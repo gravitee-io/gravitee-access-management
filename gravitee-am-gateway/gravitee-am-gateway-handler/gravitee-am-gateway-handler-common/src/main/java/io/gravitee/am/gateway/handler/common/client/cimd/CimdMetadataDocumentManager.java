@@ -29,14 +29,12 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,10 +42,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author GraviteeSource Team
  */
+@Slf4j
 public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDocumentManager>
         implements EventListener<CimdMetadataEvent, Payload>, InitializingBean {
-
-    private static final Logger logger = LoggerFactory.getLogger(CimdMetadataDocumentManager.class);
 
     @Autowired
     private Domain domain;
@@ -58,16 +55,10 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
     @Autowired
     private CimdMetadataDocumentService cimdMetadataDocumentService;
 
-    private final Cache<String, CimdMetadataDocument> metadataCache;
-    private final Cache<String, CachedLogo> logoCache;
-    private final ConcurrentHashMap<String, String> clientIdToLogoUri = new ConcurrentHashMap<>();
+    private final Cache<String, CacheEntry> cache;
 
     public CimdMetadataDocumentManager(CIMDSettings settings) {
-        this.metadataCache = CacheBuilder.newBuilder()
-                .maximumSize(settings.getCacheMaxEntries())
-                .expireAfterWrite(settings.getCacheTtlSeconds(), TimeUnit.SECONDS)
-                .build();
-        this.logoCache = CacheBuilder.newBuilder()
+        this.cache = CacheBuilder.newBuilder()
                 .maximumSize(settings.getCacheMaxEntries())
                 .expireAfterWrite(settings.getCacheTtlSeconds(), TimeUnit.SECONDS)
                 .build();
@@ -75,26 +66,26 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Pre-loading CIMD metadata documents for domain {}", domain.getName());
+        log.info("Pre-loading CIMD metadata documents for domain {}", domain.getName());
         cimdMetadataDocumentService.findByDomain(domain.getId())
                 .filter(doc -> !doc.isExpired())
                 .subscribe(
-                        doc -> metadataCache.put(doc.getClientId(), doc),
-                        error -> logger.error("Unable to pre-load CIMD documents for domain {}", domain.getName(), error)
+                        doc -> cache.put(doc.getClientId(), new CacheEntry(doc, null)),
+                        error -> log.error("Unable to pre-load CIMD documents for domain {}", domain.getName(), error)
                 );
     }
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        logger.info("Register event listener for CIMD metadata events for domain {}", domain.getName());
+        log.info("Register event listener for CIMD metadata events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, CimdMetadataEvent.class, domain.getId());
     }
 
     @Override
     protected void doStop() throws Exception {
         super.doStop();
-        logger.info("Dispose event listener for CIMD metadata events for domain {}", domain.getName());
+        log.info("Dispose event listener for CIMD metadata events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, CimdMetadataEvent.class, domain.getId());
     }
 
@@ -105,14 +96,10 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
             final String clientId = event.content().getId();
             switch (event.type()) {
                 case UPDATE, UNDEPLOY -> {
-                    metadataCache.invalidate(clientId);
-                    String logoUri = clientIdToLogoUri.remove(clientId);
-                    if (logoUri != null) {
-                        logoCache.invalidate(logoUri);
-                    }
-                    logger.debug("Domain {} evicted CIMD cache for clientId {}", domain.getName(), clientId);
+                    cache.invalidate(clientId);
+                    log.debug("Domain {} evicted CIMD cache for clientId {}", domain.getName(), clientId);
                 }
-                case DEPLOY -> logger.debug("Domain {} received CIMD DEPLOY for clientId {}", domain.getName(), clientId);
+                case DEPLOY -> log.debug("Domain {} received CIMD DEPLOY for clientId {}", domain.getName(), clientId);
             }
         }
     }
@@ -121,57 +108,46 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
      * Returns a non-expired cached document, or empty if absent or expired.
      */
     public Optional<CimdMetadataDocument> get(String clientId) {
-        CimdMetadataDocument doc = metadataCache.getIfPresent(clientId);
-        if (doc == null || doc.isExpired()) {
-            if (doc != null) {
-                metadataCache.invalidate(clientId);
+        CacheEntry entry = cache.getIfPresent(clientId);
+        if (entry == null || entry.document().isExpired()) {
+            if (entry != null) {
+                cache.invalidate(clientId);
             }
             return Optional.empty();
         }
-        return Optional.of(doc);
+        return Optional.of(entry.document());
     }
 
     /**
-     * Stores a DB-sourced document in the metadata cache and records any logo_uri mapping.
+     * Stores a DB-sourced document in the cache, preserving any logo already cached for this entry.
      */
     public void put(String clientId, CimdMetadataDocument doc) {
-        metadataCache.put(clientId, doc);
-        extractAndRecordLogoUri(clientId, doc.getMetadata());
+        CacheEntry existing = cache.getIfPresent(clientId);
+        cache.put(clientId, new CacheEntry(doc, existing != null ? existing.logo() : null));
     }
 
     /**
-     * Constructs a document from a freshly fetched metadata JSON and stores it in the metadata cache.
+     * Constructs a document from a freshly fetched metadata JSON and stores it in the cache (no logo yet).
      */
     public void put(String clientId, JsonObject metadata, Duration ttl) {
         final CimdMetadataDocument doc = CimdMetadataDocument.of(domain.getId(), clientId, metadata.encode(), ttl);
-        metadataCache.put(clientId, doc);
-        recordLogoUri(clientId, metadata.getString("logo_uri"));
+        cache.put(clientId, new CacheEntry(doc, null));
     }
 
     /**
-     * Records the logo_uri associated with a clientId so that logo cache entries can be
-     * co-evicted when the metadata document is invalidated.
+     * Attaches a logo to an existing cache entry. No-ops if the metadata entry is absent (e.g. evicted
+     * between the async fetch start and completion).
      */
-    public void recordLogoUri(String clientId, String logoUri) {
-        if (logoUri != null && !logoUri.isBlank()) {
-            clientIdToLogoUri.put(clientId, logoUri);
+    public void putLogo(String clientId, CachedLogo logo) {
+        CacheEntry existing = cache.getIfPresent(clientId);
+        if (existing != null) {
+            cache.put(clientId, new CacheEntry(existing.document(), logo));
         }
-    }
-
-    public Optional<CachedLogo> getLogo(String logoUri) {
-        return Optional.ofNullable(logoCache.getIfPresent(logoUri));
     }
 
     public Optional<CachedLogo> getLogoByClientId(String clientId) {
-        String logoUri = clientIdToLogoUri.get(clientId);
-        if (logoUri == null) {
-            return Optional.empty();
-        }
-        return getLogo(logoUri);
-    }
-
-    public void putLogo(String logoUri, CachedLogo logo) {
-        logoCache.put(logoUri, logo);
+        CacheEntry entry = cache.getIfPresent(clientId);
+        return entry != null ? Optional.ofNullable(entry.logo()) : Optional.empty();
     }
 
     public static String detectMimeType(byte[] bytes) {
@@ -193,17 +169,37 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
                 && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
             return "image/webp";
         }
+        final int o = skipLeadingBomAndAsciiWhitespace(bytes);
+        final int n = bytes.length - o;
+        if (n >= 4 && bytes[o] == '<' && bytes[o + 1] == 's' && bytes[o + 2] == 'v' && bytes[o + 3] == 'g') {
+            return "image/svg+xml";
+        }
+        if (n >= 5 && bytes[o] == '<' && bytes[o + 1] == '?' && bytes[o + 2] == 'x' && bytes[o + 3] == 'm' && bytes[o + 4] == 'l') {
+            return "image/svg+xml";
+        }
         return "application/octet-stream";
     }
 
-    private void extractAndRecordLogoUri(String clientId, String rawMetadata) {
-        if (rawMetadata == null) {
-            return;
+    /**
+     * Strips an optional UTF-8 BOM and ASCII whitespace so SVG/XML declarations are recognized when
+     * editors or tools prefix the file (common for {@code <svg>} and {@code <?xml}).
+     */
+    private static int skipLeadingBomAndAsciiWhitespace(byte[] bytes) {
+        int i = 0;
+        if (bytes.length >= 3
+                && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
+            i = 3;
         }
-        try {
-            recordLogoUri(clientId, new JsonObject(rawMetadata).getString("logo_uri"));
-        } catch (Exception ignored) {
-            // not fatal — logo association is best-effort
+        while (i < bytes.length) {
+            byte b = bytes[i];
+            if (b == ' ' || b == '\t' || b == '\n' || b == '\r') {
+                i++;
+            } else {
+                break;
+            }
         }
+        return i;
     }
+
+    private record CacheEntry(CimdMetadataDocument document, CachedLogo logo) {}
 }

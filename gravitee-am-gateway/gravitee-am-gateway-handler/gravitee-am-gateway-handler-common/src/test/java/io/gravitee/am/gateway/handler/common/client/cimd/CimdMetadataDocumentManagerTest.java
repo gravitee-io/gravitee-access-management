@@ -32,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;
@@ -163,56 +164,48 @@ public class CimdMetadataDocumentManagerTest {
 
     @Test
     public void shouldReturnEmptyLogoWhenNotCached() {
-        assertFalse(manager.getLogo("https://example.com/logo.png").isPresent());
+        assertFalse(manager.getLogoByClientId(CLIENT_URL).isPresent());
     }
 
     @Test
     public void shouldReturnLogoAfterPutLogo() {
         byte[] bytes = {(byte) 0x89, 0x50, 0x4E, 0x47};
-        manager.putLogo("https://example.com/logo.png", new CachedLogo(bytes, "image/png", 3600L));
+        manager.put(CLIENT_URL, validDocument());
+        manager.putLogo(CLIENT_URL, new CachedLogo(bytes, "image/png", 3600L));
 
-        assertTrue(manager.getLogo("https://example.com/logo.png").isPresent());
-        assertEquals("image/png", manager.getLogo("https://example.com/logo.png").get().contentType());
-        assertEquals(3600L, manager.getLogo("https://example.com/logo.png").get().maxAgeSeconds());
+        assertTrue(manager.getLogoByClientId(CLIENT_URL).isPresent());
+        assertEquals("image/png", manager.getLogoByClientId(CLIENT_URL).get().contentType());
+        assertEquals(3600L, manager.getLogoByClientId(CLIENT_URL).get().maxAgeSeconds());
     }
 
     @Test
-    public void shouldEvictLogoOnUpdateEventWhenLogoUriMapped() {
-        String logoUri = "https://example.com/logo.png";
-        manager.putLogo(logoUri, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
-        manager.recordLogoUri(CLIENT_URL, logoUri);
+    public void shouldNotStoreLogo_WhenNoMetadataEntryExists() {
+        // putLogo is a no-op without a corresponding metadata entry
+        manager.putLogo(CLIENT_URL, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
+
+        assertFalse(manager.getLogoByClientId(CLIENT_URL).isPresent());
+    }
+
+    @Test
+    public void shouldEvictLogoOnUpdateEvent() {
         manager.put(CLIENT_URL, validDocument());
+        manager.putLogo(CLIENT_URL, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
 
         manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UPDATE, payload(CLIENT_URL)));
 
         assertFalse(manager.get(CLIENT_URL).isPresent());
-        assertFalse(manager.getLogo(logoUri).isPresent());
+        assertFalse(manager.getLogoByClientId(CLIENT_URL).isPresent());
     }
 
     @Test
-    public void shouldEvictLogoOnUndeployEventWhenLogoUriMapped() {
-        String logoUri = "https://example.com/logo.png";
-        manager.putLogo(logoUri, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
-        manager.recordLogoUri(CLIENT_URL, logoUri);
+    public void shouldEvictLogoOnUndeployEvent() {
+        manager.put(CLIENT_URL, validDocument());
+        manager.putLogo(CLIENT_URL, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
 
         manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UNDEPLOY, payload(CLIENT_URL)));
 
-        assertFalse(manager.getLogo(logoUri).isPresent());
-    }
-
-    @Test
-    public void shouldAutoRecordLogoUriWhenDocumentContainsLogoUri() {
-        String logoUri = "https://example.com/logo.png";
-        CimdMetadataDocument doc = validDocument();
-        doc.setMetadata("{\"client_id\":\"" + CLIENT_URL + "\",\"redirect_uris\":[\"https://cb.example.com\"],\"logo_uri\":\"" + logoUri + "\"}");
-        manager.put(CLIENT_URL, doc);
-
-        manager.putLogo(logoUri, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
-
-        // Trigger eviction — logo should also be evicted since mapping was auto-recorded
-        manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UPDATE, payload(CLIENT_URL)));
-
-        assertFalse(manager.getLogo(logoUri).isPresent());
+        assertFalse(manager.get(CLIENT_URL).isPresent());
+        assertFalse(manager.getLogoByClientId(CLIENT_URL).isPresent());
     }
 
     private CimdMetadataDocument validDocument() {
@@ -264,6 +257,65 @@ public class CimdMetadataDocumentManagerTest {
                 0x57, 0x45, 0x42, 0x50
         };
         assertEquals("image/webp", CimdMetadataDocumentManager.detectMimeType(webp));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnSvgXmlWhenBufferStartsWithSvgTag() {
+        byte[] svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>".getBytes(StandardCharsets.UTF_8);
+        assertEquals("image/svg+xml", CimdMetadataDocumentManager.detectMimeType(svg));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnSvgXmlWhenBufferStartsWithXmlDeclaration() {
+        byte[] svg = "<?xml version=\"1.0\"?><svg></svg>".getBytes(StandardCharsets.UTF_8);
+        assertEquals("image/svg+xml", CimdMetadataDocumentManager.detectMimeType(svg));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnSvgXmlWhenUtf8BomPrecedesSvgTag() {
+        byte[] inner = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes(StandardCharsets.UTF_8);
+        byte[] bom = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
+        byte[] combined = new byte[bom.length + inner.length];
+        System.arraycopy(bom, 0, combined, 0, bom.length);
+        System.arraycopy(inner, 0, combined, bom.length, inner.length);
+        assertEquals("image/svg+xml", CimdMetadataDocumentManager.detectMimeType(combined));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnSvgXmlWhenUtf8BomAndWhitespacePrecedeXmlDeclaration() {
+        byte[] inner = "<?xml version=\"1.0\"?><svg/>".getBytes(StandardCharsets.UTF_8);
+        byte[] bom = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
+        byte[] prefix = "\n  ".getBytes(StandardCharsets.UTF_8);
+        byte[] combined = new byte[bom.length + prefix.length + inner.length];
+        int p = 0;
+        System.arraycopy(bom, 0, combined, p, bom.length);
+        p += bom.length;
+        System.arraycopy(prefix, 0, combined, p, prefix.length);
+        p += prefix.length;
+        System.arraycopy(inner, 0, combined, p, inner.length);
+        assertEquals("image/svg+xml", CimdMetadataDocumentManager.detectMimeType(combined));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnSvgXmlWhenLeadingWhitespaceBeforeSvgTag() {
+        byte[] svg = "\r\n  <svg></svg>".getBytes(StandardCharsets.UTF_8);
+        assertEquals("image/svg+xml", CimdMetadataDocumentManager.detectMimeType(svg));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenSvgTagPrefixIncomplete() {
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType("<sv".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenXmlDeclarationIncomplete() {
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType("<?xm".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenXmlDeclarationIsNotLowercase() {
+        byte[] notLowercase = "<?XML version=\"1.0\"?><svg/>".getBytes(StandardCharsets.UTF_8);
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(notLowercase));
     }
 
     @Test

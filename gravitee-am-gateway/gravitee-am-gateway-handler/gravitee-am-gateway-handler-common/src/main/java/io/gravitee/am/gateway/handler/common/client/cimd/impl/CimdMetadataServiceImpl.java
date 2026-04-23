@@ -115,7 +115,10 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                             cimdMetadataDocumentManager.put(canonicalId, doc);
                             // Pre-fetch logo if not yet cached locally (e.g. after gateway restart)
                             final JsonObject docMetadata = new JsonObject(doc.getMetadata());
-                            prefetchLogoAsync(canonicalId, docMetadata.getString("logo_uri"), settings);
+                            final long remainingTtlSeconds = doc.getExpiresAt() != null
+                                    ? Math.max(0L, (doc.getExpiresAt().getTime() - System.currentTimeMillis()) / 1000L)
+                                    : 0L;
+                            prefetchLogoAsync(canonicalId, docMetadata.getString("logo_uri"), remainingTtlSeconds, settings);
                             return Maybe.just(synthesizeClient(canonicalId, templateClient, docMetadata));
                         }
                         return Maybe.empty();
@@ -130,8 +133,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                             if (!cache.noCache()) {
                                                 // Populate local cache immediately
                                                 cimdMetadataDocumentManager.put(canonicalId, fetchResult.json(), cache.ttl());
-                                                // Kick off background logo pre-fetch
-                                                prefetchLogoAsync(canonicalId, fetchResult.json().getString("logo_uri"), settings);
+                                                // Kick off background logo pre-fetch using the metadata TTL
+                                                prefetchLogoAsync(canonicalId, fetchResult.json().getString("logo_uri"), cache.ttl().toSeconds(), settings);
                                                 // [4] Persist to DB asynchronously; update local cache with DB-assigned entry when done
                                                 cimdMetadataDocumentService
                                                         .upsert(domain, canonicalId, fetchResult.json().encode(), cache.ttl())
@@ -258,7 +261,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         if (cacheControl != null) {
             if (CACHE_CONTROL_NO_STORE.matcher(cacheControl).find()) {
                 return new FetchResult.CacheRequirements(Duration.ZERO, true);
-            }            
+            }
             Matcher m = CACHE_CONTROL_MAX_AGE.matcher(cacheControl);
             if (m.find()) {
                 try {
@@ -379,11 +382,11 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         }
     }
 
-    private void prefetchLogoAsync(String clientId, String logoUri, CIMDSettings settings) {
+    private void prefetchLogoAsync(String clientId, String logoUri, long metadataTtlSeconds, CIMDSettings settings) {
         if (logoUri == null || logoUri.isBlank()) {
             return;
         }
-        if (cimdMetadataDocumentManager.getLogo(logoUri).isPresent()) {
+        if (cimdMetadataDocumentManager.getLogoByClientId(clientId).isPresent()) {
             return;
         }
 
@@ -401,15 +404,12 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             return;
         }
 
-        cimdMetadataDocumentManager.recordLogoUri(clientId, logoUri);
-
         final long timeoutMs = resolveTimeoutMs(settings);
-        final long maxCacheTtlSeconds = resolveCacheTtlSeconds(settings);
         final var logoCollector = new BoundedBufferWriteStream(MAX_LOGO_SIZE_BYTES);
 
         webClient.getAbs(logoUri)
                 .timeout(timeoutMs)
-                .followRedirects(false)
+                .followRedirects(true)
                 .as(BodyCodec.pipe(WriteStream.newInstance(logoCollector), false))
                 .rxSend()
                 .subscribe(
@@ -419,9 +419,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                 if (body != null && body.length() > 0 && body.length() <= MAX_LOGO_SIZE_BYTES) {
                                     final byte[] bytes = body.getBytes();
                                     final String contentType = resolveContentType(response.getHeader("Content-Type"), bytes);
-                                    final long maxAgeSeconds = resolveLogoMaxAge(response.getHeader("Cache-Control"), maxCacheTtlSeconds);
-                                    cimdMetadataDocumentManager.putLogo(logoUri, new CachedLogo(bytes, contentType, maxAgeSeconds));
-                                    log.debug("CIMD logo cached for uri {}", logoUri);
+                                    cimdMetadataDocumentManager.putLogo(clientId, new CachedLogo(bytes, contentType, metadataTtlSeconds));
+                                    log.debug("CIMD logo cached for clientId {}", clientId);
                                 }
                             }
                         },
@@ -434,20 +433,6 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             return headerValue.trim();
         }
         return CimdMetadataDocumentManager.detectMimeType(bytes);
-    }
-
-    private static long resolveLogoMaxAge(String cacheControl, long maxCacheTtlSeconds) {
-        if (cacheControl != null) {
-            Matcher m = CACHE_CONTROL_MAX_AGE.matcher(cacheControl);
-            if (m.find()) {
-                try {
-                    return Math.min(Long.parseLong(m.group(1)), maxCacheTtlSeconds);
-                } catch (NumberFormatException ignored) {
-                    // fall through
-                }
-            }
-        }
-        return maxCacheTtlSeconds;
     }
 
     private static long resolveTimeoutMs(CIMDSettings settings) {
