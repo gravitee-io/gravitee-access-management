@@ -40,7 +40,6 @@ import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -262,11 +261,7 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         // Blueprint agent - inject "act" claim (mirrors access-token logic)
         if (client.isAgentIdentityMode() && idToken.get(Claims.ACT) == null) {
-            if (client.getAgentType() == AgentType.USER_EMBEDDED) {
-                idToken.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
-            } else if (client.getBlueprintClientId() != null) {
-                idToken.put(Claims.ACT, Map.of(Claims.SUB, client.getBlueprintClientId()));
-            }
+            idToken.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
         }
 
         // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-00
