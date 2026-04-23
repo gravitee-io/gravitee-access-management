@@ -303,8 +303,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private AgentType agentType;
 
-    private transient String blueprintClientId;
-
     private transient String agentInstanceId;
 
     public Client() {
@@ -406,7 +404,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentIdentityMode = other.agentIdentityMode;
         this.agentType = other.agentType;
-        this.blueprintClientId = other.blueprintClientId;
         this.agentInstanceId = other.agentInstanceId;
     }
 
@@ -1266,14 +1263,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setAgentType(AgentType agentType) {
         this.agentType = agentType;
-    }
-
-    public String getBlueprintClientId() {
-        return blueprintClientId;
-    }
-
-    public void setBlueprintClientId(String blueprintClientId) {
-        this.blueprintClientId = blueprintClientId;
     }
 
     public String getAgentInstanceId() {
