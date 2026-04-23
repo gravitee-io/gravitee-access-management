@@ -37,7 +37,7 @@ function managementUrl(path: string): string {
 export interface WorkloadJwtFixture extends Fixture {
   domain: Domain;
   oidc: DomainOidcConfig;
-  blueprintClientId: string;
+  clientId: string;
   blueprintAppId: string;
   privateKey: crypto.KeyObject;
   kid: string;
@@ -68,7 +68,7 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
       throw new Error(`Failed to create blueprint app: ${createResponse.status} ${await createResponse.text()}`);
     }
     const blueprintApp = await createResponse.json();
-    const blueprintClientId = blueprintApp.settings.oauth.clientId;
+    const clientId = blueprintApp.settings.oauth.clientId;
 
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
     const kid = uniqueName('agent-key', false);
@@ -109,7 +109,7 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
       accessToken,
       domain,
       oidc: started.oidcConfig,
-      blueprintClientId,
+      clientId,
       blueprintAppId: blueprintApp.id,
       privateKey,
       kid,
