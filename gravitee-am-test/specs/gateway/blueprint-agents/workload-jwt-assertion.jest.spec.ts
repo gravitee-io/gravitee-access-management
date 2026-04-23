@@ -44,7 +44,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
   ): string {
     const now = Math.floor(Date.now() / 1000);
     const payload = {
-      iss: fixture.blueprintClientId,
+      iss: fixture.clientId,
       sub: instanceId,
       aud: fixture.oidc.token_endpoint,
       jti: crypto.randomUUID(),
@@ -77,7 +77,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
     const decoded = decodeJwt(response.body.access_token);
     expect(decoded.sub).toEqual(agentInstanceId);
     expect(decoded.act).toBeDefined();
-    expect((decoded.act as any).sub).toEqual(fixture.blueprintClientId);
+    expect((decoded.act as any).sub).toEqual(fixture.clientId);
   });
 
   it('should reject workload-jwt with invalid signature', async () => {
@@ -133,7 +133,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
 
       const decoded = decodeJwt(response.body.access_token);
       expect(decoded.sub).toEqual(instanceId);
-      expect((decoded.act as any).sub).toEqual(fixture.blueprintClientId);
+      expect((decoded.act as any).sub).toEqual(fixture.clientId);
     }
   });
 });
