@@ -69,7 +69,7 @@ public interface ClientAuthenticationMethod {
     String SELF_SIGNED_TLS_CLIENT_AUTH = "self_signed_tls_client_auth";
 
     /**
-     * URN to identify the ClientAssertion using JWT token (RFC 7523).
+     * URN to identify the ClientAssertion using JWT token
      */
     String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 
