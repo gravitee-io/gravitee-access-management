@@ -302,8 +302,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
      * The JWT {@code iss} identifies the blueprint application (client_id, or a
      * URL-shaped client_id that resolves via master's CIMD-aware client lookup)
      * and {@code sub} identifies the agent instance. The signature is verified
-     * against the blueprint's JWKS. On success, a cloned Client is returned with
-     * {@code blueprintClientId} set to the original blueprint client_id.
+     * against the blueprint's JWKS.
      */
     private Maybe<Client> validateAgentAssertion(JWT jwt, String basePath) {
         return Maybe.defer(() -> {
@@ -394,7 +393,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     private static Client buildAgentClient(Client blueprint, String agentInstanceId) {
         Client agentClient = new Client(blueprint);
-        agentClient.setBlueprintClientId(blueprint.getClientId());
         agentClient.setAgentInstanceId(agentInstanceId);
         return agentClient;
     }
