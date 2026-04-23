@@ -62,6 +62,7 @@
         <module>gravitee-am-plugins-handlers</module>
         <module>gravitee-am-gateway</module>
         <module>gravitee-am-management-api</module>
+        <module>gravitee-am-management-api-sdk-java</module>
         <module>gravitee-am-ui</module>
         <module>gravitee-am-resource</module>
         <module>gravitee-am-botdetection</module>
