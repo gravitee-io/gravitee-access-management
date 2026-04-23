@@ -423,6 +423,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                     log.debug("CIMD logo cached for clientId {}", clientId);
                                 }
                             }
+                            else {
+                                log.debug("CIMD logo pre-fetch returned {} status code for uri {}", response.statusCode(), logoUri);
+                            }
                         },
                         err -> log.debug("CIMD logo pre-fetch failed for uri {}: {}", logoUri, err.getMessage())
                 );

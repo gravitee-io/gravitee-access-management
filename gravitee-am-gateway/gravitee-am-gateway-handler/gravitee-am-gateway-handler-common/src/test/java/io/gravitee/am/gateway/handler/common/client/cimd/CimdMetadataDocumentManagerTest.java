@@ -175,7 +175,8 @@ public class CimdMetadataDocumentManagerTest {
 
         assertTrue(manager.getLogoByClientId(CLIENT_URL).isPresent());
         assertEquals("image/png", manager.getLogoByClientId(CLIENT_URL).get().contentType());
-        assertEquals(3600L, manager.getLogoByClientId(CLIENT_URL).get().maxAgeSeconds());
+        long maxAge = manager.getLogoByClientId(CLIENT_URL).get().maxAgeSeconds();
+        assertTrue("maxAgeSeconds should be positive and at most one day", maxAge > 0 && maxAge <= 86400);
     }
 
     @Test
@@ -205,6 +206,18 @@ public class CimdMetadataDocumentManagerTest {
         manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UNDEPLOY, payload(CLIENT_URL)));
 
         assertFalse(manager.get(CLIENT_URL).isPresent());
+        assertFalse(manager.getLogoByClientId(CLIENT_URL).isPresent());
+    }
+
+    @Test
+    public void shouldReturnEmptyLogoWhenDocumentIsExpired() {
+        manager.put(CLIENT_URL, validDocument());
+        manager.putLogo(CLIENT_URL, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
+        assertTrue(manager.getLogoByClientId(CLIENT_URL).isPresent());
+
+        // replace with expired document — put() preserves the existing logo
+        manager.put(CLIENT_URL, expiredDocument());
+
         assertFalse(manager.getLogoByClientId(CLIENT_URL).isPresent());
     }
 

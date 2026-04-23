@@ -147,7 +147,17 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
 
     public Optional<CachedLogo> getLogoByClientId(String clientId) {
         CacheEntry entry = cache.getIfPresent(clientId);
-        return entry != null ? Optional.ofNullable(entry.logo()) : Optional.empty();
+        if (entry == null || entry.logo() == null) {
+            return Optional.empty();
+        }
+        if (entry.document().isExpired()) {
+            cache.invalidate(clientId);
+            return Optional.empty();
+        }
+        long remainingSeconds = Math.max(0L,
+                (entry.document().getExpiresAt().getTime() - System.currentTimeMillis()) / 1000);
+        CachedLogo logo = entry.logo();
+        return Optional.of(new CachedLogo(logo.bytes(), logo.contentType(), remainingSeconds));
     }
 
     public static String detectMimeType(byte[] bytes) {

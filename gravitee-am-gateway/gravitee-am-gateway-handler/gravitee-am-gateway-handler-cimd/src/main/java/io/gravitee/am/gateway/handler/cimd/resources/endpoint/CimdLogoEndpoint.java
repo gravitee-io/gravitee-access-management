@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.cimd.resources.endpoint;
 
 import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
+import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -47,7 +48,7 @@ public class CimdLogoEndpoint implements Handler<RoutingContext> {
             return;
         }
 
-        final Optional<CachedLogo> logo = cimdMetadataDocumentManager.getLogoByClientId(clientId);
+        final Optional<CachedLogo> logo = cimdMetadataDocumentManager.getLogoByClientId(ClientIds.canonicalize(clientId));
         if (logo.isEmpty()) {
             routingContext.response().setStatusCode(404).end();
             return;
