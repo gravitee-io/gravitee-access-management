@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.gravitee.am</groupId>
+        <artifactId>gravitee-am-parent</artifactId>
+        <version>4.12.0-alpha.3-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gravitee-am-management-api-sdk-java</artifactId>
+    <name>Gravitee IO - Access Management - Management API Java SDK</name>
+    <description>Java client SDK generated from the Access Management Management API OpenAPI specification.</description>
+
+    <properties>
+        <openapi-generator.version>7.11.0</openapi-generator.version>
+        <jackson.version>2.18.2</jackson.version>
+        <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
+        <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
+        <sdk.package.base>io.gravitee.am.sdk.management</sdk.package.base>
+    </properties>
+
+    <dependencies>
+        <!-- okhttp-gson generator runtime deps -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>4.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gsonfire</groupId>
+            <artifactId>gson-fire</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.18.0</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>${jakarta.annotation-api.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Pre-generation spec transform. The upstream OpenAPI spec is produced by the
+                Management API's swagger scan and has two quirks that Java's strictly-typed
+                client generators reject (TypeScript tolerates them at runtime):
+
+                  * The `NewProtectedResourceFeature` / `UpdateProtectedResourceFeature`
+                    parents declare the discriminator `type` as an unconstrained `string`,
+                    while their subclasses (`NewMcpTool`, `UpdateMcpTool`) redeclare `type`
+                    with an enum — producing parent-`String` vs subclass-`Enum` field and
+                    getter collisions in Java.
+
+                  * The sibling `ProtectedResourceFeature` parent already expresses `type`
+                    as an enum; subclasses correctly inherit. We reshape the two stale
+                    parents to match that working pattern.
+
+                We copy the spec into target/ and rewrite it locally — the upstream Java
+                code and the committed spec are left untouched.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-openapi-spec</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}"/>
+                                <copy file="${project.basedir}/../docs/mapi/openapi.yaml"
+                                      tofile="${project.build.directory}/openapi-patched.yaml"
+                                      overwrite="true"/>
+
+                                <!-- Promote `type` to an enum on the two stale parent schemas.
+                                     Matches only where `type: string` immediately precedes
+                                     `discriminator:` with no existing `enum:` block. -->
+                                <replaceregexp file="${project.build.directory}/openapi-patched.yaml"
+                                               match="(\n        type:\n          type: string\n)(      discriminator:)"
+                                               replace="\1          enum:${line.separator}          - MCP_TOOL${line.separator}\2"
+                                               flags="g"
+                                               byline="false"/>
+
+                                <!-- Remove the redundant `type` redeclaration from subclass
+                                     allOf overrides (anchored by the 10-space indent unique
+                                     to that context, with the scopes sibling as tail anchor). -->
+                                <replaceregexp file="${project.build.directory}/openapi-patched.yaml"
+                                               match="\n          type:\n            type: string\n            enum:\n            - MCP_TOOL\n(          scopes:)"
+                                               replace="${line.separator}\1"
+                                               flags="g"
+                                               byline="false"/>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!--
+                        Post-generation fix. Even with the spec reshaped, openapi-generator
+                        hard-codes `this.type = getClass().getSimpleName()` into the
+                        discriminator subclass constructors. Parent `type` is now a typed
+                        enum, so the String assignment won't compile. Gson populates `type`
+                        from the JSON payload during deserialization, so the assignment is
+                        redundant — strip it.
+                    -->
+                    <execution>
+                        <id>patch-discriminator-subclass-constructors</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <target>
+                                <replaceregexp match="\s*this\.type = this\.getClass\(\)\.getSimpleName\(\);\s*\n"
+                                               replace="${line.separator}"
+                                               flags="g"
+                                               byline="false">
+                                    <fileset dir="${project.build.directory}/generated-sources/openapi/src/main/java/io/gravitee/am/sdk/management/model">
+                                        <include name="McpTool.java"/>
+                                        <include name="NewMcpTool.java"/>
+                                        <include name="UpdateMcpTool.java"/>
+                                    </fileset>
+                                </replaceregexp>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-management-api-sdk</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <generatorName>java</generatorName>
+                            <inputSpec>${project.build.directory}/openapi-patched.yaml</inputSpec>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <apiPackage>${sdk.package.base}.api</apiPackage>
+                            <modelPackage>${sdk.package.base}.model</modelPackage>
+                            <invokerPackage>${sdk.package.base}.invoker</invokerPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <skipValidateSpec>true</skipValidateSpec>
+                            <configOptions>
+                                <library>okhttp-gson</library>
+                                <dateLibrary>java8</dateLibrary>
+                                <openApiNullable>false</openApiNullable>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <useJakartaEe>true</useJakartaEe>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-generated-sources</id>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generated sources are build output; skip license header check. -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
