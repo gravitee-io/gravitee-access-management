@@ -19,20 +19,18 @@ Docker Compose-based local environment for Gravitee Access Management.
 
 ```bash
 npm --prefix docker/local-stack run stack:init:copy-am
-npm --prefix docker/local-stack run stack:init:build
 ```
 
 ### MongoDB
 
 ```bash
-npm --prefix docker/local-stack run stack:dev:setup:mongo
+npm --prefix docker/local-stack run stack:dev:mongo
 ```
 
 ### PostgreSQL
 
 ```bash
-npm --prefix docker/local-stack run stack:init:plugins:psql
-npm --prefix docker/local-stack run stack:dev:setup:psql
+npm --prefix docker/local-stack run stack:dev:psql
 ```
 
 ## Optional Stacks

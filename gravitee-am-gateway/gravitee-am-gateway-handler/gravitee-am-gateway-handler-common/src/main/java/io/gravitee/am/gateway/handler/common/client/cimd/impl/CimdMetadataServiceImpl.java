@@ -16,12 +16,18 @@
 package io.gravitee.am.gateway.handler.common.client.cimd.impl;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
+import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
+import lombok.extern.slf4j.Slf4j;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
@@ -33,21 +39,26 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.streams.WriteStream;
 import io.vertx.rxjava3.ext.web.codec.BodyCodec;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class CimdMetadataServiceImpl implements CimdMetadataService {
 
-    private static final Pattern URL_SHAPED_CLIENT_ID = Pattern.compile("^https?://", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CACHE_CONTROL_MAX_AGE = Pattern.compile("(?:^|,)\\s*max-age\\s*=\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CACHE_CONTROL_NO_STORE = Pattern.compile("(?:^|,)\\s*no-store\\s*(?:,|$)", Pattern.CASE_INSENSITIVE);
     private static final Set<String> FORBIDDEN_SECRET_BASED_AUTH_METHODS = Set.of(
             ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
             ClientAuthenticationMethod.CLIENT_SECRET_POST,
@@ -55,19 +66,27 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     );
     private static final int FETCH_RETRY_ATTEMPTS = 3;
     private static final int FETCH_RETRY_DELAY_MS = 100;
+    private static final long MAX_LOGO_SIZE_BYTES = 256L * 1024L;
 
     private final Domain domain;
     private final WebClient webClient;
+    private final CimdMetadataDocumentService cimdMetadataDocumentService;
+    private final CimdMetadataDocumentManager cimdMetadataDocumentManager;
 
-    public CimdMetadataServiceImpl(Domain domain, WebClient webClient) {
+    public CimdMetadataServiceImpl(Domain domain,
+                                   WebClient webClient,
+                                   CimdMetadataDocumentService cimdMetadataDocumentService,
+                                   CimdMetadataDocumentManager cimdMetadataDocumentManager) {
         this.domain = domain;
         this.webClient = webClient;
+        this.cimdMetadataDocumentService = cimdMetadataDocumentService;
+        this.cimdMetadataDocumentManager = cimdMetadataDocumentManager;
     }
 
     @Override
     public Maybe<Client> resolveClient(String clientId, Client templateClient) {
         return Maybe.defer(() -> {
-            if (clientId == null || !URL_SHAPED_CLIENT_ID.matcher(clientId).find()) {
+            if (!ClientIds.isUrlShaped(clientId)) {
                 return Maybe.empty();
             }
 
@@ -75,13 +94,60 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                 return Maybe.error(new InvalidClientMetadataException("No template client available for CIMD resolution."));
             }
 
+            final String canonicalId = ClientIds.canonicalize(clientId);
             final CIMDSettings settings = getCimdSettings();
-            final URI clientIdUri = toUri(clientId);
+            final URI clientIdUri = toUri(canonicalId);
             validateUrlTrust(clientIdUri, settings);
 
-            return fetchMetadata(clientId, settings)
-                    .map(metadata -> synthesizeClient(clientId, templateClient, metadata))
-                    .toMaybe();
+            // [1] Local in-memory cache hit
+            var cached = cimdMetadataDocumentManager.get(canonicalId);
+            if (cached.isPresent()) {
+                log.debug("CIMD local cache hit for domain={}, clientId={}", domain.getId(), canonicalId);
+                return Maybe.just(synthesizeClient(canonicalId, templateClient, new JsonObject(cached.get().getMetadata())));
+            }
+
+            // [2] Shared DB hit
+            log.debug("CIMD local cache miss, checking DB for domain={}, clientId={}", domain.getId(), canonicalId);
+            return cimdMetadataDocumentService.findByDomainAndClientId(domain.getId(), canonicalId)
+                    .flatMap(doc -> {
+                        if (!doc.isExpired()) {
+                            log.debug("CIMD DB cache hit (restored) for domain={}, clientId={}", domain.getId(), canonicalId);
+                            cimdMetadataDocumentManager.put(canonicalId, doc);
+                            // Pre-fetch logo if not yet cached locally (e.g. after gateway restart)
+                            final JsonObject docMetadata = new JsonObject(doc.getMetadata());
+                            final long remainingTtlSeconds = doc.getExpiresAt() != null
+                                    ? Math.max(0L, (doc.getExpiresAt().getTime() - System.currentTimeMillis()) / 1000L)
+                                    : 0L;
+                            prefetchLogoAsync(canonicalId, docMetadata.getString("logo_uri"), remainingTtlSeconds, settings);
+                            return Maybe.just(synthesizeClient(canonicalId, templateClient, docMetadata));
+                        }
+                        return Maybe.empty();
+                    })
+                    // [3] Origin fetch on miss or expiry
+                    .switchIfEmpty(
+                            Maybe.defer(() -> {
+                                log.debug("CIMD cache miss, fetching from origin for domain={}, clientId={}", domain.getId(), canonicalId);
+                                return fetchMetadataWithTtl(canonicalId, settings)
+                                        .flatMap(fetchResult -> {
+                                            final FetchResult.CacheRequirements cache = fetchResult.cacheRequirements();
+                                            if (!cache.noCache()) {
+                                                // Populate local cache immediately
+                                                cimdMetadataDocumentManager.put(canonicalId, fetchResult.json(), cache.ttl());
+                                                // Kick off background logo pre-fetch using the metadata TTL
+                                                prefetchLogoAsync(canonicalId, fetchResult.json().getString("logo_uri"), cache.ttl().toSeconds(), settings);
+                                                // [4] Persist to DB asynchronously; update local cache with DB-assigned entry when done
+                                                cimdMetadataDocumentService
+                                                        .upsert(domain, canonicalId, fetchResult.json().encode(), cache.ttl())
+                                                        .subscribe(
+                                                                doc -> cimdMetadataDocumentManager.put(canonicalId, doc),
+                                                                err -> log.warn("CIMD failed to persist metadata for domain={}, clientId={}: {}", domain.getId(), canonicalId, err.getMessage())
+                                                        );
+                                            }
+                                            return Single.just(synthesizeClient(canonicalId, templateClient, fetchResult.json()));
+                                        })
+                                        .toMaybe();
+                            })
+                    );
         });
     }
 
@@ -140,9 +206,10 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                 });
     }
 
-    private Single<JsonObject> fetchMetadata(String clientId, CIMDSettings settings) {
-        final long timeoutMs = Math.max(1L, settings.getFetchTimeoutMs());
+    private Single<FetchResult> fetchMetadataWithTtl(String clientId, CIMDSettings settings) {
+        final long timeoutMs = resolveTimeoutMs(settings);
         final long maxResponseSize = Math.max(0L, settings.getMaxResponseSizeKb()) * 1024L;
+        final long maxCacheTtlSeconds = resolveCacheTtlSeconds(settings);
 
         return Single.defer(() -> {
                     final var responseCollector = new BoundedBufferWriteStream(maxResponseSize);
@@ -153,7 +220,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                             .as(BodyCodec.pipe(WriteStream.newInstance(responseCollector), false))
                             .rxSend()
                             .flatMap(response -> {
-                                if (response.statusCode() != 200) {
+                                if (response.statusCode() != HttpStatusCode.OK_200) {
                                     return Single.error(new InvalidClientMetadataException("Client metadata endpoint returned HTTP " + response.statusCode() + "."));
                                 }
 
@@ -167,7 +234,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                 }
 
                                 try {
-                                    return Single.just(new JsonObject(body));
+                                    final JsonObject json = new JsonObject(body);
+                                    return Single.just(new FetchResult(json, resolveCacheRequirements(response, maxCacheTtlSeconds)));
                                 } catch (Exception ex) {
                                     return Single.error(new InvalidClientMetadataException("Client metadata response is not valid JSON."));
                                 }
@@ -188,9 +256,29 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                 });
     }
 
+    private static FetchResult.CacheRequirements resolveCacheRequirements(HttpResponse<?> response, long maxCacheTtlSeconds) {
+        final String cacheControl = response.getHeader("Cache-Control");
+        if (cacheControl != null) {
+            if (CACHE_CONTROL_NO_STORE.matcher(cacheControl).find()) {
+                return new FetchResult.CacheRequirements(Duration.ZERO, true);
+            }
+            Matcher m = CACHE_CONTROL_MAX_AGE.matcher(cacheControl);
+            if (m.find()) {
+                try {
+                    long serverMaxAge = Long.parseLong(m.group(1));
+                    return new FetchResult.CacheRequirements(
+                            Duration.ofSeconds(Math.min(serverMaxAge, maxCacheTtlSeconds)), false);
+                } catch (NumberFormatException ignored) {
+                    // fall through to configured TTL
+                }
+            }
+        }
+        return new FetchResult.CacheRequirements(Duration.ofSeconds(maxCacheTtlSeconds), false);
+    }
+
     private Client synthesizeClient(String clientId, Client templateClient, JsonObject metadata) {
         final String metadataClientId = metadata.getString("client_id");
-        if (!clientId.equals(metadataClientId)) {
+        if (!clientId.equals(ClientIds.canonicalize(metadataClientId))) {
             throw new InvalidClientMetadataException("client_id in metadata does not match requested client_id.");
         }
 
@@ -231,6 +319,10 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         synthesizedClient.setRedirectUris(redirectUris);
         synthesizedClient.setTokenEndpointAuthMethod(tokenEndpointAuthMethod);
         synthesizedClient.setClientName(metadata.getString("client_name", synthesizedClient.getClientName()));
+        final String logoUri = metadata.getString("logo_uri");
+        if (logoUri != null && !logoUri.isBlank()) {
+            synthesizedClient.setLogoUri(logoUri);
+        }
         if (grantTypes != null) {
             synthesizedClient.setAuthorizedGrantTypes(grantTypes);
         }
@@ -288,5 +380,73 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         } catch (ParseException ex) {
             throw new InvalidClientMetadataException("Unable to parse jwks content.");
         }
+    }
+
+    private void prefetchLogoAsync(String clientId, String logoUri, long metadataTtlSeconds, CIMDSettings settings) {
+        if (logoUri == null || logoUri.isBlank()) {
+            return;
+        }
+        if (cimdMetadataDocumentManager.getLogoByClientId(clientId).isPresent()) {
+            return;
+        }
+
+        final URI uri;
+        try {
+            uri = toUri(logoUri);
+        } catch (Exception ex) {
+            log.debug("CIMD logo pre-fetch skipped — invalid URI: {}", logoUri);
+            return;
+        }
+        try {
+            validateUrlTrust(uri, settings);
+        } catch (Exception ex) {
+            log.debug("CIMD logo pre-fetch skipped — URI not trusted: {}", logoUri);
+            return;
+        }
+
+        final long timeoutMs = resolveTimeoutMs(settings);
+        final var logoCollector = new BoundedBufferWriteStream(MAX_LOGO_SIZE_BYTES);
+
+        webClient.getAbs(logoUri)
+                .timeout(timeoutMs)
+                .followRedirects(true)
+                .as(BodyCodec.pipe(WriteStream.newInstance(logoCollector), false))
+                .rxSend()
+                .subscribe(
+                        response -> {
+                            if (response.statusCode() == HttpStatusCode.OK_200) {
+                                final Buffer body = logoCollector.body().length() > 0 ? logoCollector.body() : response.bodyAsBuffer();
+                                if (body != null && body.length() > 0 && body.length() <= MAX_LOGO_SIZE_BYTES) {
+                                    final byte[] bytes = body.getBytes();
+                                    final String contentType = resolveContentType(response.getHeader("Content-Type"), bytes);
+                                    cimdMetadataDocumentManager.putLogo(clientId, new CachedLogo(bytes, contentType, metadataTtlSeconds));
+                                    log.debug("CIMD logo cached for clientId {}", clientId);
+                                }
+                            }
+                            else {
+                                log.debug("CIMD logo pre-fetch returned {} status code for uri {}", response.statusCode(), logoUri);
+                            }
+                        },
+                        err -> log.debug("CIMD logo pre-fetch failed for uri {}: {}", logoUri, err.getMessage())
+                );
+    }
+
+    private static String resolveContentType(String headerValue, byte[] bytes) {
+        if (headerValue != null && !headerValue.isBlank()) {
+            return headerValue.trim();
+        }
+        return CimdMetadataDocumentManager.detectMimeType(bytes);
+    }
+
+    private static long resolveTimeoutMs(CIMDSettings settings) {
+        return Math.max(1L, settings.getFetchTimeoutMs());
+    }
+
+    private static long resolveCacheTtlSeconds(CIMDSettings settings) {
+        return Math.max(1L, settings.getCacheTtlSeconds());
+    }
+
+    private record FetchResult(JsonObject json, CacheRequirements cacheRequirements) {
+        private record CacheRequirements(Duration ttl, boolean noCache) {}
     }
 }

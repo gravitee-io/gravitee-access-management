@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-cimd-metadata-documents-table
+      author: GraviteeSource Team
+      changes:
+        - createTable:
+            tableName: cimd_metadata_documents
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: client_id, type: nvarchar(2048), constraints: { nullable: false } }
+              - column: { name: metadata, type: clob, constraints: { nullable: true } }
+              - column: { name: fetched_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_cimd_metadata_documents
+            columnNames: id
+            tableName: cimd_metadata_documents
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+              - column:
+                  name: client_id
+            indexName: idx_cimd_metadata_documents_domain_client
+            tableName: cimd_metadata_documents
+            unique: true

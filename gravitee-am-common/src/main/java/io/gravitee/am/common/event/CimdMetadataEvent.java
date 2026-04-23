@@ -13,32 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.common;
+package io.gravitee.am.common.event;
 
-import io.reactivex.rxjava3.core.Completable;
+/**
+ * @author GraviteeSource Team
+ */
+public enum CimdMetadataEvent {
 
-public interface ExpiredDataSweeper {
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
-
-    enum Target {
-        access_tokens,
-        authorization_codes,
-        refresh_tokens,
-        scope_approvals,
-        request_objects,
-        login_attempts,
-        uma_permission_ticket,
-        auth_flow_ctx,
-        pushed_authorization_requests,
-        ciba_auth_requests,
-        user_activities,
-        devices,
-        events,
-        audits,
-        tokens,
-        cimd_metadata_documents
+    public static CimdMetadataEvent actionOf(Action action) {
+        return switch (action) {
+            case CREATE -> CimdMetadataEvent.DEPLOY;
+            case UPDATE -> CimdMetadataEvent.UPDATE;
+            case DELETE -> CimdMetadataEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

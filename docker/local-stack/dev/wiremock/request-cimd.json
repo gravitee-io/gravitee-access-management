@@ -14,6 +14,41 @@
           "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/valid-none",
           "client_name": "CIMD Valid Client",
           "client_uri": "https://example.com/enabled-base",
+          "logo_uri": "http://wiremock:8080/cimd/logos/example.png",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/logos/example.png"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "image/png"
+        },
+        "base64Body": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/cache-twice"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/cache-twice",
+          "client_name": "CIMD cache twice client",
+          "client_uri": "https://example.com/enabled-base-cache",
           "redirect_uris": [
             "https://client.example.com/callback"
           ],

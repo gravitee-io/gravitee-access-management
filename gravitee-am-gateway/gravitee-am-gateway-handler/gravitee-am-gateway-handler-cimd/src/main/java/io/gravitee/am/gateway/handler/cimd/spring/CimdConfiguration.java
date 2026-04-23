@@ -13,32 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.common;
+package io.gravitee.am.gateway.handler.cimd.spring;
 
-import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import org.springframework.context.annotation.Configuration;
 
-public interface ExpiredDataSweeper {
-
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
-
-    enum Target {
-        access_tokens,
-        authorization_codes,
-        refresh_tokens,
-        scope_approvals,
-        request_objects,
-        login_attempts,
-        uma_permission_ticket,
-        auth_flow_ctx,
-        pushed_authorization_requests,
-        ciba_auth_requests,
-        user_activities,
-        devices,
-        events,
-        audits,
-        tokens,
-        cimd_metadata_documents
-    }
+@Configuration
+public class CimdConfiguration implements ProtocolConfiguration {
+    // All required beans (CimdMetadataDocumentManager) are declared in CommonConfiguration.
 }

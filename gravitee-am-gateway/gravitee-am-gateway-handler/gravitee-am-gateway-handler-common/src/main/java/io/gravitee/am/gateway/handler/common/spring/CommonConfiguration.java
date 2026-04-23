@@ -35,8 +35,10 @@ import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManager
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServiceImpl;
+import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.CimdAwareClientLookupServiceImpl;
@@ -244,9 +246,18 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public CimdMetadataDocumentManager cimdMetadataDocumentManager(Domain domain) {
+        final CIMDSettings settings = getCimdSettings(domain);
+        final CIMDSettings effective = settings != null ? settings : CIMDSettings.defaultSettings();
+        return new CimdMetadataDocumentManager(effective);
+    }
+
+    @Bean
     public CimdMetadataService cimdMetadataService(Domain domain,
-                                                   @Qualifier("oidcWebClient") WebClient webClient) {
-        return new CimdMetadataServiceImpl(domain, webClient);
+                                                   @Qualifier("oidcWebClient") WebClient webClient,
+                                                   CimdMetadataDocumentService cimdMetadataDocumentService,
+                                                   CimdMetadataDocumentManager cimdMetadataDocumentManager) {
+        return new CimdMetadataServiceImpl(domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager);
     }
 
     @Bean

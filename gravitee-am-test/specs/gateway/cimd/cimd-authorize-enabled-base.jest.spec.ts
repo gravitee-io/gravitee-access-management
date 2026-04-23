@@ -17,6 +17,11 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
+import {
+  clearWireMockRequestJournal,
+  countGetRequestsForPathSubstring,
+  fetchWireMockRequestJournal,
+} from './fixtures/cimd-wiremock-helpers';
 
 setup(200000);
 
@@ -36,6 +41,27 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   it('should continue authorization with URL client_id when CIMD metadata is valid', async () => {
     const response = await fixture.authorize(fixture.buildClientId('valid-none'));
     fixture.expectLoginRedirect(response);
+  });
+
+  it('should continue authorization on a second request with the same URL client_id', async () => {
+    const clientId = fixture.buildClientId('valid-none');
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+  });
+
+  it('should fetch CIMD metadata from source server only once for two consecutive authorizations', async () => {
+    await clearWireMockRequestJournal();
+    const pathMarker = '/cimd/ENABLED_BASE/cache-twice';
+    const journalBefore = await fetchWireMockRequestJournal();
+    const baseline = countGetRequestsForPathSubstring(journalBefore, pathMarker);
+
+    const clientId = fixture.buildClientId('cache-twice');
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+
+    const journalAfter = await fetchWireMockRequestJournal();
+    const after = countGetRequestsForPathSubstring(journalAfter, pathMarker);
+    expect(after - baseline).toBe(1);
   });
 
   it('should prioritize pre-registered URL client over CIMD lookup for the same URL client_id', async () => {

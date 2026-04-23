@@ -28,12 +28,13 @@ import org.springframework.scheduling.TaskScheduler;
 import java.util.List;
 
 import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.audits;
+import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.cimd_metadata_documents;
 import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.events;
 
 @Configuration
 @Slf4j
 public class ManagementPurgeServiceConfiguration {
-    private final ScheduledPurgeServiceFactory factory = new ScheduledPurgeServiceFactory(List.of(events, audits));
+    private final ScheduledPurgeServiceFactory factory = new ScheduledPurgeServiceFactory(List.of(events, audits, cimd_metadata_documents));
 
     @Bean
     public ScheduledPurgeService scheduledPurgeService(@Value("${services.purge.enabled:true}") boolean enabled,

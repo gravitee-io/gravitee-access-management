@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { waitFor } from '@management-commands/domain-management-commands';
-import { timeout } from '@utils-commands/misc';
 
 export async function withRetry(operation, retries = 50, delay = 100) {
   let success = false;
@@ -71,26 +70,27 @@ export type RetryOptions<T> = {
 export async function retryUntil<T>(f: () => Promise<T>, cond: (t: T) => boolean, options: RetryOptions<T> = {}): Promise<T> {
   const { timeoutMillis = 0, maxAttempts = 100, intervalMillis = 250, onDone = () => {}, onRetry = () => {} } = options;
   let attempts = 0;
-  const promise = new Promise<T>(async (resolve, reject) => {
-    while (true) {
-      let result = await f();
-      attempts += 1;
-      if (cond(result)) {
-        onDone(result);
-        resolve(result);
-        break;
-      } else if (timeoutMillis <= 0 && attempts > maxAttempts) {
-        reject(result);
-        break;
-      } else {
-        onRetry(result);
-        await waitFor(intervalMillis);
-      }
+  const deadline = timeoutMillis > 0 ? Date.now() + timeoutMillis : null;
+
+  const assertWithinDeadline = (): void => {
+    if (deadline !== null && Date.now() >= deadline) {
+      throw new Error(`timeout after ${timeoutMillis}ms`);
     }
-  });
-  if (timeoutMillis > 0) {
-    return timeout(timeoutMillis, promise);
-  } else {
-    return promise;
+  };
+
+  while (true) {
+    assertWithinDeadline();
+    const result = await f();
+    attempts += 1;
+    if (cond(result)) {
+      onDone(result);
+      return result;
+    }
+    if (timeoutMillis <= 0 && attempts > maxAttempts) {
+      throw result;
+    }
+    assertWithinDeadline();
+    onRetry(result);
+    await waitFor(intervalMillis);
   }
 }

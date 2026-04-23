@@ -42,5 +42,6 @@
         <module>gravitee-am-gateway-handler-context</module>
         <module>gravitee-am-gateway-handler-discovery</module>
         <module>gravitee-am-gateway-handler-saml2</module>
+        <module>gravitee-am-gateway-handler-cimd</module>
     </modules>
 </project>

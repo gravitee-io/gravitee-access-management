@@ -58,6 +58,7 @@ public abstract class Event {
             case PROTECTED_RESOURCE -> ProtectedResourceEvent.actionOf(action);
             case PROTECTED_RESOURCE_SECRET -> ProtectedResourceSecretEvent.actionOf(action);
             case DOMAIN_CERTIFICATE_SETTINGS -> DomainCertificateSettingsEvent.actionOf(action);
+            case CIMD_METADATA -> CimdMetadataEvent.actionOf(action);
             default -> null;
         };
     }
