@@ -234,7 +234,6 @@ public class TokenServiceTest {
         client.setClientId("blueprint-client-id");
         client.setAgentIdentityMode(true);
         client.setAgentType(AgentType.AUTONOMOUS);
-        client.setBlueprintClientId("blueprint-client-id");
         client.setAgentInstanceId("agent-instance-001");
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
