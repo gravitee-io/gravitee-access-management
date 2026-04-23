@@ -44,7 +44,6 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -476,15 +475,9 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, request.getActClaim());
         }
 
-        // Blueprint agent - inject "act" claim
+        // Blueprint agent - inject "act" claim (actor = agent or blueprint client_id)
         if (client.isAgentIdentityMode() && jwt.get(Claims.ACT) == null) {
-            if (client.getAgentType() == AgentType.USER_EMBEDDED) {
-                // Type A: the agent itself is the actor
-                jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
-            } else if (client.getBlueprintClientId() != null) {
-                // Type B/C (agent jwt-bearer assertion): blueprint is the actor, sub is the agent instance
-                jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getBlueprintClientId()));
-            }
+            jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
         }
 
         // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-00

@@ -52,7 +52,6 @@ public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditB
         if (client != null && client.isAgentIdentityMode()) {
             agentAttributes = new HashMap<>();
             agentAttributes.put("agentInstanceId", client.getAgentInstanceId());
-            agentAttributes.put("blueprintClientId", client.getBlueprintClientId());
             if (client.getAgentType() != null) {
                 agentAttributes.put("agentType", client.getAgentType().name());
             }
