@@ -936,7 +936,6 @@ public class IDTokenServiceTest {
         client.setCertificate("client-certificate");
         client.setAgentIdentityMode(true);
         client.setAgentType(io.gravitee.am.model.application.AgentType.HOSTED_DELEGATED);
-        client.setBlueprintClientId("blueprint-client-id");
         client.setAgentInstanceId("agent-instance-001");
 
         io.gravitee.am.gateway.certificate.CertificateProvider clientCert = createCert(certificateProvider, "client-certificate");
