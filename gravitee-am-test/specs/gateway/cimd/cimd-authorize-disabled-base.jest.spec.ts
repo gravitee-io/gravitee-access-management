@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { afterAll, beforeAll, describe, it } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
 
@@ -33,6 +33,10 @@ afterAll(async () => {
 });
 
 describe('CIMD authorize - DISABLED_BASE', () => {
+  it('should not advertise client_id_metadata_document_supported in OIDC discovery when CIMD is disabled', () => {
+    expect(fixture.openIdConfiguration.client_id_metadata_document_supported).toBeUndefined();
+  });
+
   it('should load a pre-registered URL client_id when CIMD is disabled', async () => {
     const response = await fixture.authorize(fixture.preRegisteredUrlApplication.settings.oauth.clientId);
     fixture.expectLoginRedirect(response);

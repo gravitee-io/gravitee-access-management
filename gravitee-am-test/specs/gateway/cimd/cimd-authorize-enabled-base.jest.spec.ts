@@ -38,6 +38,10 @@ afterAll(async () => {
 });
 
 describe('CIMD authorize - ENABLED_BASE', () => {
+  it('should advertise client_id_metadata_document_supported in OIDC discovery', () => {
+    expect(fixture.openIdConfiguration.client_id_metadata_document_supported).toBe(true);
+  });
+
   it('should continue authorization with URL client_id when CIMD metadata is valid', async () => {
     const response = await fixture.authorize(fixture.buildClientId('valid-none'));
     fixture.expectLoginRedirect(response);

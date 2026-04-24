@@ -141,6 +141,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("claims_parameter_supported")
     private Boolean claimsParameterSupported = Boolean.FALSE;
 
+    @JsonProperty("client_id_metadata_document_supported")
+    private Boolean clientIdMetadataDocumentSupported;
+
     @JsonProperty("request_parameter_supported")
     private Boolean requestParameterSupported = Boolean.TRUE;
 
@@ -482,6 +485,14 @@ public class OpenIDProviderMetadata {
 
     public void setClaimsParameterSupported(Boolean claimsParameterSupported) {
         this.claimsParameterSupported = claimsParameterSupported;
+    }
+
+    public Boolean getClientIdMetadataDocumentSupported() {
+        return clientIdMetadataDocumentSupported;
+    }
+
+    public void setClientIdMetadataDocumentSupported(Boolean clientIdMetadataDocumentSupported) {
+        this.clientIdMetadataDocumentSupported = clientIdMetadataDocumentSupported;
     }
 
     public Boolean getRequestParameterSupported() {

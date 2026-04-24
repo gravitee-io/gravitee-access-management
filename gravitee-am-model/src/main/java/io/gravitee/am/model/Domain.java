@@ -559,6 +559,12 @@ public class Domain implements Resource {
                 this.getOidc().getCibaSettings().isEnabled();
     }
 
+    public boolean useCimd() {
+        return this.getOidc() != null &&
+                this.getOidc().getCimdSettings() != null &&
+                this.getOidc().getCimdSettings().isEnabled();
+    }
+
     public boolean isRedirectUriExpressionLanguageEnabled() {
         return this.getOidc() != null &&
                 this.getOidc().getClientRegistrationSettings() != null &&

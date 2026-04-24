@@ -116,6 +116,11 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
             openIDProviderMetadata.setRegistrationTemplatesEndpoint(openIDProviderMetadata.getRegistrationEndpoint() + "_templates");
         }
 
+        // Client ID Metadata Document (RFC 9728)
+        if (domain.useCimd()) {
+            openIDProviderMetadata.setClientIdMetadataDocumentSupported(true);
+        }
+
         // supported parameters
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
