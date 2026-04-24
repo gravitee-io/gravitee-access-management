@@ -924,6 +924,9 @@ jobs:
             az acr run --cmd "acr purge --filter 'am-gateway:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-api:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-ui:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-gateway:gamma-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-api:gamma-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-ui:gamma-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             # use an iteration from 5 to 20 to avoid updating the ci config at each version
             for minor in `seq 5 20`
             do
@@ -2204,6 +2207,7 @@ workflows:
             branches:
               only:
                 - master
+                - gamma
                 - /^\d\.\d+\.x$/
 
       - aquasec/docker_image_scan:
