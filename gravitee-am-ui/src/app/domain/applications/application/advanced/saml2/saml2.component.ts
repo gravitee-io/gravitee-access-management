@@ -33,6 +33,11 @@ interface ApplicationSaml2SettingsPayload {
   responseBinding?: string;
   nameIdMapping?: string;
   assertionAttributes?: { name: string; value: string }[];
+  includeAssertionConditions?: boolean;
+  audiences?: string[];
+  assertionValiditySeconds?: number | null;
+  notBeforeTimeSkewSeconds?: number | null;
+  notOnOrAfterTimeSkewSeconds?: number | null;
 }
 
 @Component({
@@ -51,6 +56,12 @@ export class ApplicationSaml2Component implements OnInit {
   certificates: any[] = [];
   newAttributeName = '';
   newAttributeValue = '';
+  newAudience = '';
+  /**
+   * Rows for the audiences ngx-datatable. Refreshed when `applicationSamlSettings.audiences` changes, not on every
+   * change detection cycle.
+   */
+  audienceTableRows: { audience: string }[] = [];
   bindings: any[] = [
     { name: 'Initial-Request', value: 'urn:oasis:names:tc:SAML:2.0:bindings:custom:Initial-Request' },
     { name: 'HTTP-POST', value: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' },
@@ -85,13 +96,27 @@ export class ApplicationSaml2Component implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.certificates = this.route.snapshot.data['certificates'];
     this.applicationSamlSettings = this.application.settings == null ? {} : this.application.settings.saml || {};
+    this.applicationSamlSettings.includeAssertionConditions = this.applicationSamlSettings.includeAssertionConditions ?? false;
+    this.applicationSamlSettings.audiences = this.applicationSamlSettings.audiences || [];
     this.normalizeEncryptionSelects();
     this.editMode = this.authService.hasPermissions(['application_saml_update']);
+    this.refreshAudienceTableRows();
   }
 
   private normalizeEncryptionSelects() {
     this.applicationSamlSettings.keyTransportEncryptionAlgorithm = this.applicationSamlSettings.keyTransportEncryptionAlgorithm ?? '';
     this.applicationSamlSettings.dataEncryptionAlgorithm = this.applicationSamlSettings.dataEncryptionAlgorithm ?? '';
+  }
+
+  private nullIfBlankNumber(v: string | number | null | undefined): number | null {
+    if (v === null || v === undefined) {
+      return null;
+    }
+    if (typeof v === 'string' && v.trim() === '') {
+      return null;
+    }
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
   }
 
   patch() {
@@ -103,6 +128,13 @@ export class ApplicationSaml2Component implements OnInit {
     this.applicationSamlSettings.dataEncryptionAlgorithm = this.applicationSamlSettings.dataEncryptionAlgorithm
       ? this.applicationSamlSettings.dataEncryptionAlgorithm
       : null;
+    this.applicationSamlSettings.assertionValiditySeconds = this.nullIfBlankNumber(this.applicationSamlSettings.assertionValiditySeconds);
+    this.applicationSamlSettings.notBeforeTimeSkewSeconds = this.nullIfBlankNumber(this.applicationSamlSettings.notBeforeTimeSkewSeconds);
+    this.applicationSamlSettings.notOnOrAfterTimeSkewSeconds = this.nullIfBlankNumber(
+      this.applicationSamlSettings.notOnOrAfterTimeSkewSeconds,
+    );
+    this.applicationSamlSettings.audiences = (this.applicationSamlSettings.audiences || []).map((a) => a?.trim()).filter((a) => !!a);
+    this.refreshAudienceTableRows();
     const settings = {
       settings: {
         saml: this.applicationSamlSettings,
@@ -113,7 +145,10 @@ export class ApplicationSaml2Component implements OnInit {
       this.formChanged = false;
       this.application = data;
       this.applicationSamlSettings = data.settings == null ? {} : data.settings.saml || {};
+      this.applicationSamlSettings.includeAssertionConditions = this.applicationSamlSettings.includeAssertionConditions ?? false;
+      this.applicationSamlSettings.audiences = this.applicationSamlSettings.audiences || [];
       this.normalizeEncryptionSelects();
+      this.refreshAudienceTableRows();
       this.form.reset(this.applicationSamlSettings);
       this.snackbarService.open('Application updated');
     });
@@ -146,7 +181,40 @@ export class ApplicationSaml2Component implements OnInit {
     this.formChanged = true;
   }
 
+  addAudience() {
+    if (!this.applicationSamlSettings.includeAssertionConditions) {
+      return;
+    }
+    const v = this.newAudience?.trim();
+    if (!v) {
+      return;
+    }
+    const list = this.applicationSamlSettings.audiences || [];
+    if (list.includes(v)) {
+      this.snackbarService.open('Audience value already present');
+      return;
+    }
+    this.applicationSamlSettings.audiences = [...list, v];
+    this.newAudience = '';
+    this.formChanged = true;
+    this.refreshAudienceTableRows();
+  }
+
+  deleteAudience(index: number) {
+    this.applicationSamlSettings.audiences = (this.applicationSamlSettings.audiences || []).filter((_, i) => i !== index);
+    this.formChanged = true;
+    this.refreshAudienceTableRows();
+  }
+
+  assertionConditionsChanged() {
+    this.formChanged = true;
+  }
+
   encryptionPreferenceChanged() {
     this.formChanged = true;
+  }
+
+  private refreshAudienceTableRows(): void {
+    this.audienceTableRows = (this.applicationSamlSettings.audiences || []).map((a) => ({ audience: a }));
   }
 }

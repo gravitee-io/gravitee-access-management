@@ -12377,18 +12377,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SAMLAssertionAttribute"
+        assertionValiditySeconds:
+          type: integer
+          format: int32
         attributeConsumeServiceUrl:
           type: string
+        audiences:
+          type: array
+          items:
+            type: string
         certificate:
           type: string
         dataEncryptionAlgorithm:
           type: string
         entityId:
           type: string
+        includeAssertionConditions:
+          type: boolean
         keyTransportEncryptionAlgorithm:
           type: string
         nameIdMapping:
           type: string
+        notBeforeTimeSkewSeconds:
+          type: integer
+          format: int32
+        notOnOrAfterTimeSkewSeconds:
+          type: integer
+          format: int32
         responseBinding:
           type: string
         singleLogoutServiceUrl:
@@ -15193,18 +15208,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SAMLAssertionAttribute"
+        assertionValiditySeconds:
+          type: integer
+          format: int32
         attributeConsumeServiceUrl:
           type: string
+        audiences:
+          type: array
+          items:
+            type: string
         certificate:
           type: string
         dataEncryptionAlgorithm:
           type: string
         entityId:
           type: string
+        includeAssertionConditions:
+          type: boolean
         keyTransportEncryptionAlgorithm:
           type: string
         nameIdMapping:
           type: string
+        notBeforeTimeSkewSeconds:
+          type: integer
+          format: int32
+        notOnOrAfterTimeSkewSeconds:
+          type: integer
+          format: int32
         responseBinding:
           type: string
         singleLogoutServiceUrl:

@@ -40,6 +40,11 @@ public class PatchApplicationSAMLSettings {
     private Optional<String> responseBinding;
     private Optional<String> nameIdMapping;
     private Optional<List<SAMLAssertionAttribute>> assertionAttributes;
+    private Optional<Boolean> includeAssertionConditions;
+    private Optional<List<String>> audiences;
+    private Optional<Integer> assertionValiditySeconds;
+    private Optional<Integer> notBeforeTimeSkewSeconds;
+    private Optional<Integer> notOnOrAfterTimeSkewSeconds;
 
     public Optional<String> getEntityId() {
         return entityId;
@@ -137,6 +142,46 @@ public class PatchApplicationSAMLSettings {
         this.assertionAttributes = assertionAttributes;
     }
 
+    public Optional<Boolean> getIncludeAssertionConditions() {
+        return includeAssertionConditions;
+    }
+
+    public void setIncludeAssertionConditions(Optional<Boolean> includeAssertionConditions) {
+        this.includeAssertionConditions = includeAssertionConditions;
+    }
+
+    public Optional<List<String>> getAudiences() {
+        return audiences;
+    }
+
+    public void setAudiences(Optional<List<String>> audiences) {
+        this.audiences = audiences;
+    }
+
+    public Optional<Integer> getAssertionValiditySeconds() {
+        return assertionValiditySeconds;
+    }
+
+    public void setAssertionValiditySeconds(Optional<Integer> assertionValiditySeconds) {
+        this.assertionValiditySeconds = assertionValiditySeconds;
+    }
+
+    public Optional<Integer> getNotBeforeTimeSkewSeconds() {
+        return notBeforeTimeSkewSeconds;
+    }
+
+    public void setNotBeforeTimeSkewSeconds(Optional<Integer> notBeforeTimeSkewSeconds) {
+        this.notBeforeTimeSkewSeconds = notBeforeTimeSkewSeconds;
+    }
+
+    public Optional<Integer> getNotOnOrAfterTimeSkewSeconds() {
+        return notOnOrAfterTimeSkewSeconds;
+    }
+
+    public void setNotOnOrAfterTimeSkewSeconds(Optional<Integer> notOnOrAfterTimeSkewSeconds) {
+        this.notOnOrAfterTimeSkewSeconds = notOnOrAfterTimeSkewSeconds;
+    }
+
     public ApplicationSAMLSettings patch(ApplicationSAMLSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationSAMLSettings toPatch = _toPatch == null ? new ApplicationSAMLSettings() : new ApplicationSAMLSettings(_toPatch);
@@ -152,6 +197,11 @@ public class PatchApplicationSAMLSettings {
         SetterUtils.safeSet(toPatch::setResponseBinding, this.getResponseBinding());
         SetterUtils.safeSet(toPatch::setNameIdMapping, this.getNameIdMapping());
         SetterUtils.safeSet(toPatch::setAssertionAttributes, this.getAssertionAttributes());
+        SetterUtils.safeSet(toPatch::setIncludeAssertionConditions, this.getIncludeAssertionConditions());
+        SetterUtils.safeSet(toPatch::setAudiences, this.getAudiences());
+        SetterUtils.safeSet(toPatch::setAssertionValiditySeconds, this.getAssertionValiditySeconds());
+        SetterUtils.safeSet(toPatch::setNotBeforeTimeSkewSeconds, this.getNotBeforeTimeSkewSeconds());
+        SetterUtils.safeSet(toPatch::setNotOnOrAfterTimeSkewSeconds, this.getNotOnOrAfterTimeSkewSeconds());
         return toPatch;
     }
 }

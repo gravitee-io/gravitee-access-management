@@ -35,6 +35,11 @@ public class ApplicationSAMLSettingsMongo {
     private String responseBinding;
     private String nameIdMapping;
     private List<SAMLAssertionAttributeMongo> assertionAttributes;
+    private boolean includeAssertionConditions;
+    private List<String> audiences;
+    private Integer assertionValiditySeconds;
+    private Integer notBeforeTimeSkewSeconds;
+    private Integer notOnOrAfterTimeSkewSeconds;
 
     public String getEntityId() {
         return entityId;
@@ -130,5 +135,45 @@ public class ApplicationSAMLSettingsMongo {
 
     public void setAssertionAttributes(List<SAMLAssertionAttributeMongo> assertionAttributes) {
         this.assertionAttributes = assertionAttributes;
+    }
+
+    public boolean isIncludeAssertionConditions() {
+        return includeAssertionConditions;
+    }
+
+    public void setIncludeAssertionConditions(boolean includeAssertionConditions) {
+        this.includeAssertionConditions = includeAssertionConditions;
+    }
+
+    public List<String> getAudiences() {
+        return audiences;
+    }
+
+    public void setAudiences(List<String> audiences) {
+        this.audiences = audiences;
+    }
+
+    public Integer getAssertionValiditySeconds() {
+        return assertionValiditySeconds;
+    }
+
+    public void setAssertionValiditySeconds(Integer assertionValiditySeconds) {
+        this.assertionValiditySeconds = assertionValiditySeconds;
+    }
+
+    public Integer getNotBeforeTimeSkewSeconds() {
+        return notBeforeTimeSkewSeconds;
+    }
+
+    public void setNotBeforeTimeSkewSeconds(Integer notBeforeTimeSkewSeconds) {
+        this.notBeforeTimeSkewSeconds = notBeforeTimeSkewSeconds;
+    }
+
+    public Integer getNotOnOrAfterTimeSkewSeconds() {
+        return notOnOrAfterTimeSkewSeconds;
+    }
+
+    public void setNotOnOrAfterTimeSkewSeconds(Integer notOnOrAfterTimeSkewSeconds) {
+        this.notOnOrAfterTimeSkewSeconds = notOnOrAfterTimeSkewSeconds;
     }
 }

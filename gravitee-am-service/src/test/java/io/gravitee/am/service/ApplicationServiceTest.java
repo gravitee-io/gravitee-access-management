@@ -1815,6 +1815,124 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void validateClientMetadata_invalidClientMetadataException_invalidSamlAssertionTimeSettings() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setIncludeAssertionConditions(true);
+        saml.setAssertionValiditySeconds(0);
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_invalidNotBeforeTimeSkewWhenIncludeAssertionConditionsTrue() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setIncludeAssertionConditions(true);
+        saml.setAssertionValiditySeconds(60);
+        saml.setNotBeforeTimeSkewSeconds(-1);
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_invalidNotOnOrAfterTimeSkewWhenIncludeAssertionConditionsTrue() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setIncludeAssertionConditions(true);
+        saml.setAssertionValiditySeconds(60);
+        saml.setNotBeforeTimeSkewSeconds(0);
+        saml.setNotOnOrAfterTimeSkewSeconds(-1);
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_legacySamlAssertionTimeSettingsIgnoredWhenIncludeAssertionConditionsFalse() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setIncludeAssertionConditions(false);
+        saml.setAssertionValiditySeconds(0);
+        saml.setNotBeforeTimeSkewSeconds(-1);
+        saml.setNotOnOrAfterTimeSkewSeconds(-1);
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
     public void validateClientMetadata_validMetadata_samlEncryptionAlgorithms() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
@@ -1830,6 +1948,10 @@ public class ApplicationServiceTest {
         saml.setCertificate("-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----");
         saml.setKeyTransportEncryptionAlgorithm("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p");
         saml.setDataEncryptionAlgorithm("http://www.w3.org/2001/04/xmlenc#aes256-cbc");
+        saml.setIncludeAssertionConditions(true);
+        saml.setAssertionValiditySeconds(300);
+        saml.setNotBeforeTimeSkewSeconds(0);
+        saml.setNotOnOrAfterTimeSkewSeconds(0);
         settings.setSaml(saml);
         client.setSettings(settings);
 

@@ -291,6 +291,16 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private List<SAMLAssertionAttribute> assertionAttributes;
 
+    private boolean includeAssertionConditions;
+
+    private List<String> audiences;
+
+    private Integer assertionValiditySeconds;
+
+    private Integer notBeforeTimeSkewSeconds;
+
+    private Integer notOnOrAfterTimeSkewSeconds;
+
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
@@ -392,6 +402,11 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.responseBinding = other.responseBinding;
         this.nameIdMapping = other.nameIdMapping;
         this.assertionAttributes = other.assertionAttributes != null ? new ArrayList<>(other.assertionAttributes) : null;
+        this.includeAssertionConditions = other.includeAssertionConditions;
+        this.audiences = other.audiences != null ? new ArrayList<>(other.audiences) : null;
+        this.assertionValiditySeconds = other.assertionValiditySeconds;
+        this.notBeforeTimeSkewSeconds = other.notBeforeTimeSkewSeconds;
+        this.notOnOrAfterTimeSkewSeconds = other.notOnOrAfterTimeSkewSeconds;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
@@ -1195,6 +1210,46 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.assertionAttributes = assertionAttributes;
     }
 
+    public List<String> getAudiences() {
+        return audiences;
+    }
+
+    public void setAudiences(List<String> audiences) {
+        this.audiences = audiences;
+    }
+
+    public boolean isIncludeAssertionConditions() {
+        return includeAssertionConditions;
+    }
+
+    public void setIncludeAssertionConditions(boolean includeAssertionConditions) {
+        this.includeAssertionConditions = includeAssertionConditions;
+    }
+
+    public Integer getAssertionValiditySeconds() {
+        return assertionValiditySeconds;
+    }
+
+    public void setAssertionValiditySeconds(Integer assertionValiditySeconds) {
+        this.assertionValiditySeconds = assertionValiditySeconds;
+    }
+
+    public Integer getNotBeforeTimeSkewSeconds() {
+        return notBeforeTimeSkewSeconds;
+    }
+
+    public void setNotBeforeTimeSkewSeconds(Integer notBeforeTimeSkewSeconds) {
+        this.notBeforeTimeSkewSeconds = notBeforeTimeSkewSeconds;
+    }
+
+    public Integer getNotOnOrAfterTimeSkewSeconds() {
+        return notOnOrAfterTimeSkewSeconds;
+    }
+
+    public void setNotOnOrAfterTimeSkewSeconds(Integer notOnOrAfterTimeSkewSeconds) {
+        this.notOnOrAfterTimeSkewSeconds = notOnOrAfterTimeSkewSeconds;
+    }
+
     public boolean isBackchannelUserCodeParameter() {
         return backchannelUserCodeParameter;
     }
@@ -1264,6 +1319,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
         clone.setScopeSettings(this.scopeSettings != null ? new ArrayList<>(this.getScopeSettings()) : null);
         clone.setAssertionAttributes(this.getAssertionAttributes() != null ? new ArrayList<>(this.getAssertionAttributes()) : null);
+        clone.setAudiences(this.getAudiences() != null ? new ArrayList<>(this.getAudiences()) : null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
         clone.setIdentityProviders(this.getIdentityProviders() != null ? new TreeSet<>(this.getIdentityProviders()) : null);
         clone.setFactorSettings(this.getFactorSettings());

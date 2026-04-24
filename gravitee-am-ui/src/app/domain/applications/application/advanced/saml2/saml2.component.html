@@ -121,6 +121,123 @@
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Assertion conditions</h5>
+          <small
+            >When enabled, the SAML IdP emits <code>saml2:Conditions</code> (time bounds and audience) for this application. The same
+            validity period is used for <code>Conditions</code> and for <code>SubjectConfirmationData</code> (Bearer).</small
+          >
+          <mat-divider></mat-divider>
+        </div>
+        <div style="display: flex; flex-direction: column; padding: 10px 5px">
+          <mat-checkbox
+            name="includeAssertionConditions"
+            [(ngModel)]="applicationSamlSettings.includeAssertionConditions"
+            [disabled]="!editMode"
+            (ngModelChange)="assertionConditionsChanged()"
+            >Emit SAML assertion <code>Conditions</code></mat-checkbox
+          >
+        </div>
+        <div
+          *ngIf="editMode"
+          fxLayout="row"
+          fxLayoutGap="5px"
+          fxLayoutAlign="flex-start center"
+          style="margin-bottom: 10px; margin-top: 8px"
+        >
+          <mat-form-field appearance="outline" floatLabel="always" fxFlex>
+            <mat-label>Audience URI</mat-label>
+            <input
+              matInput
+              type="text"
+              [(ngModel)]="newAudience"
+              name="newAud"
+              (keydown.enter)="$event.preventDefault(); addAudience()"
+              placeholder="e.g. https://sp.example.com"
+              [disabled]="!applicationSamlSettings.includeAssertionConditions"
+            />
+          </mat-form-field>
+          <div>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="addAudience()"
+              [disabled]="!newAudience?.trim() || !applicationSamlSettings.includeAssertionConditions"
+            >
+              ADD
+            </button>
+          </div>
+        </div>
+        <ngx-datatable
+          *ngIf="applicationSamlSettings.audiences?.length"
+          [rows]="audienceTableRows"
+          class="material"
+          columnMode="flex"
+          [headerHeight]="40"
+          [rowHeight]="55"
+        >
+          <ngx-datatable-column name="Audience" [flexGrow]="5" prop="audience">
+            <ng-template ngx-datatable-cell-template let-value="value">
+              <span style="word-break: break-all">{{ value }}</span>
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="" [flexGrow]="1" *ngIf="editMode && applicationSamlSettings.includeAssertionConditions">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
+              <div fxLayout="row" class="gv-table-cell-actions">
+                <button mat-icon-button type="button" (click)="deleteAudience(rowIndex)" title="Remove">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Assertion validity (seconds)</mat-label>
+          <input
+            matInput
+            type="number"
+            name="assertionValiditySeconds"
+            min="1"
+            step="1"
+            [(ngModel)]="applicationSamlSettings.assertionValiditySeconds"
+            (ngModelChange)="assertionConditionsChanged()"
+            [disabled]="!editMode || !applicationSamlSettings.includeAssertionConditions"
+          />
+          <mat-hint
+            >Optional. The same <code>NotOnOrAfter</code> end time is used in <code>Conditions</code> and in
+            <code>SubjectConfirmationData</code>. Clock skew is applied separately below.</mat-hint
+          >
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Not before clock skew (seconds)</mat-label>
+          <input
+            matInput
+            type="number"
+            name="notBeforeTimeSkewSeconds"
+            min="0"
+            step="1"
+            [(ngModel)]="applicationSamlSettings.notBeforeTimeSkewSeconds"
+            (ngModelChange)="assertionConditionsChanged()"
+            [disabled]="!editMode || !applicationSamlSettings.includeAssertionConditions"
+          />
+          <mat-hint>Optional. Extends the validity window into the past (tolerate clock drift).</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Not on or after clock skew (seconds)</mat-label>
+          <input
+            matInput
+            type="number"
+            name="notOnOrAfterTimeSkewSeconds"
+            min="0"
+            step="1"
+            [(ngModel)]="applicationSamlSettings.notOnOrAfterTimeSkewSeconds"
+            (ngModelChange)="assertionConditionsChanged()"
+            [disabled]="!editMode || !applicationSamlSettings.includeAssertionConditions"
+          />
+          <mat-hint>Optional. Extends the validity window into the future (tolerate clock drift).</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Assertion Mapping</h5>
           <small>Customize the NameID and attribute statement emitted in SAML responses</small>
           <mat-divider></mat-divider>
@@ -229,7 +346,11 @@
   <div class="gv-page-description" fxFlex>
     <h3>SAML 2.0</h3>
     <div class="gv-page-description-content">
-      <p>SAML relying party configuration that receives and accepts a SAML assertion issued by a SAML IdP.</p>
+      <p>
+        Relying party (SP) settings. Use <em>Emit SAML assertion Conditions</em> to opt in to <code>saml2:Conditions</code> in issued
+        assertions (audience, validity, clock skew). When left off, the previous behavior (no <code>Conditions</code> in the response) is
+        kept.
+      </p>
     </div>
   </div>
 </div>
