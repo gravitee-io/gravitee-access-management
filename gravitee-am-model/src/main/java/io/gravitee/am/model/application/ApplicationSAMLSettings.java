@@ -84,6 +84,35 @@ public class ApplicationSAMLSettings {
      */
     private List<SAMLAssertionAttribute> assertionAttributes;
 
+    /**
+     * When {@code true}, the SAML IdP should emit {@code saml2:Assertion} with
+     * {@code saml2:Conditions} (including time bounds and, when applicable,
+     * {@code AudienceRestriction}) using the fields below. When {@code false} (default),
+     * the legacy behaviour is preserved (e.g. no {@code Conditions} in the response).
+     */
+    private boolean includeAssertionConditions;
+    /**
+     * Optional extra {@code saml2:Audience} values (URIs) in addition to the SP
+     * {@link #entityId}. Used when {@link #isIncludeAssertionConditions()} is {@code true}.
+     */
+    private List<String> audiences;
+    /**
+     * Validity of the issued assertion, in whole seconds, between {@code NotBefore} and
+     * {@code NotOnOrAfter} in {@code Conditions} (and the same end time should be applied to
+     * {@code SubjectConfirmationData} for the Bearer profile). When null, the IdP default applies.
+     * Used when {@link #isIncludeAssertionConditions()} is {@code true}.
+     */
+    private Integer assertionValiditySeconds;
+    /**
+     * Non-negative seconds subtracted from the current time when the IdP sets {@code NotBefore}
+     * (clock drift / skew toward the past).
+     */
+    private Integer notBeforeTimeSkewSeconds;
+    /**
+     * Non-negative seconds added when the IdP sets {@code NotOnOrAfter} (clock drift / skew toward the future).
+     */
+    private Integer notOnOrAfterTimeSkewSeconds;
+
     public ApplicationSAMLSettings() {
     }
 
@@ -100,6 +129,11 @@ public class ApplicationSAMLSettings {
         this.responseBinding = other.responseBinding;
         this.nameIdMapping = other.nameIdMapping;
         this.assertionAttributes = other.assertionAttributes != null ? new ArrayList<>(other.assertionAttributes) : null;
+        this.includeAssertionConditions = other.includeAssertionConditions;
+        this.audiences = other.audiences != null ? new ArrayList<>(other.audiences) : null;
+        this.assertionValiditySeconds = other.assertionValiditySeconds;
+        this.notBeforeTimeSkewSeconds = other.notBeforeTimeSkewSeconds;
+        this.notOnOrAfterTimeSkewSeconds = other.notOnOrAfterTimeSkewSeconds;
     }
 
     public String getEntityId() {
@@ -198,6 +232,46 @@ public class ApplicationSAMLSettings {
         this.assertionAttributes = assertionAttributes;
     }
 
+    public List<String> getAudiences() {
+        return audiences;
+    }
+
+    public void setAudiences(List<String> audiences) {
+        this.audiences = audiences;
+    }
+
+    public boolean isIncludeAssertionConditions() {
+        return includeAssertionConditions;
+    }
+
+    public void setIncludeAssertionConditions(boolean includeAssertionConditions) {
+        this.includeAssertionConditions = includeAssertionConditions;
+    }
+
+    public Integer getAssertionValiditySeconds() {
+        return assertionValiditySeconds;
+    }
+
+    public void setAssertionValiditySeconds(Integer assertionValiditySeconds) {
+        this.assertionValiditySeconds = assertionValiditySeconds;
+    }
+
+    public Integer getNotBeforeTimeSkewSeconds() {
+        return notBeforeTimeSkewSeconds;
+    }
+
+    public void setNotBeforeTimeSkewSeconds(Integer notBeforeTimeSkewSeconds) {
+        this.notBeforeTimeSkewSeconds = notBeforeTimeSkewSeconds;
+    }
+
+    public Integer getNotOnOrAfterTimeSkewSeconds() {
+        return notOnOrAfterTimeSkewSeconds;
+    }
+
+    public void setNotOnOrAfterTimeSkewSeconds(Integer notOnOrAfterTimeSkewSeconds) {
+        this.notOnOrAfterTimeSkewSeconds = notOnOrAfterTimeSkewSeconds;
+    }
+
     public void copyTo(Client client) {
         client.setEntityId(this.entityId);
         client.setAttributeConsumeServiceUrl(this.attributeConsumeServiceUrl);
@@ -211,5 +285,10 @@ public class ApplicationSAMLSettings {
         client.setResponseBinding(this.responseBinding);
         client.setNameIdMapping(this.nameIdMapping);
         client.setAssertionAttributes(this.assertionAttributes);
+        client.setIncludeAssertionConditions(this.includeAssertionConditions);
+        client.setAudiences(this.audiences != null ? new ArrayList<>(this.audiences) : null);
+        client.setAssertionValiditySeconds(this.assertionValiditySeconds);
+        client.setNotBeforeTimeSkewSeconds(this.notBeforeTimeSkewSeconds);
+        client.setNotOnOrAfterTimeSkewSeconds(this.notOnOrAfterTimeSkewSeconds);
     }
 }

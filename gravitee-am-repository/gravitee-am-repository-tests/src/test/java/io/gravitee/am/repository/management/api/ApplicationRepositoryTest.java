@@ -355,6 +355,11 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         saml.setAssertionAttributes(Arrays.asList(
                 new SAMLAssertionAttribute("email", "{#context.attributes['user'].email}"),
                 new SAMLAssertionAttribute("dept", "{#context.attributes['user'].additionalInformation['dept']}")));
+        saml.setIncludeAssertionConditions(true);
+        saml.setAudiences(Arrays.asList("urn:sp:other"));
+        saml.setAssertionValiditySeconds(300);
+        saml.setNotBeforeTimeSkewSeconds(60);
+        saml.setNotOnOrAfterTimeSkewSeconds(120);
 
         ApplicationSettings settings = new ApplicationSettings();
         settings.setSaml(saml);
@@ -374,6 +379,13 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         afterCreate.assertValue(a -> "email".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).name())
                 && "{#context.attributes['user'].email}".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).value()));
         afterCreate.assertValue(a -> "dept".equals(a.getSettings().getSaml().getAssertionAttributes().get(1).name()));
+        afterCreate.assertValue(a -> a.getSettings().getSaml().isIncludeAssertionConditions());
+        afterCreate.assertValue(a -> a.getSettings().getSaml().getAudiences() != null
+                && a.getSettings().getSaml().getAudiences().size() == 1
+                && "urn:sp:other".equals(a.getSettings().getSaml().getAudiences().get(0)));
+        afterCreate.assertValue(a -> Integer.valueOf(300).equals(a.getSettings().getSaml().getAssertionValiditySeconds()));
+        afterCreate.assertValue(a -> Integer.valueOf(60).equals(a.getSettings().getSaml().getNotBeforeTimeSkewSeconds()));
+        afterCreate.assertValue(a -> Integer.valueOf(120).equals(a.getSettings().getSaml().getNotOnOrAfterTimeSkewSeconds()));
 
         Application loaded = applicationRepository.findById(created.getId()).blockingGet();
         loaded.getSettings().getSaml().setNameIdMapping("{#context.attributes['user'].username}");

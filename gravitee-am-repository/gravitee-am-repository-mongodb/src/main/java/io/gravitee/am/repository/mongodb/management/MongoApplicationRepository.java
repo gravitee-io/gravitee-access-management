@@ -671,6 +671,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettingsMongo.setResponseBinding(other.getResponseBinding());
         applicationSAMLSettingsMongo.setNameIdMapping(other.getNameIdMapping());
         applicationSAMLSettingsMongo.setAssertionAttributes(getMongoAssertionAttributes(other.getAssertionAttributes()));
+        applicationSAMLSettingsMongo.setIncludeAssertionConditions(other.isIncludeAssertionConditions());
+        applicationSAMLSettingsMongo.setAudiences(
+                other.getAudiences() != null ? new ArrayList<>(other.getAudiences()) : null);
+        applicationSAMLSettingsMongo.setAssertionValiditySeconds(other.getAssertionValiditySeconds());
+        applicationSAMLSettingsMongo.setNotBeforeTimeSkewSeconds(other.getNotBeforeTimeSkewSeconds());
+        applicationSAMLSettingsMongo.setNotOnOrAfterTimeSkewSeconds(other.getNotOnOrAfterTimeSkewSeconds());
         return applicationSAMLSettingsMongo;
     }
 
@@ -691,6 +697,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettings.setResponseBinding(other.getResponseBinding());
         applicationSAMLSettings.setNameIdMapping(other.getNameIdMapping());
         applicationSAMLSettings.setAssertionAttributes(getAssertionAttributes(other.getAssertionAttributes()));
+        applicationSAMLSettings.setIncludeAssertionConditions(other.isIncludeAssertionConditions());
+        applicationSAMLSettings.setAudiences(
+                other.getAudiences() != null ? new ArrayList<>(other.getAudiences()) : null);
+        applicationSAMLSettings.setAssertionValiditySeconds(other.getAssertionValiditySeconds());
+        applicationSAMLSettings.setNotBeforeTimeSkewSeconds(other.getNotBeforeTimeSkewSeconds());
+        applicationSAMLSettings.setNotOnOrAfterTimeSkewSeconds(other.getNotOnOrAfterTimeSkewSeconds());
         return applicationSAMLSettings;
     }
 

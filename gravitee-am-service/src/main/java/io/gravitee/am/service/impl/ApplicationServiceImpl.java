@@ -779,7 +779,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     /**
      * Validates SAML SP settings: certificate required when encrypted assertions are required,
-     * and XML Encryption algorithm URIs must match supported values when set.
+     * and XML Encryption algorithm URIs must match supported values when set. Fields used only
+     * when {@link ApplicationSAMLSettings#isIncludeAssertionConditions()} is {@code true} are
+     * validated only in that case so legacy payloads with unused data are not rejected.
      */
     private Single<Application> validateApplicationSamlSettings(Application application) {
         ApplicationSettings settings = application.getSettings();
@@ -809,6 +811,21 @@ public class ApplicationServiceImpl implements ApplicationService {
                 return Single.error(
                         new InvalidClientMetadataException(
                                 "dataEncryptionAlgorithm must be one of the supported XML Encryption block encryption URIs"));
+            }
+        }
+
+        if (saml.isIncludeAssertionConditions()) {
+            if (saml.getAssertionValiditySeconds() != null && saml.getAssertionValiditySeconds() < 1) {
+                return Single.error(
+                        new InvalidClientMetadataException("assertionValiditySeconds must be at least 1 when set"));
+            }
+            if (saml.getNotBeforeTimeSkewSeconds() != null && saml.getNotBeforeTimeSkewSeconds() < 0) {
+                return Single.error(
+                        new InvalidClientMetadataException("notBeforeTimeSkewSeconds must be zero or positive when set"));
+            }
+            if (saml.getNotOnOrAfterTimeSkewSeconds() != null && saml.getNotOnOrAfterTimeSkewSeconds() < 0) {
+                return Single.error(
+                        new InvalidClientMetadataException("notOnOrAfterTimeSkewSeconds must be zero or positive when set"));
             }
         }
 
