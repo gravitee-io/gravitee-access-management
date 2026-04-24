@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
+import io.gravitee.am.gateway.handler.common.web.HostSsrfGuard;
 import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServiceImpl;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
@@ -253,11 +254,17 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public HostSsrfGuard hostSsrfGuard() {
+        return new HostSsrfGuard();
+    }
+
+    @Bean
     public CimdMetadataService cimdMetadataService(Domain domain,
                                                    @Qualifier("oidcWebClient") WebClient webClient,
                                                    CimdMetadataDocumentService cimdMetadataDocumentService,
-                                                   CimdMetadataDocumentManager cimdMetadataDocumentManager) {
-        return new CimdMetadataServiceImpl(domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager);
+                                                   CimdMetadataDocumentManager cimdMetadataDocumentManager,
+                                                   HostSsrfGuard hostSsrfGuard) {
+        return new CimdMetadataServiceImpl(domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager, hostSsrfGuard);
     }
 
     @Bean

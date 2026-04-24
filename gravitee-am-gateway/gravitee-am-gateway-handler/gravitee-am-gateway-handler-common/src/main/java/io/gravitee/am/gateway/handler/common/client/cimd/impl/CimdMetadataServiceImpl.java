@@ -20,10 +20,12 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.common.web.PrivateOrReservedHostException;
 import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
 import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
+import io.gravitee.am.gateway.handler.common.web.HostSsrfGuard;
 import lombok.extern.slf4j.Slf4j;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -34,6 +36,7 @@ import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
 import io.gravitee.am.service.utils.vertx.BoundedBufferWriteStream;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.buffer.Buffer;
@@ -77,15 +80,18 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     private final WebClient webClient;
     private final CimdMetadataDocumentService cimdMetadataDocumentService;
     private final CimdMetadataDocumentManager cimdMetadataDocumentManager;
+    private final HostSsrfGuard hostSsrfGuard;
 
     public CimdMetadataServiceImpl(Domain domain,
                                    WebClient webClient,
                                    CimdMetadataDocumentService cimdMetadataDocumentService,
-                                   CimdMetadataDocumentManager cimdMetadataDocumentManager) {
+                                   CimdMetadataDocumentManager cimdMetadataDocumentManager,
+                                   HostSsrfGuard hostSsrfGuard) {
         this.domain = domain;
         this.webClient = webClient;
         this.cimdMetadataDocumentService = cimdMetadataDocumentService;
         this.cimdMetadataDocumentManager = cimdMetadataDocumentManager;
+        this.hostSsrfGuard = hostSsrfGuard;
     }
 
     @Override
@@ -101,8 +107,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
 
             final String canonicalId = ClientIds.canonicalize(clientId);
             final CIMDSettings settings = getCimdSettings();
-            final URI clientIdUri = toUri(canonicalId);
-            validateUrlTrust(clientIdUri, settings);
+            final URI clientIdUri = toUri(canonicalId, "client_id");
+            validateUrlTrust(clientIdUri, settings, "client_id");
 
             // [1] Local in-memory cache hit
             var cached = cimdMetadataDocumentManager.get(canonicalId);
@@ -132,7 +138,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                     .switchIfEmpty(
                             Maybe.defer(() -> {
                                 log.debug("CIMD cache miss, fetching from origin for domain={}, clientId={}", domain.getId(), canonicalId);
-                                return fetchMetadataWithTtl(canonicalId, settings)
+                                return validateNotPrivateHost(clientIdUri.getHost(), "client_id", settings)
+                                        .andThen(fetchMetadataWithTtl(canonicalId, settings))
                                         .flatMap(fetchResult -> {
                                             final FetchResult.CacheRequirements cache = fetchResult.cacheRequirements();
                                             if (!cache.noCache()) {
@@ -163,26 +170,30 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         return domain.getOidc().getCimdSettings();
     }
 
-    private URI toUri(String clientId) {
+    private URI toUri(String value, String fieldName) {
         try {
-            return UriBuilder.fromHttpUrl(clientId).build();
+            return UriBuilder.fromHttpUrl(value).build();
         } catch (IllegalArgumentException | URISyntaxException ex) {
-            throw new InvalidClientMetadataException("client_id is not a valid URL.");
+            throw new InvalidClientMetadataException(fieldName + " is not a valid URL.");
         }
     }
 
-    private void validateUrlTrust(URI clientIdUri, CIMDSettings settings) {
-        if (!settings.isAllowUnsecuredHttpUri() && "http".equalsIgnoreCase(clientIdUri.getScheme())) {
-            throw new InvalidClientMetadataException("Unsecured HTTP client_id is not allowed.");
+    private void validateUrlTrust(URI uri, CIMDSettings settings, String fieldName) {
+        if (!settings.isAllowUnsecuredHttpUri() && "http".equalsIgnoreCase(uri.getScheme())) {
+            throw new InvalidClientMetadataException("Unsecured HTTP " + fieldName + " is not allowed.");
         }
 
-        final String host = clientIdUri.getHost();
+        final String host = uri.getHost();
         if (host == null || host.isBlank()) {
-            throw new InvalidClientMetadataException("client_id host is missing.");
+            throw new InvalidClientMetadataException(fieldName + " host is missing.");
         }
 
         if (!isAllowedDomain(host, settings.getAllowedDomains())) {
-            throw new InvalidClientMetadataException("client_id host is not in allowed domains.");
+            throw new InvalidClientMetadataException(fieldName + " host is not in allowed domains.");
+        }
+
+        if (!settings.isAllowPrivateIpAddress() && UriBuilder.isPrivateOrReservedIpLiteral(host)) {
+            throw new InvalidClientMetadataException(fieldName + " resolves to a private or reserved IP address.");
         }
     }
 
@@ -209,6 +220,17 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                     }
                     return normalizedHost.equals(pattern);
                 });
+    }
+
+    private Completable validateNotPrivateHost(String host, String fieldName, CIMDSettings settings) {
+        if (settings.isAllowPrivateIpAddress()) {
+            return Completable.complete();
+        }
+        return hostSsrfGuard.assertNotPrivateHost(host)
+                .onErrorResumeNext(e -> e instanceof PrivateOrReservedHostException
+                        ? Completable.error(new InvalidClientMetadataException(
+                                fieldName + " resolves to a private or reserved IP address."))
+                        : Completable.error(e));
     }
 
     private Single<FetchResult> fetchMetadataWithTtl(String clientId, CIMDSettings settings) {
@@ -398,18 +420,24 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
 
         final URI uri;
         try {
-            uri = toUri(logoUri);
+            uri = toUri(logoUri, "logo_uri");
         } catch (Exception ex) {
             log.debug("CIMD logo pre-fetch skipped — invalid URI: {}", logoUri);
             return;
         }
         try {
-            validateUrlTrust(uri, settings);
+            validateUrlTrust(uri, settings, "logo_uri");
         } catch (Exception ex) {
             log.debug("CIMD logo pre-fetch skipped — URI not trusted: {}", logoUri);
             return;
         }
 
+        validateNotPrivateHost(uri.getHost(), "logo_uri", settings).subscribe(
+                () -> sendLogoPrefetchRequest(clientId, logoUri, metadataTtlSeconds, settings),
+                err -> log.debug("CIMD logo pre-fetch skipped — {}", err.getMessage()));
+    }
+
+    private void sendLogoPrefetchRequest(String clientId, String logoUri, long metadataTtlSeconds, CIMDSettings settings) {
         final long timeoutMs = resolveTimeoutMs(settings);
         final var logoCollector = new BoundedBufferWriteStream(MAX_LOGO_SIZE_BYTES);
 
