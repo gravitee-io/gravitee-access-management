@@ -18,11 +18,14 @@ package io.gravitee.am.common.web;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
@@ -73,6 +76,15 @@ public class UriBuilder {
 
     private static final Pattern LOCALHOST_PATTERN = Pattern.compile(
             LOCALHOST_HOST_REGEX + "|" + LOCALHOST_IPV4_REGEX + "|" + LOCALHOST_IPV6_REGEX);
+
+    private static final Pattern PRIVATE_IP_PATTERN = Pattern.compile(
+            "^10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
+            + "|^172\\.(1[6-9]|2\\d|3[01])\\.\\d{1,3}\\.\\d{1,3}$"
+            + "|^192\\.168\\.\\d{1,3}\\.\\d{1,3}$"
+            + "|^169\\.254\\.\\d{1,3}\\.\\d{1,3}$"
+            + "|^fe[89ab][0-9a-f]:[0-9a-f:]*$"
+            + "|^fc[0-9a-f]{2}:[0-9a-f:]*$"
+            + "|^fd[0-9a-f]{2}:[0-9a-f:]*$");
 
     private String scheme;
     private String host;
@@ -312,6 +324,35 @@ public class UriBuilder {
         return LOCALHOST_PATTERN.matcher(host.toLowerCase()).matches();
     }
 
+    /**
+     * Returns {@code true} if {@code host} (as returned by {@link URI#getHost()}, bracket-free)
+     * is an IP address literal that falls in a private, loopback, link-local, or any-local range,
+     * or if {@link #isLocalhost(String)} matches (e.g. {@code localhost}).
+     */
+    public static boolean isPrivateOrReservedIpLiteral(String host) {
+        if (host == null || host.isBlank()) return false;
+        if (isLocalhost(host)) return true;
+        if (!isIpLiteral(host)) return false;
+        final String lower = host.toLowerCase(Locale.ROOT);
+        if (PRIVATE_IP_PATTERN.matcher(lower).matches()) return true;
+        try {
+            InetAddress addr = InetAddress.getByName(host);
+            return addr.isLoopbackAddress() || addr.isSiteLocalAddress()
+                    || addr.isLinkLocalAddress() || addr.isAnyLocalAddress();
+        } catch (UnknownHostException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns {@code true} if {@code host} is a numeric IP address literal (IPv4 or IPv6)
+     * rather than a DNS hostname. IPv6 hosts must be bracket-free (as returned by
+     * {@link URI#getHost()}).
+     */
+    public static boolean isIpLiteral(String host) {
+        if (host == null) return false;
+        return host.matches("[0-9]+(?:\\.[0-9]+){1,3}") || host.contains(":");
+    }
 
     public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
         final URI redirectUri = UriBuilder.fromURIString(baseRedirectUri).build();
