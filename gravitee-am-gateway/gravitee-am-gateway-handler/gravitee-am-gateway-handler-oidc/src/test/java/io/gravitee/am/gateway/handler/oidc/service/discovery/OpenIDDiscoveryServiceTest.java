@@ -205,4 +205,18 @@ public class OpenIDDiscoveryServiceTest {
         assertTrue(openIDProviderMetadata.getBackchannelTokenDeliveryModesSupported().containsAll(List.of(CIBADeliveryMode.POLL)));
     }
 
+    @Test
+    public void shouldOmitClientIdMetadataDocumentSupportedWhenCimdDisabled() {
+        when(domain.useCimd()).thenReturn(false);
+        final OpenIDProviderMetadata metadata = openIDDiscoveryService.getConfiguration("/");
+        assertNull(metadata.getClientIdMetadataDocumentSupported());
+    }
+
+    @Test
+    public void shouldAdvertiseClientIdMetadataDocumentSupportedWhenCimdEnabled() {
+        when(domain.useCimd()).thenReturn(true);
+        final OpenIDProviderMetadata metadata = openIDDiscoveryService.getConfiguration("/");
+        assertTrue(Boolean.TRUE.equals(metadata.getClientIdMetadataDocumentSupported()));
+    }
+
 }
