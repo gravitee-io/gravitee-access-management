@@ -132,9 +132,4 @@ describe('CIMD authorize - ENABLED_BASE', () => {
     const response = await fixture.authorize(fixture.buildClientId('private-key-jwt-missing-jwks'));
     fixture.expectInvalidClientMetadata(response, 'private_key_jwt requires jwks or jwks_uri');
   });
-
-  it('should return invalid_client_metadata when token_endpoint_auth_method is missing', async () => {
-    const response = await fixture.authorize(fixture.buildClientId('missing-token-auth-method'));
-    fixture.expectInvalidClientMetadata(response, 'Secret-based token_endpoint_auth_method is not allowed');
-  });
 });

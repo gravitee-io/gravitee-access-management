@@ -350,7 +350,7 @@ public class CimdMetadataServiceImplTest {
     }
 
     @Test
-    public void shouldDefaultMissingTokenEndpointAuthMethodToClientSecretBasicAndReject() {
+    public void shouldDefaultMissingTokenEndpointAuthMethodToNone() {
         JsonObject metadata = new JsonObject()
                 .put("client_id", CLIENT_URL)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"));
@@ -358,7 +358,58 @@ public class CimdMetadataServiceImplTest {
 
         TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
 
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> "none".equals(client.getTokenEndpointAuthMethod())
+                && List.of("authorization_code").equals(client.getAuthorizedGrantTypes())
+                && List.of("code").equals(client.getResponseTypes()));
+    }
+
+    @Test
+    public void shouldRejectExplicitClientSecretBasic() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "client_secret_basic");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
         testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void shouldDefaultGrantTypesToAuthorizationCodeWhenAbsent() {
+        Client template = templateClient();
+        template.setAuthorizedGrantTypes(List.of("client_credentials"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> List.of("authorization_code").equals(client.getAuthorizedGrantTypes()));
+    }
+
+    @Test
+    public void shouldDefaultResponseTypesToCodeWhenAbsent() {
+        Client template = templateClient();
+        template.setResponseTypes(List.of("token"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> List.of("code").equals(client.getResponseTypes()));
     }
 
     @Test
