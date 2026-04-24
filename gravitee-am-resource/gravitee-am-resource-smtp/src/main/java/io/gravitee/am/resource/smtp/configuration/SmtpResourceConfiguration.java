@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.resource.smtp.configuration;
 
+import org.springframework.util.StringUtils;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Getter;
@@ -36,8 +37,8 @@ public class SmtpResourceConfiguration implements ResourceConfiguration {
     private String host;
     private int port;
     private String from;
-    private String protocol;
-    private boolean authentication;
+    private String protocol = "smtp";
+    private Boolean authentication;
     private String authenticationType = AUTH_TYPE_BASIC;
     private String username;
     @Secret
@@ -47,16 +48,24 @@ public class SmtpResourceConfiguration implements ResourceConfiguration {
     private String sslProtocols;
 
     public boolean isOauth2Authentication() {
-        return authentication && AUTH_TYPE_OAUTH2.equals(getEffectiveAuthenticationType());
+        return authenticateEnabled() && AUTH_TYPE_OAUTH2.equals(getEffectiveAuthenticationType());
     }
 
 
     public boolean isBasicAuthentication() {
-        return authentication && AUTH_TYPE_BASIC.equals(getEffectiveAuthenticationType());
+        return authenticateEnabled() && AUTH_TYPE_BASIC.equals(getEffectiveAuthenticationType());
     }
 
     public String getEffectiveAuthenticationType() {
         // Default to "basic" for backward compatibility with old configs
         return authenticationType != null ? authenticationType : AUTH_TYPE_BASIC;
+    }
+
+    public boolean authenticateEnabled() {
+        if(authentication != null) {
+            return authentication;
+        } else {
+            return StringUtils.hasText(username) && StringUtils.hasText(password);
+        }
     }
 }
