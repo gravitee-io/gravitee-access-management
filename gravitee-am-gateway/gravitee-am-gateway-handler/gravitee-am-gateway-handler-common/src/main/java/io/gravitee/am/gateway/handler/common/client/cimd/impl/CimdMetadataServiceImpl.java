@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.client.cimd.impl;
 
+import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.am.common.web.UriBuilder;
@@ -67,6 +69,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     private static final int FETCH_RETRY_ATTEMPTS = 3;
     private static final int FETCH_RETRY_DELAY_MS = 100;
     private static final long MAX_LOGO_SIZE_BYTES = 256L * 1024L;
+    private static final String DEFAULT_TOKEN_ENDPOINT_AUTH_METHOD = ClientAuthenticationMethod.NONE;
+    private static final List<String> DEFAULT_GRANT_TYPES = List.of(GrantType.AUTHORIZATION_CODE);
+    private static final List<String> DEFAULT_RESPONSE_TYPES = List.of(ResponseType.CODE);
 
     private final Domain domain;
     private final WebClient webClient;
@@ -286,7 +291,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
 
         final String tokenEndpointAuthMethod = metadata.getString(
                 "token_endpoint_auth_method",
-                ClientAuthenticationMethod.CLIENT_SECRET_BASIC
+                DEFAULT_TOKEN_ENDPOINT_AUTH_METHOD
         );
         if (FORBIDDEN_SECRET_BASED_AUTH_METHODS.contains(tokenEndpointAuthMethod)) {
             throw new InvalidClientMetadataException("Secret-based token_endpoint_auth_method is not allowed for CIMD clients.");
@@ -305,8 +310,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             throw new InvalidClientMetadataException("private_key_jwt requires jwks or jwks_uri.");
         }
 
-        final List<String> grantTypes = readOptionalStringArray(metadata, "grant_types");
-        final List<String> responseTypes = readOptionalStringArray(metadata, "response_types");
+        final List<String> grantTypes = readOptionalStringArray(metadata, "grant_types", DEFAULT_GRANT_TYPES);
+        final List<String> responseTypes = readOptionalStringArray(metadata, "response_types", DEFAULT_RESPONSE_TYPES);
 
         final Client synthesizedClient;
         try {
@@ -318,16 +323,12 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         synthesizedClient.setClientId(clientId);
         synthesizedClient.setRedirectUris(redirectUris);
         synthesizedClient.setTokenEndpointAuthMethod(tokenEndpointAuthMethod);
+        synthesizedClient.setAuthorizedGrantTypes(grantTypes);
+        synthesizedClient.setResponseTypes(responseTypes);
         synthesizedClient.setClientName(metadata.getString("client_name", synthesizedClient.getClientName()));
         final String logoUri = metadata.getString("logo_uri");
         if (logoUri != null && !logoUri.isBlank()) {
             synthesizedClient.setLogoUri(logoUri);
-        }
-        if (grantTypes != null) {
-            synthesizedClient.setAuthorizedGrantTypes(grantTypes);
-        }
-        if (responseTypes != null) {
-            synthesizedClient.setResponseTypes(responseTypes);
         }
         if (metadata.containsKey("jwks_uri")) {
             synthesizedClient.setJwksUri(jwksUri);
@@ -369,6 +370,11 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             }
             return value;
         }).toList();
+    }
+
+    private List<String> readOptionalStringArray(JsonObject metadata, String key, List<String> defaultValue) {
+        final List<String> values = readOptionalStringArray(metadata, key);
+        return values != null ? values : defaultValue;
     }
 
     private JWKSet toModelJwkSet(JsonObject jwksAsJson) {
