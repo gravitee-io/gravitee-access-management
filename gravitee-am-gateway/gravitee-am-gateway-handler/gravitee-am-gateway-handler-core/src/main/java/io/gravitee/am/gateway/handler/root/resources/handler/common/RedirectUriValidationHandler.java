@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
@@ -118,15 +119,29 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
         if (!StringUtils.hasLength(returnUrl)) {
             List<String> registeredRedirectUris = domain.isRedirectUriExpressionLanguageEnabled() ?
                     getFilteredRegisteredRedirectUris(context) : getRegisteredRedirectUris(context);
-            RedirectUriValidator validator = new RedirectUriValidator(this::checkMatchingRedirectUri);
+            final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+            // CIMD clients always require exact URI matching
+            final RedirectUriValidator.CheckMethod checkMethod = ClientIds.isUrlShaped(client.getClientId())
+                    ? this::checkExactRedirectUri
+                    : this::checkMatchingRedirectUri;
+            RedirectUriValidator validator = new RedirectUriValidator(checkMethod);
             validator.validate(registeredRedirectUris, requestedRedirectUri, operation);
         }
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
+        validateRedirectUri(requestedRedirect, registeredClientRedirectUris,
+                this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile());
+    }
+
+    private void checkExactRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
+        validateRedirectUri(requestedRedirect, registeredClientRedirectUris, true);
+    }
+
+    private void validateRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris, boolean strictMatching) {
         if (registeredClientRedirectUris
                 .stream()
-                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri, this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()))) {
+                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri, strictMatching))) {
             throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST match the registered callback URL for this application", requestedRedirect));
         }
     }

@@ -16,7 +16,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
+import { CIMD_REDIRECT_URI, CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
 import {
   clearWireMockRequestJournal,
   countGetRequestsForPathSubstring,
@@ -135,5 +135,14 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   it('should return invalid_client_metadata when private_key_jwt metadata has no jwks and no jwks_uri', async () => {
     const response = await fixture.authorize(fixture.buildClientId('private-key-jwt-missing-jwks'));
     fixture.expectInvalidClientMetadata(response, 'private_key_jwt requires jwks or jwks_uri');
+  });
+
+  it('should enforce exact redirect_uri matching for CIMD clients', async () => {
+    const response = await fixture.authorize(
+      fixture.buildClientId('valid-none'),
+      CIMD_REDIRECT_URI + '/sub',
+    );
+    const error = fixture.readOAuthError(response);
+    expect(error.error).toBe('redirect_uri_mismatch');
   });
 });
