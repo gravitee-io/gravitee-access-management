@@ -157,4 +157,56 @@ public class RedirectUriValidationHandlerTest {
 
         Mockito.verify(ctx, Mockito.times(1)).next();
     }
+
+    @Test
+    public void cimd_client_rejects_non_exact_redirect_uri_even_when_domain_allows_non_strict_matching() {
+        Domain domain = new Domain();
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        oidcSettings.setRedirectUriStrictMatching(false);
+        domain.setOidc(oidcSettings);
+        final var handler = new RedirectUriValidationHandler(domain);
+
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(request.getParam(ConstantKeys.RETURN_URL_KEY)).thenReturn(null);
+        // Sub-path of the registered URI — would match under non-strict (prefix) matching
+        Mockito.when(request.getParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI))
+                .thenReturn("https://redirect.example.com/callback/sub");
+
+        Client client = new Client();
+        client.setClientId("http://example.com/my-app"); // URL-shaped → CIMD client
+        client.setRedirectUris(List.of("https://redirect.example.com/callback"));
+        Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.never()).next();
+        Mockito.verify(ctx).fail(Mockito.any(Throwable.class));
+    }
+
+    @Test
+    public void cimd_client_accepts_exact_redirect_uri_match() {
+        Domain domain = new Domain();
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        oidcSettings.setRedirectUriStrictMatching(false);
+        domain.setOidc(oidcSettings);
+        final var handler = new RedirectUriValidationHandler(domain);
+
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(request.getParam(ConstantKeys.RETURN_URL_KEY)).thenReturn(null);
+        Mockito.when(request.getParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI))
+                .thenReturn("https://redirect.example.com/callback");
+
+        Client client = new Client();
+        client.setClientId("http://example.com/my-app"); // URL-shaped → CIMD client
+        client.setRedirectUris(List.of("https://redirect.example.com/callback"));
+        Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.times(1)).next();
+    }
 }
