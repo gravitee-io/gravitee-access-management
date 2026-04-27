@@ -228,6 +228,7 @@ import { EmailComponent, EmailInfoDialogComponent } from './domain/components/em
 import { EmailService } from './services/email.service';
 import { EmailResolver } from './resolvers/email.resolver';
 import { SelectApplicationsComponent } from './domain/components/applications/select-applications.component';
+import { SelectTemplateApplicationComponent } from './domain/components/applications/select-template-application.component';
 import { ConsentsResolver } from './resolvers/consents.resolver';
 import { AuthorizationEngineService } from './services/authorization-engine.service';
 import { OpenFGAService } from './services/openfga.service';
@@ -641,6 +642,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     EmailComponent,
     EmailInfoDialogComponent,
     SelectApplicationsComponent,
+    SelectTemplateApplicationComponent,
     AuditsComponent,
     AuditComponent,
     AuditsSettingsComponent,
