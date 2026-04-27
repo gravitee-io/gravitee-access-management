@@ -75,6 +75,7 @@ import static org.mockito.Mockito.when;
 public class ClientAssertionServiceTest {
 
     private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    private static final String JWT_SPIFFE_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-spiffe";
     private static final String CLIENT_ID = "clientIdentifier";
     private static final String AGENT_INSTANCE_ID = "agent-instance-42";
     private static final String ISSUER = CLIENT_ID;
@@ -124,6 +125,29 @@ public class ClientAssertionServiceTest {
     @Test
     public void testAssertionNotValid() {
         clientAssertionService.assertClient(JWT_BEARER_TYPE,"",null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testSpiffeAssertionTypeAccepted_invalidAssertionStillRejected() {
+        clientAssertionService.assertClient(JWT_SPIFFE_TYPE, "", null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testSpiffeAssertionType_nonSpiffeSubjectRejected() {
+        // A JWT whose sub is not a spiffe:// URI must be rejected when sent via the SPIFFE assertion type.
+        String assertion = new PlainJWT(
+                new JWTClaimsSet.Builder()
+                        .issuer(ISSUER)
+                        .subject(CLIENT_ID)
+                        .audience(AUDIENCE)
+                        .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
+                        .build()
+        ).serialize();
+        clientAssertionService.assertClient(JWT_SPIFFE_TYPE, assertion, null).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
