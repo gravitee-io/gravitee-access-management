@@ -49,6 +49,9 @@ public class PatchOIDCSettings {
     @JsonProperty("cimdSettings")
     private Optional<PatchCIMDSettings> cimdSettings;
 
+    @JsonProperty("spiffeSettings")
+    private Optional<PatchSpiffeDomainSettings> spiffeSettings;
+
     private Optional<Boolean> redirectUriStrictMatching;
 
     private Optional<List<String>> postLogoutRedirectUris;
@@ -110,6 +113,14 @@ public class PatchOIDCSettings {
         this.cimdSettings = cimdSettings;
     }
 
+    public Optional<PatchSpiffeDomainSettings> getSpiffeSettings() {
+        return spiffeSettings;
+    }
+
+    public void setSpiffeSettings(Optional<PatchSpiffeDomainSettings> spiffeSettings) {
+        this.spiffeSettings = spiffeSettings;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
 
         //If source may be null, in such case init with default values
@@ -161,6 +172,16 @@ public class PatchOIDCSettings {
             }
         }
 
+        if (getSpiffeSettings() != null) {
+            if (getSpiffeSettings().isPresent()) {
+                final PatchSpiffeDomainSettings patcher = getSpiffeSettings().get();
+                final io.gravitee.am.model.oidc.SpiffeDomainSettings source = toPatch.getSpiffeSettings();
+                toPatch.setSpiffeSettings(patcher.patch(source));
+            } else {
+                toPatch.setSpiffeSettings(io.gravitee.am.model.oidc.SpiffeDomainSettings.defaultSettings());
+            }
+        }
+
         return toPatch;
     }
 
@@ -173,6 +194,7 @@ public class PatchOIDCSettings {
                 || (redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent())
                 || (cibaSettings != null && cibaSettings.isPresent())
                 || (cimdSettings != null && cimdSettings.isPresent())
+                || (spiffeSettings != null && spiffeSettings.isPresent())
                 || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
                 || (requestUris != null && requestUris.isPresent())
                 || (securityProfileSettings != null && securityProfileSettings.isPresent())) {
