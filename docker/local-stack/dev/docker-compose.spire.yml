@@ -1,0 +1,94 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Local-stack overlay running SPIRE so AM can be exercised against a real
+# SPIFFE workload identity issuer.
+#
+# Trust domain:        am.local
+# Workload entries:    spiffe://am.local/agent/billing
+#                      spiffe://am.local/agent/test/<id>  (matches subjectPattern)
+# JWKS for AM:         http://spire-oidc:8443/keys (on compose network)
+#                      http://localhost:18443/keys (from host)
+#
+# Compose:
+#   docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml \
+#                  -f dev/docker-compose.mongo.yml -f dev/docker-compose.spire.yml up -d
+#
+
+services:
+  spire-server:
+    image: ghcr.io/spiffe/spire-server:1.9.6
+    command: ["-config", "/run/spire/config/server.conf"]
+    volumes:
+      - ./spire/server.conf:/run/spire/config/server.conf:ro
+      - spire-server-data:/run/spire/data
+      - spire-shared:/run/spire/shared
+    ports:
+      - 18081:8081
+    healthcheck:
+      test: ["CMD", "/opt/spire/bin/spire-server", "healthcheck", "-socketPath", "/run/spire/shared/server.sock"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  spire-bootstrap:
+    build:
+      context: ./spire/bootstrap
+    depends_on:
+      spire-server:
+        condition: service_healthy
+    volumes:
+      - spire-shared:/run/spire/shared
+
+  spire-agent:
+    build:
+      context: ./spire/agent
+    depends_on:
+      spire-bootstrap:
+        condition: service_completed_successfully
+    volumes:
+      - ./spire/agent.conf:/run/spire/config/agent.conf:ro
+      - spire-shared:/run/spire/shared
+      - spire-agent-public:/run/spire-agent/public
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/spire-agent", "healthcheck", "-socketPath", "/run/spire-agent/public/api.sock"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  spire-oidc:
+    image: ghcr.io/spiffe/oidc-discovery-provider:1.9.6
+    depends_on:
+      spire-agent:
+        condition: service_healthy
+    # Share PID namespace with the agent so the unix workload attestor can
+    # resolve the OIDC provider's caller PID across containers.
+    pid: "service:spire-agent"
+    command: ["-config", "/run/spire/config/oidc-provider.conf"]
+    volumes:
+      - ./spire/oidc-provider.conf:/run/spire/config/oidc-provider.conf:ro
+      - spire-agent-public:/run/spire-agent/public:ro
+    ports:
+      - 18443:8443
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8443/keys"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  spire-server-data:
+  spire-shared:
+  spire-agent-public:
