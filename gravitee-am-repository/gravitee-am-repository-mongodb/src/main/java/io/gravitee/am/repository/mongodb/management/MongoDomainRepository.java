@@ -292,6 +292,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
         oidcSettings.setCimdSettings(convert(oidcMongo.getCimdSettings()));
+        oidcSettings.setSpiffeSettings(convert(oidcMongo.getSpiffeSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidcMongo.getRequestUris());
 
@@ -379,6 +380,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
         oidcSettings.setCimdSettings(convert(oidc.getCimdSettings()));
+        oidcSettings.setSpiffeSettings(convert(oidc.getSpiffeSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidc.getRequestUris());
 
@@ -478,6 +480,45 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
         result.setTemplateId(cimdSettings.getTemplateId());
 
+        return result;
+    }
+
+    private static io.gravitee.am.model.oidc.SpiffeDomainSettings convert(io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo source) {
+        if (source == null) {
+            return null;
+        }
+        io.gravitee.am.model.oidc.SpiffeDomainSettings result = new io.gravitee.am.model.oidc.SpiffeDomainSettings();
+        result.setEnabled(source.isEnabled());
+        result.setAllowUnsecuredHttpUri(source.isAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(source.isAllowPrivateIpAddress());
+        result.setFetchTimeoutMs(source.getFetchTimeoutMs());
+        result.setMaxResponseSizeKb(source.getMaxResponseSizeKb());
+        result.setCacheTtlSeconds(source.getCacheTtlSeconds());
+        result.setCacheMaxEntries(source.getCacheMaxEntries());
+        result.setMaxJwtLifetimeSeconds(source.getMaxJwtLifetimeSeconds());
+        result.setClockSkewSeconds(source.getClockSkewSeconds());
+        if (source.getDefaultAllowedAlgorithms() != null) {
+            result.setDefaultAllowedAlgorithms(source.getDefaultAllowedAlgorithms());
+        }
+        return result;
+    }
+
+    private static io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo convert(io.gravitee.am.model.oidc.SpiffeDomainSettings source) {
+        if (source == null) {
+            return null;
+        }
+        io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo result =
+                new io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo();
+        result.setEnabled(source.isEnabled());
+        result.setAllowUnsecuredHttpUri(source.isAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(source.isAllowPrivateIpAddress());
+        result.setFetchTimeoutMs(source.getFetchTimeoutMs());
+        result.setMaxResponseSizeKb(source.getMaxResponseSizeKb());
+        result.setCacheTtlSeconds(source.getCacheTtlSeconds());
+        result.setCacheMaxEntries(source.getCacheMaxEntries());
+        result.setMaxJwtLifetimeSeconds(source.getMaxJwtLifetimeSeconds());
+        result.setClockSkewSeconds(source.getClockSkewSeconds());
+        result.setDefaultAllowedAlgorithms(source.getDefaultAllowedAlgorithms());
         return result;
     }
 

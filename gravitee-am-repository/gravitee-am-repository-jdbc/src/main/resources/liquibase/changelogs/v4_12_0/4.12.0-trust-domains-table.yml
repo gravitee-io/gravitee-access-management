@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-trust-domains-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: trust_domains
+      changes:
+        - createTable:
+            tableName: trust_domains
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: description, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: bundle_source, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: jwks_url, type: nvarchar(2048), constraints: { nullable: true } }
+              - column: { name: refresh_interval_seconds, type: int, constraints: { nullable: false } }
+              - column: { name: allowed_algorithms, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_trust_domains
+            columnNames: id
+            tableName: trust_domains
+
+        - createIndex:
+            columns:
+              - column: { name: reference_type }
+              - column: { name: reference_id }
+              - column: { name: name }
+            indexName: idx_trust_domains_ref_name
+            tableName: trust_domains
+            unique: true
