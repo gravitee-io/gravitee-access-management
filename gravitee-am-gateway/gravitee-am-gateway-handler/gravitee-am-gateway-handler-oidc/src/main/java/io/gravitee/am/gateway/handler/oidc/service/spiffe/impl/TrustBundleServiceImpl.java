@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -37,28 +38,39 @@ import java.util.concurrent.TimeUnit;
 /**
  * Caches JWKS bundles per trust domain. Refresh policy:
  * <ul>
- *   <li>TTL eviction at {@link TrustDomain#getRefreshIntervalSeconds()} (capped by domain
- *       {@link SpiffeDomainSettings#getCacheTtlSeconds()}).</li>
- *   <li>Eager refresh on {@code kid} miss in {@link #getKey(TrustDomain, String)}.</li>
- *   <li>Stale-on-error: if a refresh fails, the previously cached bundle is returned.</li>
+ *   <li>Soft refresh interval per trust domain (capped by {@link SpiffeDomainSettings#getCacheTtlSeconds()}).
+ *       When an entry is past the soft interval the bundle is re-fetched on the next access.</li>
+ *   <li>Eager refresh on {@code kid} miss: fetch a new bundle without evicting the existing one,
+ *       so a transient fetch failure can still fall back to the previous bundle.</li>
+ *   <li>Stale-on-error: when a refresh fails, the previously cached bundle is returned.
+ *       Hard expiry (a multiple of the soft interval, ≥ 1h) bounds how long stale data is served.</li>
  * </ul>
  */
 public class TrustBundleServiceImpl implements TrustBundleService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TrustBundleServiceImpl.class);
 
+    /** Hard-TTL multiplier — entries this much past the soft refresh interval are not served stale. */
+    private static final int HARD_TTL_MULTIPLIER = 4;
+
+    private static final long HARD_TTL_FLOOR_SECONDS = Duration.ofHours(1).toSeconds();
+
     private final JWKService jwkService;
+    private final SpiffeDomainSettings settings;
     private final Cache<String, CachedBundle> cache;
 
     @Autowired
     public TrustBundleServiceImpl(JWKService jwkService, Domain domain) {
         this.jwkService = jwkService;
-        SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
+        this.settings = Optional.ofNullable(domain.getOidc())
                 .map(o -> o.getSpiffeSettings())
                 .orElseGet(SpiffeDomainSettings::defaultSettings);
+        long hardTtl = Math.max(
+                (long) settings.getCacheTtlSeconds() * HARD_TTL_MULTIPLIER,
+                HARD_TTL_FLOOR_SECONDS);
         this.cache = CacheBuilder.newBuilder()
                 .maximumSize(settings.getCacheMaxEntries())
-                .expireAfterWrite(settings.getCacheTtlSeconds(), TimeUnit.SECONDS)
+                .expireAfterWrite(hardTtl, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -68,10 +80,10 @@ public class TrustBundleServiceImpl implements TrustBundleService {
             return Maybe.empty();
         }
         CachedBundle cached = cache.getIfPresent(trustDomain.getId());
-        if (cached != null) {
+        if (cached != null && !isStale(cached, trustDomain)) {
             return Maybe.just(cached.jwks);
         }
-        return fetch(trustDomain);
+        return fetch(trustDomain, cached);
     }
 
     @Override
@@ -82,9 +94,11 @@ public class TrustBundleServiceImpl implements TrustBundleService {
         return getKeys(trustDomain)
                 .flatMap(jwks -> findKid(jwks, kid)
                         .switchIfEmpty(Maybe.defer(() -> {
-                            // kid miss: evict and re-fetch once before giving up
-                            evict(trustDomain.getId());
-                            return fetch(trustDomain).flatMap(refreshed -> findKid(refreshed, kid));
+                            // kid miss: fetch fresh without evicting first; if the fetch fails we
+                            // fall back to the cached bundle, then look up the kid again.
+                            CachedBundle existing = cache.getIfPresent(trustDomain.getId());
+                            return fetch(trustDomain, existing)
+                                    .flatMap(refreshed -> findKid(refreshed, kid));
                         })));
     }
 
@@ -95,7 +109,18 @@ public class TrustBundleServiceImpl implements TrustBundleService {
         }
     }
 
-    private Maybe<JWKSet> fetch(TrustDomain trustDomain) {
+    private boolean isStale(CachedBundle entry, TrustDomain trustDomain) {
+        return entry.fetchedAt.plusSeconds(softTtlSeconds(trustDomain)).isBefore(Instant.now());
+    }
+
+    private long softTtlSeconds(TrustDomain trustDomain) {
+        long perDomain = trustDomain.getRefreshIntervalSeconds() > 0
+                ? trustDomain.getRefreshIntervalSeconds()
+                : settings.getCacheTtlSeconds();
+        return Math.min(perDomain, settings.getCacheTtlSeconds());
+    }
+
+    private Maybe<JWKSet> fetch(TrustDomain trustDomain, CachedBundle existing) {
         if (trustDomain.getBundleSource() != SpiffeBundleSource.JWKS_URL) {
             return Maybe.error(new UnsupportedOperationException(
                     "Bundle source " + trustDomain.getBundleSource() + " is not supported in this release"));
@@ -103,14 +128,17 @@ public class TrustBundleServiceImpl implements TrustBundleService {
         if (trustDomain.getJwksUrl() == null || trustDomain.getJwksUrl().isBlank()) {
             return Maybe.empty();
         }
-        return jwkService.getKeys(trustDomain.getJwksUrl())
+        Maybe<JWKSet> upstream = jwkService.getKeys(trustDomain.getJwksUrl());
+        if (settings.getFetchTimeoutMs() > 0) {
+            upstream = upstream.timeout(settings.getFetchTimeoutMs(), TimeUnit.MILLISECONDS);
+        }
+        return upstream
                 .doOnSuccess(jwks -> cache.put(trustDomain.getId(), new CachedBundle(jwks, Instant.now())))
                 .onErrorResumeNext(error -> {
-                    CachedBundle stale = cache.getIfPresent(trustDomain.getId());
-                    if (stale != null) {
+                    if (existing != null) {
                         LOGGER.warn("Failed to refresh trust bundle for {} ({}); serving stale bundle from {}",
-                                trustDomain.getName(), error.getMessage(), stale.fetchedAt);
-                        return Maybe.just(stale.jwks);
+                                trustDomain.getName(), error.getMessage(), existing.fetchedAt);
+                        return Maybe.just(existing.jwks);
                     }
                     return Maybe.error(error);
                 });
