@@ -44,6 +44,13 @@ import {
   SecurityProfileSettingsToJSON,
   SecurityProfileSettingsToJSONTyped,
 } from './SecurityProfileSettings';
+import type { SpiffeDomainSettings } from './SpiffeDomainSettings';
+import {
+  SpiffeDomainSettingsFromJSON,
+  SpiffeDomainSettingsFromJSONTyped,
+  SpiffeDomainSettingsToJSON,
+  SpiffeDomainSettingsToJSONTyped,
+} from './SpiffeDomainSettings';
 
 /**
  *
@@ -93,6 +100,12 @@ export interface OIDCSettings {
    * @memberof OIDCSettings
    */
   securityProfileSettings?: SecurityProfileSettings;
+  /**
+   *
+   * @type {SpiffeDomainSettings}
+   * @memberof OIDCSettings
+   */
+  spiffeSettings?: SpiffeDomainSettings;
 }
 
 /**
@@ -120,6 +133,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : SecurityProfileSettingsFromJSON(json['securityProfileSettings']),
+    spiffeSettings: json['spiffeSettings'] == null ? undefined : SpiffeDomainSettingsFromJSON(json['spiffeSettings']),
   };
 }
 
@@ -140,5 +154,6 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],
     securityProfileSettings: SecurityProfileSettingsToJSON(value['securityProfileSettings']),
+    spiffeSettings: SpiffeDomainSettingsToJSON(value['spiffeSettings']),
   };
 }

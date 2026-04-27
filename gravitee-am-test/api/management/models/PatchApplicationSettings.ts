@@ -88,6 +88,13 @@ import {
 } from './PatchApplicationSAMLSettings';
 import type { AgentSettings } from './AgentSettings';
 import { AgentSettingsFromJSON, AgentSettingsFromJSONTyped, AgentSettingsToJSON, AgentSettingsToJSONTyped } from './AgentSettings';
+import type { SpiffeApplicationSettings } from './SpiffeApplicationSettings';
+import {
+  SpiffeApplicationSettingsFromJSON,
+  SpiffeApplicationSettingsFromJSONTyped,
+  SpiffeApplicationSettingsToJSON,
+  SpiffeApplicationSettingsToJSONTyped,
+} from './SpiffeApplicationSettings';
 
 /**
  *
@@ -167,6 +174,12 @@ export interface PatchApplicationSettings {
    * @memberof PatchApplicationSettings
    */
   secretExpirationSettings?: SecretExpirationSettings;
+  /**
+   *
+   * @type {SpiffeApplicationSettings}
+   * @memberof PatchApplicationSettings
+   */
+  spiffe?: SpiffeApplicationSettings;
 }
 
 /**
@@ -221,6 +234,7 @@ export const PatchApplicationSettingsRequiredPermissionsEnum = {
   DomainAuthdeviceNotifier: 'DOMAIN_AUTHDEVICE_NOTIFIER',
   DomainI18NDictionary: 'DOMAIN_I18N_DICTIONARY',
   DomainTheme: 'DOMAIN_THEME',
+  DomainTrustDomain: 'DOMAIN_TRUST_DOMAIN',
   Application: 'APPLICATION',
   ApplicationSettings: 'APPLICATION_SETTINGS',
   ApplicationIdentityProvider: 'APPLICATION_IDENTITY_PROVIDER',
@@ -274,6 +288,7 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
     saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
+    spiffe: json['spiffe'] == null ? undefined : SpiffeApplicationSettingsFromJSON(json['spiffe']),
   };
 }
 
@@ -299,5 +314,6 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
+    spiffe: SpiffeApplicationSettingsToJSON(value['spiffe']),
   };
 }
