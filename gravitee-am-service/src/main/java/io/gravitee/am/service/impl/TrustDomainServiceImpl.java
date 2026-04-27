@@ -48,7 +48,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -254,6 +256,24 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             return Completable.error(new InvalidTrustDomainException(
                     "http:// jwksUrl is not allowed; enable allowUnsecuredHttpUri on domain SPIFFE settings to permit it"));
         }
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) {
+            return Completable.error(new InvalidTrustDomainException("jwksUrl must include a host"));
+        }
+        if (!settings.isAllowPrivateIpAddress()) {
+            try {
+                for (InetAddress addr : InetAddress.getAllByName(host)) {
+                    if (isPrivateAddress(addr)) {
+                        return Completable.error(new InvalidTrustDomainException(
+                                "jwksUrl host " + host + " resolves to a private/loopback address (" + addr.getHostAddress()
+                                        + "); enable allowPrivateIpAddress on domain SPIFFE settings to permit it"));
+                    }
+                }
+            } catch (UnknownHostException e) {
+                return Completable.error(new InvalidTrustDomainException(
+                        "jwksUrl host " + host + " could not be resolved"));
+            }
+        }
         if (td.getRefreshIntervalSeconds() <= 0) {
             return Completable.error(new InvalidTrustDomainException("refreshIntervalSeconds must be positive"));
         }
@@ -267,5 +287,18 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             }
         }
         return Completable.complete();
+    }
+
+    private static boolean isPrivateAddress(InetAddress addr) {
+        return addr.isAnyLocalAddress()
+                || addr.isLoopbackAddress()
+                || addr.isLinkLocalAddress()
+                || addr.isSiteLocalAddress()
+                || isUniqueLocalIpv6(addr);
+    }
+
+    private static boolean isUniqueLocalIpv6(InetAddress addr) {
+        byte[] bytes = addr.getAddress();
+        return bytes.length == 16 && (bytes[0] & 0xfe) == 0xfc;
     }
 }
