@@ -25,11 +25,15 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.service.utils.PrivateAddressGuard;
 import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -128,6 +132,14 @@ public class TrustBundleServiceImpl implements TrustBundleService {
         if (trustDomain.getJwksUrl() == null || trustDomain.getJwksUrl().isBlank()) {
             return Maybe.empty();
         }
+        // Re-validate the URL against current SPIFFE policy at fetch time.
+        // Validation also runs on create/update, but DNS may rebind to a private
+        // address afterwards or the domain policy may have been tightened since.
+        String urlSafetyError = checkUrlSafety(trustDomain.getJwksUrl());
+        if (urlSafetyError != null) {
+            return Maybe.error(new SecurityException(
+                    "Refused to fetch JWKS for trust domain " + trustDomain.getName() + ": " + urlSafetyError));
+        }
         Maybe<JWKSet> upstream = jwkService.getKeys(trustDomain.getJwksUrl());
         if (settings.getFetchTimeoutMs() > 0) {
             upstream = upstream.timeout(settings.getFetchTimeoutMs(), TimeUnit.MILLISECONDS);
@@ -142,6 +154,49 @@ public class TrustBundleServiceImpl implements TrustBundleService {
                     }
                     return Maybe.error(error);
                 });
+    }
+
+    /**
+     * Returns null when the URL passes current SPIFFE policy, or a human-readable reason otherwise.
+     * Mirrors the create/update validation in TrustDomainServiceImpl so that a stored URL whose
+     * resolution drifts to a private address — or that violates a tightened domain policy — is
+     * refused at fetch time.
+     */
+    private String checkUrlSafety(String jwksUrl) {
+        URI uri;
+        try {
+            uri = URI.create(jwksUrl);
+        } catch (IllegalArgumentException e) {
+            return "jwksUrl is not a valid URI";
+        }
+        String scheme = uri.getScheme();
+        if (scheme == null) {
+            return "jwksUrl must include a scheme";
+        }
+        boolean isHttp = "http".equalsIgnoreCase(scheme);
+        boolean isHttps = "https".equalsIgnoreCase(scheme);
+        if (!isHttp && !isHttps) {
+            return "jwksUrl scheme must be http or https";
+        }
+        if (isHttp && !settings.isAllowUnsecuredHttpUri()) {
+            return "http:// jwksUrl is not allowed by current domain SPIFFE settings";
+        }
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) {
+            return "jwksUrl must include a host";
+        }
+        if (!settings.isAllowPrivateIpAddress()) {
+            try {
+                Optional<InetAddress> privateAddr = PrivateAddressGuard.firstPrivateAddress(host);
+                if (privateAddr.isPresent()) {
+                    return "jwksUrl host " + host + " resolves to a private/loopback address ("
+                            + privateAddr.get().getHostAddress() + ")";
+                }
+            } catch (UnknownHostException e) {
+                return "jwksUrl host " + host + " could not be resolved";
+            }
+        }
+        return null;
     }
 
     private static Maybe<JWK> findKid(JWKSet jwks, String kid) {

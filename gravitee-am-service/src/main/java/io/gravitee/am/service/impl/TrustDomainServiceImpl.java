@@ -194,15 +194,13 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                         return Completable.error(new InvalidTrustDomainException("Trust domain is not linked to domain " + domain.getId()));
                     }
                     return repository.delete(id)
-                            .doOnComplete(() -> {
-                                publish(domain, td, Action.DELETE).subscribe();
-                                auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                        .principal(principal)
-                                        .type(EventType.TRUST_DOMAIN_DELETED)
-                                        .trustDomain(td)
-                                        .reference(new Reference(td.getReferenceType(), td.getReferenceId()))
-                                        .oldValue(td));
-                            })
+                            .andThen(publish(domain, td, Action.DELETE))
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.TRUST_DOMAIN_DELETED)
+                                    .trustDomain(td)
+                                    .reference(new Reference(td.getReferenceType(), td.getReferenceId()))
+                                    .oldValue(td)))
                             .doOnError(ex -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.TRUST_DOMAIN_DELETED)
