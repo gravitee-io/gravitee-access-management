@@ -238,6 +238,77 @@
         </div>
       </div>
 
+      <div class="gv-form-section" *ngIf="oauthSettings.tokenEndpointAuthMethod === 'spiffe_jwt'">
+        <div class="gv-form-section-title">
+          <h5>SPIFFE Workload Identity</h5>
+          <small
+            >The client authenticates with a SPIFFE JWT-SVID. Pick the trust domain that issues SVIDs for this workload, then bind the
+            client to an exact SPIFFE ID or a glob pattern.</small
+          >
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column" fxLayoutGap="10px">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Trust domain</mat-label>
+            <mat-select
+              name="spiffeTrustDomain"
+              [(ngModel)]="spiffeSettings.trustDomain"
+              (ngModelChange)="spiffeChanged()"
+              [disabled]="readonly"
+              required
+            >
+              <mat-option *ngFor="let td of trustDomains" [value]="td.name">{{ td.name }}</mat-option>
+            </mat-select>
+            <mat-hint *ngIf="trustDomains.length === 0"
+              >No trust domains registered. Add one under Security &raquo; Trust Domains.</mat-hint
+            >
+          </mat-form-field>
+
+          <div>
+            <label class="mat-body-strong">Subject binding</label>
+            <mat-radio-group
+              name="spiffeSubjectMode"
+              [value]="spiffeSubjectMode"
+              (change)="spiffeSubjectModeChanged($event.value)"
+              style="display: flex; flex-direction: column"
+            >
+              <mat-radio-button value="subject">Exact SPIFFE ID</mat-radio-button>
+              <mat-radio-button value="subjectPattern">Glob pattern</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <mat-form-field *ngIf="spiffeSubjectMode === 'subject'" appearance="outline" floatLabel="always">
+            <mat-label>Subject</mat-label>
+            <input
+              matInput
+              type="text"
+              name="spiffeSubject"
+              [(ngModel)]="spiffeSettings.subject"
+              (ngModelChange)="spiffeChanged()"
+              [disabled]="readonly"
+              placeholder="spiffe://prod.example/agent/billing"
+              required
+            />
+            <mat-hint>Must start with <code>spiffe://&lt;trust-domain&gt;/</code>.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field *ngIf="spiffeSubjectMode === 'subjectPattern'" appearance="outline" floatLabel="always">
+            <mat-label>Subject pattern</mat-label>
+            <input
+              matInput
+              type="text"
+              name="spiffeSubjectPattern"
+              [(ngModel)]="spiffeSettings.subjectPattern"
+              (ngModelChange)="spiffeChanged()"
+              [disabled]="readonly"
+              placeholder="spiffe://prod.example/agent/*"
+              required
+            />
+            <mat-hint><code>*</code> matches a single segment, <code>**</code> matches any.</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
       <div class="gv-form-section" *ngIf="oauthSettings.tokenEndpointAuthMethod === 'private_key_jwt'">
         <div class="gv-form-section-title">
           <h5>Advanced Assertion Client authentication</h5>
