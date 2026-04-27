@@ -1106,17 +1106,13 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (spiffe == null || spiffe.getTrustDomain() == null || spiffe.getTrustDomain().isBlank()) {
             return Single.error(new InvalidClientMetadataException("spiffe.trustDomain is required for spiffe_jwt"));
         }
-        boolean hasSubject = spiffe.getSubject() != null && !spiffe.getSubject().isBlank();
-        boolean hasPattern = spiffe.getSubjectPattern() != null && !spiffe.getSubjectPattern().isBlank();
-        if (hasSubject == hasPattern) {
-            return Single.error(new InvalidClientMetadataException(
-                    "exactly one of spiffe.subject or spiffe.subjectPattern must be set"));
+        if (spiffe.getSubject() == null || spiffe.getSubject().isBlank()) {
+            return Single.error(new InvalidClientMetadataException("spiffe.subject is required for spiffe_jwt"));
         }
         String anchor = "spiffe://" + spiffe.getTrustDomain().toLowerCase(java.util.Locale.ROOT) + "/";
-        String value = hasSubject ? spiffe.getSubject() : spiffe.getSubjectPattern();
-        if (!value.startsWith(anchor)) {
+        if (!spiffe.getSubject().startsWith(anchor)) {
             return Single.error(new InvalidClientMetadataException(
-                    "spiffe.subject/subjectPattern must start with " + anchor));
+                    "spiffe.subject must start with " + anchor));
         }
 
         return trustDomainRepository.findByName(io.gravitee.am.model.ReferenceType.DOMAIN,
