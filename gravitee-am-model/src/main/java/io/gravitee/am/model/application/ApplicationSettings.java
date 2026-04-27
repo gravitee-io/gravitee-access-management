@@ -95,6 +95,11 @@ public class ApplicationSettings {
      */
     private AgentSettings agent;
 
+    /**
+     * SPIFFE workload-identity settings, set when the application uses {@code spiffe_jwt} auth.
+     */
+    private SpiffeApplicationSettings spiffe;
+
 
     public ApplicationAdvancedSettings getAdvanced() {
         return advanced != null ? advanced : new ApplicationAdvancedSettings();
@@ -112,6 +117,7 @@ public class ApplicationSettings {
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
         this.agent = other.agent != null ? new AgentSettings(other.agent) : null;
+        this.spiffe = other.spiffe != null ? new SpiffeApplicationSettings(other.spiffe) : null;
     }
 
     public void copyTo(Client client) {
@@ -128,6 +134,7 @@ public class ApplicationSettings {
         if (this.agent != null) {
             client.setAgentType(this.agent.getAgentType());
         }
+        client.setSpiffeSettings(this.spiffe != null ? new SpiffeApplicationSettings(this.spiffe) : null);
     }
 
     private RiskAssessmentSettings getRiskAssessment(RiskAssessmentSettings settings) {
