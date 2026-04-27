@@ -38,6 +38,7 @@ import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TrustDomainAuditBuilder;
+import io.gravitee.am.service.utils.PrivateAddressGuard;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -262,12 +263,12 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         }
         if (!settings.isAllowPrivateIpAddress()) {
             try {
-                for (InetAddress addr : InetAddress.getAllByName(host)) {
-                    if (isPrivateAddress(addr)) {
-                        return Completable.error(new InvalidTrustDomainException(
-                                "jwksUrl host " + host + " resolves to a private/loopback address (" + addr.getHostAddress()
-                                        + "); enable allowPrivateIpAddress on domain SPIFFE settings to permit it"));
-                    }
+                Optional<InetAddress> privateAddr = PrivateAddressGuard.firstPrivateAddress(host);
+                if (privateAddr.isPresent()) {
+                    return Completable.error(new InvalidTrustDomainException(
+                            "jwksUrl host " + host + " resolves to a private/loopback address ("
+                                    + privateAddr.get().getHostAddress()
+                                    + "); enable allowPrivateIpAddress on domain SPIFFE settings to permit it"));
                 }
             } catch (UnknownHostException e) {
                 return Completable.error(new InvalidTrustDomainException(
@@ -287,18 +288,5 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             }
         }
         return Completable.complete();
-    }
-
-    private static boolean isPrivateAddress(InetAddress addr) {
-        return addr.isAnyLocalAddress()
-                || addr.isLoopbackAddress()
-                || addr.isLinkLocalAddress()
-                || addr.isSiteLocalAddress()
-                || isUniqueLocalIpv6(addr);
-    }
-
-    private static boolean isUniqueLocalIpv6(InetAddress addr) {
-        byte[] bytes = addr.getAddress();
-        return bytes.length == 16 && (bytes[0] & 0xfe) == 0xfc;
     }
 }
