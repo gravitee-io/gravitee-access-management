@@ -342,6 +342,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(ThemesResource.class);
     }
 
+    @Path("trust-domains")
+    public TrustDomainsResource getTrustDomainsResource() {
+        return resourceContext.getResource(TrustDomainsResource.class);
+    }
+
     @Path("authorization-engines")
     public AuthorizationEnginesResource getAuthorizationEnginesResource() {
         return resourceContext.getResource(AuthorizationEnginesResource.class);
