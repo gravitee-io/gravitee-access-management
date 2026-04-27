@@ -210,6 +210,11 @@ import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
 import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
 import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
 import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
+import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
+import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
+import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
 import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
@@ -2286,6 +2291,56 @@ export const routes: Routes = [
                               },
                               perms: {
                                 only: ['domain_certificate_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        path: 'trust-domains',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Trust Domains',
+                            section: 'Security',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_trust_domain_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainSettingsTrustDomainsComponent,
+                            resolve: {
+                              trustDomains: TrustDomainsResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: TrustDomainCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_trust_domain_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':trustDomainId',
+                            component: TrustDomainComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              trustDomain: TrustDomainResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'trustDomain.name',
+                              },
+                              perms: {
+                                only: ['domain_trust_domain_read'],
                               },
                             },
                           },
