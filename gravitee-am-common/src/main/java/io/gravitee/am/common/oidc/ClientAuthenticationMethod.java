@@ -73,6 +73,11 @@ public interface ClientAuthenticationMethod {
      */
     String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 
+    /**
+     * Client authenticates with a SPIFFE JWT-SVID verified against a configured trust domain.
+     */
+    String SPIFFE_JWT = "spiffe_jwt";
+
     static List<String> supportedValues() {
         return Arrays.asList(
                 CLIENT_SECRET_BASIC,
@@ -80,6 +85,7 @@ public interface ClientAuthenticationMethod {
                 PRIVATE_KEY_JWT,
                 CLIENT_SECRET_JWT,
                 TLS_CLIENT_AUTH,
-                SELF_SIGNED_TLS_CLIENT_AUTH);
+                SELF_SIGNED_TLS_CLIENT_AUTH,
+                SPIFFE_JWT);
     }
 }
