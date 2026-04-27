@@ -194,6 +194,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
 
+    @Lazy
+    @Autowired
+    private io.gravitee.am.repository.management.api.TrustDomainRepository trustDomainRepository;
+
     private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 
     @Override
@@ -810,7 +814,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(this::validateTlsClientAuth)
                             .flatMap(this::validatePostLogoutRedirectUris)
                             .flatMap(this::validateRequestUris)
-                            .flatMap(this::validateAgentSettings);
+                            .flatMap(this::validateAgentSettings)
+                            .flatMap(this::validateSpiffeSettings);
                 });
     }
 
@@ -1080,6 +1085,45 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    private Single<Application> validateSpiffeSettings(Application application) {
+        ApplicationOAuthSettings oauth = application.getSettings() != null ? application.getSettings().getOauth() : null;
+        io.gravitee.am.model.application.SpiffeApplicationSettings spiffe =
+                application.getSettings() != null ? application.getSettings().getSpiffe() : null;
+
+        boolean usesSpiffeAuth = oauth != null && io.gravitee.am.common.oidc.ClientAuthenticationMethod.SPIFFE_JWT
+                .equalsIgnoreCase(oauth.getTokenEndpointAuthMethod());
+
+        if (!usesSpiffeAuth) {
+            if (spiffe != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "spiffe settings may only be set when token_endpoint_auth_method=spiffe_jwt"));
+            }
+            return Single.just(application);
+        }
+
+        if (spiffe == null || spiffe.getTrustDomain() == null || spiffe.getTrustDomain().isBlank()) {
+            return Single.error(new InvalidClientMetadataException("spiffe.trustDomain is required for spiffe_jwt"));
+        }
+        boolean hasSubject = spiffe.getSubject() != null && !spiffe.getSubject().isBlank();
+        boolean hasPattern = spiffe.getSubjectPattern() != null && !spiffe.getSubjectPattern().isBlank();
+        if (hasSubject == hasPattern) {
+            return Single.error(new InvalidClientMetadataException(
+                    "exactly one of spiffe.subject or spiffe.subjectPattern must be set"));
+        }
+        String anchor = "spiffe://" + spiffe.getTrustDomain().toLowerCase(java.util.Locale.ROOT) + "/";
+        String value = hasSubject ? spiffe.getSubject() : spiffe.getSubjectPattern();
+        if (!value.startsWith(anchor)) {
+            return Single.error(new InvalidClientMetadataException(
+                    "spiffe.subject/subjectPattern must start with " + anchor));
+        }
+
+        return trustDomainRepository.findByName(io.gravitee.am.model.ReferenceType.DOMAIN,
+                        application.getDomain(), spiffe.getTrustDomain())
+                .switchIfEmpty(Single.error(new InvalidClientMetadataException(
+                        "spiffe.trustDomain '" + spiffe.getTrustDomain() + "' is not registered for this domain")))
+                .map(td -> application);
     }
 
     private Single<Application> validateAgentSettings(Application application) {
