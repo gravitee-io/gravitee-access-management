@@ -411,6 +411,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         settings.setAllowedAgentPatterns(aAuthMongo.getAllowedAgentPatterns());
         settings.setTrustedResourcePatterns(aAuthMongo.getTrustedResourcePatterns());
         settings.setAutoRegisterAgents(aAuthMongo.isAutoRegisterAgents());
+        settings.setDefaultIdentityProviders(aAuthMongo.getDefaultIdentityProviders());
         return settings;
     }
 
@@ -426,6 +427,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         mongo.setAllowedAgentPatterns(aAuth.getAllowedAgentPatterns());
         mongo.setTrustedResourcePatterns(aAuth.getTrustedResourcePatterns());
         mongo.setAutoRegisterAgents(aAuth.isAutoRegisterAgents());
+        mongo.setDefaultIdentityProviders(aAuth.getDefaultIdentityProviders());
         return mongo;
     }
 

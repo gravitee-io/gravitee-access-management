@@ -30,6 +30,7 @@ public class AAuthSettingsMongo {
     private List<String> allowedAgentPatterns;
     private List<String> trustedResourcePatterns;
     private boolean autoRegisterAgents;
+    private List<String> defaultIdentityProviders;
 
     public boolean isEnabled() {
         return enabled;
@@ -77,5 +78,13 @@ public class AAuthSettingsMongo {
 
     public void setAutoRegisterAgents(boolean autoRegisterAgents) {
         this.autoRegisterAgents = autoRegisterAgents;
+    }
+
+    public List<String> getDefaultIdentityProviders() {
+        return defaultIdentityProviders;
+    }
+
+    public void setDefaultIdentityProviders(List<String> defaultIdentityProviders) {
+        this.defaultIdentityProviders = defaultIdentityProviders;
     }
 }

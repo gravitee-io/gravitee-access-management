@@ -20,7 +20,11 @@ import io.gravitee.am.gateway.handler.aauth.service.AgentMetadataFetcher;
 import io.gravitee.am.gateway.handler.aauth.signing.VerificationResult;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.aauth.AAuthSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
+
+import java.util.List;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -131,6 +135,67 @@ public class AAuthAgentRegistryImplTest {
         var captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationService).create(any(Domain.class), captor.capture());
         assertEquals(AGENT_URL, captor.getValue().getName());
+    }
+
+    @Test
+    public void shouldAssignDefaultIdPs_whenAutoCreating() throws Exception {
+        // Set up domain with default IdPs
+        var domain = new Domain();
+        domain.setId(DOMAIN_ID);
+        var aauth = new AAuthSettings();
+        aauth.setDefaultIdentityProviders(List.of("idp-1", "idp-2"));
+        domain.setAauth(aauth);
+        registry = new AAuthAgentRegistryImpl(applicationService, metadataFetcher, domain);
+
+        when(applicationService.findByDomainAndClientId(DOMAIN_ID, AGENT_URL))
+                .thenReturn(Maybe.empty());
+
+        var metadata = new AgentMetadata(AGENT_URL, AGENT_URL + "/jwks.json",
+                "Test Agent", null, null, null, null, false, null, null);
+        when(metadataFetcher.fetchMetadata(AGENT_URL)).thenReturn(metadata);
+
+        var created = new Application();
+        created.setId("new-app");
+        when(applicationService.create(any(Domain.class), any(Application.class)))
+                .thenReturn(Single.just(created));
+
+        registry.resolveOrCreate(verificationWith("jwks_uri", AGENT_URL), DOMAIN_ID).blockingGet();
+
+        var captor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationService).create(any(Domain.class), captor.capture());
+
+        var app = captor.getValue();
+        assertNotNull(app.getIdentityProviders());
+        assertEquals(2, app.getIdentityProviders().size());
+
+        var idps = app.getIdentityProviders().iterator();
+        ApplicationIdentityProvider first = idps.next();
+        ApplicationIdentityProvider second = idps.next();
+        assertEquals("idp-1", first.getIdentity());
+        assertEquals(0, first.getPriority());
+        assertEquals("idp-2", second.getIdentity());
+        assertEquals(1, second.getPriority());
+    }
+
+    @Test
+    public void shouldCreateWithNoIdPs_whenNoDefaultsConfigured() throws Exception {
+        when(applicationService.findByDomainAndClientId(DOMAIN_ID, AGENT_URL))
+                .thenReturn(Maybe.empty());
+
+        var metadata = new AgentMetadata(AGENT_URL, AGENT_URL + "/jwks.json",
+                "Test Agent", null, null, null, null, false, null, null);
+        when(metadataFetcher.fetchMetadata(AGENT_URL)).thenReturn(metadata);
+
+        var created = new Application();
+        when(applicationService.create(any(Domain.class), any(Application.class)))
+                .thenReturn(Single.just(created));
+
+        registry.resolveOrCreate(verificationWith("jwks_uri", AGENT_URL), DOMAIN_ID).blockingGet();
+
+        var captor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationService).create(any(Domain.class), captor.capture());
+
+        assertNull(captor.getValue().getIdentityProviders());
     }
 
     private VerificationResult verificationWith(String scheme, String agentServerUrl) {

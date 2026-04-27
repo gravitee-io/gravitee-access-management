@@ -20,6 +20,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { DomainService } from '../../../services/domain.service';
 import { AuthService } from '../../../services/auth.service';
 import { DomainStoreService } from '../../../stores/domain.store';
+import { ProviderService } from '../../../services/provider.service';
 
 @Component({
   selector: 'app-aauth',
@@ -31,18 +32,31 @@ export class AauthComponent implements OnInit {
   domain: any = {};
   formChanged = false;
   editMode: boolean;
+  domainIdps: any[] = [];
 
   constructor(
     private domainService: DomainService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private domainStore: DomainStoreService,
+    private providerService: ProviderService,
   ) {}
 
   ngOnInit() {
     this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_aauth_update']);
+    this.loadIdentityProviders();
+  }
+
+  private loadIdentityProviders() {
+    this.providerService.findByDomain(this.domainId).subscribe((idps) => {
+      const defaults = this.domain.aauth?.defaultIdentityProviders || [];
+      this.domainIdps = idps.map((idp) => ({
+        ...idp,
+        selected: defaults.includes(idp.id),
+      }));
+    });
   }
 
   save() {
@@ -68,6 +82,24 @@ export class AauthComponent implements OnInit {
 
   isAAuthEnabled(): boolean {
     return this.domain.aauth?.enabled;
+  }
+
+  toggleIdp(idp: any) {
+    if (!this.domain.aauth) {
+      this.domain.aauth = {};
+    }
+    if (!this.domain.aauth.defaultIdentityProviders) {
+      this.domain.aauth.defaultIdentityProviders = [];
+    }
+    const idx = this.domain.aauth.defaultIdentityProviders.indexOf(idp.id);
+    if (idx >= 0) {
+      this.domain.aauth.defaultIdentityProviders.splice(idx, 1);
+      idp.selected = false;
+    } else {
+      this.domain.aauth.defaultIdentityProviders.push(idp.id);
+      idp.selected = true;
+    }
+    this.formChanged = true;
   }
 
   formChange() {

@@ -23,6 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -32,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * Resolves or auto-creates {@code Application(type=AAUTH_AGENT)} for verified agents.
@@ -105,6 +107,21 @@ public class AAuthAgentRegistryImpl implements AAuthAgentRegistry {
         metadata.put("aauth.firstSeenAt", Instant.now().toString());
         metadata.put("aauth.lastSeenAt", Instant.now().toString());
         app.setMetadata(metadata);
+
+        // Assign default identity providers from domain AAUTH settings
+        var aauth = domain.getAauth();
+        if (aauth != null && aauth.getDefaultIdentityProviders() != null
+                && !aauth.getDefaultIdentityProviders().isEmpty()) {
+            var idpSet = new TreeSet<ApplicationIdentityProvider>();
+            int priority = 0;
+            for (String idpId : aauth.getDefaultIdentityProviders()) {
+                var appIdp = new ApplicationIdentityProvider();
+                appIdp.setIdentity(idpId);
+                appIdp.setPriority(priority++);
+                idpSet.add(appIdp);
+            }
+            app.setIdentityProviders(idpSet);
+        }
 
         return app;
     }

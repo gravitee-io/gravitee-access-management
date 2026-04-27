@@ -41,6 +41,9 @@ public class AAuthSettings {
     /** If true (default), unknown agents are auto-registered as Application(type=AAUTH_AGENT) */
     private boolean autoRegisterAgents = true;
 
+    /** IdP IDs to assign by default when auto-registering agents */
+    private List<String> defaultIdentityProviders;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -87,5 +90,13 @@ public class AAuthSettings {
 
     public void setAutoRegisterAgents(boolean autoRegisterAgents) {
         this.autoRegisterAgents = autoRegisterAgents;
+    }
+
+    public List<String> getDefaultIdentityProviders() {
+        return defaultIdentityProviders;
+    }
+
+    public void setDefaultIdentityProviders(List<String> defaultIdentityProviders) {
+        this.defaultIdentityProviders = defaultIdentityProviders;
     }
 }

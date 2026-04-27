@@ -58,6 +58,24 @@
                 Disable to require manual agent registration.</mat-hint
               >
             </div>
+
+            <div *ngIf="domain.aauth.autoRegisterAgents !== false && domainIdps.length > 0" style="margin-top: 20px">
+              <h3>Default Identity Providers</h3>
+              <mat-hint style="font-size: 75%"
+                >Select which identity providers are assigned to agents when they are auto-registered.</mat-hint
+              >
+              <div style="margin-top: 10px">
+                <div *ngFor="let idp of domainIdps" fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 8px">
+                  <mat-slide-toggle
+                    [checked]="idp.selected"
+                    (change)="toggleIdp(idp)"
+                    [disabled]="!editMode"
+                  >
+                    {{ idp.name }}
+                  </mat-slide-toggle>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div fxLayout="row" *ngIf="editMode">
