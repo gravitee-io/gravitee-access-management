@@ -345,6 +345,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { UmaComponent } from './domain/settings/uma/uma.component';
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
+import { SpiffeSettingsComponent } from './domain/settings/openid/spiffe/spiffe-settings.component';
 import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
 import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
 import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
@@ -729,6 +730,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     OIDCProfileComponent,
     CibaComponent,
     CibaSettingsComponent,
+    SpiffeSettingsComponent,
     Saml2Component,
     CimdSettingsComponent,
     DeviceNotifiersComponent,
