@@ -33,12 +33,19 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.spiffe.SpiffeJwtSvidValidator;
+import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.oidc.SpiffeDomainSettings;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.reporter.builder.AgentAuditBuilder;
@@ -52,6 +59,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
@@ -91,8 +99,14 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private TrustBundleService trustBundleService;
+
+    @Autowired
+    private TrustDomainRepository trustDomainRepository;
+
     @Override
-    public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
+    public Maybe<Client> assertClient(String assertionType, String assertion, String basePath, String clientIdHint) {
         if (assertionType == null || assertionType.isEmpty()) {
             return Maybe.error(unsupportedAssertionType());
         }
@@ -101,7 +115,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         }
 
         return parseJwt(assertion)
-                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath));
+                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath, clientIdHint));
     }
 
     private static Maybe<JWT> parseJwt(String assertion) {
@@ -122,11 +136,17 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
      * URI resolvable via CIMD, or {@code iss != sub} (blueprint vs. agent
      * instance) — and route through the agent assertion path.
      */
-    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath) {
+    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath, String clientIdHint) {
         return Maybe.defer(() -> {
             JWTClaimsSet claims = jwt.getJWTClaimsSet();
             String iss = claims.getIssuer();
             String sub = claims.getSubject();
+
+            // SPIFFE JWT-SVID: subject is a spiffe:// URI. Route here before the
+            // generic agent-shape branch which would mis-resolve the iss.
+            if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
+                return validateSpiffeAssertion(jwt, basePath, clientIdHint);
+            }
 
             if (isAgentAssertionShape(iss, sub)) {
                 return validateAgentAssertion(jwt, basePath);
@@ -388,6 +408,82 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                         return Maybe.error(unableToValidateClientException());
                     }
                     return Maybe.just(blueprint);
+                });
+    }
+
+    /**
+     * Validate a SPIFFE JWT-SVID carried as a {@code jwt-bearer} client assertion.
+     * The client is resolved either via {@code clientIdHint} (request {@code client_id})
+     * or, when absent, by treating the SPIFFE URI in {@code sub} as the client_id
+     * (CIMD-style). The trust domain is derived from the SPIFFE ID and the bundle
+     * keys are fetched via {@link TrustBundleService}.
+     */
+    private Maybe<Client> validateSpiffeAssertion(JWT jwt, String basePath, String clientIdHint) {
+        if (!(jwt instanceof SignedJWT signedJWT)) {
+            return Maybe.error(NOT_VALID);
+        }
+        final JWTClaimsSet claims;
+        try {
+            claims = jwt.getJWTClaimsSet();
+        } catch (ParseException ex) {
+            return Maybe.error(NOT_VALID);
+        }
+
+        String sub = claims.getSubject();
+        String trustDomainName = SpiffeJwtSvidValidator.trustDomainOf(sub);
+        if (trustDomainName == null) {
+            return Maybe.error(NOT_VALID);
+        }
+        String tokenEndpoint = openIDDiscoveryService.getConfiguration(basePath).getTokenEndpoint();
+
+        String lookupId = clientIdHint != null && !clientIdHint.isBlank() ? clientIdHint : sub;
+
+        return clientLookupService.findByClientId(lookupId)
+                .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown client")))
+                .flatMap(client -> {
+                    if (!ClientAuthenticationMethod.SPIFFE_JWT.equals(client.getTokenEndpointAuthMethod())) {
+                        return Maybe.error(new InvalidClientException("Client is not configured for spiffe_jwt"));
+                    }
+                    SpiffeApplicationSettings spiffe = client.getSpiffeSettings();
+                    if (spiffe == null || spiffe.getTrustDomain() == null) {
+                        return Maybe.error(new InvalidClientException("Client missing SPIFFE settings"));
+                    }
+                    if (!trustDomainName.equalsIgnoreCase(spiffe.getTrustDomain())) {
+                        return Maybe.error(NOT_VALID);
+                    }
+                    return trustDomainRepository.findByName(ReferenceType.DOMAIN, domain.getId(), spiffe.getTrustDomain())
+                            .switchIfEmpty(Maybe.error(new InvalidClientException("Trust domain not registered")))
+                            .flatMap(td -> {
+                                SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
+                                        .map(o -> o.getSpiffeSettings())
+                                        .orElseGet(SpiffeDomainSettings::defaultSettings);
+                                if (!settings.isEnabled()) {
+                                    return Maybe.error(new InvalidClientException("SPIFFE auth disabled for this domain"));
+                                }
+                                String fail = new SpiffeJwtSvidValidator(settings)
+                                        .validate(signedJWT, td, spiffe, tokenEndpoint);
+                                if (fail != null) {
+                                    log.debug("SPIFFE assertion rejected for client {}: {}", client.getClientId(), fail);
+                                    return Maybe.error(NOT_VALID);
+                                }
+                                return verifySpiffeSignature(signedJWT, td)
+                                        .map(ok -> client);
+                            });
+                });
+    }
+
+    private Maybe<Boolean> verifySpiffeSignature(SignedJWT signedJWT, TrustDomain td) {
+        String kid = signedJWT.getHeader().getKeyID();
+        if (kid == null || kid.isBlank()) {
+            return Maybe.error(new InvalidClientException("SVID missing kid"));
+        }
+        return trustBundleService.getKey(td, kid)
+                .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key in trust bundle for kid: " + kid)))
+                .flatMap(jwk -> {
+                    if (!jwsService.isValidSignature(signedJWT, jwk)) {
+                        return Maybe.error(unableToValidateClientException());
+                    }
+                    return Maybe.just(Boolean.TRUE);
                 });
     }
 
