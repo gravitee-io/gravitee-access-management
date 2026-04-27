@@ -43,12 +43,6 @@ export interface SpiffeApplicationSettings {
    * @type {string}
    * @memberof SpiffeApplicationSettings
    */
-  subjectPattern?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof SpiffeApplicationSettings
-   */
   trustDomain?: string;
 }
 
@@ -69,7 +63,6 @@ export function SpiffeApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimi
   }
   return {
     subject: json['subject'] == null ? undefined : json['subject'],
-    subjectPattern: json['subjectPattern'] == null ? undefined : json['subjectPattern'],
     trustDomain: json['trustDomain'] == null ? undefined : json['trustDomain'],
   };
 }
@@ -85,7 +78,6 @@ export function SpiffeApplicationSettingsToJSONTyped(value?: SpiffeApplicationSe
 
   return {
     subject: value['subject'],
-    subjectPattern: value['subjectPattern'],
     trustDomain: value['trustDomain'],
   };
 }
