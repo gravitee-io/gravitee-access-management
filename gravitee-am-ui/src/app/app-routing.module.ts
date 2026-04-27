@@ -2303,7 +2303,7 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Trust Domains',
-                            section: 'Security',
+                            section: 'Workload Identity',
                             level: 'level2',
                           },
                           perms: {
@@ -3041,8 +3041,8 @@ export const routes: Routes = [
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
-                            label: 'SPIFFE',
-                            section: 'Openid',
+                            label: 'SPIFFE Settings',
+                            section: 'Workload Identity',
                             level: 'level2',
                           },
                           perms: {
