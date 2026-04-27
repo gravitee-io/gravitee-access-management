@@ -74,6 +74,11 @@ public interface ClientAuthenticationMethod {
     String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 
     /**
+     * URN to identify a ClientAssertion carrying a SPIFFE JWT-SVID.
+     */
+    String JWT_SPIFFE = "urn:ietf:params:oauth:client-assertion-type:jwt-spiffe";
+
+    /**
      * Client authenticates with a SPIFFE JWT-SVID verified against a configured trust domain.
      */
     String SPIFFE_JWT = "spiffe_jwt";
