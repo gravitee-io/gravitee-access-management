@@ -51,7 +51,6 @@ export class GrantFlowsComponent implements OnInit {
   @Output() formChanged = new EventEmitter<boolean>();
 
   trustDomains: any[] = [];
-  spiffeSubjectMode: 'subject' | 'subjectPattern' = 'subject';
 
   readonly MCP_SERVER_CONTEXT = 'McpServer' as const;
   readonly CLIENT_CREDENTIALS_GRANT_TYPE = 'client_credentials';
@@ -109,7 +108,6 @@ export class GrantFlowsComponent implements OnInit {
 
   private initSpiffeSettings() {
     this.spiffeSettings = this.spiffeSettings || {};
-    this.spiffeSubjectMode = this.spiffeSettings.subjectPattern && !this.spiffeSettings.subject ? 'subjectPattern' : 'subject';
     if (this.isSpiffeEnabledAtDomain() && this.domainId) {
       this.trustDomainService.list(this.domainId).subscribe({
         next: (results) => (this.trustDomains = results || []),
@@ -120,16 +118,6 @@ export class GrantFlowsComponent implements OnInit {
 
   isSpiffeEnabledAtDomain(): boolean {
     return this.domainStore.current?.oidc?.spiffeSettings?.enabled === true;
-  }
-
-  spiffeSubjectModeChanged(mode: 'subject' | 'subjectPattern') {
-    this.spiffeSubjectMode = mode;
-    if (mode === 'subject') {
-      this.spiffeSettings.subjectPattern = null;
-    } else {
-      this.spiffeSettings.subject = null;
-    }
-    this.spiffeChanged();
   }
 
   spiffeChanged() {
