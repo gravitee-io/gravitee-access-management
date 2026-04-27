@@ -153,6 +153,25 @@ public class ClientAssertionServiceTest {
     }
 
     @Test
+    public void testJwtBearer_spiffeSubjectRejectedWithGuidance() {
+        // A SPIFFE JWT-SVID sent on jwt-bearer must be rejected with a clear "use jwt-spiffe" message
+        // rather than silently falling through to the generic OAuth lookup path.
+        String assertion = new PlainJWT(
+                new JWTClaimsSet.Builder()
+                        .issuer("spiffe://example.org/workload/foo")
+                        .subject("spiffe://example.org/workload/foo")
+                        .audience(AUDIENCE)
+                        .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
+                        .build()
+        ).serialize();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, null).test()
+                .assertError(throwable -> throwable instanceof InvalidClientException
+                        && throwable.getMessage() != null
+                        && throwable.getMessage().contains("jwt-spiffe"))
+                .assertNotComplete();
+    }
+
+    @Test
     public void testWithMissingClaims() {
         String assertion = new PlainJWT(new JWTClaimsSet.Builder().build()).serialize();
         clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,null).test()
