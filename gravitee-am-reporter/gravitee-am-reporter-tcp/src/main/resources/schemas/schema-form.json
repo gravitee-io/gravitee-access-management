@@ -51,7 +51,7 @@
       "type": "object",
       "title": "SSL / TLS",
       "properties": {
-        "sslEnabled": {
+        "enabled": {
           "type": "boolean",
           "title": "Enable SSL/TLS",
           "default": false
