@@ -38,4 +38,5 @@ public class ApplicationSettingsMongo {
     private RiskAssessmentSettingsMongo riskAssessment;
     private SecretSettingsMongo secretExpirationSettings;
     private AgentSettingsMongo agent;
+    private SpiffeApplicationSettingsMongo spiffe;
 }

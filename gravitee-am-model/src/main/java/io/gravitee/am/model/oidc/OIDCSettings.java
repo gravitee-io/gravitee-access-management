@@ -48,6 +48,8 @@ public class OIDCSettings {
 
     private CIMDSettings cimdSettings;
 
+    private SpiffeDomainSettings spiffeSettings;
+
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
     }
@@ -104,6 +106,14 @@ public class OIDCSettings {
         this.cimdSettings = cimdSettings;
     }
 
+    public SpiffeDomainSettings getSpiffeSettings() {
+        return spiffeSettings;
+    }
+
+    public void setSpiffeSettings(SpiffeDomainSettings spiffeSettings) {
+        this.spiffeSettings = spiffeSettings;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
@@ -111,6 +121,7 @@ public class OIDCSettings {
         defaultSettings.setRedirectUriStrictMatching(false);
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
         defaultSettings.setCimdSettings(CIMDSettings.defaultSettings());
+        defaultSettings.setSpiffeSettings(SpiffeDomainSettings.defaultSettings());
         return defaultSettings;
     }
 
