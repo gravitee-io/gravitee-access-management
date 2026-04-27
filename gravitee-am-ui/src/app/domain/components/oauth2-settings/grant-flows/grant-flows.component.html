@@ -264,20 +264,7 @@
             >
           </mat-form-field>
 
-          <div>
-            <label class="mat-body-strong">Subject binding</label>
-            <mat-radio-group
-              name="spiffeSubjectMode"
-              [value]="spiffeSubjectMode"
-              (change)="spiffeSubjectModeChanged($event.value)"
-              style="display: flex; flex-direction: column"
-            >
-              <mat-radio-button value="subject">Exact SPIFFE ID</mat-radio-button>
-              <mat-radio-button value="subjectPattern">Glob pattern</mat-radio-button>
-            </mat-radio-group>
-          </div>
-
-          <mat-form-field *ngIf="spiffeSubjectMode === 'subject'" appearance="outline" floatLabel="always">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Subject</mat-label>
             <input
               matInput
@@ -290,21 +277,6 @@
               required
             />
             <mat-hint>Must start with <code>spiffe://&lt;trust-domain&gt;/</code>.</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field *ngIf="spiffeSubjectMode === 'subjectPattern'" appearance="outline" floatLabel="always">
-            <mat-label>Subject pattern</mat-label>
-            <input
-              matInput
-              type="text"
-              name="spiffeSubjectPattern"
-              [(ngModel)]="spiffeSettings.subjectPattern"
-              (ngModelChange)="spiffeChanged()"
-              [disabled]="readonly"
-              placeholder="spiffe://prod.example/agent/*"
-              required
-            />
-            <mat-hint><code>*</code> matches a single segment, <code>**</code> matches any.</mat-hint>
           </mat-form-field>
         </div>
       </div>
