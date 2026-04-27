@@ -33,7 +33,7 @@
       [columnMode]="'flex'"
       [headerHeight]="40"
       [footerHeight]="50"
-      [rowHeight]="50"
+      [rowHeight]="'auto'"
       [rows]="appConsents"
       [sorts]="[{ prop: 'enabled', dir: 'desc' }]"
       [rowClass]="rowClass"
@@ -51,6 +51,9 @@
       <ngx-datatable-column name="Application" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.clientEntity.name }}
+          <div *ngIf="row.agentIdentifier" class="grey" style="font-size: 80%">
+            {{ row.agentIdentifier }}
+          </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Last interaction" [flexGrow]="1">

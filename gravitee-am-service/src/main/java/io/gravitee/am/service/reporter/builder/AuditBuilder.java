@@ -82,6 +82,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
     protected String targetSourceId;
     protected String ipAddress;
     protected String userAgent;
+    protected String accessPointAgentIdentifier;
     protected Object oldValue;
     protected Object newValue;
 
@@ -152,6 +153,11 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
 
     public T userAgent(String userAgent) {
         this.userAgent = userAgent;
+        return (T) this;
+    }
+
+    public T agentIdentifier(String agentIdentifier) {
+        this.accessPointAgentIdentifier = agentIdentifier;
         return (T) this;
     }
 
@@ -277,6 +283,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         accessPoint.setDisplayName(accessPointName);
         accessPoint.setIpAddress(ipAddress);
         accessPoint.setUserAgent(userAgent);
+        accessPoint.setAgentIdentifier(accessPointAgentIdentifier);
         audit.setAccessPoint(accessPoint);
 
         // target

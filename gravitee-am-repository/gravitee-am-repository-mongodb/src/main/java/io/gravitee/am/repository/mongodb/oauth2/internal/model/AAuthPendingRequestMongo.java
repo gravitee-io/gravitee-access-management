@@ -33,11 +33,11 @@ public class AAuthPendingRequestMongo {
     private String status;
     private String domain;
 
-    @BsonProperty("agent_id")
-    private String agentId;
+    @BsonProperty("agent_server_url")
+    private String agentServerUrl;
 
-    @BsonProperty("agent_sub")
-    private String agentSub;
+    @BsonProperty("agent_identifier")
+    private String agentIdentifier;
 
     @BsonProperty("agent_jkt")
     private String agentJkt;
@@ -106,11 +106,11 @@ public class AAuthPendingRequestMongo {
     public String getDomain() { return domain; }
     public void setDomain(String domain) { this.domain = domain; }
 
-    public String getAgentId() { return agentId; }
-    public void setAgentId(String agentId) { this.agentId = agentId; }
+    public String getAgentServerUrl() { return agentServerUrl; }
+    public void setAgentServerUrl(String agentServerUrl) { this.agentServerUrl = agentServerUrl; }
 
-    public String getAgentSub() { return agentSub; }
-    public void setAgentSub(String agentSub) { this.agentSub = agentSub; }
+    public String getAgentIdentifier() { return agentIdentifier; }
+    public void setAgentIdentifier(String agentIdentifier) { this.agentIdentifier = agentIdentifier; }
 
     public String getAgentJkt() { return agentJkt; }
     public void setAgentJkt(String agentJkt) { this.agentJkt = agentJkt; }

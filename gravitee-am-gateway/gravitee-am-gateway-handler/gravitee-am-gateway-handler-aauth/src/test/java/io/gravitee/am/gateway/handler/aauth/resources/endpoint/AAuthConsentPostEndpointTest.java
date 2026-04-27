@@ -134,7 +134,7 @@ public class AAuthConsentPostEndpointTest extends RxWebTestBase {
         app.setSettings(settings);
         when(applicationService.findById(eq("app-1"))).thenReturn(Maybe.just(app));
 
-        when(consentService.saveConsent(any(), any(UserId.class), anySet(), any()))
+        when(consentService.saveConsent(any(), any(UserId.class), anySet(), any(), any()))
                 .thenReturn(Single.just(List.of()));
         when(tokenService.createAuthToken(any(), any(), anyString(), anyString()))
                 .thenReturn(Single.just(new AAuthTokenResponse("signed.token", 300)));
@@ -152,7 +152,7 @@ public class AAuthConsentPostEndpointTest extends RxWebTestBase {
                 null, 200, "OK", null
         );
 
-        verify(consentService).saveConsent(any(), any(UserId.class), eq(Set.of("read", "write")), any());
+        verify(consentService).saveConsent(any(), any(UserId.class), eq(Set.of("read", "write")), any(), any());
     }
 
     @Test
@@ -184,7 +184,7 @@ public class AAuthConsentPostEndpointTest extends RxWebTestBase {
                 null, 200, "OK", null
         );
 
-        verify(consentService, never()).saveConsent(any(), any(UserId.class), anySet(), any());
+        verify(consentService, never()).saveConsent(any(), any(UserId.class), anySet(), any(), any());
     }
 
     private AAuthPendingRequest createPending() {
@@ -192,8 +192,8 @@ public class AAuthConsentPostEndpointTest extends RxWebTestBase {
         req.setId("pending-1");
         req.setStatus(PendingRequestStatus.PENDING.name());
         req.setDomain("domain-1");
-        req.setAgentId("https://agent.example");
-        req.setAgentSub("aauth:bot@agent.example");
+        req.setAgentServerUrl("https://agent.example");
+        req.setAgentIdentifier("aauth:bot@agent.example");
         req.setAgentJkt("thumbprint");
         req.setApplicationId("app-1");
         try {

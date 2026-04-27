@@ -29,6 +29,7 @@ public class AuditAccessPointMongo {
     private String displayName;
     private String ipAddress;
     private String userAgent;
+    private String agentIdentifier;
 
     public String getId() {
         return id;
@@ -68,5 +69,13 @@ public class AuditAccessPointMongo {
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    public String getAgentIdentifier() {
+        return agentIdentifier;
+    }
+
+    public void setAgentIdentifier(String agentIdentifier) {
+        this.agentIdentifier = agentIdentifier;
     }
 }

@@ -47,6 +47,8 @@ public class ScopeApproval {
 
     private String scope;
 
+    private String agentIdentifier;
+
     private ApprovalStatus status;
 
     @Schema(type = "java.lang.Long")

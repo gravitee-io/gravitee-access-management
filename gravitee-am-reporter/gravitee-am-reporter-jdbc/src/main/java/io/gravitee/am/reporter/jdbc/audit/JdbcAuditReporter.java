@@ -129,6 +129,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public static final String COL_MESSAGE = "message";
     public static final String COL_IP_ADDRESS = "ip_address";
     public static final String COL_USER_AGENT = "user_agent";
+    public static final String COL_AGENT_IDENTIFIER = "agent_identifier";
 
     private static final List<String> auditColumns = List.of(
             COL_ID,
@@ -163,7 +164,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             COL_ALTERNATIVE_ID,
             COL_DISPLAY_NAME,
             COL_IP_ADDRESS,
-            COL_USER_AGENT
+            COL_USER_AGENT,
+            COL_AGENT_IDENTIFIER
     );
 
     private String auditsTable;
@@ -522,6 +524,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         accessPoint.setDisplayName(entity.getDisplayName());
         accessPoint.setUserAgent(entity.getUserAgent());
         accessPoint.setIpAddress(entity.getIpAddress());
+        accessPoint.setAgentIdentifier(entity.getAgentIdentifier());
 
         audit.setAccessPoint(accessPoint);
         return audit;
@@ -622,6 +625,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_DISPLAY_NAME, accessPoint.getDisplayName(), String.class);
                 insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_IP_ADDRESS, accessPoint.getIpAddress(), String.class);
                 insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_USER_AGENT, accessPoint.getUserAgent(), String.class);
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_AGENT_IDENTIFIER, accessPoint.getAgentIdentifier(), String.class);
 
                 insertAction = insertAction.then(insertAccessPointSpec.fetch().rowsUpdated());
             }

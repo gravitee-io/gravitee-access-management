@@ -49,6 +49,11 @@ public class AuditAccessPoint {
      */
     private String userAgent;
 
+    /**
+     * AAUTH agent identity (e.g. aauth:bot@agent.example)
+     */
+    private String agentIdentifier;
+
     public AuditAccessPoint() {
     }
 
@@ -58,6 +63,7 @@ public class AuditAccessPoint {
         this.displayName = other.displayName;
         this.ipAddress = other.ipAddress;
         this.userAgent = other.userAgent;
+        this.agentIdentifier = other.agentIdentifier;
     }
 
     public String getId() {
@@ -98,5 +104,13 @@ public class AuditAccessPoint {
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    public String getAgentIdentifier() {
+        return agentIdentifier;
+    }
+
+    public void setAgentIdentifier(String agentIdentifier) {
+        this.agentIdentifier = agentIdentifier;
     }
 }

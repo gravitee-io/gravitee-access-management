@@ -132,7 +132,7 @@ public class AAuthInteractionResolveHandlerTest extends RxWebTestBase {
         req.setId("pending-1");
         req.setStatus(status.name());
         req.setDomain("domain-1");
-        req.setAgentId("https://agent.example");
+        req.setAgentServerUrl("https://agent.example");
         req.setInteractionCode("XXXX-1234");
         req.setCreatedAt(new Date());
         req.setExpireAt(new Date(System.currentTimeMillis() + 600_000));

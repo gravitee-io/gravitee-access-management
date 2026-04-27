@@ -63,8 +63,8 @@ public class AAuthPendingRequestServiceTest {
         assertNotNull(result.getInteractionCode());
         assertEquals(PendingRequestStatus.PENDING.name(), result.getStatus());
         assertEquals("domain-1", result.getDomain());
-        assertEquals("https://agent.example", result.getAgentId());
-        assertEquals("aauth:bot@agent.example", result.getAgentSub());
+        assertEquals("https://agent.example", result.getAgentServerUrl());
+        assertEquals("aauth:bot@agent.example", result.getAgentIdentifier());
         assertEquals("thumbprint", result.getAgentJkt());
         assertEquals("read write", result.getScope());
         assertEquals("I need this", result.getJustification());
@@ -355,7 +355,7 @@ public class AAuthPendingRequestServiceTest {
         req.setId("pending-1");
         req.setStatus(status.name());
         req.setDomain("domain-1");
-        req.setAgentId("https://agent.example");
+        req.setAgentServerUrl("https://agent.example");
         req.setAgentJkt(agentJkt);
         req.setInteractionCode("ABCD-1234");
         req.setScope("read write");

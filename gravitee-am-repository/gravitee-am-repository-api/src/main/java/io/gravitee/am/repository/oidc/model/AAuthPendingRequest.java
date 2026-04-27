@@ -29,8 +29,8 @@ public class AAuthPendingRequest {
     private String id;
     private String status;
     private String domain;
-    private String agentId;
-    private String agentSub;
+    private String agentServerUrl;
+    private String agentIdentifier;
     private String agentJkt;
     private String agentPublicKey;
     private String applicationId;
@@ -77,20 +77,20 @@ public class AAuthPendingRequest {
         this.domain = domain;
     }
 
-    public String getAgentId() {
-        return agentId;
+    public String getAgentServerUrl() {
+        return agentServerUrl;
     }
 
-    public void setAgentId(String agentId) {
-        this.agentId = agentId;
+    public void setAgentServerUrl(String agentServerUrl) {
+        this.agentServerUrl = agentServerUrl;
     }
 
-    public String getAgentSub() {
-        return agentSub;
+    public String getAgentIdentifier() {
+        return agentIdentifier;
     }
 
-    public void setAgentSub(String agentSub) {
-        this.agentSub = agentSub;
+    public void setAgentIdentifier(String agentIdentifier) {
+        this.agentIdentifier = agentIdentifier;
     }
 
     public String getAgentJkt() {

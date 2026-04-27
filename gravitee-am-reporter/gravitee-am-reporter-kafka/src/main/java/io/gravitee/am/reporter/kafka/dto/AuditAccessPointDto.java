@@ -35,6 +35,7 @@ public class AuditAccessPointDto {
     private String displayName;
     private String ipAddress;
     private String userAgent;
+    private String agentIdentifier;
 
     public static AuditAccessPointDto from(AuditAccessPoint accessPoint) {
         if (accessPoint == null) {
@@ -46,6 +47,7 @@ public class AuditAccessPointDto {
                 .displayName(accessPoint.getDisplayName())
                 .userAgent(accessPoint.getUserAgent())
                 .ipAddress(ensureValid(accessPoint.getIpAddress()))
+                .agentIdentifier(accessPoint.getAgentIdentifier())
                 .build();
     }
 

@@ -35,6 +35,8 @@ public class AuditAccessPointJdbc {
     private String ipAddress;
     @Column("user_agent")
     private String userAgent;
+    @Column("agent_identifier")
+    private String agentIdentifier;
 
     public String getAuditId() {
         return auditId;
@@ -82,5 +84,13 @@ public class AuditAccessPointJdbc {
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    public String getAgentIdentifier() {
+        return agentIdentifier;
+    }
+
+    public void setAgentIdentifier(String agentIdentifier) {
+        this.agentIdentifier = agentIdentifier;
     }
 }

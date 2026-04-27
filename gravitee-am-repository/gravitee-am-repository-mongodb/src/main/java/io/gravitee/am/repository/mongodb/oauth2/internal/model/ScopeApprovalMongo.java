@@ -45,6 +45,8 @@ public class ScopeApprovalMongo extends Auditable {
 
     private Date expiresAt;
 
+    private String agentIdentifier;
+
     /**
      * Security domain associated to the scope
      */

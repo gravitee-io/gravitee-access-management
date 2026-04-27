@@ -37,7 +37,7 @@
       [columnMode]="'flex'"
       [headerHeight]="40"
       [footerHeight]="50"
-      [rowHeight]="50"
+      [rowHeight]="'auto'"
       [rows]="consents"
       [sorts]="[{ prop: 'status', dir: 'desc' }]"
       [rowClass]="getRowClass"
@@ -55,6 +55,9 @@
       <ngx-datatable-column name="Permission" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.scopeEntity.key }} | <small>{{ row.scopeEntity.name }}</small> | <small>{{ row.scopeEntity.description }}</small>
+          <div *ngIf="row.agentIdentifier" class="grey" style="font-size: 80%">
+            Agent: {{ row.agentIdentifier }}
+          </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Approval date" [flexGrow]="1">

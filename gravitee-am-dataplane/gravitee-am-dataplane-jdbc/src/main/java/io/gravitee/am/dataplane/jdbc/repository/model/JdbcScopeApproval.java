@@ -54,6 +54,8 @@ public class JdbcScopeApproval {
     private String domain;
     private String scope;
     private String status;
+    @Column("agent_identifier")
+    private String agentIdentifier;
     @Column("expires_at")
     private LocalDateTime expiresAt;
     @Column("created_at")
@@ -72,6 +74,7 @@ public class JdbcScopeApproval {
         approval.setDomain(entity.getDomain());
         approval.setScope(entity.getScope());
         approval.setStatus(entity.getStatus().name());
+        approval.setAgentIdentifier(entity.getAgentIdentifier());
         approval.setExpiresAt(DateHelper.toLocalDateTime(entity.getExpiresAt()));
         approval.setCreatedAt(DateHelper.toLocalDateTime(entity.getCreatedAt()));
         approval.setUpdatedAt(DateHelper.toLocalDateTime(entity.getUpdatedAt()));
@@ -87,6 +90,7 @@ public class JdbcScopeApproval {
         approval.setDomain(domain);
         approval.setScope(scope);
         approval.setStatus(ScopeApproval.ApprovalStatus.valueOf(status));
+        approval.setAgentIdentifier(agentIdentifier);
         approval.setExpiresAt(DateHelper.toDate(expiresAt));
         approval.setCreatedAt(DateHelper.toDate(createdAt));
         approval.setUpdatedAt(DateHelper.toDate(updatedAt));

@@ -132,7 +132,7 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
 
         Single<List<ScopeApproval>> saveConsent = approvedScopes.isEmpty()
                 ? Single.just(List.of())
-                : consentService.saveConsent(client, user.getFullId(), approvedScopes, principal);
+                : consentService.saveConsent(client, user.getFullId(), approvedScopes, pending.getAgentIdentifier(), principal);
 
         return saveConsent
                 .flatMap(saved -> createAuthTokenAndApprove(pending, user.getId()))
@@ -185,12 +185,12 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
             AAuthPendingRequest pending, String userId) {
         ResourceTokenClaims rtClaims = new ResourceTokenClaims(
                 pending.getResourceIss(), null, null,
-                pending.getAgentSub(), null, pending.getScope(), 0, 0);
+                pending.getAgentIdentifier(), null, pending.getScope(), 0, 0);
 
         try {
             PublicKey agentKey = AAuthKeyUtils.deserializePublicKey(pending.getAgentPublicKey());
             VerificationResult verification = new VerificationResult(
-                    "jwt", "sig", agentKey, pending.getAgentJkt(), pending.getAgentId(), pending.getAgentSub());
+                    "jwt", "sig", agentKey, pending.getAgentJkt(), pending.getAgentServerUrl(), pending.getAgentIdentifier());
 
             return tokenService.createAuthToken(rtClaims, verification, pending.getPsIssuerUrl(), userId)
                     .flatMap(response -> pendingService.approve(

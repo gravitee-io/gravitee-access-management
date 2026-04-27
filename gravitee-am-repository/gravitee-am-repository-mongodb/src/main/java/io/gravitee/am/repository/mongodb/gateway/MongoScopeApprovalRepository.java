@@ -189,6 +189,7 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         scopeApproval.setExpiresAt(scopeApprovalMongo.getExpiresAt());
         scopeApproval.setStatus(ScopeApproval.ApprovalStatus.valueOf(scopeApprovalMongo.getStatus().toUpperCase()));
         scopeApproval.setDomain(scopeApprovalMongo.getDomain());
+        scopeApproval.setAgentIdentifier(scopeApprovalMongo.getAgentIdentifier());
         scopeApproval.setCreatedAt(scopeApprovalMongo.getCreatedAt());
         scopeApproval.setUpdatedAt(scopeApprovalMongo.getUpdatedAt());
 
@@ -211,6 +212,7 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         scopeApprovalMongo.setExpiresAt(scopeApproval.getExpiresAt());
         scopeApprovalMongo.setStatus(scopeApproval.getStatus().name().toUpperCase());
         scopeApprovalMongo.setDomain(scopeApproval.getDomain());
+        scopeApprovalMongo.setAgentIdentifier(scopeApproval.getAgentIdentifier());
         scopeApprovalMongo.setCreatedAt(scopeApproval.getCreatedAt());
         scopeApprovalMongo.setUpdatedAt(scopeApproval.getUpdatedAt());
 

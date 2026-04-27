@@ -120,8 +120,8 @@ public class MongoAAuthPendingRequestRepository extends AbstractOAuth2MongoRepos
         mongo.setId(req.getId());
         mongo.setStatus(req.getStatus());
         mongo.setDomain(req.getDomain());
-        mongo.setAgentId(req.getAgentId());
-        mongo.setAgentSub(req.getAgentSub());
+        mongo.setAgentServerUrl(req.getAgentServerUrl());
+        mongo.setAgentIdentifier(req.getAgentIdentifier());
         mongo.setAgentJkt(req.getAgentJkt());
         mongo.setAgentPublicKey(req.getAgentPublicKey());
         mongo.setApplicationId(req.getApplicationId());
@@ -153,8 +153,8 @@ public class MongoAAuthPendingRequestRepository extends AbstractOAuth2MongoRepos
         req.setId(mongo.getId());
         req.setStatus(mongo.getStatus());
         req.setDomain(mongo.getDomain());
-        req.setAgentId(mongo.getAgentId());
-        req.setAgentSub(mongo.getAgentSub());
+        req.setAgentServerUrl(mongo.getAgentServerUrl());
+        req.setAgentIdentifier(mongo.getAgentIdentifier());
         req.setAgentJkt(mongo.getAgentJkt());
         req.setAgentPublicKey(mongo.getAgentPublicKey());
         req.setApplicationId(mongo.getApplicationId());

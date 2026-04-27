@@ -105,12 +105,22 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
         return Observable.fromIterable(approvals)
                 .flatMapSingle(approval -> dataPlaneRegistry.getScopeApprovalRepository(domain).upsert(approval))
                 .toList()
-                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                .doOnSuccess(__ -> {
+                    var auditBuilder = AuditBuilder.builder(UserConsentAuditBuilder.class)
                         .reference(domain.asReference())
                         .client(client)
                         .principal(principal)
                         .type(EventType.USER_CONSENT_CONSENTED)
-                        .approvals(approvals)))
+                        .approvals(approvals);
+                    var firstAgentId = approvals.stream()
+                            .map(ScopeApproval::getAgentIdentifier)
+                            .filter(java.util.Objects::nonNull)
+                            .findFirst().orElse(null);
+                    if (firstAgentId != null) {
+                        auditBuilder.agentIdentifier(firstAgentId);
+                    }
+                    auditService.report(auditBuilder);
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                         .reference(domain.asReference())
                         .client(client)

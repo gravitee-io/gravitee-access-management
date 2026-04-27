@@ -154,12 +154,12 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
             AAuthPendingRequest pending, String userId) {
         ResourceTokenClaims rtClaims = new ResourceTokenClaims(
                 pending.getResourceIss(), null, null,
-                pending.getAgentSub(), null, pending.getScope(), 0, 0);
+                pending.getAgentIdentifier(), null, pending.getScope(), 0, 0);
 
         try {
             PublicKey agentKey = AAuthKeyUtils.deserializePublicKey(pending.getAgentPublicKey());
             VerificationResult verification = new VerificationResult(
-                    "jwt", "sig", agentKey, pending.getAgentJkt(), pending.getAgentId(), pending.getAgentSub());
+                    "jwt", "sig", agentKey, pending.getAgentJkt(), pending.getAgentServerUrl(), pending.getAgentIdentifier());
 
             return tokenService.createAuthToken(rtClaims, verification, pending.getPsIssuerUrl(), userId)
                     .flatMap(response -> pendingRequestService.approve(
@@ -190,7 +190,7 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
         ctx.put(ConstantKeys.ACTION_KEY, action);
         ctx.put("justification", MarkdownSanitizer.toSafeHtml(pending.getJustification()));
         ctx.put("interactionCode", pending.getInteractionCode());
-        ctx.put("agentName", client.getClientName() != null ? client.getClientName() : pending.getAgentId());
+        ctx.put("agentName", client.getClientName() != null ? client.getClientName() : pending.getAgentServerUrl());
         ctx.put("agentLogoUri", client.getLogoUri());
         ctx.put("clarificationSupported", pending.isClarificationSupported());
         ctx.put("clarificationResponse", MarkdownSanitizer.toSafeHtml(pending.getClarificationResponse()));

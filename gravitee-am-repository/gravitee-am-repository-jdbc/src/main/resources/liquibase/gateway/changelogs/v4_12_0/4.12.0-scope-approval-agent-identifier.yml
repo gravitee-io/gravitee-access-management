@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-gw-scope-approval-agent-identifier
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - addColumn:
+            tableName: scope_approvals
+            columns:
+              - column:
+                  name: agent_identifier
+                  type: nvarchar(255)

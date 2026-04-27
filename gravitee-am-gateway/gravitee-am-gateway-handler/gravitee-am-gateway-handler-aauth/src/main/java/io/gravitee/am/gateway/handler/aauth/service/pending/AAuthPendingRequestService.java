@@ -49,7 +49,7 @@ public class AAuthPendingRequestService {
     /**
      * Create a new pending request for the deferred authorization flow.
      */
-    public Single<AAuthPendingRequest> create(String domain, String agentId, String agentSub,
+    public Single<AAuthPendingRequest> create(String domain, String agentServerUrl, String agentIdentifier,
                                                 String agentJkt, PublicKey agentPublicKey,
                                                 String applicationId, String resourceIss,
                                                 String scope, String justification,
@@ -60,8 +60,8 @@ public class AAuthPendingRequestService {
         request.setId(UUID.randomUUID().toString());
         request.setStatus(PendingRequestStatus.PENDING.name());
         request.setDomain(domain);
-        request.setAgentId(agentId);
-        request.setAgentSub(agentSub);
+        request.setAgentServerUrl(agentServerUrl);
+        request.setAgentIdentifier(agentIdentifier);
         request.setAgentJkt(agentJkt);
         request.setAgentPublicKey(serializePublicKey(agentPublicKey));
         request.setApplicationId(applicationId);

@@ -76,12 +76,14 @@ public class AAuthConsentService {
      * @return the saved approvals
      */
     public Single<List<ScopeApproval>> saveConsent(Client client, UserId userId, Set<String> scopes,
+                                                     String agentIdentifier,
                                                      io.gravitee.am.identityprovider.api.User principal) {
         List<ScopeApproval> approvals = scopes.stream()
                 .map(scope -> {
                     ScopeApproval approval = new ScopeApproval(
                             null, userId, client.getClientId(), domain.getId(),
                             scope, APPROVED);
+                    approval.setAgentIdentifier(agentIdentifier);
                     approval.setExpiresAt(defaultExpiry());
                     return approval;
                 })

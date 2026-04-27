@@ -39,6 +39,7 @@ public class ScopeApprovalEntity extends ScopeApproval {
         setExpiresAt(scopeApproval.getExpiresAt());
         setCreatedAt(scopeApproval.getCreatedAt());
         setUpdatedAt(scopeApproval.getUpdatedAt());
+        setAgentIdentifier(scopeApproval.getAgentIdentifier());
     }
 
     public ApplicationEntity getClientEntity() {

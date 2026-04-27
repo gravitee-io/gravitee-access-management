@@ -60,6 +60,8 @@ public class JdbcScopeApproval {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
+    @Column("agent_identifier")
+    private String agentIdentifier;
 
     public static JdbcScopeApproval of(ScopeApproval entity) {
         var approval = new JdbcScopeApproval();
@@ -75,6 +77,7 @@ public class JdbcScopeApproval {
         approval.setExpiresAt(DateHelper.toLocalDateTime(entity.getExpiresAt()));
         approval.setCreatedAt(DateHelper.toLocalDateTime(entity.getCreatedAt()));
         approval.setUpdatedAt(DateHelper.toLocalDateTime(entity.getUpdatedAt()));
+        approval.setAgentIdentifier(entity.getAgentIdentifier());
         return approval;
     }
 
@@ -90,6 +93,7 @@ public class JdbcScopeApproval {
         approval.setExpiresAt(DateHelper.toDate(expiresAt));
         approval.setCreatedAt(DateHelper.toDate(createdAt));
         approval.setUpdatedAt(DateHelper.toDate(updatedAt));
+        approval.setAgentIdentifier(agentIdentifier);
         return approval;
     }
 

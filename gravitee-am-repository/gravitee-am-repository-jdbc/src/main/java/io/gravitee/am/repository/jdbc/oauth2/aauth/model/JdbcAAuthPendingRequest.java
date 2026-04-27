@@ -33,10 +33,10 @@ public class JdbcAAuthPendingRequest {
     private String id;
     private String status;
     private String domain;
-    @Column("agent_id")
-    private String agentId;
-    @Column("agent_sub")
-    private String agentSub;
+    @Column("agent_server_url")
+    private String agentServerUrl;
+    @Column("agent_identifier")
+    private String agentIdentifier;
     @Column("agent_jkt")
     private String agentJkt;
     @Column("agent_public_key")
@@ -89,11 +89,11 @@ public class JdbcAAuthPendingRequest {
     public String getDomain() { return domain; }
     public void setDomain(String domain) { this.domain = domain; }
 
-    public String getAgentId() { return agentId; }
-    public void setAgentId(String agentId) { this.agentId = agentId; }
+    public String getAgentServerUrl() { return agentServerUrl; }
+    public void setAgentServerUrl(String agentServerUrl) { this.agentServerUrl = agentServerUrl; }
 
-    public String getAgentSub() { return agentSub; }
-    public void setAgentSub(String agentSub) { this.agentSub = agentSub; }
+    public String getAgentIdentifier() { return agentIdentifier; }
+    public void setAgentIdentifier(String agentIdentifier) { this.agentIdentifier = agentIdentifier; }
 
     public String getAgentJkt() { return agentJkt; }
     public void setAgentJkt(String agentJkt) { this.agentJkt = agentJkt; }

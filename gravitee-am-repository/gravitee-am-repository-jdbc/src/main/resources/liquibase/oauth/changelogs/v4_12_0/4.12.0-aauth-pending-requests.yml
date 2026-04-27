@@ -14,8 +14,8 @@ databaseChangeLog:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: status, type: nvarchar(32), constraints: { nullable: false } }
               - column: { name: domain, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: agent_id, type: nvarchar(512), constraints: { nullable: true } }
-              - column: { name: agent_sub, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: agent_server_url, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: agent_identifier, type: nvarchar(512), constraints: { nullable: true } }
               - column: { name: agent_jkt, type: nvarchar(128), constraints: { nullable: false } }
               - column: { name: agent_public_key, type: clob, constraints: { nullable: false } }
               - column: { name: application_id, type: nvarchar(64), constraints: { nullable: true } }

@@ -517,6 +517,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             accessPointMongo.setDisplayName(accessPoint.getDisplayName());
             accessPointMongo.setIpAddress(accessPoint.getIpAddress());
             accessPointMongo.setUserAgent(accessPoint.getUserAgent());
+            accessPointMongo.setAgentIdentifier(accessPoint.getAgentIdentifier());
             auditMongo.setAccessPoint(accessPointMongo);
         }
 
@@ -577,6 +578,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             accessPoint.setDisplayName(accessPointMongo.getDisplayName());
             accessPoint.setIpAddress(accessPointMongo.getIpAddress());
             accessPoint.setUserAgent(accessPointMongo.getUserAgent());
+            accessPoint.setAgentIdentifier(accessPointMongo.getAgentIdentifier());
             audit.setAccessPoint(accessPoint);
         }
 

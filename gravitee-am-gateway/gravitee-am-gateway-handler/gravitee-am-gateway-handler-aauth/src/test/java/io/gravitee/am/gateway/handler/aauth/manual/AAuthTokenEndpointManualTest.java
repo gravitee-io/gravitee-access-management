@@ -16,11 +16,13 @@
 package io.gravitee.am.gateway.handler.aauth.manual;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockAgentMetadataServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockResourceServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentKeyPairFactory;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentTokenBuilder;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestSignatureBuilder;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -30,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
