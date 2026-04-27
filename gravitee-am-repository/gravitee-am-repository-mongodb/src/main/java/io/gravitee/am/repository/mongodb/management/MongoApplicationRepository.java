@@ -32,6 +32,7 @@ import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.AgentType;
+import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -55,6 +56,7 @@ import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.AgentSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SpiffeApplicationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
@@ -521,6 +523,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
         applicationSettingsMongo.setAgent(convert(other.getAgent()));
+        applicationSettingsMongo.setSpiffe(convert(other.getSpiffe()));
         return applicationSettingsMongo;
     }
 
@@ -541,6 +544,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
         applicationSettings.setAgent(convert(other.getAgent()));
+        applicationSettings.setSpiffe(convert(other.getSpiffe()));
         return applicationSettings;
     }
 
@@ -871,6 +875,30 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         AgentSettingsMongo agentSettingsMongo = new AgentSettingsMongo();
         agentSettingsMongo.setAgentType(other.getAgentType() != null ? other.getAgentType().name() : null);
         return agentSettingsMongo;
+    }
+
+    private static SpiffeApplicationSettings convert(SpiffeApplicationSettingsMongo other) {
+        if (other == null) {
+            return null;
+        }
+
+        SpiffeApplicationSettings settings = new SpiffeApplicationSettings();
+        settings.setTrustDomain(other.getTrustDomain());
+        settings.setSubject(other.getSubject());
+        settings.setSubjectPattern(other.getSubjectPattern());
+        return settings;
+    }
+
+    private static SpiffeApplicationSettingsMongo convert(SpiffeApplicationSettings other) {
+        if (other == null) {
+            return null;
+        }
+
+        SpiffeApplicationSettingsMongo settings = new SpiffeApplicationSettingsMongo();
+        settings.setTrustDomain(other.getTrustDomain());
+        settings.setSubject(other.getSubject());
+        settings.setSubjectPattern(other.getSubjectPattern());
+        return settings;
     }
 
     private static MFASettings convert(MFASettingsMongo mfaSettingsMongo) {
