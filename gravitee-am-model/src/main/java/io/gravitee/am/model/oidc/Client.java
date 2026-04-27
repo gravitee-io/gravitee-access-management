@@ -321,6 +321,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private transient String agentInstanceId;
 
+    private io.gravitee.am.model.application.SpiffeApplicationSettings spiffeSettings;
+
     public Client() {
     }
 
@@ -427,6 +429,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.agentIdentityMode = other.agentIdentityMode;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
+        this.spiffeSettings = other.spiffeSettings != null
+                ? new io.gravitee.am.model.application.SpiffeApplicationSettings(other.spiffeSettings)
+                : null;
     }
 
     public String getId() {
@@ -1349,6 +1354,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setAgentInstanceId(String agentInstanceId) {
         this.agentInstanceId = agentInstanceId;
+    }
+
+    public io.gravitee.am.model.application.SpiffeApplicationSettings getSpiffeSettings() {
+        return spiffeSettings;
+    }
+
+    public void setSpiffeSettings(io.gravitee.am.model.application.SpiffeApplicationSettings spiffeSettings) {
+        this.spiffeSettings = spiffeSettings;
     }
 
     @Override
