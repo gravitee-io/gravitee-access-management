@@ -20,6 +20,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.PermissionSettingUtils;
@@ -56,6 +57,7 @@ public class PatchApplicationSettings {
     private Optional<RiskAssessmentSettings> riskAssessment;
     private Optional<SecretExpirationSettings> secretExpirationSettings;
     private Optional<AgentSettings> agent;
+    private Optional<SpiffeApplicationSettings> spiffe;
 
     public ApplicationSettings patch(ApplicationSettings _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -83,6 +85,7 @@ public class PatchApplicationSettings {
             toPatch.setSaml(this.getSaml().get().patch(toPatch.getSaml()));
         }
         SetterUtils.safeSet(toPatch::setAgent, this.getAgent());
+        SetterUtils.safeSet(toPatch::setSpiffe, this.getSpiffe());
         return toPatch;
     }
 
