@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_SPIFFE;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -110,6 +111,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         if (assertionType == null || assertionType.isEmpty()) {
             return Maybe.error(unsupportedAssertionType());
         }
+        if (JWT_SPIFFE.equals(assertionType)) {
+            return parseJwt(assertion)
+                    .flatMap(jwt -> validateSpiffeAssertion(jwt, basePath, clientIdHint));
+        }
         if (!JWT_BEARER.equals(assertionType)) {
             return Maybe.error(unsupportedAssertionType());
         }
@@ -141,12 +146,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             JWTClaimsSet claims = jwt.getJWTClaimsSet();
             String iss = claims.getIssuer();
             String sub = claims.getSubject();
-
-            // SPIFFE JWT-SVID: subject is a spiffe:// URI. Route here before the
-            // generic agent-shape branch which would mis-resolve the iss.
-            if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
-                return validateSpiffeAssertion(jwt, basePath, clientIdHint);
-            }
 
             if (isAgentAssertionShape(iss, sub)) {
                 return validateAgentAssertion(jwt, basePath);
@@ -412,11 +411,12 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     /**
-     * Validate a SPIFFE JWT-SVID carried as a {@code jwt-bearer} client assertion.
-     * The client is resolved either via {@code clientIdHint} (request {@code client_id})
-     * or, when absent, by treating the SPIFFE URI in {@code sub} as the client_id
-     * (CIMD-style). The trust domain is derived from the SPIFFE ID and the bundle
-     * keys are fetched via {@link TrustBundleService}.
+     * Validate a SPIFFE JWT-SVID carried as a {@code jwt-spiffe} client assertion
+     * (see {@link ClientAuthenticationMethod#JWT_SPIFFE}). The client is resolved
+     * either via {@code clientIdHint} (request {@code client_id}) or, when absent,
+     * by treating the SPIFFE URI in {@code sub} as the client_id (CIMD-style).
+     * The trust domain is derived from the SPIFFE ID and the bundle keys are
+     * fetched via {@link TrustBundleService}.
      */
     private Maybe<Client> validateSpiffeAssertion(JWT jwt, String basePath, String clientIdHint) {
         if (!(jwt instanceof SignedJWT signedJWT)) {
