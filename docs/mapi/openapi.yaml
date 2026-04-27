@@ -17039,8 +17039,6 @@ components:
       properties:
         subject:
           type: string
-        subjectPattern:
-          type: string
         trustDomain:
           type: string
     SpiffeDomainSettings:
