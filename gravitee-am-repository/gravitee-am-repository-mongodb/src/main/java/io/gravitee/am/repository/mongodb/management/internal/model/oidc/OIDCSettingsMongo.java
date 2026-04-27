@@ -32,6 +32,8 @@ public class OIDCSettingsMongo {
 
     private CIMDSettingsMongo cimdSettings;
 
+    private SpiffeDomainSettingsMongo spiffeSettings;
+
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
     }
@@ -86,5 +88,13 @@ public class OIDCSettingsMongo {
 
     public void setCimdSettings(CIMDSettingsMongo cimdSettings) {
         this.cimdSettings = cimdSettings;
+    }
+
+    public SpiffeDomainSettingsMongo getSpiffeSettings() {
+        return spiffeSettings;
+    }
+
+    public void setSpiffeSettings(SpiffeDomainSettingsMongo spiffeSettings) {
+        this.spiffeSettings = spiffeSettings;
     }
 }
