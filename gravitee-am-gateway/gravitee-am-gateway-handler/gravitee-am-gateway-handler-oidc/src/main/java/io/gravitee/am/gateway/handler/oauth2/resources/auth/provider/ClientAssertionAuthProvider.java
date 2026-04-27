@@ -71,7 +71,8 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
     public boolean canHandle(Client client, RoutingContext context) {
         if (client != null && (
                 ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(client.getTokenEndpointAuthMethod()) ||
-                        ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(client.getTokenEndpointAuthMethod()))) {
+                        ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(client.getTokenEndpointAuthMethod()) ||
+                        ClientAuthenticationMethod.SPIFFE_JWT.equals(client.getTokenEndpointAuthMethod()))) {
             return true;
         }
 
@@ -90,7 +91,7 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
         String clientId = request.getParam(Parameters.CLIENT_ID);
         String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
-        clientAssertionService.assertClient(clientAssertionType, clientAssertion, basePath)
+        clientAssertionService.assertClient(clientAssertionType, clientAssertion, basePath, clientId)
                 .flatMap(client1 -> {
                     // clientId is optional, but if provided we must ensure it is the same than the logged client.
                     if(clientId != null && !clientId.equals(client1.getClientId())) {

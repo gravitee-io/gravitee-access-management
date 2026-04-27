@@ -36,6 +36,9 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
+import io.gravitee.am.gateway.handler.oidc.service.spiffe.impl.TrustBundleServiceImpl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.impl.JWSServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
@@ -91,6 +94,11 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public JWKService jwkService() {
         return new JWKServiceImpl();
+    }
+
+    @Bean
+    public TrustBundleService trustBundleService(JWKService jwkService, Domain domain) {
+        return new TrustBundleServiceImpl(jwkService, domain);
     }
 
     @Bean
