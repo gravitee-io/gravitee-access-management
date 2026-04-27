@@ -449,6 +449,13 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         }
         String tokenEndpoint = discovery.getTokenEndpoint();
 
+        SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
+                .map(o -> o.getSpiffeSettings())
+                .orElseGet(SpiffeDomainSettings::defaultSettings);
+        if (!settings.isEnabled()) {
+            return Maybe.error(new InvalidClientException("SPIFFE auth disabled for this domain"));
+        }
+
         String lookupId = clientIdHint != null && !clientIdHint.isBlank() ? clientIdHint : sub;
 
         return clientLookupService.findByClientId(lookupId)
@@ -461,18 +468,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                     if (spiffe == null || spiffe.getTrustDomain() == null) {
                         return Maybe.error(new InvalidClientException("Client missing SPIFFE settings"));
                     }
-                    if (!trustDomainName.equalsIgnoreCase(spiffe.getTrustDomain())) {
-                        return Maybe.error(NOT_VALID);
-                    }
                     return trustDomainRepository.findByName(ReferenceType.DOMAIN, domain.getId(), spiffe.getTrustDomain())
                             .switchIfEmpty(Maybe.error(new InvalidClientException("Trust domain not registered")))
                             .flatMap(td -> {
-                                SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
-                                        .map(o -> o.getSpiffeSettings())
-                                        .orElseGet(SpiffeDomainSettings::defaultSettings);
-                                if (!settings.isEnabled()) {
-                                    return Maybe.error(new InvalidClientException("SPIFFE auth disabled for this domain"));
-                                }
                                 String fail = new SpiffeJwtSvidValidator(settings)
                                         .validate(signedJWT, td, spiffe, tokenEndpoint);
                                 if (fail != null) {
