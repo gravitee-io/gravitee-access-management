@@ -155,6 +155,7 @@ import { CertificateComponent } from './domain/settings/certificates/certificate
 import { CertificatesResolver } from './resolvers/certificates.resolver';
 import { SignCertificatesResolver } from './resolvers/sign-certificates.resolver';
 import { CertificateService } from './services/certificate.service';
+import { TrustDomainService } from './services/trust-domain.service';
 import { CertificateCreationStep1Component } from './domain/settings/certificates/creation/steps/step1/step1.component';
 import { CertificateFormComponent } from './domain/settings/certificates/certificate/form/form.component';
 import { CertificateResolver } from './resolvers/certificate.resolver';
@@ -383,6 +384,11 @@ import { PlatformAlertStatusResolver } from './resolvers/platform-alert-status.r
 import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
 import { BotDetectionService } from './services/bot-detection.service';
 import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
+import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
+import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
+import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
 import { BotDetectionCreationStep1Component } from './domain/settings/botdetections/creation/steps/step1/step1.component';
 import { BotDetectionCreationStep2Component } from './domain/settings/botdetections/creation/steps/step2/step2.component';
@@ -746,6 +752,9 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AlertNotifierFormComponent,
     DomainAlertNotifierComponent,
     DomainSettingsBotDetectionsComponent,
+    DomainSettingsTrustDomainsComponent,
+    TrustDomainCreationComponent,
+    TrustDomainComponent,
     BotDetectionCreationComponent,
     BotDetectionCreationStep1Component,
     BotDetectionCreationStep2Component,
@@ -862,6 +871,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     EnvironmentService,
     AuthService,
     CertificateService,
+    TrustDomainService,
     RoleService,
     DashboardService,
     UserService,
@@ -965,6 +975,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     PlatformAlertStatusResolver,
     BotDetectionService,
     BotDetectionsResolver,
+    TrustDomainsResolver,
+    TrustDomainResolver,
     BotDetectionResolver,
     BotDetectionPluginsResolver,
     ScopesAllResolver,
