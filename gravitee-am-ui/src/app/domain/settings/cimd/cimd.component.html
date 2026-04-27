@@ -29,21 +29,14 @@
 
         <div *ngIf="cimdSettings.enabled">
           <div class="gv-form-section" fxLayout="column">
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Template ID</mat-label>
-              <input
-                matInput
-                type="text"
-                placeholder="Enter the Template ID"
-                name="templateId"
-                [(ngModel)]="cimdSettings.templateId"
-                (ngModelChange)="onFormChange()"
-                [disabled]="!editMode"
-                required
-              />
-              <mat-hint>The template identifier used in CIMD requests.</mat-hint>
-              <mat-error>Template ID is required.</mat-error>
-            </mat-form-field>
+            <input type="hidden" name="templateId" [(ngModel)]="cimdSettings.templateId" required />
+            <app-select-template-application
+              [selectedAppId]="cimdSettings.templateId"
+              [disabled]="!editMode"
+              [required]="true"
+              (appSelected)="onTemplateAppSelected($event)"
+              (appCleared)="onTemplateAppCleared()"
+            ></app-select-template-application>
           </div>
 
           <div class="gv-form-section" fxLayout="column">
@@ -182,6 +175,11 @@
         <p>
           Client-Initiated Metadata Document (CIMD) allows OAuth 2.0 clients to retrieve their own metadata from a well-known URI, enabling
           dynamic configuration of client parameters without prior registration.
+        </p>
+        <h4>Template Application</h4>
+        <p>
+          CIMD requires at least one application to be configured as a <b>Template</b>. Templates are managed in the
+          <a [routerLink]="['../dcr/templates']">Client Registration settings</a>.
         </p>
       </div>
     </div>

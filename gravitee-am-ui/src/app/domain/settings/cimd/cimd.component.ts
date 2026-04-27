@@ -92,6 +92,16 @@ export class CimdSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
+  onTemplateAppSelected(appId: string) {
+    this.cimdSettings.templateId = appId;
+    this.formChanged = true;
+  }
+
+  onTemplateAppCleared() {
+    this.cimdSettings.templateId = null;
+    this.formChanged = true;
+  }
+
   onFormChange() {
     this.formChanged = true;
   }
