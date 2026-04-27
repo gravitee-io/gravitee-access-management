@@ -147,6 +147,15 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             String iss = claims.getIssuer();
             String sub = claims.getSubject();
 
+            // A SPIFFE JWT-SVID arriving on the jwt-bearer assertion type is a
+            // client misconfiguration: SPIFFE assertions must use jwt-spiffe.
+            // Surface a clear error rather than letting the request fall through
+            // to the agent or generic OAuth lookup paths.
+            if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
+                return Maybe.error(new InvalidClientException(
+                        "SPIFFE JWT-SVID must be sent with client_assertion_type=" + JWT_SPIFFE));
+            }
+
             if (isAgentAssertionShape(iss, sub)) {
                 return validateAgentAssertion(jwt, basePath);
             }
@@ -434,7 +443,11 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         if (trustDomainName == null) {
             return Maybe.error(NOT_VALID);
         }
-        String tokenEndpoint = openIDDiscoveryService.getConfiguration(basePath).getTokenEndpoint();
+        OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
+        if (discovery == null || discovery.getTokenEndpoint() == null) {
+            return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
+        }
+        String tokenEndpoint = discovery.getTokenEndpoint();
 
         String lookupId = clientIdHint != null && !clientIdHint.isBlank() ? clientIdHint : sub;
 
