@@ -16,10 +16,12 @@
 package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.utils.SetterUtils;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @NoArgsConstructor
@@ -67,6 +69,7 @@ public class PatchSpiffeDomainSettings {
     public void setDefaultAllowedAlgorithms(Optional<List<String>> defaultAllowedAlgorithms) { this.defaultAllowedAlgorithms = defaultAllowedAlgorithms; }
 
     public SpiffeDomainSettings patch(SpiffeDomainSettings toPatch) {
+        validate();
         SpiffeDomainSettings result = toPatch != null ? toPatch : SpiffeDomainSettings.defaultSettings();
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAllowUnsecuredHttpUri, this.getAllowUnsecuredHttpUri(), boolean.class);
@@ -85,5 +88,36 @@ public class PatchSpiffeDomainSettings {
                 .ifPresent(opt -> result.setClockSkewSeconds(opt.orElse(SpiffeDomainSettings.DEFAULT_CLOCK_SKEW_SECONDS)));
         SetterUtils.safeSet(result::setDefaultAllowedAlgorithms, this.getDefaultAllowedAlgorithms());
         return result;
+    }
+
+    private void validate() {
+        requirePositive("fetchTimeoutMs", fetchTimeoutMs);
+        requirePositive("maxResponseSizeKb", maxResponseSizeKb);
+        requirePositive("cacheTtlSeconds", cacheTtlSeconds);
+        requirePositive("cacheMaxEntries", cacheMaxEntries);
+        requirePositive("maxJwtLifetimeSeconds", maxJwtLifetimeSeconds);
+        requireNonNegative("clockSkewSeconds", clockSkewSeconds);
+        if (defaultAllowedAlgorithms != null && defaultAllowedAlgorithms.isPresent()) {
+            for (String alg : defaultAllowedAlgorithms.get()) {
+                if (alg == null || alg.isBlank()
+                        || alg.equalsIgnoreCase("none")
+                        || alg.toUpperCase(Locale.ROOT).startsWith("HS")) {
+                    throw new InvalidParameterException(
+                            "defaultAllowedAlgorithms must not contain 'none' or HMAC variants (HS256/HS384/HS512)");
+                }
+            }
+        }
+    }
+
+    private static void requirePositive(String field, Optional<Integer> value) {
+        if (value != null && value.isPresent() && value.get() <= 0) {
+            throw new InvalidParameterException(field + " must be a positive integer");
+        }
+    }
+
+    private static void requireNonNegative(String field, Optional<Integer> value) {
+        if (value != null && value.isPresent() && value.get() < 0) {
+            throw new InvalidParameterException(field + " must be zero or a positive integer");
+        }
     }
 }
