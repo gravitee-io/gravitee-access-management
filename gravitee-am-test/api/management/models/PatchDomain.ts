@@ -304,6 +304,7 @@ export const PatchDomainRequiredPermissionsEnum = {
   DomainAuthdeviceNotifier: 'DOMAIN_AUTHDEVICE_NOTIFIER',
   DomainI18NDictionary: 'DOMAIN_I18N_DICTIONARY',
   DomainTheme: 'DOMAIN_THEME',
+  DomainTrustDomain: 'DOMAIN_TRUST_DOMAIN',
   Application: 'APPLICATION',
   ApplicationSettings: 'APPLICATION_SETTINGS',
   ApplicationIdentityProvider: 'APPLICATION_IDENTITY_PROVIDER',
