@@ -28,5 +28,15 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public interface ClientAssertionService {
 
-    Maybe<Client> assertClient(String assertionType, String assertion, String basePath);
+    default Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
+        return assertClient(assertionType, assertion, basePath, null);
+    }
+
+    /**
+     * Validate a client assertion. {@code clientIdHint} is the {@code client_id}
+     * supplied by the request (form param or HTTP Basic) when known; required for
+     * SPIFFE JWT-SVID where the assertion's {@code sub} is a SPIFFE URI rather than
+     * the client_id.
+     */
+    Maybe<Client> assertClient(String assertionType, String assertion, String basePath, String clientIdHint);
 }
