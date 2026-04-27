@@ -35,6 +35,7 @@ apis/RoleApi.ts
 apis/ScopeApi.ts
 apis/ShardingTagsApi.ts
 apis/ThemeApi.ts
+apis/TrustDomainApi.ts
 apis/UserApi.ts
 apis/UserNotificationsApi.ts
 apis/index.ts
@@ -161,6 +162,7 @@ models/NewScope.ts
 models/NewServiceResource.ts
 models/NewTag.ts
 models/NewTheme.ts
+models/NewTrustDomain.ts
 models/NewUser.ts
 models/NotifierPlugin.ts
 models/OIDCSettings.ts
@@ -198,6 +200,7 @@ models/PatchRememberDeviceSettings.ts
 models/PatchSAMLSettings.ts
 models/PatchScope.ts
 models/PatchSecurityProfileSettings.ts
+models/PatchSpiffeDomainSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
@@ -228,6 +231,8 @@ models/SecurityProfileSettings.ts
 models/SelfServiceAccountManagementSettings.ts
 models/ServiceResource.ts
 models/SessionSettings.ts
+models/SpiffeApplicationSettings.ts
+models/SpiffeDomainSettings.ts
 models/StatusEntity.ts
 models/Step.ts
 models/StepUpAuthenticationSettings.ts
@@ -237,6 +242,7 @@ models/ThemeEntity.ts
 models/TokenClaim.ts
 models/TokenExchangeOAuthSettings.ts
 models/TokenExchangeSettings.ts
+models/TrustDomain.ts
 models/TrustedIssuer.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts
@@ -261,6 +267,7 @@ models/UpdateRole.ts
 models/UpdateScope.ts
 models/UpdateServiceResource.ts
 models/UpdateTag.ts
+models/UpdateTrustDomain.ts
 models/UpdateUser.ts
 models/UpdateUserWithId.ts
 models/User.ts
