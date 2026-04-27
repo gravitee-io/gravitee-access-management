@@ -15,57 +15,27 @@
  */
 package io.gravitee.am.model.application;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * Per-application SPIFFE settings, populated when the application uses the
  * {@code spiffe_jwt} client-authentication method.
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class SpiffeApplicationSettings {
 
-    /**
-     * Name of the {@code TrustDomain} this application authenticates against.
-     */
+    /** Name of the {@code TrustDomain} this application authenticates against. */
     private String trustDomain;
 
-    /**
-     * Exact SPIFFE ID expected in the SVID's {@code sub} claim. Mutually exclusive with {@link #subjectPattern}.
-     */
+    /** Exact SPIFFE ID expected in the SVID's {@code sub} claim. */
     private String subject;
-
-    /**
-     * Glob pattern matched against the SVID's {@code sub} claim. {@code *} matches one segment, {@code **} matches any.
-     */
-    private String subjectPattern;
-
-    public SpiffeApplicationSettings() {
-    }
 
     public SpiffeApplicationSettings(SpiffeApplicationSettings other) {
         this.trustDomain = other.trustDomain;
         this.subject = other.subject;
-        this.subjectPattern = other.subjectPattern;
-    }
-
-    public String getTrustDomain() {
-        return trustDomain;
-    }
-
-    public void setTrustDomain(String trustDomain) {
-        this.trustDomain = trustDomain;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getSubjectPattern() {
-        return subjectPattern;
-    }
-
-    public void setSubjectPattern(String subjectPattern) {
-        this.subjectPattern = subjectPattern;
     }
 }

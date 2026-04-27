@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.spiffe;
 
-import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
@@ -27,7 +26,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -71,11 +69,6 @@ public final class SpiffeJwtSvidValidator {
         if (allowed == null || allowed.stream().noneMatch(a -> a.equalsIgnoreCase(alg))) {
             return "algorithm not allowed: " + alg;
         }
-        // Block HMAC even if mistakenly present in the allow-list.
-        JWSAlgorithm jwsAlg = JWSAlgorithm.parse(alg);
-        if (JWSAlgorithm.Family.HMAC_SHA.contains(jwsAlg)) {
-            return "HMAC algorithms are forbidden for JWT-SVIDs";
-        }
 
         // Header type: SPIFFE JWT-SVID §3 mandates typ=JWT (not JWT-SVID).
         if (jwt.getHeader().getType() != null && !"JWT".equals(jwt.getHeader().getType().getType())) {
@@ -106,14 +99,14 @@ public final class SpiffeJwtSvidValidator {
         if (spiffeApplicationSettings == null) {
             return "client missing spiffe settings";
         }
-        if (!matchesSubject(sub, spiffeApplicationSettings)) {
-            return "sub does not match client subject/pattern";
+        String expected = spiffeApplicationSettings.getSubject();
+        if (expected == null || expected.isBlank() || !expected.equals(sub)) {
+            return "sub does not match client subject";
         }
 
         // Audience must include AM's token endpoint.
         List<String> audiences = claims.getAudience();
-        if (audiences == null || audiences.isEmpty() || tokenEndpoint == null
-                || audiences.stream().noneMatch(tokenEndpoint::equals)) {
+        if (audiences == null || !audiences.contains(tokenEndpoint)) {
             return "aud does not contain token endpoint";
         }
 
@@ -146,71 +139,6 @@ public final class SpiffeJwtSvidValidator {
         return null;
     }
 
-    private static boolean matchesSubject(String sub, SpiffeApplicationSettings settings) {
-        String exact = settings.getSubject();
-        if (exact != null && !exact.isBlank()) {
-            return exact.equals(sub);
-        }
-        String pattern = settings.getSubjectPattern();
-        if (pattern == null || pattern.isBlank()) {
-            return false;
-        }
-        if (!pattern.startsWith(SPIFFE_PREFIX) || !sub.startsWith(SPIFFE_PREFIX)) {
-            return false;
-        }
-        return globMatch(stripScheme(pattern), stripScheme(sub));
-    }
-
-    private static String stripScheme(String spiffeId) {
-        return spiffeId.substring(SPIFFE_PREFIX.length());
-    }
-
-    /**
-     * Glob: '*' matches a single path segment (no '/'); '**' matches zero or more
-     * segments (may include '/'). Used for matching SPIFFE IDs after the scheme
-     * has been stripped, so the input only contains path segments.
-     */
-    private static boolean globMatch(String pattern, String input) {
-        return doMatch(pattern, 0, input, 0);
-    }
-
-    private static boolean doMatch(String pattern, int pi, String input, int ii) {
-        while (pi < pattern.length()) {
-            char pc = pattern.charAt(pi);
-            if (pc == '*') {
-                boolean isDoubleStar = pi + 1 < pattern.length() && pattern.charAt(pi + 1) == '*';
-                if (isDoubleStar) {
-                    int next = pi + 2;
-                    if (next == pattern.length()) {
-                        return true;
-                    }
-                    for (int k = ii; k <= input.length(); k++) {
-                        if (doMatch(pattern, next, input, k)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-                int next = pi + 1;
-                for (int k = ii; k <= input.length(); k++) {
-                    if (k > ii && input.charAt(k - 1) == '/') {
-                        return false;
-                    }
-                    if (doMatch(pattern, next, input, k)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            if (ii >= input.length() || input.charAt(ii) != pc) {
-                return false;
-            }
-            pi++;
-            ii++;
-        }
-        return ii == input.length();
-    }
-
     public static String trustDomainOf(String spiffeId) {
         if (spiffeId == null || !spiffeId.startsWith(SPIFFE_PREFIX)) {
             return null;
@@ -223,9 +151,5 @@ public final class SpiffeJwtSvidValidator {
 
     public static boolean isSpiffeId(String value) {
         return value != null && value.startsWith(SPIFFE_PREFIX);
-    }
-
-    public static Optional<String> firstSpiffeIdInClaims(JWTClaimsSet claims) {
-        return Optional.ofNullable(claims).map(JWTClaimsSet::getSubject).filter(SpiffeJwtSvidValidator::isSpiffeId);
     }
 }

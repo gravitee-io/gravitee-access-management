@@ -24,5 +24,4 @@ public class SpiffeApplicationSettingsMongo {
 
     private String trustDomain;
     private String subject;
-    private String subjectPattern;
 }
