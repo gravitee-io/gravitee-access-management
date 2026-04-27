@@ -232,11 +232,18 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 JWT jwt = JWTParser.parse(clientAssertion);
                 String iss = jwt.getJWTClaimsSet().getIssuer();
                 String sub = jwt.getJWTClaimsSet().getSubject();
+                // SPIFFE JWT-SVID: iss is the bundle issuer (not the client_id) and
+                // sub is a SPIFFE URI. The client_id form param is authoritative;
+                // when absent, fall back to the SPIFFE URI itself.
+                if (sub != null && sub.startsWith("spiffe://")) {
+                    String formClientId = request.getParam(Parameters.CLIENT_ID);
+                    clientId = (formClientId != null && !formClientId.isEmpty()) ? formClientId : sub;
+                }
                 // For blueprint-agent jwt-bearer assertions the blueprint client_id is in
                 // "iss" (not "sub") because "sub" carries the agent instance ID which is
                 // not a registered client. Detected by shape: iss is a URI (CIMD) or
                 // iss != sub. Standard RFC 7523 assertions have iss == sub == client_id.
-                if (iss != null && (isUri(iss) || (sub != null && !iss.equals(sub)))) {
+                else if (iss != null && (isUri(iss) || (sub != null && !iss.equals(sub)))) {
                     clientId = iss;
                 } else {
                     clientId = sub;
