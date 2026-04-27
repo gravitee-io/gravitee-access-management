@@ -40,6 +40,13 @@ import {
   PatchCIBASettingsToJSON,
   PatchCIBASettingsToJSONTyped,
 } from './PatchCIBASettings';
+import type { PatchSpiffeDomainSettings } from './PatchSpiffeDomainSettings';
+import {
+  PatchSpiffeDomainSettingsFromJSON,
+  PatchSpiffeDomainSettingsFromJSONTyped,
+  PatchSpiffeDomainSettingsToJSON,
+  PatchSpiffeDomainSettingsToJSONTyped,
+} from './PatchSpiffeDomainSettings';
 import type { PatchClientRegistrationSettings } from './PatchClientRegistrationSettings';
 import {
   PatchClientRegistrationSettingsFromJSON,
@@ -109,6 +116,12 @@ export interface PatchOIDCSettings {
    * @memberof PatchOIDCSettings
    */
   securityProfileSettings?: PatchSecurityProfileSettings;
+  /**
+   *
+   * @type {PatchSpiffeDomainSettings}
+   * @memberof PatchOIDCSettings
+   */
+  spiffeSettings?: PatchSpiffeDomainSettings;
 }
 
 /**
@@ -163,6 +176,7 @@ export const PatchOIDCSettingsRequiredPermissionsEnum = {
   DomainAuthdeviceNotifier: 'DOMAIN_AUTHDEVICE_NOTIFIER',
   DomainI18NDictionary: 'DOMAIN_I18N_DICTIONARY',
   DomainTheme: 'DOMAIN_THEME',
+  DomainTrustDomain: 'DOMAIN_TRUST_DOMAIN',
   Application: 'APPLICATION',
   ApplicationSettings: 'APPLICATION_SETTINGS',
   ApplicationIdentityProvider: 'APPLICATION_IDENTITY_PROVIDER',
@@ -213,6 +227,7 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : PatchSecurityProfileSettingsFromJSON(json['securityProfileSettings']),
+    spiffeSettings: json['spiffeSettings'] == null ? undefined : PatchSpiffeDomainSettingsFromJSON(json['spiffeSettings']),
   };
 }
 
@@ -234,5 +249,6 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
     requestUris: value['requestUris'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
     securityProfileSettings: PatchSecurityProfileSettingsToJSON(value['securityProfileSettings']),
+    spiffeSettings: PatchSpiffeDomainSettingsToJSON(value['spiffeSettings']),
   };
 }
