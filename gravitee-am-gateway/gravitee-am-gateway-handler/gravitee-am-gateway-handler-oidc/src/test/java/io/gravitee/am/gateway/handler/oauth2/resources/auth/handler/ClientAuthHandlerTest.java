@@ -171,7 +171,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvoke_clientCredentials_privateJWT_privateJWTTokenAuthMethod() throws Exception {
         Client client = mock(Client.class);
-        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString(), any())).thenReturn(Maybe.just(client));
         when(clientLookupService.findByClientId("client_id")).thenReturn(Maybe.just(client));
         testRequest(
                 HttpMethod.POST,
@@ -186,7 +186,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(client.isTlsClientCertificateBoundAccessTokens()).thenReturn(true);
         when(clientLookupService.findByClientId("client_id")).thenReturn(Maybe.just(client));
 
-        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString(), any())).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.POST,
@@ -197,7 +197,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvoke_clientCredentials_clientSecret_clientSecretJWTTokenAuthMethod() throws Exception {
         Client client = mock(Client.class);
-        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString(), any())).thenReturn(Maybe.just(client));
         when(clientLookupService.findByClientId("client_id")).thenReturn(Maybe.just(client));
         testRequest(
                 HttpMethod.POST,
