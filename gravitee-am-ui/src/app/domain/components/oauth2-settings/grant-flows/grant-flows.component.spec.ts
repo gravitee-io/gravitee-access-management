@@ -20,8 +20,10 @@ jest.mock('@gravitee/ui-components/src/lib/utils', () => ({
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { of } from 'rxjs';
 
 import { DomainStoreService } from '../../../../stores/domain.store';
+import { TrustDomainService } from '../../../../services/trust-domain.service';
 
 import { GrantFlowsComponent } from './grant-flows.component';
 
@@ -58,7 +60,10 @@ describe('GrantFlowsComponent', () => {
       imports: [CommonModule],
       declarations: [GrantFlowsComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      providers: [{ provide: DomainStoreService, useValue: mockDomainStoreService }],
+      providers: [
+        { provide: DomainStoreService, useValue: mockDomainStoreService },
+        { provide: TrustDomainService, useValue: { list: () => of([]) } },
+      ],
     }).compileComponents();
   });
 
