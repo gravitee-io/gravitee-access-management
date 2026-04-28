@@ -76,6 +76,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -592,6 +593,64 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
         verify(auditService).report(any());
         verify(userService, never()).addFactor(any(), any(), any());
+    }
+
+    @Test
+    public void shouldPickActivatedFactor_whenPendingFactorIsOlder() throws Exception {
+        // AM-6875: when no factor is in session and the user has both an older PENDING_ACTIVATION
+        // factor and a newer ACTIVATED factor, getFactor() must select the ACTIVATED one.
+        final var endUser = new User();
+        EnrolledFactor pending = new EnrolledFactor();
+        pending.setFactorId("pending-factor");
+        pending.setStatus(FactorStatus.PENDING_ACTIVATION);
+        pending.setCreatedAt(new Date(1_000));
+        EnrolledFactor activated = new EnrolledFactor();
+        activated.setFactorId("activated-factor");
+        activated.setStatus(FactorStatus.ACTIVATED);
+        activated.setCreatedAt(new Date(2_000));
+        endUser.setFactors(List.of(pending, activated));
+
+        router.route(HttpMethod.POST, "/mfa/challenge")
+                .order(-1)
+                .handler(routingContext -> {
+                    Client client = new Client();
+                    ApplicationFactorSettings pendingSettings = new ApplicationFactorSettings();
+                    pendingSettings.setId("pending-factor");
+                    ApplicationFactorSettings activatedSettings = new ApplicationFactorSettings();
+                    activatedSettings.setId("activated-factor");
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(pendingSettings, activatedSettings));
+                    client.setFactorSettings(factorSettings);
+                    routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    routingContext.next();
+                });
+
+        Factor activatedFactor = mock(Factor.class);
+        when(activatedFactor.getId()).thenReturn("activated-factor");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(false);
+        when(factorManager.getFactor("activated-factor")).thenReturn(activatedFactor);
+        when(factorManager.get("activated-factor")).thenReturn(factorProvider);
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
+
+        testRequest(HttpMethod.POST,
+                "/mfa/challenge",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("code=123456&factorId=activated-factor"));
+                },
+                res -> {
+                    String location = res.getHeader("Location");
+                    Assert.assertTrue(location.endsWith("/oauth/authorize"));
+                },
+                302,
+                "Found", null);
+
+        verify(factorManager).getFactor("activated-factor");
+        verify(factorManager, never()).getFactor("pending-factor");
     }
 
     @Test
