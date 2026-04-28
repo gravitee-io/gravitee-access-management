@@ -572,12 +572,19 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             throw FactorNotFoundException.withMessage("No factor found for the end user");
         }
 
-        return enrolledFactors
+        Optional<EnrolledFactor> firstPrimary = enrolledFactors
                 .stream()
                 .filter(e -> TRUE.equals(e.isPrimary()))
+                .findFirst();
+
+        Optional<EnrolledFactor> firstActivated = enrolledFactors
+                .stream()
+                .filter(e -> ACTIVATED.equals(e.getStatus()))
+                .findFirst();
+
+        return firstPrimary.or(() -> firstActivated)
                 .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
-                .findFirst()
-                .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
+                .orElseGet(() -> factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
     }
 
     private EnrolledFactor getEnrolledFactor(RoutingContext routingContext,

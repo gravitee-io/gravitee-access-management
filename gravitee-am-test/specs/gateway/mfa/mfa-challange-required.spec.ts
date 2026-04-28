@@ -17,7 +17,14 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, beforeEach, expect, jest } from '@jest/globals';
 import { Domain, enableDomain, initClient, initDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
-import { followUpGet, get, postForm, processMfaEndToEnd, processMfaEnrollment } from './fixture/mfa-flow-fixture';
+import {
+  followUpGet,
+  get,
+  postForm,
+  processMfaEndToEnd,
+  processMfaEnrollment,
+  processMfaEnrollmentForFactor,
+} from './fixture/mfa-flow-fixture';
 import { extractDomAttr, extractDomValue } from './fixture/mfa-extract-fixture';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
@@ -58,11 +65,12 @@ const domain = {
 } as Domain;
 
 beforeAll(async () => {
-  await initDomain(domain, 5);
+  await initDomain(domain, 6);
 
   const defaultClient1 = await initClient(domain, 'default-1', defaultApplicationSettings(domain));
   const defaultClient2 = await initClient(domain, 'default-2', defaultApplicationSettings(domain));
   const defaultClient3 = await initClient(domain, 'default-3', defaultApplicationSettings(domain));
+  const secondEnrollmentClient = await initClient(domain, 'second-enroll', defaultApplicationSettings(domain));
 
   const rememberDeviceClientSettings = defaultApplicationSettings(domain);
   rememberDeviceClientSettings.settings.mfa.rememberDevice = {
@@ -84,6 +92,7 @@ beforeAll(async () => {
   defaultClientCtx3 = new TestSuiteContext(domain, defaultClient3, domain.domain.users[2], oidc.body.authorization_endpoint);
   rememberMeCtx1 = new TestSuiteContext(domain, rememberDeviceClient1, domain.domain.users[3], oidc.body.authorization_endpoint);
   rememberMeCtx2 = new TestSuiteContext(domain, rememberDeviceClient2, domain.domain.users[4], oidc.body.authorization_endpoint);
+  secondEnrollmentCtx = new TestSuiteContext(domain, secondEnrollmentClient, domain.domain.users[5], oidc.body.authorization_endpoint);
 });
 
 afterAll(async () => {
@@ -95,6 +104,7 @@ let defaultClientCtx2: TestSuiteContext;
 let defaultClientCtx3: TestSuiteContext;
 let rememberMeCtx1: TestSuiteContext;
 let rememberMeCtx2: TestSuiteContext;
+let secondEnrollmentCtx: TestSuiteContext;
 
 describe('When Challenge REQUIRED and factor not enrolled', () =>
   it('should Enroll', async () => {
@@ -168,4 +178,52 @@ describe('When Challenge REQUIRED and factor enrolled and no session issued usin
 
     expect(authResponse.headers['location']).toBeDefined();
     expect(authResponse.headers['location']).toContain('code=');
+  }));
+
+describe('When user has a stale PENDING factor and a later ACTIVATED factor (AM-6875)', () =>
+  it('should challenge the ACTIVATED factor, not the older PENDING one', async () => {
+    const ctx = secondEnrollmentCtx;
+    const factorA = domain.domain.factors[0].id;
+    const factorB = domain.domain.factors[1].id;
+
+    const firstEnrollment = await processMfaEnrollmentForFactor(ctx, factorA);
+    const challengeAfterA = await get(firstEnrollment.location, 302, { Cookie: firstEnrollment.cookie });
+    await followUpGet(challengeAfterA, 200);
+
+    const secondEnrollment = await processMfaEnrollmentForFactor(ctx, factorB);
+    const challengeAfterB = await get(secondEnrollment.location, 302, { Cookie: secondEnrollment.cookie });
+    const challengePageB = await followUpGet(challengeAfterB, 200);
+
+    let xsrf = extractDomValue(challengePageB, '[name=X-XSRF-TOKEN]');
+    let action = extractDomAttr(challengePageB, 'form', 'action');
+    const challengePostB = await postForm(
+      action,
+      { 'X-XSRF-TOKEN': xsrf, factorId: factorB, code: '1234', rememberDeviceConsent: 'off' },
+      { Cookie: challengePageB.headers['set-cookie'], 'Content-type': 'application/x-www-form-urlencoded' },
+      302,
+    );
+    const finalAfterB = await followUpGet(challengePostB, 302);
+    expect(finalAfterB.headers['location']).toContain('code=');
+
+    const authResponse = await get(ctx.clientAuthUrl, 302);
+    const loginPage = await followUpGet(authResponse, 200);
+    xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+    action = extractDomAttr(loginPage, 'form', 'action');
+    const loginPostResponse = await postForm(
+      action,
+      {
+        'X-XSRF-TOKEN': xsrf,
+        username: ctx.user.username,
+        password: ctx.user.password,
+        client_id: ctx.client.clientId,
+      },
+      { Cookie: loginPage.headers['set-cookie'], 'Content-type': 'application/x-www-form-urlencoded' },
+      302,
+    );
+    const challengeLocation = await followUpGet(loginPostResponse, 302);
+    const challengePage = await followUpGet(challengeLocation, 200);
+
+    const challengedFactorId = extractDomValue(challengePage, '[name=factorId]');
+    expect(challengedFactorId).toBe(factorB);
+    expect(challengedFactorId).not.toBe(factorA);
   }));
