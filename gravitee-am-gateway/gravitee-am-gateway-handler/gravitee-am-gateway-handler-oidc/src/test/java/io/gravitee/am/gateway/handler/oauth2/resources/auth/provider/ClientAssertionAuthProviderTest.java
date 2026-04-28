@@ -71,7 +71,7 @@ public class ClientAssertionAuthProviderTest {
         when(context.request()).thenReturn(httpServerRequest);
         when(context.get(CONTEXT_PATH)).thenReturn("/");
 
-        when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(any(),any(),any(),any())).thenReturn(Maybe.just(client));
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.handle(client, context, clientAsyncResult -> {
@@ -93,7 +93,7 @@ public class ClientAssertionAuthProviderTest {
         when(context.request()).thenReturn(httpServerRequest);
         when(context.get(CONTEXT_PATH)).thenReturn("/");
 
-        when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.error(new InvalidClientException("Unknown or unsupported assertion_type")));
+        when(clientAssertionService.assertClient(any(),any(),any(),any())).thenReturn(Maybe.error(new InvalidClientException("Unknown or unsupported assertion_type")));
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.handle(client, context, clientAsyncResult -> {
@@ -110,7 +110,7 @@ public class ClientAssertionAuthProviderTest {
     public void unauthorized_invalidClient_clientDoesNotMatch() throws Exception {
         Client client = Mockito.mock(Client.class);
         when(client.getClientId()).thenReturn(CLIENT_ID);
-        when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(any(),any(),any(),any())).thenReturn(Maybe.just(client));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
