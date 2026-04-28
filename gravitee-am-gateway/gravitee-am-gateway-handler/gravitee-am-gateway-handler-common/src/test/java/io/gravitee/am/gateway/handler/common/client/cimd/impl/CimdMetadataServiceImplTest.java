@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentMan
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -253,6 +254,9 @@ public class CimdMetadataServiceImplTest {
 
     @Test
     public void shouldSynthesizeClientWithMetadataValues() {
+        Client template = templateClient();
+        template.setAuthorizedGrantTypes(List.of("authorization_code", "client_credentials"));
+        template.setResponseTypes(List.of("code", "token"));
         JsonObject metadata = new JsonObject()
                 .put("client_id", CLIENT_URL)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
@@ -263,7 +267,7 @@ public class CimdMetadataServiceImplTest {
                 .put("response_types", new JsonArray().add("token"));
         mockFetchSuccess(metadata.encode());
 
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -381,7 +385,7 @@ public class CimdMetadataServiceImplTest {
     @Test
     public void shouldDefaultGrantTypesToAuthorizationCodeWhenAbsent() {
         Client template = templateClient();
-        template.setAuthorizedGrantTypes(List.of("client_credentials"));
+        // template already includes authorization_code — default intersects to ["authorization_code"]
         JsonObject metadata = new JsonObject()
                 .put("client_id", CLIENT_URL)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
@@ -396,9 +400,45 @@ public class CimdMetadataServiceImplTest {
     }
 
     @Test
+    public void shouldIntersectGrantTypesWithTemplate() {
+        Client template = templateClient();
+        template.setAuthorizedGrantTypes(List.of("authorization_code"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("grant_types", new JsonArray().add("authorization_code").add("client_credentials"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> List.of("authorization_code").equals(client.getAuthorizedGrantTypes()));
+    }
+
+    @Test
+    public void shouldExcludeGrantTypesNotInTemplate() {
+        Client template = templateClient();
+        template.setAuthorizedGrantTypes(List.of("authorization_code"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("grant_types", new JsonArray().add("client_credentials"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizedGrantTypes().isEmpty());
+    }
+
+    @Test
     public void shouldDefaultResponseTypesToCodeWhenAbsent() {
         Client template = templateClient();
-        template.setResponseTypes(List.of("token"));
+        // template already includes code — default intersects to ["code"]
         JsonObject metadata = new JsonObject()
                 .put("client_id", CLIENT_URL)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
@@ -410,6 +450,151 @@ public class CimdMetadataServiceImplTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(client -> List.of("code").equals(client.getResponseTypes()));
+    }
+
+    @Test
+    public void shouldIntersectResponseTypesWithTemplate() {
+        Client template = templateClient();
+        template.setResponseTypes(List.of("code"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("response_types", new JsonArray().add("code").add("token"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> List.of("code").equals(client.getResponseTypes()));
+    }
+
+    @Test
+    public void shouldExcludeResponseTypesNotInTemplate() {
+        Client template = templateClient();
+        template.setResponseTypes(List.of("code"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("response_types", new JsonArray().add("token"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> client.getResponseTypes().isEmpty());
+    }
+
+    @Test
+    public void shouldIntersectScopeWithTemplateScopes() {
+        Client template = templateClient();
+        template.setScopeSettings(List.of(
+                scopeSetting("read", false),
+                scopeSetting("write", false)));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("scope", "read");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client ->
+                client.getScopeSettings() != null
+                        && client.getScopeSettings().size() == 1
+                        && "read".equals(client.getScopeSettings().get(0).getScope()));
+    }
+
+    @Test
+    public void shouldPreserveDefaultScopesWithinIntersection() {
+        Client template = templateClient();
+        template.setScopeSettings(List.of(
+                scopeSetting("read", true),
+                scopeSetting("write", false)));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("scope", "read write");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client ->
+                client.getScopeSettings() != null
+                        && client.getScopeSettings().size() == 2
+                        && client.getScopeSettings().stream().anyMatch(s -> "read".equals(s.getScope()) && s.isDefaultScope())
+                        && client.getScopeSettings().stream().anyMatch(s -> "write".equals(s.getScope()) && !s.isDefaultScope()));
+    }
+
+    @Test
+    public void shouldRestrictDefaultScopeWhenExcludedByIntersection() {
+        Client template = templateClient();
+        template.setScopeSettings(List.of(
+                scopeSetting("read", true)));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("scope", "write");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client ->
+                client.getScopeSettings() != null && client.getScopeSettings().isEmpty());
+    }
+
+    @Test
+    public void shouldPreserveTemplateScopesWhenScopeIsBlankInMetadata() {
+        Client template = templateClient();
+        template.setScopeSettings(List.of(scopeSetting("read", true)));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("scope", "");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client ->
+                client.getScopeSettings() != null
+                        && client.getScopeSettings().size() == 1
+                        && "read".equals(client.getScopeSettings().get(0).getScope()));
+    }
+
+    @Test
+    public void shouldPreserveTemplateScopesWhenNoScopeInMetadata() {
+        Client template = templateClient();
+        template.setScopeSettings(List.of(
+                scopeSetting("read", true),
+                scopeSetting("write", false)));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client ->
+                client.getScopeSettings() != null
+                        && client.getScopeSettings().size() == 2);
     }
 
     @Test
@@ -908,5 +1093,11 @@ public class CimdMetadataServiceImplTest {
         template.setClientSecrets(List.of(new ClientSecret()));
         template.setSecretSettings(List.of(new ApplicationSecretSettings()));
         return template;
+    }
+
+    private ApplicationScopeSettings scopeSetting(String scope, boolean defaultScope) {
+        ApplicationScopeSettings s = new ApplicationScopeSettings(scope);
+        s.setDefaultScope(defaultScope);
+        return s;
     }
 }

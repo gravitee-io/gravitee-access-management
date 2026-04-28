@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentMan
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import lombok.extern.slf4j.Slf4j;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -48,6 +49,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -310,8 +313,15 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             throw new InvalidClientMetadataException("private_key_jwt requires jwks or jwks_uri.");
         }
 
-        final List<String> grantTypes = readOptionalStringArray(metadata, "grant_types", DEFAULT_GRANT_TYPES);
-        final List<String> responseTypes = readOptionalStringArray(metadata, "response_types", DEFAULT_RESPONSE_TYPES);
+        final List<String> grantTypes = intersect(
+                readOptionalStringArray(metadata, "grant_types", DEFAULT_GRANT_TYPES),
+                templateClient.getAuthorizedGrantTypes());
+        final List<String> responseTypes = intersect(
+                readOptionalStringArray(metadata, "response_types", DEFAULT_RESPONSE_TYPES),
+                templateClient.getResponseTypes());
+        final List<ApplicationScopeSettings> scopes = intersectScopes(
+                metadata.getString("scope"),
+                templateClient.getScopeSettings());
 
         final Client synthesizedClient;
         try {
@@ -325,6 +335,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         synthesizedClient.setTokenEndpointAuthMethod(tokenEndpointAuthMethod);
         synthesizedClient.setAuthorizedGrantTypes(grantTypes);
         synthesizedClient.setResponseTypes(responseTypes);
+        synthesizedClient.setScopeSettings(scopes);
         synthesizedClient.setClientName(metadata.getString("client_name", synthesizedClient.getClientName()));
         final String logoUri = metadata.getString("logo_uri");
         if (logoUri != null && !logoUri.isBlank()) {
@@ -375,6 +386,25 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     private List<String> readOptionalStringArray(JsonObject metadata, String key, List<String> defaultValue) {
         final List<String> values = readOptionalStringArray(metadata, key);
         return values != null ? values : defaultValue;
+    }
+
+    private static List<String> intersect(List<String> requested, List<String> allowed) {
+        if (requested == null || requested.isEmpty() || allowed == null || allowed.isEmpty()) {
+            return List.of();
+        }
+        final var allowedSet = new HashSet<>(allowed);
+        return requested.stream().filter(allowedSet::contains).toList();
+    }
+
+    private static List<ApplicationScopeSettings> intersectScopes(
+            String requested, List<ApplicationScopeSettings> templateScopes) {
+        if (requested == null || requested.isBlank() || templateScopes == null || templateScopes.isEmpty()) {
+            return templateScopes;
+        }
+        final Set<String> scopes = new HashSet<>(Arrays.asList(requested.split("\\s+")));
+        return templateScopes.stream()
+                .filter(s -> scopes.contains(s.getScope()))
+                .toList();
     }
 
     private JWKSet toModelJwkSet(JsonObject jwksAsJson) {
