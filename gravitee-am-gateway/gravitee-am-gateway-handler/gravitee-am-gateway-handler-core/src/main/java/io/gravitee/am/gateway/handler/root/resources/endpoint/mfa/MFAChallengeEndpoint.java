@@ -85,6 +85,7 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.ge
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.lang.Boolean.TRUE;
 
@@ -284,12 +285,19 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             throw FactorNotFoundException.withMessage("No factor found for the end user");
         }
 
-        return enrolledFactors
+        Optional<EnrolledFactor> firstPrimary = enrolledFactors
                 .stream()
                 .filter(e -> TRUE.equals(e.isPrimary()))
+                .findFirst();
+
+        Optional<EnrolledFactor> firstActivated = enrolledFactors
+                .stream()
+                .filter(e -> ACTIVATED.equals(e.getStatus()))
+                .findFirst();
+
+        return firstPrimary.or(() -> firstActivated)
                 .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
-                .findFirst()
-                .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
+                .orElseGet(() -> factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
     }
 
     private EnrolledFactor getEnrolledFactor(RoutingContext routingContext,
