@@ -76,7 +76,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -320,6 +322,51 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
+    }
+
+    @Test
+    public void shouldPickActivatedFactor_whenPendingFactorIsOlder() {
+        // AM-6875: when no factor is in session and the user has both an older PENDING_ACTIVATION
+        // factor and a newer ACTIVATED factor, getFactor() must select the ACTIVATED one.
+        EnrolledFactor pending = new EnrolledFactor();
+        pending.setFactorId("pending-factor");
+        pending.setStatus(FactorStatus.PENDING_ACTIVATION);
+        pending.setCreatedAt(new Date(1_000));
+        EnrolledFactor activated = new EnrolledFactor();
+        activated.setFactorId("activated-factor");
+        activated.setStatus(FactorStatus.ACTIVATED);
+        activated.setCreatedAt(new Date(2_000));
+        User endUser = new User();
+        endUser.setFactors(List.of(pending, activated));
+
+        Factor activatedFactor = mock(Factor.class);
+        when(activatedFactor.getId()).thenReturn("activated-factor");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(false);
+        when(factorManager.getFactor("activated-factor")).thenReturn(activatedFactor);
+        when(factorManager.get("activated-factor")).thenReturn(factorProvider);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Set.of("pending-factor", "activated-factor"));
+        ApplicationFactorSettings pendingSettings = new ApplicationFactorSettings();
+        pendingSettings.setId("pending-factor");
+        ApplicationFactorSettings activatedSettings = new ApplicationFactorSettings();
+        activatedSettings.setId("activated-factor");
+        FactorSettings factorSettings = new FactorSettings();
+        factorSettings.setApplicationFactors(List.of(pendingSettings, activatedSettings));
+        client.setFactorSettings(factorSettings);
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+        mfaChallengeEndpoint.handle(spyRoutingContext);
+        awaitResponseEnd(spyRoutingContext);
+
+        verify(factorManager).getFactor("activated-factor");
+        verify(factorManager, never()).getFactor("pending-factor");
     }
 
     @Test
