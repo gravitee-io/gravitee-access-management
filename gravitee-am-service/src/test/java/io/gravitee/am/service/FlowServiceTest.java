@@ -33,6 +33,8 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -542,8 +544,8 @@ public class FlowServiceTest {
         observer.assertNoErrors();
 
         observer.assertValue(flows -> {
-            Optional<Flow> flow = flows.stream().filter(f -> f.getType() == Type.REGISTER).findFirst();
-            return flow.isPresent() 
+                    Optional<Flow> flow = flows.stream().filter(f -> f.getType() == Type.REGISTER).findFirst();
+                    return flow.isPresent()
                             && !flow.get().getId().equals(existingFlow.getId())
                             && flow.get().getApplication().equals(clientTargetId)
                             && flow.get().getReferenceId().equals(DOMAIN)
@@ -568,8 +570,8 @@ public class FlowServiceTest {
         String rand = UUID.randomUUID().toString();
         Flow flow = new Flow();
         flow.setName("ROOT" + rand);
-        flow.setCreatedAt(new Date());
-        flow.setUpdatedAt(new Date());
+        flow.setCreatedAt(new Date(Instant.now().minus(10, ChronoUnit.SECONDS).toEpochMilli()));
+        flow.setUpdatedAt(flow.getCreatedAt());
         flow.setCondition("condition" + rand);
         flow.setEnabled(true);
         flow.setOrder(5);
