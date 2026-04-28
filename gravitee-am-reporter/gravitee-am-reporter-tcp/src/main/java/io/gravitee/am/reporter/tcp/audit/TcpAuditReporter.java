@@ -95,7 +95,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * <p>Multiple reporter instances pointing to the same TCP endpoint share a single
  * {@link TcpWriteStream} through the {@link WriteStreamRegistry}. Each instance keeps
- * its own fallback file (unique per reporter context).</p>
+ * its own fallback file (unique path per reporter context).</p>
  *
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -205,6 +205,7 @@ public class TcpAuditReporter extends AbstractService<Reporter> implements Audit
 
 
         tcpWriteStream.addReconnectHandler(onReconnectHandler);
+        restoreHasFallbackFromDisk();
 
         log.info("TCP reporter started → {}:{} (context={})",
                 tcpWriteStream.getHost(), tcpWriteStream.getPort(), context);
@@ -425,10 +426,29 @@ public class TcpAuditReporter extends AbstractService<Reporter> implements Audit
     // -------------------------------------------------------------------------
 
     private void onReconnect() {
-        log.info("TCP connection (re-)established. Checking fallback file…");
         if (hasFallback.get()) {
+            log.info("TCP connection (re-)established — fallback file present, starting drain…");
             drainFallbackAsync();
+        } else {
+            log.info("TCP connection (re-)established — no fallback file to drain");
         }
+    }
+
+    private void restoreHasFallbackFromDisk() {
+        if (!fallbackFileEnabled) return;
+        buildFileList()
+                .onSuccess(files -> {
+                    if (!files.isEmpty()) {
+                        log.info("Found {} leftover fallback file(s) from a previous run — will drain when connected",
+                                files.size());
+                        hasFallback.set(true);
+                        TcpWriteStream s = tcpWriteStream;
+                        if (s != null && s.isConnected()) {
+                            drainFallbackAsync();
+                        }
+                    }
+                })
+                .onFailure(err -> log.warn("Could not enumerate fallback files on startup: {}", err.getMessage()));
     }
 
     /**
@@ -887,8 +907,7 @@ public class TcpAuditReporter extends AbstractService<Reporter> implements Audit
 
         Files.createDirectories(dir);
 
-        String fileId = "tcp-fallback-" + Math.abs(Objects.hash(
-                config.getHost(), config.getPort(), context));
+        String fileId = "tcp-fallback-" + Math.abs(Objects.hash(config.getHost(), config.getPort()));
         return dir.resolve(fileId + ".b64").toAbsolutePath().toString();
     }
 

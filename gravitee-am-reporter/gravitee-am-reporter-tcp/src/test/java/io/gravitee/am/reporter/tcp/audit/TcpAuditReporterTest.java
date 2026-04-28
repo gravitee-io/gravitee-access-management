@@ -34,12 +34,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,6 +49,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,6 +57,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.*;
 
 /**
@@ -66,6 +71,9 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TcpAuditReporterTest {
 
+    private static final long FALLBACK_ASSERT_TIMEOUT_MS = 10_000;
+    private static final long FALLBACK_POLL_INTERVAL_MS = 25;
+
     @TempDir
     Path tempDir;
 
@@ -75,33 +83,28 @@ class TcpAuditReporterTest {
     @Mock
     private TcpWriteStream tcpWriteStream;
 
+    @Mock
     private WriteStreamRegistry writeStreamRegistry;
-    private GraviteeContext context;
+
     private MockEnvironment environment;
+    private GraviteeContext context;
+
+    @InjectMocks
+    private TcpAuditReporter reporter;
 
     @BeforeEach
     void setUp() {
         when(node.id()).thenReturn("node-id");
         when(node.hostname()).thenReturn("node-hostname");
 
-        context = GraviteeContext.defaultContext("my-domain");
-
         environment = new MockEnvironment();
         environment.setProperty(TcpAuditReporter.PROP_FALLBACK_DIR, tempDir.toString());
         environment.setProperty(TcpAuditReporter.PROP_FALLBACK_DIR_ENABLED, "true");
 
-        writeStreamRegistry = new WriteStreamRegistry() {
-            @Override
-            public io.vertx.core.streams.WriteStream getOrCreate(String streamId,
-                                                                  java.util.function.Supplier<io.vertx.core.streams.WriteStream> supplier) {
-                return tcpWriteStream;
-            }
+        context = GraviteeContext.defaultContext("my-domain");
 
-            @Override
-            public Optional<io.vertx.core.streams.WriteStream> decreaseUsage(String streamId) {
-                return Optional.empty();
-            }
-        };
+        lenient().when(writeStreamRegistry.getOrCreate(anyString(), any())).thenReturn(tcpWriteStream);
+        lenient().when(writeStreamRegistry.decreaseUsage(anyString())).thenReturn(Optional.empty());
     }
 
     private TcpReporterConfiguration defaultConfig() {
@@ -112,19 +115,12 @@ class TcpAuditReporterTest {
         return cfg;
     }
 
-    private TcpAuditReporter buildReporter() throws Exception {
-        return buildReporter(defaultConfig());
-    }
-
-    private TcpAuditReporter buildReporter(TcpReporterConfiguration cfg) throws Exception {
-        Vertx realVertx = Vertx.vertx();
-        TcpAuditReporter reporter = new TcpAuditReporter();
-        setPrivateField(reporter, "config", cfg);
-        setPrivateField(reporter, "environment", environment);
-        setPrivateField(reporter, "vertx", realVertx);
-        setPrivateField(reporter, "context", context);
-        setPrivateField(reporter, "writeStreamRegistry", writeStreamRegistry);
-        setPrivateField(reporter, "node", node);
+    private void startReporter() throws Exception {
+        TcpReporterConfiguration cfg = defaultConfig();
+        ReflectionTestUtils.setField(reporter, "config", cfg);
+        ReflectionTestUtils.setField(reporter, "environment", environment);
+        ReflectionTestUtils.setField(reporter, "vertx", Vertx.vertx());
+        ReflectionTestUtils.setField(reporter, "context", context);
 
         StaticApplicationContext appCtx = new StaticApplicationContext();
         appCtx.refresh();
@@ -132,7 +128,6 @@ class TcpAuditReporterTest {
 
         reporter.afterPropertiesSet();
         reporter.start();
-        return reporter;
     }
 
     // -------------------------------------------------------------------------
@@ -141,7 +136,7 @@ class TcpAuditReporterTest {
 
     @Test
     void canHandle_shouldReturnTrue_forAudit() throws Exception {
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         assertThat(reporter.canHandle(buildAudit())).isTrue();
     }
 
@@ -154,7 +149,7 @@ class TcpAuditReporterTest {
         when(tcpWriteStream.isConnected()).thenReturn(true);
         when(tcpWriteStream.write(any(Buffer.class))).thenReturn(Future.succeededFuture());
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         reporter.report(buildAudit());
 
         verify(tcpWriteStream).write(any(Buffer.class));
@@ -166,7 +161,7 @@ class TcpAuditReporterTest {
         ArgumentCaptor<Buffer> bufferCaptor = ArgumentCaptor.forClass(Buffer.class);
         when(tcpWriteStream.write(bufferCaptor.capture())).thenReturn(Future.succeededFuture());
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         reporter.report(buildAudit());
 
         String json = bufferCaptor.getValue().toString();
@@ -180,7 +175,7 @@ class TcpAuditReporterTest {
         ArgumentCaptor<Buffer> bufferCaptor = ArgumentCaptor.forClass(Buffer.class);
         when(tcpWriteStream.write(bufferCaptor.capture())).thenReturn(Future.succeededFuture());
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         reporter.report(buildAudit());
 
         String json = bufferCaptor.getValue().toString();
@@ -194,7 +189,7 @@ class TcpAuditReporterTest {
         ArgumentCaptor<Buffer> bufferCaptor = ArgumentCaptor.forClass(Buffer.class);
         when(tcpWriteStream.write(bufferCaptor.capture())).thenReturn(Future.succeededFuture());
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         Audit audit = buildAudit();
         audit.getAccessPoint().setIpAddress("not-an-ip");
         reporter.report(audit);
@@ -209,7 +204,7 @@ class TcpAuditReporterTest {
         ArgumentCaptor<Buffer> bufferCaptor = ArgumentCaptor.forClass(Buffer.class);
         when(tcpWriteStream.write(bufferCaptor.capture())).thenReturn(Future.succeededFuture());
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         Audit audit = buildAudit();
         audit.getActor().setAttributes(Collections.singletonMap("sensitiveKey", "sensitiveValue"));
         audit.getTarget().setAttributes(Collections.singletonMap("targetKey", "targetValue"));
@@ -228,11 +223,8 @@ class TcpAuditReporterTest {
     void report_shouldWriteToFallbackFile_whenTcpNotConnected() throws Exception {
         when(tcpWriteStream.isConnected()).thenReturn(false);
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         reporter.report(buildAudit());
-
-        // Give async write time to complete
-        Thread.sleep(500);
 
         assertFallbackFileContainsEntries(1);
     }
@@ -242,10 +234,9 @@ class TcpAuditReporterTest {
         when(tcpWriteStream.isConnected()).thenReturn(true);
         when(tcpWriteStream.write(any(Buffer.class))).thenReturn(Future.failedFuture("socket error"));
 
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         reporter.report(buildAudit());
 
-        Thread.sleep(500);
         assertFallbackFileContainsEntries(1);
     }
 
@@ -253,12 +244,13 @@ class TcpAuditReporterTest {
     void report_multipleFailures_shouldAppendAllToFallbackFile() throws Exception {
         when(tcpWriteStream.isConnected()).thenReturn(false);
 
-        TcpAuditReporter reporter = buildReporter();
-        for (int i = 0; i < 3; i++) {
-            reporter.report(buildAudit());
-        }
+        startReporter();
+        reporter.report(buildAudit());
+        awaitFallbackLineCountAtLeast(1);
+        reporter.report(buildAudit());
+        awaitFallbackLineCountAtLeast(2);
+        reporter.report(buildAudit());
 
-        Thread.sleep(600);
         assertFallbackFileContainsEntries(3);
     }
 
@@ -275,22 +267,17 @@ class TcpAuditReporterTest {
         when(tcpWriteStream.isConnected()).thenReturn(true);
         when(tcpWriteStream.write(any(Buffer.class))).thenReturn(Future.succeededFuture());
 
-        TcpAuditReporter reporter = buildReporter();
-        // Inject the fallback state and file path
-        setPrivateField(reporter, "hasFallback", new AtomicBoolean(true));
-        setPrivateField(reporter, "fallbackFile", fallbackPath.toString());
+        startReporter();
+        requireHasFallbackTrue();
+        ReflectionTestUtils.setField(reporter, "fallbackFile", fallbackPath.toString());
 
         // A successful write triggers fallback drain
         reporter.report(buildAudit());
 
-        // Wait for drain to complete
-        Thread.sleep(800);
-
         // 3 fallback entries + 1 nominal entry = at least 4 writes
-        verify(tcpWriteStream, atLeast(4)).write(any(Buffer.class));
+        verify(tcpWriteStream, timeout(FALLBACK_ASSERT_TIMEOUT_MS).atLeast(4)).write(any(Buffer.class));
 
-        // Fallback file should be deleted after successful drain
-        assertThat(fallbackPath).doesNotExist();
+        awaitPathAbsent(fallbackPath);
     }
 
     @Test
@@ -308,15 +295,53 @@ class TcpAuditReporterTest {
                     return Future.succeededFuture();
                 });
 
-        TcpAuditReporter reporter = buildReporter();
-        setPrivateField(reporter, "hasFallback", new AtomicBoolean(true));
-        setPrivateField(reporter, "fallbackFile", fallbackPath.toString());
+        startReporter();
+        requireHasFallbackTrue();
+        ReflectionTestUtils.setField(reporter, "fallbackFile", fallbackPath.toString());
 
         reporter.report(buildAudit());
-        Thread.sleep(600);
+
+        verify(tcpWriteStream, timeout(FALLBACK_ASSERT_TIMEOUT_MS).atLeast(2)).write(any(Buffer.class));
 
         // File should still exist with remaining entries
         assertThat(fallbackPath).exists();
+    }
+
+    // -------------------------------------------------------------------------
+    // doStart() — restore hasFallback from disk
+    // -------------------------------------------------------------------------
+
+    @Test
+    void doStart_shouldSetHasFallback_whenFallbackFileExistsFromPreviousRun() throws Exception {
+        Path fallbackPath = expectedFallbackFilePath();
+        Files.createDirectories(fallbackPath.getParent());
+        Files.writeString(fallbackPath,
+                Base64.getEncoder().encodeToString("{\"id\":\"x\",\"type\":\"USER_LOGIN\"}".getBytes()) + "\n");
+
+        when(tcpWriteStream.isConnected()).thenReturn(false);
+        startReporter();
+
+        awaitHasFallbackTrue();
+    }
+
+    @Test
+    void doStart_shouldDrainFallbackFile_whenAlreadyConnectedOnStartup() throws Exception {
+        Path fallbackPath = expectedFallbackFilePath();
+        Files.createDirectories(fallbackPath.getParent());
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            sb.append(Base64.getEncoder().encodeToString(("{\"id\":\"" + i + "\",\"type\":\"USER_LOGIN\"}").getBytes()))
+              .append('\n');
+        }
+        Files.writeString(fallbackPath, sb.toString());
+
+        when(tcpWriteStream.isConnected()).thenReturn(true);
+        when(tcpWriteStream.write(any(Buffer.class))).thenReturn(Future.succeededFuture());
+
+        startReporter();
+
+        verify(tcpWriteStream, timeout(FALLBACK_ASSERT_TIMEOUT_MS).atLeast(2)).write(any(Buffer.class));
+        awaitPathAbsent(fallbackPath);
     }
 
     // -------------------------------------------------------------------------
@@ -325,13 +350,13 @@ class TcpAuditReporterTest {
 
     @Test
     void canSearch_shouldReturnFalse() throws Exception {
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         assertThat(reporter.canSearch()).isFalse();
     }
 
     @Test
     void search_shouldThrowIllegalState() throws Exception {
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         assertThatThrownBy(() -> reporter.search(ReferenceType.DOMAIN, "id", null, 0, 10).blockingGet())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("TCP reporter");
@@ -339,14 +364,14 @@ class TcpAuditReporterTest {
 
     @Test
     void aggregate_shouldThrowIllegalState() throws Exception {
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         assertThatThrownBy(() -> reporter.aggregate(ReferenceType.DOMAIN, "id", null, null).blockingGet())
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void findById_shouldThrowIllegalState() throws Exception {
-        TcpAuditReporter reporter = buildReporter();
+        startReporter();
         assertThatThrownBy(() -> reporter.findById(ReferenceType.DOMAIN, "id", "auditId").blockingGet())
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -356,52 +381,52 @@ class TcpAuditReporterTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void buildStreamKey_shouldBeStableForSameEndpoint() throws Exception {
-        TcpAuditReporter reporterA = new TcpAuditReporter();
+    void buildStreamKey_shouldBeStableForSameEndpoint() {
         TcpReporterConfiguration cfgA = new TcpReporterConfiguration();
         cfgA.setHost("host1");
         cfgA.setPort(9000);
-        setPrivateField(reporterA, "config", cfgA);
+        TcpAuditReporter reporterA = new TcpAuditReporter();
+        ReflectionTestUtils.setField(reporterA, "config", cfgA);
 
-        TcpAuditReporter reporterB = new TcpAuditReporter();
         TcpReporterConfiguration cfgB = new TcpReporterConfiguration();
         cfgB.setHost("host1");
         cfgB.setPort(9000);
-        setPrivateField(reporterB, "config", cfgB);
+        TcpAuditReporter reporterB = new TcpAuditReporter();
+        ReflectionTestUtils.setField(reporterB, "config", cfgB);
 
         assertThat(reporterA.buildStreamKey()).isEqualTo(reporterB.buildStreamKey());
     }
 
     @Test
-    void buildStreamKey_shouldDifferForDifferentHosts() throws Exception {
-        TcpAuditReporter reporterA = new TcpAuditReporter();
+    void buildStreamKey_shouldDifferForDifferentHosts() {
         TcpReporterConfiguration cfgA = new TcpReporterConfiguration();
         cfgA.setHost("host1");
         cfgA.setPort(9000);
-        setPrivateField(reporterA, "config", cfgA);
+        TcpAuditReporter reporterA = new TcpAuditReporter();
+        ReflectionTestUtils.setField(reporterA, "config", cfgA);
 
-        TcpAuditReporter reporterB = new TcpAuditReporter();
         TcpReporterConfiguration cfgB = new TcpReporterConfiguration();
         cfgB.setHost("host2");
         cfgB.setPort(9000);
-        setPrivateField(reporterB, "config", cfgB);
+        TcpAuditReporter reporterB = new TcpAuditReporter();
+        ReflectionTestUtils.setField(reporterB, "config", cfgB);
 
         assertThat(reporterA.buildStreamKey()).isNotEqualTo(reporterB.buildStreamKey());
     }
 
     @Test
-    void buildStreamKey_shouldDifferForDifferentPorts() throws Exception {
-        TcpAuditReporter reporterA = new TcpAuditReporter();
+    void buildStreamKey_shouldDifferForDifferentPorts() {
         TcpReporterConfiguration cfgA = new TcpReporterConfiguration();
         cfgA.setHost("host1");
         cfgA.setPort(9000);
-        setPrivateField(reporterA, "config", cfgA);
+        TcpAuditReporter reporterA = new TcpAuditReporter();
+        ReflectionTestUtils.setField(reporterA, "config", cfgA);
 
-        TcpAuditReporter reporterB = new TcpAuditReporter();
         TcpReporterConfiguration cfgB = new TcpReporterConfiguration();
         cfgB.setHost("host1");
         cfgB.setPort(9001);
-        setPrivateField(reporterB, "config", cfgB);
+        TcpAuditReporter reporterB = new TcpAuditReporter();
+        ReflectionTestUtils.setField(reporterB, "config", cfgB);
 
         assertThat(reporterA.buildStreamKey()).isNotEqualTo(reporterB.buildStreamKey());
     }
@@ -409,6 +434,11 @@ class TcpAuditReporterTest {
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    private void requireHasFallbackTrue() {
+        AtomicBoolean hasFallback = (AtomicBoolean) ReflectionTestUtils.getField(reporter, "hasFallback");
+        hasFallback.set(true);
+    }
 
     private Audit buildAudit() {
         String random = UUID.randomUUID().toString();
@@ -449,25 +479,95 @@ class TcpAuditReporterTest {
         return audit;
     }
 
-    private void assertFallbackFileContainsEntries(int expectedCount) throws IOException {
-        Path fallbackDir = tempDir.resolve(context.getOrganizationId())
+    private Path fallbackDirForContext() {
+        return tempDir.resolve(context.getOrganizationId())
                 .resolve(context.getEnvironmentId())
                 .resolve(context.getDomainId());
-        assertThat(fallbackDir).exists();
+    }
 
-        long lineCount = Files.list(fallbackDir)
-                .filter(p -> p.toString().endsWith(".b64"))
-                .findFirst()
-                .map(p -> {
-                    try {
-                        return Files.lines(p).filter(l -> !l.isBlank()).count();
-                    } catch (IOException e) {
-                        return 0L;
-                    }
-                })
-                .orElse(0L);
+    /** Waits until the primary {@code *.b64} fallback file has at least {@code minLines} non-blank lines (async I/O). */
+    private void awaitFallbackLineCountAtLeast(int minLines) throws Exception {
+        Path fallbackDir = fallbackDirForContext();
+        long deadline = System.currentTimeMillis() + FALLBACK_ASSERT_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if (Files.isDirectory(fallbackDir)) {
+                long n = countNonBlankLinesInFirstB64File(fallbackDir);
+                if (n >= minLines) {
+                    return;
+                }
+            }
+            Thread.sleep(FALLBACK_POLL_INTERVAL_MS);
+        }
+        long n = Files.isDirectory(fallbackDir) ? countNonBlankLinesInFirstB64File(fallbackDir) : 0;
+        assertThat(n).as("non-blank lines in fallback *.b64 (expected at least %d)", minLines).isGreaterThanOrEqualTo(minLines);
+    }
 
-        assertThat(lineCount).isEqualTo(expectedCount);
+    /** {@link TcpAuditReporter#restoreHasFallbackFromDisk()} completes on the Vert.x event loop — poll the flag. */
+    private void awaitHasFallbackTrue() throws Exception {
+        long deadline = System.currentTimeMillis() + FALLBACK_ASSERT_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            AtomicBoolean hf = (AtomicBoolean) ReflectionTestUtils.getField(reporter, "hasFallback");
+            if (hf.get()) {
+                return;
+            }
+            Thread.sleep(FALLBACK_POLL_INTERVAL_MS);
+        }
+        AtomicBoolean hf = (AtomicBoolean) ReflectionTestUtils.getField(reporter, "hasFallback");
+        assertThat(hf.get()).as("hasFallback after restoreHasFallbackFromDisk").isTrue();
+    }
+
+    private void awaitPathAbsent(Path path) throws Exception {
+        long deadline = System.currentTimeMillis() + FALLBACK_ASSERT_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if (!Files.exists(path)) {
+                return;
+            }
+            Thread.sleep(FALLBACK_POLL_INTERVAL_MS);
+        }
+        assertThat(path).as("path should be removed after drain").doesNotExist();
+    }
+
+    /**
+     * Asserts the active TCP fallback file eventually contains {@code expectedCount} non-blank lines.
+     */
+    private void assertFallbackFileContainsEntries(int expectedCount) throws Exception {
+        Path fallbackDir = fallbackDirForContext();
+
+        long deadline = System.currentTimeMillis() + FALLBACK_ASSERT_TIMEOUT_MS;
+        long lineCount = 0;
+        while (System.currentTimeMillis() < deadline) {
+            if (Files.isDirectory(fallbackDir)) {
+                lineCount = countNonBlankLinesInFirstB64File(fallbackDir);
+                if (lineCount == expectedCount) {
+                    return;
+                }
+                if (lineCount > expectedCount) {
+                    break;
+                }
+            }
+            Thread.sleep(FALLBACK_POLL_INTERVAL_MS);
+        }
+
+        assertThat(fallbackDir).as("fallback directory should exist").exists();
+        assertThat(lineCount).as("non-blank line count in first *.b64 under fallback dir").isEqualTo(expectedCount);
+    }
+
+    private long countNonBlankLinesInFirstB64File(Path fallbackDir) throws IOException {
+        try (var paths = Files.list(fallbackDir)) {
+            return paths
+                    .filter(p -> p.toString().endsWith(".b64"))
+                    .findFirst()
+                    .map(p -> {
+                        try {
+                            try (var lines = Files.lines(p)) {
+                                return lines.filter(l -> !l.isBlank()).count();
+                            }
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .orElse(0L);
+        }
     }
 
     private Path prepareFallbackFileWithEntries(int count) throws IOException {
@@ -486,20 +586,18 @@ class TcpAuditReporterTest {
         return fallbackPath;
     }
 
-    private static void setPrivateField(Object target, String fieldName, Object value) throws Exception {
-        java.lang.reflect.Field field = findField(target.getClass(), fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-    }
-
-    private static java.lang.reflect.Field findField(Class<?> clazz, String name) throws NoSuchFieldException {
-        try {
-            return clazz.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
-            if (clazz.getSuperclass() != null) {
-                return findField(clazz.getSuperclass(), name);
-            }
-            throw e;
-        }
+    /**
+     * Returns the path that TcpAuditReporter will use for its fallback file, derived using
+     * the same formula as {@code resolveFallbackFile()} so tests can pre-populate it.
+     */
+    private Path expectedFallbackFilePath() throws IOException {
+        Path dir = tempDir
+                .resolve(context.getOrganizationId())
+                .resolve(context.getEnvironmentId())
+                .resolve(context.getDomainId());
+        Files.createDirectories(dir);
+        String fileId = "tcp-fallback-" + Math.abs(Objects.hash(
+                defaultConfig().getHost(), defaultConfig().getPort()));
+        return dir.resolve(fileId + ".b64");
     }
 }
