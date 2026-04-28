@@ -63,7 +63,7 @@ export async function processMfaEnrollment(ctx: TestSuiteContext, rememberDevice
     {
       'X-XSRF-TOKEN': xsrf,
       factorId: factorId,
-      ser_mfa_enrollment: true,
+      user_mfa_enrollment: true,
     },
     {
       Cookie: enrollmentPage.headers['set-cookie'],
@@ -76,6 +76,61 @@ export async function processMfaEnrollment(ctx: TestSuiteContext, rememberDevice
     cookie: enrollmentPostResponse.headers['set-cookie'],
     location: enrollmentPostResponse.headers['location'],
     factorId: factorId,
+  };
+}
+
+/**
+ * Like processMfaEnrollment, but submits the enrollment form with an explicit factorId,
+ * bypassing the page-rendered default. The endpoint validates that the chosen factorId is
+ * configured on the application (MFAEnrollEndpoint.getValidFactor), so it must be one of
+ * the application factors.
+ */
+export async function processMfaEnrollmentForFactor(ctx: TestSuiteContext, chosenFactorId: string) {
+  const authResponse = await get(ctx.clientAuthUrl, 302);
+  const loginPage = await followUpGet(authResponse, 200);
+
+  let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+  let action = extractDomAttr(loginPage, 'form', 'action');
+
+  const loginPostResponse = await postForm(
+    action,
+    {
+      'X-XSRF-TOKEN': xsrf,
+      username: ctx.user.username,
+      password: ctx.user.password,
+      client_id: ctx.client.clientId,
+    },
+    {
+      Cookie: loginPage.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
+    302,
+  );
+
+  const enrollLocationResponse = await followUpGet(loginPostResponse, 302);
+  const enrollmentPage = await followUpGet(enrollLocationResponse, 200);
+
+  xsrf = extractDomValue(enrollmentPage, '[name=X-XSRF-TOKEN]');
+  action = extractDomAttr(enrollmentPage, 'form', 'action');
+
+  const enrollmentPostResponse = await postForm(
+    action,
+    {
+      'X-XSRF-TOKEN': xsrf,
+      factorId: chosenFactorId,
+      user_mfa_enrollment: true,
+    },
+    {
+      Cookie: enrollmentPage.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
+    302,
+  );
+
+  return {
+    cookie: enrollmentPostResponse.headers['set-cookie'],
+    location: enrollmentPostResponse.headers['location'],
+    factorId: chosenFactorId,
   };
 }
 
