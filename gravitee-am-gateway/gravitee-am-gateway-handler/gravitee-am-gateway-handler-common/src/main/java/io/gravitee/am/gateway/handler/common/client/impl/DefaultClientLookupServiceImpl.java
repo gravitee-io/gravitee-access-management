@@ -37,6 +37,11 @@ public class DefaultClientLookupServiceImpl implements ClientLookupService {
     }
 
     @Override
+    public Maybe<Client> findById(String id) {
+        return clientSyncService.findById(id);
+    }
+
+    @Override
     public Maybe<Client> findByClientId(String clientId) {
         if (protectedResourceSyncService == null) {
             return clientSyncService.findByClientId(clientId);

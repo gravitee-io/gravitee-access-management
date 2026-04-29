@@ -54,6 +54,12 @@ public class CimdAwareClientLookupServiceImpl implements ClientLookupService {
     }
 
     @Override
+    public Maybe<Client> findById(String id) {
+        // id can only be an application id, so we can just use the default lookup service
+        return defaultClientLookupService.findById(id);
+    }
+
+    @Override
     public Maybe<Client> findByClientId(String clientId) {
         return defaultClientLookupService.findByClientId(clientId)
                 .switchIfEmpty(resolveFromCimd(clientId));
