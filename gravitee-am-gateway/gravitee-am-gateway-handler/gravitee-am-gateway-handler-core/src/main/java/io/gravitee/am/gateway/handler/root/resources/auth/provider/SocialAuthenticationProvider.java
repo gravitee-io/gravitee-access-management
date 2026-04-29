@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.authentication.UserAuthenticationAbortedException;
 import io.gravitee.am.common.jwt.Claims;
@@ -52,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACCESS_TOKEN_KEY;
@@ -69,7 +67,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.STORE_ORIGINAL_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
-import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -84,6 +81,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     private final IdentityProviderManager identityProviderManager;
     private final Domain domain;
     private final GatewayMetricProvider gatewayMetricProvider;
+    private final UsersDomainWhitelistValidator usersDomainWhitelistValidator = new UsersDomainWhitelistValidator();
 
     public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager,
                                         EventManager eventManager,
@@ -201,38 +199,6 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
     private Single<io.gravitee.am.identityprovider.api.User> checkDomainWhitelist(io.gravitee.am.identityprovider.api.User endUser, String identityProviderId) {
         final IdentityProvider identityProvider = this.identityProviderManager.getIdentityProvider(identityProviderId);
-        var domainWhitelist = identityProvider.getDomainWhitelist();
-        // No whitelist mean we let everyone, so we reject the connection if neither the username nor the email are allowed
-        if (nonNull(domainWhitelist) &&
-                !domainWhitelist.isEmpty() &&
-                !isUsernameWhitelisted(domainWhitelist, endUser.getUsername()) &&
-                !isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
-            return Single.error(new LoginCallbackFailedException("could not authenticate user"));
-        }
-
-        return Single.just(endUser);
-    }
-
-    private static boolean isUsernameWhitelisted(List<String> domainWhitelist, String username) {
-        return nonNull(username) && isDomainWhitelisted(username, domainWhitelist);
-    }
-
-    private static boolean isEmailWhitelisted(List<String> domainWhitelist, String email) {
-        return nonNull(email) && isDomainWhitelisted(email, domainWhitelist);
-    }
-
-    private static boolean isDomainWhitelisted(String username, List<String> domainWhitelist) {
-        var domainName = username.split("@");
-        // username is not an email, fail
-        if (domainName.length < 2) {
-            logger.debug("Username [{}] is not an email", username);
-            return false;
-        }
-
-        if (domainWhitelist.stream().noneMatch(domainName[1].trim()::equals)) {
-            logger.debug("Username [{}] does not match domainWhitelist", username);
-            return false;
-        }
-        return true;
+        return usersDomainWhitelistValidator.checkDomainWhitelist(endUser, identityProvider.getDomainWhitelist());
     }
 }
