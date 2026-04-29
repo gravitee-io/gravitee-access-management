@@ -47,6 +47,31 @@ public class RegularClientLookupServiceImplTest {
     }
 
     @Test
+    public void shouldFindClientById() {
+        Client client = new Client();
+        when(clientSyncService.findById("client-uuid")).thenReturn(Maybe.just(client));
+
+        TestObserver<Client> observer = clientLookupService.findById("client-uuid").test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(client);
+        verifyNoInteractions(protectedResourceSyncService);
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenClientNotFoundById() {
+        when(clientSyncService.findById("client-uuid")).thenReturn(Maybe.empty());
+
+        TestObserver<Client> observer = clientLookupService.findById("client-uuid").test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertNoValues();
+        verifyNoInteractions(protectedResourceSyncService);
+    }
+
+    @Test
     public void shouldReturnClientFromClientSyncService() {
         Client client = new Client();
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));

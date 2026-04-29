@@ -59,6 +59,35 @@ public class CimdAwareClientLookupServiceImplTest {
     }
 
     @Test
+    public void shouldFindTemplateClientByIdWithoutInvokingCimd() {
+        // When a CIMD user's session stores user.getClient() = templateId (the internal UUID
+        // inherited by the synthesized client), looking up by that UUID resolves the template
+        // directly without triggering remote CIMD metadata resolution.
+        Client template = new Client();
+        template.setId("software-template-id");
+        when(clientSyncService.findById("software-template-id")).thenReturn(Maybe.just(template));
+
+        TestObserver<Client> observer = complexClientLookupService.findById("software-template-id").test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(template);
+        verifyNoInteractions(cimdMetadataService);
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenTemplateNotFoundById() {
+        when(clientSyncService.findById("software-template-id")).thenReturn(Maybe.empty());
+
+        TestObserver<Client> observer = complexClientLookupService.findById("software-template-id").test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertNoValues();
+        verifyNoInteractions(cimdMetadataService);
+    }
+
+    @Test
     public void shouldReturnRegisteredClientWithoutCallingCimd() {
         Client registeredClient = new Client();
         when(clientSyncService.findByClientId("registered-client")).thenReturn(Maybe.just(registeredClient));

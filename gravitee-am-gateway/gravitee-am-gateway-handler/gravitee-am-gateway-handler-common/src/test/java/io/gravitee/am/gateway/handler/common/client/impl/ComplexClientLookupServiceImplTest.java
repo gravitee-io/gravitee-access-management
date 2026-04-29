@@ -48,6 +48,31 @@ public class ComplexClientLookupServiceImplTest {
     }
 
     @Test
+    public void shouldFindClientById() {
+        Client client = new Client();
+        when(clientSyncService.findById("client-uuid")).thenReturn(Maybe.just(client));
+
+        TestObserver<Client> observer = clientLookupService.findById("client-uuid").test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(client);
+        verify(protectedResourceSyncService, never()).findByClientId("client-uuid");
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenClientNotFoundById() {
+        when(clientSyncService.findById("client-uuid")).thenReturn(Maybe.empty());
+
+        TestObserver<Client> observer = clientLookupService.findById("client-uuid").test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertNoValues();
+        verify(protectedResourceSyncService, never()).findByClientId("client-uuid");
+    }
+
+    @Test
     public void shouldReturnClientFromClientSyncServiceWithoutFallback() {
         Client client = new Client();
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));

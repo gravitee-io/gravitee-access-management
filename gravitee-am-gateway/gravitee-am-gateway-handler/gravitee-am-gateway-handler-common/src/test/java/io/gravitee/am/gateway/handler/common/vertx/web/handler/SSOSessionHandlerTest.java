@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
@@ -64,7 +64,7 @@ import static org.mockito.Mockito.when;
 public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
     @Mock
     private JWTService jwtService;
     @Mock
@@ -93,7 +93,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
         router.route("/login")
                 .handler(new CookieSessionHandler(jwtService, certificateManager, subjectManager, userEnhancer, "am-cookie", 30 * 60 * 60))
-                .handler(new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain))
+                .handler(new SSOSessionHandler(clientLookupService, authenticationFlowContextService, loginAttemptService, domain))
                 .handler(rc -> {
                     if (rc.session().isDestroyed()) {
                         rc.response().setStatusCode(401).end();
@@ -206,8 +206,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("test-client");
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(client.getClientId())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(client.getClientId())).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
@@ -233,8 +233,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientLookupService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -276,8 +276,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-2"));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientLookupService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -330,8 +330,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         attempts.setAttempts(2);
         when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.just(attempts));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientLookupService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -394,8 +394,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         attempts.setAttempts(1);
         when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.just(attempts));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientLookupService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -434,8 +434,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-2"));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientLookupService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -457,6 +457,71 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.GET,
                 "/login?client_id=requested-client",
+                HttpStatusCode.FORBIDDEN_403, "Forbidden");
+    }
+
+    @Test
+    public void shouldInvoke_cimdClient_sameIdp() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setClient("template-uuid");
+        user.setSource("idp-1");
+
+        Client templateClient = new Client();
+        templateClient.setId("template-uuid");
+        templateClient.setClientId("template-client");
+
+        Client cimdClient = new Client();
+        cimdClient.setId("template-uuid");
+        cimdClient.setClientId("https://example.com/cimd-client");
+        cimdClient.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
+
+        when(clientLookupService.findById("template-uuid")).thenReturn(Maybe.just(templateClient));
+        when(clientLookupService.findById("https://example.com/cimd-client")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("https://example.com/cimd-client")).thenReturn(Maybe.just(cimdClient));
+
+        router.route().order(-1).handler(routingContext -> {
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=https://example.com/cimd-client",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotInvoke_cimdClient_differentIdp() throws Exception {
+        // User originally logged in via a regular client (idp-1), now trying a CIMD client (idp-2).
+        // The CIMD client has a different template UUID than the user's stored client, so the
+        // "same client" short-circuit doesn't apply and the IdP check fires.
+        User user = new User();
+        user.setId("user-id");
+        user.setClient("regular-client-uuid");
+        user.setSource("idp-1");
+
+        Client regularClient = new Client();
+        regularClient.setId("regular-client-uuid");
+        regularClient.setClientId("regular-client");
+
+        Client cimdClient = new Client();
+        cimdClient.setId("template-uuid");
+        cimdClient.setClientId("https://example.com/cimd-client");
+        cimdClient.setIdentityProviders(getApplicationIdentityProviders("idp-2"));
+
+        when(clientLookupService.findById("regular-client-uuid")).thenReturn(Maybe.just(regularClient));
+        when(clientLookupService.findById("https://example.com/cimd-client")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("https://example.com/cimd-client")).thenReturn(Maybe.just(cimdClient));
+
+        router.route().order(-1).handler(routingContext -> {
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=https://example.com/cimd-client",
                 HttpStatusCode.FORBIDDEN_403, "Forbidden");
     }
 

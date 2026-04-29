@@ -23,7 +23,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.Domain;
@@ -66,13 +66,13 @@ import static java.util.Optional.ofNullable;
 public class SSOSessionHandler implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SSOSessionHandler.class);
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
     private AuthenticationFlowContextService authenticationFlowContextService;
     private LoginAttemptGatewayService loginAttemptService;
     private Domain domain;
 
-    public SSOSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptGatewayService loginAttemptService, Domain domain) {
-        this.clientSyncService = clientSyncService;
+    public SSOSessionHandler(ClientLookupService clientLookupService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptGatewayService loginAttemptService, Domain domain) {
+        this.clientLookupService = clientLookupService;
         this.authenticationFlowContextService = authenticationFlowContextService;
         this.loginAttemptService = loginAttemptService;
         this.domain = domain;
@@ -237,8 +237,8 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
     }
 
     private Single<Optional<Client>> getClient(String clientId) {
-        return clientSyncService.findById(clientId)
-                .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(clientId)))
+        return clientLookupService.findById(clientId)
+                .switchIfEmpty(Maybe.defer(() -> clientLookupService.findByClientId(clientId)))
                 .map(Optional::ofNullable)
                 .defaultIfEmpty(Optional.empty());
     }

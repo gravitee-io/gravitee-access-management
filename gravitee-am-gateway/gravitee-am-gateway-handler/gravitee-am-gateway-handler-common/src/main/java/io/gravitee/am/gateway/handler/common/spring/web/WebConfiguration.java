@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.spring.web;
 
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
@@ -35,6 +35,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.vertx.core.http.CookieSameSite;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,8 +69,8 @@ public class WebConfiguration {
     }
 
     @Bean
-    public SSOSessionHandler ssoSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptGatewayService loginAttemptService, Domain domain) {
-        return new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain);
+    public SSOSessionHandler ssoSessionHandler(@Qualifier("complexClientLookupService") ClientLookupService clientLookupService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptGatewayService loginAttemptService, Domain domain) {
+        return new SSOSessionHandler(clientLookupService, authenticationFlowContextService, loginAttemptService, domain);
     }
 
     @Bean
