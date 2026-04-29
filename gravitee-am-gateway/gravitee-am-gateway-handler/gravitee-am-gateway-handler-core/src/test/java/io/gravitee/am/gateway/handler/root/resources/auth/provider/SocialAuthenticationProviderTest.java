@@ -707,6 +707,46 @@ public class SocialAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldAuthenticateUser_DomainAllowed_CaseInsensitive() throws Exception {
+        // AM-6967: domain whitelist must be matched case-insensitively per RFC 4343
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "jdoe@Acme-Corp.org");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.User user = new io.gravitee.am.identityprovider.api.DefaultUser("jdoe@Acme-Corp.org");
+
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("acme-corp.org"));
+
+        when(userAuthenticationManager.connect(any(), any(), any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertFalse(asyncResult.isFailed());
+        verify(userAuthenticationManager).connect(any(), any(), any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
+    }
+
+    @Test
     public void shouldNotAuthenticateUser_Username_DomainNotAllowed() throws Exception {
         JsonObject credentials = new JsonObject();
         credentials.put("username", "my-user-id@acme.com");
