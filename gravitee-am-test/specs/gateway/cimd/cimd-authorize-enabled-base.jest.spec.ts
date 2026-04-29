@@ -137,6 +137,11 @@ describe('CIMD authorize - ENABLED_BASE', () => {
     fixture.expectInvalidClientMetadata(response, 'private_key_jwt requires jwks or jwks_uri');
   });
 
+  it('should continue authorization when private_key_jwt metadata includes jwks', async () => {
+    const response = await fixture.authorize(fixture.buildClientId('private-key-jwt-with-jwks'));
+    fixture.expectLoginRedirect(response);
+  });
+
   it('should enforce exact redirect_uri matching for CIMD clients', async () => {
     const response = await fixture.authorize(
       fixture.buildClientId('valid-none'),
