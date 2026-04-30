@@ -17,28 +17,16 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.factor.FactorType;
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
-import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
-import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.ApplicationFactorSettings;
-import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.FactorSettings;
-import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
@@ -46,20 +34,15 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
-import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.DomainDataPlane;
-import io.gravitee.am.service.exception.MFAValidationAttemptException;
-import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
@@ -84,10 +67,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -100,7 +80,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class MFAChallengeEndpointTest extends RxWebTestBase {
+public class MFAChallengeGetEndpointTest extends RxWebTestBase {
 
     @Mock
     private TemplateEngine templateEngine;
@@ -121,7 +101,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
 
     private LocalSessionStore localSessionStore;
-    private MFAChallengeEndpoint mfaChallengeEndpoint;
+    private MFAChallengeGetEndpoint mfaChallengeGetEndpoint;
 
     private SessionModifier sessionModifier;
 
@@ -144,8 +124,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         super.setUp();
         sessionModifier = new SessionModifier();
         localSessionStore = LocalSessionStore.create(vertx);
-        mfaChallengeEndpoint =
-                new MFAChallengeEndpoint(factorManager, templateEngine,  applicationContext, domainDataPlane,  rateLimiterService, auditService);
+        mfaChallengeGetEndpoint =
+                new MFAChallengeGetEndpoint(factorManager, templateEngine,  applicationContext, domainDataPlane,  rateLimiterService, auditService);
 
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
@@ -157,7 +137,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                         routingContext.next();
                     }
                 })
-                .handler(mfaChallengeEndpoint)
+                .handler(mfaChallengeGetEndpoint)
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         when(domain.getId()).thenReturn("id");
         when(domainDataPlane.getDomain()).thenReturn(domain);
@@ -207,11 +187,11 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
 
-        mfaChallengeEndpoint.handle(spyRoutingContext);
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
     }
@@ -238,15 +218,15 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         String previousTid = UUID.randomUUID().toString();
-        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.session().put(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
         spyRoutingContext.putParam(ConstantKeys.ERROR_PARAM_KEY, "dummy_error");
 
-        mfaChallengeEndpoint.handle(spyRoutingContext);
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
-        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
     }
@@ -272,17 +252,17 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         String previousTid = UUID.randomUUID().toString();
-        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.session().put(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
 
         when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
         when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(false));
 
-        mfaChallengeEndpoint.handle(spyRoutingContext);
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
-        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertTrue(spyRoutingContext.response().headers().get("location").contains("request_limit_error"));
     }
 
@@ -309,17 +289,17 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         String previousTid = UUID.randomUUID().toString();
-        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.session().put(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
 
         when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
         when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(true));
 
-        mfaChallengeEndpoint.handle(spyRoutingContext);
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
-        Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
     }
@@ -362,7 +342,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
 
-        mfaChallengeEndpoint.handle(spyRoutingContext);
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
         awaitResponseEnd(spyRoutingContext);
 
         verify(factorManager).getFactor("activated-factor");
@@ -489,7 +469,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
       when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
       when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(true));
 
-      mfaChallengeEndpoint.handle(spyRoutingContext);
+      mfaChallengeGetEndpoint.handle(spyRoutingContext);
 
       awaitResponseEnd(spyRoutingContext);
 
