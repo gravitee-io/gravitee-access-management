@@ -19,6 +19,8 @@ set -euo pipefail
 #
 # Options forwarded to scripts/regen-oas.sh:
 #   --also-make   Build upstream Maven modules before generating.
+#   --maven-settings <path>
+#                 Pass-through -s for CI (Artifactory).
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,6 +31,11 @@ REGEN_ARGS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --also-make) REGEN_ARGS+=(--also-make); shift ;;
+    --maven-settings)
+      SETTINGS_PATH="${2:?--maven-settings requires a path}"
+      REGEN_ARGS+=(--maven-settings "$SETTINGS_PATH")
+      shift 2
+      ;;
     *) echo "Error: unknown argument: $1" >&2; exit 2 ;;
   esac
 done
