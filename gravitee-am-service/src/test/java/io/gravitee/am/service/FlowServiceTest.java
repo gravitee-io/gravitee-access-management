@@ -39,8 +39,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.junit.Assert.*;
-
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -50,6 +50,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
@@ -633,8 +638,9 @@ public class FlowServiceTest {
         String rand = UUID.randomUUID().toString();
         Flow flow = new Flow();
         flow.setName("ROOT" + rand);
-        flow.setCreatedAt(new Date());
-        flow.setUpdatedAt(new Date());
+        Date date = new Date(Instant.now().minus(10, ChronoUnit.SECONDS).toEpochMilli());
+        flow.setCreatedAt(date);
+        flow.setUpdatedAt(date);
         flow.setCondition("condition" + rand);
         flow.setEnabled(true);
         flow.setOrder(5);
