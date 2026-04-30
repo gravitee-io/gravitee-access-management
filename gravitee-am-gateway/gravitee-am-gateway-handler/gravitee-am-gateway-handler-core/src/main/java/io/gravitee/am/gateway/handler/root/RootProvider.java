@@ -47,6 +47,7 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeGetEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
@@ -58,7 +59,6 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOST
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengePostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
@@ -82,7 +82,6 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -155,7 +154,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_K
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler.handleWhen;
 import static io.vertx.core.http.HttpMethod.GET;
-import static java.lang.Boolean.parseBoolean;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -530,7 +528,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_CHALLENGE))
-                .handler(new MFAChallengeEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
+                .handler(new MFAChallengeGetEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
                         domainDataPlane,  rateLimiterService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.post(PATH_MFA_CHALLENGE)
