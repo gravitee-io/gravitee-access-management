@@ -299,8 +299,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private SecretExpirationSettings secretExpirationSettings;
 
-    private boolean agentIdentityMode;
-
     private AgentType agentType;
 
     private transient String agentInstanceId;
@@ -404,7 +402,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
-        this.agentIdentityMode = other.agentIdentityMode;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
         this.spiffeSettings = other.spiffeSettings != null
@@ -1254,12 +1251,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = secretExpirationSettings;
     }
 
-    public boolean isAgentIdentityMode() {
-        return agentIdentityMode;
-    }
-
-    public void setAgentIdentityMode(boolean agentIdentityMode) {
-        this.agentIdentityMode = agentIdentityMode;
+    public boolean isAgentApplication() {
+        return io.gravitee.am.model.application.ApplicationType.AGENT.equals(appType);
     }
 
     public AgentType getAgentType() {

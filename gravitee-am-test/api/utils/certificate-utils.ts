@@ -15,36 +15,6 @@
  */
 
 import * as forge from 'node-forge';
-import { createHash, randomBytes } from 'crypto';
-import fs from 'fs';
-import path from 'path';
-
-/** Forge attribute shape accepted by cert.setSubject / setIssuer. */
-type CertAttr = { name?: string; shortName?: string; value: string };
-
-/**
- * Core self-signed cert builder. Handles all the repetitive forge steps so
- * the public generators only need to prepare their inputs.
- */
-function buildSelfSignedPem(
-  attrs: CertAttr[],
-  serialNumber: string,
-  notBefore: Date,
-  notAfter: Date,
-  extensions: object[] = [],
-): string {
-  const keypair = forge.pki.rsa.generateKeyPair(2048);
-  const cert = forge.pki.createCertificate();
-  cert.publicKey = keypair.publicKey;
-  cert.serialNumber = serialNumber;
-  cert.validity.notBefore = notBefore;
-  cert.validity.notAfter = notAfter;
-  cert.setSubject(attrs);
-  cert.setIssuer(attrs); // self-signed
-  if (extensions.length) cert.setExtensions(extensions);
-  cert.sign(keypair.privateKey, forge.md.sha256.create());
-  return forge.pki.certificateToPem(cert);
-}
 
 /**
  * Generate a self-signed X.509 certificate in PEM format.
@@ -66,45 +36,74 @@ export function generateCertificatePEM(
 ): string {
   const { subjectDN = 'CN=Test Certificate, O=Test Org, C=US', validDays = 365, expired = false, serialNumber } = options;
 
-  const serial = serialNumber || Date.now().toString();
+  // Generate a key pair
+  const keys = forge.pki.rsa.generateKeyPair(2048);
 
+  // Create certificate
+  const cert = forge.pki.createCertificate();
+  cert.publicKey = keys.publicKey;
+  // Serial number must be a hex string (without 0x prefix) or decimal string
+  // Use timestamp as decimal string for better compatibility
+  cert.serialNumber = serialNumber || Date.now().toString();
+
+  // Set certificate validity
   const now = new Date();
   const notBefore = new Date(now);
-  notBefore.setDate(notBefore.getDate() - 1); // 1 day ago to avoid clock-skew issues
+  notBefore.setDate(notBefore.getDate() - 1); // Start 1 day ago to avoid timing issues
 
   const notAfter = new Date(now);
   if (expired) {
+    // Set expiration to 1 year ago
     notAfter.setFullYear(notAfter.getFullYear() - 1);
   } else {
+    // Set expiration to validDays from now
     notAfter.setDate(notAfter.getDate() + validDays);
   }
 
-  const attrMap: Record<string, string> = {
-    CN: 'commonName',
-    C: 'countryName',
-    O: 'organizationName',
-    OU: 'organizationalUnitName',
-    L: 'localityName',
-    ST: 'stateOrProvinceName',
-    E: 'emailAddress',
-  };
+  cert.validity.notBefore = notBefore;
+  cert.validity.notAfter = notAfter;
 
-  let attrs: CertAttr[];
-  if (subjectDN.includes('=')) {
-    attrs = subjectDN.split(',').map((part) => {
-      const [key, ...rest] = part.trim().split('=');
-      return { name: attrMap[key.trim().toUpperCase()] ?? key.trim(), value: rest.join('=').trim() };
+  // Parse subjectDN or use default attributes
+  let subjectAttrs;
+
+  if (subjectDN && subjectDN.includes('=')) {
+    // Parse DN string format: "CN=Name, O=Org, C=US"
+    const parts = subjectDN.split(',').map((p) => p.trim());
+    const attrMap: { [key: string]: string } = {
+      CN: 'commonName',
+      C: 'countryName',
+      O: 'organizationName',
+      OU: 'organizationalUnitName',
+      L: 'localityName',
+      ST: 'stateOrProvinceName',
+      E: 'emailAddress',
+    };
+
+    subjectAttrs = parts.map((part) => {
+      const [key, ...valueParts] = part.split('=');
+      const keyTrimmed = key.trim().toUpperCase();
+      const value = valueParts.join('=').trim();
+      const forgeKey = attrMap[keyTrimmed] || key.trim();
+      return { name: forgeKey, value };
     });
   } else {
-    attrs = [
+    // Use default attributes
+    subjectAttrs = [
       { name: 'countryName', value: 'US' },
       { name: 'organizationName', value: 'Test Org' },
-      { name: 'commonName', value: `Test Certificate ${serial}` },
+      { name: 'commonName', value: `Test Certificate ${cert.serialNumber}` },
     ];
   }
 
-  const extensions = [
-    { name: 'basicConstraints', cA: true },
+  cert.setSubject(subjectAttrs);
+  cert.setIssuer(subjectAttrs); // Self-signed, so issuer = subject
+
+  // Set extensions
+  cert.setExtensions([
+    {
+      name: 'basicConstraints',
+      cA: true,
+    },
     {
       name: 'keyUsage',
       keyCertSign: true,
@@ -113,10 +112,16 @@ export function generateCertificatePEM(
       keyEncipherment: true,
       dataEncipherment: true,
     },
-  ];
+  ]);
 
-  const pem = buildSelfSignedPem(attrs, serial, notBefore, notAfter, extensions);
+  // Sign certificate with private key
+  cert.sign(keys.privateKey, forge.md.sha256.create());
 
+  // Convert to PEM format
+  const pem = forge.pki.certificateToPem(cert);
+
+  // Ensure proper PEM format (should already be correct, but verify)
+  // PEM should start with -----BEGIN CERTIFICATE----- and end with -----END CERTIFICATE-----
   if (!pem.includes('-----BEGIN CERTIFICATE-----') || !pem.includes('-----END CERTIFICATE-----')) {
     throw new Error('Generated certificate is not in valid PEM format');
   }
@@ -132,6 +137,7 @@ export function generateCertificatePEM(
  * @returns PEM-encoded certificate string
  */
 export function generateUniqueCertificatePEM(index?: number): string {
+  // Use a numeric serial number for better compatibility
   const serialNumber = index !== undefined ? `${Date.now()}${index}` : Date.now().toString();
   return generateCertificatePEM({
     subjectDN: `CN=Test Certificate ${serialNumber}, O=Test Org, C=US`,
@@ -149,40 +155,4 @@ export function generateExpiredCertificatePEM(): string {
     expired: true,
     subjectDN: 'CN=Expired Test Certificate, O=Test Org, C=US',
   });
-}
-
-/** Cert produced by generateSelfSignedCert — PEM, its Subject DN string, and pre-computed SHA-256 thumbprint. */
-export type SelfSignedCert = {
-  pem: string;
-  subjectDn: string;
-  thumbprintS256: string;
-};
-
-/**
- * Generate an ephemeral RSA 2048 self-signed certificate suitable for mTLS client-auth tests.
- * Uses a random serial and a single CN RDN to avoid DN ordering ambiguity with BouncyCastle.
- */
-export function generateSelfSignedCert(cn: string): SelfSignedCert {
-  const pem = buildSelfSignedPem(
-    [{ shortName: 'CN', value: cn }],
-    randomBytes(16).toString('hex'),
-    new Date(),
-    new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-  );
-  return { pem, subjectDn: `CN=${cn}`, thumbprintS256: certThumbprintS256(pem) };
-}
-
-/**
- * Compute the SHA-256 thumbprint (x5t#S256) of a PEM-encoded certificate.
- * Returns a Base64URL-encoded string, matching RFC 7517 §4.9.
- */
-export function certThumbprintS256(pem: string): string {
-  const cert = forge.pki.certificateFromPem(pem);
-  const der = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
-  return createHash('sha256').update(Buffer.from(der, 'binary')).digest('base64url');
-}
-
-/** Read a PEM cert or key from a path relative to process.cwd() (e.g. `/certs/client-a/client.crt`). */
-export function readCert(relPath: string): string {
-  return fs.readFileSync(path.join(process.cwd(), relPath), 'utf8');
 }

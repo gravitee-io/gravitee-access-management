@@ -16,8 +16,7 @@
 package io.gravitee.am.model.application;
 
 /**
- * Configuration block for Blueprint (agent identity) applications.
- * Stored on {@link ApplicationSettings} when {@code agentIdentityMode} is true.
+ * Configuration block for agent applications ({@code Application.type = AGENT}).
  * <p>
  * Only fields unique to the agent persona live here. Grant types, token TTLs,
  * scopes, JWKS and client-authentication method are configured on

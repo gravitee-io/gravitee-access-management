@@ -85,6 +85,7 @@ export const FilteredApplicationTypeEnum = {
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
 } as const;
 export type FilteredApplicationTypeEnum = typeof FilteredApplicationTypeEnum[keyof typeof FilteredApplicationTypeEnum];
 

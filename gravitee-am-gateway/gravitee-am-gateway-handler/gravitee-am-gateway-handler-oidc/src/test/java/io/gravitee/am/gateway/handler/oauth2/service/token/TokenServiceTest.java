@@ -199,7 +199,7 @@ public class TokenServiceTest {
 
         Client client = new Client();
         client.setClientId("my-agent-client-id");
-        client.setAgentIdentityMode(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         client.setAgentType(AgentType.USER_EMBEDDED);
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
@@ -220,7 +220,9 @@ public class TokenServiceTest {
         assertNotNull(actClaim);
         assertEquals(client.getClientId(), actClaim.get(Claims.SUB));
         Assertions.assertFalse(actClaim.containsKey(Claims.CLIENT_ID));
-        assertEquals("user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
+        assertEquals("ai_agent user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
+        assertEquals("user_embedded", jwtArgumentCaptor.getValue().get(Claims.SUB_PROFILE));
+        assertEquals("user_embedded", actClaim.get(Claims.SUB_PROFILE));
 
         expectTokenCreatedAuditLog();
     }
@@ -232,7 +234,7 @@ public class TokenServiceTest {
 
         Client client = new Client();
         client.setClientId("blueprint-client-id");
-        client.setAgentIdentityMode(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         client.setAgentType(AgentType.AUTONOMOUS);
         client.setAgentInstanceId("agent-instance-001");
 
@@ -258,7 +260,9 @@ public class TokenServiceTest {
         assertTrue(actClaimObject instanceof Map<?, ?>);
         Map<?, ?> actClaim = (Map<?, ?>) actClaimObject;
         assertEquals("blueprint-client-id", actClaim.get(Claims.SUB));
-        assertEquals("autonomous", capturedJwt.get(Claims.CLIENT_PROFILE));
+        assertEquals("ai_agent autonomous", capturedJwt.get(Claims.CLIENT_PROFILE));
+        assertEquals("autonomous", capturedJwt.get(Claims.SUB_PROFILE));
+        assertEquals("autonomous", actClaim.get(Claims.SUB_PROFILE));
 
         expectTokenCreatedAuditLog();
     }
