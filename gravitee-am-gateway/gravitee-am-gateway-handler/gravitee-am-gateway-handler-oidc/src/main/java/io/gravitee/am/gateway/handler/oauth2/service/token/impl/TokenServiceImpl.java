@@ -475,15 +475,27 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, request.getActClaim());
         }
 
-        // Blueprint agent - inject "act" claim (actor = agent or blueprint client_id)
+        // Blueprint agent - inject "act" claim (actor = agent or blueprint client_id) and
+        // tag the actor with sub_profile so downstream consumers can reason about the chain.
         if (client.isAgentApplication() && jwt.get(Claims.ACT) == null) {
-            jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
+            Map<String, Object> act = new HashMap<>();
+            act.put(Claims.SUB, client.getClientId());
+            if (client.getAgentType() != null) {
+                act.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
+            }
+            jwt.put(Claims.ACT, act);
         }
 
         // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
         // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
         if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
             jwt.put(Claims.CLIENT_PROFILE, "ai_agent " + client.getAgentType().name().toLowerCase());
+        }
+
+        // Blueprint agent - emit sub_profile for the agent subject (RFC draft §3.3 sub_profile).
+        // Profile token only — no "ai_agent" prefix, that's only for client_profile.
+        if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.SUB_PROFILE) == null) {
+            jwt.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
         }
 
         // Apply resource to aud

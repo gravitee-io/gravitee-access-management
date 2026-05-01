@@ -298,6 +298,12 @@ public class StrategyGranterAdapter implements TokenGranter {
             actClaim.put(Claims.GIO_INTERNAL_SUB, actorInfo.gis());
         }
 
+        // Propagate sub_profile when the actor is itself a profiled subject (e.g. an agent).
+        // Non-agent intermediate actors carry no sub_profile — omit, do not synthesize.
+        if (actorInfo.hasSubProfile()) {
+            actClaim.put(Claims.SUB_PROFILE, actorInfo.subProfile());
+        }
+
         // Per RFC 8693 Section 4.1: if the subject token has an "act" claim,
         // nest it under the current actor to preserve the delegation chain
         if (actorInfo.hasSubjectTokenActClaim()) {

@@ -221,6 +221,8 @@ public class TokenServiceTest {
         assertEquals(client.getClientId(), actClaim.get(Claims.SUB));
         Assertions.assertFalse(actClaim.containsKey(Claims.CLIENT_ID));
         assertEquals("ai_agent user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
+        assertEquals("user_embedded", jwtArgumentCaptor.getValue().get(Claims.SUB_PROFILE));
+        assertEquals("user_embedded", actClaim.get(Claims.SUB_PROFILE));
 
         expectTokenCreatedAuditLog();
     }
@@ -259,6 +261,8 @@ public class TokenServiceTest {
         Map<?, ?> actClaim = (Map<?, ?>) actClaimObject;
         assertEquals("blueprint-client-id", actClaim.get(Claims.SUB));
         assertEquals("ai_agent autonomous", capturedJwt.get(Claims.CLIENT_PROFILE));
+        assertEquals("autonomous", capturedJwt.get(Claims.SUB_PROFILE));
+        assertEquals("autonomous", actClaim.get(Claims.SUB_PROFILE));
 
         expectTokenCreatedAuditLog();
     }

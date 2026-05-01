@@ -307,10 +307,16 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     private ActorTokenInfo extractActorInfo(ValidatedToken actorToken, ValidatedToken subjectToken, int delegationDepth) {
         String subject = actorToken.getSubject();
         String gis = extractGis(actorToken);
+        String subProfile = extractSubProfile(actorToken);
         Object subjectTokenActClaim = subjectToken.getClaim(Claims.ACT);
         Object actorTokenActClaim = actorToken.getClaim(Claims.ACT);
 
-        return new ActorTokenInfo(subject, gis, subjectTokenActClaim, actorTokenActClaim, delegationDepth);
+        return new ActorTokenInfo(subject, gis, subProfile, subjectTokenActClaim, actorTokenActClaim, delegationDepth);
+    }
+
+    private String extractSubProfile(ValidatedToken token) {
+        Object subProfile = token.getClaim(Claims.SUB_PROFILE);
+        return subProfile instanceof String ? (String) subProfile : null;
     }
 
     private String extractGis(ValidatedToken token) {
