@@ -97,7 +97,6 @@ public interface ClientAuthenticationMethod {
                 CLIENT_SECRET_JWT,
                 TLS_CLIENT_AUTH,
                 SELF_SIGNED_TLS_CLIENT_AUTH,
-                SPIFFE_JWT,
-                AGENT_JWT_BEARER);
+                SPIFFE_JWT);
     }
 }

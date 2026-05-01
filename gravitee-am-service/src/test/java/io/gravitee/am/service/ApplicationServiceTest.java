@@ -2021,6 +2021,100 @@ public class ApplicationServiceTest {
         verify(applicationRepository, never()).update(any(Application.class));
     }
 
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenGrant_implicit() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        // Use grant+response combo accepted by GrantTypeUtils so the agent forbidden-grant check is reached.
+        toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT));
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oauth2.ResponseType.TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenGrant_password() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("password"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenGrant_refreshToken() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("refresh_token"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenResponseType_token() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oauth2.ResponseType.TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenResponseType_idToken() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenResponseType_idTokenToken() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
     private Application agentBaseline() {
         Application existing = emptyAppWithDomain();
         existing.setType(ApplicationType.AGENT);

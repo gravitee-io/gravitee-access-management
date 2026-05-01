@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -1132,15 +1133,35 @@ public class ApplicationServiceImpl implements ApplicationService {
         ApplicationOAuthSettings oauth = application.getSettings().getOauth();
         List<String> grantTypes = oauth != null ? oauth.getGrantTypes() : null;
         if (grantTypes != null) {
-            String forbidden = switch (agent.getAgentType()) {
+            String forbiddenGrant = grantTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES::contains)
+                    .findFirst()
+                    .orElse(null);
+            if (forbiddenGrant != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "Agent applications cannot use grant type: " + forbiddenGrant));
+            }
+            String typeSpecific = switch (agent.getAgentType()) {
                 case USER_EMBEDDED -> grantTypes.contains(GrantType.CLIENT_CREDENTIALS)
                         ? "USER_EMBEDDED agents cannot use client_credentials grant" : null;
                 case AUTONOMOUS -> grantTypes.contains(GrantType.AUTHORIZATION_CODE)
                         ? "AUTONOMOUS agents cannot use authorization_code grant" : null;
                 case HOSTED_DELEGATED -> null;
             };
-            if (forbidden != null) {
-                return Single.error(new InvalidClientMetadataException(forbidden));
+            if (typeSpecific != null) {
+                return Single.error(new InvalidClientMetadataException(typeSpecific));
+            }
+        }
+
+        List<String> responseTypes = oauth != null ? oauth.getResponseTypes() : null;
+        if (responseTypes != null) {
+            String forbiddenResponse = responseTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES::contains)
+                    .findFirst()
+                    .orElse(null);
+            if (forbiddenResponse != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "Agent applications cannot use response type: " + forbiddenResponse));
             }
         }
 
