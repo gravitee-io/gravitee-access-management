@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -38,6 +39,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -70,12 +73,9 @@ public class IntrospectionAccessTokenServiceTest {
         jwt.setJti("jti");
         jwt.setDomain("domain");
         jwt.setAud("client");
-        final Client client = new Client();
-        client.setClientId("client-id");
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
         testObserver.assertComplete();
@@ -93,15 +93,11 @@ public class IntrospectionAccessTokenServiceTest {
         jwt.setAud("client");
         jwt.setIat(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
 
-        final Client client = new Client();
-        client.setClientId("client-id");
-
         final AccessToken accessToken = new AccessToken();
         accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
         when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
@@ -118,12 +114,9 @@ public class IntrospectionAccessTokenServiceTest {
         jwt.setDomain("domain");
         jwt.setAud("client");
         jwt.setIat(Instant.now().getEpochSecond());
-        final Client client = new Client();
-        client.setClientId("client-id");
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertComplete();
@@ -140,12 +133,9 @@ public class IntrospectionAccessTokenServiceTest {
         jwt.setDomain("domain");
         jwt.setAud("client");
         jwt.setIat(Instant.now().getEpochSecond());
-        final Client client = new Client();
-        client.setClientId("client-id");
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)).thenReturn(Single.error(new JWTException("invalid token")));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.error(new JWTException("invalid token")));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertError(InvalidTokenException.class);
@@ -160,12 +150,9 @@ public class IntrospectionAccessTokenServiceTest {
         jwt.setDomain("domain");
         jwt.setAud("client");
         jwt.setIat(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
-        final Client client = new Client();
-        client.setClientId("client-id");
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
         when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
@@ -181,19 +168,62 @@ public class IntrospectionAccessTokenServiceTest {
         jwt.setDomain("domain");
         jwt.setAud("client");
         jwt.setIat(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
-        final Client client = new Client();
-        client.setClientId("client-id");
 
         final AccessToken accessToken = new AccessToken();
         accessToken.setExpireAt(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
         when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertError(InvalidTokenException.class);
         verify(accessTokenRepository, times(1)).findByToken(jwt.getJti());
+    }
+
+    @Test
+    public void shouldLoadCertificateFromClientForJwtService() {
+        final String token = "token";
+        final JWT jwt = new JWT();
+        jwt.setJti("jti");
+        jwt.setDomain("domain");
+        jwt.setAud("client");
+
+        final Client client = new Client();
+        client.setCertificate("cert-id");
+
+        when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenAnswer(invocation -> {
+            Maybe<String> certificateId = invocation.getArgument(1);
+            assertEquals("cert-id", certificateId.blockingGet());
+            return Single.just(jwt);
+        });
+
+        TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(clientService).findByDomainAndClientId("domain", "client");
+    }
+
+    @Test
+    public void shouldThrowInvalidTokenExceptionWhenClientMissingDuringVerification() {
+        final String token = "token";
+        final JWT jwt = new JWT();
+        jwt.setJti("jti");
+        jwt.setDomain("domain");
+        jwt.setAud("client");
+
+        when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenAnswer(invocation -> {
+            Maybe<String> certificateId = invocation.getArgument(1);
+            return certificateId.toSingle().map(id -> jwt);
+        });
+
+        TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
+        testObserver.assertError(throwable -> throwable instanceof InvalidTokenException
+                && "Invalid or unknown client for this token".equals(((Throwable) throwable).getMessage()));
+        verify(clientService).findByDomainAndClientId("domain", "client");
     }
 }
