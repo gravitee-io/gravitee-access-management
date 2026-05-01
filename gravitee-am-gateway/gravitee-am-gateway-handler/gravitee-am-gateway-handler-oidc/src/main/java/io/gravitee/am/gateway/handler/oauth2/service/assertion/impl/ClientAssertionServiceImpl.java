@@ -57,6 +57,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.AGENT_JWT_BEARER;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_SPIFFE;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
@@ -108,12 +109,16 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             return parseJwt(assertion)
                     .flatMap(jwt -> validateSpiffeAssertion(jwt, basePath, clientIdHint));
         }
+        if (AGENT_JWT_BEARER.equals(assertionType)) {
+            return parseJwt(assertion)
+                    .flatMap(jwt -> validateAgentAssertion(jwt, basePath));
+        }
         if (!JWT_BEARER.equals(assertionType)) {
             return Maybe.error(unsupportedAssertionType());
         }
 
         return parseJwt(assertion)
-                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath, clientIdHint));
+                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath));
     }
 
     private static Maybe<JWT> parseJwt(String assertion) {
@@ -127,30 +132,25 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     /**
-     * Dispatch an {@code urn:ietf:params:oauth:client-assertion-type:jwt-bearer}
-     * assertion. Standard RFC 7523 assertions have {@code iss == sub == client_id}
-     * and are handled by the private_key_jwt / client_secret_jwt path. Blueprint
-     * agent instance assertions have a distinct shape — either {@code iss} is a
-     * URI resolvable via CIMD, or {@code iss != sub} (blueprint vs. agent
-     * instance) — and route through the agent assertion path.
+     * Dispatch a standard RFC 7523 {@code jwt-bearer} client assertion: {@code iss == sub == client_id}.
+     * Agent-instance assertions are routed via the dedicated {@link ClientAuthenticationMethod#AGENT_JWT_BEARER}
+     * assertion type and never reach this path.
      */
-    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath, String clientIdHint) {
+    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath) {
         return Maybe.defer(() -> {
             JWTClaimsSet claims = jwt.getJWTClaimsSet();
             String iss = claims.getIssuer();
             String sub = claims.getSubject();
 
-            // A SPIFFE JWT-SVID arriving on the jwt-bearer assertion type is a
-            // client misconfiguration: SPIFFE assertions must use jwt-spiffe.
-            // Surface a clear error rather than letting the request fall through
-            // to the agent or generic OAuth lookup paths.
+            // SPIFFE JWT-SVID on the jwt-bearer assertion type is a client misconfiguration.
             if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
                 return Maybe.error(new InvalidClientException(
                         "SPIFFE JWT-SVID must be sent with client_assertion_type=" + JWT_SPIFFE));
             }
 
-            if (isAgentAssertionShape(iss, sub)) {
-                return validateAgentAssertion(jwt, basePath);
+            // Strict RFC 7523: iss MUST equal sub for private_key_jwt / client_secret_jwt.
+            if (iss == null || !iss.equals(sub)) {
+                return Maybe.error(NOT_VALID);
             }
 
             return validateJWT(jwt, basePath)
@@ -161,17 +161,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                         return validateSignatureWithPublicKey(validated);
                     });
         });
-    }
-
-    private static boolean isAgentAssertionShape(String iss, String sub) {
-        if (iss == null || sub == null) {
-            return false;
-        }
-        return isUri(iss) || !iss.equals(sub);
-    }
-
-    private static boolean isUri(String value) {
-        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     /**

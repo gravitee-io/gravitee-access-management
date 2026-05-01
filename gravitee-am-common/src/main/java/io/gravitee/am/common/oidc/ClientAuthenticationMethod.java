@@ -79,6 +79,12 @@ public interface ClientAuthenticationMethod {
     String JWT_SPIFFE = "urn:ietf:params:oauth:client-assertion-type:jwt-spiffe";
 
     /**
+     * URN to identify a ClientAssertion issued by an agent instance under a blueprint application.
+     * The JWT {@code iss} is the blueprint {@code client_id}; {@code sub} is the agent instance id.
+     */
+    String AGENT_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer";
+
+    /**
      * Client authenticates with a SPIFFE JWT-SVID verified against a configured trust domain.
      */
     String SPIFFE_JWT = "spiffe_jwt";
@@ -91,6 +97,7 @@ public interface ClientAuthenticationMethod {
                 CLIENT_SECRET_JWT,
                 TLS_CLIENT_AUTH,
                 SELF_SIGNED_TLS_CLIENT_AUTH,
-                SPIFFE_JWT);
+                SPIFFE_JWT,
+                AGENT_JWT_BEARER);
     }
 }
