@@ -180,14 +180,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        Bson query = eq(FIELD_DOMAIN, domain);
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        Bson query = type == null
+                ? eq(FIELD_DOMAIN, domain)
+                : and(eq(FIELD_DOMAIN, domain), eq(FIELD_TYPE, type.name()));
         return queryApplications(query, page, size).observeOn(Schedulers.computation());
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        Bson query = and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds));
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        Bson query = type == null
+                ? and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds))
+                : and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds), eq(FIELD_TYPE, type.name()));
         return queryApplications(query, page, size).observeOn(Schedulers.computation());
     }
 
@@ -206,29 +210,16 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
-        Bson query = and(eq(FIELD_DOMAIN, domain), eq(FIELD_TYPE, ApplicationType.AGENT.name()));
-        return queryApplications(query, page, size).observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
-        Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
-        Bson mongoQuery = and(baseQuery, eq(FIELD_TYPE, ApplicationType.AGENT.name()));
-        boolean useCollation = !isWildcardQuery(query);
-        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
-    }
-
-    @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
         // search - use collation for non-wildcard queries to leverage case-insensitive indexes
-        Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson mongoQuery = type == null ? baseQuery : and(baseQuery, eq(FIELD_TYPE, type.name()));
         boolean useCollation = !isWildcardQuery(query);
         return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
         // Search on client_id and name fields with case-insensitive matching
         boolean useWildcard = isWildcardQuery(query);
 
@@ -246,9 +237,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
             searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
         }
 
-        Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
-                searchQuery);
+        Bson mongoQuery = type == null
+                ? and(eq(FIELD_DOMAIN, domain), searchQuery)
+                : and(eq(FIELD_DOMAIN, domain), searchQuery, eq(FIELD_TYPE, type.name()));
 
         CountOptions countOpts = useWildcard ? countOptions() : countOptions().collation(CASE_INSENSITIVE_COLLATION);
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOpts)).first(0L);

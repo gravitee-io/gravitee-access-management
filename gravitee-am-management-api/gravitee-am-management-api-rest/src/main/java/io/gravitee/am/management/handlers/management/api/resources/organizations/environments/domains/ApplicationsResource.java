@@ -124,40 +124,15 @@ public class ApplicationsResource extends AbstractDomainResource {
     }
 
     private Single<Page<Application>> listApplications(String domain, int page, int size, String query, ApplicationType type) {
-        if (type == ApplicationType.AGENT) {
-            return query != null
-                    ? applicationService.searchAgents(domain, query, page, size)
-                    : applicationService.findAgentsByDomain(domain, page, size);
-        }
-        if (query != null) {
-            return applicationService.search(domain, query, page, size);
-        } else {
-            return applicationService.findByDomain(domain, page, size);
-        }
+        return query != null
+                ? applicationService.search(domain, query, type, page, size)
+                : applicationService.findByDomain(domain, type, page, size);
     }
 
     private Single<Page<Application>> listApplicationsByIds(String domain, List<String> applicationIds, int page, int size, String query, ApplicationType type) {
-        if (type == ApplicationType.AGENT) {
-            Single<Page<Application>> source = query != null
-                    ? applicationService.searchAgents(domain, query, page, size)
-                    : applicationService.findAgentsByDomain(domain, page, size);
-            return source.map(p -> filterToPermittedIds(p, applicationIds, page));
-        }
-        if (query != null) {
-            return applicationService.search(domain, applicationIds, query, page, size);
-        } else {
-            return applicationService.findByDomain(domain, applicationIds, page, size);
-        }
-    }
-
-    private static Page<Application> filterToPermittedIds(Page<Application> page, List<String> permittedIds, int currentPage) {
-        if (permittedIds == null || permittedIds.isEmpty()) {
-            return new Page<>(List.of(), currentPage, 0L);
-        }
-        final List<Application> filtered = page.getData().stream()
-                .filter(app -> permittedIds.contains(app.getId()))
-                .toList();
-        return new Page<>(filtered, currentPage, filtered.size());
+        return query != null
+                ? applicationService.search(domain, applicationIds, query, type, page, size)
+                : applicationService.findByDomain(domain, applicationIds, type, page, size);
     }
 
     @POST

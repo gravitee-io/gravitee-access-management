@@ -203,130 +203,118 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        LOGGER.debug("findByDomain({}, {}, {}, {})", domain, type, page, size);
+        var criteria = type == null
+                ? where(COL_DOMAIN).is(domain)
+                : where(COL_DOMAIN).is(domain).and(where(COL_TYPE).is(type.name()));
+        Single<Long> countQuery = type == null
+                ? applicationRepository.countByDomain(domain)
+                : applicationRepository.countByDomainAndType(domain, type.name());
         return fluxToFlowable(getTemplate().select(JdbcApplication.class)
-                .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
-                .all())
-                .map(this::toEntity)
-                .concatMap(app -> completeApplication(app).toFlowable())
-                .toList()
-                .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<>(data, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        if(applicationIds == null || applicationIds.isEmpty()) {
-            return Single.just(new Page<>());
-        }
-        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
-        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
-                .matching(query(where(COL_DOMAIN).is(domain).and(where(COL_ID).in(applicationIds)))
-                        .with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
-                .all())
-                .map(this::toEntity)
-                .concatMap(app -> completeApplication(app).toFlowable())
-                .toList()
-                .flatMap(data -> applicationRepository.countByDomainAndApplicationIds(domain, applicationIds).map(total -> new Page<>(data, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
-
-        boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
-
-        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, page, size, COL_UPDATED_AT, false);
-        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false);
-
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
-                .bind(COL_DOMAIN, domain)
-                .bind("value", escapedQuery.toUpperCase())
-                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
-                .all())
-                .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(COL_DOMAIN, domain)
-                        .bind("value", escapedQuery.toUpperCase())
-                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
-                        .map(total -> new Page<>(data, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
-    }
-
-    @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
-        LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
-        if(applicationIds == null || applicationIds.isEmpty()) {
-            return Single.just(new Page<>());
-        }
-
-        boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
-
-        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, page, size, COL_UPDATED_AT, false);
-        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true);
-
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
-                .bind(COL_DOMAIN, domain)
-                .bind("applicationIds", applicationIds)
-                .bind("value", escapedQuery.toUpperCase())
-                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
-                .all())
-                .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(COL_DOMAIN, domain)
-                        .bind("applicationIds", applicationIds)
-                        .bind("value", escapedQuery.toUpperCase())
-                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
-                        .map(total -> new Page<Application>(data, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
-    }
-
-    @Override
-    public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
-        LOGGER.debug("findAgentsByDomain({}, {}, {})", domain, page, size);
-        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
-                .matching(query(where(COL_DOMAIN).is(domain).and(where(COL_TYPE).is(ApplicationType.AGENT.name())))
-                        .with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
-                .all())
-                .map(this::toEntity)
-                .concatMap(app -> completeApplication(app).toFlowable())
-                .toList()
-                .flatMap(data -> applicationRepository.countByDomainAndType(domain, ApplicationType.AGENT.name())
-                        .map(total -> new Page<>(data, page, total)))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
-        LOGGER.debug("searchAgents({}, {}, {}, {})", domain, query, page, size);
-        var criteria = where(COL_DOMAIN).is(domain)
-                .and(where(COL_TYPE).is(ApplicationType.AGENT.name()))
-                .and(where(COL_NAME).like(query.replaceAll("\\*+", "%")));
-        Single<List<Application>> dataQuery = fluxToFlowable(getTemplate().select(JdbcApplication.class)
                 .matching(query(criteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
                 .all())
                 .map(this::toEntity)
                 .concatMap(app -> completeApplication(app).toFlowable())
-                .toList();
-        Single<Long> countQuery = monoToSingle(getTemplate().select(JdbcApplication.class)
-                .matching(query(criteria))
-                .count());
-        return Single.zip(dataQuery, countQuery, (data, total) -> new Page<>(data, page, total))
+                .toList()
+                .flatMap(data -> countQuery.map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        if(applicationIds == null || applicationIds.isEmpty()) {
+            return Single.just(new Page<>());
+        }
+        LOGGER.debug("findByDomain({}, ids, {}, {}, {})", domain, type, page, size);
+        var criteria = where(COL_DOMAIN).is(domain).and(where(COL_ID).in(applicationIds));
+        if (type != null) {
+            criteria = criteria.and(where(COL_TYPE).is(type.name()));
+        }
+        Query matchingQuery = query(criteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending()));
+        Query countQuery = query(criteria);
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
+                .matching(matchingQuery)
+                .all())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().select(JdbcApplication.class).matching(countQuery).count())
+                        .map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("search({}, {}, {}, {}, {})", domain, query, type, page, size);
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, type != null, page, size, COL_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false, type != null);
+
+        DatabaseClient.GenericExecuteSpec searchSpecBase = getTemplate().getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
+                .bind("value", escapedQuery.toUpperCase());
+        DatabaseClient.GenericExecuteSpec countSpecBase = getTemplate().getDatabaseClient().sql(count)
+                .bind(COL_DOMAIN, domain)
+                .bind("value", escapedQuery.toUpperCase());
+        final DatabaseClient.GenericExecuteSpec searchSpec = type != null ? searchSpecBase.bind("type", type.name()) : searchSpecBase;
+        final DatabaseClient.GenericExecuteSpec countSpec = type != null ? countSpecBase.bind("type", type.name()) : countSpecBase;
+
+        return fluxToFlowable(searchSpec
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(countSpec
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("search({}, ids, {}, {}, {}, {})", domain, query, type, page, size);
+        if(applicationIds == null || applicationIds.isEmpty()) {
+            return Single.just(new Page<>());
+        }
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, type != null, page, size, COL_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true, type != null);
+
+        DatabaseClient.GenericExecuteSpec searchSpecBase = getTemplate().getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
+                .bind("applicationIds", applicationIds)
+                .bind("value", escapedQuery.toUpperCase());
+        DatabaseClient.GenericExecuteSpec countSpecBase = getTemplate().getDatabaseClient().sql(count)
+                .bind(COL_DOMAIN, domain)
+                .bind("applicationIds", applicationIds)
+                .bind("value", escapedQuery.toUpperCase());
+        final DatabaseClient.GenericExecuteSpec searchSpec = type != null ? searchSpecBase.bind("type", type.name()) : searchSpecBase;
+        final DatabaseClient.GenericExecuteSpec countSpec = type != null ? countSpecBase.bind("type", type.name()) : countSpecBase;
+
+        return fluxToFlowable(searchSpec
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(countSpec
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<Application>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
 
     @Override

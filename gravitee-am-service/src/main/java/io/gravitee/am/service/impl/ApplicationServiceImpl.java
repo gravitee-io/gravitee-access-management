@@ -217,9 +217,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find applications by domain {}", domain);
-        return applicationRepository.findByDomain(domain, page, size)
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        LOGGER.debug("Find applications by domain {} and type {}", domain, type);
+        return applicationRepository.findByDomain(domain, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -228,9 +228,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        LOGGER.debug("Find applications by domain {} and appIds {}", domain, applicationIds);
-        return applicationRepository.findByDomain(domain, applicationIds, page, size)
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        LOGGER.debug("Find applications by domain {}, type {} and appIds {}", domain, type, applicationIds);
+        return applicationRepository.findByDomain(domain, applicationIds, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -239,9 +239,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {}", query, domain);
-        return applicationRepository.search(domain, query, page, size)
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {} and type {}", query, domain, type);
+        return applicationRepository.search(domain, query, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -250,35 +250,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {} and appIds={}", query, domain, applicationIds);
-        return applicationRepository.search(domain, applicationIds, query, page, size)
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {}, type {} and appIds={}", query, domain, type, applicationIds);
+        return applicationRepository.search(domain, applicationIds, query, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
-                });
-    }
-
-    @Override
-    public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find agent applications by domain {}", domain);
-        return applicationRepository.findAgentsByDomain(domain, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find agent applications by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find agent applications by domain %s", domain), ex));
-                });
-    }
-
-    @Override
-    public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
-        LOGGER.debug("Search agent applications with query {} for domain {}", query, domain);
-        return applicationRepository.searchAgents(domain, query, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search agent applications with query {} for domain {}", query, domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to search agent applications with query %s by domain %s", query, domain), ex));
                 });
     }
 
