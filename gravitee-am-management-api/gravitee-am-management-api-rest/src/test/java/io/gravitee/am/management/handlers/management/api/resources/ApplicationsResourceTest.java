@@ -106,6 +106,59 @@ public class ApplicationsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldGetAgentApps_typeFilter() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Application agent = new Application();
+        agent.setId("agent-1-id");
+        agent.setName("agent-1");
+        agent.setDomain(domainId);
+        agent.setType(ApplicationType.AGENT);
+        agent.setUpdatedAt(new Date());
+
+        final Page<Application> agentPage = new Page<>(List.of(agent), 0, 1);
+
+        doReturn(Flowable.just("agent-1-id"))
+                .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(agentPage)).when(applicationService).findAgentsByDomain(domainId, 0, 50);
+
+        final Response response = target("domains").path(domainId).path("applications")
+                .queryParam("type", "AGENT").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Map responseEntity = readEntity(response, Map.class);
+        assertEquals(1, ((List) responseEntity.get("data")).size());
+    }
+
+    @Test
+    public void shouldSearchAgentApps_typeFilter() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Application agent = new Application();
+        agent.setId("agent-1-id");
+        agent.setName("alpha-agent");
+        agent.setDomain(domainId);
+        agent.setType(ApplicationType.AGENT);
+        agent.setUpdatedAt(new Date());
+
+        final Page<Application> page = new Page<>(List.of(agent), 0, 1);
+
+        doReturn(Flowable.just("agent-1-id"))
+                .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(page)).when(applicationService).searchAgents(domainId, "alpha*", 0, 50);
+
+        final Response response = target("domains").path(domainId).path("applications")
+                .queryParam("type", "AGENT").queryParam("q", "alpha*").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
     public void shouldCreate() throws JsonProcessingException {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
