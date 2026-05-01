@@ -37,12 +37,6 @@ import { AgentSettingsFromJSON, AgentSettingsFromJSONTyped, AgentSettingsToJSON,
 export interface NewApplication {
   /**
    *
-   * @type {boolean}
-   * @memberof NewApplication
-   */
-  agentIdentityMode?: boolean;
-  /**
-   *
    * @type {AgentSettings}
    * @memberof NewApplication
    */
@@ -100,6 +94,7 @@ export const NewApplicationTypeEnum = {
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
 } as const;
 export type NewApplicationTypeEnum = typeof NewApplicationTypeEnum[keyof typeof NewApplicationTypeEnum];
 
@@ -121,7 +116,6 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    agentIdentityMode: json['agentIdentityMode'] == null ? undefined : json['agentIdentityMode'],
     agentSettings: json['agentSettings'] == null ? undefined : AgentSettingsFromJSON(json['agentSettings']),
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
@@ -143,7 +137,6 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
   }
 
   return {
-    agentIdentityMode: value['agentIdentityMode'],
     agentSettings: AgentSettingsToJSON(value['agentSettings']),
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
