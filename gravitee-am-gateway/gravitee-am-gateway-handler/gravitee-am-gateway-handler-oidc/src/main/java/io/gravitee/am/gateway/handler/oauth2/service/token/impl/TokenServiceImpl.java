@@ -480,9 +480,10 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
         }
 
-        // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-00
+        // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
+        // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
         if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
-            jwt.put(Claims.CLIENT_PROFILE, client.getAgentType().name().toLowerCase());
+            jwt.put(Claims.CLIENT_PROFILE, "ai_agent " + client.getAgentType().name().toLowerCase());
         }
 
         // Apply resource to aud

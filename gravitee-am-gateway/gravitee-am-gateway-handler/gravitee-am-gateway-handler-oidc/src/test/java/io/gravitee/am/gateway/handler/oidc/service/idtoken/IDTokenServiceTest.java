@@ -920,7 +920,7 @@ public class IDTokenServiceTest {
         Object act = captured.get(io.gravitee.am.common.jwt.Claims.ACT);
         assertTrue(act instanceof Map);
         assertEquals("agent-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
-        assertEquals("user_embedded", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
+        assertEquals("ai_agent user_embedded", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
     }
 
     @Test
@@ -955,6 +955,6 @@ public class IDTokenServiceTest {
         Object act = captured.get(io.gravitee.am.common.jwt.Claims.ACT);
         assertTrue(act instanceof Map);
         assertEquals("blueprint-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
-        assertEquals("hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
+        assertEquals("ai_agent hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
     }
 }

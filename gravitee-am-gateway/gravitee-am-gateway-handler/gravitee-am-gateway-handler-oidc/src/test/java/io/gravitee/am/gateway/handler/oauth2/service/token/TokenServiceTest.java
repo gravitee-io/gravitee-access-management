@@ -220,7 +220,7 @@ public class TokenServiceTest {
         assertNotNull(actClaim);
         assertEquals(client.getClientId(), actClaim.get(Claims.SUB));
         Assertions.assertFalse(actClaim.containsKey(Claims.CLIENT_ID));
-        assertEquals("user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
+        assertEquals("ai_agent user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
 
         expectTokenCreatedAuditLog();
     }
@@ -258,7 +258,7 @@ public class TokenServiceTest {
         assertTrue(actClaimObject instanceof Map<?, ?>);
         Map<?, ?> actClaim = (Map<?, ?>) actClaimObject;
         assertEquals("blueprint-client-id", actClaim.get(Claims.SUB));
-        assertEquals("autonomous", capturedJwt.get(Claims.CLIENT_PROFILE));
+        assertEquals("ai_agent autonomous", capturedJwt.get(Claims.CLIENT_PROFILE));
 
         expectTokenCreatedAuditLog();
     }
