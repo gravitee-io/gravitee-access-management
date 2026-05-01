@@ -98,6 +98,13 @@ public class CertificateProviderManagerTest {
         );
     }
 
+    @Test
+    public void shouldExposeKeyId_fromUnderlyingProvider() {
+        CertificateProvider certificateProvider = certificateProviderManager.create(defaultProvider());
+
+        assertEquals(signingKeyId, certificateProvider.getKeyId());
+    }
+
     private io.gravitee.am.certificate.api.CertificateProvider noneProvider() {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
