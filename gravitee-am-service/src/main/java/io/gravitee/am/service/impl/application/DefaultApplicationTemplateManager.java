@@ -60,5 +60,6 @@ public class DefaultApplicationTemplateManager implements ApplicationTemplateMan
         templates.add(new ApplicationNativeTemplate());
         templates.add(new ApplicationWebTemplate());
         templates.add(new ApplicationResourceServerTemplate());
+        templates.add(new ApplicationAgentTemplate());
     }
 }

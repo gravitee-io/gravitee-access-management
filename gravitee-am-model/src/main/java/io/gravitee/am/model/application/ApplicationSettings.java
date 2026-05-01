@@ -90,8 +90,7 @@ public class ApplicationSettings {
     private SecretExpirationSettings secretExpirationSettings;
 
     /**
-     * Agent identity settings (Blueprint model).
-     * Non-null only when the application has agent identity mode enabled.
+     * Agent application settings. Non-null only when {@code Application.type == AGENT}.
      */
     private AgentSettings agent;
 

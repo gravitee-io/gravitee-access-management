@@ -44,8 +44,6 @@ public class NewApplication {
 
     private Map<String, Object> metadata;
 
-    private boolean agentIdentityMode;
-
     private AgentSettings agentSettings;
 
     public String getName() {
@@ -102,14 +100,6 @@ public class NewApplication {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
-    }
-
-    public boolean isAgentIdentityMode() {
-        return agentIdentityMode;
-    }
-
-    public void setAgentIdentityMode(boolean agentIdentityMode) {
-        this.agentIdentityMode = agentIdentityMode;
     }
 
     public AgentSettings getAgentSettings() {
