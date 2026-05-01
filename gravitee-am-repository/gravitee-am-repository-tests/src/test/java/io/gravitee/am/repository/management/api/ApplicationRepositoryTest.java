@@ -544,7 +544,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteApplication_removesAgentRow() {
+    public void testDeleteApplication_removesAgentFromQuery() {
         String domain = "domainAgentDelete" + UUID.randomUUID();
         Application app = new Application();
         app.setName("to-delete");

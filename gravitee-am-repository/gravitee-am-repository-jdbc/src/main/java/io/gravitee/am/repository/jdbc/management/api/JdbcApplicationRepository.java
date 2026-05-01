@@ -17,8 +17,6 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.application.AgentSettings;
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -29,7 +27,6 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;
-import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationAgentRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationClientSecretRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationFactorRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationIdentityRepository;
@@ -119,9 +116,6 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     @Autowired
     private SpringApplicationIdentityRepository identityRepository;
-
-    @Autowired
-    private SpringApplicationAgentRepository agentRepository;
 
     private String insertStatement;
     private String updateStatement;
@@ -304,23 +298,35 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
         LOGGER.debug("findAgentsByDomain({}, {}, {})", domain, page, size);
-        return agentRepository.findAllByDomain(domain)
-                .map(JdbcApplication.Agent::getApplicationId)
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
+                .matching(query(where(COL_DOMAIN).is(domain).and(where(COL_TYPE).is(ApplicationType.AGENT.name())))
+                        .with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .all())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(ids -> ids.isEmpty()
-                        ? Single.just(new Page<>(Collections.emptyList(), page, 0L))
-                        : findByDomain(domain, ids, page, size));
+                .flatMap(data -> applicationRepository.countByDomainAndType(domain, ApplicationType.AGENT.name())
+                        .map(total -> new Page<>(data, page, total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
         LOGGER.debug("searchAgents({}, {}, {}, {})", domain, query, page, size);
-        return agentRepository.findAllByDomain(domain)
-                .map(JdbcApplication.Agent::getApplicationId)
-                .toList()
-                .flatMap(ids -> ids.isEmpty()
-                        ? Single.just(new Page<>(Collections.emptyList(), page, 0L))
-                        : search(domain, ids, query, page, size));
+        var criteria = where(COL_DOMAIN).is(domain)
+                .and(where(COL_TYPE).is(ApplicationType.AGENT.name()))
+                .and(where(COL_NAME).like(query.replaceAll("\\*+", "%")));
+        Single<List<Application>> dataQuery = fluxToFlowable(getTemplate().select(JdbcApplication.class)
+                .matching(query(criteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .all())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .toList();
+        Single<Long> countQuery = monoToSingle(getTemplate().select(JdbcApplication.class)
+                .matching(query(criteria))
+                .count());
+        return Single.zip(dataQuery, countQuery, (data, total) -> new Page<>(data, page, total))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -477,20 +483,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         Mono<Long> factors = getTemplate().delete(criteria, JdbcApplication.Factor.class);
         Mono<Long> grants = getTemplate().delete(criteria, JdbcApplication.Grant.class);
         Mono<Long> scopeSettings = getTemplate().delete(criteria, JdbcApplication.ScopeSettings.class);
-        Mono<Long> agent = getTemplate().delete(criteria, JdbcApplication.Agent.class);
-        return factors.then(secrets).then(identities).then(grants).then(scopeSettings).then(agent);
-    }
-
-    private static boolean isAgentIdentityApplication(Application app) {
-        return ApplicationType.AGENT.equals(app.getType());
-    }
-
-    private static String resolveAgentType(Application app) {
-        return Optional.ofNullable(app.getSettings())
-                .map(ApplicationSettings::getAgent)
-                .map(AgentSettings::getAgentType)
-                .map(Enum::name)
-                .orElse(null);
+        return factors.then(secrets).then(identities).then(grants).then(scopeSettings);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Application app) {
@@ -568,17 +561,6 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 sql = value.getScopeApproval() == null ? sql.bindNull("approval", Integer.class) : sql.bind("approval", value.getScopeApproval());
                 return sql.fetch().rowsUpdated();
             }).reduce(Long::sum));
-        }
-
-        if (isAgentIdentityApplication(app)) {
-            final String agentType = resolveAgentType(app);
-            actionFlow = actionFlow.then(Mono.defer(() -> {
-                DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
-                        .sql("INSERT INTO agent_applications(application_id, agent_type) VALUES (:app, :agent_type)")
-                        .bind("app", app.getId());
-                sql = agentType == null ? sql.bindNull("agent_type", String.class) : sql.bind("agent_type", agentType);
-                return sql.fetch().rowsUpdated();
-            }));
         }
 
         return actionFlow;

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-drop-agent-applications-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: agent_applications
+      changes:
+        - dropTable:
+            tableName: agent_applications
