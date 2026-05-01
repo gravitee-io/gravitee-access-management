@@ -1026,9 +1026,6 @@ jobs:
           var-name: GITHUB_TOKEN
       - restore-maven-job-cache:
           jobName: pull_requests
-      - run:
-          name: Copy Maven settings
-          command: mkdir -p ~/.m2 && cp /tmp/.gravitee.settings.xml ~/.m2/settings.xml
       - restore_cache:
           keys:
             - v1-oasdiff-{{ checksum ".oasdiff-version" }}
@@ -1048,7 +1045,7 @@ jobs:
             - /usr/local/bin/oasdiff
       - run:
           name: Check OAS staleness
-          command: bash .circleci/scripts/oas-staleness-check.sh --also-make
+          command: bash .circleci/scripts/oas-staleness-check.sh --also-make --maven-settings /tmp/.gravitee.settings.xml
       - run:
           name: Check OAS breaking changes
           command: bash .circleci/scripts/oas-compat-check.sh
@@ -1279,6 +1276,7 @@ jobs:
 
             export CURRENT_GIT_BRANCH=$(git status | grep 'On branch' | awk '{print $3}')
 
+            bash scripts/regen-oas.sh --maven-settings /tmp/.gravitee.settings.xml
             git add --update
             git commit -m "${MVN_PRJ_VERSION}"
             git tag ${MVN_PRJ_VERSION}
@@ -1302,6 +1300,7 @@ jobs:
               echo "# ---- git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does not exist, creating it"
               git checkout -b ${MAINTENANCE_GIT_BRANCH}
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+              bash scripts/regen-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
               git add --update
               git commit -m 'chore: prepare next version'
 
@@ -1360,6 +1359,7 @@ jobs:
               fi;
             fi;
             
+            bash scripts/regen-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
             git add --update
             git commit -m 'chore: prepare next version [skip ci]'
 
