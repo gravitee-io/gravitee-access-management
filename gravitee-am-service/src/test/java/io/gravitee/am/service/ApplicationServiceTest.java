@@ -1971,6 +1971,38 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldNot_update_userEmbeddedAgent_withoutRedirectUris() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setRedirectUris(null);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("redirect"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_hostedDelegatedAgent_withoutRedirectUris() {
+        Application toPatch = agentBaseline();
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.HOSTED_DELEGATED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.getSettings().getOauth().setRedirectUris(null);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("redirect"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
     public void shouldNot_update_agentApp_markedAsTemplate() {
         Application toPatch = agentBaseline();
         // baseline is HOSTED_DELEGATED-friendly (authorization_code), make it valid for that profile

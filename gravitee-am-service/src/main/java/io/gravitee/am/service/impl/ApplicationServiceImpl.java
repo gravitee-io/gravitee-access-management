@@ -34,6 +34,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.AgentSettings;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -1137,6 +1138,17 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         if (application.isTemplate()) {
             return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
+        }
+
+        // USER_EMBEDDED and HOSTED_DELEGATED rely on authorization_code; redirect_uri is required.
+        // AUTONOMOUS uses client_credentials only — no redirect needed.
+        if (agent.getAgentType() != AgentType.AUTONOMOUS) {
+            ApplicationOAuthSettings authSettings = application.getSettings().getOauth();
+            List<String> redirectUris = authSettings != null ? authSettings.getRedirectUris() : null;
+            if (redirectUris == null || redirectUris.isEmpty()) {
+                return Single.error(new InvalidClientMetadataException(
+                        agent.getAgentType().name() + " agents require at least one redirect_uri"));
+            }
         }
 
         ApplicationOAuthSettings oauth = application.getSettings().getOauth();
