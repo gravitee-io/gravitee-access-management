@@ -36,7 +36,6 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.SpiffeJwtSvidValidator;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ClientSecret;
@@ -46,10 +45,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.SecretService;
-import io.gravitee.am.service.reporter.builder.AgentAuditBuilder;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,9 +92,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Autowired
     private SecretService appSecretService;
-
-    @Autowired
-    private AuditService auditService;
 
     @Autowired
     private TrustBundleService trustBundleService;
@@ -376,16 +369,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             // resolves the synthesized client via the domain's CIMD metadata flow.
             return clientLookupService.findByClientId(iss)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
-                    .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid)
-                            .doOnError(err -> {
-                                if (err instanceof InvalidClientException
-                                        && err.getMessage() != null
-                                        && err.getMessage().startsWith("Unable to validate client")) {
-                                    reportAgentAuth(iss, sub, kid, jti, blueprint, "INVALID_SIGNATURE");
-                                }
-                            }))
-                    .map(blueprint -> buildAgentClient(blueprint, sub))
-                    .doOnSuccess(agentClient -> reportAgentAuth(iss, sub, kid, jti, agentClient, null));
+                    .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid))
+                    .map(blueprint -> buildAgentClient(blueprint, sub));
         });
     }
 
@@ -502,32 +487,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         Client agentClient = new Client(blueprint);
         agentClient.setAgentInstanceId(agentInstanceId);
         return agentClient;
-    }
-
-    private void reportAgentAuth(String iss, String sub, String kid, String jti,
-                                 Client blueprint, String failureReason) {
-        try {
-            var builder = AuditBuilder.builder(AgentAuditBuilder.class);
-            if (blueprint.getDomain() != null) {
-                builder.reference(Reference.domain(blueprint.getDomain()));
-            }
-            builder
-                    .blueprintId(blueprint.getClientId())
-                    .blueprintName(blueprint.getClientName())
-                    .agentInstanceId(sub)
-                    .agentType(blueprint.getAgentType() != null ? blueprint.getAgentType().name() : null)
-                    .assertionKid(kid)
-                    .assertionIss(iss)
-                    .assertionJti(jti);
-
-            if (failureReason != null) {
-                builder.throwable(new InvalidClientException(failureReason));
-            }
-
-            auditService.report(builder);
-        } catch (Exception e) {
-            log.warn("Failed to report agent authentication audit", e);
-        }
     }
 
     private Maybe<JWKSet> getClientJwkSet(Client client) {
