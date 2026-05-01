@@ -980,7 +980,7 @@ public class DomainServiceTest {
 
     @Test
     public void shouldNoPatch_CIMD_reference_classical_app_not_template_nor_blueprint() {
-        // An app that is neither template nor agentIdentityMode should be rejected
+        // An app that is not a template should be rejected as a CIMD templateId reference
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
         domain.setId("my-domain");
@@ -1007,7 +1007,7 @@ public class DomainServiceTest {
         when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
         Application app = new Application();
         app.setTemplate(false);
-        // no agentIdentityMode set (defaults to false)
+        // not a template, type defaults to non-AGENT
         when(applicationService.findById(anyString())).thenReturn(Maybe.just(app));
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)

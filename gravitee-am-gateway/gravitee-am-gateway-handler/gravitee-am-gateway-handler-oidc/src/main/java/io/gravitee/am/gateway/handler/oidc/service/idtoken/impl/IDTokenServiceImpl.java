@@ -258,7 +258,7 @@ public class IDTokenServiceImpl implements IDTokenService {
             idToken.put(Claims.ACT, oAuth2Request.getActClaim());
         }
 
-        // Blueprint agent - inject "act" claim (mirrors access-token logic) and tag with sub_profile.
+        // Agent application - inject "act" claim (mirrors access-token logic) and tag with sub_profile.
         if (client.isAgentApplication() && idToken.get(Claims.ACT) == null) {
             Map<String, Object> act = new HashMap<>();
             act.put(Claims.SUB, client.getClientId());
@@ -268,13 +268,13 @@ public class IDTokenServiceImpl implements IDTokenService {
             idToken.put(Claims.ACT, act);
         }
 
-        // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
+        // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
         // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
             idToken.put(Claims.CLIENT_PROFILE, "ai_agent " + client.getAgentType().name().toLowerCase());
         }
 
-        // Blueprint agent - emit sub_profile for the agent subject (RFC draft §3.3).
+        // Agent application - emit sub_profile for the agent subject (RFC draft §3.3).
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.SUB_PROFILE) == null) {
             idToken.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
         }

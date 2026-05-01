@@ -475,7 +475,7 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, request.getActClaim());
         }
 
-        // Blueprint agent - inject "act" claim (actor = agent or blueprint client_id) and
+        // Agent application - inject "act" claim (actor = agent or blueprint client_id) and
         // tag the actor with sub_profile so downstream consumers can reason about the chain.
         if (client.isAgentApplication() && jwt.get(Claims.ACT) == null) {
             Map<String, Object> act = new HashMap<>();
@@ -486,13 +486,13 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, act);
         }
 
-        // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
+        // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
         // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
         if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
             jwt.put(Claims.CLIENT_PROFILE, "ai_agent " + client.getAgentType().name().toLowerCase());
         }
 
-        // Blueprint agent - emit sub_profile for the agent subject (RFC draft §3.3 sub_profile).
+        // Agent application - emit sub_profile for the agent subject (RFC draft §3.3 sub_profile).
         // Profile token only — no "ai_agent" prefix, that's only for client_profile.
         if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.SUB_PROFILE) == null) {
             jwt.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
@@ -680,7 +680,7 @@ public class TokenServiceImpl implements TokenService {
                 .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
                 .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
                 .tokenActor(client)
-                .agentIdentity(client)
+                .agentApplication(client)
                 .withParams(() -> buildAuditParams(oAuth2Request, tokenWithCertInfo.certificateInfo))
                 .tokenTarget(endUser)
                 .accessTokenSubject(enhancedToken.getSubject());
