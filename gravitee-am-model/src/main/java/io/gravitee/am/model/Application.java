@@ -170,9 +170,7 @@ public class Application implements Resource, PasswordSettingsAware, Notifiable 
         return getSettings() != null && getSettings().getOauth() != null ? getSettings().getOauth().getClientId() : null;
     }
 
-    public boolean isAgentIdentityMode() {
-        return settings != null
-                && settings.getAdvanced() != null
-                && settings.getAdvanced().isAgentIdentityMode();
+    public boolean isAgentApplication() {
+        return ApplicationType.AGENT.equals(type);
     }
 }

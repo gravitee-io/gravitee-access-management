@@ -897,7 +897,7 @@ public class DomainServiceTest {
                 .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
                 .test();
 
-        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template or blueprint agent");
+        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template");
         verify(domainRepository).findById(anyString());
         verify(applicationService).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
@@ -989,7 +989,7 @@ public class DomainServiceTest {
 
     @Test
     public void shouldNoPatch_CIMD_reference_classical_app_not_template_nor_blueprint() {
-        // An app that is neither template nor agentIdentityMode should be rejected
+        // An app that is not a template should be rejected as a CIMD templateId reference
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
         domain.setId("my-domain");
@@ -1016,7 +1016,7 @@ public class DomainServiceTest {
         when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
         Application app = new Application();
         app.setTemplate(false);
-        // no agentIdentityMode set (defaults to false)
+        // not a template, type defaults to non-AGENT
         when(applicationService.findById(anyString())).thenReturn(Maybe.just(app));
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
@@ -1030,8 +1030,8 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldPatch_CIMD_reference_blueprint_agent_app() {
-        // A blueprint agent app (agentIdentityMode=true) should be accepted as CIMD template
+    public void shouldNotPatch_CIMD_reference_agent_app_not_marked_template() {
+        // Agent applications are not templates; CIMD templateId must point to a real template.
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
         domain.setId("my-domain");
@@ -1055,26 +1055,19 @@ public class DomainServiceTest {
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
         when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         Application blueprintApp = new Application();
-        blueprintApp.setTemplate(false); // NOT a template
-        ApplicationSettings settings = new ApplicationSettings();
-        ApplicationAdvancedSettings advanced = new ApplicationAdvancedSettings();
-        advanced.setAgentIdentityMode(true); // IS a blueprint agent
-        settings.setAdvanced(advanced);
-        blueprintApp.setSettings(settings);
+        blueprintApp.setTemplate(false);
+        blueprintApp.setType(io.gravitee.am.model.application.ApplicationType.AGENT);
         when(applicationService.findById("blueprint-app-id")).thenReturn(Maybe.just(blueprintApp));
 
-        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertComplete()
-                .assertNoErrors();
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
 
+        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template");
         verify(applicationService).findById("blueprint-app-id");
-        verify(domainRepository).update(any(Domain.class));
+        verify(domainRepository, never()).update(any(Domain.class));
     }
 
     @Test

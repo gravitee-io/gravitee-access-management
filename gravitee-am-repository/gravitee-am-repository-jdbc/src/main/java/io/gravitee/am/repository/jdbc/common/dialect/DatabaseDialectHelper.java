@@ -53,9 +53,17 @@ public interface DatabaseDialectHelper {
         return buildCountUserQuery(wildcard, false);
     }
 
-    String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc);
+    String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, boolean withType, int page, int size, String sort, boolean asc);
 
-    String buildCountApplicationsQuery(boolean wildcard, boolean withIds);
+    String buildCountApplicationsQuery(boolean wildcard, boolean withIds, boolean withType);
+
+    default String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc) {
+        return buildSearchApplicationsQuery(wildcard, withIds, false, page, size, sort, asc);
+    }
+
+    default String buildCountApplicationsQuery(boolean wildcard, boolean withIds) {
+        return buildCountApplicationsQuery(wildcard, withIds, false);
+    }
 
     String buildSearchApplicationsQuery(boolean wildcard, ApplicationCriteria criteria, int page, int size, String sort, boolean asc);
 

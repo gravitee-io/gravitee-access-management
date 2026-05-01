@@ -984,23 +984,26 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
-    public void create_rejectsAgentIdentityReference() {
+    public void create_rejectsAgentBlueprintAsTemplate() {
+        // Agent applications are not templates (write-time guard in ApplicationServiceImpl).
+        // DCR resolves software_id via sanitizeTemplate which rejects non-templates.
         Client blueprint = new Client();
         blueprint.setId("blueprint-id");
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
+        blueprint.setTemplate(false);
 
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setSoftwareId(Optional.of("blueprint-id"));
         request.setRedirectUris(Optional.of(List.of("https://callback.example.com")));
 
+        when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById("blueprint-id")).thenReturn(Maybe.just(blueprint));
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(throwable ->
-                "Agent identity applications cannot be registered via dynamic client registration"
-                        .equals(throwable.getMessage()));
+                "Client behind software_id is not a template".equals(throwable.getMessage()));
         verify(clientService, times(0)).create(any(), any());
     }
 

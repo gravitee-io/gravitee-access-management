@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.management.api.resources.model.Filtere
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -101,6 +102,7 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("expand") List<String> expandsParam,
             @QueryParam("status") String status,
             @QueryParam("owner.email") String ownerEmail,
+            @QueryParam("type") ApplicationType type,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
         ApplicationFilter filter = new ApplicationFilter(status, ownerEmail);
@@ -116,11 +118,11 @@ public class ApplicationsResource extends AbstractDomainResource {
                 .andThen(checkDomainExists(domain).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ -> listApplications(domain, organizationId, filter, page, size, query))
+                        .flatMapSingle(__ -> listApplications(domain, organizationId, filter, page, size, query, type))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> listApplicationsByIds(domain, organizationId, ids, filter, page, size, query))))
+                                        .flatMap(ids -> listApplicationsByIds(domain, organizationId, ids, filter, page, size, query, type))))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(app -> FilteredApplication.of(app, expands)).toList(),
@@ -138,30 +140,29 @@ public class ApplicationsResource extends AbstractDomainResource {
                         .collect(Collectors.toSet());
     }
 
-    private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query) {
+    private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query, ApplicationType type) {
         if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter()) {
             return query != null
                     ? applicationService.search(domain, organizationId, filter, query, page, size)
                     : applicationService.findByDomain(domain, organizationId, filter, page, size);
         }
         if (query != null) {
-            return applicationService.search(domain, query, page, size);
+            return applicationService.search(domain, query, type, page, size);
         }
-        return applicationService.findByDomain(domain, page, size);
+        return applicationService.findByDomain(domain, type, page, size);
     }
 
-    private Single<Page<Application>> listApplicationsByIds(String domain, String organizationId, List<String> applicationIds, ApplicationFilter filter, int page, int size, String query) {
+    private Single<Page<Application>> listApplicationsByIds(String domain, String organizationId, List<String> applicationIds, ApplicationFilter filter, int page, int size, String query, ApplicationType type) {
         if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter()) {
-            // Intersect permission-scoped IDs with any owner/status filter resolution in the service layer
             ApplicationFilter filterWithScope = new ApplicationFilter(filter.status(), filter.ownerEmail(), applicationIds);
             return query != null
                     ? applicationService.search(domain, organizationId, filterWithScope, query, page, size)
                     : applicationService.findByDomain(domain, organizationId, filterWithScope, page, size);
         }
         if (query != null) {
-            return applicationService.search(domain, applicationIds, query, page, size);
+            return applicationService.search(domain, applicationIds, query, type, page, size);
         }
-        return applicationService.findByDomain(domain, applicationIds, page, size);
+        return applicationService.findByDomain(domain, applicationIds, type, page, size);
     }
 
     @POST
@@ -196,11 +197,6 @@ public class ApplicationsResource extends AbstractDomainResource {
                                         .entity(application)
                                         .build())))
                 .subscribe(response::resume, response::resume);
-    }
-
-    @Path("agents")
-    public AgentApplicationsResource getAgentApplicationsResource() {
-        return resourceContext.getResource(AgentApplicationsResource.class);
     }
 
     @Path("{application}")
