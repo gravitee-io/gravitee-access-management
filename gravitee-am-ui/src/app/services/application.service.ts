@@ -31,14 +31,12 @@ export class ApplicationService {
     private authService: AuthService,
   ) {}
 
-  findByDomain(domainId, page, size, agentsOnly = false): Observable<any> {
-    const extra = agentsOnly ? '&type=AGENT' : '';
-    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size + extra);
+  findByDomain(domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size);
   }
 
-  search(domainId, searchTerm, agentsOnly = false): Observable<any> {
-    const extra = agentsOnly ? '&type=AGENT' : '';
-    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm + extra);
+  search(domainId, searchTerm): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm);
   }
 
   get(domainId, id): Observable<any> {

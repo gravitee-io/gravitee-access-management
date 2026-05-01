@@ -23,7 +23,6 @@
       <mat-label>Search for applications</mat-label>
       <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
     </mat-form-field>
-    <mat-slide-toggle [checked]="agentsOnly" (change)="onAgentsOnlyToggle($event.checked)">Agents only</mat-slide-toggle>
   </div>
   <div class="gv-page-content" *ngIf="!isEmpty">
     <ngx-datatable
