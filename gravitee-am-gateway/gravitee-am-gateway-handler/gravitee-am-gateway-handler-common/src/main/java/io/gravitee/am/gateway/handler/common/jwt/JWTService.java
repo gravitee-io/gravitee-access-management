@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.jwt;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 
@@ -70,12 +71,28 @@ public interface JWTService {
     Single<String> encodeAuthorization(JWT jwt, Client client);
 
     /**
+     * Decode JWT signed string representation to JWT.
+     * @param jwt JWT to decode
+     * @param clientCertificateId reactive source of the client/application certificate id used
+     *                            when the JOSE {@code kid} does not match any provider;
+     *                            subscribed lazily so callers can defer client lookups until they
+     *                            are actually needed
+     * @param tokenType type of the decoded token
+     * @return JWT object
+     */
+    Single<JWT> decodeAndVerify(String jwt, Maybe<String> clientCertificateId, TokenType tokenType);
+
+    /**
      * Decode JWT signed string representation to JWT
      * @param jwt JWT to decode
      * @param client client which want to decode the token
      * @return JWT object
      */
-    Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType);
+    default Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
+        return decodeAndVerify(jwt,
+                Maybe.fromCallable(client::getCertificate),
+                tokenType);
+    }
 
     /**
      * Decode JWT signed string representation to JWT using the specified certificate provider.
