@@ -1133,6 +1133,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (agent.getAgentType() == null) {
             return Single.error(new InvalidClientMetadataException("Agent type is required when application type is AGENT"));
         }
+        if (application.isTemplate()) {
+            return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
+        }
 
         ApplicationOAuthSettings oauth = application.getSettings().getOauth();
         List<String> grantTypes = oauth != null ? oauth.getGrantTypes() : null;

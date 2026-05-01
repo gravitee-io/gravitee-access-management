@@ -1970,6 +1970,23 @@ public class ApplicationServiceTest {
         verify(applicationRepository, never()).update(any(Application.class));
     }
 
+    @Test
+    public void shouldNot_update_agentApp_markedAsTemplate() {
+        Application toPatch = agentBaseline();
+        // baseline is HOSTED_DELEGATED-friendly (authorization_code), make it valid for that profile
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.HOSTED_DELEGATED);
+        toPatch.getSettings().setAgent(agent);
+        toPatch.setTemplate(true);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("template"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
     private Application agentBaseline() {
         Application existing = emptyAppWithDomain();
         existing.setType(ApplicationType.AGENT);
