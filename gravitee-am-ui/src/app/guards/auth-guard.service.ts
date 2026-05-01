@@ -101,10 +101,10 @@ export class AuthGuard {
         return false;
       }
     }
-    // hide menu items that require blueprint agent identity mode unless the app has it enabled
+    // hide menu items that require an agent application
     if (path.data?.requiresAgentIdentity === true) {
       const app = route.data['application'];
-      if (!app?.settings?.advanced?.agentIdentityMode) {
+      if (app?.type?.toUpperCase() !== 'AGENT') {
         return false;
       }
     }

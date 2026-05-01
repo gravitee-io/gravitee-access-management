@@ -65,7 +65,7 @@
               <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
                 <a [routerLink]="[row.id]">{{ row.name }}</a>
                 <mat-chip
-                  *ngIf="row.agentIdentityMode"
+                  *ngIf="row.type === 'AGENT'"
                   class="agent-chip"
                   color="primary"
                   selected

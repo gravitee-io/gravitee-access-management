@@ -32,12 +32,12 @@ export class ApplicationService {
   ) {}
 
   findByDomain(domainId, page, size, agentsOnly = false): Observable<any> {
-    const extra = agentsOnly ? '&agentIdentityMode=true' : '';
+    const extra = agentsOnly ? '&type=AGENT' : '';
     return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size + extra);
   }
 
   search(domainId, searchTerm, agentsOnly = false): Observable<any> {
-    const extra = agentsOnly ? '&agentIdentityMode=true' : '';
+    const extra = agentsOnly ? '&type=AGENT' : '';
     return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm + extra);
   }
 
