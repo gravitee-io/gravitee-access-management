@@ -342,6 +342,11 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
+            if (this.domain.usePlainFapiProfile()
+                    && !isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
+                return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
+            }
+
             // Per the Agent Identity proposal, the audience for a workload jwt-bearer
             // assertion MUST be the AM token endpoint — not the base issuer or PAR
             // endpoint. Discovery + token endpoint are always available (derived from

@@ -880,6 +880,24 @@ public class ClientAssertionServiceTest {
     }
 
     @Test
+    public void testWorkloadJwt_RS256InvalidForFAPI() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        String assertion = generateWorkloadJWT(privateKey, CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        lenient().when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        lenient().when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(domain.usePlainFapiProfile()).thenReturn(true);
+
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidClientException.class);
+    }
+
+    @Test
     public void testJwtBearer_strictRfc7523_rejectsIssNotEqualSub() throws Exception {
         // RFC 7523: iss MUST equal sub (== client_id). Agent assertions now use
         // the dedicated agent-jwt-bearer assertion type; jwt-bearer is strict.
