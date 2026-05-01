@@ -905,7 +905,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE
+                            && application.getType() != ApplicationType.AGENT
+                            && !updateTypeOnly) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
@@ -1166,6 +1168,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 oAuthSettings.setForcePKCE(true);
                 oAuthSettings.setForceS256CodeChallengeMethod(true);
                 defaultGrantTypes(oAuthSettings, GrantType.AUTHORIZATION_CODE);
+                defaultResponseTypesForAuthorizationCode(oAuthSettings);
             }
             case HOSTED_DELEGATED -> {
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
@@ -1173,6 +1176,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
                 defaultGrantTypes(oAuthSettings,
                         GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
+                defaultResponseTypesForAuthorizationCode(oAuthSettings);
             }
             case AUTONOMOUS -> {
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
@@ -1181,6 +1185,13 @@ public class ApplicationServiceImpl implements ApplicationService {
                 oAuthSettings.setRedirectUris(null);
                 defaultGrantTypes(oAuthSettings, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
             }
+        }
+    }
+
+    private static void defaultResponseTypesForAuthorizationCode(ApplicationOAuthSettings oAuthSettings) {
+        // GrantTypeUtils.completeGrantTypeCorrespondance strips authorization_code if response_types lacks "code".
+        if (oAuthSettings.getResponseTypes() == null || oAuthSettings.getResponseTypes().isEmpty()) {
+            oAuthSettings.setResponseTypes(new ArrayList<>(List.of(io.gravitee.am.common.oauth2.ResponseType.CODE)));
         }
     }
 
