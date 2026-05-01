@@ -29,12 +29,6 @@ import { Fixture } from '../../../test-fixture';
 const ORG_ID = process.env.AM_DEF_ORG_ID;
 const ENV_ID = process.env.AM_DEF_ENV_ID;
 
-const AGENT_TYPE_TO_APPLICATION_TYPE: Record<string, string> = {
-  USER_EMBEDDED: 'NATIVE',
-  HOSTED_DELEGATED: 'WEB',
-  AUTONOMOUS: 'SERVICE',
-};
-
 export interface BlueprintFixture extends Fixture {
   accessToken: string;
   domain: Domain;
@@ -86,8 +80,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       const appName = name || uniqueName(`agent-${agentType.toLowerCase()}`, true);
       const body: any = {
         name: appName,
-        type: AGENT_TYPE_TO_APPLICATION_TYPE[agentType],
-        agentIdentityMode: true,
+        type: 'AGENT',
         agentSettings: { agentType },
       };
       if (redirectUri || agentType !== 'AUTONOMOUS') {

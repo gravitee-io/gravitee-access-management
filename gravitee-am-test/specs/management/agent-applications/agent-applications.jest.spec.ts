@@ -17,7 +17,6 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { Application } from '@management-models/Application';
 import { uniqueName } from '@utils-commands/misc';
-import { listAgentApplications, listAgentApplicationsRaw } from '@management-commands/agent-applications-commands';
 import { setup } from '../../test-fixture';
 import { AgentApplicationsFixture, setupAgentApplicationsFixture } from './fixtures/agent-applications-fixture';
 
@@ -63,9 +62,9 @@ afterAll(async () => {
   await fixture.cleanUp();
 });
 
-describe('GET /applications/agents', () => {
-  it('returns only applications with agentIdentityMode=true', async () => {
-    const page = await listAgentApplications(fixture.domain.id!, fixture.accessToken, { size: 100 });
+describe('GET /applications?type=AGENT', () => {
+  it('returns only applications typed as AGENT', async () => {
+    const page = await fixture.listAgents(fixture.domain.id!, { size: 100 });
 
     expect(page.totalCount).toEqual(3);
     expect(page.data).toHaveLength(3);
@@ -75,43 +74,36 @@ describe('GET /applications/agents', () => {
     expect(ids).not.toContain(regularApp.id);
   });
 
-  it('includes agent-specific projection fields on each item', async () => {
-    const page = await listAgentApplications(fixture.domain.id!, fixture.accessToken, { size: 100 });
+  it('exposes filtered projection (id/name/type/enabled) for each agent', async () => {
+    const page = await fixture.listAgents(fixture.domain.id!, { size: 100 });
     const item = page.data.find((app) => app.id === autonomousAgent.id);
 
-    expect(item).toBeDefined();
     expect(item).toMatchObject({
       id: autonomousAgent.id,
       name: autonomousAgent.name,
-      type: 'service',
+      type: 'agent',
       enabled: true,
     });
-    expect(item!.settings?.advanced?.agentIdentityMode).toBe(true);
-    expect(item!.settings?.agent?.agentType).toEqual('autonomous');
-    expect(item!.settings?.oauth?.clientId).toBeTruthy();
   });
 
   it('filters by name via the q parameter and still excludes non-agents', async () => {
-    const page = await listAgentApplications(fixture.domain.id!, fixture.accessToken, {
-      q: `${SEARCH_PREFIX}*`,
-      size: 50,
-    });
+    const page = await fixture.listAgents(fixture.domain.id!, { q: `${SEARCH_PREFIX}*`, size: 50 });
 
     expect(page.data).toHaveLength(1);
     expect(page.data[0].id).toEqual(searchableAgent.id);
-    expect(page.data[0].settings?.advanced?.agentIdentityMode).toBe(true);
+    expect(page.data[0].type).toEqual('agent');
   });
 
   it('returns an empty page when the domain has no agents', async () => {
-    const page = await listAgentApplications(fixture.emptyDomain.id!, fixture.accessToken, { size: 50 });
+    const page = await fixture.listAgents(fixture.emptyDomain.id!, { size: 50 });
 
     expect(page.totalCount).toEqual(0);
     expect(page.data).toEqual([]);
   });
 
   it('honours pagination (size=1 returns one item per page)', async () => {
-    const firstPage = await listAgentApplications(fixture.domain.id!, fixture.accessToken, { page: 0, size: 1 });
-    const secondPage = await listAgentApplications(fixture.domain.id!, fixture.accessToken, { page: 1, size: 1 });
+    const firstPage = await fixture.listAgents(fixture.domain.id!, { page: 0, size: 1 });
+    const secondPage = await fixture.listAgents(fixture.domain.id!, { page: 1, size: 1 });
 
     expect(firstPage.data).toHaveLength(1);
     expect(secondPage.data).toHaveLength(1);
@@ -121,7 +113,7 @@ describe('GET /applications/agents', () => {
   });
 
   it('rejects requests without a bearer token with 401', async () => {
-    const response = await listAgentApplicationsRaw(fixture.domain.id!, '', { size: 1 });
+    const response = await fixture.listAgentsRaw(fixture.domain.id!, '', { size: 1 });
     expect(response.status).toEqual(401);
   });
 });

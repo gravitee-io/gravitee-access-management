@@ -27,7 +27,6 @@ public class ApplicationAdvancedSettings {
 
     private boolean skipConsent;
     private boolean flowsInherited = true;
-    private boolean agentIdentityMode;
 
     public ApplicationAdvancedSettings() {
     }
@@ -35,7 +34,6 @@ public class ApplicationAdvancedSettings {
     public ApplicationAdvancedSettings(ApplicationAdvancedSettings other) {
         this.skipConsent = other.skipConsent;
         this.flowsInherited = other.flowsInherited;
-        this.agentIdentityMode = other.agentIdentityMode;
     }
 
     public boolean isSkipConsent() {
@@ -54,17 +52,8 @@ public class ApplicationAdvancedSettings {
         this.flowsInherited = flowsInherited;
     }
 
-    public boolean isAgentIdentityMode() {
-        return agentIdentityMode;
-    }
-
-    public void setAgentIdentityMode(boolean agentIdentityMode) {
-        this.agentIdentityMode = agentIdentityMode;
-    }
-
     public void copyTo(Client client) {
         client.setAutoApproveScopes(this.skipConsent ? Collections.singletonList("true") : null);
         client.setFlowsInherited(this.flowsInherited);
-        client.setAgentIdentityMode(this.agentIdentityMode);
     }
 }

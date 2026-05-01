@@ -113,7 +113,6 @@ services:
     volumes:
       - ./wiremock/request-sfr.json:/tmp/request-sfr.json
       - ./wiremock/request-cimd.json:/tmp/request-cimd.json
-      - ./wiremock/request-jwks.json:/tmp/request-jwks.json
     command:
       - sh
       - -ec
@@ -123,9 +122,6 @@ services:
           -H "Content-Type: application/json"
         curl -fsS -X POST http://wiremock:8080/__admin/mappings/import \
           -d @/tmp/request-cimd.json \
-          -H "Content-Type: application/json"
-        curl -fsS -X POST http://wiremock:8080/__admin/mappings/import \
-          -d @/tmp/request-jwks.json \
           -H "Content-Type: application/json"
 
   ciba:

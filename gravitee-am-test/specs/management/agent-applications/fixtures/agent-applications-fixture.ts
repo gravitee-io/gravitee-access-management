@@ -24,11 +24,11 @@ import { Fixture } from '../../../test-fixture';
 
 export type AgentType = 'AUTONOMOUS' | 'USER_EMBEDDED' | 'HOSTED_DELEGATED';
 
-const AGENT_TYPE_TO_APP_TYPE: Record<AgentType, string> = {
-  AUTONOMOUS: 'SERVICE',
-  USER_EMBEDDED: 'NATIVE',
-  HOSTED_DELEGATED: 'WEB',
-};
+export interface AgentListResult {
+  data: Array<any>;
+  totalCount: number;
+  currentPage: number;
+}
 
 export interface AgentApplicationsFixture extends Fixture {
   accessToken: string;
@@ -37,6 +37,8 @@ export interface AgentApplicationsFixture extends Fixture {
   createdApplicationIds: Record<string, string[]>;
   createAgentApp: (domainId: string, name: string, agentType?: AgentType) => Promise<Application>;
   createRegularApp: (domainId: string, name: string) => Promise<Application>;
+  listAgents: (domainId: string, opts?: { page?: number; size?: number; q?: string }) => Promise<AgentListResult>;
+  listAgentsRaw: (domainId: string, token: string, opts?: { page?: number; size?: number; q?: string }) => Promise<{ status: number }>;
   cleanUp: () => Promise<void>;
 }
 
@@ -56,8 +58,7 @@ export const setupAgentApplicationsFixture = async (): Promise<AgentApplications
   const createAgentApp = async (domainId: string, name: string, agentType: AgentType = 'AUTONOMOUS'): Promise<Application> => {
     const payload: any = {
       name,
-      type: AGENT_TYPE_TO_APP_TYPE[agentType],
-      agentIdentityMode: true,
+      type: 'AGENT',
       agentSettings: { agentType },
     };
     if (agentType !== 'AUTONOMOUS') {
@@ -66,6 +67,41 @@ export const setupAgentApplicationsFixture = async (): Promise<AgentApplications
     const created = await createApplication(domainId, accessToken, payload);
     track(domainId, created);
     return created;
+  };
+
+  const ORG_ID = process.env.AM_DEF_ORG_ID;
+  const ENV_ID = process.env.AM_DEF_ENV_ID;
+
+  const listAgentsRaw = async (
+    domainId: string,
+    token: string,
+    opts: { page?: number; size?: number; q?: string } = {},
+  ): Promise<{ status: number }> => {
+    const params = new URLSearchParams({ type: 'AGENT' });
+    if (opts.page !== undefined) params.set('page', String(opts.page));
+    if (opts.size !== undefined) params.set('size', String(opts.size));
+    if (opts.q !== undefined) params.set('q', opts.q);
+    const url = `${process.env.AM_MANAGEMENT_URL}/management/organizations/${ORG_ID}/environments/${ENV_ID}/domains/${domainId}/applications?${params.toString()}`;
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(url, { headers });
+    return { status: response.status };
+  };
+
+  const listAgents = async (
+    domainId: string,
+    opts: { page?: number; size?: number; q?: string } = {},
+  ): Promise<AgentListResult> => {
+    const params = new URLSearchParams({ type: 'AGENT' });
+    if (opts.page !== undefined) params.set('page', String(opts.page));
+    if (opts.size !== undefined) params.set('size', String(opts.size));
+    if (opts.q !== undefined) params.set('q', opts.q);
+    const url = `${process.env.AM_MANAGEMENT_URL}/management/organizations/${ORG_ID}/environments/${ENV_ID}/domains/${domainId}/applications?${params.toString()}`;
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!response.ok) {
+      throw new Error(`listAgents failed: ${response.status} ${await response.text()}`);
+    }
+    return response.json() as Promise<AgentListResult>;
   };
 
   const createRegularApp = async (domainId: string, name: string): Promise<Application> => {
@@ -103,6 +139,8 @@ export const setupAgentApplicationsFixture = async (): Promise<AgentApplications
     createdApplicationIds,
     createAgentApp,
     createRegularApp,
+    listAgents,
+    listAgentsRaw,
     cleanUp,
   };
 };

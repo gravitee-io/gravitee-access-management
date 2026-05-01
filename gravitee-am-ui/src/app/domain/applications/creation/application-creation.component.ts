@@ -28,12 +28,6 @@ import {
   CopyClientSecretCopyDialogData,
 } from '../../../components/client-secrets-management/dialog/copy-client-secret/copy-client-secret.component';
 
-const AGENT_TYPE_TO_APPLICATION_TYPE: Record<string, string> = {
-  USER_EMBEDDED: 'NATIVE',
-  HOSTED_DELEGATED: 'WEB',
-  AUTONOMOUS: 'SERVICE',
-};
-
 @Component({
   selector: 'app-creation',
   templateUrl: './application-creation.component.html',
@@ -97,14 +91,11 @@ export class ApplicationCreationComponent implements OnInit {
     app.clientSecret = this.application.clientSecret;
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
 
+    app.type = this.application.type;
     if (this.application.type === 'AGENT') {
-      app.type = AGENT_TYPE_TO_APPLICATION_TYPE[this.application.agentType] ?? 'WEB';
-      app.agentIdentityMode = true;
       app.agentSettings = {
         agentType: this.application.agentType,
       };
-    } else {
-      app.type = this.application.type;
     }
 
     this.applicationService

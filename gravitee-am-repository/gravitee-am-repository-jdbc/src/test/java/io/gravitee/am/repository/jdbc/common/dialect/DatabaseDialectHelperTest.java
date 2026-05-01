@@ -212,6 +212,56 @@ public class DatabaseDialectHelperTest {
     }
 
     @Test
+    public void shouldBuildSearchApplicationsQuery_withType_Postgresql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+
+        String query = helper.buildSearchApplicationsQuery(false, false, true, 0, 10, "name", true);
+
+        assertTrue("Postgres query filters on type column", query.contains("a.type = :type"));
+    }
+
+    @Test
+    public void shouldBuildSearchApplicationsQuery_withType_MySql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MySqlHelper helper = new MySqlHelper(dialect, null);
+
+        String query = helper.buildSearchApplicationsQuery(false, false, true, 0, 10, "name", true);
+
+        assertTrue("MySql query filters on type column", query.contains("a.type = :type"));
+    }
+
+    @Test
+    public void shouldBuildSearchApplicationsQuery_withType_MsSql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        String query = helper.buildSearchApplicationsQuery(false, false, true, 0, 10, "name", true);
+
+        assertTrue("MsSql query filters on type column", query.contains("a.type = :type"));
+    }
+
+    @Test
+    public void shouldBuildSearchApplicationsQuery_withType_Mariadb() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MariadbHelper helper = new MariadbHelper(dialect, null);
+
+        String query = helper.buildSearchApplicationsQuery(false, false, true, 0, 10, "name", true);
+
+        assertTrue("MariaDB query filters on type column", query.contains("a.type = :type"));
+    }
+
+    @Test
+    public void shouldBuildSearchApplicationsQuery_withoutType_omitsTypeClause() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+
+        String query = helper.buildSearchApplicationsQuery(false, false, false, 0, 10, "name", true);
+
+        Assert.assertFalse("type clause is omitted when withType=false", query.contains("a.type"));
+    }
+
+    @Test
     public void shouldGetLikeEscapeClause_Postgresql_Empty() {
         R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
         PostgresqlHelper helper = new PostgresqlHelper(dialect, null);

@@ -29,28 +29,25 @@ afterAll(async () => {
   await fixture?.cleanUp();
 });
 
-describe('Blueprint Application — Creation & Type Inference', () => {
-  it('should create USER_EMBEDDED agent and infer NATIVE type', async () => {
+describe('Blueprint Application — Creation & Profile', () => {
+  it('should create USER_EMBEDDED agent typed as AGENT', async () => {
     const app = await fixture.createBlueprintApp('USER_EMBEDDED');
 
-    expect(app.type).toEqual('native');
-    expect(app.settings.advanced.agentIdentityMode).toBe(true);
+    expect(app.type).toEqual('agent');
     expect(app.settings.agent.agentType).toEqual('user_embedded');
   });
 
-  it('should create HOSTED_DELEGATED agent and infer WEB type', async () => {
+  it('should create HOSTED_DELEGATED agent typed as AGENT', async () => {
     const app = await fixture.createBlueprintApp('HOSTED_DELEGATED');
 
-    expect(app.type).toEqual('web');
-    expect(app.settings.advanced.agentIdentityMode).toBe(true);
+    expect(app.type).toEqual('agent');
     expect(app.settings.agent.agentType).toEqual('hosted_delegated');
   });
 
-  it('should create AUTONOMOUS agent and infer SERVICE type', async () => {
+  it('should create AUTONOMOUS agent typed as AGENT', async () => {
     const app = await fixture.createBlueprintApp('AUTONOMOUS');
 
-    expect(app.type).toEqual('service');
-    expect(app.settings.advanced.agentIdentityMode).toBe(true);
+    expect(app.type).toEqual('agent');
     expect(app.settings.agent.agentType).toEqual('autonomous');
   });
 

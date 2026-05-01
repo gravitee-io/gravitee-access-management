@@ -1020,6 +1020,17 @@ paths:
         in: query
         schema:
           type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - WEB
+          - NATIVE
+          - BROWSER
+          - SERVICE
+          - RESOURCE_SERVER
+          - AGENT
       responses:
         "200":
           description: List registered applications for a security domain
@@ -1067,59 +1078,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Application"
-        "500":
-          description: Internal server error
-  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/agents:
-    get:
-      tags:
-      - application
-      - domain
-      summary: List applications flagged as agent identities for a security domain
-      description: "User must have the APPLICATION[LIST] permission on the specified\
-        \ domain, environment or organization AND either APPLICATION[READ] permission\
-        \ on each domain's application or APPLICATION[READ] permission on the specified\
-        \ domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode\
-        \ = true."
-      operationId: listAgentApplications
-      parameters:
-      - name: organizationId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: environmentId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: domain
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: page
-        in: query
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      - name: size
-        in: query
-        schema:
-          type: integer
-          format: int32
-          default: 50
-      - name: q
-        in: query
-        schema:
-          type: string
-      responses:
-        "200":
-          description: List agent applications for a security domain
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentApplicationPage"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}:
@@ -12349,19 +12307,6 @@ components:
           type: string
         type:
           type: string
-    AgentApplicationPage:
-      type: object
-      properties:
-        currentPage:
-          type: integer
-          format: int32
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Application"
-        totalCount:
-          type: integer
-          format: int64
     AgentSettings:
       type: object
       properties:
@@ -12453,7 +12398,7 @@ components:
     Application:
       type: object
       properties:
-        agentIdentityMode:
+        agentApplication:
           type: boolean
         certificate:
           type: string
@@ -12506,14 +12451,13 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         updatedAt:
           type: string
           format: date-time
     ApplicationAdvancedSettings:
       type: object
       properties:
-        agentIdentityMode:
-          type: boolean
         flowsInherited:
           type: boolean
         skipConsent:
@@ -13994,6 +13938,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -14496,8 +14441,6 @@ components:
       - type
       type: object
       properties:
-        agentIdentityMode:
-          type: boolean
         agentSettings:
           $ref: "#/components/schemas/AgentSettings"
         clientId:
@@ -14524,6 +14467,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -15558,8 +15502,6 @@ components:
     PatchApplicationAdvancedSettings:
       type: object
       properties:
-        agentIdentityMode:
-          type: boolean
         flowsInherited:
           type: boolean
         skipConsent:
@@ -15885,6 +15827,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     PatchCIBASettings:
       type: object
       properties:

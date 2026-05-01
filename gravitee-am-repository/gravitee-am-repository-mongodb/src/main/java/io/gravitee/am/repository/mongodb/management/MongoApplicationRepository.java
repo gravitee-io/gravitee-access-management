@@ -126,7 +126,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
-    private static final String FIELD_AGENT_IDENTITY_MODE = "settings.advanced.agentIdentityMode";
+    private static final String FIELD_TYPE = "type";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct
@@ -143,7 +143,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         indexes.put(new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
         indexes.put(new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_AGENT_IDENTITY_MODE, 1), new IndexOptions().name("d1aim1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_TYPE, 1), new IndexOptions().name("d1t1"));
 
         // Case-insensitive indexes for search functionality
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), indexOptionsWithCollation("d1soc1_ci"));
@@ -180,14 +180,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        Bson query = eq(FIELD_DOMAIN, domain);
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        Bson query = type == null
+                ? eq(FIELD_DOMAIN, domain)
+                : and(eq(FIELD_DOMAIN, domain), eq(FIELD_TYPE, type.name()));
         return queryApplications(query, page, size).observeOn(Schedulers.computation());
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        Bson query = and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds));
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        Bson query = type == null
+                ? and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds))
+                : and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds), eq(FIELD_TYPE, type.name()));
         return queryApplications(query, page, size).observeOn(Schedulers.computation());
     }
 
@@ -206,29 +210,16 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
-        Bson query = and(eq(FIELD_DOMAIN, domain), eq(FIELD_AGENT_IDENTITY_MODE, true));
-        return queryApplications(query, page, size).observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
-        Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
-        Bson mongoQuery = and(baseQuery, eq(FIELD_AGENT_IDENTITY_MODE, true));
-        boolean useCollation = !isWildcardQuery(query);
-        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
-    }
-
-    @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
         // search - use collation for non-wildcard queries to leverage case-insensitive indexes
-        Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson mongoQuery = type == null ? baseQuery : and(baseQuery, eq(FIELD_TYPE, type.name()));
         boolean useCollation = !isWildcardQuery(query);
         return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
         // Search on client_id and name fields with case-insensitive matching
         boolean useWildcard = isWildcardQuery(query);
 
@@ -246,9 +237,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
             searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
         }
 
-        Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
-                searchQuery);
+        Bson mongoQuery = type == null
+                ? and(eq(FIELD_DOMAIN, domain), searchQuery)
+                : and(eq(FIELD_DOMAIN, domain), searchQuery, eq(FIELD_TYPE, type.name()));
 
         CountOptions countOpts = useWildcard ? countOptions() : countOptions().collation(CASE_INSENSITIVE_COLLATION);
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOpts)).first(0L);
@@ -804,7 +795,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettings applicationAdvancedSettings = new ApplicationAdvancedSettings();
         applicationAdvancedSettings.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettings.setFlowsInherited(other.isFlowsInherited());
-        applicationAdvancedSettings.setAgentIdentityMode(other.isAgentIdentityMode());
         return applicationAdvancedSettings;
     }
 
@@ -816,7 +806,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettingsMongo applicationAdvancedSettingsMongo = new ApplicationAdvancedSettingsMongo();
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
-        applicationAdvancedSettingsMongo.setAgentIdentityMode(other.isAgentIdentityMode());
         return applicationAdvancedSettingsMongo;
     }
 
