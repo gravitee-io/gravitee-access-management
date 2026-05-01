@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as forge from 'node-forge';
-import { createHash, randomBytes } from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import { generateSelfSignedCert } from '@utils/certificate-utils';
 import { Agent } from 'https';
 import fetch from 'cross-fetch';
 import { Domain } from '@management-models/Domain';
@@ -33,6 +30,17 @@ import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
+/** POST to a token endpoint through nginx mTLS, presenting a client certificate. */
+export async function postWithClientCert(url: string, body: string, cert: string, key: string): Promise<Response> {
+  const agent = new Agent({ rejectUnauthorized: false, cert, key });
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+    agent,
+  } as any) as Promise<Response>;
+}
+
 export interface MtlsAuthFixture extends Fixture {
   domain: Domain;
   oidc: DomainOidcConfig;
@@ -43,70 +51,6 @@ export interface MtlsAuthFixture extends Fixture {
   /** clientId of the tls_client_auth app configured for CN=a (used in nginx edge-stack tests) */
   edgeTlsClientId: string;
 }
-
-/**
- * Encodes a PEM certificate for the X-Client-Cert header.
- *
- * CertificateUtils.extractPeerCertificate() pre-processes the header value by
- * replacing literal +, / and = characters, then calls URLDecoder.decode().
- * encodeURIComponent produces a fully percent-encoded string (no literal +/=/),
- * so the pre-processing step is a no-op and decode() recovers the original PEM.
- */
-export function encodeCertForHeader(pem: string): string {
-  return encodeURIComponent(pem);
-}
-
-/** PEM text for paths under `cwd`, e.g. `/certs/client-a/client.crt`. */
-export function readCert(relPath: string): string {
-  return fs.readFileSync(path.join(process.cwd(), relPath), 'utf8');
-}
-
-/** POST with mutual TLS (used for `gateway-mtls` nginx edge tests). */
-export async function postWithClientCert(
-  url: string,
-  body: string,
-  cert: string,
-  key: string,
-): Promise<Response> {
-  const agent = new Agent({ rejectUnauthorized: false, cert, key });
-  return fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-    agent,
-  } as any) as Promise<Response>;
-}
-
-interface GeneratedCert {
-  pem: string;
-  subjectDn: string;
-  forgeCert: forge.pki.Certificate;
-}
-
-function generateSelfSignedCert(cn: string): GeneratedCert {
-  const keypair = forge.pki.rsa.generateKeyPair(2048);
-  const cert = forge.pki.createCertificate();
-  cert.publicKey = keypair.publicKey;
-  cert.serialNumber = randomBytes(16).toString('hex');
-  cert.validity.notBefore = new Date();
-  cert.validity.notAfter = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-  const attrs = [{ shortName: 'CN', value: cn }];
-  cert.setSubject(attrs);
-  cert.setIssuer(attrs);
-  cert.sign(keypair.privateKey, forge.md.sha256.create());
-  return {
-    pem: forge.pki.certificateToPem(cert),
-    // Single-RDN subject avoids DN ordering ambiguity with BouncyCastle's areEqual()
-    subjectDn: `CN=${cn}`,
-    forgeCert: cert,
-  };
-}
-
-function certThumbprintS256(cert: forge.pki.Certificate): string {
-  const der = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
-  return createHash('sha256').update(Buffer.from(der, 'binary')).digest('base64url');
-}
-
 
 export const setupMtlsAuthFixture = async (): Promise<MtlsAuthFixture> => {
   const accessToken = await requestAdminAccessToken();
@@ -188,7 +132,6 @@ export const setupMtlsAuthFixture = async (): Promise<MtlsAuthFixture> => {
     // Inline jwks is used because the jwksUri path goes through JWKConverter.convert(RSAKey)
     // which does not copy x5t#S256 to AM's JWK model, making getX5tS256() always null.
     // The inline path (getKeys(Client)) returns the stored JWKSet directly, preserving x5tS256.
-    const thumbprint = certThumbprintS256(validCert.forgeCert);
     const ssApp = await createApplication(domain.id, accessToken, {
       name: uniqueName('mtls-ss-app', true),
       type: 'SERVICE',
@@ -204,7 +147,7 @@ export const setupMtlsAuthFixture = async (): Promise<MtlsAuthFixture> => {
               redirectUris: ['http://localhost:4000/'],
               grantTypes: ['client_credentials'],
               tokenEndpointAuthMethod: 'self_signed_tls_client_auth',
-              jwks: { keys: [{ kty: 'RSA', x5tS256: thumbprint }] },
+              jwks: { keys: [{ kty: 'RSA', x5tS256: validCert.thumbprintS256 }] },
             },
           },
         },

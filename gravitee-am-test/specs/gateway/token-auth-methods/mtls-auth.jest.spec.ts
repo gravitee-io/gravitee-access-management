@@ -16,13 +16,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { setup } from '../../test-fixture';
-import {
-  MtlsAuthFixture,
-  encodeCertForHeader,
-  postWithClientCert,
-  readCert,
-  setupMtlsAuthFixture,
-} from './fixtures/mtls-auth-fixture';
+import { MtlsAuthFixture, postWithClientCert, setupMtlsAuthFixture } from './fixtures/mtls-auth-fixture';
+import { readCert } from '@utils/certificate-utils';
 
 setup(300000);
 
@@ -49,7 +44,7 @@ describe('mTLS OAuth Client Authentication (RFC 8705)', () => {
         `grant_type=client_credentials&client_id=${encodeURIComponent(fixture.tlsAuthClientId)}`,
         {
           'Content-type': 'application/x-www-form-urlencoded',
-          'X-Client-Cert': encodeCertForHeader(fixture.validCertPem),
+          'X-Client-Cert': encodeURIComponent(fixture.validCertPem),
         },
       ).expect(200);
 
@@ -64,7 +59,7 @@ describe('mTLS OAuth Client Authentication (RFC 8705)', () => {
         `grant_type=client_credentials&client_id=${encodeURIComponent(fixture.tlsAuthClientId)}`,
         {
           'Content-type': 'application/x-www-form-urlencoded',
-          'X-Client-Cert': encodeCertForHeader(fixture.wrongCertPem),
+          'X-Client-Cert': encodeURIComponent(fixture.wrongCertPem),
         },
       ).expect(401);
     });
@@ -89,7 +84,7 @@ describe('mTLS OAuth Client Authentication (RFC 8705)', () => {
         `grant_type=client_credentials&client_id=${encodeURIComponent(fixture.selfSignedClientId)}`,
         {
           'Content-type': 'application/x-www-form-urlencoded',
-          'X-Client-Cert': encodeCertForHeader(fixture.validCertPem),
+          'X-Client-Cert': encodeURIComponent(fixture.validCertPem),
         },
       ).expect(200);
 
@@ -104,7 +99,7 @@ describe('mTLS OAuth Client Authentication (RFC 8705)', () => {
         `grant_type=client_credentials&client_id=${encodeURIComponent(fixture.selfSignedClientId)}`,
         {
           'Content-type': 'application/x-www-form-urlencoded',
-          'X-Client-Cert': encodeCertForHeader(fixture.wrongCertPem),
+          'X-Client-Cert': encodeURIComponent(fixture.wrongCertPem),
         },
       ).expect(401);
     });
