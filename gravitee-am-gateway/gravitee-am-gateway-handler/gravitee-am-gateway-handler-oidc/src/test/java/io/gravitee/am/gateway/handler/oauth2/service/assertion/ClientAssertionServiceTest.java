@@ -76,6 +76,7 @@ public class ClientAssertionServiceTest {
 
     private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     private static final String JWT_SPIFFE_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-spiffe";
+    private static final String AGENT_JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer";
     private static final String CLIENT_ID = "clientIdentifier";
     private static final String AGENT_INSTANCE_ID = "agent-instance-42";
     private static final String ISSUER = CLIENT_ID;
@@ -716,7 +717,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
         JWKSet agentJwks = new JWKSet();
@@ -733,13 +734,13 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
-        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertNoErrors()
                 .assertValue(client -> {
                     // clientId stays as blueprint, agentInstanceId carries the instance
                     return CLIENT_ID.equals(client.getClientId())
                             && AGENT_INSTANCE_ID.equals(client.getAgentInstanceId())
-                            && client.isAgentIdentityMode();
+                            && client.isAgentApplication();
                 });
     }
 
@@ -757,7 +758,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         JWKSet agentJwks = new JWKSet();
@@ -772,7 +773,7 @@ public class ClientAssertionServiceTest {
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
         when(clientLookupService.findByClientId(CLIENT_ID)).thenReturn(Maybe.just(blueprint));
 
-        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -791,7 +792,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
         JWKSet agentJwks = new JWKSet();
@@ -808,7 +809,7 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(), any())).thenReturn(false);
 
-        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -820,7 +821,6 @@ public class ClientAssertionServiceTest {
 
         Client regularClient = new Client();
         regularClient.setClientId(CLIENT_ID);
-        regularClient.setAgentIdentityMode(false);
 
         String assertion = generateWorkloadJWT(privateKey, CLIENT_ID, AGENT_INSTANCE_ID);
         OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
@@ -830,7 +830,7 @@ public class ClientAssertionServiceTest {
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
         when(clientLookupService.findByClientId(CLIENT_ID)).thenReturn(Maybe.just(regularClient));
 
-        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -851,7 +851,7 @@ public class ClientAssertionServiceTest {
         );
         signedJWT.sign(new RSASSASigner(privateKey));
 
-        clientAssertionService.assertClient(JWT_BEARER_TYPE, signedJWT.serialize(), "/").test()
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, signedJWT.serialize(), "/").test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -863,7 +863,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.USER_EMBEDDED);
 
         String assertion = generateWorkloadJWT(privateKey, CLIENT_ID, AGENT_INSTANCE_ID);
@@ -873,6 +873,43 @@ public class ClientAssertionServiceTest {
         when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
         when(clientLookupService.findByClientId(CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testWorkloadJwt_RS256InvalidForFAPI() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        String assertion = generateWorkloadJWT(privateKey, CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        lenient().when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        lenient().when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(domain.usePlainFapiProfile()).thenReturn(true);
+
+        clientAssertionService.assertClient(AGENT_JWT_BEARER_TYPE, assertion, basePath).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidClientException.class);
+    }
+
+    @Test
+    public void testJwtBearer_strictRfc7523_rejectsIssNotEqualSub() throws Exception {
+        // RFC 7523: iss MUST equal sub (== client_id). Agent assertions now use
+        // the dedicated agent-jwt-bearer assertion type; jwt-bearer is strict.
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        String assertion = generateWorkloadJWT(privateKey, "blueprint-id", "agent-instance-1");
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        lenient().when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        lenient().when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
 
         clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)

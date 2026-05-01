@@ -26,7 +26,7 @@ import jwt from 'jsonwebtoken';
 
 setup(180000);
 
-const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
@@ -43,7 +43,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
     agent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, redirectUri, 'private_key_jwt');
 
     const appDetails = await fixture.getApp(agent.id);
-    expect(appDetails.type).toEqual('web');
+    expect(appDetails.type).toEqual('agent');
     expect(appDetails.settings.oauth.grantTypes).toContain('authorization_code');
     expect(appDetails.settings.oauth.grantTypes).toContain('client_credentials');
     expect(appDetails.settings.oauth.grantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');

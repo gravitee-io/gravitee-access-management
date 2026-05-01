@@ -402,8 +402,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateRequestObjectSigningAlgorithm)
                 .flatMap(this::validateRequestObjectEncryptionAlgorithm)
                 .flatMap(this::enforceWithSoftwareStatement)
-                .flatMap(this::validateCibaSettings)
-                .flatMap(this::validateAgentConstraints);
+                .flatMap(this::validateCibaSettings);
     }
 
     private Single<DynamicClientRegistrationRequest> enforceWithSoftwareStatement(DynamicClientRegistrationRequest request) {
@@ -961,34 +960,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         }
 
         return Single.just(request);
-    }
-
-    /**
-     * Agent identity applications (blueprints) must not be registered via DCR.
-     * Blueprints are the trust anchor for agent instances and carry sensitive
-     * governance (JWKS, grant policy, CIMD settings) — they must be created
-     * deliberately through the Management API, not by self-service clients.
-     * <p>
-     * This check rejects DCR requests whose {@code software_id} resolves to an
-     * application with agent identity mode enabled. DCR has no request field
-     * that directly sets agent identity mode, so {@code software_id} (template
-     * / blueprint reference) is the only way to reach that state.
-     */
-    private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
-        Optional<String> softwareId = request.getSoftwareId();
-        if (softwareId == null || softwareId.isEmpty()) {
-            return Single.just(request);
-        }
-
-        return clientService.findById(softwareId.get())
-                .flatMap(referenced -> {
-                    if (referenced.isAgentIdentityMode()) {
-                        return Maybe.<DynamicClientRegistrationRequest>error(() -> new InvalidClientMetadataException(
-                                "Agent identity applications cannot be registered via dynamic client registration"));
-                    }
-                    return Maybe.just(request);
-                })
-                .defaultIfEmpty(request);
     }
 
     /**

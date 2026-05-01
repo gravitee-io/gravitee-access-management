@@ -37,12 +37,6 @@ export interface ApplicationAdvancedSettings {
    * @type {boolean}
    * @memberof ApplicationAdvancedSettings
    */
-  agentIdentityMode?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ApplicationAdvancedSettings
-   */
   flowsInherited?: boolean;
   /**
    *
@@ -68,7 +62,6 @@ export function ApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreDiscri
     return json;
   }
   return {
-    agentIdentityMode: json['agentIdentityMode'] == null ? undefined : json['agentIdentityMode'],
     flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
     skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
   };
@@ -87,7 +80,6 @@ export function ApplicationAdvancedSettingsToJSONTyped(
   }
 
   return {
-    agentIdentityMode: value['agentIdentityMode'],
     flowsInherited: value['flowsInherited'],
     skipConsent: value['skipConsent'],
   };

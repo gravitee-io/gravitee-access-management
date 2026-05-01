@@ -300,7 +300,7 @@ class StrategyGranterAdapterTest {
         user.setId("subject-user");
 
         // Create TokenExchangeData with actorInfo that has gis
-        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, 1);
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, null, 1);
         GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
                 "urn:ietf:params:oauth:token-type:access_token",
                 new Date(),
@@ -367,7 +367,7 @@ class StrategyGranterAdapterTest {
         user.setId("subject-user");
 
         // Create TokenExchangeData with actorInfo that has no gis
-        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", null, null, null, 1);
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", null, null, null, null, 1);
         GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
                 "urn:ietf:params:oauth:token-type:access_token",
                 new Date(),
@@ -439,7 +439,7 @@ class StrategyGranterAdapterTest {
         );
 
         // Create TokenExchangeData with actorInfo that has actor_act (actor token is delegated)
-        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, actorTokenActClaim, 1);
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, actorTokenActClaim, 1);
         GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
                 "urn:ietf:params:oauth:token-type:access_token",
                 new Date(),
@@ -511,7 +511,7 @@ class StrategyGranterAdapterTest {
         user.setId("subject-user");
 
         // Create TokenExchangeData with actorInfo that has NO actor_act (actor token is not delegated)
-        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, 1);
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, null, 1);
         GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
                 "urn:ietf:params:oauth:token-type:access_token",
                 new Date(),

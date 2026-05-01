@@ -23,7 +23,6 @@
       <mat-label>Search for applications</mat-label>
       <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
     </mat-form-field>
-    <mat-slide-toggle [checked]="agentsOnly" (change)="onAgentsOnlyToggle($event.checked)">Agents only</mat-slide-toggle>
   </div>
   <div class="gv-page-content" *ngIf="!isEmpty">
     <ngx-datatable
@@ -62,19 +61,7 @@
               <svg width="40" height="40" [identiconHash]="row.name"></svg>
             </div>
             <div class="app-information" fxLayout="column">
-              <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                <a [routerLink]="[row.id]">{{ row.name }}</a>
-                <mat-chip
-                  *ngIf="row.agentIdentityMode"
-                  class="agent-chip"
-                  color="primary"
-                  selected
-                  matTooltip="Blueprint agent application"
-                  disableRipple
-                >
-                  Agent
-                </mat-chip>
-              </div>
+              <a [routerLink]="[row.id]">{{ row.name }}</a>
               <small>{{ row.type }}</small>
             </div>
           </div>
