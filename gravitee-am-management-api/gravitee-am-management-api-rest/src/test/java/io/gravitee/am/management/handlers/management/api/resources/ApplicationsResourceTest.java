@@ -87,7 +87,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         doReturn(Flowable.just("client-1-id"))
                 .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, (ApplicationType) null, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -123,7 +123,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         doReturn(Flowable.just("agent-1-id"))
                 .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(agentPage)).when(applicationService).findAgentsByDomain(domainId, 0, 50);
+        doReturn(Single.just(agentPage)).when(applicationService).findByDomain(domainId, ApplicationType.AGENT, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications")
                 .queryParam("type", "AGENT").request().get();
@@ -151,7 +151,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         doReturn(Flowable.just("agent-1-id"))
                 .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(page)).when(applicationService).searchAgents(domainId, "alpha*", 0, 50);
+        doReturn(Single.just(page)).when(applicationService).search(domainId, "alpha*", ApplicationType.AGENT, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications")
                 .queryParam("type", "AGENT").queryParam("q", "alpha*").request().get();

@@ -456,7 +456,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         regularApp.setType(ApplicationType.SERVICE);
         applicationRepository.create(regularApp).blockingGet();
 
-        TestObserver<Page<Application>> observer = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        TestObserver<Page<Application>> observer = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
@@ -475,7 +475,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         regularApp.setType(ApplicationType.SERVICE);
         applicationRepository.create(regularApp).blockingGet();
 
-        TestObserver<Page<Application>> observer = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        TestObserver<Page<Application>> observer = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertValue(p -> p.getData().isEmpty());
@@ -492,7 +492,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         app.setType(ApplicationType.SERVICE);
         Application created = applicationRepository.create(app).blockingGet();
 
-        TestObserver<Page<Application>> beforeToggle = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        TestObserver<Page<Application>> beforeToggle = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
         beforeToggle.awaitDone(10, TimeUnit.SECONDS);
         beforeToggle.assertValue(p -> p.getData().isEmpty());
 
@@ -504,7 +504,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         created.setSettings(settings);
         applicationRepository.update(created).blockingGet();
 
-        TestObserver<Page<Application>> afterToggle = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        TestObserver<Page<Application>> afterToggle = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
         afterToggle.awaitDone(10, TimeUnit.SECONDS);
         afterToggle.assertValue(p -> p.getData().size() == 1);
     }
@@ -536,7 +536,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         matchingRegular.setType(ApplicationType.SERVICE);
         applicationRepository.create(matchingRegular).blockingGet();
 
-        TestObserver<Page<Application>> observer = applicationRepository.searchAgents(domain, "alpha*", 0, 20).test();
+        TestObserver<Page<Application>> observer = applicationRepository.search(domain, "alpha*", ApplicationType.AGENT, 0, 20).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertValue(p -> p.getData().size() == 1);
@@ -554,7 +554,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         applicationRepository.delete(created.getId()).blockingAwait();
 
-        TestObserver<Page<Application>> observer = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        TestObserver<Page<Application>> observer = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValue(p -> p.getData().isEmpty());
     }

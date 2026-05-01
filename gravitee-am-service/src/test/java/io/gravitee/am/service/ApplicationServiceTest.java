@@ -107,7 +107,9 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import org.mockito.ArgumentMatchers;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doAnswer;
@@ -258,7 +260,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(0), eq(Integer.MAX_VALUE))).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Set<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -269,7 +271,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainAndApplicationIds() {
-        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(), eq(0), eq(10)))
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(), isNull(), eq(0), eq(10)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), List.of("id1"),0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -281,7 +283,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldSearchByDomainAndApplicationIds() {
-        when(applicationRepository.search(eq(DOMAIN.getId()), any(), eq("query"), eq(0), eq(10)))
+        when(applicationRepository.search(eq(DOMAIN.getId()), any(), eq("query"), isNull(), eq(0), eq(10)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Page<Application>> testObserver = applicationService.search(DOMAIN.getId(), List.of("id1"), "query", 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -293,7 +295,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(0), eq(Integer.MAX_VALUE))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         applicationService.findByDomain(DOMAIN.getId()).subscribe(testObserver);
@@ -305,7 +307,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldFindByDomainPagination() {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.just(pageClients));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(1), eq(1))).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), 1, 1).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -317,9 +319,9 @@ public class ApplicationServiceTest {
     @Test
     public void shouldFindAgentsByDomain() {
         Page<Application> page = new Page<>(Collections.singleton(new Application()), 0, 1);
-        when(applicationRepository.findAgentsByDomain(DOMAIN.getId(), 0, 10)).thenReturn(Single.just(page));
+        when(applicationRepository.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10)).thenReturn(Single.just(page));
 
-        TestObserver<Page<Application>> testObserver = applicationService.findAgentsByDomain(DOMAIN.getId(), 0, 10).test();
+        TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -329,10 +331,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindAgentsByDomain_technicalException() {
-        when(applicationRepository.findAgentsByDomain(DOMAIN.getId(), 0, 10)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Page<Application>> testObserver = new TestObserver<>();
-        applicationService.findAgentsByDomain(DOMAIN.getId(), 0, 10).subscribe(testObserver);
+        applicationService.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -341,9 +343,9 @@ public class ApplicationServiceTest {
     @Test
     public void shouldSearchAgents() {
         Page<Application> page = new Page<>(Collections.singleton(new Application()), 0, 1);
-        when(applicationRepository.searchAgents(DOMAIN.getId(), "agent*", 0, 10)).thenReturn(Single.just(page));
+        when(applicationRepository.search(DOMAIN.getId(), "agent*", ApplicationType.AGENT, 0, 10)).thenReturn(Single.just(page));
 
-        TestObserver<Page<Application>> testObserver = applicationService.searchAgents(DOMAIN.getId(), "agent*", 0, 10).test();
+        TestObserver<Page<Application>> testObserver = applicationService.search(DOMAIN.getId(), "agent*", ApplicationType.AGENT, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -353,10 +355,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldSearchAgents_technicalException() {
-        when(applicationRepository.searchAgents(DOMAIN.getId(), "q", 0, 10)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.search(DOMAIN.getId(), "q", ApplicationType.AGENT, 0, 10)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Page<Application>> testObserver = new TestObserver<>();
-        applicationService.searchAgents(DOMAIN.getId(), "q", 0, 10).subscribe(testObserver);
+        applicationService.search(DOMAIN.getId(), "q", ApplicationType.AGENT, 0, 10).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -364,7 +366,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(1), eq(1))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         applicationService.findByDomain(DOMAIN.getId(), 1, 1).subscribe(testObserver);
