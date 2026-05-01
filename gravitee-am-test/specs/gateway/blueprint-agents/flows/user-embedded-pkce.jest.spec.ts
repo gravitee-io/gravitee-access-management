@@ -34,7 +34,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
     agent = await fixture.createBlueprintApp('USER_EMBEDDED', undefined, redirectUri);
 
     const appDetails = await fixture.getApp(agent.id);
-    expect(appDetails.type).toEqual('native');
+    expect(appDetails.type).toEqual('agent');
     expect(appDetails.settings.oauth.clientSecret).toBeUndefined();
     expect(appDetails.settings.oauth.grantTypes).toContain('authorization_code');
     expect(appDetails.settings.oauth.forcePKCE).toEqual(true);

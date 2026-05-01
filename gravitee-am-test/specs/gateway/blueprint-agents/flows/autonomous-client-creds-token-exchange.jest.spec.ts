@@ -26,7 +26,7 @@ import jwt from 'jsonwebtoken';
 
 setup(180000);
 
-const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
@@ -44,7 +44,7 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     autonomousAgent = await fixture.createBlueprintApp('AUTONOMOUS', undefined, undefined, 'client_secret_basic');
 
     const autonomousDetails = await fixture.getApp(autonomousAgent.id);
-    expect(autonomousDetails.type).toEqual('service');
+    expect(autonomousDetails.type).toEqual('agent');
     expect(autonomousDetails.settings.oauth.grantTypes).toContain('client_credentials');
     expect(autonomousDetails.settings.oauth.grantTypes).toContain(TOKEN_EXCHANGE_GRANT);
     expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('authorization_code');
