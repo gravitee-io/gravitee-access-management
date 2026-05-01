@@ -1051,11 +1051,7 @@ public class DomainServiceTest {
 
         Application blueprintApp = new Application();
         blueprintApp.setTemplate(false); // NOT a template
-        ApplicationSettings settings = new ApplicationSettings();
-        ApplicationAdvancedSettings advanced = new ApplicationAdvancedSettings();
-        advanced.setAgentIdentityMode(true); // IS a blueprint agent
-        settings.setAdvanced(advanced);
-        blueprintApp.setSettings(settings);
+        blueprintApp.setType(io.gravitee.am.model.application.ApplicationType.AGENT); // IS a blueprint agent
         when(applicationService.findById("blueprint-app-id")).thenReturn(Maybe.just(blueprintApp));
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)

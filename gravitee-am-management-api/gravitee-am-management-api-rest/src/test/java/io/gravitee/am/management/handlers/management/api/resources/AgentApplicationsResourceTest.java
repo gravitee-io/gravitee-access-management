@@ -76,19 +76,16 @@ public class AgentApplicationsResourceTest extends JerseySpringTest {
         assertEquals("agent-1", item.get("name"));
         assertEquals(Boolean.TRUE, item.get("enabled"));
 
+        assertEquals("agent", item.get("type"));
+
         @SuppressWarnings("unchecked")
         final Map<String, Object> settings = (Map<String, Object>) item.get("settings");
         assertTrue(settings.containsKey("oauth"));
-        assertTrue(settings.containsKey("advanced"));
         assertTrue(settings.containsKey("agent"));
 
         @SuppressWarnings("unchecked")
         final Map<String, Object> oauth = (Map<String, Object>) settings.get("oauth");
         assertEquals("client-agent-1", oauth.get("clientId"));
-
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> advanced = (Map<String, Object>) settings.get("advanced");
-        assertEquals(Boolean.TRUE, advanced.get("agentIdentityMode"));
 
         @SuppressWarnings("unchecked")
         final Map<String, Object> agentBlock = (Map<String, Object>) settings.get("agent");
@@ -154,21 +151,18 @@ public class AgentApplicationsResourceTest extends JerseySpringTest {
         application.setType(ApplicationType.SERVICE);
         application.setEnabled(true);
         application.setDomain(domainId);
+        application.setType(io.gravitee.am.model.application.ApplicationType.AGENT);
         application.setUpdatedAt(new Date());
 
         final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         oauth.setClientId("client-" + name);
         oauth.setRedirectUris(List.of("https://example.com/callback"));
 
-        final ApplicationAdvancedSettings advanced = new ApplicationAdvancedSettings();
-        advanced.setAgentIdentityMode(true);
-
         final AgentSettings agent = new AgentSettings();
         agent.setAgentType(agentType);
 
         final ApplicationSettings settings = new ApplicationSettings();
         settings.setOauth(oauth);
-        settings.setAdvanced(advanced);
         settings.setAgent(agent);
         application.setSettings(settings);
         return application;

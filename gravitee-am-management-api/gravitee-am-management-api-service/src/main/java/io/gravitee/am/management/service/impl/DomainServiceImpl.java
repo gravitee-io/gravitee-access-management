@@ -915,7 +915,7 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("templateId must be provided when Client ID Metadata Document is enabled"));
         }
 
-        return applicationService.findById(templateId).filter(app -> app.isTemplate() || app.isAgentIdentityMode())
+        return applicationService.findById(templateId).filter(app -> app.isTemplate() || app.isAgentApplication())
                 .switchIfEmpty(Maybe.error(new InvalidDomainException("templateId must be a valid application id configured as template or blueprint agent"))).ignoreElement();
     }
 

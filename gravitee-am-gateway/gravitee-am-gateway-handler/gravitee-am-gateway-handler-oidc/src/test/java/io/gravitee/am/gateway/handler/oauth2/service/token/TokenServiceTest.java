@@ -199,7 +199,7 @@ public class TokenServiceTest {
 
         Client client = new Client();
         client.setClientId("my-agent-client-id");
-        client.setAgentIdentityMode(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         client.setAgentType(AgentType.USER_EMBEDDED);
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
@@ -232,7 +232,7 @@ public class TokenServiceTest {
 
         Client client = new Client();
         client.setClientId("blueprint-client-id");
-        client.setAgentIdentityMode(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         client.setAgentType(AgentType.AUTONOMOUS);
         client.setAgentInstanceId("agent-instance-001");
 

@@ -982,7 +982,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
         return clientService.findById(softwareId.get())
                 .flatMap(referenced -> {
-                    if (referenced.isAgentIdentityMode()) {
+                    if (referenced.isAgentApplication()) {
                         return Maybe.<DynamicClientRegistrationRequest>error(() -> new InvalidClientMetadataException(
                                 "Agent identity applications cannot be registered via dynamic client registration"));
                     }

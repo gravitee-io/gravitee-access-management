@@ -716,7 +716,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
         JWKSet agentJwks = new JWKSet();
@@ -739,7 +739,7 @@ public class ClientAssertionServiceTest {
                     // clientId stays as blueprint, agentInstanceId carries the instance
                     return CLIENT_ID.equals(client.getClientId())
                             && AGENT_INSTANCE_ID.equals(client.getAgentInstanceId())
-                            && client.isAgentIdentityMode();
+                            && client.isAgentApplication();
                 });
     }
 
@@ -757,7 +757,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         JWKSet agentJwks = new JWKSet();
@@ -791,7 +791,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
         JWKSet agentJwks = new JWKSet();
@@ -820,7 +820,6 @@ public class ClientAssertionServiceTest {
 
         Client regularClient = new Client();
         regularClient.setClientId(CLIENT_ID);
-        regularClient.setAgentIdentityMode(false);
 
         String assertion = generateWorkloadJWT(privateKey, CLIENT_ID, AGENT_INSTANCE_ID);
         OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
@@ -863,7 +862,7 @@ public class ClientAssertionServiceTest {
 
         Client blueprint = new Client();
         blueprint.setClientId(CLIENT_ID);
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         blueprint.setAgentType(AgentType.USER_EMBEDDED);
 
         String assertion = generateWorkloadJWT(privateKey, CLIENT_ID, AGENT_INSTANCE_ID);

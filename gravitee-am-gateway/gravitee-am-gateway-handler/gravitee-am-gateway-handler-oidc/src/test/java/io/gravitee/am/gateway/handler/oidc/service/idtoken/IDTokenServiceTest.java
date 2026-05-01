@@ -898,7 +898,7 @@ public class IDTokenServiceTest {
         Client client = new Client();
         client.setClientId("agent-client-id");
         client.setCertificate("client-certificate");
-        client.setAgentIdentityMode(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         client.setAgentType(io.gravitee.am.model.application.AgentType.USER_EMBEDDED);
 
         io.gravitee.am.gateway.certificate.CertificateProvider clientCert = createCert(certificateProvider, "client-certificate");
@@ -932,7 +932,7 @@ public class IDTokenServiceTest {
         Client client = new Client();
         client.setClientId("blueprint-client-id");
         client.setCertificate("client-certificate");
-        client.setAgentIdentityMode(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
         client.setAgentType(io.gravitee.am.model.application.AgentType.HOSTED_DELEGATED);
         client.setAgentInstanceId("agent-instance-001");
 

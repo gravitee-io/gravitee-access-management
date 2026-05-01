@@ -38,7 +38,6 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
@@ -391,12 +390,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        if (newApplication.isAgentIdentityMode()) {
-            ApplicationAdvancedSettings advancedSettings = Optional.ofNullable(applicationSettings.getAdvanced())
-                    .orElseGet(ApplicationAdvancedSettings::new);
-            advancedSettings.setAgentIdentityMode(true);
-            applicationSettings.setAdvanced(advancedSettings);
-
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
             AgentSettings agentSettings = Optional.ofNullable(newApplication.getAgentSettings())
                     .orElseGet(AgentSettings::new);
             applyAgentDefaults(agentSettings, oAuthSettings);
@@ -1123,16 +1117,21 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> validateAgentSettings(Application application) {
-        if (!application.isAgentIdentityMode()) {
+        boolean isAgentType = ApplicationType.AGENT.equals(application.getType());
+        AgentSettings agent = application.getSettings().getAgent();
+
+        if (!isAgentType) {
+            if (agent != null) {
+                return Single.error(new InvalidClientMetadataException("Agent settings are only allowed when application type is AGENT"));
+            }
             return Single.just(application);
         }
 
-        AgentSettings agent = application.getSettings().getAgent();
         if (agent == null) {
-            return Single.error(new InvalidClientMetadataException("Agent settings are required when agent identity mode is enabled"));
+            return Single.error(new InvalidClientMetadataException("Agent settings are required when application type is AGENT"));
         }
         if (agent.getAgentType() == null) {
-            return Single.error(new InvalidClientMetadataException("Agent type is required when agent identity mode is enabled"));
+            return Single.error(new InvalidClientMetadataException("Agent type is required when application type is AGENT"));
         }
 
         ApplicationOAuthSettings oauth = application.getSettings().getOauth();

@@ -476,12 +476,12 @@ public class TokenServiceImpl implements TokenService {
         }
 
         // Blueprint agent - inject "act" claim (actor = agent or blueprint client_id)
-        if (client.isAgentIdentityMode() && jwt.get(Claims.ACT) == null) {
+        if (client.isAgentApplication() && jwt.get(Claims.ACT) == null) {
             jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
         }
 
         // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-00
-        if (client.isAgentIdentityMode() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
+        if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
             jwt.put(Claims.CLIENT_PROFILE, client.getAgentType().name().toLowerCase());
         }
 

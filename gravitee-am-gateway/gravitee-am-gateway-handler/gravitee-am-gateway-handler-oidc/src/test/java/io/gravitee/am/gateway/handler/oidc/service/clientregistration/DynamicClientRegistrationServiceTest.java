@@ -987,7 +987,7 @@ public class DynamicClientRegistrationServiceTest {
     public void create_rejectsAgentIdentityReference() {
         Client blueprint = new Client();
         blueprint.setId("blueprint-id");
-        blueprint.setAgentIdentityMode(true);
+        blueprint.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
 
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setSoftwareId(Optional.of("blueprint-id"));

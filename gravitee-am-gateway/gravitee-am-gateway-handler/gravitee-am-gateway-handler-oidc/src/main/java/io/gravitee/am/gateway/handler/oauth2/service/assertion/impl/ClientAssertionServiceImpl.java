@@ -375,7 +375,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     private Maybe<Client> verifyAgentBlueprint(Client blueprint, SignedJWT signedJWT, String kid) {
-        if (!blueprint.isAgentIdentityMode()) {
+        if (!blueprint.isAgentApplication()) {
             return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
         }
         AgentType agentType = blueprint.getAgentType();

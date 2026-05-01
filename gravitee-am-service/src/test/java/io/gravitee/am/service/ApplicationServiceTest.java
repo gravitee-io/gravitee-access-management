@@ -36,6 +36,8 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.application.AgentSettings;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -773,7 +775,8 @@ public class ApplicationServiceTest {
     private NewApplication prepareCreateApp(boolean withRedirectUri) {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
-        when(newClient.getType()).thenReturn(Stream.of(ApplicationType.values()).filter(type -> type != ApplicationType.SERVICE).toList().get(new Random().nextInt(0, ApplicationType.values().length - 1)));
+        var pickable = Stream.of(ApplicationType.values()).filter(type -> type != ApplicationType.SERVICE && type != ApplicationType.AGENT).toList();
+        when(newClient.getType()).thenReturn(pickable.get(new Random().nextInt(0, pickable.size())));
         if (withRedirectUri) {
             when(newClient.getRedirectUris()).thenReturn(List.of("https://redirect"));
         } else {
@@ -1913,6 +1916,79 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withoutAgentSettings() {
+        Application toPatch = agentBaseline();
+        toPatch.getSettings().setAgent(null);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withoutAgentType() {
+        Application toPatch = agentBaseline();
+        toPatch.getSettings().setAgent(new AgentSettings()); // agentType null
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_nonAgentApp_withAgentSettings() {
+        Application existing = emptyAppWithDomain();
+        existing.setType(ApplicationType.SERVICE);
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(existing));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setType(ApplicationType.SERVICE);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setGrantTypes(Arrays.asList(GrantType.CLIENT_CREDENTIALS));
+        oauth.setResponseTypes(Arrays.asList());
+        oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        settings.setOauth(oauth);
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        settings.setAgent(agent);
+        toPatch.setSettings(settings);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    private Application agentBaseline() {
+        Application existing = emptyAppWithDomain();
+        existing.setType(ApplicationType.AGENT);
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(existing));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setType(ApplicationType.AGENT);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE));
+        oauth.setResponseTypes(Arrays.asList("code"));
+        oauth.setRedirectUris(Arrays.asList("https://example.com/cb"));
+        oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
+        settings.setOauth(oauth);
+        toPatch.setSecretSettings(List.of(ApplicationSecretConfig.buildNoneSecretSettings()));
+        toPatch.setSettings(settings);
+        return toPatch;
     }
 
     private static Application emptyAppWithDomain() {

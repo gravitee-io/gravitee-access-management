@@ -259,12 +259,12 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // Blueprint agent - inject "act" claim (mirrors access-token logic)
-        if (client.isAgentIdentityMode() && idToken.get(Claims.ACT) == null) {
+        if (client.isAgentApplication() && idToken.get(Claims.ACT) == null) {
             idToken.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
         }
 
         // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-00
-        if (client.isAgentIdentityMode() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
+        if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
             idToken.put(Claims.CLIENT_PROFILE, client.getAgentType().name().toLowerCase());
         }
 

@@ -160,7 +160,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
     }
 
     public ClientTokenAuditBuilder agentIdentity(Client client) {
-        if (client != null && client.isAgentIdentityMode()) {
+        if (client != null && client.isAgentApplication()) {
             tokenNewValue.put("agentInstanceId", client.getAgentInstanceId());
             if (client.getAgentType() != null) {
                 tokenNewValue.put("agentType", client.getAgentType().name());

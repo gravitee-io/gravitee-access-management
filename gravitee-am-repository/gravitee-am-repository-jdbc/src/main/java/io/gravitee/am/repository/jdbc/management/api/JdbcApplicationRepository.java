@@ -22,6 +22,7 @@ import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -481,10 +482,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     private static boolean isAgentIdentityApplication(Application app) {
-        return Optional.ofNullable(app.getSettings())
-                .map(ApplicationSettings::getAdvanced)
-                .map(ApplicationAdvancedSettings::isAgentIdentityMode)
-                .orElse(false);
+        return ApplicationType.AGENT.equals(app.getType());
     }
 
     private static String resolveAgentType(Application app) {
