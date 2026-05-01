@@ -34,9 +34,6 @@ import {
   AccessPolicyListItem,
   AccessPolicyListItemFromJSON,
   AccessPolicyListItemToJSON,
-  AgentApplicationPage,
-  AgentApplicationPageFromJSON,
-  AgentApplicationPageToJSON,
   AnalyticsTypeParam,
   AnalyticsTypeParamFromJSON,
   AnalyticsTypeParamToJSON,
@@ -252,15 +249,6 @@ export interface GetMembersRequest {
   application: string;
 }
 
-export interface ListAgentApplicationsRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  page?: number;
-  size?: number;
-  q?: string;
-}
-
 export interface ListAppFlowsRequest {
   organizationId: string;
   environmentId: string;
@@ -292,6 +280,7 @@ export interface ListApplicationsRequest {
   page?: number;
   size?: number;
   q?: string;
+  type?: ListApplicationsTypeEnum;
 }
 
 export interface ListSecretsRequest {
@@ -1981,87 +1970,6 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION[LIST] permission on the specified domain, environment or organization AND either APPLICATION[READ] permission on each domain\'s application or APPLICATION[READ] permission on the specified domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode = true.
-   * List applications flagged as agent identities for a security domain
-   */
-  async listAgentApplicationsRaw(
-    requestParameters: ListAgentApplicationsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<AgentApplicationPage>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listAgentApplications.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling listAgentApplications.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling listAgentApplications.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    if (requestParameters.page !== undefined) {
-      queryParameters['page'] = requestParameters.page;
-    }
-
-    if (requestParameters.size !== undefined) {
-      queryParameters['size'] = requestParameters.size;
-    }
-
-    if (requestParameters.q !== undefined) {
-      queryParameters['q'] = requestParameters.q;
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/agents`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => AgentApplicationPageFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the APPLICATION[LIST] permission on the specified domain, environment or organization AND either APPLICATION[READ] permission on each domain\'s application or APPLICATION[READ] permission on the specified domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode = true.
-   * List applications flagged as agent identities for a security domain
-   */
-  async listAgentApplications(
-    requestParameters: ListAgentApplicationsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<AgentApplicationPage> {
-    const response = await this.listAgentApplicationsRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
    * List registered flows for an application
    */
@@ -2349,6 +2257,10 @@ export class ApplicationApi extends runtime.BaseAPI {
 
     if (requestParameters.q !== undefined) {
       queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.type !== undefined) {
+      queryParameters['type'] = requestParameters.type;
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -3242,3 +3154,15 @@ export const FindApplicationFormTemplateEnum = {
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type FindApplicationFormTemplateEnum = typeof FindApplicationFormTemplateEnum[keyof typeof FindApplicationFormTemplateEnum];
+/**
+ * @export
+ */
+export const ListApplicationsTypeEnum = {
+  Web: 'WEB',
+  Native: 'NATIVE',
+  Browser: 'BROWSER',
+  Service: 'SERVICE',
+  ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
+} as const;
+export type ListApplicationsTypeEnum = typeof ListApplicationsTypeEnum[keyof typeof ListApplicationsTypeEnum];

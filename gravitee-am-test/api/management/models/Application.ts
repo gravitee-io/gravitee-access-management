@@ -68,7 +68,7 @@ export interface Application {
    * @type {boolean}
    * @memberof Application
    */
-  agentIdentityMode?: boolean;
+  agentApplication?: boolean;
   /**
    *
    * @type {string}
@@ -182,6 +182,7 @@ export const ApplicationTypeEnum = {
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
 } as const;
 export type ApplicationTypeEnum = typeof ApplicationTypeEnum[keyof typeof ApplicationTypeEnum];
 
@@ -201,7 +202,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    agentIdentityMode: json['agentIdentityMode'] == null ? undefined : json['agentIdentityMode'],
+    agentApplication: json['agentApplication'] == null ? undefined : json['agentApplication'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     description: json['description'] == null ? undefined : json['description'],
@@ -236,7 +237,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
   }
 
   return {
-    agentIdentityMode: value['agentIdentityMode'],
+    agentApplication: value['agentApplication'],
     certificate: value['certificate'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     description: value['description'],

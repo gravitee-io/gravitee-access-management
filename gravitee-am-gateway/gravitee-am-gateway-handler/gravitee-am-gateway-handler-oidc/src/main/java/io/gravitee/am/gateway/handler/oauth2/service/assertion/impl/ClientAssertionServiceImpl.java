@@ -36,7 +36,6 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.SpiffeJwtSvidValidator;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ClientSecret;
@@ -46,10 +45,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.SecretService;
-import io.gravitee.am.service.reporter.builder.AgentAuditBuilder;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +57,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.AGENT_JWT_BEARER;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_SPIFFE;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
@@ -98,9 +95,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     private SecretService appSecretService;
 
     @Autowired
-    private AuditService auditService;
-
-    @Autowired
     private TrustBundleService trustBundleService;
 
     @Autowired
@@ -115,12 +109,16 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             return parseJwt(assertion)
                     .flatMap(jwt -> validateSpiffeAssertion(jwt, basePath, clientIdHint));
         }
+        if (AGENT_JWT_BEARER.equals(assertionType)) {
+            return parseJwt(assertion)
+                    .flatMap(jwt -> validateAgentAssertion(jwt, basePath));
+        }
         if (!JWT_BEARER.equals(assertionType)) {
             return Maybe.error(unsupportedAssertionType());
         }
 
         return parseJwt(assertion)
-                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath, clientIdHint));
+                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath));
     }
 
     private static Maybe<JWT> parseJwt(String assertion) {
@@ -134,30 +132,25 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     /**
-     * Dispatch an {@code urn:ietf:params:oauth:client-assertion-type:jwt-bearer}
-     * assertion. Standard RFC 7523 assertions have {@code iss == sub == client_id}
-     * and are handled by the private_key_jwt / client_secret_jwt path. Blueprint
-     * agent instance assertions have a distinct shape — either {@code iss} is a
-     * URI resolvable via CIMD, or {@code iss != sub} (blueprint vs. agent
-     * instance) — and route through the agent assertion path.
+     * Dispatch a standard RFC 7523 {@code jwt-bearer} client assertion: {@code iss == sub == client_id}.
+     * Agent-instance assertions are routed via the dedicated {@link ClientAuthenticationMethod#AGENT_JWT_BEARER}
+     * assertion type and never reach this path.
      */
-    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath, String clientIdHint) {
+    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath) {
         return Maybe.defer(() -> {
             JWTClaimsSet claims = jwt.getJWTClaimsSet();
             String iss = claims.getIssuer();
             String sub = claims.getSubject();
 
-            // A SPIFFE JWT-SVID arriving on the jwt-bearer assertion type is a
-            // client misconfiguration: SPIFFE assertions must use jwt-spiffe.
-            // Surface a clear error rather than letting the request fall through
-            // to the agent or generic OAuth lookup paths.
+            // SPIFFE JWT-SVID on the jwt-bearer assertion type is a client misconfiguration.
             if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
                 return Maybe.error(new InvalidClientException(
                         "SPIFFE JWT-SVID must be sent with client_assertion_type=" + JWT_SPIFFE));
             }
 
-            if (isAgentAssertionShape(iss, sub)) {
-                return validateAgentAssertion(jwt, basePath);
+            // Strict RFC 7523: iss MUST equal sub for private_key_jwt / client_secret_jwt.
+            if (iss == null || !iss.equals(sub)) {
+                return Maybe.error(NOT_VALID);
             }
 
             return validateJWT(jwt, basePath)
@@ -168,17 +161,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                         return validateSignatureWithPublicKey(validated);
                     });
         });
-    }
-
-    private static boolean isAgentAssertionShape(String iss, String sub) {
-        if (iss == null || sub == null) {
-            return false;
-        }
-        return isUri(iss) || !iss.equals(sub);
-    }
-
-    private static boolean isUri(String value) {
-        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     /**
@@ -360,6 +342,11 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
+            if (this.domain.usePlainFapiProfile()
+                    && !isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
+                return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
+            }
+
             // Per the Agent Identity proposal, the audience for a workload jwt-bearer
             // assertion MUST be the AM token endpoint — not the base issuer or PAR
             // endpoint. Discovery + token endpoint are always available (derived from
@@ -376,22 +363,14 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             // resolves the synthesized client via the domain's CIMD metadata flow.
             return clientLookupService.findByClientId(iss)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
-                    .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid)
-                            .doOnError(err -> {
-                                if (err instanceof InvalidClientException
-                                        && err.getMessage() != null
-                                        && err.getMessage().startsWith("Unable to validate client")) {
-                                    reportAgentAuth(iss, sub, kid, jti, blueprint, "INVALID_SIGNATURE");
-                                }
-                            }))
-                    .map(blueprint -> buildAgentClient(blueprint, sub))
-                    .doOnSuccess(agentClient -> reportAgentAuth(iss, sub, kid, jti, agentClient, null));
+                    .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid))
+                    .map(blueprint -> buildAgentClient(blueprint, sub));
         });
     }
 
     private Maybe<Client> verifyAgentBlueprint(Client blueprint, SignedJWT signedJWT, String kid) {
-        if (!blueprint.isAgentIdentityMode()) {
-            return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
+        if (!blueprint.isAgentApplication()) {
+            return Maybe.error(new InvalidClientException("Application is not an agent application"));
         }
         AgentType agentType = blueprint.getAgentType();
         if (agentType != AgentType.AUTONOMOUS && agentType != AgentType.HOSTED_DELEGATED) {
@@ -502,32 +481,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         Client agentClient = new Client(blueprint);
         agentClient.setAgentInstanceId(agentInstanceId);
         return agentClient;
-    }
-
-    private void reportAgentAuth(String iss, String sub, String kid, String jti,
-                                 Client blueprint, String failureReason) {
-        try {
-            var builder = AuditBuilder.builder(AgentAuditBuilder.class);
-            if (blueprint.getDomain() != null) {
-                builder.reference(Reference.domain(blueprint.getDomain()));
-            }
-            builder
-                    .blueprintId(blueprint.getClientId())
-                    .blueprintName(blueprint.getClientName())
-                    .agentInstanceId(sub)
-                    .agentType(blueprint.getAgentType() != null ? blueprint.getAgentType().name() : null)
-                    .assertionKid(kid)
-                    .assertionIss(iss)
-                    .assertionJti(jti);
-
-            if (failureReason != null) {
-                builder.throwable(new InvalidClientException(failureReason));
-            }
-
-            auditService.report(builder);
-        } catch (Exception e) {
-            log.warn("Failed to report agent authentication audit", e);
-        }
     }
 
     private Maybe<JWKSet> getClientJwkSet(Client client) {

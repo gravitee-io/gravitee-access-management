@@ -44,17 +44,29 @@ public interface ApplicationService {
 
     Single<Page<Application>> findAll(int page, int size);
 
-    Single<Page<Application>> findByDomain(String domain, int page, int size);
+    default Single<Page<Application>> findByDomain(String domain, int page, int size) {
+        return findByDomain(domain, (ApplicationType) null, page, size);
+    }
 
-    Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size);
+    Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size);
 
-    Single<Page<Application>> search(String domain, String query, int page, int size);
+    default Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
+        return findByDomain(domain, applicationIds, (ApplicationType) null, page, size);
+    }
 
-    Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size);
+    Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size);
 
-    Single<Page<Application>> findAgentsByDomain(String domain, int page, int size);
+    default Single<Page<Application>> search(String domain, String query, int page, int size) {
+        return search(domain, query, (ApplicationType) null, page, size);
+    }
 
-    Single<Page<Application>> searchAgents(String domain, String query, int page, int size);
+    Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size);
+
+    default Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+        return search(domain, applicationIds, query, (ApplicationType) null, page, size);
+    }
+
+    Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size);
 
     Flowable<Application> findByCertificate(String certificate);
 

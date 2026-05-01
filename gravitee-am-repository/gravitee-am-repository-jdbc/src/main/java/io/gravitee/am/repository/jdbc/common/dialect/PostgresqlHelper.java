@@ -125,9 +125,10 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     }
 
     @Override
-    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, StringBuilder builder) {
+    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, boolean withType, StringBuilder builder) {
         return builder.append("a.domain = :domain")
                 .append(withIds ? " AND a.id IN (:applicationIds)": "")
+                .append(withType ? " AND a.type = :type" : "")
                 .append(" AND (")
                 .append(" upper(a.name) ").append(wildcard ? SQL_LIKE : "= ")
                 .append(VALUE_PARAM)

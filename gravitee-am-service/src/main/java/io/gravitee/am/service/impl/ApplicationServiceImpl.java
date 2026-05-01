@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -35,6 +36,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.AgentSettings;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -232,9 +234,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find applications by domain {}", domain);
-        return applicationRepository.findByDomain(domain, page, size)
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        LOGGER.debug("Find applications by domain {} and type {}", domain, type);
+        return applicationRepository.findByDomain(domain, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -243,9 +245,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        LOGGER.debug("Find applications by domain {} and appIds {}", domain, applicationIds);
-        return applicationRepository.findByDomain(domain, applicationIds, page, size)
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        LOGGER.debug("Find applications by domain {}, type {} and appIds {}", domain, type, applicationIds);
+        return applicationRepository.findByDomain(domain, applicationIds, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -254,9 +256,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {}", query, domain);
-        return applicationRepository.search(domain, query, page, size)
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {} and type {}", query, domain, type);
+        return applicationRepository.search(domain, query, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -265,35 +267,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {} and appIds={}", query, domain, applicationIds);
-        return applicationRepository.search(domain, applicationIds, query, page, size)
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {}, type {} and appIds={}", query, domain, type, applicationIds);
+        return applicationRepository.search(domain, applicationIds, query, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
-                });
-    }
-
-    @Override
-    public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find agent applications by domain {}", domain);
-        return applicationRepository.findAgentsByDomain(domain, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find agent applications by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find agent applications by domain %s", domain), ex));
-                });
-    }
-
-    @Override
-    public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
-        LOGGER.debug("Search agent applications with query {} for domain {}", query, domain);
-        return applicationRepository.searchAgents(domain, query, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search agent applications with query {} for domain {}", query, domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to search agent applications with query %s by domain %s", query, domain), ex));
                 });
     }
 
@@ -406,12 +386,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        if (newApplication.isAgentIdentityMode()) {
-            ApplicationAdvancedSettings advancedSettings = Optional.ofNullable(applicationSettings.getAdvanced())
-                    .orElseGet(ApplicationAdvancedSettings::new);
-            advancedSettings.setAgentIdentityMode(true);
-            applicationSettings.setAdvanced(advancedSettings);
-
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
             AgentSettings agentSettings = Optional.ofNullable(newApplication.getAgentSettings())
                     .orElseGet(AgentSettings::new);
             applyAgentDefaults(agentSettings, oAuthSettings);
@@ -1154,7 +1129,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE
+                            && application.getType() != ApplicationType.AGENT
+                            && !updateTypeOnly) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
@@ -1366,30 +1343,69 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> validateAgentSettings(Application application) {
-        if (!application.isAgentIdentityMode()) {
+        boolean isAgentType = ApplicationType.AGENT.equals(application.getType());
+        AgentSettings agent = application.getSettings().getAgent();
+
+        if (!isAgentType) {
+            if (agent != null) {
+                return Single.error(new InvalidClientMetadataException("Agent settings are only allowed when application type is AGENT"));
+            }
             return Single.just(application);
         }
 
-        AgentSettings agent = application.getSettings().getAgent();
         if (agent == null) {
-            return Single.error(new InvalidClientMetadataException("Agent settings are required when agent identity mode is enabled"));
+            return Single.error(new InvalidClientMetadataException("Agent settings are required when application type is AGENT"));
         }
         if (agent.getAgentType() == null) {
-            return Single.error(new InvalidClientMetadataException("Agent type is required when agent identity mode is enabled"));
+            return Single.error(new InvalidClientMetadataException("Agent type is required when application type is AGENT"));
+        }
+        if (application.isTemplate()) {
+            return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
+        }
+
+        // USER_EMBEDDED and HOSTED_DELEGATED rely on authorization_code; redirect_uri is required.
+        // AUTONOMOUS uses client_credentials only — no redirect needed.
+        if (agent.getAgentType() != AgentType.AUTONOMOUS) {
+            ApplicationOAuthSettings authSettings = application.getSettings().getOauth();
+            List<String> redirectUris = authSettings != null ? authSettings.getRedirectUris() : null;
+            if (redirectUris == null || redirectUris.isEmpty()) {
+                return Single.error(new InvalidClientMetadataException(
+                        agent.getAgentType().name() + " agents require at least one redirect_uri"));
+            }
         }
 
         ApplicationOAuthSettings oauth = application.getSettings().getOauth();
         List<String> grantTypes = oauth != null ? oauth.getGrantTypes() : null;
         if (grantTypes != null) {
-            String forbidden = switch (agent.getAgentType()) {
+            String forbiddenGrant = grantTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES::contains)
+                    .findFirst()
+                    .orElse(null);
+            if (forbiddenGrant != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "Agent applications cannot use grant type: " + forbiddenGrant));
+            }
+            String typeSpecific = switch (agent.getAgentType()) {
                 case USER_EMBEDDED -> grantTypes.contains(GrantType.CLIENT_CREDENTIALS)
                         ? "USER_EMBEDDED agents cannot use client_credentials grant" : null;
                 case AUTONOMOUS -> grantTypes.contains(GrantType.AUTHORIZATION_CODE)
                         ? "AUTONOMOUS agents cannot use authorization_code grant" : null;
                 case HOSTED_DELEGATED -> null;
             };
-            if (forbidden != null) {
-                return Single.error(new InvalidClientMetadataException(forbidden));
+            if (typeSpecific != null) {
+                return Single.error(new InvalidClientMetadataException(typeSpecific));
+            }
+        }
+
+        List<String> responseTypes = oauth != null ? oauth.getResponseTypes() : null;
+        if (responseTypes != null) {
+            String forbiddenResponse = responseTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES::contains)
+                    .findFirst()
+                    .orElse(null);
+            if (forbiddenResponse != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "Agent applications cannot use response type: " + forbiddenResponse));
             }
         }
 
@@ -1407,6 +1423,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 oAuthSettings.setForcePKCE(true);
                 oAuthSettings.setForceS256CodeChallengeMethod(true);
                 defaultGrantTypes(oAuthSettings, GrantType.AUTHORIZATION_CODE);
+                defaultResponseTypesForAuthorizationCode(oAuthSettings);
             }
             case HOSTED_DELEGATED -> {
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
@@ -1414,6 +1431,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
                 defaultGrantTypes(oAuthSettings,
                         GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
+                defaultResponseTypesForAuthorizationCode(oAuthSettings);
             }
             case AUTONOMOUS -> {
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
@@ -1422,6 +1440,13 @@ public class ApplicationServiceImpl implements ApplicationService {
                 oAuthSettings.setRedirectUris(null);
                 defaultGrantTypes(oAuthSettings, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
             }
+        }
+    }
+
+    private static void defaultResponseTypesForAuthorizationCode(ApplicationOAuthSettings oAuthSettings) {
+        // GrantTypeUtils.completeGrantTypeCorrespondance strips authorization_code if response_types lacks "code".
+        if (oAuthSettings.getResponseTypes() == null || oAuthSettings.getResponseTypes().isEmpty()) {
+            oAuthSettings.setResponseTypes(new ArrayList<>(List.of(io.gravitee.am.common.oauth2.ResponseType.CODE)));
         }
     }
 
