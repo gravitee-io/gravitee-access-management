@@ -490,12 +490,16 @@ public class TokenServiceImpl implements TokenService {
         // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
         // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
         if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
-            jwt.put(Claims.CLIENT_PROFILE, "ai_agent " + client.getAgentType().name().toLowerCase());
+            jwt.put(Claims.CLIENT_PROFILE, Claims.CLIENT_PROFILE_AI_AGENT + " " + client.getAgentType().name().toLowerCase());
         }
 
-        // Agent application - emit sub_profile for the agent subject (RFC draft §3.3 sub_profile).
-        // Profile token only — no "ai_agent" prefix, that's only for client_profile.
-        if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.SUB_PROFILE) == null) {
+        // Agent application - emit sub_profile only when the subject is the agent itself
+        // (client-credentials / autonomous flows). For user-bound flows (USER_EMBEDDED auth code,
+        // HOSTED_DELEGATED token exchange with a user subject) the subject is the end-user, so
+        // top-level sub_profile must not advertise the agent profile — the agent identity is
+        // already carried via client_profile and act.sub_profile.
+        if (client.isAgentApplication() && client.getAgentType() != null
+                && request.isClientOnly() && jwt.get(Claims.SUB_PROFILE) == null) {
             jwt.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
         }
 
