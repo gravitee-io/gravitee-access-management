@@ -28,7 +28,6 @@ export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
     { href: 'settings', label: 'Settings' },
     { href: 'default-scope', label: 'Default Scopes' },
     { href: 'allowed-scope', label: 'Allowed Scopes' },
-    { href: 'templates', label: 'Client templates' },
   ];
 
   constructor(private route: ActivatedRoute) {}

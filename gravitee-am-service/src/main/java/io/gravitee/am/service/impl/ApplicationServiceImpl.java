@@ -29,6 +29,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.CIMDSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -37,7 +39,6 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
@@ -59,6 +60,7 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.exception.ApplicationTemplateInUseException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -444,6 +446,16 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
                 .flatMap(existingApplication -> {
+                    // Prevent un-templating an application that is currently the CIMD template
+                    if (patchApplication.getTemplate() != null
+                            && patchApplication.getTemplate().isPresent()
+                            && Boolean.FALSE.equals(patchApplication.getTemplate().get())
+                            && existingApplication.isTemplate()) {
+                        String cimdTemplateId = retrieveCIMDTemplateId(domain);
+                        if (existingApplication.getId() != null && existingApplication.getId().equals(cimdTemplateId)) {
+                            return Single.error(new ApplicationTemplateInUseException());
+                        }
+                    }
                     Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
 
@@ -481,6 +493,18 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
+    private String retrieveCIMDTemplateId(Domain domain) {
+        return Optional.ofNullable(domain.getOidc())
+                .map(OIDCSettings::getCimdSettings)
+                .map(cimdSettings -> {
+                    if (cimdSettings.isEnabled()) {
+                        return cimdSettings.getTemplateId();
+                    }
+                    return null;
+                })
+                .orElse(null);
+    }
+
     private static boolean hasClientSecret(Application existingApplication) {
         return existingApplication.getSettings() != null && existingApplication.getSettings().getOauth() != null && existingApplication.getSettings().getOauth().getClientSecret() != null;
     }
@@ -491,6 +515,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
                 .flatMapCompletable(application -> {
+                    // Prevent deletion of an application that is currently the CIMD template
+                    String cimdTemplateId = retrieveCIMDTemplateId(domain);
+                    if (id.equals(cimdTemplateId)) {
+                        return Completable.error(new ApplicationTemplateInUseException());
+                    }
                     // create event for sync process
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
                     return applicationRepository.delete(id)

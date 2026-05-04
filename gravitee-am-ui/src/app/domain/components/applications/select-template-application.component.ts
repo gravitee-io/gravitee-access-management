@@ -15,9 +15,6 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { UntypedFormControl, Validators } from '@angular/forms';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
 
 import { ApplicationService } from '../../../services/application.service';
 
@@ -28,10 +25,8 @@ import { ApplicationService } from '../../../services/application.service';
 })
 export class SelectTemplateApplicationComponent implements OnInit, OnChanges {
   private domainId: string;
-  appCtrl = new UntypedFormControl();
-  filteredApps: Observable<any>;
-  hasNoTemplateApps = false;
-  selectedApp: any = null;
+  templateApps: any[] = [];
+  selectedValue: string = null;
   @Input() selectedAppId: string;
   @Input() disabled: boolean;
   @Input() required = false;
@@ -45,56 +40,23 @@ export class SelectTemplateApplicationComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-
-    if (this.required) {
-      this.appCtrl.setValidators(Validators.required);
-    }
-
-    if (this.disabled) {
-      this.appCtrl.disable();
-    }
-
-    this.filteredApps = this.appCtrl.valueChanges.pipe(
-      startWith(''),
-      mergeMap((value) => {
-        const searchTerm = typeof value === 'string' || value instanceof String ? value + '*' : '*';
-        return this.applicationService.search(this.domainId, searchTerm);
-      }),
-      map((value) => value['data'].filter((app) => app.template)),
-      tap((apps) => (this.hasNoTemplateApps = apps.length === 0)),
-    );
-
-    if (this.selectedAppId) {
-      this.applicationService.get(this.domainId, this.selectedAppId).subscribe((app) => {
-        this.selectedApp = app;
-        this.appCtrl.setValue(app, { emitEvent: false });
-      });
-    }
+    this.selectedValue = this.selectedAppId || null;
+    this.applicationService.search(this.domainId, '*').subscribe((result) => {
+      this.templateApps = result['data'].filter((app) => app.template);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['disabled'] && !changes['disabled'].firstChange) {
-      if (this.disabled) {
-        this.appCtrl.disable();
-      } else {
-        this.appCtrl.enable();
-      }
+    if (changes['selectedAppId']) {
+      this.selectedValue = this.selectedAppId || null;
     }
   }
 
-  onAppSelectionChanged(event) {
-    this.selectedApp = event.option.value;
-    this.appSelected.emit(this.selectedApp.id);
-  }
-
-  displayFn(app?: any): string | undefined {
-    return app ? app.name : undefined;
-  }
-
-  clearApp(event) {
-    event.preventDefault();
-    this.selectedApp = null;
-    this.appCtrl.setValue('');
-    this.appCleared.emit();
+  onSelectChange(appId: string) {
+    if (appId) {
+      this.appSelected.emit(appId);
+    } else {
+      this.appCleared.emit();
+    }
   }
 }

@@ -17,18 +17,19 @@
 -->
 <mat-form-field appearance="outline" floatLabel="always">
   <mat-label>Template Application</mat-label>
-  <input matInput placeholder="Search for a template application ..." [matAutocomplete]="auto" [formControl]="appCtrl" />
-  <button mat-icon-button matSuffix aria-label="Clear" (click)="clearApp($event)">
-    <mat-icon *ngIf="selectedApp">clear</mat-icon>
-  </button>
-  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAppSelectionChanged($event)" [displayWith]="displayFn">
-    <mat-option *ngFor="let app of filteredApps | async" [value]="app">
-      <span>{{ app.name }}</span>
-    </mat-option>
-    <mat-option *ngIf="hasNoTemplateApps" disabled>
-      No template applications found — configure one in Client Registration settings.
-    </mat-option>
-  </mat-autocomplete>
+  <mat-select
+    [(ngModel)]="selectedValue"
+    (ngModelChange)="onSelectChange($event)"
+    [disabled]="disabled"
+    [required]="required"
+    placeholder="Select a template application ..."
+  >
+    <mat-option [value]="null">— None —</mat-option>
+    <mat-option *ngFor="let app of templateApps" [value]="app.id">{{ app.name }}</mat-option>
+    <mat-option *ngIf="templateApps.length === 0" disabled
+      >No template applications found — mark an application as a template in its Settings &gt; General page.</mat-option
+    >
+  </mat-select>
   <mat-hint>The template application used in CIMD requests.</mat-hint>
-  <mat-error *ngIf="appCtrl.hasError('required')">Template Application is required.</mat-error>
+  <mat-error>Template Application is required.</mat-error>
 </mat-form-field>

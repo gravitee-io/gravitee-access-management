@@ -272,6 +272,30 @@
           </div>
         </div>
 
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Template</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableTemplate($event)"
+              [checked]="isTemplate"
+              [disabled]="!editMode || isCimdTemplate"
+              [matTooltip]="isCimdTemplate ? 'Remove this application from the CIMD settings before changing its template mode' : ''"
+            >
+              Use as DCR / CIMD registration template
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%"
+              >When enabled, this application serves as a base template for Dynamic Client Registration and CIMD ephemeral
+              registrations.</mat-hint
+            >
+            <mat-hint *ngIf="isCimdTemplate" style="font-size: 75%; color: var(--mdc-theme-error, #b00020)">
+              This application is currently referenced as the CIMD template. Update the CIMD settings to allow changes.
+            </mat-hint>
+          </div>
+        </div>
+
         <div fxLayout="row" *ngIf="editMode">
           <button
             mat-raised-button

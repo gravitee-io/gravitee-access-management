@@ -48,6 +48,8 @@ export class ApplicationGeneralComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
   deleteMode: boolean;
+  isTemplate: boolean;
+  isCimdTemplate: boolean;
   applicationType: string;
   applicationTypes: any[] = [
     {
@@ -104,6 +106,8 @@ export class ApplicationGeneralComponent implements OnInit {
     });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
+    this.isTemplate = this.application.template || false;
+    this.isCimdTemplate = this.domain?.oidc?.cimdSettings?.templateId === this.application.id;
     if (!this.domain.uma || !this.domain.uma.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
@@ -122,6 +126,7 @@ export class ApplicationGeneralComponent implements OnInit {
       silentReAuthentication: this.silentReAuthentication,
     };
     data.settings.advanced = { skipConsent: this.skipConsent };
+    data.template = this.isTemplate;
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(() => {
       this.formChanged = false;
       this.snackbarService.open('Application updated');
@@ -142,6 +147,11 @@ export class ApplicationGeneralComponent implements OnInit {
         }),
       )
       .subscribe();
+  }
+
+  enableTemplate(event: any) {
+    this.isTemplate = event.checked;
+    this.formChanged = true;
   }
 
   changeApplicationType() {
