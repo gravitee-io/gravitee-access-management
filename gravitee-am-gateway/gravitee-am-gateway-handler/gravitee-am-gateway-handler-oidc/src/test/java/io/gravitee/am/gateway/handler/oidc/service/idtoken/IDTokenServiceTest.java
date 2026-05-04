@@ -64,6 +64,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -924,7 +925,8 @@ public class IDTokenServiceTest {
         assertEquals("agent-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
         assertEquals("user_embedded", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
         assertEquals("ai_agent user_embedded", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
-        assertEquals("user_embedded", captured.get(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
+        // ID token subject is the end-user; top-level sub_profile must NOT carry the agent profile.
+        assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
     }
 
     @Test
@@ -961,6 +963,7 @@ public class IDTokenServiceTest {
         assertEquals("blueprint-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
         assertEquals("hosted_delegated", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
         assertEquals("ai_agent hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
-        assertEquals("hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
+        // ID token subject is the end-user; top-level sub_profile must NOT carry the agent profile.
+        assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
     }
 }

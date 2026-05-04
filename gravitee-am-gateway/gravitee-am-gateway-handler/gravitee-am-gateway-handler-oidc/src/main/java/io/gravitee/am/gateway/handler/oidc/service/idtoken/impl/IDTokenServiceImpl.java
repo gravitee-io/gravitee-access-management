@@ -271,13 +271,11 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
         // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
+        // Top-level sub_profile is intentionally NOT set on ID tokens: ID tokens are issued for
+        // an end-user subject, and sub_profile must describe the subject (the user), not the
+        // agent client. The agent profile travels on client_profile and act.sub_profile.
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
-            idToken.put(Claims.CLIENT_PROFILE, "ai_agent " + client.getAgentType().name().toLowerCase());
-        }
-
-        // Agent application - emit sub_profile for the agent subject (RFC draft §3.3).
-        if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.SUB_PROFILE) == null) {
-            idToken.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
+            idToken.put(Claims.CLIENT_PROFILE, Claims.CLIENT_PROFILE_AI_AGENT + " " + client.getAgentType().name().toLowerCase());
         }
 
         return idToken;
