@@ -221,7 +221,8 @@ public class TokenServiceTest {
         assertEquals(client.getClientId(), actClaim.get(Claims.SUB));
         Assertions.assertFalse(actClaim.containsKey(Claims.CLIENT_ID));
         assertEquals("ai_agent user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
-        assertEquals("user_embedded", jwtArgumentCaptor.getValue().get(Claims.SUB_PROFILE));
+        // Subject is a user (oAuth2Request.subject = "userid"), so top-level sub_profile must NOT carry the agent profile.
+        Assertions.assertFalse(jwtArgumentCaptor.getValue().containsKey(Claims.SUB_PROFILE));
         assertEquals("user_embedded", actClaim.get(Claims.SUB_PROFILE));
 
         expectTokenCreatedAuditLog();
