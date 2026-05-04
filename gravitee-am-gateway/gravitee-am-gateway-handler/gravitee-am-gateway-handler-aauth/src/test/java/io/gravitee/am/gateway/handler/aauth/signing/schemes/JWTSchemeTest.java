@@ -110,6 +110,32 @@ public class JWTSchemeTest {
     }
 
     @Test
+    public void shouldExtractPsClaimFromAgentToken() throws Exception {
+        String jwt = TestAgentTokenBuilder.buildAgentTokenWithPs(
+                issuerKeyPair, "https://agent-server.example",
+                "aauth:bot@agent-server.example",
+                "https://ps.example/aauth",
+                delegateKeyPair.getPublic(), 3600);
+
+        SignatureKeyInfo keyInfo = new SignatureKeyInfo("sig", "jwt", Map.of("jwt", jwt));
+        ResolvedKey resolved = scheme.resolve(keyInfo);
+
+        assertEquals("https://ps.example/aauth", resolved.agentTokenPs());
+    }
+
+    @Test
+    public void shouldReturnNullPsWhenAgentTokenHasNoPsClaim() throws Exception {
+        String jwt = TestAgentTokenBuilder.buildAgentToken(
+                issuerKeyPair, "https://agent-server.example",
+                "aauth:bot@agent-server.example", delegateKeyPair.getPublic(), 3600);
+
+        SignatureKeyInfo keyInfo = new SignatureKeyInfo("sig", "jwt", Map.of("jwt", jwt));
+        ResolvedKey resolved = scheme.resolve(keyInfo);
+
+        assertNull(resolved.agentTokenPs());
+    }
+
+    @Test
     public void shouldRejectExpiredJwt() throws Exception {
         // Build a token that expired 1 hour ago
         String jwt = TestAgentTokenBuilder.buildAgentToken(

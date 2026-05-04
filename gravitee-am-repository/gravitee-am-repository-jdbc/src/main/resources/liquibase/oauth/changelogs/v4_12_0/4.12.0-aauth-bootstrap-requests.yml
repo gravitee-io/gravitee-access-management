@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-aauth-bootstrap-requests-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: aauth_bootstrap_requests
+      changes:
+        - createTable:
+            tableName: aauth_bootstrap_requests
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: status, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: agent_server_url, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: agent_server_name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: agent_server_logo_uri, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: ephemeral_key_jwk, type: clob, constraints: { nullable: false } }
+              - column: { name: ephemeral_key_thumbprint, type: nvarchar(128), constraints: { nullable: false } }
+              - column: { name: interaction_code, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: bootstrap_token, type: clob, constraints: { nullable: true } }
+              - column: { name: user_id, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: pairwise_sub, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: domain_hint, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: login_hint, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: tenant, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: last_access_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_aauth_bootstrap_requests
+            columnNames: id
+            tableName: aauth_bootstrap_requests
+
+  - changeSet:
+      id: 4.12.0-aauth-bootstrap-requests-indexes
+      author: GraviteeSource Team
+      changes:
+        - createIndex:
+            indexName: idx_aauth_bootstrap_requests_interaction_code
+            tableName: aauth_bootstrap_requests
+            columns:
+              - column: { name: interaction_code }
+
+        - createIndex:
+            indexName: idx_aauth_bootstrap_requests_ephemeral_key_thumbprint
+            tableName: aauth_bootstrap_requests
+            columns:
+              - column: { name: ephemeral_key_thumbprint }
+
+        - createIndex:
+            indexName: idx_aauth_bootstrap_requests_expire_at
+            tableName: aauth_bootstrap_requests
+            columns:
+              - column: { name: expire_at }

@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.aauth.util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class AAuthIdentifierValidatorTest {
@@ -96,5 +98,75 @@ public class AAuthIdentifierValidatorTest {
     @Test
     public void shouldRejectEndpointUrlWithHttpScheme() {
         assertFalse(AAuthIdentifierValidator.isValidEndpointUrl("http://ps.example/token"));
+    }
+
+    // agent_server URL (bootstrap §6.2)
+
+    @Test
+    public void shouldAcceptHttpsAgentServerUrl() {
+        assertNull(AAuthIdentifierValidator.validateAgentServerUrl("https://agent.example", false));
+    }
+
+    @Test
+    public void shouldAcceptHttpsAgentServerUrlWithPort() {
+        assertNull(AAuthIdentifierValidator.validateAgentServerUrl("https://agent.example:8443", false));
+    }
+
+    @Test
+    public void shouldAcceptHttpsAgentServerUrlWithPath() {
+        // bootstrap spec doesn't restrict path; metadata fetch concatenates the well-known suffix.
+        assertNull(AAuthIdentifierValidator.validateAgentServerUrl("https://agent.example/v1", false));
+    }
+
+    @Test
+    public void shouldRejectHttpAgentServerUrlByDefault() {
+        String reason = AAuthIdentifierValidator.validateAgentServerUrl("http://agent.example", false);
+        assertNotNull(reason);
+        assertTrue(reason.contains("https"));
+    }
+
+    @Test
+    public void shouldAcceptHttpAgentServerUrlWhenInsecureAllowed() {
+        assertNull(AAuthIdentifierValidator.validateAgentServerUrl("http://localhost:8080", true));
+    }
+
+    @Test
+    public void shouldRejectFtpAgentServerUrlEvenWhenInsecureAllowed() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("ftp://agent.example", true));
+    }
+
+    @Test
+    public void shouldRejectAgentServerUrlWithQuery() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("https://agent.example?x=y", false));
+    }
+
+    @Test
+    public void shouldRejectAgentServerUrlWithFragment() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("https://agent.example#frag", false));
+    }
+
+    @Test
+    public void shouldRejectAgentServerUrlWithUserInfo() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("https://user:pass@agent.example", false));
+    }
+
+    @Test
+    public void shouldRejectNullAgentServerUrl() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl(null, false));
+    }
+
+    @Test
+    public void shouldRejectBlankAgentServerUrl() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("   ", false));
+    }
+
+    @Test
+    public void shouldRejectMalformedAgentServerUrl() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("not a url", false));
+    }
+
+    @Test
+    public void shouldRejectAgentServerUrlWithoutScheme() {
+        assertNotNull(AAuthIdentifierValidator.validateAgentServerUrl("agent.example", false));
     }
 }

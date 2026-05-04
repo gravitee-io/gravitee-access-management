@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-aauth-bootstrap-bindings-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: aauth_bootstrap_bindings
+      changes:
+        - createTable:
+            tableName: aauth_bootstrap_bindings
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(320), constraints: { nullable: false } }
+              - column: { name: agent_server_url, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: agent_identifier, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: pairwise_sub, type: nvarchar(256), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_aauth_bootstrap_bindings
+            columnNames: id
+            tableName: aauth_bootstrap_bindings
+
+  - changeSet:
+      id: 4.12.0-aauth-bootstrap-bindings-indexes
+      author: GraviteeSource Team
+      changes:
+        - createIndex:
+            indexName: idx_aauth_bootstrap_bindings_domain_user_id
+            tableName: aauth_bootstrap_bindings
+            columns:
+              - column: { name: domain }
+              - column: { name: user_id }
+
+        - addUniqueConstraint:
+            constraintName: uk_aauth_bootstrap_bindings_domain_agent_user
+            tableName: aauth_bootstrap_bindings
+            columnNames: domain, agent_server_url, user_id

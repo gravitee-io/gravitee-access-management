@@ -79,4 +79,52 @@ public final class AAuthIdentifierValidator {
             return false;
         }
     }
+
+    /**
+     * Validate the {@code agent_server} URL submitted on a bootstrap request
+     * (draft-hardt-aauth-bootstrap §6.2). The URL is placed in
+     * {@code bootstrap_token.aud} and used to discover Agent Server metadata,
+     * so it must be a clean origin URL: parseable, with a host, no query,
+     * no fragment, no userinfo.
+     *
+     * @param url            the candidate URL
+     * @param allowInsecure  when true, accept {@code http://} as well as {@code https://}
+     *                       (development convenience — see {@code AAuthSettings})
+     * @return {@code null} if the URL is valid; otherwise a short, end-user-facing
+     *         description of the first failure encountered
+     */
+    public static String validateAgentServerUrl(String url, boolean allowInsecure) {
+        if (url == null || url.isBlank()) {
+            return "agent_server is required";
+        }
+        URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (IllegalArgumentException e) {
+            return "agent_server is not a valid URL";
+        }
+        String scheme = uri.getScheme();
+        if (scheme == null) {
+            return "agent_server must include a scheme";
+        }
+        boolean schemeOk = "https".equals(scheme) || (allowInsecure && "http".equals(scheme));
+        if (!schemeOk) {
+            return allowInsecure
+                    ? "agent_server must use http or https scheme"
+                    : "agent_server must use https scheme";
+        }
+        if (uri.getHost() == null || uri.getHost().isEmpty()) {
+            return "agent_server must include a host";
+        }
+        if (uri.getRawQuery() != null) {
+            return "agent_server must not include a query string";
+        }
+        if (uri.getRawFragment() != null) {
+            return "agent_server must not include a fragment";
+        }
+        if (uri.getRawUserInfo() != null) {
+            return "agent_server must not include user info";
+        }
+        return null;
+    }
 }

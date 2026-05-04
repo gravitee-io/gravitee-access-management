@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.aauth.manual;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockAgentMetadataServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockResourceServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentKeyPairFactory;
@@ -32,7 +31,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.util.Base64;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -121,7 +119,7 @@ public class AAuthTokenEndpointManualTest {
 
             // Step 3: Issue resource token with aauth: agent identifier
             // The agent identifier uses aauth:local@domain format (spec Section 5.1)
-            String agentIdentifier = "aauth:bot@" + URI.create(agentBaseUrl).getHost();
+            String agentIdentifier = "aauth:localbot" + RandomStringUtils.secure().nextAlphabetic(5) + "@" + URI.create(agentBaseUrl).getHost();
             String resourceToken = resourceServer.issueResourceToken(
                     psIssuerUrl, agentIdentifier, delegateThumbprint, "read write");
             System.out.println("[3] Resource token issued (agent=" + agentIdentifier + ", scope=read write)");
@@ -344,7 +342,7 @@ public class AAuthTokenEndpointManualTest {
      * All 9 verification steps are implemented.
      */
     private static void verifyAuthTokenSignature(String authToken, String amBaseUrl,
-                                                  String expectedResourceUrl, String expectedAgentId) {
+                                                 String expectedResourceUrl, String expectedAgentId) {
         System.out.println("=== RESOURCE SERVER: AUTH TOKEN VERIFICATION (Section 9.4.3) ===");
         try {
             com.nimbusds.jwt.SignedJWT signedJWT = com.nimbusds.jwt.SignedJWT.parse(authToken);

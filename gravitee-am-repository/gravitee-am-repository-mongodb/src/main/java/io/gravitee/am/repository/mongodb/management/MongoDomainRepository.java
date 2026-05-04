@@ -412,6 +412,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         settings.setTrustedResourcePatterns(aAuthMongo.getTrustedResourcePatterns());
         settings.setAutoRegisterAgents(aAuthMongo.isAutoRegisterAgents());
         settings.setDefaultIdentityProviders(aAuthMongo.getDefaultIdentityProviders());
+        settings.setAllowInsecureAgentServer(aAuthMongo.isAllowInsecureAgentServer());
+        settings.setBootstrapTokenLifespan(aAuthMongo.getBootstrapTokenLifespan());
         return settings;
     }
 
@@ -428,6 +430,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         mongo.setTrustedResourcePatterns(aAuth.getTrustedResourcePatterns());
         mongo.setAutoRegisterAgents(aAuth.isAutoRegisterAgents());
         mongo.setDefaultIdentityProviders(aAuth.getDefaultIdentityProviders());
+        mongo.setAllowInsecureAgentServer(aAuth.isAllowInsecureAgentServer());
+        mongo.setBootstrapTokenLifespan(aAuth.getBootstrapTokenLifespan());
         return mongo;
     }
 

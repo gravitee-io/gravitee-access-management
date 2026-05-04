@@ -59,6 +59,22 @@
               >
             </div>
 
+            <div fxLayout="column" style="margin-top: 20px">
+              <mat-slide-toggle
+                [checked]="domain.aauth.allowInsecureAgentServer === true"
+                (change)="domain.aauth.allowInsecureAgentServer = $event.checked; formChange()"
+                [disabled]="!editMode"
+              >
+                Allow insecure agent_server URLs (development)
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%"
+                >When enabled, bootstrap requests may use <code>http://</code> agent_server URLs.
+                For local development only — never enable in production. An <code>http</code> agent_server
+                defeats the consent-screen identity check and exposes the bootstrap_token's audience to
+                in-network tampering.</mat-hint
+              >
+            </div>
+
             <div *ngIf="domain.aauth.autoRegisterAgents !== false && domainIdps.length > 0" style="margin-top: 20px">
               <h3>Default Identity Providers</h3>
               <mat-hint style="font-size: 75%"

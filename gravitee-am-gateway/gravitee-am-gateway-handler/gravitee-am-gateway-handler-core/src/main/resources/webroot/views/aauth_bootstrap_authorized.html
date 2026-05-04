@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agent Bootstrap Authorized</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span>Bootstrap Authorized</span>
+        </div>
+    </div>
+    <div class="section">
+        <div class="box center">
+            <div>
+                <span>You have authorized the agent. You can close this window.</span>
+            </div>
+            <div th:if="${agentServerName != null}" style="margin-top: 10px;">
+                <span class="grey">Agent server: </span>
+                <span class="deep-blue" th:text="${agentServerName}"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

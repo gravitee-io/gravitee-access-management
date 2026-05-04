@@ -27,18 +27,32 @@ import java.security.PublicKey;
  *                        or {@code null} for pseudonymous (hwk)
  * @param agentIdentifier the agent identifier in {@code aauth:local@domain} format (jwt scheme only, from jwt.sub),
  *                        or {@code null} when not available
+ * @param agentTokenPs    value of the {@code ps} claim from the {@code aa-agent+jwt} naming JWT
+ *                        (jwt scheme, agent token only); {@code null} for other schemes/types.
+ *                        Carries the PS URL the AS believes the agent was bootstrapped against —
+ *                        used by the bootstrap announcement endpoint to confirm it's the right PS.
  */
 public record ResolvedKey(
         PublicKey publicKey,
         String algorithm,
         String jwkThumbprint,
         String agentServerUrl,
-        String agentIdentifier
+        String agentIdentifier,
+        String agentTokenPs
 ) {
     /**
      * Constructor for schemes that don't resolve agent identity (e.g. hwk).
      */
     public ResolvedKey(PublicKey publicKey, String algorithm, String jwkThumbprint) {
-        this(publicKey, algorithm, jwkThumbprint, null, null);
+        this(publicKey, algorithm, jwkThumbprint, null, null, null);
+    }
+
+    /**
+     * Constructor for schemes that resolve agent identity but no agent_token.ps
+     * (e.g. jwks_uri scheme, or aa-auth+jwt where the ps claim is on a different layer).
+     */
+    public ResolvedKey(PublicKey publicKey, String algorithm, String jwkThumbprint,
+                       String agentServerUrl, String agentIdentifier) {
+        this(publicKey, algorithm, jwkThumbprint, agentServerUrl, agentIdentifier, null);
     }
 }

@@ -49,7 +49,10 @@ public enum Template {
     CERTIFICATE_EXPIRATION("certificate_expiration", null),
     CLIENT_SECRET_EXPIRATION("client_secret_expiration", null),
     VERIFY_ATTEMPT("verify_attempt",null),
-    AAUTH_CONSENT("aauth_consent", "/aauth/consent");
+    AAUTH_CONSENT("aauth_consent", "/aauth/consent"),
+    AAUTH_BOOTSTRAP_CONSENT("aauth_bootstrap_consent", "/aauth/bootstrap/consent"),
+    AAUTH_BOOTSTRAP_AUTHORIZED("aauth_bootstrap_authorized", null),
+    AAUTH_BOOTSTRAP_DENIED("aauth_bootstrap_denied", null);
 
 
     private final String template;

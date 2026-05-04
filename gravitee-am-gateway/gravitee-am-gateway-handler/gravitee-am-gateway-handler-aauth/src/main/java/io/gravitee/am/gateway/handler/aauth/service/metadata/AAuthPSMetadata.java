@@ -22,14 +22,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * AAUTH Person Server (PS) metadata document.
  * Served at {@code /.well-known/aauth-person.json} per the AAUTH protocol specification.
  *
- * @param issuer        the PS's HTTPS URL (placed in the {@code iss} claim of issued JWTs)
- * @param tokenEndpoint URL where agents send token requests
- * @param jwksUri       URL to the PS's JSON Web Key Set
+ * @param issuer            the PS's HTTPS URL (placed in the {@code iss} claim of issued JWTs)
+ * @param tokenEndpoint     URL where agents send token requests
+ * @param jwksUri           URL to the PS's JSON Web Key Set
+ * @param bootstrapEndpoint URL where agents initiate the bootstrap ceremony
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AAuthPSMetadata(
         @JsonProperty("issuer") String issuer,
         @JsonProperty("token_endpoint") String tokenEndpoint,
-        @JsonProperty("jwks_uri") String jwksUri
+        @JsonProperty("jwks_uri") String jwksUri,
+        @JsonProperty("bootstrap_endpoint") String bootstrapEndpoint
 ) {
 }

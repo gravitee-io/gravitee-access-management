@@ -29,6 +29,9 @@ import java.security.PublicKey;
  *                         or {@code null} for pseudonymous (hwk) requests
  * @param agentIdentifier  the agent identifier in {@code aauth:local@domain} format (jwt scheme, from jwt.sub),
  *                         or {@code null} when not available
+ * @param agentTokenPs     value of the {@code ps} claim from the naming {@code aa-agent+jwt} (jwt scheme,
+ *                         agent token only); {@code null} otherwise. The bootstrap announcement endpoint
+ *                         compares this against its own PS URL per draft-hardt-aauth-bootstrap §6.7.
  */
 public record VerificationResult(
         String scheme,
@@ -36,6 +39,15 @@ public record VerificationResult(
         PublicKey publicKey,
         String jwkThumbprint,
         String agentServerUrl,
-        String agentIdentifier
+        String agentIdentifier,
+        String agentTokenPs
 ) {
+    /**
+     * Backward-compatible constructor for callers that don't carry an
+     * {@code agent_token.ps} claim (hwk, jwks_uri, or aa-auth+jwt verifications, and tests).
+     */
+    public VerificationResult(String scheme, String label, PublicKey publicKey,
+                              String jwkThumbprint, String agentServerUrl, String agentIdentifier) {
+        this(scheme, label, publicKey, jwkThumbprint, agentServerUrl, agentIdentifier, null);
+    }
 }

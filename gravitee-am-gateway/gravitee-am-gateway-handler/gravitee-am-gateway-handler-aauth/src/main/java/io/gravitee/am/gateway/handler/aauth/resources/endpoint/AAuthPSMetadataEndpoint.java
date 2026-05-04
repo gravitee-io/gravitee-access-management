@@ -51,7 +51,8 @@ public class AAuthPSMetadataEndpoint implements Handler<RoutingContext> {
         final AAuthPSMetadata metadata = new AAuthPSMetadata(
                 aAuthBase,
                 aAuthBase + "/token",
-                aAuthBase + "/.well-known/jwks.json"
+                aAuthBase + "/.well-known/jwks.json",
+                aAuthBase + "/bootstrap"
         );
 
         context.response()

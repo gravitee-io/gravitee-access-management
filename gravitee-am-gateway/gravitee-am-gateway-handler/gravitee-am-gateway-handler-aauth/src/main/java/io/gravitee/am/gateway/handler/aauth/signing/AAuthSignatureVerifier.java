@@ -112,7 +112,8 @@ public class AAuthSignatureVerifier {
                 resolvedKey.publicKey(),
                 resolvedKey.jwkThumbprint(),
                 resolvedKey.agentServerUrl(),
-                resolvedKey.agentIdentifier()
+                resolvedKey.agentIdentifier(),
+                resolvedKey.agentTokenPs()
         );
     }
 

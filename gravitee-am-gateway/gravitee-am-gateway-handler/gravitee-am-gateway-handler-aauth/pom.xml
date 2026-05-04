@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-am-gateway-handler</artifactId>
         <groupId>io.gravitee.am.gateway.handler</groupId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.12.0-alpha.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-handler-aauth</artifactId>
@@ -111,6 +111,16 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <excludes combine.children="append">
+                        <!-- AAuth implementation plans / IETF spec drafts: not Gravitee source code. -->
+                        <exclude>plans/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

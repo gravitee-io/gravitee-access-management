@@ -31,6 +31,8 @@ public class AAuthSettingsMongo {
     private List<String> trustedResourcePatterns;
     private boolean autoRegisterAgents;
     private List<String> defaultIdentityProviders;
+    private boolean allowInsecureAgentServer;
+    private int bootstrapTokenLifespan;
 
     public boolean isEnabled() {
         return enabled;
@@ -86,5 +88,21 @@ public class AAuthSettingsMongo {
 
     public void setDefaultIdentityProviders(List<String> defaultIdentityProviders) {
         this.defaultIdentityProviders = defaultIdentityProviders;
+    }
+
+    public boolean isAllowInsecureAgentServer() {
+        return allowInsecureAgentServer;
+    }
+
+    public void setAllowInsecureAgentServer(boolean allowInsecureAgentServer) {
+        this.allowInsecureAgentServer = allowInsecureAgentServer;
+    }
+
+    public int getBootstrapTokenLifespan() {
+        return bootstrapTokenLifespan;
+    }
+
+    public void setBootstrapTokenLifespan(int bootstrapTokenLifespan) {
+        this.bootstrapTokenLifespan = bootstrapTokenLifespan;
     }
 }

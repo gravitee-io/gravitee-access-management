@@ -56,7 +56,28 @@ public class TestAgentTokenBuilder {
     public static String buildAgentToken(KeyPair issuerKeyPair, String kid, String iss, String sub,
                                           PublicKey delegateKey, long ttlSeconds) throws Exception {
         return buildToken(issuerKeyPair, kid, "aa-agent+jwt", "aauth-agent.json",
-                iss, sub, null, delegateKey, ttlSeconds);
+                iss, sub, null, null, delegateKey, ttlSeconds);
+    }
+
+    /**
+     * Build an aa-agent+jwt with a {@code ps} claim — matches the shape of agent tokens
+     * issued for bootstrap-onboarded agents (draft-hardt-aauth-bootstrap §6.5).
+     * Uses the default kid {@code "test-key-1"}.
+     */
+    public static String buildAgentTokenWithPs(KeyPair issuerKeyPair, String iss, String sub,
+                                                String ps, PublicKey delegateKey, long ttlSeconds) throws Exception {
+        return buildAgentTokenWithPs(issuerKeyPair, "test-key-1", iss, sub, ps, delegateKey, ttlSeconds);
+    }
+
+    /**
+     * Build an aa-agent+jwt with a {@code ps} claim and an explicit {@code kid}.
+     * Use this when the issuer's JWKS publishes a specific kid the AS expects
+     * (the manual test stubs {@code "agent-key-1"}, for example).
+     */
+    public static String buildAgentTokenWithPs(KeyPair issuerKeyPair, String kid, String iss, String sub,
+                                                String ps, PublicKey delegateKey, long ttlSeconds) throws Exception {
+        return buildToken(issuerKeyPair, kid, "aa-agent+jwt", "aauth-agent.json",
+                iss, sub, null, ps, delegateKey, ttlSeconds);
     }
 
     /**
@@ -65,11 +86,11 @@ public class TestAgentTokenBuilder {
     public static String buildAuthToken(KeyPair issuerKeyPair, String iss, String agentClaim,
                                          PublicKey delegateKey, long ttlSeconds) throws Exception {
         return buildToken(issuerKeyPair, "test-key-1", "aa-auth+jwt", "aauth-person.json",
-                iss, null, agentClaim, delegateKey, ttlSeconds);
+                iss, null, agentClaim, null, delegateKey, ttlSeconds);
     }
 
     private static String buildToken(KeyPair issuerKeyPair, String kid, String typ, String dwk,
-                                      String iss, String sub, String agentClaim,
+                                      String iss, String sub, String agentClaim, String ps,
                                       PublicKey delegateKey, long ttlSeconds) throws Exception {
         // Build the cnf.jwk from the delegate's public key
         byte[] rawDelegateKey = extractEd25519RawBytes(delegateKey);
@@ -88,6 +109,9 @@ public class TestAgentTokenBuilder {
         }
         if (agentClaim != null) {
             claimsBuilder.claim("agent", agentClaim);
+        }
+        if (ps != null) {
+            claimsBuilder.claim("ps", ps);
         }
 
         // cnf.jwk

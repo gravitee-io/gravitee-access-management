@@ -108,11 +108,12 @@ public class JWTScheme implements SignatureScheme {
             String algorithm = JwkKeyConverter.algorithmForJwk(cnfJwk);
             String thumbprint = JwkKeyConverter.computeThumbprint(cnfJwk);
 
-            // 9. Determine agent server URL and agent identifier
-            // For aa-agent+jwt: agentServerUrl = iss, agentIdentifier = sub (aauth:local@domain)
-            // For aa-auth+jwt: agentServerUrl = iss, agentIdentifier = agent claim
+            // 9. Determine agent server URL, agent identifier, and (for agent tokens) the ps claim
+            // For aa-agent+jwt: agentServerUrl = iss, agentIdentifier = sub (aauth:local@domain), agentTokenPs = ps claim
+            // For aa-auth+jwt:  agentServerUrl = iss, agentIdentifier = agent claim, agentTokenPs = null (ps is not on auth tokens)
             String agentServerUrl = iss;
             String agentIdentifier;
+            String agentTokenPs = null;
             if (TYP_AGENT_TOKEN.equals(typ)) {
                 agentIdentifier = claims.getSubject();
                 if (agentIdentifier == null) {
@@ -122,6 +123,12 @@ public class JWTScheme implements SignatureScheme {
                     throw new SignatureVerificationException("invalid_jwt",
                             "Invalid agent identifier format: expected aauth:local@domain, got " + agentIdentifier);
                 }
+                Object psClaim = claims.getClaim("ps");
+                if (psClaim != null && !(psClaim instanceof String)) {
+                    throw new SignatureVerificationException("invalid_jwt",
+                            "ps claim on agent token must be a string");
+                }
+                agentTokenPs = (String) psClaim;
             } else {
                 agentIdentifier = (String) claims.getClaim("agent");
                 if (agentIdentifier == null) {
@@ -129,7 +136,7 @@ public class JWTScheme implements SignatureScheme {
                 }
             }
 
-            return new ResolvedKey(cnfPublicKey, algorithm, thumbprint, agentServerUrl, agentIdentifier);
+            return new ResolvedKey(cnfPublicKey, algorithm, thumbprint, agentServerUrl, agentIdentifier, agentTokenPs);
 
         } catch (SignatureVerificationException e) {
             throw e;

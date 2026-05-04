@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.aauth;
 
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthBootstrapConsentPostEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthBootstrapEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthBootstrapPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingDeleteEndpoint;
@@ -23,6 +26,9 @@ import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPSMetadataEn
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthBootstrapConsentHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthBootstrapConsentRedirectHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthBootstrapInteractHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentRedirectHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthErrorHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentHandler;
@@ -108,6 +114,24 @@ public class AAuthProvider extends AbstractProtocolProvider {
 
     @Autowired
     private AAuthConsentPostEndpoint aAuthConsentPostEndpoint;
+
+    @Autowired
+    private AAuthBootstrapEndpoint aAuthBootstrapEndpoint;
+
+    @Autowired
+    private AAuthBootstrapPendingEndpoint aAuthBootstrapPendingEndpoint;
+
+    @Autowired
+    private AAuthBootstrapInteractHandler aAuthBootstrapInteractHandler;
+
+    @Autowired
+    private AAuthBootstrapConsentRedirectHandler aAuthBootstrapConsentRedirectHandler;
+
+    @Autowired
+    private AAuthBootstrapConsentHandler aAuthBootstrapConsentHandler;
+
+    @Autowired
+    private AAuthBootstrapConsentPostEndpoint aAuthBootstrapConsentPostEndpoint;
 
     @Autowired
     private CSRFHandler csrfHandler;
@@ -197,11 +221,51 @@ public class AAuthProvider extends AbstractProtocolProvider {
                 .handler(BodyHandler.create())
                 .handler(aAuthConsentPostEndpoint);
 
+        // --- Bootstrap routes (API - signed requests) ---
+        // Bootstrap endpoint — agent initiates bootstrap or announces completion
+        aAuthRouter.route(HttpMethod.POST, "/bootstrap")
+                .handler(corsHandler)
+                .handler(BodyHandler.create())
+                .handler(aAuthSignatureHandler)
+                .handler(aAuthBootstrapEndpoint);
+
+        // Bootstrap pending endpoint — agent polls for bootstrap_token
+        aAuthRouter.route(HttpMethod.GET, "/bootstrap/pending/:id")
+                .handler(corsHandler)
+                .handler(aAuthSignatureHandler)
+                .handler(aAuthBootstrapPendingEndpoint);
+
+        // --- Bootstrap routes (Browser - user interaction) ---
+        aAuthRouter.route("/bootstrap-interact")
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
+
+        aAuthRouter.route(HttpMethod.GET, "/bootstrap-interact")
+                .handler(aAuthBootstrapInteractHandler)
+                .handler(authenticationFlowHandler.create())
+                .handler(aAuthBootstrapConsentRedirectHandler);
+
+        // Bootstrap consent page (behind authentication)
+        aAuthRouter.route("/bootstrap-consent")
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
+
+        aAuthRouter.route("/bootstrap-consent").handler(csrfHandler);
+
+        aAuthRouter.route(HttpMethod.GET, "/bootstrap-consent")
+                .handler(aAuthBootstrapConsentHandler);
+
+        aAuthRouter.route(HttpMethod.POST, "/bootstrap-consent")
+                .handler(BodyHandler.create())
+                .handler(aAuthBootstrapConsentPostEndpoint);
+
         // --- Error handlers ---
         // Browser-facing routes (interact, consent): redirect to /error page
         // (same pattern as RootProvider's ErrorHandler)
         aAuthRouter.route("/interact").failureHandler(new AAuthErrorHandler());
         aAuthRouter.route("/consent").failureHandler(new AAuthErrorHandler());
+        aAuthRouter.route("/bootstrap-interact").failureHandler(new AAuthErrorHandler());
+        aAuthRouter.route("/bootstrap-consent").failureHandler(new AAuthErrorHandler());
 
         // API routes (token, pending, metadata, jwks): JSON error responses
         // (same pattern as CIBAProvider / OAuth2Provider ExceptionHandler)

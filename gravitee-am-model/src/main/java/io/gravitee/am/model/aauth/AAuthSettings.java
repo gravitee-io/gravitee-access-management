@@ -32,6 +32,13 @@ public class AAuthSettings {
     /** Pending/deferred request TTL in seconds (default 600) */
     private int pendingRequestTtl = 600;
 
+    /**
+     * bootstrap_token lifespan in seconds (default 300, capped at 300 per spec §6.4).
+     * Spec language is "SHOULD NOT exceed 5 minutes"; the gateway caps at 300 anyway.
+     * Operators can lower this for stricter posture (e.g. 60s).
+     */
+    private int bootstrapTokenLifespan = 300;
+
     /** URL patterns for allowed agents (e.g. "https://*.corp.example") */
     private List<String> allowedAgentPatterns;
 
@@ -43,6 +50,15 @@ public class AAuthSettings {
 
     /** IdP IDs to assign by default when auto-registering agents */
     private List<String> defaultIdentityProviders;
+
+    /**
+     * If true, accept {@code http://} agent_server URLs in bootstrap requests.
+     * Intended for local development (testing against a non-TLS Agent Server).
+     * MUST remain false in production: an http agent_server defeats consent-screen
+     * identity verification and exposes the bootstrap_token's audience to in-network
+     * tampering.
+     */
+    private boolean allowInsecureAgentServer = false;
 
     public boolean isEnabled() {
         return enabled;
@@ -98,5 +114,21 @@ public class AAuthSettings {
 
     public void setDefaultIdentityProviders(List<String> defaultIdentityProviders) {
         this.defaultIdentityProviders = defaultIdentityProviders;
+    }
+
+    public boolean isAllowInsecureAgentServer() {
+        return allowInsecureAgentServer;
+    }
+
+    public void setAllowInsecureAgentServer(boolean allowInsecureAgentServer) {
+        this.allowInsecureAgentServer = allowInsecureAgentServer;
+    }
+
+    public int getBootstrapTokenLifespan() {
+        return bootstrapTokenLifespan;
+    }
+
+    public void setBootstrapTokenLifespan(int bootstrapTokenLifespan) {
+        this.bootstrapTokenLifespan = bootstrapTokenLifespan;
     }
 }

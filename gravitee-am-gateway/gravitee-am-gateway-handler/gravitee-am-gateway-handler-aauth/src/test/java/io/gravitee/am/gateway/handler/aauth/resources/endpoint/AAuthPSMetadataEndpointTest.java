@@ -72,13 +72,14 @@ public class AAuthPSMetadataEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldReturnThreeRequiredFields() throws Exception {
+    public void shouldReturnRequiredFields() throws Exception {
         JsonObject json = fetchMetadataJson();
 
-        assertEquals("Should have exactly 3 fields", 3, json.size());
+        assertEquals("Should have exactly 4 fields", 4, json.size());
         assertNotNull("issuer should be present", json.getString("issuer"));
         assertNotNull("token_endpoint should be present", json.getString("token_endpoint"));
         assertNotNull("jwks_uri should be present", json.getString("jwks_uri"));
+        assertNotNull("bootstrap_endpoint should be present", json.getString("bootstrap_endpoint"));
     }
 
     @Test

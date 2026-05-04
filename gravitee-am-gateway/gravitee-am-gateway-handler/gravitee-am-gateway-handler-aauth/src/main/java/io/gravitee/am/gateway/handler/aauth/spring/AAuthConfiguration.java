@@ -15,20 +15,31 @@
  */
 package io.gravitee.am.gateway.handler.aauth.spring;
 
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthBootstrapConsentPostEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthBootstrapEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthBootstrapPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingDeleteEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
-import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthBootstrapConsentHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthBootstrapConsentRedirectHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthBootstrapInteractHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentRedirectHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthInteractionResolveHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.aauth.service.bootstrap.AAuthBootstrapService;
+import io.gravitee.am.gateway.handler.aauth.service.bootstrap.BootstrapTokenMinter;
+import io.gravitee.am.gateway.handler.aauth.service.bootstrap.PairwiseSubjectGenerator;
 import io.gravitee.am.gateway.handler.aauth.service.consent.AAuthConsentService;
+import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
+import io.gravitee.am.repository.oidc.api.AAuthBootstrapBindingRepository;
+import io.gravitee.am.repository.oidc.api.AAuthBootstrapRequestRepository;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.gateway.handler.aauth.service.AgentMetadataFetcher;
 import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistry;
@@ -47,6 +58,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.ApplicationService;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,8 +68,17 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author GraviteeSource Team
  */
+@Slf4j
 @Configuration
 public class AAuthConfiguration implements ProtocolConfiguration {
+
+    /**
+     * Sentinel value used as the master salt when {@code aauth.pairwise.subject.salt}
+     * is not configured. The string deliberately starts with {@code INSECURE_DEFAULT_}
+     * so it is greppable in logs / persisted pairwise sub history.
+     */
+    private static final String INSECURE_DEFAULT_PAIRWISE_SALT =
+            "INSECURE_DEFAULT_PAIRWISE_SALT_DO_NOT_USE_IN_PRODUCTION";
 
     @Bean
     public ReplayDetector replayDetector() {
@@ -196,5 +217,82 @@ public class AAuthConfiguration implements ProtocolConfiguration {
                                                                       ApplicationService applicationService,
                                                                       Domain domain) {
         return new AAuthConsentPostEndpoint(pendingService, tokenService, consentService, applicationService, domain);
+    }
+
+    // --- Bootstrap beans ---
+
+    @Bean
+    public PairwiseSubjectGenerator pairwiseSubjectGenerator(
+            Domain domain,
+            @Value("${aauth.pairwise.subject.salt:}") String configuredSalt) {
+        String salt = configuredSalt;
+        if (salt == null || salt.isBlank()) {
+            log.warn("aauth.pairwise.subject.salt is not configured — using an insecure built-in default. "
+                    + "Set this property in gravitee.yml (or via env var) to a long random string before "
+                    + "going to production. Pairwise sub identifiers generated with the default value are "
+                    + "derivable by anyone who knows the user id, the agent server URL, and the security domain id.");
+            salt = INSECURE_DEFAULT_PAIRWISE_SALT;
+        }
+        return new PairwiseSubjectGenerator(salt, domain.getId());
+    }
+
+    @Bean
+    public BootstrapTokenMinter bootstrapTokenMinter(CertificateManager certificateManager, Domain domain) {
+        // Use the configured lifespan if set, otherwise the AAuthSettings default (300s).
+        // BootstrapTokenMinter clamps to the spec range internally.
+        int lifespan = domain.getAauth() != null && domain.getAauth().getBootstrapTokenLifespan() > 0
+                ? domain.getAauth().getBootstrapTokenLifespan()
+                : BootstrapTokenMinter.MAX_BOOTSTRAP_TOKEN_LIFESPAN_SECONDS;
+        return new BootstrapTokenMinter(certificateManager, lifespan);
+    }
+
+    @Bean
+    public AAuthBootstrapService aAuthBootstrapService(
+            AAuthBootstrapRequestRepository requestRepo,
+            AAuthBootstrapBindingRepository bindingRepo,
+            BootstrapTokenMinter tokenMinter,
+            PairwiseSubjectGenerator pairwiseGenerator,
+            AgentMetadataFetcher metadataFetcher) {
+        return new AAuthBootstrapService(requestRepo, bindingRepo, tokenMinter, pairwiseGenerator, metadataFetcher);
+    }
+
+    @Bean
+    public AAuthBootstrapEndpoint aAuthBootstrapEndpoint(AAuthBootstrapService bootstrapService,
+                                                          AAuthAgentRegistry agentRegistry,
+                                                          Domain domain) {
+        return new AAuthBootstrapEndpoint(bootstrapService, agentRegistry, domain);
+    }
+
+    @Bean
+    public AAuthBootstrapPendingEndpoint aAuthBootstrapPendingEndpoint(AAuthBootstrapService bootstrapService) {
+        return new AAuthBootstrapPendingEndpoint(bootstrapService);
+    }
+
+    @Bean
+    public AAuthBootstrapInteractHandler aAuthBootstrapInteractHandler(AAuthBootstrapService bootstrapService,
+                                                                        AAuthAgentRegistry agentRegistry,
+                                                                        Domain domain) {
+        return new AAuthBootstrapInteractHandler(bootstrapService, agentRegistry, domain.getId());
+    }
+
+    @Bean
+    public AAuthBootstrapConsentRedirectHandler aAuthBootstrapConsentRedirectHandler() {
+        return new AAuthBootstrapConsentRedirectHandler();
+    }
+
+    @Bean
+    public AAuthBootstrapConsentHandler aAuthBootstrapConsentHandler(
+            AAuthBootstrapService bootstrapService,
+            ThymeleafTemplateEngine engine,
+            Domain domain) {
+        return new AAuthBootstrapConsentHandler(bootstrapService, engine, domain);
+    }
+
+    @Bean
+    public AAuthBootstrapConsentPostEndpoint aAuthBootstrapConsentPostEndpoint(
+            AAuthBootstrapService bootstrapService,
+            ThymeleafTemplateEngine engine,
+            Domain domain) {
+        return new AAuthBootstrapConsentPostEndpoint(bootstrapService, engine, domain);
     }
 }
