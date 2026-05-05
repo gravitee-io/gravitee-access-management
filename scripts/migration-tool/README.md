@@ -12,8 +12,7 @@ All commands must be run from the **repository root** (e.g. `./scripts/migration
 ## Prerequisites
 
 ### Kubernetes (Kind)
-- A running Kind cluster (e.g. `kind create cluster --name am-migration`).
-- `kubectl` and `helm` installed.
+- `kubectl`, `helm` and `kind` installed.
 - Gravitee license: set `GRAVITEE_LICENSE` (base64) or place a license file and set path via config (see `LicenseManager`).
 
 ### Docker Compose
@@ -32,21 +31,23 @@ All commands must be run from the **repository root** (e.g. `./scripts/migration
 1. **clean** – Remove existing releases, secrets, namespace (K8s) or compose stack (Docker).
 2. **k8s:setup** – (K8s only) Create namespace, deploy DB (MongoDB or PostgreSQL), create auth/license secrets; skip for Docker Compose.
 3. **deploy-from** – Deploy AM at “from” tag (K8s: 1 Management API + 2 Gateways; Docker: 1 API + 1 Gateway). K8s starts port-forwards.
-4. **verify-baseline** – Run management Jest tests (`gravitee-am-test`) against the deployed “from” version.
-5. **upgrade-mapi** – Upgrade Management API (and UI) to “to” tag.
-6. **verify-mapi** – Run management tests again.
-7. **upgrade-gw** – Upgrade Gateways to “to” tag.
-8. **verify-all** – Run gateway Jest tests (K8s: targets dp1 on port 8091).
-9. *Optional, with `--with-downgrade`:* **downgrade-mapi** → **verify-after-downgrade-mapi** → **downgrade-gw** → **verify-after-downgrade**.
+4. **seed** – Seed test data for the “from” version. Runs `npm run migration:seed -- --to-version <from-tag>` in `gravitee-am-test`.
+5. **verify-baseline** – Run management Jest tests (`gravitee-am-test`) against the deployed “from” version.
+6. **upgrade-mapi** – Upgrade Management API (and UI) to “to” tag.
+7. **verify-mapi** – Run management tests again.
+8. **upgrade-gw** – Upgrade Gateways to “to” tag.
+9. **seed-upgrade** – Seed test data for the “to” version. Runs `npm run migration:seed -- --to-version <to-tag>` in `gravitee-am-test`. This data is used to verify rollback handles N+1 data correctly.
+10. **verify-all** – Run gateway Jest tests (K8s: targets dp1 on port 8091).
+11. *Optional, with `--with-downgrade`:* **downgrade-mapi** → **verify-after-downgrade-mapi** → **downgrade-gw** → **verify-after-downgrade**.
 
 ### K8s multi-dataplane
 - One Management API release and two Gateway releases (dp1, dp2) per run.
-- Ports (local port-forward): Management API **8093**, UI **8002** (local browser testing only; Jest uses 8093), Gateway dp1 **8091**, Gateway dp2 **8092**.
+- Ports (local port-forward): Management API **8093**, UI **8002** (local browser testing only; Jest uses 8093), Gateway dp1 **8091**, Gateway dp2 **8092**, Gateway dp1 node/monitoring **18092** (`AM_GATEWAY_NODE_MONITORING_URL`; used for domain readiness polling).
 - `AM_GATEWAY_URL` is set to `http://localhost:8091` for verify-all and verify-after-downgrade so gateway tests hit dp1.
 
 ### System diagram (K8s)
 
-When running with `--provider k8s`, the tool deploys the following into a Kind cluster. Port-forwards expose services on localhost: Jest (gravitee-am-test) uses **8093** (Management API) and **8091** (Gateway dp1). Port **8002** (Management UI) is for local browser testing only; Jest does not access it.
+When running with `--provider k8s`, the tool deploys the following into a Kind cluster. Port-forwards expose services on localhost: Jest (gravitee-am-test) uses **8093** (Management API), **8091** (Gateway dp1), and **18092** (Gateway dp1 node/monitoring for domain readiness). Port **8002** (Management UI) is for local browser testing only; Jest does not access it.
 
 ```mermaid
 flowchart LR
@@ -70,6 +71,7 @@ flowchart LR
 
     Jest -->|"localhost:8093"| MAPI
     Jest -->|"localhost:8091\n(AM_GATEWAY_URL)"| DP1
+    Jest -->|"localhost:18092\n(node/monitoring)"| DP1
     Jest -.->|"localhost:8092"| DP2
 ```
 
@@ -107,13 +109,13 @@ Override via env: `AM_HELM_VALUES_PATH_MONGO_MAPI=path1,path2` or `AM_HELM_VALUE
 ```
 
 ### One-time setup (K8s)
-Clean, run K8s setup (DB + namespace + secrets), deploy “from” version. No cleanup at the end.
+Clean, run K8s setup (DB + namespace + secrets), deploy “from” version. No cleanup at the end. Does **not** run `seed`; use `--stage seed` separately if you need seeded data for manual testing.
 ```bash
 ./scripts/migration-test.mjs --provider k8s setup
 ```
 
 ### Run full migration
-Runs all stages (clean → setup → deploy-from → verify-baseline → … → verify-all, and optionally downgrade stages).
+Runs all stages (clean → setup → deploy-from → seed → verify-baseline → … → seed-upgrade → verify-all, and optionally downgrade stages).
 ```bash
 ./scripts/migration-test.mjs --provider k8s run
 ./scripts/migration-test.mjs --provider k8s run --db-type postgres --with-downgrade
@@ -150,6 +152,26 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 | `--test-filter` | Jest path pattern (e.g. `specs/management/certificates/certificates.jest.spec.ts`) | (none) |
 | `--with-downgrade` | After verify-all, downgrade to from-tag and run downgrade verification | `false` (CLI); CircleCI migration workflow may default to `true` |
 | `--test-dir` | Test suite directory (relative or absolute); overrides config default | From `Config.test.dir` or `AM_MIGRATION_TEST_DIR` |
+| `--registry` | Image registry host, K8s only (e.g. `graviteeio.azurecr.io`). Overrides image repositories via Helm `--set` and skips Docker Hub tag validation. CI trigger does not yet forward this parameter. | (none; uses Docker Hub) |
+
+### Version resolution
+
+Tags are resolved to `major.minor` at startup before any deployment. The resolved versions are passed to the seed script (`migration:seed --to-version <major.minor>`).
+
+| Tag format | Example | Resolved | Method |
+|-----------|---------|----------|--------|
+| Semver release | `4.10.0` | `4.10` | Parsed directly |
+| Semver pre-release | `4.11.0-alpha.3` | `4.11` | Parsed directly |
+| Semver snapshot | `4.12.0-SNAPSHOT` | `4.12` | Parsed directly |
+| Branch-latest with version | `4-10-x-latest` | `4.10` | Parsed from tag |
+| `master-latest` | `master-latest` | `4.12` | Git: reads `origin/master` pom.xml |
+| `latest` | `latest` | `4.10` | Docker Hub API: resolves actual tag |
+
+**Validation rules** (checked at startup, fail fast):
+- Both tags must resolve to a valid `major.minor`.
+- `from-tag` must resolve to a version **older** than `to-tag` (same version = error).
+- Branch-latest tags (e.g. `master-latest`, `4-10-x-latest`) require `--registry`.
+- `latest` is always resolved via Docker Hub, even with `--registry`. Use explicit semver or branch-latest tags with custom registries.
 
 ---
 
@@ -157,7 +179,7 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 
 **`--stage <name>`** runs **only that one stage** instead of the full pipeline. Use it to re-run or debug a single step without redoing earlier stages.
 
-- **Without `--stage`:** the tool runs the full list of stages (clean → k8s:setup → deploy-from → … → verify-all, and optionally the downgrade stages if you pass `--with-downgrade`).
+- **Without `--stage`:** the tool runs the full list of stages (clean → k8s:setup → deploy-from → seed → verify-baseline → upgrade-mapi → verify-mapi → upgrade-gw → seed-upgrade → verify-all, and optionally the downgrade stages if you pass `--with-downgrade`).
 - **With `--stage <name>`:** only the stage you name runs; no other stages run.
 
 **Valid stage names:**
@@ -167,10 +189,12 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 | `clean` | Tear down: uninstall Helm releases, delete secrets/namespace (K8s) or compose stack (Docker). |
 | `k8s:setup` | (K8s only) Create namespace, deploy DB (Mongo/Postgres), create auth secrets. Skipped for Docker Compose. |
 | `deploy-from` | Deploy AM at `--from-tag` (e.g. 4.10.0). K8s also starts port-forwards. |
+| `seed` | Seed test data for the “from” version (`npm run migration:seed -- --to-version <from-tag>`). |
 | `verify-baseline` | Run Jest management tests against the “from” version. |
 | `upgrade-mapi` | Upgrade Management API (and UI) to `--to-tag`. |
 | `verify-mapi` | Run Jest management tests after MAPI upgrade. |
 | `upgrade-gw` | Upgrade Gateways to `--to-tag`. |
+| `seed-upgrade` | Seed test data for the “to” version (`npm run migration:seed -- --to-version <to-tag>`). For rollback testing. |
 | `verify-all` | Run Jest gateway tests (e.g. against dp1). |
 | `downgrade-mapi` | Downgrade MAPI back to `--from-tag`. |
 | `verify-after-downgrade-mapi` | Run Jest management tests after MAPI downgrade. |
@@ -221,8 +245,8 @@ To avoid hardcoded secrets and Aqua (or similar) scan findings:
 
 ## Architecture
 
-- **Entry point:** `index.mjs` – parses CLI (Node `parseArgs`), loads `.env`, selects provider, and runs command (`run`, `setup`, or `trigger`).
-- **Orchestrator** (`lib/Orchestrator.mjs`) – Runs stages in sequence; calls provider (`clean`, `setup`, `deploy`, `upgradeMapi`, `upgradeGw`) and runs Jest in `gravitee-am-test` for verify stages. On failure or success, calls `provider.cleanup()` unless `skipCleanup` is set.
+- **Entry point:** `index.mjs` – parses CLI (Node `parseArgs`), loads `.env`, selects provider, and runs command (`run`, `setup`, `teardown`, or `trigger`).
+- **Orchestrator** (`lib/Orchestrator.mjs`) – Runs stages in sequence; calls provider (`clean`, `setup`, `deploy`, `upgradeMapi`, `upgradeGw`) for infrastructure stages, runs Jest in `gravitee-am-test` for verify stages, and runs `npm run migration:seed` for seed stages. On failure or success, calls `provider.cleanup()` unless `skipCleanup` is set.
 - **Providers:** Abstract deployment and teardown.
   - **K8sProvider** – Uses Helm (graviteeio/am + optional internal Postgres chart), Kubectl (namespace, secrets), LicenseManager (license for Helm `--set`), PortForwarder (8093, 8002, 8091, 8092), and a DatabaseStrategy (MongoDB or PostgreSQL). Multi-release: one API + two Gateways; version validated via `VersionValidator` (Docker Hub) before deploy/upgrade.
   - **DockerComposeProvider** – Uses `env/docker-compose/docker-compose.yml`; single API + single Gateway; `AM_VERSION` env drives image tag.
@@ -251,11 +275,9 @@ See also `docs/agent-standards/commands.md` for canonical build/test and migrati
 
 ## Next steps
 
-- **Fix Docker Compose** – Make the Docker Compose provider functional so the full migration flow (clean → setup → deploy-from → verify-baseline → … → verify-all) runs with `--provider docker-compose`. Requires fixing compose file, env, and provider logic to align with the K8s flow.
+- **Fix Docker Compose** – Make the Docker Compose provider functional so the full migration flow runs with `--provider docker-compose`. Requires fixing compose file, env, and provider logic to align with the K8s flow.
 - **Fix Jest/K8s environment** – Resolve remaining environment or wiring issues so Jest tests (gravitee-am-test) run reliably against the K8s-deployed AM (management and gateway specs, URLs, ports, dataplane IDs, timeouts). Aim for the full suite (or a well-defined subset) to pass without manual tweaks.
-- **Integrate Gatling performance tests** – Consider integrating the existing Gatling performance tests into the migration flow: use them for data seeding (organisations, applications, users, tokens) before migration runs, and extend the scope of Gatling scenarios to cover migration-specific cases (e.g. upgrade/downgrade behaviour, schema compatibility). Prefer this over creating a new test project dedicated to the migration tool.
-- **Add a `teardown` command** – Add a new command (e.g. `teardown`) that removes the entire Kind cluster (e.g. `kind delete cluster --name am-migration`), so users can fully tear down the K8s environment from the tool instead of running Kind commands manually.
-- Run unit tests and fix any failures.
+- **Implement real seed logic** – `migration-bootstrap.mjs` is currently a **stub** (prints confirmation, creates no data). Replace with real seeding that creates domains, applications, users via the Management API so verification tests run against known state. The orchestrator wiring (`seed` / `seed-upgrade` stages) is ready.
 - Run a full migration locally (e.g. Kind + `--provider k8s run --db-type postgres --with-downgrade`).
 - Use `--stage` and `--test-filter` to iterate on a single stage or a single Jest file.
 - Trigger the CircleCI migration workflow via `trigger` (with `CIRCLECI_TOKEN`) or from the GitHub Actions “Trigger Migration Test” workflow.
@@ -266,7 +288,7 @@ See also `docs/agent-standards/commands.md` for canonical build/test and migrati
 ## Future work
 
 - **Infrastructure via configuration** – Manage K8s resources and dependencies more via configuration than code, so adding new resources or dependencies (e.g. OpenFGA, SMTP, LDAP, Kafka) requires minimal code change. For example: declare releases, ports, and env in config or YAML; have the provider and orchestrator drive behaviour from that config instead of hardcoding topology and wiring in code.
-- **Seeded dataset** – Create a repeatable dataset (organisations, applications, users, tokens, etc.) that can be seeded before each migration run so verification tests run against known state and assertions are deterministic. Prefer reusing Gatling for seeding and extending its scenarios over a separate migration-only test project.
+- **Seeded dataset** – The `seed` / `seed-upgrade` orchestrator stages are wired; `migration-bootstrap.mjs` is a stub. Implement real seeding logic (domains, apps, users, tokens) so verification tests run against known deterministic state.
 - **Migration-specific test scenarios** – Extend existing test assets (e.g. Gatling scenarios, gravitee-am-test specs) to cover migration-specific behaviour (upgrade/downgrade, schema compatibility, regression) rather than introducing a new test project solely for the migration tool.
 - **Use both dp1 and dp2** – Extend verification to exercise both gateway dataplanes (dp1 on 8091, dp2 on 8092): run gateway tests against each, or add load/HA checks that involve both.
 - **Additional dependencies** – Add optional or configurable dependencies (e.g. SMTP, LDAP, Kafka) in K8s/Docker Compose so migration tests cover a wider range of integrations and configurations.

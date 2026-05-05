@@ -172,6 +172,28 @@ describe('K8sProvider', () => {
             })
         }));
     });
+
+    test('single-release deploy with registry should set image.repository overrides', async () => {
+        const providerWithRegistry = new K8sProvider({
+            namespace: 'gravitee-am',
+            valuesPath: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: mockLicenseManager,
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            registry: 'graviteeio.azurecr.io'
+        });
+        await providerWithRegistry.deploy('master-latest');
+        expect(mockHelm.installOrUpgrade).toHaveBeenCalledWith('am', 'graviteeio/am', expect.objectContaining({
+            set: expect.objectContaining({
+                'api.image.tag': 'master-latest',
+                'api.image.repository': 'graviteeio.azurecr.io/am-management-api',
+                'gateway.image.repository': 'graviteeio.azurecr.io/am-gateway',
+                'ui.image.repository': 'graviteeio.azurecr.io/am-management-ui',
+            })
+        }));
+    });
 });
 
 describe('K8sProvider with releases (multi-dataplane)', () => {
@@ -264,12 +286,94 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         }));
     });
 
-    test('startTunnels should port-forward mapi, dp1 (8091), dp2 (8092), ui', async () => {
+    test('startTunnels should port-forward mapi, dp1 (8091), dp2 (8092), dp1-technical (18092), ui', async () => {
         await provider.startTunnels();
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-mapi-management-api', 8093, 83);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-mapi-management-ui', 8002, 8002);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp1-gateway', 8091, 82);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp2-gateway', 8092, 82);
-        expect(mockPortForwarder.start).toHaveBeenCalledTimes(4);
+        expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp1-gateway', 18092, 18092);
+        expect(mockPortForwarder.start).toHaveBeenCalledTimes(5);
+    });
+
+    test('getTestEnv should include gateway monitoring URL', () => {
+        const env = provider.getTestEnv();
+        expect(env.AM_GATEWAY_URL).toBe('http://localhost:8091');
+        expect(env.AM_DOMAIN_DATA_PLANE_ID).toBe('dp1');
+        expect(env.AM_GATEWAY_NODE_MONITORING_URL).toBe('http://localhost:18092/_node');
+    });
+
+    test('clean should force-kill port 18092', async () => {
+        await provider.clean();
+        expect(mockPortForwarder.forceKillPort).toHaveBeenCalledWith(18092);
+    });
+
+    test('deploy with registry should set image.repository overrides', async () => {
+        const providerWithRegistry = new K8sProvider({
+            namespace: 'gravitee-am',
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: { getLicenseBase64: jest.fn().mockResolvedValue('dGVzdC1saWNlbnNl') },
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            releases,
+            registry: 'graviteeio.azurecr.io'
+        });
+        await providerWithRegistry.deploy('master-latest');
+        expect(mockHelm.installOrUpgrade).toHaveBeenNthCalledWith(1, 'am-mapi', 'graviteeio/am', expect.objectContaining({
+            set: expect.objectContaining({
+                'api.image.tag': 'master-latest',
+                'api.image.repository': 'graviteeio.azurecr.io/am-management-api',
+                'gateway.image.repository': 'graviteeio.azurecr.io/am-gateway',
+                'ui.image.repository': 'graviteeio.azurecr.io/am-management-ui',
+            })
+        }));
+        expect(mockHelm.installOrUpgrade).toHaveBeenNthCalledWith(2, 'am-gateway-dp1', 'graviteeio/am', expect.objectContaining({
+            set: expect.objectContaining({
+                'gateway.image.tag': 'master-latest',
+                'gateway.image.repository': 'graviteeio.azurecr.io/am-gateway',
+            })
+        }));
+    });
+
+    test('upgradeMapi with registry should set image.repository overrides', async () => {
+        const providerWithRegistry = new K8sProvider({
+            namespace: 'gravitee-am',
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: { getLicenseBase64: jest.fn().mockResolvedValue('dGVzdC1saWNlbnNl') },
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            releases,
+            registry: 'graviteeio.azurecr.io'
+        });
+        await providerWithRegistry.upgradeMapi('master-latest');
+        const call = mockHelm.installOrUpgrade.mock.calls[0];
+        expect(call[2].set).toEqual(expect.objectContaining({
+            'api.image.tag': 'master-latest',
+            'ui.image.tag': 'master-latest',
+            'api.image.repository': 'graviteeio.azurecr.io/am-management-api',
+            'ui.image.repository': 'graviteeio.azurecr.io/am-management-ui',
+        }));
+    });
+
+    test('upgradeGw with registry should set image.repository overrides', async () => {
+        const providerWithRegistry = new K8sProvider({
+            namespace: 'gravitee-am',
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: { getLicenseBase64: jest.fn().mockResolvedValue('dGVzdC1saWNlbnNl') },
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            releases,
+            registry: 'graviteeio.azurecr.io'
+        });
+        await providerWithRegistry.upgradeGw('master-latest');
+        for (const call of mockHelm.installOrUpgrade.mock.calls) {
+            expect(call[2].set).toEqual(expect.objectContaining({
+                'gateway.image.tag': 'master-latest',
+                'gateway.image.repository': 'graviteeio.azurecr.io/am-gateway',
+            }));
+        }
     });
 });

@@ -32,6 +32,15 @@ module.exports = {
         testCasePropertiesDirectory: '.',
       },
     ],
+    [
+      'jest-html-reporters',
+      {
+        publicPath: './jest-reports/html',
+        filename: process.env.JEST_HTML_REPORT_NAME || 'index.html',
+        pageTitle: 'AM Migration Test Report',
+        expand: true,
+      },
+    ],
   ],
   moduleNameMapper: {
     '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',

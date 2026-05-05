@@ -30,6 +30,7 @@ import { Orchestrator } from './lib/Orchestrator.mjs';
 import { CircleCI } from './lib/CircleCI.mjs';
 import { K8sProvider } from './lib/providers/K8sProvider.mjs';
 import { DockerComposeProvider } from './lib/providers/DockerComposeProvider.mjs';
+import { validateMigrationParams } from './lib/core/VersionResolver.mjs';
 import { Config } from './lib/core/Config.mjs';
 import { Helm } from './lib/infra/kubernetes/Helm.mjs';
 import { Kubectl } from './lib/infra/kubernetes/Kubectl.mjs';
@@ -53,6 +54,7 @@ const parsed = parseArgs({
         stage: { type: 'string' },
         'test-filter': { type: 'string' },
         'test-dir': { type: 'string' },
+        registry: { type: 'string' },
         'with-downgrade': { type: 'boolean', default: false },
     },
     allowPositionals: true,
@@ -84,6 +86,7 @@ if (firstIsCommand) {
         stage: zxArgv.stage,
         'test-filter': zxArgv['test-filter'],
         'test-dir': zxArgv['test-dir'],
+        registry: zxArgv.registry,
         'with-downgrade': zxArgv['with-downgrade'],
     };
 } else {
@@ -102,9 +105,23 @@ const options = {
     stage: raw.stage ?? undefined,
     testFilter: (raw['test-filter'] ?? '').trim() || undefined,
     testDir,
+    registry: raw.registry ?? undefined,
     withDowngrade: raw['with-downgrade'] === true,
     token: process.env.CIRCLECI_TOKEN,
 };
+
+// 0. Validate and resolve versions (for commands that deploy)
+if (command === 'run' || command === 'setup') {
+    try {
+        const { fromVersion, toVersion } = await validateMigrationParams(options);
+        options.fromVersion = fromVersion;
+        options.toVersion = toVersion;
+        console.log(`📝 Resolved versions: ${options.fromTag} → ${fromVersion}, ${options.toTag} → ${toVersion}`);
+    } catch (e) {
+        console.error(`❌ ${e.message}`);
+        process.exit(1);
+    }
+}
 
 // 1. Initialize Infrastructure Provider
 let provider;
@@ -141,7 +158,8 @@ switch (options.providerName) {
             helm,
             kubectl,
             databaseStrategy,
-            releases
+            releases,
+            registry: options.registry
         });
         break;
     }
@@ -210,10 +228,12 @@ const commands = {
             'clean',
             'k8s:setup',
             'deploy-from',
+            'seed',
             'verify-baseline',
             'upgrade-mapi',
             'verify-mapi',
             'upgrade-gw',
+            'seed-upgrade',
             'verify-all',
             ...(options.withDowngrade
                 ? ['downgrade-mapi', 'verify-after-downgrade-mapi', 'downgrade-gw', 'verify-after-downgrade']
@@ -246,15 +266,16 @@ function printHelp() {
     console.log('  teardown   Remove resources and delete Kind cluster (k8s)');
     console.log('  run        Run migration orchestration');
     console.log('\nOptions (use --key <value> or --key=<value>):');
-    console.log('  --from-tag <tag>   Initial AM version (default: 4.10.0)');
-    console.log('  --to-tag <tag>     Target AM version (default: latest)');
+    console.log('  --from-tag <tag>   Initial AM version: semver (4.10.0), branch-latest (4-10-x-latest), or master-latest');
+    console.log('  --to-tag <tag>     Target AM version (same formats). Must resolve to a newer version than from-tag');
     console.log('  --db-type <type>  Database: mongodb or postgres (default: mongodb)');
     console.log('  --provider <name> Infrastructure: docker-compose or k8s (default: docker-compose)');
     console.log('  --stage <name>    Run only this stage');
     console.log('  --test-filter <path>  Run only Jest tests matching path (e.g. specs/gateway/refresh-token.jest.spec.ts)');
     console.log('  --test-dir <path>   Test suite directory (default from config; use full path to override)');
+    console.log('  --registry <host>   Image registry, K8s only (e.g. graviteeio.azurecr.io); overrides Docker Hub and skips tag validation');
     console.log('  --with-downgrade  After verify-all, downgrade back to from-tag and verify');
     console.log('\nStages:');
-    console.log('  clean, k8s:setup, deploy-from, verify-baseline, upgrade-mapi, verify-mapi, upgrade-gw, verify-all');
+    console.log('  clean, k8s:setup, deploy-from, seed, verify-baseline, upgrade-mapi, verify-mapi, upgrade-gw, seed-upgrade, verify-all');
     console.log('  (+ with --with-downgrade: downgrade-mapi, verify-after-downgrade-mapi, downgrade-gw, verify-after-downgrade)');
 }
