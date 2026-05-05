@@ -32,7 +32,7 @@
     <description>Java client SDK generated from the Access Management Management API OpenAPI specification.</description>
 
     <properties>
-        <openapi-generator.version>7.11.0</openapi-generator.version>
+        <openapi-generator.version>7.22.0</openapi-generator.version>
         <jackson.version>2.18.2</jackson.version>
         <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
@@ -40,31 +40,29 @@
     </properties>
 
     <dependencies>
-        <!-- okhttp-gson generator runtime deps -->
+        <!-- vertx generator runtime deps -->
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.12.0</version>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>logging-interceptor</artifactId>
-            <version>4.12.0</version>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.gsonfire</groupId>
-            <artifactId>gson-fire</artifactId>
-            <version>1.9.0</version>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.18.0</version>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>2.2.25</version>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
@@ -135,9 +133,9 @@
                         Post-generation fix. Even with the spec reshaped, openapi-generator
                         hard-codes `this.type = getClass().getSimpleName()` into the
                         discriminator subclass constructors. Parent `type` is now a typed
-                        enum, so the String assignment won't compile. Gson populates `type`
-                        from the JSON payload during deserialization, so the assignment is
-                        redundant — strip it.
+                        enum, so the String assignment won't compile. Jackson populates
+                        `type` from the JSON payload during deserialization, so the
+                        assignment is redundant — strip it.
                     -->
                     <execution>
                         <id>patch-discriminator-subclass-constructors</id>
@@ -157,6 +155,24 @@
                                         <include name="UpdateMcpTool.java"/>
                                     </fileset>
                                 </replaceregexp>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!--
+                        Vert.x 5 dropped vertx-rx-java (RxJava 1 EOL). The vertx generator
+                        still emits an api/rxjava/* wrapper layer compiled against rx.Single.
+                        Delete it so only the standard WebClient-based api/* survives.
+                    -->
+                    <execution>
+                        <id>strip-rxjava1-wrappers</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.build.directory}/generated-sources/openapi/src/main/java/io/gravitee/am/sdk/management/api/rxjava"/>
                             </target>
                         </configuration>
                     </execution>
@@ -187,7 +203,8 @@
                             <generateModelDocumentation>false</generateModelDocumentation>
                             <skipValidateSpec>true</skipValidateSpec>
                             <configOptions>
-                                <library>okhttp-gson</library>
+                                <library>vertx</library>
+                                <useVertx5>true</useVertx5>
                                 <dateLibrary>java8</dateLibrary>
                                 <openApiNullable>false</openApiNullable>
                                 <hideGenerationTimestamp>true</hideGenerationTimestamp>
