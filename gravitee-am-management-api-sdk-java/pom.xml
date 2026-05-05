@@ -313,6 +313,18 @@
                                 -->
                                 <enumUnknownDefaultCase>true</enumUnknownDefaultCase>
                                 <!--
+                                    AM's Patch* models read collection fields with tri-state
+                                    semantics: absent = preserve, [] = clear. The generator
+                                    default-initialises every container field to an empty
+                                    collection, so plain Jackson serialisation (USE_DEFAULTS)
+                                    emits `"grantTypes": []` etc. on every PATCH and AM clears
+                                    untouched fields. Initialise containers to null so the
+                                    consumer's NON_NULL inclusion drops them from the wire,
+                                    while explicit `setX(List.of())` still serialises `[]`
+                                    (preserving "clear by empty list" intent).
+                                -->
+                                <containerDefaultToNull>true</containerDefaultToNull>
+                                <!--
                                     The Management API serializes all enums as lowercase
                                     (see ObjectMapperResolver in gravitee-am-management-api-rest),
                                     while generated enum constants stay uppercase. Switch
