@@ -69,6 +69,21 @@
             <artifactId>jakarta.annotation-api</artifactId>
             <version>${jakarta.annotation-api.version}</version>
         </dependency>
+        <!-- Required by useBeanValidation: generated models reference jakarta.validation.constraints.* -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -125,6 +140,22 @@
                                                replace="${line.separator}\1"
                                                flags="g"
                                                byline="false"/>
+
+                                <!-- Strip `requiredPermissions` from Patch* schemas. The Java
+                                     models expose getRequiredPermissions() as a derived getter
+                                     used internally by REST resources for permission checks
+                                     (see PermissionSettingUtils). The OpenAPI scan picks it up
+                                     as a settable schema property, so the SDK ships it as a
+                                     field that gets serialized as `"requiredPermissions": []`
+                                     on every PATCH — and AM's own deserializer rejects it as
+                                     unrecognized (400). The property is meaningless on the
+                                     wire either way; remove it from the spec before generation
+                                     so the SDK never emits it. -->
+                                <replaceregexp file="${project.build.directory}/openapi-patched.yaml"
+                                               match="        requiredPermissions:\n          uniqueItems: true\n          type: array\n          items:\n            type: string\n            enum:\n(            - [A-Z0-9_]+\n)+"
+                                               replace=""
+                                               flags="g"
+                                               byline="false"/>
                             </target>
                         </configuration>
                     </execution>
@@ -153,6 +184,58 @@
                                         <include name="McpTool.java"/>
                                         <include name="NewMcpTool.java"/>
                                         <include name="UpdateMcpTool.java"/>
+                                    </fileset>
+                                </replaceregexp>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!--
+                        supportVertxFuture: the vertx-generator default-method template passes
+                        a Promise where a Handler<AsyncResult<T>> is expected. In Vert.x 4 these
+                        were interchangeable; in Vert.x 5 Promise no longer implements Handler.
+                        Rewrite the call site to pass `promise::handle`.
+                    -->
+                    <execution>
+                        <id>fix-vertx5-future-default-methods</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <target>
+                                <replaceregexp match="([ (])promise\);"
+                                               replace="\1promise::handle);"
+                                               flags="g"
+                                               byline="true">
+                                    <fileset dir="${project.build.directory}/generated-sources/openapi/src/main/java/io/gravitee/am/sdk/management/api">
+                                        <include name="*.java"/>
+                                    </fileset>
+                                </replaceregexp>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!--
+                        useBeanValidation: the vertx api template emits @Valid on collection
+                        element types but doesn't import jakarta.validation.Valid. Inject the
+                        import into api/*.java files that reference it.
+                    -->
+                    <execution>
+                        <id>add-valid-import-to-api</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <target>
+                                <replaceregexp match="(import io\.vertx\.core\.json\.JsonObject;\n)"
+                                               replace="\1import jakarta.validation.Valid;${line.separator}"
+                                               flags="g"
+                                               byline="false">
+                                    <fileset dir="${project.build.directory}/generated-sources/openapi/src/main/java/io/gravitee/am/sdk/management/api">
+                                        <include name="*.java"/>
+                                        <containsregexp expression="@Valid"/>
                                     </fileset>
                                 </replaceregexp>
                             </target>
@@ -209,6 +292,34 @@
                                 <openApiNullable>false</openApiNullable>
                                 <hideGenerationTimestamp>true</hideGenerationTimestamp>
                                 <useJakartaEe>true</useJakartaEe>
+                                <!--
+                                    Emit Future<T> operationId(...) defaults on every API
+                                    interface alongside the Handler<AsyncResult<T>> form, so
+                                    consumers can avoid Promise/Handler boilerplate at call sites.
+                                -->
+                                <supportVertxFuture>true</supportVertxFuture>
+                                <!--
+                                    Bean Validation annotations (@NotNull, @Size, @Pattern) on
+                                    generated models so consumers can fail fast on bad payloads.
+                                    performBeanValidation stays off — annotations only, no
+                                    runtime validation cost.
+                                -->
+                                <useBeanValidation>true</useBeanValidation>
+                                <performBeanValidation>false</performBeanValidation>
+                                <!--
+                                    Forward-compat: when AM adds a new enum constant, generated
+                                    SDK fromValue() returns UNKNOWN_DEFAULT_OPEN_API instead of
+                                    throwing — so older clients can still decode newer payloads.
+                                -->
+                                <enumUnknownDefaultCase>true</enumUnknownDefaultCase>
+                                <!--
+                                    The Management API serializes all enums as lowercase
+                                    (see ObjectMapperResolver in gravitee-am-management-api-rest),
+                                    while generated enum constants stay uppercase. Switch
+                                    fromValue() to equalsIgnoreCase so deserialization succeeds
+                                    against wire payloads like "type":"agent".
+                                -->
+                                <useEnumCaseInsensitive>true</useEnumCaseInsensitive>
                             </configOptions>
                         </configuration>
                     </execution>
