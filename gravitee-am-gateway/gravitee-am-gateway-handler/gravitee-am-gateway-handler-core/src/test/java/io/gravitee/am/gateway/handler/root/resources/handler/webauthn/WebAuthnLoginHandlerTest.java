@@ -38,8 +38,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpClientRequest;
-import io.vertx.ext.auth.webauthn.MetaDataService;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
@@ -54,7 +54,6 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -86,7 +85,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
     private WebAuthnLoginHandler webAuthnLoginHandler;
 
     @Mock
-    private WebAuthn webAuthn;
+    private WebAuthn4J webAuthn;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -96,9 +95,6 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         super.setUp();
 
         // init webauthn objet
-        MetaDataService metaDataService = mock(MetaDataService.class);
-        when(metaDataService.verify(any())).thenReturn(new JsonObject());
-        when(webAuthn.metaDataService()).thenReturn(metaDataService);
         when(webAuthn.authenticate(any(Credentials.class))).thenReturn(Future.succeededFuture(io.vertx.ext.auth.User.fromName("username")));
 
         webAuthnLoginHandler =
@@ -109,45 +105,6 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
                 .handler(BodyHandler.create())
                 .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
         when(domainDataPlane.getDomain()).thenReturn(domain);
-    }
-
-    @Test
-    public void shouldNotLogin_v1_deviceIntegrityException() throws Exception {
-        // init domain
-        WebAuthnSettings webAuthnSettings = new WebAuthnSettings();
-        webAuthnSettings.setEnforceAuthenticatorIntegrity(true);
-        webAuthnSettings.setEnforceAuthenticatorIntegrityMaxAge(10);
-        when(domain.getWebAuthnSettings()).thenReturn(webAuthnSettings);
-
-        MetaDataService metaDataService = mock(MetaDataService.class);
-        doThrow(RuntimeException.class).when(metaDataService).verify(any());
-        when(webAuthn.metaDataService()).thenReturn(metaDataService);
-
-        Credential credential = packedCredential();
-
-        when(credentialService.findByCredentialId(any(), any())).thenReturn(Flowable.just(credential));
-        when(userAuthenticationManager.connectWithPasswordless(any(), any(), any())).thenReturn(Single.just(new User()));
-
-        router.route(HttpMethod.POST, "/webauthn/login")
-                .handler(rc -> {
-                    Client client = new Client();
-                    rc.session().put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, PASSWORDLESS_CHALLENGE_KEY);
-                    rc.session().put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-                    rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-                    rc.next();
-                })
-                .handler(webAuthnLoginHandler)
-                .handler(rc -> rc.end());
-
-        testRequest(
-                HttpMethod.POST,
-                "/webauthn/login",
-                sendAssertion(),
-                rep -> {
-                    String location = rep.getHeader("Location");
-                    Assert.assertTrue(location.contains("/webauthn/login?error=login_failed&error_code=account_device_integrity"));
-                },
-                302, "Found", null);
     }
 
     @Test

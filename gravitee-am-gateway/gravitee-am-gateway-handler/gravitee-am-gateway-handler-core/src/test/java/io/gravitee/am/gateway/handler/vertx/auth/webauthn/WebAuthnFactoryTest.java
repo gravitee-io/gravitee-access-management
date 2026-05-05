@@ -18,9 +18,9 @@ package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
-import io.vertx.ext.auth.webauthn.RelyingParty;
+import io.vertx.ext.auth.webauthn4j.RelyingParty;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.ext.auth.webauthn.WebAuthn;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +59,7 @@ public class WebAuthnFactoryTest {
     @Test
     public void testDefault() {
         when(domain.getWebAuthnSettings()).thenReturn(null);
-        WebAuthn webAuthn = webAuthnFactory.getObject();
+        WebAuthn4J webAuthn = webAuthnFactory.getObject();
         RelyingParty relyingParty = webAuthnFactory.getRelyingParty();
         Assert.assertNotNull(webAuthn);
         Assert.assertNotNull(relyingParty);
@@ -70,7 +70,7 @@ public class WebAuthnFactoryTest {
     @Test
     public void testCustom_emptySettings() {
         when(domain.getWebAuthnSettings()).thenReturn(new WebAuthnSettings());
-        WebAuthn webAuthn = webAuthnFactory.getObject();
+        WebAuthn4J webAuthn = webAuthnFactory.getObject();
         RelyingParty relyingParty = webAuthnFactory.getRelyingParty();
         Assert.assertNotNull(webAuthn);
         Assert.assertNotNull(relyingParty);
@@ -84,7 +84,7 @@ public class WebAuthnFactoryTest {
         when(webAuthnSettings.getRelyingPartyName()).thenReturn("Custom RP name");
         when(webAuthnSettings.getOrigin()).thenReturn("https://auth.gravitee.io:8443");
         when(domain.getWebAuthnSettings()).thenReturn(webAuthnSettings);
-        WebAuthn webAuthn = webAuthnFactory.getObject();
+        WebAuthn4J webAuthn = webAuthnFactory.getObject();
         RelyingParty relyingParty = webAuthnFactory.getRelyingParty();
         Assert.assertNotNull(webAuthn);
         Assert.assertNotNull(relyingParty);
@@ -98,7 +98,7 @@ public class WebAuthnFactoryTest {
         when(webAuthnSettings.getRelyingPartyName()).thenReturn("Custom RP name");
         when(webAuthnSettings.getRelyingPartyId()).thenReturn("Custom RP ID");
         when(domain.getWebAuthnSettings()).thenReturn(webAuthnSettings);
-        WebAuthn webAuthn = webAuthnFactory.getObject();
+        WebAuthn4J webAuthn = webAuthnFactory.getObject();
         RelyingParty relyingParty = webAuthnFactory.getRelyingParty();
         Assert.assertNotNull(webAuthn);
         Assert.assertNotNull(relyingParty);

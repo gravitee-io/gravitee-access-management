@@ -27,7 +27,10 @@ import io.gravitee.am.model.ReferenceType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.ext.auth.webauthn.Authenticator;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.ext.auth.webauthn4j.Authenticator;
+import io.vertx.ext.auth.webauthn4j.CredentialStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,7 +50,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RepositoryCredentialStore {
+public class RepositoryCredentialStore implements CredentialStorage {
 
     @Autowired
     private CredentialGatewayService credentialService;
@@ -63,17 +66,52 @@ public class RepositoryCredentialStore {
     @Value("${user.webAuthn.maxAllowCredentials:-1}")
     protected int maxAllowCredentials;
 
-    public Single<List<Authenticator>> fetch(Authenticator query) {
-        return fetchCredentials(query)
+    @Override
+    public Future<List<Authenticator>> find(String username, String credentialId) {
+        Promise<List<Authenticator>> promise = Promise.promise();
+        fetchRx(username, credentialId).subscribe(promise::complete, promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public Future<Void> storeCredential(Authenticator authenticator) {
+        Promise<Void> promise = Promise.promise();
+        create(authenticator).subscribe(promise::complete, promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public Future<Void> updateCounter(Authenticator authenticator) {
+        Promise<Void> promise = Promise.promise();
+        credentialService.findByCredentialId(domain, authenticator.getCredID())
+                .toList()
+                .flatMapCompletable(credentials ->
+                        Observable.fromIterable(credentials)
+                                .flatMapCompletable(credential -> {
+                                    credential.setCounter(authenticator.getCounter());
+                                    credential.setUpdatedAt(new Date());
+                                    return credentialService.update(domain, credential).ignoreElement();
+                                })
+                )
+                .subscribe(promise::complete, promise::fail);
+        return promise.future();
+    }
+
+    Single<List<Authenticator>> fetch(String username, String credentialId) {
+        return fetchRx(username, credentialId);
+    }
+
+    private Single<List<Authenticator>> fetchRx(String username, String credentialId) {
+        return fetchCredentials(username, credentialId)
                 .flatMap(credentials -> {
-                    if (credentials.isEmpty() && query.getUserName() != null) {
+                    if (credentials.isEmpty() && username != null) {
                         // If, when initiating an authentication ceremony, there is no account matching the provided username,
                         // continue the ceremony by invoking navigator.credentials.get() using a syntactically valid
                         // PublicKeyCredentialRequestOptions object that is populated with plausible imaginary values.
                         // Prevent 14.6.2. Username Enumeration (https://www.w3.org/TR/webauthn-2/#sctn-username-enumeration)
                         return Single.zip(
-                                generateCredID(query.getUserName(), Claims.SUB),
-                                generateCredID(query.getUserName(), StandardClaims.PREFERRED_USERNAME), (part1, part2) -> {
+                                generateCredID(username, Claims.SUB),
+                                generateCredID(username, StandardClaims.PREFERRED_USERNAME), (part1, part2) -> {
                                     MessageDigest md = MessageDigest.getInstance("SHA-512");
                                     SecureRandom secureRandom = SecureRandom.getInstance(MovingFactorUtils.SHA_1_PRNG);
                                     secureRandom.setSeed(part1.getBytes());
@@ -86,7 +124,7 @@ public class RepositoryCredentialStore {
                                         md.update(salt);
                                         String initialValue = shiftValue(part2, i);
                                         Authenticator authenticator = new Authenticator();
-                                        authenticator.setUserName(query.getUserName());
+                                        authenticator.setUsername(username);
                                         if (deviceType == 1) {
                                             if (i < 2) {
                                                 if (initialValue.length() > 27) {
@@ -119,43 +157,23 @@ public class RepositoryCredentialStore {
                 });
     }
 
-    private Single<List<Credential>> fetchCredentials(Authenticator query){
-        if (query.getUserName() != null) {
+    private Single<List<Credential>> fetchCredentials(String username, String credentialId) {
+        if (username != null) {
             if (maxAllowCredentials > 0) {
-                return credentialService.findByUsername(domain, query.getUserName(), maxAllowCredentials).toList();
+                return credentialService.findByUsername(domain, username, maxAllowCredentials).toList();
             } else {
-                return credentialService.findByUsername(domain, query.getUserName()).toList();
+                return credentialService.findByUsername(domain, username).toList();
             }
         } else {
-            return credentialService.findByCredentialId(domain, query.getCredID()).toList();
+            return credentialService.findByCredentialId(domain, credentialId).toList();
         }
-    }
-
-    public Completable store(Authenticator authenticator) {
-
-        return credentialService.findByCredentialId(domain, authenticator.getCredID())
-                .toList()
-                .flatMapCompletable(credentials -> {
-                    if (credentials.isEmpty()) {
-                        // no credential found, create it
-                        return create(authenticator);
-                    } else {
-                        // update current credentials
-                        return Observable.fromIterable(credentials)
-                                .flatMapCompletable(credential -> {
-                                    credential.setCounter(authenticator.getCounter());
-                                    credential.setUpdatedAt(new Date());
-                                    return credentialService.update(domain, credential).ignoreElement();
-                                });
-                    }
-                });
     }
 
     private Completable create(Authenticator authenticator) {
         Credential credential = new Credential();
         credential.setReferenceType(ReferenceType.DOMAIN);
         credential.setReferenceId(domain.getId());
-        credential.setUsername(authenticator.getUserName());
+        credential.setUsername(authenticator.getUsername());
         credential.setCredentialId(authenticator.getCredID());
         credential.setPublicKey(authenticator.getPublicKey());
         credential.setCounter(authenticator.getCounter());
@@ -177,7 +195,7 @@ public class RepositoryCredentialStore {
             return null;
         }
         Authenticator authenticator = new Authenticator();
-        authenticator.setUserName(credential.getUsername());
+        authenticator.setUsername(credential.getUsername());
         authenticator.setCredID(credential.getCredentialId());
         if (credential.getCounter() != null) {
             authenticator.setCounter(credential.getCounter());

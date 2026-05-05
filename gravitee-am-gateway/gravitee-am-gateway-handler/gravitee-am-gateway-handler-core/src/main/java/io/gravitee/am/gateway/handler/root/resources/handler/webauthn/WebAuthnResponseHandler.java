@@ -27,8 +27,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4JCredentials;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -49,13 +49,13 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelp
 public class WebAuthnResponseHandler extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnResponseHandler.class);
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
     private final String origin;
 
     public WebAuthnResponseHandler(UserService userService,
                                    FactorManager factorManager,
                                    DomainDataPlane domainDataPlane,
-                                   WebAuthn webAuthn,
+                                   WebAuthn4J webAuthn,
                                    CredentialGatewayService credentialService,
                                    UserAuthenticationManager userAuthenticationManager) {
         setUserService(userService);
@@ -98,7 +98,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
             // authenticate the user
             Single.fromCompletionStage(webAuthn.authenticate(
                     // authInfo
-                    new WebAuthnCredentials()
+                    new WebAuthn4JCredentials()
                             .setOrigin(origin)
                             .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                             .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))

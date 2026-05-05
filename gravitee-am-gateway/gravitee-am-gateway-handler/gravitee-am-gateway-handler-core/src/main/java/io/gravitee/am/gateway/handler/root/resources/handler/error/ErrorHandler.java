@@ -26,7 +26,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4JException;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
@@ -80,7 +80,7 @@ public class ErrorHandler extends AbstractErrorHandler {
             } else if (throwable instanceof AuthenticationException) {
                 AuthenticationException authenticationException = (AuthenticationException) throwable;
                 handleException(routingContext, authenticationException.getErrorCode(), authenticationException.getErrorCode() + " : " + authenticationException.getMessage());
-            } else if (throwable instanceof AttestationException) {
+            } else if (throwable instanceof WebAuthn4JException) {
                 handleException(routingContext, "technical_error", "Invalid WebAuthn attestation, make sure your device is compliant with the platform requirements");
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);

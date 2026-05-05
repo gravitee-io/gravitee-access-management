@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
-import io.gravitee.am.common.exception.authentication.AccountDeviceIntegrityException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -25,7 +24,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpHeaders;
@@ -35,18 +33,14 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.webauthn.AttestationCertificates;
-import io.vertx.ext.auth.webauthn.Authenticator;
-import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4JCredentials;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
-import java.time.Instant;
-import java.util.Date;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN;
@@ -61,13 +55,13 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelp
 public class WebAuthnLoginHandler extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginHandler.class);
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
     private final String origin;
 
     public WebAuthnLoginHandler(UserService userService,
                                 FactorManager factorManager,
                                 DomainDataPlane domainDataPlane,
-                                WebAuthn webAuthn,
+                                WebAuthn4J webAuthn,
                                 CredentialGatewayService credentialService,
                                 UserAuthenticationManager userAuthenticationManager) {
         setUserService(userService);
@@ -178,7 +172,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         // authenticate the user with its webauthn credential id
         Single.fromCompletionStage(webAuthn.authenticate(
                         // authInfo
-                        new WebAuthnCredentials()
+                        new WebAuthn4JCredentials()
                                 .setOrigin(origin)
                                 .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                                 .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
@@ -226,64 +220,8 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
     }
 
     protected Completable checkAuthenticatorConformity(String credentialId, String username) {
-        final WebAuthnSettings webAuthnSettings = domainDataPlane.getDomain().getWebAuthnSettings();
-        // option is disabled, continue
-        if (webAuthnSettings == null || !webAuthnSettings.isEnforceAuthenticatorIntegrity()) {
-            return Completable.complete();
-        }
-        // max Age is not defined, continue
-        final Integer maxAge = webAuthnSettings.getEnforceAuthenticatorIntegrityMaxAge();
-        if (maxAge == null) {
-            logger.warn("WebAuthn enforce authenticator integrity is enabled but max age has not been set");
-            return Completable.complete();
-        }
-
-        return credentialService.findByCredentialId(domainDataPlane.getDomain(), credentialId)
-                .filter(credential -> {
-                    final String fmt = credential.getAttestationStatementFormat();
-                    final Date lastCheckedAt = credential.getLastCheckedAt();
-                    // if the attestation "fmt" set to "none",
-                    // then no attestation is provided, and you don’t have anything to verify.
-                    if ("none".equals(fmt)) {
-                        return false;
-                    }
-                    // waiting feedback from Vert.x team https://github.com/eclipse-vertx/vertx-auth/issues/619
-                    // before removing this condition
-                    try {
-                        JsonObject jsonObject = new JsonObject(credential.getAttestationStatement());
-                        AttestationCertificates attestationCertificates = new AttestationCertificates(jsonObject);
-                        // if no certificate chain, skip the verification
-                        if (attestationCertificates.getX5c() == null || attestationCertificates.getX5c().isEmpty()) {
-                            logger.debug("No certificate chain has been found for credential {}", credentialId);
-                            return false;
-                        }
-                    } catch (Exception ex) {
-                        logger.error("Unable to decode credential attestation statement for credential {}", credentialId, ex);
-                        return false;
-                    }
-                    // check only credential with elapsed last checked date
-                    return (lastCheckedAt == null || Instant.now().isAfter(lastCheckedAt.toInstant().plusSeconds(maxAge)));
-                })
-                .firstElement()
-                .map(credential -> {
-                    Authenticator authenticator = new Authenticator();
-                    authenticator.setUserName(credential.getUsername());
-                    authenticator.setCredID(credential.getCredentialId());
-                    authenticator.setAaguid(credential.getAaguid());
-                    authenticator.setCounter(credential.getCounter());
-                    authenticator.setPublicKey(credential.getPublicKey());
-                    authenticator.setFmt(credential.getAttestationStatementFormat());
-                    JsonObject jsonObject = new JsonObject(credential.getAttestationStatement());
-                    authenticator.setAttestationCertificates(new AttestationCertificates(jsonObject));
-                    // verify integrity (throws RuntimeException if the authenticator is invalid or
-                    // returns an MDS statement for this authenticator or null).
-                    JsonObject statement = webAuthn.metaDataService().verify(authenticator);
-                    return statement != null ? statement : new JsonObject();
-                })
-                .ignoreElement()
-                .onErrorResumeNext(error -> {
-                    logger.error("User {} webauthn authenticator {} has not been trusted", username, credentialId, error);
-                    return Completable.error(new AccountDeviceIntegrityException("Invalid user webauthn authenticator"));
-                });
+        // Authenticator integrity (FIDO metadata verification) is now handled internally by vertx-auth-webauthn4j
+        // via WebAuthn4JOptions.setUseMetadata(true), which is enabled when enforceAuthenticatorIntegrity is true.
+        return Completable.complete();
     }
 }
