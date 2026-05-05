@@ -15,15 +15,19 @@
  */
 package io.gravitee.am.sdk.management;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.sdk.management.model.Application;
 import io.gravitee.am.sdk.management.model.PatchApplication;
+import io.gravitee.am.sdk.management.model.PatchApplicationOAuthSettings;
 import io.gravitee.am.sdk.management.model.PatchApplicationSettings;
 import io.gravitee.am.sdk.management.model.PatchApplicationType;
 import io.gravitee.am.sdk.management.model.PatchDomain;
 import io.gravitee.am.sdk.management.model.PatchOIDCSettings;
 import io.gravitee.am.sdk.management.model.PatchSAMLSettings;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -70,5 +74,40 @@ class EnumCaseInsensitiveDeserializationTest {
         assertFalse(objectMapper.writeValueAsString(new PatchDomain()).contains("requiredPermissions"));
         assertFalse(objectMapper.writeValueAsString(new PatchOIDCSettings()).contains("requiredPermissions"));
         assertFalse(objectMapper.writeValueAsString(new PatchSAMLSettings()).contains("requiredPermissions"));
+    }
+
+    /**
+     * Sparse PATCH semantics: `containerDefaultToNull=true` plus consumer-side NON_NULL
+     * inclusion means an untouched Patch* serialises to `{}`, an empty-collection setter
+     * still emits `[]` (clear intent), and a populated setter emits the values.
+     */
+    @Test
+    void untouchedPatchModelsSerializeToEmptyObject() throws Exception {
+        ObjectMapper nonNull = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        assertEquals("{}", nonNull.writeValueAsString(new PatchApplication()));
+        assertEquals("{}", nonNull.writeValueAsString(new PatchApplicationSettings()));
+        assertEquals("{}", nonNull.writeValueAsString(new PatchApplicationOAuthSettings()));
+        assertEquals("{}", nonNull.writeValueAsString(new PatchDomain()));
+        assertEquals("{}", nonNull.writeValueAsString(new PatchOIDCSettings()));
+        assertEquals("{}", nonNull.writeValueAsString(new PatchSAMLSettings()));
+    }
+
+    @Test
+    void explicitEmptyCollectionStillSerializes() throws Exception {
+        ObjectMapper nonNull = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        PatchApplicationOAuthSettings patch = new PatchApplicationOAuthSettings();
+        patch.setGrantTypes(List.of());
+        assertEquals("{\"grantTypes\":[]}", nonNull.writeValueAsString(patch));
+    }
+
+    @Test
+    void populatedCollectionSerializesValues() throws Exception {
+        ObjectMapper nonNull = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        PatchApplicationOAuthSettings patch = new PatchApplicationOAuthSettings();
+        patch.setGrantTypes(List.of("authorization_code"));
+        assertEquals("{\"grantTypes\":[\"authorization_code\"]}", nonNull.writeValueAsString(patch));
     }
 }
