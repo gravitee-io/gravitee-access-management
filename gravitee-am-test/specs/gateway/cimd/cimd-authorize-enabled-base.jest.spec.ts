@@ -22,6 +22,8 @@ import {
   countGetRequestsForPathSubstring,
   fetchWireMockRequestJournal,
 } from './fixtures/cimd-wiremock-helpers';
+import { decodeJwt } from '@utils-commands/jwt';
+import { delay } from '@utils-commands/misc';
 
 setup(200000);
 
@@ -143,11 +145,42 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   });
 
   it('should enforce exact redirect_uri matching for CIMD clients', async () => {
-    const response = await fixture.authorize(
-      fixture.buildClientId('valid-none'),
-      CIMD_REDIRECT_URI + '/sub',
-    );
+    const response = await fixture.authorize(fixture.buildClientId('valid-none'), CIMD_REDIRECT_URI + '/sub');
     const error = fixture.readOAuthError(response);
     expect(error.error).toBe('redirect_uri_mismatch');
+  });
+
+  it('should return active=true when introspecting a valid token issued to a CIMD client', async () => {
+    const clientId = fixture.buildClientId('valid-none');
+
+    const code = await fixture.completeAuthorizationCodeFlow(clientId);
+    const tokenResponse = await fixture.exchangeAuthCodeForToken(code, clientId);
+    const accessToken = tokenResponse.body.access_token;
+    expect(accessToken).toBeDefined();
+    expect(decodeJwt(accessToken).aud).toBe(clientId);
+
+    const introspection = await fixture.introspectToken(accessToken);
+    expect(introspection.active).toBe(true);
+    expect(introspection.client_id).toBe(clientId);
+    expect(introspection.aud).toBe(clientId);
+    expect(introspection.token_type).toBe('bearer');
+    expect(introspection.iss).toContain(fixture.domain.hrid);
+    expect(introspection.domain).toBe(fixture.domain.id);
+    expect(introspection.jti).toBeDefined();
+    expect(introspection.exp).toBeGreaterThan(introspection.iat);
+  });
+
+  it('should return active=false when introspecting a revoked token issued to a CIMD client', async () => {
+    const clientId = fixture.buildClientId('valid-none');
+
+    const code = await fixture.completeAuthorizationCodeFlow(clientId);
+    const tokenResponse = await fixture.exchangeAuthCodeForToken(code, clientId);
+    const accessToken = tokenResponse.body.access_token;
+    expect(accessToken).toBeDefined();
+
+    await fixture.revokeAccessToken(accessToken, clientId);
+
+    const introspection = await fixture.introspectToken(accessToken);
+    expect(introspection.active).toBe(false);
   });
 });
