@@ -17,12 +17,26 @@
 -->
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Applications</h1>
-  <div *ngIf="!isEmpty" class="applications-search">
-    <mat-form-field appearance="fill" floatLabel="always">
+  <div *ngIf="!isEmpty" class="applications-search" fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="16px">
+    <mat-form-field appearance="fill" floatLabel="always" fxFlex="45">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Search for applications</mat-label>
-      <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
+      <input #searchInput type="text" matInput placeholder="Search" (input)="onSearch($event)" />
     </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" fxFlex="30">
+      <mat-label>Application Type</mat-label>
+      <mat-select [(ngModel)]="selectedTypes" [multiple]="true" (selectionChange)="onTypeFilterChange()">
+        <mat-option *ngFor="let appType of applicationTypes" [value]="appType.type">
+          {{ appType.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" class="clear-filters-btn" [disabled]="!hasActiveFilters" (click)="clearAllFilters()">
+      <mat-icon>filter_list_off</mat-icon>
+      <span>Clear filters</span>
+    </button>
   </div>
   <div class="gv-page-content" *ngIf="!isEmpty">
     <ngx-datatable
