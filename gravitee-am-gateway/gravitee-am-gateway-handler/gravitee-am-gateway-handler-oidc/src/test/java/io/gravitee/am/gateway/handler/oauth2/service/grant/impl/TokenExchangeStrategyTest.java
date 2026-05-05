@@ -207,6 +207,7 @@ class TokenExchangeStrategyTest {
         ActorTokenInfo actorInfo = new ActorTokenInfo(
                 "actor-sub",
                 "source:actor-id",
+                null,
                 Map.of(Claims.SUB, "previous-actor"),
                 Map.of(Claims.SUB, "actor-delegate"),
                 2,
@@ -253,6 +254,7 @@ class TokenExchangeStrategyTest {
         Date expiration = new Date(System.currentTimeMillis() + 3600000);
         ActorTokenInfo actorInfo = new ActorTokenInfo(
                 "actor-sub",
+                null,
                 null,
                 null,
                 null,
