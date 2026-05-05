@@ -17,7 +17,11 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
-import { clearWireMockRequestJournal, waitForWireMockGetToPath } from './fixtures/cimd-wiremock-helpers';
+import {
+  clearWireMockRequestJournal,
+  countGetRequestsForPathSubstring,
+  fetchWireMockRequestJournal,
+} from './fixtures/cimd-wiremock-helpers';
 
 setup(120000);
 
@@ -38,17 +42,26 @@ describe('CIMD logo endpoint', () => {
     await fixture.fetchCimdLogo().expect(400);
   });
 
-  it('should return 404 when logo is not yet cached', async () => {
+  it('should return 404 when logo is not cached and metadata is absent from the gateway', async () => {
     await fixture.fetchCimdLogo(fixture.buildClientId('valid-none')).expect(404);
   });
 
-  it('should return 200 with image/png after authorize populates the logo cache', async () => {
+  it('should return 200 with image/png after authorize populates the logo cache then leverage the cache on subsequent requests', async () => {
     await clearWireMockRequestJournal();
     fixture.expectLoginRedirect(await fixture.authorize(fixture.buildClientId('valid-none')));
-    await waitForWireMockGetToPath('/cimd/logos/example.png');
 
-    const response = await fixture.fetchCimdLogo(fixture.buildClientId('valid-none')).expect(200);
-    expect(response.headers['content-type']).toContain('image/png');
-    expect(response.body.length).toBeGreaterThan(0);
+    const first = await fixture.fetchCimdLogo(fixture.buildClientId('valid-none')).expect(200);
+    expect(first.headers['content-type']).toContain('image/png');
+    expect(first.body.length).toBeGreaterThan(0);
+
+    const journalAfterFirst = await fetchWireMockRequestJournal();
+    expect(countGetRequestsForPathSubstring(journalAfterFirst, '/cimd/logos/example.png')).toBeGreaterThanOrEqual(1);
+
+    await clearWireMockRequestJournal();
+    const second = await fixture.fetchCimdLogo(fixture.buildClientId('valid-none')).expect(200);
+    expect(second.headers['content-type']).toContain('image/png');
+
+    const journalAfterSecond = await fetchWireMockRequestJournal();
+    expect(countGetRequestsForPathSubstring(journalAfterSecond, '/cimd/logos/example.png')).toBe(0);
   });
 });

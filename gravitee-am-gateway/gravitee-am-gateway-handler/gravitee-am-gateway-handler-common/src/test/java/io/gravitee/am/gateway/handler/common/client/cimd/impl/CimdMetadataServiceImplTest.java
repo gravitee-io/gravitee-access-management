@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.client.cimd.impl;
 
-import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
+import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
-import io.gravitee.am.gateway.handler.common.web.HostSsrfGuard;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -29,6 +30,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -40,12 +42,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -61,6 +63,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -93,6 +97,12 @@ public class CimdMetadataServiceImplTest {
     private HttpResponse<Buffer> response;
 
     @Mock
+    private CimdUriTrustValidator uriTrustValidator;
+
+    @Mock
+    private CimdLogoCacheService logoCacheService;
+
+    @Mock
     private CimdMetadataDocumentService cimdMetadataDocumentService;
 
     @Mock
@@ -114,16 +124,40 @@ public class CimdMetadataServiceImplTest {
         oidcSettings.setCimdSettings(cimdSettings);
         domain.setOidc(oidcSettings);
 
-        // Default: local cache miss, DB miss — falls through to HTTP fetch
-        when(cimdMetadataDocumentManager.get(anyString())).thenReturn(Optional.empty());
-        when(cimdMetadataDocumentManager.getLogoByClientId(anyString())).thenReturn(Optional.empty());
-        when(cimdMetadataDocumentService.findByDomainAndClientId(anyString(), anyString())).thenReturn(Maybe.empty());
+        // Default: cache miss — falls through to HTTP fetch
+        when(cimdMetadataDocumentManager.resolve(anyString())).thenReturn(Single.just(Optional.empty()));
+        lenient().when(cimdMetadataDocumentManager.getLogoByClientId(anyString())).thenReturn(Optional.empty());
         when(cimdMetadataDocumentService.upsert(any(), anyString(), anyString(), any(Duration.class)))
                 .thenReturn(Single.just(new CimdMetadataDocument()));
 
-        HostSsrfGuard hostSsrfGuard = new HostSsrfGuard(host -> new java.net.InetAddress[]{java.net.InetAddress.getByName("8.8.8.8")});
-        cimdMetadataService = new CimdMetadataServiceImpl(domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager,
-                hostSsrfGuard);
+        lenient()
+                .when(uriTrustValidator.parseHttpUrl(anyString(), anyString()))
+                .thenAnswer(invocation -> {
+                    try {
+                        return UriBuilder.fromHttpUrl(invocation.getArgument(0)).build();
+                    } catch (Exception ex) {
+                        throw new InvalidClientMetadataException(invocation.getArgument(1) + " is not a valid URL.");
+                    }
+                });
+        lenient().doNothing().when(uriTrustValidator).validateTrust(any(), any(), anyString());
+        lenient()
+                .when(uriTrustValidator.validateResolvableHost(anyString(), anyString(), any()))
+                .thenReturn(Completable.complete());
+
+        cimdMetadataService = new CimdMetadataServiceImpl(
+                domain,
+                webClient,
+                cimdMetadataDocumentService,
+                cimdMetadataDocumentManager,
+                uriTrustValidator,
+                logoCacheService);
+    }
+
+    @After
+    public void resetCimdTrustPolicy() {
+        cimdSettings.setAllowPrivateIpAddress(true);
+        cimdSettings.setAllowUnsecuredHttpUri(false);
+        cimdSettings.setAllowedDomains(null);
     }
 
     @Test
@@ -137,255 +171,15 @@ public class CimdMetadataServiceImplTest {
     }
 
     @Test
-    public void shouldRejectHttpWhenUnsecuredHttpIsDisabled() {
-        cimdSettings.setAllowUnsecuredHttpUri(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("http://localhost/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldAcceptHttpWhenUnsecuredHttpIsEnabled() {
-        cimdSettings.setAllowUnsecuredHttpUri(true);
-        mockFetchSuccess(metadataPayload("http://localhost/metadata"));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("http://localhost/metadata", templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client -> "http://localhost/metadata".equals(client.getClientId()));
-    }
-
-    @Test
-    public void shouldRejectLoopbackIpLiteralWhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://127.0.0.1/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldAllowUnresolvableHostnameWhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-        mockFetchSuccess(metadataPayload("https://non-resolvable.example.invalid/metadata"));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://non-resolvable.example.invalid/metadata", templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client -> "https://non-resolvable.example.invalid/metadata".equals(client.getClientId()));
-    }
-
-    @Test
-    public void shouldAllowPrivateIpWhenPrivateIpIsEnabled() {
-        cimdSettings.setAllowPrivateIpAddress(true);
-        mockFetchSuccess(metadataPayload("https://127.0.0.1/metadata"));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://127.0.0.1/metadata", templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client -> "https://127.0.0.1/metadata".equals(client.getClientId()));
-    }
-
-    @Test
-    public void shouldRejectPrivateClassAIpWhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://10.0.0.1/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldRejectPrivateClassBIpWhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://172.16.0.1/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldRejectPrivateClassCIpWhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://192.168.1.1/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldRejectLinkLocalIpv4WhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://169.254.169.254/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldRejectLoopbackIpv6WhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://[::1]/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldRejectLinkLocalIpv6WhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://[fe80::1]/metadata", templateClient()).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldAllowPublicIpWhenPrivateIpIsDisabled() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-        mockFetchSuccess(metadataPayload("https://8.8.8.8/metadata"));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://8.8.8.8/metadata", templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client -> "https://8.8.8.8/metadata".equals(client.getClientId()));
-    }
-
-    @Test
-    public void shouldAllowPrivateIpRangesWhenPrivateIpIsEnabled() {
-        cimdSettings.setAllowPrivateIpAddress(true);
-        mockFetchSuccess(metadataPayload("https://10.0.0.1/metadata"));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient("https://10.0.0.1/metadata", templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-    }
-
-    @Test
-    public void shouldRejectLogoUriWithPrivateIpWhenPrivateIpIsDisabled() {
-        // Use a non-private client_id URL so Phase 1 does not block the main request.
-        // The logo_uri has a private IP — prefetchLogoAsync must not fetch it.
-        cimdSettings.setAllowPrivateIpAddress(false);
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://192.168.0.1/logo.png");
-        dbDoc.setClientId(EXTERNAL_URL);
-        dbDoc.setMetadata(metadataPayloadWithLogo(EXTERNAL_URL, "https://192.168.0.1/logo.png"));
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", EXTERNAL_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        when(cimdMetadataDocumentManager.get(EXTERNAL_URL)).thenReturn(Optional.empty());
-        when(cimdMetadataDocumentManager.getLogoByClientId(EXTERNAL_URL)).thenReturn(Optional.empty());
-
-        cimdMetadataService.resolveClient(EXTERNAL_URL, templateClient()).test().assertComplete();
-
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldSkipLogoPrefetchWhenLogoHostnameResolvesToPrivateIp() {
-        cimdSettings.setAllowPrivateIpAddress(false);
-        HostSsrfGuard rejectingGuard = new HostSsrfGuard(host ->
-                new java.net.InetAddress[]{java.net.InetAddress.getLoopbackAddress()});
-        cimdMetadataService = new CimdMetadataServiceImpl(
-                domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager, rejectingGuard);
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://branding.vendor.example/logo.png");
-        dbDoc.setClientId(EXTERNAL_URL);
-        dbDoc.setMetadata(metadataPayloadWithLogo(EXTERNAL_URL, "https://branding.vendor.example/logo.png"));
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", EXTERNAL_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        when(cimdMetadataDocumentManager.get(EXTERNAL_URL)).thenReturn(Optional.empty());
-        when(cimdMetadataDocumentManager.getLogoByClientId(EXTERNAL_URL)).thenReturn(Optional.empty());
-
-        cimdMetadataService.resolveClient(EXTERNAL_URL, templateClient()).test().assertComplete();
-
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldSkipLogoPrefetchAfterOriginFetchWhenLogoHostnameResolvesToPrivateIp() throws Exception {
-        cimdSettings.setAllowPrivateIpAddress(false);
-        HostSsrfGuard selectiveGuard = new HostSsrfGuard(host -> {
-            if ("external.example.com".equalsIgnoreCase(host)) {
-                return new java.net.InetAddress[]{java.net.InetAddress.getByName("8.8.8.8")};
-            }
-            return new java.net.InetAddress[]{java.net.InetAddress.getLoopbackAddress()};
-        });
-        cimdMetadataService = new CimdMetadataServiceImpl(
-                domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager, selectiveGuard);
-        mockFetchSuccess(metadataPayloadWithLogo(EXTERNAL_URL, "https://branding.vendor.example/logo.png"));
-
-        cimdMetadataService.resolveClient(EXTERNAL_URL, templateClient()).test().assertComplete();
-
-        verify(request, times(1)).rxSend();
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-    }
-
-    @Test
-    public void shouldRejectWhenHostSsrfGuardRejectsHostname() {
-        HostSsrfGuard rejectingGuard = new HostSsrfGuard(host ->
-                new java.net.InetAddress[]{java.net.InetAddress.getLoopbackAddress()});
-        cimdMetadataService = new CimdMetadataServiceImpl(
-                domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager, rejectingGuard);
+    public void shouldRejectWhenResolvableHostRejectedForClientId() {
+        when(uriTrustValidator.validateResolvableHost(eq("external.example.com"), eq("client_id"), eq(cimdSettings)))
+                .thenReturn(Completable.error(new InvalidClientMetadataException("private")));
         cimdSettings.setAllowPrivateIpAddress(false);
 
         TestObserver<Client> testObserver = cimdMetadataService.resolveClient(EXTERNAL_URL, templateClient()).test();
 
         testObserver.assertError(InvalidClientMetadataException.class);
         verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldAllowWhenHostSsrfGuardAllowsHostname() throws Exception {
-        java.net.InetAddress publicIp = java.net.InetAddress.getByName("8.8.8.8");
-        HostSsrfGuard allowingGuard = new HostSsrfGuard(host -> new java.net.InetAddress[]{publicIp});
-        cimdMetadataService = new CimdMetadataServiceImpl(
-                domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager, allowingGuard);
-        cimdSettings.setAllowPrivateIpAddress(false);
-        mockFetchSuccess(metadataPayload(EXTERNAL_URL));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(EXTERNAL_URL, templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValueCount(1);
-    }
-
-    @Test
-    public void shouldRejectHostOutsideAllowedDomains() {
-        cimdSettings.setAllowedDomains(List.of("*.example.com"));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
-
-        testObserver.assertError(e -> e instanceof InvalidClientMetadataException
-                && e.getMessage().contains("client_id")
-                && e.getMessage().contains("allowed domains"));
-        verifyNoInteractions(webClient);
-    }
-
-    @Test
-    public void shouldAllowHostInsideAllowedDomains() {
-        cimdSettings.setAllowedDomains(List.of("localhost"));
-        mockFetchSuccess(metadataPayload(CLIENT_URL));
-
-        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client -> CLIENT_URL.equals(client.getClientId()));
     }
 
     @Test
@@ -834,7 +628,7 @@ public class CimdMetadataServiceImplTest {
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
         verify(request).followRedirects(false);
-        verify(request).followRedirects(true);
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("https://localhost/logo.png"), anyLong(), eq(cimdSettings));
     }
 
     @Test
@@ -859,7 +653,7 @@ public class CimdMetadataServiceImplTest {
         when(webClient.getAbs(anyString())).thenReturn(request);
         when(request.timeout(anyLong())).thenReturn(request);
         when(request.followRedirects(false)).thenReturn(request);
-        when(request.followRedirects(true)).thenReturn(request);
+        lenient().when(request.followRedirects(true)).thenReturn(request);
         when(request.as(any())).thenReturn((HttpRequest) request);
     }
 
@@ -877,7 +671,7 @@ public class CimdMetadataServiceImplTest {
     @Test
     public void shouldReturnFromLocalCacheWithoutHttpOrDbCall() {
         CimdMetadataDocument cached = cachedDocument(false);
-        when(cimdMetadataDocumentManager.get(CLIENT_URL)).thenReturn(Optional.of(cached));
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(cached)));
 
         TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
 
@@ -885,14 +679,12 @@ public class CimdMetadataServiceImplTest {
         obs.assertNoErrors();
         obs.assertValueCount(1);
         verifyNoInteractions(webClient);
-        verify(cimdMetadataDocumentService, never()).findByDomainAndClientId(anyString(), anyString());
     }
 
     @Test
     public void shouldReturnFromDbCacheWithoutHttpCall() {
         CimdMetadataDocument dbDoc = cachedDocument(false);
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(dbDoc)));
 
         TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
 
@@ -900,23 +692,6 @@ public class CimdMetadataServiceImplTest {
         obs.assertNoErrors();
         obs.assertValueCount(1);
         verifyNoInteractions(webClient);
-        verify(cimdMetadataDocumentManager).put(CLIENT_URL, dbDoc);
-    }
-
-    @Test
-    public void shouldFetchFromOriginWhenDbDocumentIsExpired() {
-        CimdMetadataDocument expiredDoc = cachedDocument(true);
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(expiredDoc));
-        mockFetchSuccess(metadataPayload(CLIENT_URL));
-
-        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
-
-        obs.assertComplete();
-        obs.assertNoErrors();
-        obs.assertValueCount(1);
-        verify(request).as(any());
-        verify(cimdMetadataDocumentService).upsert(any(), anyString(), anyString(), any(Duration.class));
     }
 
     @Test
@@ -1037,7 +812,7 @@ public class CimdMetadataServiceImplTest {
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager).putLogo(eq(CLIENT_URL), any(CachedLogo.class));
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("https://localhost/logo.png"), anyLong(), eq(cimdSettings));
     }
 
     @Test
@@ -1046,46 +821,39 @@ public class CimdMetadataServiceImplTest {
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService, never()).prefetchLogoAsync(anyString(), any(), anyLong(), any());
     }
 
     @Test
-    public void shouldTriggerLogoPrefetchOnDbHitWhenLogoNotYetCached() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        when(cimdMetadataDocumentManager.getLogoByClientId(CLIENT_URL)).thenReturn(Optional.empty());
-        mockLogoFetch();
+    public void shouldTriggerLogoPrefetchOnCacheHitWhenLogoNotYetCached() {
+        CimdMetadataDocument doc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(doc)));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager).putLogo(eq(CLIENT_URL), any(CachedLogo.class));
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("https://localhost/logo.png"), anyLong(), eq(cimdSettings));
     }
 
     @Test
-    public void shouldSkipLogoPrefetchOnDbHitWhenLogoAlreadyCached() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        when(cimdMetadataDocumentManager.getLogoByClientId(CLIENT_URL))
-                .thenReturn(Optional.of(new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L)));
+    public void shouldSkipLogoPrefetchOnCacheHitWhenLogoAlreadyCached() {
+        CimdMetadataDocument doc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(doc)));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("https://localhost/logo.png"), anyLong(), eq(cimdSettings));
     }
 
     // --- logo_uri validation and edge cases ---
 
     @Test
     public void shouldNotPrefetchLogoWhenLogoUriIsNull() {
-        CimdMetadataDocument dbDoc = cachedDocument(false);
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
+        CimdMetadataDocument doc = cachedDocument(false);
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(doc)));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), isNull(), anyLong(), eq(cimdSettings));
         verifyNoInteractions(webClient);
     }
 
@@ -1095,142 +863,53 @@ public class CimdMetadataServiceImplTest {
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq(""), anyLong(), eq(cimdSettings));
     }
 
     @Test
     public void shouldNotFetchLogoWhenLogoUriIsInvalid() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "not-a-url");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
+        CimdMetadataDocument doc = cachedDocumentWithLogo(false, "not-a-url");
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(doc)));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("not-a-url"), anyLong(), eq(cimdSettings));
         verifyNoInteractions(webClient);
     }
 
     @Test
     public void shouldNotFetchLogoWhenLogoUriIsUntrusted() {
         cimdSettings.setAllowUnsecuredHttpUri(false);
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "http://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
+        CimdMetadataDocument doc = cachedDocumentWithLogo(false, "http://localhost/logo.png");
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL)).thenReturn(Single.just(Optional.of(doc)));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("http://localhost/logo.png"), anyLong(), eq(cimdSettings));
         verifyNoInteractions(webClient);
     }
 
     @Test
     public void shouldNotFetchLogoWhenLogoHostOutsideAllowedDomains() {
         cimdSettings.setAllowedDomains(List.of("*.example.com"));
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://cdn.evil.net/logo.png");
-        dbDoc.setClientId(EXTERNAL_URL);
-        dbDoc.setMetadata(metadataPayloadWithLogo(EXTERNAL_URL, "https://cdn.evil.net/logo.png"));
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", EXTERNAL_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        when(cimdMetadataDocumentManager.get(EXTERNAL_URL)).thenReturn(Optional.empty());
-        when(cimdMetadataDocumentManager.getLogoByClientId(EXTERNAL_URL)).thenReturn(Optional.empty());
+        CimdMetadataDocument doc = cachedDocumentWithLogo(false, "https://cdn.evil.net/logo.png");
+        doc.setClientId(EXTERNAL_URL);
+        doc.setMetadata(metadataPayloadWithLogo(EXTERNAL_URL, "https://cdn.evil.net/logo.png"));
+        when(cimdMetadataDocumentManager.resolve(EXTERNAL_URL)).thenReturn(Single.just(Optional.of(doc)));
 
         cimdMetadataService.resolveClient(EXTERNAL_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(logoCacheService).prefetchLogoAsync(eq(EXTERNAL_URL), eq("https://cdn.evil.net/logo.png"), anyLong(), eq(cimdSettings));
         verifyNoInteractions(webClient);
     }
 
     @Test
     public void shouldSkipLogoPrefetchOnFreshFetchWhenLogoAlreadyCached() {
-        when(cimdMetadataDocumentManager.getLogoByClientId(CLIENT_URL))
-                .thenReturn(Optional.of(new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L)));
         mockFetchSuccess(metadataPayloadWithLogo(CLIENT_URL, "https://localhost/logo.png"));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-    }
-
-    @Test
-    public void shouldNotCacheLogoWhenResponseIsNotOk() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        mockLogoFetch();
-        when(response.statusCode()).thenReturn(404);
-
-        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
-
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-    }
-
-    @Test
-    public void shouldNotCacheLogoWhenBodyIsEmpty() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        mockLogoFetch();
-        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer());
-
-        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
-
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-    }
-
-    @Test
-    public void shouldNotCacheLogoWhenBodyExceedsMaxSize() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        mockLogoFetch();
-        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[256 * 1024 + 1]));
-
-        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
-
-        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
-    }
-
-    @Test
-    public void shouldUseContentTypeHeaderWhenPresentForLogo() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        mockLogoFetch();
-        when(response.getHeader("Content-Type")).thenReturn("image/jpeg");
-
-        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
-
-        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
-        verify(cimdMetadataDocumentManager).putLogo(eq(CLIENT_URL), captor.capture());
-        assertEquals("image/jpeg", captor.getValue().contentType());
-    }
-
-    @Test
-    public void shouldDetectMimeTypeFromMagicBytesWhenContentTypeHeaderAbsent() {
-        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
-        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
-                .thenReturn(Maybe.just(dbDoc));
-        mockLogoFetch();
-        when(response.getHeader("Content-Type")).thenReturn(null);
-
-        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
-
-        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
-        verify(cimdMetadataDocumentManager).putLogo(eq(CLIENT_URL), captor.capture());
-        assertEquals("image/png", captor.getValue().contentType());
-    }
-
-    @Test
-    public void shouldUseMetadataTtlForLogoMaxAge() {
-        // Metadata Cache-Control resolves to 900s; logo server Cache-Control is irrelevant
-        cimdSettings.setCacheTtlSeconds(1800);
-        mockFetchSuccessWithCacheControl(metadataPayloadWithLogo(CLIENT_URL, "https://localhost/logo.png"), "max-age=900");
-
-        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
-
-        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
-        verify(cimdMetadataDocumentManager).putLogo(eq(CLIENT_URL), captor.capture());
-        assertEquals(900L, captor.getValue().maxAgeSeconds());
+        verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("https://localhost/logo.png"), anyLong(), eq(cimdSettings));
     }
 
     // --- helpers ---
@@ -1244,17 +923,6 @@ public class CimdMetadataServiceImplTest {
         doc.setExpiresAt(expired ? new Date(System.currentTimeMillis() - 1000) : new Date(System.currentTimeMillis() + 86400_000));
         doc.setUpdatedAt(new Date());
         return doc;
-    }
-
-    private void mockLogoFetch() {
-        when(webClient.getAbs(anyString())).thenReturn(request);
-        when(request.timeout(anyLong())).thenReturn(request);
-        when(request.followRedirects(true)).thenReturn(request);
-        when(request.as(any())).thenReturn((HttpRequest) request);
-        when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.statusCode()).thenReturn(200);
-        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}));
-        when(response.getHeader("Content-Type")).thenReturn("image/png");
     }
 
     private void mockFetchSuccessWithCacheControl(String payload, String cacheControlHeader) {

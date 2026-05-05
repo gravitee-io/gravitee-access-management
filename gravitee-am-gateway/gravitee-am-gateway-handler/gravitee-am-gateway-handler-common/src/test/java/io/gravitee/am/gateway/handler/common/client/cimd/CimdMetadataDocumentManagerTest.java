@@ -25,6 +25,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +42,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -158,6 +161,53 @@ public class CimdMetadataDocumentManagerTest {
         manager.afterPropertiesSet();
 
         assertFalse(manager.get(CLIENT_URL).isPresent());
+    }
+
+    // --- resolve() tests ---
+
+    @Test
+    public void resolve_shouldReturnLocalDocWithoutHittingDb() {
+        manager.put(CLIENT_URL, validDocument());
+
+        Optional<CimdMetadataDocument> result = manager.resolve(CLIENT_URL).blockingGet();
+
+        assertTrue(result.isPresent());
+        verify(cimdMetadataDocumentService, never()).findByDomainAndClientId(anyString(), anyString());
+    }
+
+    @Test
+    public void resolve_shouldFallBackToDbAndRestoreLocalCacheOnLocalMiss() {
+        CimdMetadataDocument dbDoc = validDocument();
+        when(cimdMetadataDocumentService.findByDomainAndClientId(DOMAIN_ID, CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+
+        Optional<CimdMetadataDocument> result = manager.resolve(CLIENT_URL).blockingGet();
+
+        assertTrue(result.isPresent());
+        // local cache should have been restored
+        assertTrue(manager.get(CLIENT_URL).isPresent());
+    }
+
+    @Test
+    public void resolve_shouldReturnEmptyWhenDbDocIsExpired() {
+        CimdMetadataDocument expired = expiredDocument();
+        when(cimdMetadataDocumentService.findByDomainAndClientId(DOMAIN_ID, CLIENT_URL))
+                .thenReturn(Maybe.just(expired));
+
+        Optional<CimdMetadataDocument> result = manager.resolve(CLIENT_URL).blockingGet();
+
+        assertFalse(result.isPresent());
+        assertFalse(manager.get(CLIENT_URL).isPresent());
+    }
+
+    @Test
+    public void resolve_shouldReturnEmptyWhenDbAlsoMisses() {
+        when(cimdMetadataDocumentService.findByDomainAndClientId(DOMAIN_ID, CLIENT_URL))
+                .thenReturn(Maybe.empty());
+
+        Optional<CimdMetadataDocument> result = manager.resolve(CLIENT_URL).blockingGet();
+
+        assertFalse(result.isPresent());
     }
 
     // --- logo cache tests ---

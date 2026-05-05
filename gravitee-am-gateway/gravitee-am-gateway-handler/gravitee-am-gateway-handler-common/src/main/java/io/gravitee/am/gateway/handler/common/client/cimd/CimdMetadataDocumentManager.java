@@ -28,6 +28,7 @@ import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
@@ -158,6 +159,33 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
                 (entry.document().getExpiresAt().getTime() - System.currentTimeMillis()) / 1000);
         CachedLogo logo = entry.logo();
         return Optional.of(new CachedLogo(logo.bytes(), logo.contentType(), remainingSeconds));
+    }
+
+    /**
+     * Returns a non-expired document from the local cache, falling back and warming from the DB on a miss.
+     */
+    public Single<Optional<CimdMetadataDocument>> resolve(String clientId) {
+        Optional<CimdMetadataDocument> local = get(clientId);
+        if (local.isPresent()) {
+            log.debug("CIMD local cache hit for domain={}, clientId={}", domain.getId(), clientId);
+            return Single.just(local);
+        }
+        log.debug("CIMD local cache miss, checking DB for domain={}, clientId={}", domain.getId(), clientId);
+        return cimdMetadataDocumentService.findByDomainAndClientId(domain.getId(), clientId)
+                .filter(doc -> !doc.isExpired())
+                .doOnSuccess(doc -> {
+                    log.debug("CIMD DB cache hit (restored) for domain={}, clientId={}", domain.getId(), clientId);
+                    put(clientId, doc);
+                })
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty());
+    }
+
+    public static long remainingTtlSeconds(CimdMetadataDocument doc) {
+        if (doc.getExpiresAt() == null) {
+            return 0L;
+        }
+        return Math.max(0L, (doc.getExpiresAt().getTime() - System.currentTimeMillis()) / 1000L);
     }
 
     public static String detectMimeType(byte[] bytes) {

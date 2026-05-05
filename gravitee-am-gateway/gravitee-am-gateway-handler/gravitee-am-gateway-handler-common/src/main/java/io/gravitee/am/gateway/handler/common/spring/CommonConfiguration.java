@@ -35,8 +35,10 @@ import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManager
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import io.gravitee.am.gateway.handler.common.web.HostSsrfGuard;
 import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServiceImpl;
 import io.gravitee.am.service.CimdMetadataDocumentService;
@@ -259,12 +261,32 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public CimdUriTrustValidator cimdUriTrustValidator(HostSsrfGuard hostSsrfGuard) {
+        return new CimdUriTrustValidator(hostSsrfGuard);
+    }
+
+    @Bean
+    public CimdLogoCacheService cimdLogoCacheService(
+            @Qualifier("oidcWebClient") WebClient webClient,
+            CimdMetadataDocumentManager cimdMetadataDocumentManager,
+            CimdUriTrustValidator cimdUriTrustValidator) {
+        return new CimdLogoCacheService(webClient, cimdMetadataDocumentManager, cimdUriTrustValidator);
+    }
+
+    @Bean
     public CimdMetadataService cimdMetadataService(Domain domain,
                                                    @Qualifier("oidcWebClient") WebClient webClient,
                                                    CimdMetadataDocumentService cimdMetadataDocumentService,
                                                    CimdMetadataDocumentManager cimdMetadataDocumentManager,
-                                                   HostSsrfGuard hostSsrfGuard) {
-        return new CimdMetadataServiceImpl(domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager, hostSsrfGuard);
+                                                   CimdUriTrustValidator cimdUriTrustValidator,
+                                                   CimdLogoCacheService cimdLogoCacheService) {
+        return new CimdMetadataServiceImpl(
+                domain,
+                webClient,
+                cimdMetadataDocumentService,
+                cimdMetadataDocumentManager,
+                cimdUriTrustValidator,
+                cimdLogoCacheService);
     }
 
     @Bean

@@ -281,6 +281,10 @@ form div {
     text-align: center;
 }
 
+.header-description > * {
+    vertical-align: middle;
+}
+
 .input-field {
     box-sizing: border-box;
     display: flex;
@@ -683,4 +687,29 @@ div#passwordSettings > p {
 .invalid:before {
     padding-right: 10px;
     content: url("../images/invalid.svg");
+}
+
+.cimd-consent-client-logo {
+    width: 48px;
+    height: 48px;
+    max-width: 48px;
+    max-height: 48px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.cimd-consent-host-verified {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 14px;
+    line-height: 18px;
+    color: #1b5e20;
+}
+
+.cimd-consent-host-verified .icons {
+    font-size: 18px;
+    line-height: 18px;
+    color: #1b5e20;
 }
