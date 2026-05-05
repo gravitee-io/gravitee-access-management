@@ -33,6 +33,7 @@ public class ClientProperties {
     private String clientId;
     private String clientName;
     private String name;
+    private String logoUri;
     private CookieSettings cookieSettings;
     private Map<String, Object> metadata;
 
@@ -45,6 +46,7 @@ public class ClientProperties {
         this.clientId = client.getClientId();
         this.clientName = client.getClientName();
         this.name = client.getClientName();
+        this.logoUri = client.getLogoUri();
         this.cookieSettings = client.getCookieSettings();
         this.metadata = client.getMetadata() == null ? new HashMap<>() : new HashMap<>(client.getMetadata());
     }
@@ -91,6 +93,14 @@ public class ClientProperties {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getLogoUri() {
+        return logoUri;
+    }
+
+    public void setLogoUri(String logoUri) {
+        this.logoUri = logoUri;
     }
 
     public CookieSettings getCookieSettings() {

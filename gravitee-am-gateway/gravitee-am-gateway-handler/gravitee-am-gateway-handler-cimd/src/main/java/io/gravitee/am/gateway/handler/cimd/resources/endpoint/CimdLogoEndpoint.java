@@ -16,8 +16,12 @@
 package io.gravitee.am.gateway.handler.cimd.resources.endpoint;
 
 import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.CIMDSettings;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -25,19 +29,28 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.Optional;
 
 /**
- * Serves a pre-fetched CIMD client logo from the in-memory logo cache.
+ * Serves a CIMD client logo from the in-memory cache, or fetches it synchronously on cache miss when
+ * non-expired metadata for the client is present and {@code logo_uri} is set.
  *
- * The caller supplies the {@code clientId} (the CIMD metadata URL) as a query parameter.
- * This endpoint performs a pure cache lookup — it never fetches remotely.
+ * <p>The caller supplies {@code clientId} (the canonical metadata URL) as a query parameter.
+ * Remote {@code logo_uri} values are never served directly to the browser; they are fetched by the
+ * gateway using the same trust rules as metadata logo pre-fetch.</p>
  */
 public class CimdLogoEndpoint implements Handler<RoutingContext> {
 
     private static final String PARAM_CLIENT_ID = "clientId";
 
+    private final Domain domain;
     private final CimdMetadataDocumentManager cimdMetadataDocumentManager;
+    private final CimdLogoCacheService cimdLogoCacheService;
 
-    public CimdLogoEndpoint(CimdMetadataDocumentManager cimdMetadataDocumentManager) {
+    public CimdLogoEndpoint(
+            Domain domain,
+            CimdMetadataDocumentManager cimdMetadataDocumentManager,
+            CimdLogoCacheService cimdLogoCacheService) {
+        this.domain = domain;
         this.cimdMetadataDocumentManager = cimdMetadataDocumentManager;
+        this.cimdLogoCacheService = cimdLogoCacheService;
     }
 
     @Override
@@ -48,17 +61,55 @@ public class CimdLogoEndpoint implements Handler<RoutingContext> {
             return;
         }
 
-        final Optional<CachedLogo> logo = cimdMetadataDocumentManager.getLogoByClientId(ClientIds.canonicalize(clientId));
-        if (logo.isEmpty()) {
-            routingContext.response().setStatusCode(404).end();
+        final String canonicalId = ClientIds.canonicalize(clientId);
+
+        final Optional<CachedLogo> cachedLogo = cimdMetadataDocumentManager.getLogoByClientId(canonicalId);
+        if (cachedLogo.isPresent()) {
+            endWithLogo(routingContext, cachedLogo.get());
             return;
         }
 
-        final CachedLogo cachedLogo = logo.get();
-        routingContext.response()
+        cimdMetadataDocumentManager.resolve(canonicalId)
+                .flatMap(doc -> {
+                    if (doc.isEmpty()) {
+                        return Single.just(Optional.<CachedLogo>empty());
+                    }
+                    final String logoUri = doc.get().getLogoUri();
+                    if (logoUri == null || logoUri.isBlank()) {
+                        return Single.just(Optional.<CachedLogo>empty());
+                    }
+                    final CIMDSettings settings = resolveCimdSettings();
+                    if (settings == null || !settings.isEnabled()) {
+                        return Single.just(Optional.<CachedLogo>empty());
+                    }
+                    return cimdLogoCacheService.fetchAndCacheNow(
+                            canonicalId, logoUri, CimdMetadataDocumentManager.remainingTtlSeconds(doc.get()), settings);
+                })
+                .subscribe(
+                        opt -> {
+                            if (opt.isEmpty()) {
+                                routingContext.response().setStatusCode(404).end();
+                            } else {
+                                endWithLogo(routingContext, opt.get());
+                            }
+                        },
+                        routingContext::fail);
+    }
+
+    private static void endWithLogo(RoutingContext routingContext, CachedLogo cachedLogo) {
+        routingContext
+                .response()
                 .putHeader("Content-Type", cachedLogo.contentType())
                 .putHeader("Cache-Control", "max-age=" + cachedLogo.maxAgeSeconds())
                 .setStatusCode(200)
                 .end(Buffer.buffer(cachedLogo.bytes()));
     }
+
+    private CIMDSettings resolveCimdSettings() {
+        if (domain == null || domain.getOidc() == null) {
+            return null;
+        }
+        return domain.getOidc().getCimdSettings();
+    }
+
 }

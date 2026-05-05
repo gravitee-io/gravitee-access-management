@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.Duration;
 import java.util.Date;
 
@@ -24,7 +28,11 @@ import java.util.Date;
  * 
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class CimdMetadataDocument {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private String id;
     private String domainId;
@@ -37,26 +45,16 @@ public class CimdMetadataDocument {
     private Date expiresAt;
     private Date updatedAt;
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getDomainId() { return domainId; }
-    public void setDomainId(String domainId) { this.domainId = domainId; }
-
-    public String getClientId() { return clientId; }
-    public void setClientId(String clientId) { this.clientId = clientId; }
-
-    public String getMetadata() { return metadata; }
-    public void setMetadata(String metadata) { this.metadata = metadata; }
-
-    public Date getFetchedAt() { return fetchedAt; }
-    public void setFetchedAt(Date fetchedAt) { this.fetchedAt = fetchedAt; }
-
-    public Date getExpiresAt() { return expiresAt; }
-    public void setExpiresAt(Date expiresAt) { this.expiresAt = expiresAt; }
-
-    public Date getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+    public String getLogoUri() {
+        if (metadata == null) {
+            return null;
+        }
+        try {
+            return MAPPER.readTree(metadata).path("logo_uri").asText(null);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
 
     public boolean isExpired() {
         return expiresAt != null && expiresAt.before(new Date());

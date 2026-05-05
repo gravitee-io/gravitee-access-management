@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.cimd;
 
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.cimd.resources.endpoint.CimdLogoEndpoint;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -38,13 +40,19 @@ public class CimdProvider extends AbstractProtocolProvider {
     @Autowired
     private CimdMetadataDocumentManager cimdMetadataDocumentManager;
 
+    @Autowired
+    private CimdLogoCacheService cimdLogoCacheService;
+
+    @Autowired
+    private Domain domain;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
         final Router cimdRouter = Router.router(vertx);
         cimdRouter.route().handler(corsHandler);
-        cimdRouter.get("/logo").handler(new CimdLogoEndpoint(cimdMetadataDocumentManager));
+        cimdRouter.get("/logo").handler(new CimdLogoEndpoint(domain, cimdMetadataDocumentManager, cimdLogoCacheService));
         cimdRouter.route().failureHandler(new ErrorHandler());
 
         router.route(subRouterPath()).subRouter(cimdRouter);

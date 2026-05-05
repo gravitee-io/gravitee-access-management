@@ -27,6 +27,8 @@
             <span th:text="#{oauth.consent.title}"/>
         </div>
         <div class="header-description">
+            <img class="cimd-consent-client-logo" th:if="${cimdLogoUrl}" th:src="${cimdLogoUrl}"
+                 th:attr="alt=${client.clientName}" onerror="this.style.display='none'">
             <span class="deep-blue" th:text="${client.clientName}"/> <span th:text="#{oauth.consent.description}"/>
         </div>
     </div>
@@ -46,6 +48,12 @@
 
             <span class="header-description start" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"></span>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="cimd-consent-host-verified" th:if="${cimdClientIdHostname}">
+                <span class="icons">check_circle</span>
+                <strong class="cimd-consent-hostname" th:text="${cimdClientIdHostname}"></strong>
+                <span th:text="#{oauth.consent.cimd.verified}"></span>
+            </div>
 
             <div>
                 <button type="submit" name="user_oauth_approval" value="true" class="button primary" th:text="#{oauth.button.accept}"></button>
