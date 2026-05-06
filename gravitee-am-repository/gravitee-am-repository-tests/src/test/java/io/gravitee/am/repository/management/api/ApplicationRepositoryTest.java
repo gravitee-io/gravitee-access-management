@@ -24,7 +24,6 @@ import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -406,13 +405,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         app.setName("agentRtApp");
         app.setDomain(domain);
         app.setType(ApplicationType.AGENT);
-
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.AUTONOMOUS);
-
-        ApplicationSettings settings = new ApplicationSettings();
-        settings.setAgent(agent);
-        app.setSettings(settings);
+        app.setSubType(AgentType.AUTONOMOUS.name());
 
         Application created = applicationRepository.create(app).blockingGet();
 
@@ -421,17 +414,16 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         afterCreate.assertComplete();
         afterCreate.assertNoErrors();
         afterCreate.assertValue(a -> ApplicationType.AGENT.equals(a.getType()));
-        afterCreate.assertValue(a -> a.getSettings().getAgent() != null
-                && AgentType.AUTONOMOUS.equals(a.getSettings().getAgent().getAgentType()));
+        afterCreate.assertValue(a -> AgentType.AUTONOMOUS.name().equals(a.getSubType()));
 
         Application loaded = applicationRepository.findById(created.getId()).blockingGet();
-        loaded.getSettings().getAgent().setAgentType(AgentType.USER_EMBEDDED);
+        loaded.setSubType(AgentType.USER_EMBEDDED.name());
         applicationRepository.update(loaded).blockingGet();
 
         TestObserver<Application> reloaded = applicationRepository.findById(created.getId()).test();
         reloaded.awaitDone(10, TimeUnit.SECONDS);
         reloaded.assertComplete();
-        reloaded.assertValue(a -> AgentType.USER_EMBEDDED.equals(a.getSettings().getAgent().getAgentType()));
+        reloaded.assertValue(a -> AgentType.USER_EMBEDDED.name().equals(a.getSubType()));
         reloaded.assertValue(a -> ApplicationType.AGENT.equals(a.getType()));
     }
 
@@ -443,11 +435,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         agentApp.setName("agent-app");
         agentApp.setDomain(domain);
         agentApp.setType(ApplicationType.AGENT);
-        AgentSettings agentSettings = new AgentSettings();
-        agentSettings.setAgentType(AgentType.AUTONOMOUS);
-        ApplicationSettings agentAppSettings = new ApplicationSettings();
-        agentAppSettings.setAgent(agentSettings);
-        agentApp.setSettings(agentAppSettings);
+        agentApp.setSubType(AgentType.AUTONOMOUS.name());
         applicationRepository.create(agentApp).blockingGet();
 
         Application regularApp = new Application();
@@ -496,12 +484,8 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         beforeToggle.awaitDone(10, TimeUnit.SECONDS);
         beforeToggle.assertValue(p -> p.getData().isEmpty());
 
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        ApplicationSettings settings = new ApplicationSettings();
-        settings.setAgent(agent);
         created.setType(ApplicationType.AGENT);
-        created.setSettings(settings);
+        created.setSubType(AgentType.USER_EMBEDDED.name());
         applicationRepository.update(created).blockingGet();
 
         TestObserver<Page<Application>> afterToggle = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
@@ -517,11 +501,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         matchingAgent.setName("alpha-agent");
         matchingAgent.setDomain(domain);
         matchingAgent.setType(ApplicationType.AGENT);
-        AgentSettings matchingAgentSettings = new AgentSettings();
-        matchingAgentSettings.setAgentType(AgentType.AUTONOMOUS);
-        ApplicationSettings matchingSettings = new ApplicationSettings();
-        matchingSettings.setAgent(matchingAgentSettings);
-        matchingAgent.setSettings(matchingSettings);
+        matchingAgent.setSubType(AgentType.AUTONOMOUS.name());
         applicationRepository.create(matchingAgent).blockingGet();
 
         Application otherAgent = new Application();

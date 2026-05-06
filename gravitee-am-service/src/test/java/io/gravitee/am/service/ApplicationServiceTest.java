@@ -36,7 +36,6 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
-import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -1921,9 +1920,9 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldNot_update_agentApp_withoutAgentSettings() {
+    public void shouldNot_update_agentApp_withoutSubType() {
         Application toPatch = agentBaseline();
-        toPatch.getSettings().setAgent(null);
+        toPatch.setSubType(null);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1933,9 +1932,9 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldNot_update_agentApp_withoutAgentType() {
+    public void shouldNot_update_agentApp_withUnknownSubType() {
         Application toPatch = agentBaseline();
-        toPatch.getSettings().setAgent(new AgentSettings()); // agentType null
+        toPatch.setSubType("BOGUS");
 
         TestObserver testObserver = applicationService.update(toPatch).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1945,7 +1944,7 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldNot_update_nonAgentApp_withAgentSettings() {
+    public void shouldNot_update_nonAgentApp_withSubType() {
         Application existing = emptyAppWithDomain();
         existing.setType(ApplicationType.SERVICE);
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(existing));
@@ -1954,15 +1953,13 @@ public class ApplicationServiceTest {
 
         Application toPatch = emptyAppWithDomain();
         toPatch.setType(ApplicationType.SERVICE);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         oauth.setGrantTypes(Arrays.asList(GrantType.CLIENT_CREDENTIALS));
         oauth.setResponseTypes(Arrays.asList());
         oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         settings.setOauth(oauth);
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        settings.setAgent(agent);
         toPatch.setSettings(settings);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -1975,9 +1972,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_userEmbeddedAgent_withoutRedirectUris() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         toPatch.getSettings().getOauth().setRedirectUris(null);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -1991,9 +1986,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_hostedDelegatedAgent_withoutRedirectUris() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.HOSTED_DELEGATED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.HOSTED_DELEGATED.name());
         toPatch.getSettings().getOauth().setRedirectUris(null);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -2008,9 +2001,7 @@ public class ApplicationServiceTest {
     public void shouldNot_update_agentApp_markedAsTemplate() {
         Application toPatch = agentBaseline();
         // baseline is HOSTED_DELEGATED-friendly (authorization_code), make it valid for that profile
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.HOSTED_DELEGATED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.HOSTED_DELEGATED.name());
         toPatch.setTemplate(true);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -2024,9 +2015,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_agentApp_withForbiddenGrant_implicit() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         // Use grant+response combo accepted by GrantTypeUtils so the agent forbidden-grant check is reached.
         toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT));
         toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oauth2.ResponseType.TOKEN));
@@ -2041,9 +2030,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_agentApp_withForbiddenGrant_password() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD));
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -2057,9 +2044,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_agentApp_withForbiddenGrant_refreshToken() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN));
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -2073,9 +2058,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_agentApp_withForbiddenResponseType_token() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oauth2.ResponseType.TOKEN));
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -2088,9 +2071,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_agentApp_withForbiddenResponseType_idToken() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
 
         TestObserver testObserver = applicationService.update(toPatch).test();
@@ -2103,9 +2084,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldNot_update_agentApp_withForbiddenResponseType_idTokenToken() {
         Application toPatch = agentBaseline();
-        AgentSettings agent = new AgentSettings();
-        agent.setAgentType(AgentType.USER_EMBEDDED);
-        toPatch.getSettings().setAgent(agent);
+        toPatch.setSubType(AgentType.USER_EMBEDDED.name());
         toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN));
 
         TestObserver testObserver = applicationService.update(toPatch).test();

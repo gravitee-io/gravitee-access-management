@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-applications-add-sub-type
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: applications
+            columns:
+              - column: { name: sub_type, type: nvarchar(64), constraints: { nullable: true } }
