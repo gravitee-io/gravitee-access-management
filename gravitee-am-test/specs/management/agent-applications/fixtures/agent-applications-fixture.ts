@@ -59,7 +59,7 @@ export const setupAgentApplicationsFixture = async (): Promise<AgentApplications
     const payload: any = {
       name,
       type: 'AGENT',
-      agentSettings: { agentType },
+      subType: agentType,
     };
     if (agentType !== 'AUTONOMOUS') {
       payload.redirectUris = ['https://agent.example.com/callback'];
