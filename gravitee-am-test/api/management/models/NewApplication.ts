@@ -26,21 +26,12 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
-import type { AgentSettings } from './AgentSettings';
-import { AgentSettingsFromJSON, AgentSettingsFromJSONTyped, AgentSettingsToJSON, AgentSettingsToJSONTyped } from './AgentSettings';
-
 /**
  *
  * @export
  * @interface NewApplication
  */
 export interface NewApplication {
-  /**
-   *
-   * @type {AgentSettings}
-   * @memberof NewApplication
-   */
-  agentSettings?: AgentSettings;
   /**
    *
    * @type {string}
@@ -82,8 +73,24 @@ export interface NewApplication {
    * @type {string}
    * @memberof NewApplication
    */
+  subType?: NewApplicationSubTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof NewApplication
+   */
   type: NewApplicationTypeEnum;
 }
+
+/**
+ * @export
+ */
+export const NewApplicationSubTypeEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type NewApplicationSubTypeEnum = typeof NewApplicationSubTypeEnum[keyof typeof NewApplicationSubTypeEnum];
 
 /**
  * @export
@@ -116,13 +123,13 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    agentSettings: json['agentSettings'] == null ? undefined : AgentSettingsFromJSON(json['agentSettings']),
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     description: json['description'] == null ? undefined : json['description'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    subType: json['subType'] == null ? undefined : json['subType'],
     type: json['type'],
   };
 }
@@ -137,13 +144,13 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
   }
 
   return {
-    agentSettings: AgentSettingsToJSON(value['agentSettings']),
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
     description: value['description'],
     metadata: value['metadata'],
     name: value['name'],
     redirectUris: value['redirectUris'],
+    subType: value['subType'],
     type: value['type'],
   };
 }
