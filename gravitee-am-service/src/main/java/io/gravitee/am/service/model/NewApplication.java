@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -44,7 +44,11 @@ public class NewApplication {
 
     private Map<String, Object> metadata;
 
-    private AgentSettings agentSettings;
+    /**
+     * Application sub-type (agent persona for AGENT applications). Validated by service.
+     */
+    @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
+    private String subType;
 
     public String getName() {
         return name;
@@ -102,12 +106,12 @@ public class NewApplication {
         this.metadata = metadata;
     }
 
-    public AgentSettings getAgentSettings() {
-        return agentSettings;
+    public String getSubType() {
+        return subType;
     }
 
-    public void setAgentSettings(AgentSettings agentSettings) {
-        this.agentSettings = agentSettings;
+    public void setSubType(String subType) {
+        this.subType = subType;
     }
 
     @Override
