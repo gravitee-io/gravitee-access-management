@@ -17,9 +17,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 const AGENT_TYPE_LABELS: Record<string, string> = {
-  user_embedded: 'User-embedded',
-  autonomous: 'Autonomous',
-  delegated: 'Delegated',
+  USER_EMBEDDED: 'User-embedded',
+  AUTONOMOUS: 'Autonomous',
+  HOSTED_DELEGATED: 'Hosted delegated',
 };
 
 @Component({
@@ -37,7 +37,7 @@ export class ApplicationAgentComponent implements OnInit {
 
   ngOnInit(): void {
     this.application = this.route.snapshot.data['application'];
-    this.agentType = this.application.settings?.agent?.agentType ?? '';
+    this.agentType = this.application.subType ?? '';
     this.agentTypeLabel = AGENT_TYPE_LABELS[this.agentType] ?? this.agentType;
   }
 }
