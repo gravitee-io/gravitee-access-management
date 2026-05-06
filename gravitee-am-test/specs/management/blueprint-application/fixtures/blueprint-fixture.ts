@@ -81,7 +81,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       const body: any = {
         name: appName,
         type: 'AGENT',
-        agentSettings: { agentType },
+        subType: agentType,
       };
       if (redirectUri || agentType !== 'AUTONOMOUS') {
         body.redirectUris = [redirectUri || 'https://agent.example.com/callback'];
