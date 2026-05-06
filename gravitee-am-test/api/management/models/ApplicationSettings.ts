@@ -74,8 +74,6 @@ import {
   SecretExpirationSettingsToJSON,
   SecretExpirationSettingsToJSONTyped,
 } from './SecretExpirationSettings';
-import type { AgentSettings } from './AgentSettings';
-import { AgentSettingsFromJSON, AgentSettingsFromJSONTyped, AgentSettingsToJSON, AgentSettingsToJSONTyped } from './AgentSettings';
 import type { PasswordSettings } from './PasswordSettings';
 import {
   PasswordSettingsFromJSON,
@@ -109,12 +107,6 @@ export interface ApplicationSettings {
    * @memberof ApplicationSettings
    */
   advanced?: ApplicationAdvancedSettings;
-  /**
-   *
-   * @type {AgentSettings}
-   * @memberof ApplicationSettings
-   */
-  agent?: AgentSettings;
   /**
    *
    * @type {CookieSettings}
@@ -189,7 +181,6 @@ export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator:
   return {
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
     advanced: json['advanced'] == null ? undefined : ApplicationAdvancedSettingsFromJSON(json['advanced']),
-    agent: json['agent'] == null ? undefined : AgentSettingsFromJSON(json['agent']),
     cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
     login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
     mfa: json['mfa'] == null ? undefined : MFASettingsFromJSON(json['mfa']),
@@ -215,7 +206,6 @@ export function ApplicationSettingsToJSONTyped(value?: ApplicationSettings | nul
   return {
     account: AccountSettingsToJSON(value['account']),
     advanced: ApplicationAdvancedSettingsToJSON(value['advanced']),
-    agent: AgentSettingsToJSON(value['agent']),
     cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
     login: LoginSettingsToJSON(value['login']),
     mfa: MFASettingsToJSON(value['mfa']),
