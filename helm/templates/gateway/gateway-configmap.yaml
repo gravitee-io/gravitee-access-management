@@ -194,6 +194,10 @@ data:
       {{- end }}
       # Allows to define if cookie secure only (default false)
       cookie-secure: {{ .Values.gateway.jwt.cookie.secure | default false }}
+      {{- if .Values.gateway.jwt.jwks }}
+      jwks:
+        {{- .Values.gateway.jwt.jwks | toYaml | nindent 8 }}
+      {{- end }}
 
     {{- if .Values.smtp }}
     # SMTP configuration used to send mails

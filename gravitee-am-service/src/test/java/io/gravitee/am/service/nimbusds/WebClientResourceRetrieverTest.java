@@ -16,92 +16,63 @@
 package io.gravitee.am.service.nimbusds;
 
 import com.nimbusds.jose.util.Resource;
-import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.rxjava3.ext.web.client.HttpResponse;
-import io.vertx.rxjava3.ext.web.client.HttpRequest;
-import io.vertx.rxjava3.ext.web.client.WebClient;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
+import io.gravitee.am.service.jwk.JWKSetFetcher.JWKSetFetchResponse;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
 import java.net.URL;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class WebClientResourceRetrieverTest {
 
     @Mock
-    private WebClient webClient;
-
-    @Mock
-    private HttpRequest<Buffer> httpRequest;
-
-    @Mock
-    private HttpResponse<Buffer> httpResponse;
+    private JWKSetFetcher jwkSetFetcher;
 
     private WebClientResourceRetriever retriever;
 
     @BeforeEach
     void setUp() {
-        retriever = new WebClientResourceRetriever(webClient);
+        retriever = new WebClientResourceRetriever(jwkSetFetcher);
     }
 
     @Test
-    void shouldRetrieveResourceSuccessfully_whenHttp200() throws Exception {
-        // given
+    void shouldReturnResourceFromFetcher() throws Exception {
         URL url = new URL("https://example.com/jwks");
-        String body = "{\"keys\":[]}";
-        String contentType = "application/json";
+        Resource resource = new Resource("{\"keys\":[]}", "application/json");
+        when(jwkSetFetcher.getKeys(url.toExternalForm()))
+                .thenReturn(Maybe.just(new JWKSetFetchResponse(new JWKSet(), resource)));
 
-        when(webClient.getAbs(url.toExternalForm())).thenReturn(httpRequest);
-        when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(httpResponse.statusCode()).thenReturn(200);
-        when(httpResponse.bodyAsString()).thenReturn(body);
-        when(httpResponse.getHeader(HttpHeaders.CONTENT_TYPE)).thenReturn(contentType);
+        Resource result = retriever.retrieveResource(url);
 
-        // when
-        Resource resource = retriever.retrieveResource(url);
-
-        // then
-        assertThat(resource).isNotNull();
-        assertThat(resource.getContent()).isEqualTo(body);
-        assertThat(resource.getContentType()).isEqualTo(contentType);
+        assertThat(result).isSameAs(resource);
     }
 
     @Test
-    void shouldThrowIOException_whenHttpStatusIsNot200() throws Exception {
-        // given
+    void shouldReturnNullWhenFetcherEmpty() throws Exception {
         URL url = new URL("https://example.com/jwks");
+        when(jwkSetFetcher.getKeys(url.toExternalForm())).thenReturn(Maybe.empty());
 
-        when(webClient.getAbs(url.toExternalForm())).thenReturn(httpRequest);
-        when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(httpResponse.statusCode()).thenReturn(404);
-        when(httpResponse.bodyAsString()).thenReturn("Not Found");
+        assertThat(retriever.retrieveResource(url)).isNull();
+    }
 
-        // when / then
+    @Test
+    void shouldPropagateFetcherError() throws Exception {
+        URL url = new URL("https://example.com/jwks");
+        when(jwkSetFetcher.getKeys(url.toExternalForm()))
+                .thenReturn(Maybe.error(new InvalidClientMetadataException("boom")));
+
         assertThatThrownBy(() -> retriever.retrieveResource(url))
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining(url.toString());
-    }
-
-    @Test
-    void shouldWrapExceptionInIOException_whenWebClientFails() throws Exception {
-        // given
-        URL url = new URL("https://example.com/jwks");
-
-        when(webClient.getAbs(url.toExternalForm())).thenReturn(httpRequest);
-        when(httpRequest.rxSend()).thenReturn(Single.error(new RuntimeException("Boom")));
-
-        // when / then
-        assertThatThrownBy(() -> retriever.retrieveResource(url))
-                .isInstanceOf(IOException.class)
-                .hasCauseInstanceOf(RuntimeException.class);
+                .isInstanceOf(InvalidClientMetadataException.class);
     }
 }

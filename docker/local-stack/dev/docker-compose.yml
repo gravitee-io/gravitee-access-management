@@ -95,6 +95,8 @@ services:
   wiremock:
     image: wiremock/wiremock:3.13.2
     command: ["--verbose", "--global-response-templating"]
+    volumes:
+      - ./wiremock/cimd-private-key-jwt-jwks.json:/home/wiremock/__files/cimd-private-key-jwt-jwks.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/mappings"]
       interval: 5s

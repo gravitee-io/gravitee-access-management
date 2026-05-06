@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.nimbusds;
+package io.gravitee.am.service.jwk;
 
 import com.nimbusds.jose.util.Resource;
-import com.nimbusds.jose.util.ResourceRetriever;
-import io.gravitee.am.service.jwk.JWKSetFetcher;
-import io.gravitee.am.service.jwk.JWKSetFetcher.JWKSetFetchResponse;
-import lombok.RequiredArgsConstructor;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.reactivex.rxjava3.core.Maybe;
 
-import java.io.IOException;
-import java.net.URL;
+public interface JWKSetFetcher {
+    Maybe<JWKSetFetchResponse> getKeys(String jwksUri);
 
-@RequiredArgsConstructor
-public class WebClientResourceRetriever implements ResourceRetriever {
-    private final JWKSetFetcher jwkSetFetcher;
-
-    @Override
-    public Resource retrieveResource(URL url) throws IOException {
-        return jwkSetFetcher.getKeys(url.toExternalForm())
-                .map(JWKSetFetchResponse::resource)
-                .blockingGet();
-    }
-
+    record JWKSetFetchResponse(JWKSet jwkSet, Resource resource) {}
 }

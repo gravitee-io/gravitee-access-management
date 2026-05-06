@@ -30,14 +30,18 @@ import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
+import * as jose from 'jose';
+import crypto from 'crypto';
 import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { PatchCIMDSettings } from '@management-models/PatchCIMDSettings';
 import { Fixture } from '../../../test-fixture';
+import { CIMD_PRIVATE_KEY_JWT_KID, cimdPrivateKeyJwtPrivateJwk } from '@api-fixtures/cimd-private-key-jwt';
 
 export const CIMD_REDIRECT_URI = 'https://client.example.com/callback';
 const PRE_REGISTERED_URL_CLIENT_ID = 'http://wiremock:8080/cimd/static-one';
+const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 const CIMD_TEST_USER = {
   username: 'cimd-user',
   password: 'CimdP@ssw0rd123!',
@@ -116,8 +120,10 @@ export interface CimdAuthorizeFixture extends Fixture {
   expectLoginRedirect: (response: any) => void;
   completeAuthorizationCodeFlow: (clientId: string, redirectUri?: string) => Promise<string>;
   exchangeAuthCodeForToken: (code: string, clientId: string, redirectUri?: string) => Promise<any>;
+  exchangeAuthCodeForTokenWithPrivateKeyJwt: (code: string, clientId: string, redirectUri?: string) => Promise<any>;
   revokeAccessToken: (token: string, clientId: string) => Promise<void>;
   introspectToken: (token: string) => Promise<any>;
+  introspectTokenWithPrivateKeyJwt: (token: string, clientId: string) => Promise<any>;
 }
 
 const buildClientId = (profile: CimdAuthorizeProfile, scenario: string): string => `http://wiremock:8080/cimd/${profile}/${scenario}`;
@@ -132,6 +138,20 @@ const buildAuthorizeUrl = (endpoint: string, clientId: string, redirectUri: stri
   });
 
   return `${endpoint}?${params.toString()}`;
+};
+
+const createPrivateKeyJwtAssertion = async (clientId: string, audience: string): Promise<string> => {
+  const privateKey = await jose.importJWK(cimdPrivateKeyJwtPrivateJwk as jose.JWK, 'RS256');
+  const now = Math.floor(Date.now() / 1000);
+  return new jose.SignJWT({})
+    .setProtectedHeader({ alg: 'RS256', kid: CIMD_PRIVATE_KEY_JWT_KID })
+    .setIssuer(clientId)
+    .setSubject(clientId)
+    .setAudience(audience)
+    .setJti(crypto.randomUUID())
+    .setIssuedAt(now)
+    .setExpirationTime(now + 300)
+    .sign(privateKey);
 };
 
 const readOAuthError = (response: any): OAuthAuthorizeError => {
@@ -173,7 +193,7 @@ async function createOAuthApplication(
         },
         advanced: { skipConsent: true },
       },
-      ...(identityProviderId ? { identityProviders: [{ identity: identityProviderId, priority: 0 }] } : {}),
+      ...(identityProviderId ? { identityProviders: new Set([{ identity: identityProviderId, priority: 0 }]) } : {}),
     },
     created.id,
   );
@@ -291,6 +311,32 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       }).expect(200);
     };
 
+    const appendPrivateKeyJwtAuthentication = async (params: URLSearchParams, clientId: string): Promise<URLSearchParams> => {
+      params.set('client_id', clientId);
+      params.set('client_assertion_type', CLIENT_ASSERTION_TYPE);
+      params.set('client_assertion', await createPrivateKeyJwtAssertion(clientId, startedDomain.oidcConfig.token_endpoint));
+      return params;
+    };
+
+    const exchangeAuthCodeForTokenWithPrivateKeyJwt = async (
+      code: string,
+      clientId: string,
+      redirectUri = CIMD_REDIRECT_URI,
+    ): Promise<any> => {
+      const params = await appendPrivateKeyJwtAuthentication(
+        new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri,
+        }),
+        clientId,
+      );
+
+      return performPost(startedDomain.oidcConfig.token_endpoint, '', params.toString(), {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }).expect(200);
+    };
+
     const revokeAccessToken = async (token: string, clientId: string): Promise<void> => {
       const params = new URLSearchParams({
         token,
@@ -318,6 +364,20 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       return response.body;
     };
 
+    const introspectTokenWithPrivateKeyJwt = async (token: string, clientId: string): Promise<any> => {
+      const params = await appendPrivateKeyJwtAuthentication(
+        new URLSearchParams({
+          token,
+          token_type_hint: 'access_token',
+        }),
+        clientId,
+      );
+      const response = await performPost(startedDomain.oidcConfig.introspection_endpoint, '', params.toString(), {
+        'Content-type': 'application/x-www-form-urlencoded',
+      }).expect(200);
+      return response.body;
+    };
+
     return {
       profile,
       accessToken,
@@ -340,8 +400,10 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       expectLoginRedirect,
       completeAuthorizationCodeFlow,
       exchangeAuthCodeForToken,
+      exchangeAuthCodeForTokenWithPrivateKeyJwt,
       revokeAccessToken,
       introspectToken,
+      introspectTokenWithPrivateKeyJwt,
       cleanUp: async () => {
         await safeDeleteDomain(domain?.id, accessToken);
       },

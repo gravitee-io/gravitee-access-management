@@ -200,6 +200,9 @@ services:
 # JWT used to generate signed token for OAuth 2.0/OpenID Connect protocols and to verify emails
 jwt:
   jwks:
+#    cache:
+#      ttlAfterWriteSeconds: 3600
+#      maximumSize: 100
     retriever:
       type: JOSE # JOSE | WEBCLIENT
   secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y # jwt secret used to sign JWT tokens (HMAC algorithm)

@@ -15,24 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwk.impl;
 
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
-import io.gravitee.am.service.utils.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.jwk.JWKSetFetcher.JWKSetFetchResponse;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.vertx.rxjava3.ext.web.client.HttpResponse;
-import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
-import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -49,8 +44,7 @@ public class JWKServiceImpl implements JWKService {
     private CertificateManager certificateManager;
 
     @Autowired
-    @Qualifier("oidcWebClient")
-    public WebClient client;
+    private JWKSetFetcher jwkSetFetcher;
 
     @Override
     public Single<JWKSet> getKeys() {
@@ -93,23 +87,8 @@ public class JWKServiceImpl implements JWKService {
 
     @Override
     public Maybe<JWKSet> getKeys(String jwksUri) {
-        try {
-            return client.getAbs(UriBuilder.fromHttpUrl(jwksUri).build().toString())
-                    .rxSend()
-                    .map(HttpResponse::bodyAsString)
-                    .map(new JWKSetDeserializer()::convert)
-                    .flatMapMaybe(jwkSet -> {
-                        if (jwkSet != null && jwkSet.isPresent()) {
-                            return Maybe.just(jwkSet.get());
-                        }
-                        return Maybe.empty();
-                    })
-                    .onErrorResumeNext(exception -> Maybe.error(new InvalidClientMetadataException("Unable to parse jwks from : " + jwksUri)));
-        } catch (IllegalArgumentException | URISyntaxException ex) {
-            return Maybe.error(new InvalidClientMetadataException(jwksUri + " is not valid."));
-        } catch (InvalidClientMetadataException ex) {
-            return Maybe.error(ex);
-        }
+        return jwkSetFetcher.getKeys(jwksUri)
+                .map(JWKSetFetchResponse::jwkSet);
     }
 
     @Override

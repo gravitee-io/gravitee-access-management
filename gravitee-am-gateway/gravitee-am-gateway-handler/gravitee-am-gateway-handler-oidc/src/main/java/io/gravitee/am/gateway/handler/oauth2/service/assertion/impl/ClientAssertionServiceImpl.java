@@ -81,9 +81,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     @Autowired
     private Domain domain;
 
-    @Autowired
-    private SecretService appSecretService;
-
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
 

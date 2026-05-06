@@ -156,6 +156,26 @@ tests:
                 introspect:
                   offlineVerificationTimerSeconds: 25
 
+  - it: should set gateway jwt jwks
+    set:
+      gateway.jwt.jwks.cache.maximumSize: 100
+      gateway.jwt.jwks.cache.ttlAfterWriteSeconds: 3600
+      gateway.jwt.jwks.retriever.type: JOSE
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |2-
+              jwks:
+                cache:
+                  maximumSize: 100
+                  ttlAfterWriteSeconds: 3600
+                retriever:
+                  type: JOSE
+
   - it: should set default alert engine values disabled
     asserts:
       - hasDocuments:
