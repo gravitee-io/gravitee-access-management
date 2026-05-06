@@ -324,6 +324,19 @@
     {
       "request": {
         "method": "GET",
+        "urlPathPattern": "/cimd/ENABLED_BASE/private-key-jwt-with-jwks-uri-[A-Za-z0-9]+"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"client_id\":\"http://wiremock:8080{{request.path}}\",\"client_name\":\"CIMD PKJWT With JWKS URI\",\"redirect_uris\":[\"https://client.example.com/callback\"],\"token_endpoint_auth_method\":\"private_key_jwt\",\"jwks_uri\":\"http://wiremock:8080/jwks/cimd-private-key-jwt{{request.path}}\"}"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "urlPath": "/cimd/ENABLED_BASE/invalid-json"
       },
       "response": {

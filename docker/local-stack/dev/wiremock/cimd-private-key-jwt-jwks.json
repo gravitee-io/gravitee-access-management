@@ -1,0 +1,11 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "n": "lOd-5KMvu9C0sulBE3-NbI-FfLavakLlt6GmoWgO27iUIDE6vcjvrLC_Qu8G4m0BGWqHy9ij9iprJ_ipAIMV5r8sf_3IXVeR0_4DN8U7VOgs8Je1zKMGZUQH5LUuYVq9raQAZYX_70cL5K_8mR1sX07W2txvBzcbP_Sd4MXIT-pcmvLTDXslWQs5XJqqWotbN6SxCRCWNOjdycYi4miGycnTts2GTLkAWPyXEG8tkOIzuA33wfrimC89Zd3baXKSkAzXPhFyvq42m3uKvro_4njMuTyoQwnkXkLedJFSCa1oJom4Ggj7J2OzluKlmFFH45jALybC96XBs2nEGK0hxw",
+      "e": "AQAB",
+      "use": "sig",
+      "kid": "cimd-private-key-jwt"
+    }
+  ]
+}

@@ -24,9 +24,11 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.service.http.WebClientBuilder;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
+import io.gravitee.am.service.jwk.impl.CachedJWKSetFetcher;
+import io.gravitee.am.service.jwk.impl.WebClientJWKSetFetcher;
 import io.gravitee.am.service.nimbusds.WebClientResourceRetriever;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.time.Duration;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 
@@ -48,6 +51,17 @@ public class JWTConfiguration {
     public enum RetrieverType {
         JOSE,
         WEBCLIENT
+    }
+
+    @Bean
+    public JWKSetFetcher jwkSetFetcher(Vertx vertx,
+                                       WebClientBuilder webClient,
+                                       @Value("${jwt.jwks.cache.maximumSize:100}") long maximumSize,
+                                       @Value("${jwt.jwks.cache.ttlAfterWriteSeconds:3600}") long expireAfterWriteSeconds){
+        return new CachedJWKSetFetcher(
+                new WebClientJWKSetFetcher(webClient.createWebClient(vertx)),
+                maximumSize,
+                Duration.ofSeconds(expireAfterWriteSeconds));
     }
 
     @Bean("managementSecretKey")
@@ -67,21 +81,14 @@ public class JWTConfiguration {
     }
 
     @Bean("defaultResourceRetriever")
-    protected ResourceRetriever defaultResourceRetriever(Vertx vertx,
+    protected ResourceRetriever defaultResourceRetriever(JWKSetFetcher jwkSetFetcher,
                                                          @Value("${jwt.jwks.retriever.type:JOSE}") RetrieverType type,
-                                                         WebClientBuilder webClientBuilder,
                                                          @Value("${httpClient.timeout:10000}") int connectionTimeout,
                                                          @Value("${httpClient.readTimeout:5000}") int readTimeout) {
         return switch (type) {
             case JOSE -> createJoseResourceRetriever(connectionTimeout, readTimeout);
-            case WEBCLIENT -> createWebClientResourceRetriever(vertx, webClientBuilder);
+            case WEBCLIENT -> new WebClientResourceRetriever(jwkSetFetcher);
         };
-    }
-
-    private ResourceRetriever createWebClientResourceRetriever(Vertx vertx, WebClientBuilder webClientBuilder) {
-        log.info("Creating WebClient for all JWKs retrievers");
-        WebClient webClient = webClientBuilder.createWebClient(vertx);
-        return new WebClientResourceRetriever(webClient);
     }
 
     private ResourceRetriever createJoseResourceRetriever(@Value("${httpClient.timeout:10000}") int connectionTimeout,

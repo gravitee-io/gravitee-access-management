@@ -20,6 +20,8 @@ import com.nimbusds.jose.JWEAlgorithm;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
+import io.gravitee.am.service.jwk.JWKSetFetcher.JWKSetFetchResponse;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
@@ -29,12 +31,8 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.rxjava3.ext.web.client.HttpRequest;
-import io.vertx.rxjava3.ext.web.client.HttpResponse;
-import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,7 +64,7 @@ public class JWKServiceTest {
     private JWKService jwkService = new JWKServiceImpl();
 
     @Mock
-    public WebClient webClient;
+    private JWKSetFetcher jwkSetFetcher;
 
     @Mock
     private CertificateManager certificateManager;
@@ -137,63 +135,42 @@ public class JWKServiceTest {
     }
 
     @Test
-    public void testGetKeys_UriException() {
-        TestObserver testObserver = jwkService.getKeys("blabla").test();
+    public void testGetKeys_delegatesToFetcher() {
+        JWK jwk = Mockito.mock(JWK.class);
+        when(jwk.getKid()).thenReturn("KID");
+        JWKSet jwkSet = new JWKSet();
+        jwkSet.setKeys(Arrays.asList(jwk));
 
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertNotComplete();
-    }
-
-    @Test
-    public void testGetKeys_errorResponse() {
-
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
-        HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
-
-
-        when(webClient.getAbs(anyString())).thenReturn(request);
-        when(request.rxSend()).thenReturn(Single.just(response));
-
-        TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertNotComplete();
-    }
-
-    @Test
-    public void testGetKeys_parseException() {
-
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
-        HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
-
-
-        when(webClient.getAbs(anyString())).thenReturn(request);
-        when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.bodyAsString()).thenReturn("{\"unknown\":[]}");
-
-        TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
-
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertNotComplete();
-    }
-
-    @Test
-    public void testGetKeys() {
-
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
-        HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
-
-        String bodyAsString = "{\"keys\":[{\"kty\": \"RSA\",\"use\": \"enc\",\"kid\": \"KID\",\"n\": \"modulus\",\"e\": \"exponent\"}]}";
-
-        when(webClient.getAbs(anyString())).thenReturn(request);
-        when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.bodyAsString()).thenReturn(bodyAsString);
+        when(jwkSetFetcher.getKeys(JWKS_URI)).thenReturn(Maybe.just(new JWKSetFetchResponse(jwkSet, null)));
 
         TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
 
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(jwkSet -> ((JWKSet)jwkSet).getKeys().get(0).getKid().equals("KID"));
+        testObserver.assertValue(value -> ((JWKSet) value).getKeys().get(0).getKid().equals("KID"));
+        verify(jwkSetFetcher).getKeys(JWKS_URI);
+    }
+
+    @Test
+    public void testGetKeys_fetcherEmpty_emitsEmpty() {
+        when(jwkSetFetcher.getKeys(JWKS_URI)).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
+
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void testGetKeys_fetcherError_propagates() {
+        when(jwkSetFetcher.getKeys(JWKS_URI))
+                .thenReturn(Maybe.error(new InvalidClientMetadataException("boom")));
+
+        TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
     }
 
     @Test
@@ -269,19 +246,17 @@ public class JWKServiceTest {
         Client client = new Client();
         client.setJwksUri(JWKS_URI);
 
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
-        HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
+        JWK jwk = Mockito.mock(JWK.class);
+        when(jwk.getKid()).thenReturn("KID");
+        JWKSet jwkSet = new JWKSet();
+        jwkSet.setKeys(Arrays.asList(jwk));
 
-        String bodyAsString = "{\"keys\":[{\"kty\": \"RSA\",\"use\": \"enc\",\"kid\": \"KID\",\"n\": \"modulus\",\"e\": \"exponent\"}]}";
-
-        when(webClient.getAbs(anyString())).thenReturn(request);
-        when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.bodyAsString()).thenReturn(bodyAsString);
+        when(jwkSetFetcher.getKeys(JWKS_URI)).thenReturn(Maybe.just(new JWKSetFetchResponse(jwkSet, null)));
 
         TestObserver testObserver = jwkService.getKeys(client).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(jwkSet -> ((JWKSet)jwkSet).getKeys().get(0).getKid().equals("KID"));
+        testObserver.assertValue(value -> ((JWKSet) value).getKeys().get(0).getKid().equals("KID"));
     }
 
     @Test

@@ -31,7 +31,6 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
@@ -51,6 +50,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -61,12 +61,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -358,6 +358,123 @@ public class CimdMetadataServiceImplTest {
         TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
 
         testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void shouldRejectWhenValidateTrustRejectsJwksUri() {
+        doThrow(new InvalidClientMetadataException("jwks_uri host is not in allowed domains."))
+                .when(uriTrustValidator).validateTrust(any(URI.class), eq(cimdSettings), eq("jwks_uri"));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://idp.example.com/jwks");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(uriTrustValidator).validateTrust(any(URI.class), eq(cimdSettings), eq("jwks_uri"));
+        verify(cimdMetadataDocumentManager, never()).put(anyString(), any(JsonObject.class), any(Duration.class));
+        verify(cimdMetadataDocumentService, never()).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldRejectWhenValidateResolvableHostRejectsJwksUri() {
+        when(uriTrustValidator.validateResolvableHost(eq("idp.example.com"), eq("jwks_uri"), eq(cimdSettings)))
+                .thenReturn(Completable.error(new InvalidClientMetadataException("jwks_uri resolves to a private or reserved IP address.")));
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://idp.example.com/jwks");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(cimdMetadataDocumentService, never()).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldRejectMetadataWithMalformedJwksUri() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "not a url");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(uriTrustValidator).parseHttpUrl("not a url", "jwks_uri");
+        verify(cimdMetadataDocumentService, never()).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldValidateJWKsUriWithRightFieldName() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://idp.example.com/jwks");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(uriTrustValidator).parseHttpUrl("https://idp.example.com/jwks", "jwks_uri");
+        verify(uriTrustValidator).validateTrust(any(URI.class), eq(cimdSettings), eq("jwks_uri"));
+        verify(uriTrustValidator).validateResolvableHost(eq("idp.example.com"), eq("jwks_uri"), eq(cimdSettings));
+    }
+
+    @Test
+    public void shouldSkipJwksUriValidationWhenAbsent() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> client.getJwksUri() == null);
+        verify(uriTrustValidator, never()).validateTrust(any(URI.class), any(), eq("jwks_uri"));
+        verify(uriTrustValidator, never()).validateResolvableHost(anyString(), eq("jwks_uri"), any());
+    }
+
+    @Test
+    public void shouldNotRevalidateJWKsUriOnLocalCacheHit() {
+        // On a cache hit, validateMetadata is not invoked — so the validator must not be called for jwks_uri,
+        // even if the cached metadata contains a now-untrusted jwks_uri.
+        String cachedPayload = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://disallowed.example.org/jwks")
+                .encode();
+        CimdMetadataDocument cached = new CimdMetadataDocument();
+        cached.setDomainId("domain-id");
+        cached.setClientId(CLIENT_URL);
+        cached.setMetadata(cachedPayload);
+        cached.setFetchedAt(new Date());
+        cached.setExpiresAt(new Date(System.currentTimeMillis() + 86400_000));
+        cached.setUpdatedAt(new Date());
+
+        when(cimdMetadataDocumentManager.resolve(CLIENT_URL))
+                .thenReturn(Single.just(Optional.of(cached)));
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(1);
+        verifyNoInteractions(webClient);
+        verify(uriTrustValidator, never()).validateTrust(any(URI.class), any(), eq("jwks_uri"));
+        verify(uriTrustValidator, never()).validateResolvableHost(anyString(), eq("jwks_uri"), any());
     }
 
     @Test
@@ -684,7 +801,7 @@ public class CimdMetadataServiceImplTest {
                 .put("client_id", clientId)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
                 .put("token_endpoint_auth_method", "private_key_jwt")
-                .put("jwks_uri", "https://localhost/jwks")
+                .put("jwks_uri", "https://idp.example.com/jwks")
                 .encode();
     }
 
@@ -960,7 +1077,7 @@ public class CimdMetadataServiceImplTest {
                 .put("client_id", clientId)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
                 .put("token_endpoint_auth_method", "private_key_jwt")
-                .put("jwks_uri", "https://localhost/jwks")
+                .put("jwks_uri", "https://idp.example.com/jwks")
                 .put("logo_uri", logoUri)
                 .encode();
     }
@@ -976,7 +1093,7 @@ public class CimdMetadataServiceImplTest {
                 .put("client_id", clientId)
                 .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
                 .put("token_endpoint_auth_method", "private_key_jwt")
-                .put("jwks_uri", "https://localhost/jwks")
+                .put("jwks_uri", "https://idp.example.com/jwks")
                 .put("logo_uri", "")
                 .encode();
     }

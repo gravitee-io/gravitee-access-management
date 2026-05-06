@@ -22,6 +22,19 @@
           ]
         }
       }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/jwks/cimd-private-key-jwt/cimd/ENABLED_BASE/private-key-jwt-with-jwks-uri-[A-Za-z0-9]+"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "cimd-private-key-jwt-jwks.json"
+      }
     }
   ],
   "importOptions": {

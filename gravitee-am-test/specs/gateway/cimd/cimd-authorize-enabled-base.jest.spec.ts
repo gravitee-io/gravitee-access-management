@@ -23,7 +23,6 @@ import {
   fetchWireMockRequestJournal,
 } from './fixtures/cimd-wiremock-helpers';
 import { decodeJwt } from '@utils-commands/jwt';
-import { delay } from '@utils-commands/misc';
 
 setup(200000);
 
@@ -142,6 +141,52 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   it('should continue authorization when private_key_jwt metadata includes jwks', async () => {
     const response = await fixture.authorize(fixture.buildClientId('private-key-jwt-with-jwks'));
     fixture.expectLoginRedirect(response);
+  });
+
+  it('should authenticate private_key_jwt CIMD client with public keys exposed by jwks_uri', async () => {
+    await clearWireMockRequestJournal();
+    const scenario = `private-key-jwt-with-jwks-uri-${Date.now()}`;
+    const clientId = fixture.buildClientId(scenario);
+    const jwksPath = `/jwks/cimd-private-key-jwt${new URL(clientId).pathname}`;
+
+    const code = await fixture.completeAuthorizationCodeFlow(clientId);
+    const tokenResponse = await fixture.exchangeAuthCodeForTokenWithPrivateKeyJwt(code, clientId);
+    const accessToken = tokenResponse.body.access_token;
+    expect(accessToken).toBeDefined();
+    expect(decodeJwt(accessToken).aud).toBe(clientId);
+
+    const introspection = await fixture.introspectTokenWithPrivateKeyJwt(accessToken, clientId);
+    expect(introspection.active).toBe(true);
+    expect(introspection.client_id).toBe(clientId);
+    expect(introspection.aud).toBe(clientId);
+    expect(introspection.token_type).toBe('bearer');
+    expect(introspection.iss).toContain(fixture.domain.hrid);
+    expect(introspection.domain).toBe(fixture.domain.id);
+    expect(introspection.jti).toBeDefined();
+    expect(introspection.exp).toBeGreaterThan(introspection.iat);
+
+    const journal = await fetchWireMockRequestJournal();
+    expect(countGetRequestsForPathSubstring(journal, jwksPath)).toBe(1);
+  });
+
+  it('should fetch jwks_uri from source server only once for repeated private_key_jwt client authentication', async () => {
+    await clearWireMockRequestJournal();
+    const scenario = `private-key-jwt-with-jwks-uri-cache${Date.now()}`;
+    const clientId = fixture.buildClientId(scenario);
+    const jwksPath = `/jwks/cimd-private-key-jwt${new URL(clientId).pathname}`;
+
+    const code = await fixture.completeAuthorizationCodeFlow(clientId);
+    const tokenResponse = await fixture.exchangeAuthCodeForTokenWithPrivateKeyJwt(code, clientId);
+    const accessToken = tokenResponse.body.access_token;
+    expect(accessToken).toBeDefined();
+
+    const firstIntrospection = await fixture.introspectTokenWithPrivateKeyJwt(accessToken, clientId);
+    expect(firstIntrospection.active).toBe(true);
+    const secondIntrospection = await fixture.introspectTokenWithPrivateKeyJwt(accessToken, clientId);
+    expect(secondIntrospection.active).toBe(true);
+
+    const journal = await fetchWireMockRequestJournal();
+    expect(countGetRequestsForPathSubstring(journal, jwksPath)).toBe(1);
   });
 
   it('should enforce exact redirect_uri matching for CIMD clients', async () => {

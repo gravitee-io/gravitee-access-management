@@ -34,6 +34,7 @@ import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.buffer.Buffer;
@@ -130,6 +131,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                 log.debug("CIMD cache miss, fetching from origin for domain={}, clientId={}", domain.getId(), canonicalId);
                                 return cimdUriTrustValidator.validateResolvableHost(clientIdUri.getHost(), "client_id", settings)
                                         .andThen(fetchMetadataWithTtl(canonicalId, settings))
+                                        .flatMap(fetchResult -> validateJWKs(fetchResult, settings)
+                                                .andThen(Single.just(fetchResult)))
                                         .flatMap(fetchResult -> {
                                             final FetchResult.CacheRequirements cache = fetchResult.cacheRequirements();
                                             if (!cache.noCache()) {
@@ -148,6 +151,16 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                             })
                     );
         });
+    }
+
+    private Completable validateJWKs(FetchResult fetchResult, CIMDSettings settings) {
+        String jwksUri = fetchResult.json().getString("jwks_uri");
+        if (jwksUri == null || jwksUri.trim().isEmpty()) {
+            return Completable.complete();
+        }
+        final URI jwksURI = cimdUriTrustValidator.parseHttpUrl(jwksUri, "jwks_uri");
+        cimdUriTrustValidator.validateTrust(jwksURI, settings, "jwks_uri");
+        return cimdUriTrustValidator.validateResolvableHost(jwksURI.getHost(), "jwks_uri", settings);
     }
 
     private CIMDSettings getCimdSettings() {
