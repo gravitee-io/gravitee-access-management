@@ -213,3 +213,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_12_0/4.12.0-add-cimd-metadata-documents.yml
   - include:
       - file: liquibase/changelogs/v4_12_0/4.12.0-trust-domains-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_12_0/4.12.0-applications-add-sub-type.yml

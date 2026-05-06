@@ -12227,15 +12227,6 @@ components:
           type: string
         type:
           type: string
-    AgentSettings:
-      type: object
-      properties:
-        agentType:
-          type: string
-          enum:
-          - USER_EMBEDDED
-          - HOSTED_DELEGATED
-          - AUTONOMOUS
     AlertNotifier:
       type: object
       properties:
@@ -12361,6 +12352,12 @@ components:
             $ref: "#/components/schemas/ClientSecret"
         settings:
           $ref: "#/components/schemas/ApplicationSettings"
+        subType:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         template:
           type: boolean
         type:
@@ -12648,8 +12645,6 @@ components:
           $ref: "#/components/schemas/AccountSettings"
         advanced:
           $ref: "#/components/schemas/ApplicationAdvancedSettings"
-        agent:
-          $ref: "#/components/schemas/AgentSettings"
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
         login:
@@ -13733,6 +13728,12 @@ components:
           type: string
         name:
           type: string
+        subType:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         template:
           type: boolean
         type:
@@ -14239,8 +14240,6 @@ components:
       - type
       type: object
       properties:
-        agentSettings:
-          $ref: "#/components/schemas/AgentSettings"
         clientId:
           type: string
         clientSecret:
@@ -14257,6 +14256,12 @@ components:
           type: array
           items:
             type: string
+        subType:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         type:
           type: string
           enum:
@@ -15272,6 +15277,12 @@ components:
             - INSTALLATION
         settings:
           $ref: "#/components/schemas/PatchApplicationSettings"
+        subType:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         template:
           type: boolean
     PatchApplicationAdvancedSettings:
@@ -15479,8 +15490,6 @@ components:
           $ref: "#/components/schemas/AccountSettings"
         advanced:
           $ref: "#/components/schemas/PatchApplicationAdvancedSettings"
-        agent:
-          $ref: "#/components/schemas/AgentSettings"
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
         login:
