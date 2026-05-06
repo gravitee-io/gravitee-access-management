@@ -155,6 +155,12 @@ export interface Application {
   settings?: ApplicationSettings;
   /**
    *
+   * @type {string}
+   * @memberof Application
+   */
+  subType?: ApplicationSubTypeEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof Application
    */
@@ -172,6 +178,16 @@ export interface Application {
    */
   updatedAt?: Date;
 }
+
+/**
+ * @export
+ */
+export const ApplicationSubTypeEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type ApplicationSubTypeEnum = typeof ApplicationSubTypeEnum[keyof typeof ApplicationSubTypeEnum];
 
 /**
  * @export
@@ -221,6 +237,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     secrets: json['secrets'] == null ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    subType: json['subType'] == null ? undefined : json['subType'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
@@ -256,6 +273,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     secrets: value['secrets'] == null ? undefined : (value['secrets'] as Array<any>).map(ClientSecretToJSON),
     settings: ApplicationSettingsToJSON(value['settings']),
+    subType: value['subType'],
     template: value['template'],
     type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),

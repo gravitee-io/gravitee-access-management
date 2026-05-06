@@ -58,6 +58,12 @@ export interface FilteredApplication {
   name?: string;
   /**
    *
+   * @type {string}
+   * @memberof FilteredApplication
+   */
+  subType?: FilteredApplicationSubTypeEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof FilteredApplication
    */
@@ -75,6 +81,16 @@ export interface FilteredApplication {
    */
   updatedAt?: Date;
 }
+
+/**
+ * @export
+ */
+export const FilteredApplicationSubTypeEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type FilteredApplicationSubTypeEnum = typeof FilteredApplicationSubTypeEnum[keyof typeof FilteredApplicationSubTypeEnum];
 
 /**
  * @export
@@ -109,6 +125,7 @@ export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator:
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
+    subType: json['subType'] == null ? undefined : json['subType'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
@@ -129,6 +146,7 @@ export function FilteredApplicationToJSONTyped(value?: FilteredApplication | nul
     enabled: value['enabled'],
     id: value['id'],
     name: value['name'],
+    subType: value['subType'],
     template: value['template'],
     type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
