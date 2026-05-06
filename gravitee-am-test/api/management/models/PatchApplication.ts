@@ -103,6 +103,12 @@ export interface PatchApplication {
   settings?: PatchApplicationSettings;
   /**
    *
+   * @type {string}
+   * @memberof PatchApplication
+   */
+  subType?: PatchApplicationSubTypeEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof PatchApplication
    */
@@ -187,6 +193,16 @@ export type PatchApplicationRequiredPermissionsEnum =
   typeof PatchApplicationRequiredPermissionsEnum[keyof typeof PatchApplicationRequiredPermissionsEnum];
 
 /**
+ * @export
+ */
+export const PatchApplicationSubTypeEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type PatchApplicationSubTypeEnum = typeof PatchApplicationSubTypeEnum[keyof typeof PatchApplicationSubTypeEnum];
+
+/**
  * Check if a given object implements the PatchApplication interface.
  */
 export function instanceOfPatchApplication(value: object): value is PatchApplication {
@@ -214,6 +230,7 @@ export function PatchApplicationFromJSONTyped(json: any, ignoreDiscriminator: bo
     name: json['name'] == null ? undefined : json['name'],
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
+    subType: json['subType'] == null ? undefined : json['subType'],
     template: json['template'] == null ? undefined : json['template'],
   };
 }
@@ -240,6 +257,7 @@ export function PatchApplicationToJSONTyped(value?: PatchApplication | null, ign
     name: value['name'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
     settings: PatchApplicationSettingsToJSON(value['settings']),
+    subType: value['subType'],
     template: value['template'],
   };
 }
