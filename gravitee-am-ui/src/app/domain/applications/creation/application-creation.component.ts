@@ -61,9 +61,7 @@ export class ApplicationCreationComponent implements OnInit {
 
     app.type = this.application.type;
     if (this.application.type === 'AGENT') {
-      app.agentSettings = {
-        agentType: this.application.agentType,
-      };
+      app.subType = this.application.agentType;
     }
 
     this.applicationService
