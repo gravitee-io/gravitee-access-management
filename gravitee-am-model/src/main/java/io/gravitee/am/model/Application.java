@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -61,6 +62,13 @@ public class Application implements Resource, PasswordSettingsAware, Notifiable 
      * Application type
      */
     private ApplicationType type;
+    /**
+     * Application sub-type. Carries the agent persona (USER_EMBEDDED / HOSTED_DELEGATED /
+     * AUTONOMOUS) when {@code type == AGENT}; null otherwise. String-typed at the API
+     * boundary so future non-agent sub-types do not require an enum change.
+     */
+    @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
+    private String subType;
     /**
      * Application description
      */
@@ -119,6 +127,7 @@ public class Application implements Resource, PasswordSettingsAware, Notifiable 
         this.id = other.id;
         this.name = other.name;
         this.type = other.type;
+        this.subType = other.subType;
         this.description = other.description;
         this.domain = other.domain;
         this.enabled = other.enabled;
@@ -156,6 +165,7 @@ public class Application implements Resource, PasswordSettingsAware, Notifiable 
         client.setUpdatedAt(this.updatedAt);
         Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
         client.setAppType(this.type);
+        client.setAgentType(AgentType.orNull(this.subType));
         client.setSecretSettings(this.secretSettings);
         client.setClientSecrets(this.getSecrets());
         return client;
