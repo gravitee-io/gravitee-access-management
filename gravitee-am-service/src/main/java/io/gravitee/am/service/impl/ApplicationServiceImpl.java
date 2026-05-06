@@ -35,7 +35,6 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -105,6 +104,7 @@ import org.springframework.util.ObjectUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -387,10 +387,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         if (ApplicationType.AGENT.equals(newApplication.getType())) {
-            AgentSettings agentSettings = Optional.ofNullable(newApplication.getAgentSettings())
-                    .orElseGet(AgentSettings::new);
-            applyAgentDefaults(agentSettings, oAuthSettings);
-            applicationSettings.setAgent(agentSettings);
+            application.setSubType(newApplication.getSubType());
+            applyAgentDefaults(application.getSubType(), oAuthSettings);
         }
 
         application.setSettings(applicationSettings);
@@ -1344,20 +1342,23 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Single<Application> validateAgentSettings(Application application) {
         boolean isAgentType = ApplicationType.AGENT.equals(application.getType());
-        AgentSettings agent = application.getSettings().getAgent();
+        String subType = application.getSubType();
 
         if (!isAgentType) {
-            if (agent != null) {
-                return Single.error(new InvalidClientMetadataException("Agent settings are only allowed when application type is AGENT"));
+            if (subType != null) {
+                return Single.error(new InvalidClientMetadataException("subType is only allowed when application type is AGENT"));
             }
             return Single.just(application);
         }
 
-        if (agent == null) {
-            return Single.error(new InvalidClientMetadataException("Agent settings are required when application type is AGENT"));
+        if (subType == null) {
+            return Single.error(new InvalidClientMetadataException("subType is required when application type is AGENT"));
         }
-        if (agent.getAgentType() == null) {
-            return Single.error(new InvalidClientMetadataException("Agent type is required when application type is AGENT"));
+        AgentType agentType = AgentType.orNull(subType);
+        if (agentType == null) {
+            String allowed = Arrays.stream(AgentType.values()).map(Enum::name).collect(Collectors.joining(", "));
+            return Single.error(new InvalidClientMetadataException(
+                    "Unknown subType '" + subType + "' for AGENT application. Allowed values: [" + allowed + "]"));
         }
         if (application.isTemplate()) {
             return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
@@ -1365,12 +1366,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // USER_EMBEDDED and HOSTED_DELEGATED rely on authorization_code; redirect_uri is required.
         // AUTONOMOUS uses client_credentials only — no redirect needed.
-        if (agent.getAgentType() != AgentType.AUTONOMOUS) {
+        if (agentType != AgentType.AUTONOMOUS) {
             ApplicationOAuthSettings authSettings = application.getSettings().getOauth();
             List<String> redirectUris = authSettings != null ? authSettings.getRedirectUris() : null;
             if (redirectUris == null || redirectUris.isEmpty()) {
                 return Single.error(new InvalidClientMetadataException(
-                        agent.getAgentType().name() + " agents require at least one redirect_uri"));
+                        agentType.name() + " agents require at least one redirect_uri"));
             }
         }
 
@@ -1385,7 +1386,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 return Single.error(new InvalidClientMetadataException(
                         "Agent applications cannot use grant type: " + forbiddenGrant));
             }
-            String typeSpecific = switch (agent.getAgentType()) {
+            String typeSpecific = switch (agentType) {
                 case USER_EMBEDDED -> grantTypes.contains(GrantType.CLIENT_CREDENTIALS)
                         ? "USER_EMBEDDED agents cannot use client_credentials grant" : null;
                 case AUTONOMOUS -> grantTypes.contains(GrantType.AUTHORIZATION_CODE)
@@ -1412,11 +1413,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         return Single.just(application);
     }
 
-    private void applyAgentDefaults(AgentSettings agentSettings, ApplicationOAuthSettings oAuthSettings) {
-        if (agentSettings.getAgentType() == null) {
+    private void applyAgentDefaults(String subType, ApplicationOAuthSettings oAuthSettings) {
+        AgentType agentType = AgentType.orNull(subType);
+        if (agentType == null) {
             return;
         }
-        switch (agentSettings.getAgentType()) {
+        switch (agentType) {
             case USER_EMBEDDED -> {
                 oAuthSettings.setClientType("public");
                 oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);

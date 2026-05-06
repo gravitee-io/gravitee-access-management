@@ -29,8 +29,6 @@ import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.AgentSettings;
-import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -53,7 +51,6 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.AgentSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SpiffeApplicationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
@@ -356,6 +353,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setId(other.getId());
         applicationMongo.setName(other.getName());
         applicationMongo.setType(other.getType() != null ? other.getType().toString() : null);
+        applicationMongo.setSubType(other.getSubType());
         applicationMongo.setDescription(other.getDescription());
         applicationMongo.setDomain(other.getDomain());
         applicationMongo.setEnabled(other.isEnabled());
@@ -380,6 +378,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setId(other.getId());
         application.setName(other.getName());
         application.setType(ApplicationType.orNull(other.getType()));
+        application.setSubType(other.getSubType());
         application.setDescription(other.getDescription());
         application.setDomain(other.getDomain());
         application.setEnabled(other.isEnabled());
@@ -478,7 +477,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
-        applicationSettingsMongo.setAgent(convert(other.getAgent()));
         applicationSettingsMongo.setSpiffe(convert(other.getSpiffe()));
         return applicationSettingsMongo;
     }
@@ -499,7 +497,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
-        applicationSettings.setAgent(convert(other.getAgent()));
         applicationSettings.setSpiffe(convert(other.getSpiffe()));
         return applicationSettings;
     }
@@ -807,26 +804,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
         return applicationAdvancedSettingsMongo;
-    }
-
-    private static AgentSettings convert(AgentSettingsMongo other) {
-        if (other == null) {
-            return null;
-        }
-
-        AgentSettings agentSettings = new AgentSettings();
-        agentSettings.setAgentType(AgentType.orNull(other.getAgentType()));
-        return agentSettings;
-    }
-
-    private static AgentSettingsMongo convert(AgentSettings other) {
-        if (other == null) {
-            return null;
-        }
-
-        AgentSettingsMongo agentSettingsMongo = new AgentSettingsMongo();
-        agentSettingsMongo.setAgentType(other.getAgentType() != null ? other.getAgentType().name() : null);
-        return agentSettingsMongo;
     }
 
     private static SpiffeApplicationSettings convert(SpiffeApplicationSettingsMongo other) {
