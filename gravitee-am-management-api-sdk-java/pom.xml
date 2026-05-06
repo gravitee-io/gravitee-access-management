@@ -32,6 +32,14 @@
     <description>Java client SDK generated from the Access Management Management API OpenAPI specification.</description>
 
     <properties>
+        <!--
+            Pin bytecode target to JDK 21 so consumers on the mainline gravitee
+            toolchain (e.g. gravitee-gamma-module-aim) can compile against this
+            SDK. AM server modules stay on JDK 25; only this thin generated
+            client downgrades. JDK 25 JVMs load class files compiled against
+            release 21 without issue.
+        -->
+        <maven.compiler.release>21</maven.compiler.release>
         <openapi-generator.version>7.22.0</openapi-generator.version>
         <jackson.version>2.18.2</jackson.version>
         <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
