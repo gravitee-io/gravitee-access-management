@@ -31,6 +31,8 @@ public class JdbcApplication {
     private String id;
     private String name;
     private String type;
+    @Column("sub_type")
+    private String subType;
     private String description;
     private String domain;
 
@@ -87,6 +89,14 @@ public class JdbcApplication {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
     }
 
     public String getDescription() {

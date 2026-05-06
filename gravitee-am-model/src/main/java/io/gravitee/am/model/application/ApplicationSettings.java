@@ -90,11 +90,6 @@ public class ApplicationSettings {
     private SecretExpirationSettings secretExpirationSettings;
 
     /**
-     * Agent application settings. Non-null only when {@code Application.type == AGENT}.
-     */
-    private AgentSettings agent;
-
-    /**
      * SPIFFE workload-identity settings, set when the application uses {@code spiffe_jwt} auth.
      */
     private SpiffeApplicationSettings spiffe;
@@ -115,7 +110,6 @@ public class ApplicationSettings {
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
-        this.agent = other.agent != null ? new AgentSettings(other.agent) : null;
         this.spiffe = other.spiffe != null ? new SpiffeApplicationSettings(other.spiffe) : null;
     }
 
@@ -130,9 +124,6 @@ public class ApplicationSettings {
         client.setRiskAssessment(this.getRiskAssessment());
         Optional.ofNullable(this.saml).ifPresent(s -> s.copyTo(client));
         client.setSecretExpirationSettings(this.secretExpirationSettings);
-        if (this.agent != null) {
-            client.setAgentType(this.agent.getAgentType());
-        }
         client.setSpiffeSettings(this.spiffe != null ? new SpiffeApplicationSettings(this.spiffe) : null);
     }
 
