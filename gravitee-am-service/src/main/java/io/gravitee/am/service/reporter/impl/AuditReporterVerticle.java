@@ -15,18 +15,15 @@
  */
 package io.gravitee.am.service.reporter.impl;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.reporter.AuditReporterService;
-import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.node.reporter.vertx.eventbus.ReportableMessageCodec;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.rxjava3.core.AbstractVerticle;
-import io.vertx.rxjava3.core.eventbus.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,31 +34,31 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditReporterVerticle.class);
     public static final String EVENT_BUS_ADDRESS = "node:audits";
-    private MessageProducer<Reportable> producer;
+    public static final String EVENT_BUS_ADDRESS_PREFIX = "node:audits.";
+
+    private DeliveryOptions deliveryOptions;
 
     @Override
     public void start() throws Exception {
-        producer = vertx.eventBus()
-                .<Reportable>publisher(
-                        EVENT_BUS_ADDRESS,
-                        new DeliveryOptions()
-                                .setCodecName(ReportableMessageCodec.CODEC_NAME));
-
+        deliveryOptions = new DeliveryOptions().setCodecName(ReportableMessageCodec.CODEC_NAME);
         vertx.eventBus().consumer(EVENT_BUS_ADDRESS, new ReportableHandlerLogger<>());
     }
 
     @Override
     public void stop() throws Exception {
-        if (producer != null) {
-            producer.close();
-        }
+        // nothing to close
     }
 
     public void report(Reportable reportable) {
-        if (producer != null) {
-            producer.write(reportable)
-                    .doOnError(throwable -> LOGGER.error("Unexpected error while sending a reportable element", throwable))
-                    .subscribe();
+        if (deliveryOptions != null) {
+            String address = (reportable.getReferenceType() != null && reportable.getReferenceId() != null)
+                    ? addressFor(new Reference(reportable.getReferenceType(), reportable.getReferenceId()))
+                    : EVENT_BUS_ADDRESS;
+            vertx.eventBus().publish(address, reportable, deliveryOptions);
         }
+    }
+
+    public static String addressFor(Reference reference) {
+        return EVENT_BUS_ADDRESS_PREFIX + reference.type().name() + "." + reference.id();
     }
 }
