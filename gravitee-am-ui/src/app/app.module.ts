@@ -272,6 +272,7 @@ import { ApplicationResolver } from './resolvers/application.resolver';
 import { ApplicationCreationComponent } from './domain/applications/creation/application-creation.component';
 import { ApplicationCreationStep1Component } from './domain/applications/creation/steps/step1/step1.component';
 import { ApplicationCreationStep2Component } from './domain/applications/creation/steps/step2/step2.component';
+import { ApplicationCreationStep3CimdConfirmComponent } from './domain/applications/creation/steps/step3-cimd-confirm/step3-cimd-confirm.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
 import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
@@ -664,6 +665,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationCreationComponent,
     ApplicationCreationStep1Component,
     ApplicationCreationStep2Component,
+    ApplicationCreationStep3CimdConfirmComponent,
     ApplicationComponent,
     ApplicationOverviewComponent,
     ApplicationEndpointsComponent,

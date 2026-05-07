@@ -17,6 +17,8 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { find } from 'lodash';
 
+import { ProviderService } from '../../../../../services/provider.service';
+
 @Component({
   selector: 'application-creation-step2',
   templateUrl: './step2.component.html',
@@ -27,6 +29,7 @@ export class ApplicationCreationStep2Component implements OnInit {
   @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
+  identityProviders: any[] = [];
   applicationTypes: any[] = [
     {
       icon: 'language',
@@ -50,10 +53,21 @@ export class ApplicationCreationStep2Component implements OnInit {
     },
   ];
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private providerService: ProviderService,
+  ) {}
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
+    if (this.application.creationMode == null) {
+      this.application.creationMode = 'manual';
+    }
+    if (this.cimdEnabled()) {
+      this.providerService.findByDomain(this.domain.id).subscribe((data) => {
+        this.identityProviders = (data ?? []).filter((idp) => !idp.external);
+      });
+    }
   }
 
   icon(app) {
@@ -68,5 +82,35 @@ export class ApplicationCreationStep2Component implements OnInit {
 
   elRedirectUriEnabled(): boolean {
     return this.domain?.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage;
+  }
+
+  cimdEnabled(): boolean {
+    return !!this.domain?.oidc?.cimdSettings?.enabled;
+  }
+
+  isCimd(): boolean {
+    return this.application.creationMode === 'cimd';
+  }
+
+  onModeChange(): void {
+    // Reset transient fields when toggling so we don't carry stale state across modes.
+    if (this.isCimd()) {
+      this.application.redirectUri = null;
+      this.application.clientId = null;
+      this.application.clientSecret = null;
+      this.application.name = null;
+    } else {
+      this.application.cimdUrl = null;
+      this.application.cimdIdentityProvider = null;
+      this.application.cimdPreview = null;
+      this.application.cimdClientName = null;
+    }
+  }
+
+  onCimdUrlChange(): void {
+    // Force re-validation when the URL changes so we never create against a stale preview.
+    this.application.cimdPreview = null;
+    this.application.cimdClientName = null;
+    this.application.name = null;
   }
 }

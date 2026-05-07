@@ -47,6 +47,14 @@ export class ApplicationService {
     return this.http.post<any>(this.appsURL + domainId + '/applications', application);
   }
 
+  validateCimd(domainId, url): Observable<any> {
+    return this.http.post<any>(this.appsURL + domainId + '/cimd/validate', { url });
+  }
+
+  createFromCimd(domainId, payload): Observable<any> {
+    return this.http.post<any>(this.appsURL + domainId + '/cimd/applications', payload);
+  }
+
   patch(domainId, appId, patchApplication): Observable<any> {
     return this.http.patch<any>(this.appsURL + domainId + '/applications/' + appId, patchApplication);
   }
