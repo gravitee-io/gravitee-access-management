@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.client.cimd;
+package io.gravitee.am.common.oauth2;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author GraviteeSource Team
  */
-public class ClientIdsTest {
+class ClientIdsTest {
 
     @Test
-    public void isUrlShaped_acceptsHttpAndHttpsAtStart() {
+    void isUrlShaped_acceptsHttpAndHttpsAtStart() {
         assertTrue(ClientIds.isUrlShaped("http://example.com"));
         assertTrue(ClientIds.isUrlShaped("https://example.com"));
         assertTrue(ClientIds.isUrlShaped("HTTP://EXAMPLE.COM/p"));
@@ -36,7 +36,7 @@ public class ClientIdsTest {
     }
 
     @Test
-    public void isUrlShaped_rejectsNullEmptyAndNonUrl() {
+    void isUrlShaped_rejectsNullEmptyAndNonUrl() {
         assertFalse(ClientIds.isUrlShaped(null));
         assertFalse(ClientIds.isUrlShaped(""));
         assertFalse(ClientIds.isUrlShaped("opaque-client"));
@@ -44,99 +44,98 @@ public class ClientIdsTest {
     }
 
     @Test
-    public void isUrlShaped_rejectsFtpAndRequiresSchemeAtStart() {
+    void isUrlShaped_rejectsFtpAndRequiresSchemeAtStart() {
         assertFalse(ClientIds.isUrlShaped("ftp://files.example/"));
         assertFalse(ClientIds.isUrlShaped(" not-http://trailing"));
         assertFalse(ClientIds.isUrlShaped("prefix-https://host"));
     }
 
     @Test
-    public void isUrlShaped_rejectsHttpWithoutSlashSlash() {
+    void isUrlShaped_rejectsHttpWithoutSlashSlash() {
         assertFalse(ClientIds.isUrlShaped("http:"));
         assertFalse(ClientIds.isUrlShaped("https"));
     }
 
     @Test
-    public void canonicalize_returnsNullWhenInputNull() {
+    void canonicalize_returnsNullWhenInputNull() {
         assertNull(ClientIds.canonicalize(null));
     }
 
     @Test
-    public void canonicalize_nonUrl_returnsUnchanged() {
+    void canonicalize_nonUrl_returnsUnchanged() {
         assertEquals("my-app", ClientIds.canonicalize("my-app"));
         assertEquals("", ClientIds.canonicalize(""));
     }
 
     @Test
-    public void canonicalize_lowercasesSchemeAndHost_preservesPathAndQuery() {
+    void canonicalize_lowercasesSchemeAndHost_preservesPathAndQuery() {
         assertEquals(
                 "https://client.example.com/metadata?x=1&y=a+b",
                 ClientIds.canonicalize("HTTPS://CLIENT.EXAMPLE.COM/metadata?x=1&y=a+b"));
     }
 
     @Test
-    public void canonicalize_includesPortWhenNotDefault() {
+    void canonicalize_includesPortWhenNotDefault() {
         assertEquals("http://example.com:8080/oauth", ClientIds.canonicalize("HTTP://EXAMPLE.COM:8080/oauth"));
     }
 
     @Test
-    public void canonicalize_emptyPath_usesEmptyPathString() {
+    void canonicalize_emptyPath_usesEmptyPathString() {
         assertEquals("https://h.example", ClientIds.canonicalize("https://H.EXAMPLE"));
     }
 
     @Test
-    public void sameForLookup_bothUrl_equivalentWhenHostsDifferInCase() {
+    void sameForLookup_bothUrl_equivalentWhenHostsDifferInCase() {
         assertTrue(ClientIds.sameForLookup(
                 "https://a.example.com/r",
                 "HTTPS://A.EXAMPLE.COM/r"));
     }
 
     @Test
-    public void sameForLookup_httpAndHttps_notEqual() {
+    void sameForLookup_httpAndHttps_notEqual() {
         assertFalse(ClientIds.sameForLookup("http://x.example/p", "https://x.example/p"));
     }
 
     @Test
-    public void sameForLookup_pathsMustMatch() {
+    void sameForLookup_pathsMustMatch() {
         assertFalse(ClientIds.sameForLookup("https://x.example/a", "https://x.example/b"));
     }
 
     @Test
-    public void sameForLookup_trailingPathSlashMatters() {
+    void sameForLookup_trailingPathSlashMatters() {
         assertFalse(ClientIds.sameForLookup("https://x.example", "https://x.example/"));
     }
 
     @Test
-    public void sameForLookup_opaque_usesStringEquality() {
+    void sameForLookup_opaque_usesStringEquality() {
         assertTrue(ClientIds.sameForLookup("opaque-id", "opaque-id"));
         assertFalse(ClientIds.sameForLookup("opaque-id", "Opaque-Id"));
     }
 
     @Test
-    public void sameForLookup_nullHandling() {
+    void sameForLookup_nullHandling() {
         assertTrue(ClientIds.sameForLookup(null, null));
         assertFalse(ClientIds.sameForLookup(null, "a"));
         assertFalse(ClientIds.sameForLookup("a", null));
     }
 
     @Test
-    public void sameForLookup_mixedUrlAndOpaque_doesNotMatch() {
+    void sameForLookup_mixedUrlAndOpaque_doesNotMatch() {
         assertFalse(ClientIds.sameForLookup("https://x.example.com/", "not-a-url"));
     }
 
     @Test
-    public void sameForLookup_bothUrl_oneOpaqueButLooksLikePath_stillUrlBranch() {
-        // If one side is URL-shaped, we compare via canonicalize on both; opaque string unchanged.
+    void sameForLookup_bothUrl_oneOpaqueButLooksLikePath_stillUrlBranch() {
         assertFalse(ClientIds.sameForLookup("https://a.example.com/", "a.example.com"));
     }
 
     @Test
-    public void canonicalize_urnStyle_notUrlShaped_unchanged() {
+    void canonicalize_urnStyle_notUrlShaped_unchanged() {
         assertEquals("urn:acme:client", ClientIds.canonicalize("urn:acme:client"));
     }
 
     @Test
-    public void canonicalize_rawPathPercentEncoding_stableUnderCaseOnlyChange() {
+    void canonicalize_rawPathPercentEncoding_stableUnderCaseOnlyChange() {
         String lowerHost = "https://ns.example/oidc%2Freg";
         String upperHost = "HTTPS://ns.example/oidc%2Freg";
         assertEquals(ClientIds.canonicalize(lowerHost), ClientIds.canonicalize(upperHost));

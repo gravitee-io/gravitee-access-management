@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring;
 
+import io.gravitee.am.management.handlers.management.api.adapter.ConsentApplicationEntityFactory;
 import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapterImpl;
 import io.gravitee.am.management.handlers.management.api.adapter.UMAResourceManagementAdapter;
@@ -30,6 +31,7 @@ import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,12 +63,19 @@ public class ManagementConfiguration {
     }
 
     @Bean
+    ConsentApplicationEntityFactory consentApplicationEntityFactory(
+            ApplicationService applicationService,
+            CimdMetadataDocumentService cimdMetadataDocumentService) {
+        return new ConsentApplicationEntityFactory(applicationService, cimdMetadataDocumentService);
+    }
+
+    @Bean
     ScopeApprovalAdapter scopeApprovalAdapter(ScopeApprovalService scopeApprovalService,
         RevokeTokenManagementService revokeTokenManagementService,
-        ApplicationService applicationService,
+        ConsentApplicationEntityFactory consentApplicationEntityFactory,
         ScopeService scopeService,
         DataPlaneRegistry dataPlaneRegistry) {
-        return new ScopeApprovalAdapterImpl(scopeApprovalService, revokeTokenManagementService, applicationService, scopeService, dataPlaneRegistry);
+        return new ScopeApprovalAdapterImpl(scopeApprovalService, revokeTokenManagementService, consentApplicationEntityFactory, scopeService, dataPlaneRegistry);
     }
 
     @Bean

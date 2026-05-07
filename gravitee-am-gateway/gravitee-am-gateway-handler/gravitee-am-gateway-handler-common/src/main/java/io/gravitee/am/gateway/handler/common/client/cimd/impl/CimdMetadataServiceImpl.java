@@ -20,7 +20,7 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
-import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
@@ -46,11 +46,16 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import io.gravitee.am.service.utils.vertx.BoundedBufferWriteStream;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -294,6 +299,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         synthesizedClient.setSecretSettings(List.of());
         synthesizedClient.setTemplate(false);
         synthesizedClient.setDomain(domain.getId());
+
+        synthesizedClient.setCimdMetadataHash(calculateMetadataHash(metadata.encode()));
+
         return synthesizedClient;
     }
 
@@ -362,6 +370,16 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
 
     private static long resolveCacheTtlSeconds(CIMDSettings settings) {
         return Math.max(1L, settings.getCacheTtlSeconds());
+    }
+
+    private static String calculateMetadataHash(String metadataJson) {
+        try {
+            byte[] hashBytes = MessageDigest.getInstance("SHA-256")
+                    .digest(metadataJson.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available", e);
+        }
     }
 
     private record FetchResult(JsonObject json, CacheRequirements cacheRequirements) {

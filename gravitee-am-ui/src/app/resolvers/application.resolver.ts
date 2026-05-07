@@ -15,8 +15,9 @@
  */
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
+import { isUserConsentSyntheticApplicationId } from '../domain/settings/users/user/applications/user-consent-application.constants';
 import { ApplicationService } from '../services/application.service';
 
 @Injectable()
@@ -26,6 +27,14 @@ export class ApplicationResolver {
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
+    const clientId = route.queryParamMap.get('clientId');
+    if (clientId && isUserConsentSyntheticApplicationId(appId)) {
+      return of({
+        id: appId,
+        name: clientId,
+        settings: { oauth: { clientId } },
+      });
+    }
     return this.applicationService.get(domainId, appId);
   }
 }

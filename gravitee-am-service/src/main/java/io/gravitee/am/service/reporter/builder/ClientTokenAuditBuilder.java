@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -114,7 +115,8 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder tokenActor(Client client) {
         if (client != null) {
-            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
+            var alternativeId = ClientIds.isUrlShaped(client.getClientId()) ? client.getClientId() : client.getClientName();
+            setActor(client.getId(), EntityType.APPLICATION, alternativeId, client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
             super.client(client);
             if(client.getDomain() != null){
                 reference(Reference.domain(client.getDomain()));

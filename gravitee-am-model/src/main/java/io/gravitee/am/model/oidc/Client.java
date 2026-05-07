@@ -238,6 +238,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private Map<String, Object> metadata;
 
+    /** Thumbprint of the CIMD metadata document used at authentication time. */
+    private transient String cimdMetadataHash;
+
     private boolean forcePKCE;
 
     private boolean forceS256CodeChallengeMethod;
@@ -905,6 +908,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public String getCimdMetadataHash() {
+        return cimdMetadataHash;
+    }
+
+    public void setCimdMetadataHash(String cimdMetadataHash) {
+        this.cimdMetadataHash = cimdMetadataHash;
     }
 
     public String getTlsClientAuthSubjectDn() {

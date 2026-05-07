@@ -33,6 +33,7 @@ export class UserApplicationComponent implements OnInit {
   private domainId: string;
   private userId: string;
   application: any;
+  applicationDisplayName: string;
   clientId: string;
   consents: any[];
   canRevoke: boolean;
@@ -53,6 +54,18 @@ export class UserApplicationComponent implements OnInit {
     this.consents = this.route.snapshot.data['consents'];
     this.clientId = this.route.snapshot.queryParamMap.get('clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
+    this.applicationDisplayName = this.resolveApplicationDisplayName();
+  }
+
+  private resolveApplicationDisplayName(): string {
+    const fromConsent = this.consents?.[0]?.clientEntity?.name;
+    if (fromConsent) {
+      return fromConsent;
+    }
+    if (this.application?.name) {
+      return this.application.name;
+    }
+    return this.clientId ?? '';
   }
 
   revokeApplication(event) {
@@ -63,7 +76,7 @@ export class UserApplicationComponent implements OnInit {
         filter((res) => res),
         switchMap(() => this.userService.revokeConsents(this.domainId, this.userId, this.clientId)),
         tap(() => {
-          this.snackbarService.open('Access for application ' + this.application.name + ' revoked');
+          this.snackbarService.open('Access for application ' + this.applicationDisplayName + ' revoked');
           this.router.navigate(['..'], { relativeTo: this.route });
         }),
       )
@@ -93,6 +106,7 @@ export class UserApplicationComponent implements OnInit {
     this.userService.consents(this.domainId, this.userId, null).subscribe((consents) => {
       this.consents = consents.filter((consent) => consent.clientId === this.clientId);
       this.consents = [...this.consents];
+      this.applicationDisplayName = this.resolveApplicationDisplayName();
     });
   }
 

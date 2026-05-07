@@ -23,7 +23,6 @@ import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -40,7 +39,7 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
 
     private final ScopeApprovalService scopeApprovalService;
     private final RevokeTokenManagementService revokeTokenManagementService;
-    private final ApplicationService applicationService;
+    private final ConsentApplicationEntityFactory consentApplicationEntityFactory;
     private final ScopeService scopeService;
     private final DataPlaneRegistry dataPlaneRegistry;
 
@@ -93,9 +92,6 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
     }
 
     private Single<ApplicationEntity> getClient(String domain, String clientId) {
-        return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(ApplicationEntity::new)
-                .defaultIfEmpty(new ApplicationEntity(UNKNOWN_ID, clientId, "unknown-client-name"))
-                .cache();
+        return consentApplicationEntityFactory.resolve(domain, clientId);
     }
 }

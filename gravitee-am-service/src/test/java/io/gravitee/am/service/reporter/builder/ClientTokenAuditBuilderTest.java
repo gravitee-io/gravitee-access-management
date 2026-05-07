@@ -194,6 +194,26 @@ class ClientTokenAuditBuilderTest {
     }
 
     @Test
+    void shouldBuildTokenActorCimdClient() {
+        var applicationId = "client-applicationId";
+        var clientId = "https://client.example.com/metadata";
+        var clientName = "CIMD Client";
+        var domainId = "domainId";
+        var client = new Client();
+        client.setId(applicationId);
+        client.setClientId(clientId);
+        client.setClientName(clientName);
+        client.setDomain(domainId);
+
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).build(objectMapper);
+
+        assertEquals(applicationId, audit.getActor().getId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
+        assertEquals(clientId, audit.getActor().getAlternativeId());
+        assertEquals(TOKEN_CREATED, audit.getType());
+    }
+
+    @Test
     void shouldBuildError() {
         var message = "message-error-1";
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).throwable(new Exception(message)).build(objectMapper);

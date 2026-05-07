@@ -31,6 +31,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>io.gravitee.am.management</groupId>
             <artifactId>gravitee-am-management-api-service</artifactId>
             <version>${project.version}</version>

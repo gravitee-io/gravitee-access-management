@@ -51,8 +51,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.Date;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -268,6 +271,25 @@ public class CimdMetadataServiceImplTest {
                 && client.getSecretSettings().isEmpty()
                 && !client.isTemplate()
                 && "domain-id".equals(client.getDomain()));
+    }
+
+    @Test
+    public void shouldStoreMetadataDocumentHashInSynthesizedClientMetadata() throws Exception {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none");
+        String metadataJson = metadata.encode();
+        mockFetchSuccess(metadataJson);
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        String expectedHash = HexFormat.of().formatHex(
+                MessageDigest.getInstance("SHA-256").digest(metadataJson.getBytes(StandardCharsets.UTF_8)));
+        testObserver.assertValue(client -> expectedHash.equals(client.getCimdMetadataHash()));
     }
 
     @Test

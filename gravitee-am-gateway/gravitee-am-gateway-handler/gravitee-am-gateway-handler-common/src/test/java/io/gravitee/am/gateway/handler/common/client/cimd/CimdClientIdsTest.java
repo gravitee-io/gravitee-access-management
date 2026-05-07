@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.client.cimd;
 
+import io.gravitee.am.common.oauth2.ClientIds;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

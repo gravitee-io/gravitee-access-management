@@ -24,6 +24,7 @@ import static io.gravitee.am.common.audit.EventType.CLIENT_AUTHENTICATION;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ClientAuthAuditBuilderTest {
@@ -64,6 +65,7 @@ class ClientAuthAuditBuilderTest {
         assertEquals(clientName, audit.getActor().getAlternativeId());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(CLIENT_AUTHENTICATION, audit.getType());
+        assertNull(audit.getTarget());
     }
 
     @Test
@@ -92,5 +94,43 @@ class ClientAuthAuditBuilderTest {
         assertEquals(FAILURE, audit.getOutcome().getStatus());
         assertEquals(errorMessage, audit.getOutcome().getMessage());
         assertEquals(CLIENT_AUTHENTICATION, audit.getType());
+    }
+
+    @Test
+    void shouldStoreMetadataHashInActorAttributesForCimdClient() {
+        var applicationId = "client-applicationId";
+        var clientId = "https://example.com/client";
+        var clientName = "CIMD Client";
+        var domainId = "domainId";
+        var metadataHash = "abc123def456";
+
+        var client = new Client();
+        client.setId(applicationId);
+        client.setClientId(clientId);
+        client.setClientName(clientName);
+        client.setDomain(domainId);
+        client.setCimdMetadataHash(metadataHash);
+
+        var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).build(objectMapper);
+
+        assertEquals(applicationId, audit.getActor().getId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
+        assertEquals(clientId, audit.getActor().getAlternativeId());
+        assertNull(audit.getTarget());
+        assertNotNull(audit.getActor().getAttributes());
+        assertEquals(metadataHash, audit.getActor().getAttributes().get("metadataDocumentHash"));
+    }
+
+    @Test
+    void shouldNotSetTargetWhenNoMetadataHash() {
+        var client = new Client();
+        client.setId("id");
+        client.setClientId("regular-client-id");
+        client.setClientName("Regular Client");
+        client.setDomain("domainId");
+
+        var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).build(objectMapper);
+
+        assertNull(audit.getTarget());
     }
 }
