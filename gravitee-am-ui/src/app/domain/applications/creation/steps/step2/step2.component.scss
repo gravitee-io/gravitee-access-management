@@ -1,3 +1,6 @@
+@use '@angular/material' as mat;
+@use '@gravitee/ui-particles-angular' as gio;
+
 i {
   width: 130px;
   height: 130px;
@@ -6,4 +9,100 @@ i {
   margin-top: 20px;
   font-size: 55px;
   line-height: 130px;
+}
+
+.creation-mode-section {
+  margin-bottom: 24px;
+}
+
+.creation-mode-heading {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.creation-mode-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .creation-mode-radio {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgb(0 0 0 / 38%);
+    border-radius: 50%;
+    margin-top: 2px;
+    background: white;
+    transition: border-color 0.15s;
+  }
+
+  .creation-mode-radio-dot {
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
+    transform: scale(0);
+    transition: transform 0.15s;
+  }
+
+  .creation-mode-text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .creation-mode-label {
+    color: rgb(0 0 0 / 87%);
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .creation-mode-description {
+    color: rgb(0 0 0 / 60%);
+    font-size: 0.8125rem;
+  }
+
+  .creation-mode-row {
+    display: flex;
+    min-width: 240px;
+    flex: 1 1 0;
+    align-items: flex-start;
+    padding: 16px 20px;
+    border: 1px solid rgb(0 0 0 / 12%);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    gap: 12px;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
+
+    &:hover {
+      border-color: rgb(0 0 0 / 32%);
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2px mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
+      outline: none;
+    }
+
+    &.selected {
+      border-color: mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
+      background-color: rgb(218 59 0 / 6%); // primary tint
+
+      .creation-mode-radio {
+        border-color: mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
+      }
+
+      .creation-mode-radio-dot {
+        transform: scale(1);
+      }
+    }
+  }
 }

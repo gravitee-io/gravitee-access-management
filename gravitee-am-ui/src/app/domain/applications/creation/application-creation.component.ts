@@ -50,6 +50,7 @@ export class ApplicationCreationComponent implements OnInit {
 
   ngOnInit() {
     this.application.domain = this.route.snapshot.parent.data['domain'].id;
+    this.application.creationMode = 'manual';
   }
 
   isCimd(): boolean {

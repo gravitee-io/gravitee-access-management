@@ -1,0 +1,38 @@
+.cimd-metadata-dialog-content {
+  min-width: min(720px, 90vw);
+  max-width: 90vw;
+}
+
+.cimd-metadata-dialog-source {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  word-break: break-all;
+
+  a {
+    color: rgb(0 0 0 / 75%);
+    text-decoration: underline;
+
+    &:hover {
+      color: rgb(0 0 0 / 100%);
+    }
+  }
+}
+
+.cimd-metadata-dialog-label {
+  margin-right: 4px;
+  color: rgb(0 0 0 / 50%);
+}
+
+.cimd-metadata-dialog-pre {
+  overflow: auto;
+  max-height: 60vh;
+  padding: 16px;
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 6px;
+  margin: 0;
+  background: rgb(0 0 0 / 4%);
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre;
+}

@@ -27,6 +27,18 @@ export class ApplicationCreationStep2Component implements OnInit {
   @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
+  creationModes = [
+    {
+      value: 'manual',
+      label: 'Manual',
+      description: 'Add manual information',
+    },
+    {
+      value: 'cimd',
+      label: 'CIMD',
+      description: 'Bootstrap from a Client Identity Metadata Document URL',
+    },
+  ];
   applicationTypes: any[] = [
     {
       icon: 'language',
@@ -54,9 +66,6 @@ export class ApplicationCreationStep2Component implements OnInit {
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
-    if (this.application.creationMode == null) {
-      this.application.creationMode = 'manual';
-    }
   }
 
   icon(app) {
@@ -93,6 +102,14 @@ export class ApplicationCreationStep2Component implements OnInit {
       this.application.cimdPreview = null;
       this.application.cimdClientName = null;
     }
+  }
+
+  selectCreationMode(value: string): void {
+    if (this.application.creationMode === value) {
+      return;
+    }
+    this.application.creationMode = value;
+    this.onModeChange();
   }
 
   onCimdUrlChange(): void {
