@@ -36,6 +36,7 @@ import {
 })
 export class ApplicationCreationComponent implements OnInit {
   public application: any = {};
+  public validating = false;
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
@@ -51,7 +52,37 @@ export class ApplicationCreationComponent implements OnInit {
     this.application.domain = this.route.snapshot.parent.data['domain'].id;
   }
 
+  isCimd(): boolean {
+    return this.application?.creationMode === 'cimd';
+  }
+
+  validateCimd(): void {
+    if (!this.application.cimdUrl) {
+      return;
+    }
+    this.validating = true;
+    this.applicationService.validateCimd(this.application.domain, this.application.cimdUrl).subscribe(
+      (preview) => {
+        this.validating = false;
+        this.application.cimdPreview = preview;
+        this.application.cimdClientName = null;
+        this.application.name = preview?.clientName ?? null;
+        this.stepper.next();
+      },
+      (err: unknown) => {
+        this.validating = false;
+        const message = (err as { error?: { message?: string } })?.error?.message ?? 'Unable to validate CIMD URL';
+        this.snackbarService.open(message);
+      },
+    );
+  }
+
   create() {
+    if (this.isCimd()) {
+      this.createFromCimd();
+      return;
+    }
+
     const app: any = {};
     app.name = this.application.name;
     app.type = this.application.type;
@@ -90,12 +121,54 @@ export class ApplicationCreationComponent implements OnInit {
       });
   }
 
-  stepperValid(): boolean {
-    return (
-      this.application?.type &&
-      this.application.domain &&
-      this.application.name &&
-      (this.application.type !== 'SERVICE' ? this.application.redirectUri : true)
+  private createFromCimd(): void {
+    const resolvedName = this.application?.cimdPreview?.clientName || this.application.cimdClientName;
+    const payload: any = {
+      name: resolvedName,
+      type: this.application.type,
+      description: this.application.description,
+      cimdUrl: this.application.cimdUrl,
+    };
+    if (this.application?.cimdPreview?.missing?.clientName && this.application.cimdClientName) {
+      payload.clientName = this.application.cimdClientName;
+    }
+    if (this.application.cimdIdentityProvider) {
+      payload.identityProviders = [this.application.cimdIdentityProvider];
+    }
+    this.applicationService.createFromCimd(this.application.domain, payload).subscribe(
+      (data) => {
+        this.snackbarService.open('Application ' + data.name + ' created');
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
+      },
+      (err: unknown) => {
+        const message = (err as { error?: { message?: string } })?.error?.message ?? 'Unable to create application from CIMD URL';
+        this.snackbarService.open(message);
+      },
     );
+  }
+
+  stepperValid(): boolean {
+    if (!this.application?.type || !this.application.domain) {
+      return false;
+    }
+    if (this.isCimd()) {
+      const preview = this.application?.cimdPreview;
+      const resolvedName = preview?.clientName || this.application.cimdClientName;
+      return !!preview && !!resolvedName;
+    }
+    if (!this.application.name) {
+      return false;
+    }
+    return this.application.type !== 'SERVICE' ? !!this.application.redirectUri : true;
+  }
+
+  step2Valid(): boolean {
+    if (this.isCimd()) {
+      return !!this.application.cimdUrl;
+    }
+    if (!this.application?.name) {
+      return false;
+    }
+    return this.application.type !== 'SERVICE' ? !!this.application.redirectUri : true;
   }
 }

@@ -42,7 +42,25 @@
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>
-          <button mat-raised-button color="primary" (click)="create()" [disabled]="!stepperValid()">Create</button>
+          <button *ngIf="!isCimd()" mat-raised-button color="primary" (click)="create()" [disabled]="!stepperValid()">Create</button>
+          <button *ngIf="isCimd()" mat-raised-button color="primary" (click)="validateCimd()" [disabled]="!step2Valid() || validating">
+            Next
+          </button>
+        </div>
+      </mat-step>
+      <mat-step *ngIf="isCimd()">
+        <ng-template matStepLabel>
+          <h5>Confirm</h5>
+          <small>Review CIMD metadata</small>
+        </ng-template>
+        <application-creation-step3-cimd-confirm
+          *ngIf="stepper.selectedIndex === 2"
+          [application]="application"
+        ></application-creation-step3-cimd-confirm>
+        <div class="stepper-button-zone">
+          <button mat-raised-button matStepperPrevious type="button">Back</button>
+          <span fxFlex></span>
+          <button mat-raised-button color="primary" (click)="create()" [disabled]="!stepperValid()">Confirm</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
