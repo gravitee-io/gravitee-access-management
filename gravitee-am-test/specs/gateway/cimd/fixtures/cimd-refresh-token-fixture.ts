@@ -30,6 +30,7 @@ import { buildCreateAndTestUser } from '@management-commands/user-management-com
 import { uniqueName } from '@utils-commands/misc';
 import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { Fixture } from '../../../test-fixture';
 import { CIMD_REDIRECT_URI } from './cimd-authorize-fixture';
 
@@ -44,6 +45,7 @@ export interface CimdRefreshTokenFixture extends Fixture {
   clientId: string;
   redirectUri: string;
   user: { username: string; password: string; id: string };
+  revokeToken: (token: string, tokenTypeHint: 'access_token' | 'refresh_token') => Promise<void>;
 }
 
 export const setupCimdRefreshTokenFixture = async (): Promise<CimdRefreshTokenFixture> => {
@@ -126,6 +128,20 @@ export const setupCimdRefreshTokenFixture = async (): Promise<CimdRefreshTokenFi
       clientId,
       redirectUri: CIMD_REDIRECT_URI,
       user: { username: user.username, password: userPassword as string, id: user.id },
+      revokeToken: async (token: string, tokenTypeHint: 'access_token' | 'refresh_token') => {
+        await performPost(
+          startedDomain.oidcConfig.revocation_endpoint,
+          '',
+          new URLSearchParams({
+            token,
+            token_type_hint: tokenTypeHint,
+            client_id: clientId,
+          }).toString(),
+          {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        ).expect(200);
+      },
       cleanUp: async () => {
         await safeDeleteDomain(domain?.id, accessToken);
       },

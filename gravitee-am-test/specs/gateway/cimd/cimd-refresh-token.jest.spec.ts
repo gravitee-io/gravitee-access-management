@@ -222,4 +222,41 @@ describe('CIMD refresh token', () => {
 
     expect(refreshResponse.body.error).toEqual('invalid_client');
   });
+
+  it('should reject refresh grant after refresh_token revocation', async () => {
+    const code = await executeCimdAuthCodeFlow(fixture);
+
+    const tokenResponse = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: fixture.redirectUri,
+        client_id: fixture.clientId,
+      }).toString(),
+      {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    ).expect(200);
+
+    expect(tokenResponse.body.refresh_token).toMatch(JWT_FORMAT);
+
+    await fixture.revokeToken(tokenResponse.body.refresh_token, 'refresh_token');
+
+    const refreshResponse = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: tokenResponse.body.refresh_token,
+        client_id: fixture.clientId,
+      }).toString(),
+      {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    ).expect(400);
+
+    expect(refreshResponse.body.error).toEqual('invalid_grant');
+  });
 });
