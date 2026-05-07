@@ -3586,6 +3586,82 @@ paths:
                   $ref: "#/components/schemas/CertificateKey"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/cimd/applications:
+    post:
+      tags:
+      - application
+      - domain
+      summary: Create an application from a CIMD document URL
+      description: "User must have APPLICATION[CREATE] permission on the specified\
+        \ domain"
+      operationId: createApplicationFromCimd
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCimdApplication"
+        required: true
+      responses:
+        "201":
+          description: Application successfully created
+        "400":
+          description: Document invalid or untrusted
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/cimd/validate:
+    post:
+      tags:
+      - application
+      - domain
+      summary: Validate a CIMD URL and return parsed metadata preview
+      description: "User must have APPLICATION[CREATE] permission on the specified\
+        \ domain"
+      operationId: validateCimdUrl
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CimdValidationRequest"
+        required: true
+      responses:
+        "200":
+          description: Document validated
+        "400":
+          description: Document invalid or untrusted
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers:
     get:
       tags:
@@ -12925,6 +13001,13 @@ components:
           - REQUIRED
           - CONDITIONAL
           - RISK_BASED
+    CimdValidationRequest:
+      required:
+      - url
+      type: object
+      properties:
+        url:
+          type: string
     ClientRegistrationSettings:
       type: object
       properties:
@@ -14124,6 +14207,29 @@ components:
             -----BEGIN CERTIFICATE-----
             ...
             -----END CERTIFICATE-----
+    NewCimdApplication:
+      required:
+      - cimdUrl
+      - name
+      - type
+      type: object
+      properties:
+        cimdUrl:
+          type: string
+        clientName:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - WEB
+          - NATIVE
+          - BROWSER
+          - SERVICE
+          - RESOURCE_SERVER
     NewClientSecret:
       required:
       - name
