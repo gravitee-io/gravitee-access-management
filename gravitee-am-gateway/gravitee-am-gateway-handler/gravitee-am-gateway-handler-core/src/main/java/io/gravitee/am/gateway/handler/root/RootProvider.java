@@ -47,6 +47,7 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
+import io.gravitee.am.gateway.handler.root.handler.GraviteeLoggerHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint;
@@ -130,14 +131,22 @@ import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpVersion;
+import io.vertx.ext.web.handler.LoggerFormat;
+import io.vertx.ext.web.impl.Utils;
+import io.vertx.rxjava3.ext.web.handler.LoggerFormatter;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
+import io.vertx.rxjava3.ext.web.handler.LoggerHandler;
 import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -327,6 +336,9 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${http.cookie.rememberDevice.name:"+ DEFAULT_REMEMBER_DEVICE_COOKIE_NAME +"}")
     private String rememberDeviceCookieName;
 
+    @Value("${handlers.request.logger.accesslog.enabled:false}")
+    private boolean accessLogEnabled = false;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -339,6 +351,11 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // static handler
         staticHandler(rootRouter);
+
+        // provide access log to have better visibility on GW activity
+        if (accessLogEnabled) {
+            rootRouter.route().handler(new GraviteeLoggerHandler(environment));
+        }
 
         // session cookie handler
         sessionAndCookieHandler(rootRouter);
