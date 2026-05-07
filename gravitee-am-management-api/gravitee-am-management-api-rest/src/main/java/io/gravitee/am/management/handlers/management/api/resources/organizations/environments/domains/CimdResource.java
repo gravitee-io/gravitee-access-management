@@ -19,9 +19,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.model.CimdPreview;
+import io.gravitee.am.service.model.CimdClientMetadata;
 import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,7 +49,7 @@ import java.net.URI;
 public class CimdResource extends AbstractDomainResource {
 
     @Autowired
-    private CimdMetadataDocumentService cimdMetadataDocumentService;
+    private io.gravitee.am.service.cimd.CimdMetadataFetcher cimdMetadataFetcher;
 
     @Autowired
     private ApplicationService applicationService;
@@ -82,7 +81,7 @@ public class CimdResource extends AbstractDomainResource {
                                     || !existingDomain.getOidc().getCimdSettings().isEnabled()) {
                                 throw new InvalidClientMetadataException("CIMD is not enabled for this domain.");
                             }
-                            return cimdMetadataDocumentService.fetchAndValidate(existingDomain, request.url());
+                            return cimdMetadataFetcher.fetchAndValidate(existingDomain, request.url());
                         }))
                 .map(CimdResource::toResponse)
                 .subscribe(response::resume, response::resume);
@@ -126,7 +125,7 @@ public class CimdResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    private static CimdValidationResponse toResponse(CimdPreview preview) {
+    private static CimdValidationResponse toResponse(CimdClientMetadata preview) {
         return new CimdValidationResponse(
                 preview.url(),
                 preview.clientId(),

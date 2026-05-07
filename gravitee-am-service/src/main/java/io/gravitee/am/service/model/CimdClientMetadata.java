@@ -24,7 +24,7 @@ import java.util.List;
  * subsequent create call can persist and re-parse it (e.g. for inline {@code jwks}) without
  * re-fetching.
  */
-public record CimdPreview(
+public record CimdClientMetadata(
         String url,
         String clientId,
         String clientName,
