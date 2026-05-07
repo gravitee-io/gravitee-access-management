@@ -29,20 +29,24 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import java.util.concurrent.ConcurrentHashMap;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.EVENT_BUS_ADDRESS;
+import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.addressFor;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,7 +57,7 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     public static final Logger logger = LoggerFactory.getLogger(EventBusReporterWrapper.class);
     private final Vertx vertx;
     private final Reporter<R,C> reporter;
-    private MessageConsumer<Reportable> messageConsumer;
+    private final List<MessageConsumer<Reportable>> messageConsumers = Collections.synchronizedList(new ArrayList<>());
     private Set<Reference> referenceFilter;
 
 
@@ -140,7 +144,15 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
                         throw ex;
                     }
                 })
-                .doOnSuccess(o -> messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this))
+                .doOnSuccess(o -> {
+                    if (referenceFilter == null) {
+                        messageConsumers.add(vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this));
+                    } else {
+                        for (Reference ref : referenceFilter) {
+                            messageConsumers.add(vertx.eventBus().consumer(addressFor(ref), EventBusReporterWrapper.this));
+                        }
+                    }
+                })
                 .doOnError(ex -> logger.error("Error while starting reporter", ex))
                 .subscribe();
 
@@ -149,25 +161,35 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
 
     @Override
     public Reporter<R,C> stop() throws Exception {
-        if (messageConsumer != null) {
-            messageConsumer.unregister();
-        }
+        unregister();
         return (Reporter<R, C>) reporter.stop();
     }
 
     public void unregister() {
-        if (messageConsumer != null) {
-            messageConsumer.unregister();
-        }
+        messageConsumers.forEach(MessageConsumer::unregister);
+        messageConsumers.clear();
     }
 
     public void updateReferences(ChildReporterAction referenceChange) {
         switch (referenceChange.op()) {
-            case CREATE -> referenceFilter.add(referenceChange.reference());
-            case DELETE -> referenceFilter.remove(referenceChange.reference);
+            case CREATE -> {
+                referenceFilter.add(referenceChange.reference());
+                messageConsumers.add(vertx.eventBus().consumer(addressFor(referenceChange.reference()), EventBusReporterWrapper.this));
+            }
+            case DELETE -> {
+                referenceFilter.remove(referenceChange.reference());
+                String removedAddress = addressFor(referenceChange.reference());
+                messageConsumers.removeIf(c -> {
+                    if (removedAddress.equals(c.address())) {
+                        c.unregister();
+                        return true;
+                    }
+                    return false;
+                });
+            }
             default -> logger.debug("Ignoring {}", referenceChange);
         }
-        logger.info("Reporter {}: updated reference list to {}", reporter ,referenceFilter);
+        logger.info("Reporter {}: updated reference list to {}", reporter, referenceFilter);
     }
 
     public record ChildReporterAction(Action op, Reference reference) {
