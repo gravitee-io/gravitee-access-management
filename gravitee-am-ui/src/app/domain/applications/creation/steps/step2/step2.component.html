@@ -18,14 +18,29 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Configure your application.</p>
 
-  <div *ngIf="cimdEnabled()" style="margin-bottom: 16px">
-    <mat-button-toggle-group name="creationMode" [(ngModel)]="application.creationMode" (change)="onModeChange()">
-      <mat-button-toggle value="manual">Manual</mat-button-toggle>
-      <mat-button-toggle value="cimd">CIMD</mat-button-toggle>
-    </mat-button-toggle-group>
-    <span class="gv-form-section-hint" style="margin-left: 12px; font-size: 75%">
-      Bootstrap from a Client Identity Metadata Document URL.
-    </span>
+  <div *ngIf="cimdEnabled()" class="creation-mode-section">
+    <h4 class="creation-mode-heading">Import configuration</h4>
+    <div class="creation-mode-picker" role="radiogroup" aria-label="Application import configuration">
+      <div
+        *ngFor="let mode of creationModes"
+        class="creation-mode-row"
+        [ngClass]="{ selected: application.creationMode === mode.value }"
+        role="radio"
+        [attr.aria-checked]="application.creationMode === mode.value"
+        [attr.tabindex]="application.creationMode === mode.value ? 0 : -1"
+        (click)="selectCreationMode(mode.value)"
+        (keydown.enter)="selectCreationMode(mode.value)"
+        (keydown.space)="$event.preventDefault(); selectCreationMode(mode.value)"
+      >
+        <span class="creation-mode-radio" aria-hidden="true">
+          <span class="creation-mode-radio-dot"></span>
+        </span>
+        <span class="creation-mode-text">
+          <span class="creation-mode-label">{{ mode.label }}</span>
+          <span class="creation-mode-description">{{ mode.description }}</span>
+        </span>
+      </div>
+    </div>
   </div>
 
   <div>

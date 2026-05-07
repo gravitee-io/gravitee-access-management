@@ -273,6 +273,7 @@ import { ApplicationCreationComponent } from './domain/applications/creation/app
 import { ApplicationCreationStep1Component } from './domain/applications/creation/steps/step1/step1.component';
 import { ApplicationCreationStep2Component } from './domain/applications/creation/steps/step2/step2.component';
 import { ApplicationCreationStep3CimdConfirmComponent } from './domain/applications/creation/steps/step3-cimd-confirm/step3-cimd-confirm.component';
+import { CimdMetadataDialogComponent } from './domain/applications/creation/steps/step3-cimd-confirm/cimd-metadata-dialog.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
 import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
@@ -666,6 +667,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationCreationStep1Component,
     ApplicationCreationStep2Component,
     ApplicationCreationStep3CimdConfirmComponent,
+    CimdMetadataDialogComponent,
     ApplicationComponent,
     ApplicationOverviewComponent,
     ApplicationEndpointsComponent,

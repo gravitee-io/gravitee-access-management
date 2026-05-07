@@ -16,81 +16,305 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">Review the metadata fetched from the CIMD URL.</p>
-  <form class="cimd-confirm-form" fxLayout="column" #cimdConfirmForm="ngForm">
-    <div class="gv-form-section">
-      <div class="gv-form-section-title">
-        <h5>Client identity</h5>
-        <mat-divider></mat-divider>
-      </div>
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-label>Client ID</mat-label>
-        <input matInput type="text" name="client_id_readonly" [value]="preview.url" disabled />
-        <mat-hint>The CIMD URL is used as the canonical client_id.</mat-hint>
-      </mat-form-field>
+  <div class="cimd-confirm-intro">
+    <div class="cimd-confirm-intro-text">
+      <h4 class="cimd-confirm-intro-title">Review the imported metadata</h4>
+      <p class="cimd-confirm-intro-subtitle">Fields below were parsed from the CIMD document at {{ preview.url }}.</p>
+    </div>
+    <button *ngIf="preview.metadataJson" mat-stroked-button type="button" class="cimd-confirm-view-json" (click)="openMetadataDialog()">
+      <mat-icon class="cimd-confirm-view-json-icon">code</mat-icon>
+      View metadata JSON
+    </button>
+  </div>
 
-      <mat-form-field *ngIf="missing.clientName" appearance="outline" floatLabel="always">
-        <mat-label>Client Name</mat-label>
-        <input
-          matInput
-          type="text"
-          name="cimd_client_name"
-          placeholder="Client name"
-          [(ngModel)]="application.cimdClientName"
-          (ngModelChange)="application.name = $event"
-          required
-        />
-        <mat-hint>Document does not provide a client_name &mdash; please supply one.</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field *ngIf="!missing.clientName" appearance="outline" floatLabel="always">
-        <mat-label>Client Name</mat-label>
-        <input matInput type="text" name="client_name_readonly" [value]="preview.clientName" disabled />
-      </mat-form-field>
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h5>Client identity</h5>
+      <mat-divider></mat-divider>
     </div>
 
-    <div class="gv-form-section">
-      <div class="gv-form-section-title">
-        <h5>OAuth 2.0 settings (from document)</h5>
-        <mat-divider></mat-divider>
+    <dl class="cimd-confirm-list" aria-label="Client identity">
+      <div class="cimd-confirm-row">
+        <dt>Client ID</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.url }}</span>
+          <small>The CIMD URL is used as the canonical client_id.</small>
+        </dd>
       </div>
 
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-label>Redirect URIs</mat-label>
-        <textarea matInput name="redirect_uris" [value]="(preview.redirectUris || []).join('\n')" disabled rows="3"></textarea>
-      </mat-form-field>
-
-      <div fxLayout="row" fxLayoutGap="16px">
-        <mat-form-field appearance="outline" floatLabel="always" fxFlex>
-          <mat-label>Grant types</mat-label>
-          <input matInput type="text" name="grant_types" [value]="(preview.grantTypes || []).join(', ')" disabled />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" floatLabel="always" fxFlex>
-          <mat-label>Response types</mat-label>
-          <input matInput type="text" name="response_types" [value]="(preview.responseTypes || []).join(', ')" disabled />
-        </mat-form-field>
+      <div *ngIf="!missing.clientName" class="cimd-confirm-row">
+        <dt>Client Name</dt>
+        <dd>
+          <span class="cimd-confirm-value">{{ preview.clientName }}</span>
+        </dd>
       </div>
 
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-label>Scopes</mat-label>
-        <input matInput type="text" name="scopes" [value]="(preview.scopes || []).join(' ')" disabled />
-      </mat-form-field>
+      <ng-container *ngIf="missing.clientName">
+        <form #cimdConfirmForm="ngForm">
+          <mat-form-field appearance="outline" floatLabel="always" class="cimd-confirm-input">
+            <mat-label>Client Name</mat-label>
+            <input
+              matInput
+              type="text"
+              name="cimd_client_name"
+              placeholder="Enter a name for the application"
+              [(ngModel)]="application.cimdClientName"
+              (ngModelChange)="application.name = $event"
+              required
+            />
+            <mat-hint>Document does not provide a client_name &mdash; please supply one.</mat-hint>
+          </mat-form-field>
+        </form>
+      </ng-container>
+    </dl>
+  </div>
 
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-label>Token endpoint auth method</mat-label>
-        <input matInput type="text" name="token_endpoint_auth_method" [value]="preview.tokenEndpointAuthMethod || 'none'" disabled />
-      </mat-form-field>
-
-      <mat-form-field *ngIf="preview.logoUri" appearance="outline" floatLabel="always">
-        <mat-label>Logo URI</mat-label>
-        <input matInput type="text" name="logo_uri" [value]="preview.logoUri" disabled />
-      </mat-form-field>
-
-      <mat-form-field *ngIf="preview.jwksUri" appearance="outline" floatLabel="always">
-        <mat-label>JWKS URI</mat-label>
-        <input matInput type="text" name="jwks_uri" [value]="preview.jwksUri" disabled />
-      </mat-form-field>
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h5>OAuth 2.0 settings (from document)</h5>
+      <mat-divider></mat-divider>
     </div>
-  </form>
+
+    <dl class="cimd-confirm-list" aria-label="OAuth 2.0 settings">
+      <div class="cimd-confirm-row">
+        <dt>Redirect URIs</dt>
+        <dd>
+          <ul *ngIf="(preview.redirectUris || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let uri of preview.redirectUris" class="cimd-confirm-mono">{{ uri }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div class="cimd-confirm-row">
+        <dt>Grant types</dt>
+        <dd>
+          <ul *ngIf="(preview.grantTypes || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let gt of preview.grantTypes">{{ gt }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div class="cimd-confirm-row">
+        <dt>Response types</dt>
+        <dd>
+          <ul *ngIf="(preview.responseTypes || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let rt of preview.responseTypes">{{ rt }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div class="cimd-confirm-row">
+        <dt>Scopes</dt>
+        <dd>
+          <ul *ngIf="(preview.scopes || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let s of preview.scopes">{{ s }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div class="cimd-confirm-row">
+        <dt>Token endpoint auth method</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.tokenEndpointAuthMethod || 'none' }}</span>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.logoUri" class="cimd-confirm-row">
+        <dt>Logo URI</dt>
+        <dd>
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.logoUri" target="_blank" rel="noopener noreferrer">{{
+            preview.logoUri
+          }}</a>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.jwksUri" class="cimd-confirm-row">
+        <dt>JWKS URI</dt>
+        <dd>
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.jwksUri" target="_blank" rel="noopener noreferrer">{{
+            preview.jwksUri
+          }}</a>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.hasInlineJwks" class="cimd-confirm-row">
+        <dt>JWKS (inline)</dt>
+        <dd>
+          <span *ngIf="!inlineJwks.length" class="cimd-confirm-value">Inline keys provided in document</span>
+          <ul *ngIf="inlineJwks.length" class="cimd-confirm-chips">
+            <li *ngFor="let key of inlineJwks" class="cimd-confirm-mono cimd-confirm-key">
+              <span *ngIf="key.kid"><strong>kid:</strong> {{ key.kid }}</span>
+              <span *ngIf="key.kty"><strong>kty:</strong> {{ key.kty }}</span>
+              <span *ngIf="key.alg"><strong>alg:</strong> {{ key.alg }}</span>
+              <span *ngIf="key.use"><strong>use:</strong> {{ key.use }}</span>
+            </li>
+          </ul>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.applicationType" class="cimd-confirm-row">
+        <dt>Application type</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.applicationType }}</span>
+        </dd>
+      </div>
+
+      <div *ngIf="(preview.postLogoutRedirectUris || []).length" class="cimd-confirm-row">
+        <dt>Post-logout redirect URIs</dt>
+        <dd>
+          <ul class="cimd-confirm-chips">
+            <li *ngFor="let uri of preview.postLogoutRedirectUris" class="cimd-confirm-mono">{{ uri }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div *ngIf="(preview.contacts || []).length" class="cimd-confirm-row">
+        <dt>Contacts</dt>
+        <dd>
+          <ul class="cimd-confirm-chips">
+            <li *ngFor="let c of preview.contacts">{{ c }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.clientUri" class="cimd-confirm-row">
+        <dt>Client URI</dt>
+        <dd>
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.clientUri" target="_blank" rel="noopener noreferrer">{{
+            preview.clientUri
+          }}</a>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.policyUri" class="cimd-confirm-row">
+        <dt>Policy URI</dt>
+        <dd>
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.policyUri" target="_blank" rel="noopener noreferrer">{{
+            preview.policyUri
+          }}</a>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.tosUri" class="cimd-confirm-row">
+        <dt>Terms of service URI</dt>
+        <dd>
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.tosUri" target="_blank" rel="noopener noreferrer">{{
+            preview.tosUri
+          }}</a>
+        </dd>
+      </div>
+
+      <div *ngIf="(preview.requestUris || []).length" class="cimd-confirm-row">
+        <dt>Request URIs</dt>
+        <dd>
+          <ul class="cimd-confirm-chips">
+            <li *ngFor="let uri of preview.requestUris" class="cimd-confirm-mono">{{ uri }}</li>
+          </ul>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.softwareId || preview.softwareVersion" class="cimd-confirm-row">
+        <dt>Software</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono"
+            >{{ preview.softwareId || '—' }}<span *ngIf="preview.softwareVersion"> &#64; {{ preview.softwareVersion }}</span></span
+          >
+        </dd>
+      </div>
+
+      <div *ngIf="preview.softwareStatement" class="cimd-confirm-row">
+        <dt>Software statement</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono cimd-confirm-truncate">{{ preview.softwareStatement }}</span>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.subjectType" class="cimd-confirm-row">
+        <dt>Subject type</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.subjectType }}</span>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.sectorIdentifierUri" class="cimd-confirm-row">
+        <dt>Sector identifier URI</dt>
+        <dd>
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.sectorIdentifierUri" target="_blank" rel="noopener noreferrer">{{
+            preview.sectorIdentifierUri
+          }}</a>
+        </dd>
+      </div>
+
+      <div *ngIf="preview.idTokenSignedResponseAlg" class="cimd-confirm-row">
+        <dt>ID token signing alg</dt>
+        <dd>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.idTokenSignedResponseAlg }}</span>
+        </dd>
+      </div>
+
+      <div
+        *ngIf="
+          preview.tlsClientAuthSubjectDn ||
+          preview.tlsClientAuthSanDns ||
+          preview.tlsClientAuthSanUri ||
+          preview.tlsClientAuthSanIp ||
+          preview.tlsClientAuthSanEmail ||
+          preview.tlsClientCertificateBoundAccessTokens
+        "
+        class="cimd-confirm-row"
+      >
+        <dt>mTLS</dt>
+        <dd>
+          <span *ngIf="preview.tlsClientAuthSubjectDn" class="cimd-confirm-value cimd-confirm-mono"
+            >DN: {{ preview.tlsClientAuthSubjectDn }}</span
+          >
+          <span *ngIf="preview.tlsClientAuthSanDns" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN dns: {{ preview.tlsClientAuthSanDns }}</span
+          >
+          <span *ngIf="preview.tlsClientAuthSanUri" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN uri: {{ preview.tlsClientAuthSanUri }}</span
+          >
+          <span *ngIf="preview.tlsClientAuthSanIp" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN ip: {{ preview.tlsClientAuthSanIp }}</span
+          >
+          <span *ngIf="preview.tlsClientAuthSanEmail" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN email: {{ preview.tlsClientAuthSanEmail }}</span
+          >
+          <span *ngIf="preview.tlsClientCertificateBoundAccessTokens" class="cimd-confirm-value">Certificate-bound access tokens</span>
+        </dd>
+      </div>
+
+      <div
+        *ngIf="
+          preview.backchannelTokenDeliveryMode ||
+          preview.backchannelAuthRequestSignAlg ||
+          preview.backchannelClientNotificationEndpoint ||
+          preview.backchannelUserCodeParameter
+        "
+        class="cimd-confirm-row"
+      >
+        <dt>CIBA backchannel</dt>
+        <dd>
+          <span *ngIf="preview.backchannelTokenDeliveryMode" class="cimd-confirm-value cimd-confirm-mono"
+            >delivery mode: {{ preview.backchannelTokenDeliveryMode }}</span
+          >
+          <span *ngIf="preview.backchannelAuthRequestSignAlg" class="cimd-confirm-value cimd-confirm-mono"
+            >request signing: {{ preview.backchannelAuthRequestSignAlg }}</span
+          >
+          <span *ngIf="preview.backchannelClientNotificationEndpoint" class="cimd-confirm-value cimd-confirm-mono"
+            >notification endpoint: {{ preview.backchannelClientNotificationEndpoint }}</span
+          >
+          <span
+            *ngIf="preview.backchannelUserCodeParameter !== null && preview.backchannelUserCodeParameter !== undefined"
+            class="cimd-confirm-value cimd-confirm-mono"
+            >user_code parameter: {{ preview.backchannelUserCodeParameter }}</span
+          >
+        </dd>
+      </div>
+    </dl>
+
+    <ng-template #noneTpl>
+      <span class="cimd-confirm-value cimd-confirm-empty">—</span>
+    </ng-template>
+  </div>
 </div>

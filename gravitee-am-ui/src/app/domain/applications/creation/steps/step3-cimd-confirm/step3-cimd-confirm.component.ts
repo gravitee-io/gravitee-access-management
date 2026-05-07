@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 import { Component, Input } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+
+import { CimdMetadataDialogComponent, CimdMetadataDialogData } from './cimd-metadata-dialog.component';
+
+interface JwkDescriptor {
+  kid?: string;
+  kty?: string;
+  use?: string;
+  alg?: string;
+}
 
 @Component({
   selector: 'application-creation-step3-cimd-confirm',
@@ -24,11 +34,67 @@ import { Component, Input } from '@angular/core';
 export class ApplicationCreationStep3CimdConfirmComponent {
   @Input() application: any;
 
+  private parsedMetadataCache: any = null;
+  private parsedMetadataSource: string | null = null;
+
+  constructor(private readonly dialog: MatDialog) {}
+
   get preview(): any {
     return this.application?.cimdPreview ?? {};
   }
 
   get missing(): any {
     return this.preview?.missing ?? {};
+  }
+
+  get inlineJwks(): JwkDescriptor[] {
+    const meta = this.parsedMetadata();
+    const keys = meta?.jwks?.keys;
+    if (!Array.isArray(keys)) {
+      return [];
+    }
+    return keys.filter((k) => k && typeof k === 'object').map((k) => ({ kid: k.kid, kty: k.kty, use: k.use, alg: k.alg }));
+  }
+
+  openMetadataDialog(): void {
+    const json = this.formatMetadata();
+    if (!json) {
+      return;
+    }
+    this.dialog.open<CimdMetadataDialogComponent, CimdMetadataDialogData>(CimdMetadataDialogComponent, {
+      data: { url: this.preview?.url, json },
+      maxWidth: '900px',
+      width: '90vw',
+      autoFocus: 'first-tabbable',
+    });
+  }
+
+  private formatMetadata(): string {
+    const meta = this.parsedMetadata();
+    if (meta == null) {
+      return this.preview?.metadataJson ?? '';
+    }
+    try {
+      return JSON.stringify(meta, null, 2);
+    } catch (_) {
+      return this.preview?.metadataJson ?? '';
+    }
+  }
+
+  private parsedMetadata(): any {
+    const raw = this.preview?.metadataJson;
+    if (!raw) {
+      return null;
+    }
+    if (raw === this.parsedMetadataSource) {
+      return this.parsedMetadataCache;
+    }
+    try {
+      this.parsedMetadataCache = JSON.parse(raw);
+    } catch (_) {
+      this.parsedMetadataCache = null;
+    }
+    this.parsedMetadataSource = raw;
+    return this.parsedMetadataCache;
   }
 }
