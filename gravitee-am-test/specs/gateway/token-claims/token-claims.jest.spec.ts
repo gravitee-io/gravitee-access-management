@@ -16,13 +16,12 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { TokenClaimsFixture, setupTokenClaimsFixture } from './fixtures/token-claims-fixture';
 
 setup(200000);
-
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
   const parts = token.split('.');

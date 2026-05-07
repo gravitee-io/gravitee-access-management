@@ -17,13 +17,13 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import * as jose from 'jose';
 import crypto from 'crypto';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { setup } from '../../test-fixture';
 import { PrivateKeyJwtFixture, setupPrivateKeyJwtFixture } from './fixtures/private-key-jwt-fixture';
 import { privateJwk } from '@api-fixtures/oidc';
 
 setup(200000);
 
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 
 async function createPrivateKeyJwtAssertion(clientId: string, audience: string, privateKeyJwk: jose.JWK): Promise<string> {

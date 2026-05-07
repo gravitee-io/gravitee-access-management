@@ -25,6 +25,32 @@
     {
       "request": {
         "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/valid-refresh"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/valid-refresh",
+          "client_name": "CIMD Refresh Token Client",
+          "client_uri": "https://example.com/enabled-base-refresh",
+          "logo_uri": "http://wiremock:8080/cimd/logos/example.png",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "grant_types": [
+            "authorization_code",
+            "refresh_token"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "urlPath": "/cimd/logos/example.png"
       },
       "response": {

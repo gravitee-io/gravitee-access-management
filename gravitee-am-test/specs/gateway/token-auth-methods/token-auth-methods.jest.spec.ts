@@ -16,6 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { TokenAuthFixture, setupTokenAuthFixture } from './fixtures/token-auth-fixture';
@@ -23,8 +24,6 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto'; // Used for client_secret_jwt assertion JTI
 
 setup(200000);
-
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('Token Authentication Methods', () => {
   describe('client_secret_basic', () => {
