@@ -475,18 +475,6 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationSettings.setOauth(oAuthSettings);
         application.setSettings(applicationSettings);
 
-        if (newApplication.getIdentityProviders() != null && !newApplication.getIdentityProviders().isEmpty()) {
-            final TreeSet<ApplicationIdentityProvider> identities = new TreeSet<>();
-            int priority = 0;
-            for (String identityId : newApplication.getIdentityProviders()) {
-                ApplicationIdentityProvider link = new ApplicationIdentityProvider();
-                link.setIdentity(identityId);
-                link.setPriority(priority++);
-                identities.add(link);
-            }
-            application.setIdentityProviders(identities);
-        }
-
         applicationTemplateManager.apply(application);
         return application;
     }

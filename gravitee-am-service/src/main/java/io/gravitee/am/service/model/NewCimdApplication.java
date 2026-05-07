@@ -20,8 +20,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 /**
  * Payload for creating an application bootstrapped from a CIMD (Client Identity Metadata Document) URL.
  * The server fetches the URL, validates it against the domain's CIMD trust policy, and seeds the
@@ -44,7 +42,4 @@ public class NewCimdApplication {
 
     /** User-supplied client_name when the document does not provide one. */
     private String clientName;
-
-    /** Optional default identity provider IDs to attach to the new application. */
-    private List<String> identityProviders;
 }
