@@ -134,20 +134,6 @@
             >
           </mat-form-field>
         </div>
-        <div class="gv-form-section">
-          <div class="gv-form-section-title">
-            <h5>Identity Provider (optional)</h5>
-            <mat-divider></mat-divider>
-          </div>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Default Identity Provider</mat-label>
-            <mat-select name="cimd_idp" [(ngModel)]="application.cimdIdentityProvider">
-              <mat-option [value]="null">None</mat-option>
-              <mat-option *ngFor="let idp of identityProviders" [value]="idp.id">{{ idp.name }}</mat-option>
-            </mat-select>
-            <mat-hint>The identity provider used by default when authenticating users for this application.</mat-hint>
-          </mat-form-field>
-        </div>
       </ng-container>
     </form>
   </div>
