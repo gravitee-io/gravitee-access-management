@@ -207,6 +207,80 @@ public class CimdMetadataFetcherTest {
     }
 
     @Test
+    public void fetchAndValidate_kitchenSink_populatesExtendedMetadata() {
+        respondJson("""
+                {
+                  "client_name": "Acme Full",
+                  "redirect_uris": ["https://acme.example/cb"],
+                  "post_logout_redirect_uris": ["https://acme.example/post-logout"],
+                  "grant_types": ["authorization_code", "refresh_token"],
+                  "response_types": ["code"],
+                  "scope": "openid profile",
+                  "token_endpoint_auth_method": "tls_client_auth",
+                  "application_type": "web",
+                  "subject_type": "pairwise",
+                  "sector_identifier_uri": "https://acme.example/sector.json",
+                  "id_token_signed_response_alg": "RS256",
+                  "logo_uri": "https://acme.example/logo.png",
+                  "client_uri": "https://acme.example",
+                  "policy_uri": "https://acme.example/policy",
+                  "tos_uri": "https://acme.example/tos",
+                  "contacts": ["security@acme.example"],
+                  "request_uris": ["https://acme.example/request.jwt"],
+                  "software_id": "acme-id",
+                  "software_version": "2.4.1",
+                  "tls_client_auth_subject_dn": "CN=acme,O=Acme,C=US",
+                  "tls_client_certificate_bound_access_tokens": true,
+                  "backchannel_token_delivery_mode": "poll",
+                  "backchannel_authentication_request_signing_alg": "RS256",
+                  "backchannel_user_code_parameter": false
+                }
+                """);
+
+        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        CimdPreview p = obs.values().get(0);
+        assertEquals(List.of("https://acme.example/post-logout"), p.postLogoutRedirectUris());
+        assertEquals(List.of("security@acme.example"), p.contacts());
+        assertEquals(List.of("https://acme.example/request.jwt"), p.requestUris());
+        assertEquals("web", p.applicationType());
+        assertEquals("pairwise", p.subjectType());
+        assertEquals("https://acme.example/sector.json", p.sectorIdentifierUri());
+        assertEquals("RS256", p.idTokenSignedResponseAlg());
+        assertEquals("https://acme.example", p.clientUri());
+        assertEquals("https://acme.example/policy", p.policyUri());
+        assertEquals("https://acme.example/tos", p.tosUri());
+        assertEquals("acme-id", p.softwareId());
+        assertEquals("2.4.1", p.softwareVersion());
+        assertEquals("CN=acme,O=Acme,C=US", p.tlsClientAuthSubjectDn());
+        assertEquals(Boolean.TRUE, p.tlsClientCertificateBoundAccessTokens());
+        assertEquals("poll", p.backchannelTokenDeliveryMode());
+        assertEquals("RS256", p.backchannelAuthRequestSignAlg());
+        assertEquals(Boolean.FALSE, p.backchannelUserCodeParameter());
+        assertEquals(Boolean.FALSE, p.hasInlineJwks());
+    }
+
+    @Test
+    public void fetchAndValidate_inlineJwks_setsHasInlineJwksFlag() {
+        respondJson("""
+                {
+                  "redirect_uris": ["https://acme.example/cb"],
+                  "token_endpoint_auth_method": "private_key_jwt",
+                  "jwks": {"keys": []}
+                }
+                """);
+
+        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        CimdPreview p = obs.values().get(0);
+        assertEquals(Boolean.TRUE, p.hasInlineJwks());
+    }
+
+    @Test
     public void fetchAndValidate_responseExceedsMaxSize_fails() {
         StringBuilder big = new StringBuilder("{ \"redirect_uris\": [\"https://acme.example/cb\"], \"x\": \"");
         big.append("a".repeat(20_000));
