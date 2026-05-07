@@ -23,7 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.http.WebClientBuilder;
-import io.gravitee.am.service.model.CimdPreview;
+import io.gravitee.am.service.model.CimdClientMetadata;
 import io.gravitee.am.service.utils.vertx.BoundedBufferWriteStream;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
@@ -48,14 +48,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Fetches and validates a CIMD (Client Identity Metadata Document) URL from the management API
- * context, returning a {@link CimdPreview} suitable for surfacing in the application creation UI.
+ * context, returning a {@link CimdClientMetadata} suitable for surfacing in the application creation UI.
  *
  * <p>Mirrors the gateway-runtime trust + validation rules in
  * {@code CimdMetadataServiceImpl} / {@code CimdUriTrustValidator}, using the Vert.x
@@ -68,12 +67,6 @@ public class CimdMetadataFetcher {
     private static final Pattern URL_SHAPED = Pattern.compile("^https?://", Pattern.CASE_INSENSITIVE);
     private static final Pattern CACHE_CONTROL_MAX_AGE = Pattern.compile("(?:^|,)\\s*max-age\\s*=\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern CACHE_CONTROL_NO_STORE = Pattern.compile("(?:^|,)\\s*no-store\\s*(?:,|$)", Pattern.CASE_INSENSITIVE);
-    private static final Set<String> FORBIDDEN_SECRET_BASED_AUTH_METHODS = Set.of(
-            ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
-            ClientAuthenticationMethod.CLIENT_SECRET_POST,
-            ClientAuthenticationMethod.CLIENT_SECRET_JWT
-    );
-
     private final WebClient webClient;
 
     @Autowired
@@ -86,7 +79,7 @@ public class CimdMetadataFetcher {
         this.webClient = webClient;
     }
 
-    public Single<CimdPreview> fetchAndValidate(Domain domain, String rawUrl) {
+    public Single<CimdClientMetadata> fetchAndValidate(Domain domain, String rawUrl) {
         return Single.defer(() -> {
             if (domain == null || domain.getOidc() == null || domain.getOidc().getCimdSettings() == null) {
                 return Single.error(new InvalidClientMetadataException("CIMD settings are not configured for this domain."));
@@ -272,7 +265,7 @@ public class CimdMetadataFetcher {
         }
 
         final String tokenEndpointAuthMethod = optionalText(metadata, "token_endpoint_auth_method");
-        if (tokenEndpointAuthMethod != null && FORBIDDEN_SECRET_BASED_AUTH_METHODS.contains(tokenEndpointAuthMethod)) {
+        if (tokenEndpointAuthMethod != null && CimdValidationRules.FORBIDDEN_SECRET_BASED_AUTH_METHODS.contains(tokenEndpointAuthMethod)) {
             throw new InvalidClientMetadataException("Secret-based token_endpoint_auth_method is not allowed for CIMD clients.");
         }
 
@@ -284,12 +277,12 @@ public class CimdMetadataFetcher {
         }
     }
 
-    private CimdPreview toPreview(String url, JsonNode metadata, FetchResult fetched) {
+    private CimdClientMetadata toPreview(String url, JsonNode metadata, FetchResult fetched) {
         final String docClientId = optionalText(metadata, "client_id");
         final String docClientName = optionalText(metadata, "client_name");
         final boolean hasInlineJwks = metadata.has("jwks") && metadata.get("jwks").isObject();
 
-        final CimdPreview.Missing missing = new CimdPreview.Missing(
+        final CimdClientMetadata.Missing missing = new CimdClientMetadata.Missing(
                 docClientId == null || docClientId.isBlank(),
                 docClientName == null || docClientName.isBlank()
         );
@@ -301,7 +294,7 @@ public class CimdMetadataFetcher {
             throw new InvalidClientMetadataException("Unable to serialise client metadata response.");
         }
 
-        return new CimdPreview(
+        return new CimdClientMetadata(
                 url,
                 docClientId,
                 docClientName,

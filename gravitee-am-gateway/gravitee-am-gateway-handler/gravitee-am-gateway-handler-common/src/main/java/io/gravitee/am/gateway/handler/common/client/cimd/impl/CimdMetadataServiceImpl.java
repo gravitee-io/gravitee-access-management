@@ -31,6 +31,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.CimdMetadataDocumentService;
+import io.gravitee.am.service.cimd.CimdValidationRules;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
@@ -61,11 +62,6 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
 
     private static final Pattern CACHE_CONTROL_MAX_AGE = Pattern.compile("(?:^|,)\\s*max-age\\s*=\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern CACHE_CONTROL_NO_STORE = Pattern.compile("(?:^|,)\\s*no-store\\s*(?:,|$)", Pattern.CASE_INSENSITIVE);
-    private static final Set<String> FORBIDDEN_SECRET_BASED_AUTH_METHODS = Set.of(
-            ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
-            ClientAuthenticationMethod.CLIENT_SECRET_POST,
-            ClientAuthenticationMethod.CLIENT_SECRET_JWT
-    );
     private static final int FETCH_RETRY_ATTEMPTS = 3;
     private static final int FETCH_RETRY_DELAY_MS = 100;
     private static final String DEFAULT_TOKEN_ENDPOINT_AUTH_METHOD = ClientAuthenticationMethod.NONE;
@@ -234,7 +230,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                 "token_endpoint_auth_method",
                 DEFAULT_TOKEN_ENDPOINT_AUTH_METHOD
         );
-        if (FORBIDDEN_SECRET_BASED_AUTH_METHODS.contains(tokenEndpointAuthMethod)) {
+        if (CimdValidationRules.FORBIDDEN_SECRET_BASED_AUTH_METHODS.contains(tokenEndpointAuthMethod)) {
             throw new InvalidClientMetadataException("Secret-based token_endpoint_auth_method is not allowed for CIMD clients.");
         }
 

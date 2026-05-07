@@ -24,8 +24,6 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CimdMetadataDocumentRepository;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.cimd.CimdMetadataFetcher;
-import io.gravitee.am.service.model.CimdPreview;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -55,9 +53,6 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
 
     @Autowired
     private EventService eventService;
-
-    @Autowired
-    private CimdMetadataFetcher cimdMetadataFetcher;
 
     @Override
     public Maybe<CimdMetadataDocument> findByDomainAndClientId(String domainId, String clientId) {
@@ -113,11 +108,6 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
                     logger.error("Error deleting CIMD document for domain {} clientId {}", domainId, clientId, ex);
                     return Completable.error(ex);
                 });
-    }
-
-    @Override
-    public Single<CimdPreview> fetchAndValidate(Domain domain, String url) {
-        return cimdMetadataFetcher.fetchAndValidate(domain, url);
     }
 
     private Single<CimdMetadataDocument> publishEvent(CimdMetadataDocument saved, Domain domain, Action action) {

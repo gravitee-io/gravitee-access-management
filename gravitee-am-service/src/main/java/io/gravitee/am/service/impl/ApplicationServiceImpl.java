@@ -48,7 +48,7 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
-import io.gravitee.am.service.model.CimdPreview;
+import io.gravitee.am.service.model.CimdClientMetadata;
 import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.am.service.ApplicationTemplateManager;
 import io.gravitee.am.service.AuditService;
@@ -204,6 +204,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private CimdMetadataDocumentService cimdMetadataDocumentService;
+
+    @Autowired
+    private io.gravitee.am.service.cimd.CimdMetadataFetcher cimdMetadataFetcher;
 
     private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 
@@ -411,7 +414,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal) {
         LOGGER.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
-        return cimdMetadataDocumentService.fetchAndValidate(domain, newApplication.getCimdUrl())
+        return cimdMetadataFetcher.fetchAndValidate(domain, newApplication.getCimdUrl())
                 .flatMap(preview -> {
                     final Application application = buildCimdApplication(domain, newApplication, preview);
                     return create0(domain, application, principal)
@@ -433,7 +436,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdPreview preview) {
+    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview) {
         final String resolvedClientName = preview.clientName() != null && !preview.clientName().isBlank()
                 ? preview.clientName()
                 : newApplication.getClientName();
@@ -480,13 +483,28 @@ public class ApplicationServiceImpl implements ApplicationService {
         applyExtendedMetadata(preview, oAuthSettings);
 
         applicationSettings.setOauth(oAuthSettings);
+
+        // apply default SAML 2.0 settings (mirrors regular ApplicationService#create)
+        if (ApplicationType.SERVICE != application.getType() && preview.redirectUris() != null && !preview.redirectUris().isEmpty()) {
+            try {
+                final String url = preview.redirectUris().get(0);
+                ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
+                samlSettings.setEntityId(UriBuilder.fromHttpUrl(url).buildRootUrl());
+                samlSettings.setAttributeConsumeServiceUrl(url);
+                applicationSettings.setSaml(samlSettings);
+            } catch (Exception ex) {
+                // redirect_uri may use a custom scheme (e.g. mobile deep link); leave SAML unset.
+                LOGGER.debug("Could not generate SAML attribute consume service url from CIMD redirect_uri", ex);
+            }
+        }
+
         application.setSettings(applicationSettings);
 
         applicationTemplateManager.apply(application);
         return application;
     }
 
-    private void applyExtendedMetadata(CimdPreview preview, ApplicationOAuthSettings oAuthSettings) {
+    private void applyExtendedMetadata(CimdClientMetadata preview, ApplicationOAuthSettings oAuthSettings) {
         if (preview.postLogoutRedirectUris() != null && !preview.postLogoutRedirectUris().isEmpty()) {
             oAuthSettings.setPostLogoutRedirectUris(preview.postLogoutRedirectUris());
         }

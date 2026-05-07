@@ -21,7 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.model.CimdPreview;
+import io.gravitee.am.service.model.CimdClientMetadata;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -97,11 +97,11 @@ public class CimdMetadataFetcherTest {
                 }
                 """);
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertComplete();
 
-        CimdPreview preview = obs.values().get(0);
+        CimdClientMetadata preview = obs.values().get(0);
         assertEquals(url(), preview.url());
         assertEquals("Acme", preview.clientName());
         assertEquals(List.of("https://acme.example/cb"), preview.redirectUris());
@@ -120,11 +120,11 @@ public class CimdMetadataFetcherTest {
                 }
                 """);
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertComplete();
 
-        CimdPreview preview = obs.values().get(0);
+        CimdClientMetadata preview = obs.values().get(0);
         assertTrue(preview.missing().clientId());
         assertTrue(preview.missing().clientName());
     }
@@ -133,7 +133,7 @@ public class CimdMetadataFetcherTest {
     public void fetchAndValidate_missingRedirectUris_fails() {
         respondJson("{ \"client_id\": \"x\" }");
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
@@ -147,7 +147,7 @@ public class CimdMetadataFetcherTest {
                 }
                 """);
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
@@ -163,7 +163,7 @@ public class CimdMetadataFetcherTest {
             }
         });
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
@@ -175,21 +175,21 @@ public class CimdMetadataFetcherTest {
             exchange.close();
         });
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
 
     @Test
     public void fetchAndValidate_disabledDomain_fails() {
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(false), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(false), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
 
     @Test
     public void fetchAndValidate_nonHttpUrl_fails() {
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), "ftp://example.com/").test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), "ftp://example.com/").test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
@@ -201,7 +201,7 @@ public class CimdMetadataFetcherTest {
         Domain domain = domain(true);
         domain.getOidc().getCimdSettings().setAllowedDomains(List.of("only-this.example"));
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain, url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain, url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }
@@ -237,11 +237,11 @@ public class CimdMetadataFetcherTest {
                 }
                 """);
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertComplete();
 
-        CimdPreview p = obs.values().get(0);
+        CimdClientMetadata p = obs.values().get(0);
         assertEquals(List.of("https://acme.example/post-logout"), p.postLogoutRedirectUris());
         assertEquals(List.of("security@acme.example"), p.contacts());
         assertEquals(List.of("https://acme.example/request.jwt"), p.requestUris());
@@ -272,11 +272,11 @@ public class CimdMetadataFetcherTest {
                 }
                 """);
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertComplete();
 
-        CimdPreview p = obs.values().get(0);
+        CimdClientMetadata p = obs.values().get(0);
         assertEquals(Boolean.TRUE, p.hasInlineJwks());
     }
 
@@ -290,7 +290,7 @@ public class CimdMetadataFetcherTest {
         Domain domain = domain(true);
         domain.getOidc().getCimdSettings().setMaxResponseSizeKb(1);
 
-        TestObserver<CimdPreview> obs = fetcher.fetchAndValidate(domain, url()).test();
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain, url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
         obs.assertError(InvalidClientMetadataException.class);
     }

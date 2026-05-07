@@ -17,7 +17,6 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.model.CimdPreview;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -41,11 +40,4 @@ public interface CimdMetadataDocumentService {
     Single<CimdMetadataDocument> upsert(Domain domain, String clientId, String metadataJson, Duration ttl);
 
     Completable delete(String domainId, String clientId);
-
-    /**
-     * Fetches the CIMD document at {@code url} (server-side, with trust + size + timeout enforcement)
-     * and returns a parsed preview suitable for surfacing in the application creation UI. Does not
-     * persist the document.
-     */
-    Single<CimdPreview> fetchAndValidate(Domain domain, String url);
 }
