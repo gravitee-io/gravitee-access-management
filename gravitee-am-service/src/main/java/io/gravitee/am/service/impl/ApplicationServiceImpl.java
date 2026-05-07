@@ -65,7 +65,10 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.ApplicationTemplateInUseException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidRoleException;
@@ -123,6 +126,7 @@ import static org.springframework.util.StringUtils.hasText;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationServiceImpl.class);
+    private static final ObjectMapper CIMD_MAPPER = new ObjectMapper();
 
     /**
      * Allowed XML Encryption key transport URIs (aligned with Management UI SAML 2.0 settings).
@@ -472,11 +476,105 @@ public class ApplicationServiceImpl implements ApplicationService {
                     })
                     .toList());
         }
+
+        applyExtendedMetadata(preview, oAuthSettings);
+
         applicationSettings.setOauth(oAuthSettings);
         application.setSettings(applicationSettings);
 
         applicationTemplateManager.apply(application);
         return application;
+    }
+
+    private void applyExtendedMetadata(CimdPreview preview, ApplicationOAuthSettings oAuthSettings) {
+        if (preview.postLogoutRedirectUris() != null && !preview.postLogoutRedirectUris().isEmpty()) {
+            oAuthSettings.setPostLogoutRedirectUris(preview.postLogoutRedirectUris());
+        }
+        if (preview.contacts() != null && !preview.contacts().isEmpty()) {
+            oAuthSettings.setContacts(preview.contacts());
+        }
+        if (preview.requestUris() != null && !preview.requestUris().isEmpty()) {
+            oAuthSettings.setRequestUris(preview.requestUris());
+        }
+        if (preview.applicationType() != null) {
+            oAuthSettings.setApplicationType(preview.applicationType());
+        }
+        if (preview.subjectType() != null) {
+            oAuthSettings.setSubjectType(preview.subjectType());
+        }
+        if (preview.sectorIdentifierUri() != null) {
+            oAuthSettings.setSectorIdentifierUri(preview.sectorIdentifierUri());
+        }
+        if (preview.idTokenSignedResponseAlg() != null) {
+            oAuthSettings.setIdTokenSignedResponseAlg(preview.idTokenSignedResponseAlg());
+        }
+        if (preview.clientUri() != null) {
+            oAuthSettings.setClientUri(preview.clientUri());
+        }
+        if (preview.policyUri() != null) {
+            oAuthSettings.setPolicyUri(preview.policyUri());
+        }
+        if (preview.tosUri() != null) {
+            oAuthSettings.setTosUri(preview.tosUri());
+        }
+        if (preview.softwareId() != null) {
+            oAuthSettings.setSoftwareId(preview.softwareId());
+        }
+        if (preview.softwareVersion() != null) {
+            oAuthSettings.setSoftwareVersion(preview.softwareVersion());
+        }
+        if (preview.softwareStatement() != null) {
+            oAuthSettings.setSoftwareStatement(preview.softwareStatement());
+        }
+        if (preview.tlsClientAuthSubjectDn() != null) {
+            oAuthSettings.setTlsClientAuthSubjectDn(preview.tlsClientAuthSubjectDn());
+        }
+        if (preview.tlsClientAuthSanDns() != null) {
+            oAuthSettings.setTlsClientAuthSanDns(preview.tlsClientAuthSanDns());
+        }
+        if (preview.tlsClientAuthSanUri() != null) {
+            oAuthSettings.setTlsClientAuthSanUri(preview.tlsClientAuthSanUri());
+        }
+        if (preview.tlsClientAuthSanIp() != null) {
+            oAuthSettings.setTlsClientAuthSanIp(preview.tlsClientAuthSanIp());
+        }
+        if (preview.tlsClientAuthSanEmail() != null) {
+            oAuthSettings.setTlsClientAuthSanEmail(preview.tlsClientAuthSanEmail());
+        }
+        if (Boolean.TRUE.equals(preview.tlsClientCertificateBoundAccessTokens())) {
+            oAuthSettings.setTlsClientCertificateBoundAccessTokens(true);
+        }
+        if (preview.backchannelTokenDeliveryMode() != null) {
+            oAuthSettings.setBackchannelTokenDeliveryMode(preview.backchannelTokenDeliveryMode());
+        }
+        if (preview.backchannelClientNotificationEndpoint() != null) {
+            oAuthSettings.setBackchannelClientNotificationEndpoint(preview.backchannelClientNotificationEndpoint());
+        }
+        if (preview.backchannelAuthRequestSignAlg() != null) {
+            oAuthSettings.setBackchannelAuthRequestSignAlg(preview.backchannelAuthRequestSignAlg());
+        }
+        if (Boolean.TRUE.equals(preview.backchannelUserCodeParameter())) {
+            oAuthSettings.setBackchannelUserCodeParameter(true);
+        }
+        if (Boolean.TRUE.equals(preview.hasInlineJwks())) {
+            oAuthSettings.setJwks(parseInlineJwks(preview.metadataJson()));
+        }
+    }
+
+    private io.gravitee.am.model.oidc.JWKSet parseInlineJwks(String metadataJson) {
+        try {
+            JsonNode root = CIMD_MAPPER.readTree(metadataJson);
+            JsonNode jwksNode = root.get("jwks");
+            if (jwksNode == null || !jwksNode.isObject()) {
+                return null;
+            }
+            com.nimbusds.jose.jwk.JWKSet parsed = com.nimbusds.jose.jwk.JWKSet.parse(CIMD_MAPPER.writeValueAsString(jwksNode));
+            io.gravitee.am.model.oidc.JWKSet result = new io.gravitee.am.model.oidc.JWKSet();
+            result.setKeys(parsed.getKeys().stream().map(JWKConverter::convert).toList());
+            return result;
+        } catch (java.io.IOException | java.text.ParseException ex) {
+            throw new InvalidClientMetadataException("Unable to parse jwks content.");
+        }
     }
 
     @Override

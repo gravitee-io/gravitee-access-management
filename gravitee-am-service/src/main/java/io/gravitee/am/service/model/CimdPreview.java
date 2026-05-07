@@ -21,19 +21,44 @@ import java.util.List;
 /**
  * Parsed projection of a fetched CIMD metadata document, surfaced to the UI as a preview before
  * confirming application creation. The {@code metadataJson} carries the raw response body so the
- * subsequent create call can persist it without re-fetching.
+ * subsequent create call can persist and re-parse it (e.g. for inline {@code jwks}) without
+ * re-fetching.
  */
 public record CimdPreview(
         String url,
         String clientId,
         String clientName,
         List<String> redirectUris,
+        List<String> postLogoutRedirectUris,
         List<String> scopes,
         List<String> grantTypes,
         List<String> responseTypes,
+        List<String> contacts,
+        List<String> requestUris,
         String tokenEndpointAuthMethod,
+        String applicationType,
+        String subjectType,
+        String sectorIdentifierUri,
+        String idTokenSignedResponseAlg,
         String logoUri,
+        String clientUri,
+        String policyUri,
+        String tosUri,
         String jwksUri,
+        Boolean hasInlineJwks,
+        String softwareId,
+        String softwareVersion,
+        String softwareStatement,
+        String tlsClientAuthSubjectDn,
+        String tlsClientAuthSanDns,
+        String tlsClientAuthSanUri,
+        String tlsClientAuthSanIp,
+        String tlsClientAuthSanEmail,
+        Boolean tlsClientCertificateBoundAccessTokens,
+        String backchannelTokenDeliveryMode,
+        String backchannelClientNotificationEndpoint,
+        String backchannelAuthRequestSignAlg,
+        Boolean backchannelUserCodeParameter,
         Missing missing,
         String metadataJson,
         Duration ttl

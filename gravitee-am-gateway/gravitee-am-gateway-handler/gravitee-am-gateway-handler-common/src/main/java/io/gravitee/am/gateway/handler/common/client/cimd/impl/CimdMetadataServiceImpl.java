@@ -307,6 +307,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             synthesizedClient.setJwks(toModelJwkSet((JsonObject) jwksRaw));
         }
 
+        applyExtendedMetadata(metadata, synthesizedClient);
+
         synthesizedClient.setClientSecret(null);
         synthesizedClient.setClientSecrets(List.of());
         synthesizedClient.setSecretSettings(List.of());
@@ -316,6 +318,61 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         synthesizedClient.setCimdMetadataHash(calculateMetadataHash(metadata.encode()));
 
         return synthesizedClient;
+    }
+
+    private void applyExtendedMetadata(JsonObject metadata, Client client) {
+        applyOptionalString(metadata, "application_type", client::setApplicationType);
+        applyOptionalString(metadata, "subject_type", client::setSubjectType);
+        applyOptionalString(metadata, "sector_identifier_uri", client::setSectorIdentifierUri);
+        applyOptionalString(metadata, "id_token_signed_response_alg", client::setIdTokenSignedResponseAlg);
+        applyOptionalString(metadata, "client_uri", client::setClientUri);
+        applyOptionalString(metadata, "policy_uri", client::setPolicyUri);
+        applyOptionalString(metadata, "tos_uri", client::setTosUri);
+        applyOptionalString(metadata, "software_id", client::setSoftwareId);
+        applyOptionalString(metadata, "software_version", client::setSoftwareVersion);
+        applyOptionalString(metadata, "software_statement", client::setSoftwareStatement);
+        applyOptionalString(metadata, "tls_client_auth_subject_dn", client::setTlsClientAuthSubjectDn);
+        applyOptionalString(metadata, "tls_client_auth_san_dns", client::setTlsClientAuthSanDns);
+        applyOptionalString(metadata, "tls_client_auth_san_uri", client::setTlsClientAuthSanUri);
+        applyOptionalString(metadata, "tls_client_auth_san_ip", client::setTlsClientAuthSanIp);
+        applyOptionalString(metadata, "tls_client_auth_san_email", client::setTlsClientAuthSanEmail);
+        applyOptionalString(metadata, "backchannel_token_delivery_mode", client::setBackchannelTokenDeliveryMode);
+        applyOptionalString(metadata, "backchannel_client_notification_endpoint", client::setBackchannelClientNotificationEndpoint);
+        applyOptionalString(metadata, "backchannel_authentication_request_signing_alg", client::setBackchannelAuthRequestSignAlg);
+
+        Boolean tlsBoundTokens = optionalBoolean(metadata, "tls_client_certificate_bound_access_tokens");
+        if (tlsBoundTokens != null) {
+            client.setTlsClientCertificateBoundAccessTokens(tlsBoundTokens);
+        }
+        Boolean userCodeParam = optionalBoolean(metadata, "backchannel_user_code_parameter");
+        if (userCodeParam != null) {
+            client.setBackchannelUserCodeParameter(userCodeParam);
+        }
+
+        List<String> postLogoutRedirectUris = readOptionalStringArray(metadata, "post_logout_redirect_uris");
+        if (postLogoutRedirectUris != null && !postLogoutRedirectUris.isEmpty()) {
+            client.setPostLogoutRedirectUris(postLogoutRedirectUris);
+        }
+        List<String> contacts = readOptionalStringArray(metadata, "contacts");
+        if (contacts != null && !contacts.isEmpty()) {
+            client.setContacts(contacts);
+        }
+        List<String> requestUris = readOptionalStringArray(metadata, "request_uris");
+        if (requestUris != null && !requestUris.isEmpty()) {
+            client.setRequestUris(requestUris);
+        }
+    }
+
+    private static void applyOptionalString(JsonObject metadata, String key, java.util.function.Consumer<String> setter) {
+        String value = metadata.getString(key);
+        if (value != null && !value.isBlank()) {
+            setter.accept(value);
+        }
+    }
+
+    private static Boolean optionalBoolean(JsonObject metadata, String key) {
+        Object raw = metadata.getValue(key);
+        return (raw instanceof Boolean b) ? b : null;
     }
 
     private List<String> readRequiredStringArray(JsonObject metadata, String key) {

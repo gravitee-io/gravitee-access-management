@@ -287,13 +287,7 @@ public class CimdMetadataFetcher {
     private CimdPreview toPreview(String url, JsonNode metadata, FetchResult fetched) {
         final String docClientId = optionalText(metadata, "client_id");
         final String docClientName = optionalText(metadata, "client_name");
-        final List<String> redirectUris = readStringArray(metadata, "redirect_uris");
-        final List<String> grantTypes = readStringArray(metadata, "grant_types");
-        final List<String> responseTypes = readStringArray(metadata, "response_types");
-        final List<String> scopes = readScopes(metadata);
-        final String tokenEndpointAuthMethod = optionalText(metadata, "token_endpoint_auth_method");
-        final String logoUri = optionalText(metadata, "logo_uri");
-        final String jwksUri = optionalText(metadata, "jwks_uri");
+        final boolean hasInlineJwks = metadata.has("jwks") && metadata.get("jwks").isObject();
 
         final CimdPreview.Missing missing = new CimdPreview.Missing(
                 docClientId == null || docClientId.isBlank(),
@@ -311,17 +305,46 @@ public class CimdMetadataFetcher {
                 url,
                 docClientId,
                 docClientName,
-                redirectUris,
-                scopes,
-                grantTypes,
-                responseTypes,
-                tokenEndpointAuthMethod,
-                logoUri,
-                jwksUri,
+                readStringArray(metadata, "redirect_uris"),
+                readStringArray(metadata, "post_logout_redirect_uris"),
+                readScopes(metadata),
+                readStringArray(metadata, "grant_types"),
+                readStringArray(metadata, "response_types"),
+                readStringArray(metadata, "contacts"),
+                readStringArray(metadata, "request_uris"),
+                optionalText(metadata, "token_endpoint_auth_method"),
+                optionalText(metadata, "application_type"),
+                optionalText(metadata, "subject_type"),
+                optionalText(metadata, "sector_identifier_uri"),
+                optionalText(metadata, "id_token_signed_response_alg"),
+                optionalText(metadata, "logo_uri"),
+                optionalText(metadata, "client_uri"),
+                optionalText(metadata, "policy_uri"),
+                optionalText(metadata, "tos_uri"),
+                optionalText(metadata, "jwks_uri"),
+                hasInlineJwks,
+                optionalText(metadata, "software_id"),
+                optionalText(metadata, "software_version"),
+                optionalText(metadata, "software_statement"),
+                optionalText(metadata, "tls_client_auth_subject_dn"),
+                optionalText(metadata, "tls_client_auth_san_dns"),
+                optionalText(metadata, "tls_client_auth_san_uri"),
+                optionalText(metadata, "tls_client_auth_san_ip"),
+                optionalText(metadata, "tls_client_auth_san_email"),
+                optionalBoolean(metadata, "tls_client_certificate_bound_access_tokens"),
+                optionalText(metadata, "backchannel_token_delivery_mode"),
+                optionalText(metadata, "backchannel_client_notification_endpoint"),
+                optionalText(metadata, "backchannel_authentication_request_signing_alg"),
+                optionalBoolean(metadata, "backchannel_user_code_parameter"),
                 missing,
                 body,
                 fetched.ttl()
         );
+    }
+
+    private static Boolean optionalBoolean(JsonNode node, String key) {
+        final JsonNode value = node.get(key);
+        return (value != null && value.isBoolean()) ? value.asBoolean() : null;
     }
 
     private static String optionalText(JsonNode node, String key) {
