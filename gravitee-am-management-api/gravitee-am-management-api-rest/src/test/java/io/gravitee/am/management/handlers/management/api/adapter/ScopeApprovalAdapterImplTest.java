@@ -28,6 +28,7 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
@@ -58,9 +59,13 @@ class ScopeApprovalAdapterImplTest {
     private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(dataPlaneRegistry, mock());
     private final RevokeTokenManagementService revokeTokenManagementService = mock(RevokeTokenManagementService.class);
     private final ApplicationService appService = mock();
+    private final CimdMetadataDocumentService cimdMetadataDocumentService = mock();
+    private final ConsentApplicationEntityFactory consentApplicationEntityFactory =
+            new ConsentApplicationEntityFactory(appService, cimdMetadataDocumentService);
     private final ScopeService scopeService = mock();
 
-    private final ScopeApprovalAdapterImpl underTest = new ScopeApprovalAdapterImpl(scopeApprovalService, revokeTokenManagementService, appService, scopeService, dataPlaneRegistry);
+    private final ScopeApprovalAdapterImpl underTest = new ScopeApprovalAdapterImpl(scopeApprovalService,
+            revokeTokenManagementService, consentApplicationEntityFactory, scopeService, dataPlaneRegistry);
 
     @BeforeEach
     void setUp() {

@@ -62,6 +62,11 @@
           <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent" />
           <mat-hint>Remote Client User Agent</mat-hint>
         </mat-form-field>
+        <mat-form-field *ngIf="audit.actor?.attributes?.metadataDocumentHash" appearance="outline" floatLabel="always">
+          <mat-label>Metadata Document Hash</mat-label>
+          <input matInput placeholder="Metadata Document Hash" disabled [value]="audit.actor.attributes.metadataDocumentHash" />
+          <mat-hint>SHA-256 hash of the CIMD metadata document</mat-hint>
+        </mat-form-field>
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">

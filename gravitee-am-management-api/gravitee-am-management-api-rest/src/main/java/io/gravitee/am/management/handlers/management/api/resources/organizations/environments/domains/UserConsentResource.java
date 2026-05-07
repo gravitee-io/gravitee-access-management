@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
+import io.gravitee.am.management.handlers.management.api.adapter.ConsentApplicationEntityFactory;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
@@ -24,7 +25,6 @@ import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
@@ -58,7 +58,7 @@ public class UserConsentResource extends AbstractResource {
     private ScopeApprovalService scopeApprovalService;
 
     @Autowired
-    private ApplicationService applicationService;
+    private ConsentApplicationEntityFactory consentApplicationEntityFactory;
 
     @Autowired
     private RevokeTokenManagementService revokeTokenManagementService;
@@ -126,8 +126,6 @@ public class UserConsentResource extends AbstractResource {
 
 
     private Single<ApplicationEntity> getClient(String domain, String clientId) {
-        return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(ApplicationEntity::new)
-                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"));
+        return consentApplicationEntityFactory.resolve(domain, clientId);
     }
 }

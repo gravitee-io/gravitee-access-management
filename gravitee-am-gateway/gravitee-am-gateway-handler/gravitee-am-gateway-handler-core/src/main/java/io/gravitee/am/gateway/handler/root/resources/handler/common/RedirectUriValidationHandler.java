@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;

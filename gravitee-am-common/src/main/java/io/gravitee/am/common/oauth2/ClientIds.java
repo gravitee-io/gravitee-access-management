@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.client.cimd;
+package io.gravitee.am.common.oauth2;
 
 import io.gravitee.am.common.web.UriBuilder;
 
@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Utilities for client_id values that can be URLs.
+ * Utilities for client_id values that can be URLs (e.g. OAuth Client ID Metadata Document).
  */
 public final class ClientIds {
 

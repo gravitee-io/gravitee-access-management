@@ -46,11 +46,19 @@ public class CimdMetadataDocument {
     private Date updatedAt;
 
     public String getLogoUri() {
+        return getStringFromMetadata("logo_uri");
+    }
+
+    public String getClientName() {
+        return getStringFromMetadata("client_name");
+    }
+
+    private String getStringFromMetadata(String key) {
         if (metadata == null) {
             return null;
         }
         try {
-            return MAPPER.readTree(metadata).path("logo_uri").asText(null);
+            return MAPPER.readTree(metadata).path(key).asText(null);
         } catch (Exception ignored) {
             return null;
         }

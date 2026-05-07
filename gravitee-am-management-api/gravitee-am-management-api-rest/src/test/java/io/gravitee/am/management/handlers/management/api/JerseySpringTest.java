@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.adapter.ConsentApplicationEntityFactory;
 import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
@@ -279,6 +280,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected PasswordPolicyService passwordPolicyService;
+
+    @Autowired
+    protected ConsentApplicationEntityFactory consentApplicationEntityFactory;
 
     @Autowired
     protected ScopeApprovalAdapter scopeApprovalAdapter;
@@ -683,6 +687,11 @@ public abstract class JerseySpringTest {
         @Bean
         public AuthorizationEnginePluginService authorizationEnginePluginService() {
             return mock(AuthorizationEnginePluginService.class);
+        }
+
+        @Bean
+        public ConsentApplicationEntityFactory consentApplicationEntityFactory() {
+            return mock(ConsentApplicationEntityFactory.class);
         }
     }
 

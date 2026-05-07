@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent;
 
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;

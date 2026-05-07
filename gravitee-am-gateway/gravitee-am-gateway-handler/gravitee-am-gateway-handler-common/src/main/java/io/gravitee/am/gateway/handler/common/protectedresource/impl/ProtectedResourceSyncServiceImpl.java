@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.protectedresource.impl;
 
-import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.Domain;

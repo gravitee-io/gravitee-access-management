@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.cimd.resources.endpoint;
 import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
-import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.reactivex.rxjava3.core.Single;
