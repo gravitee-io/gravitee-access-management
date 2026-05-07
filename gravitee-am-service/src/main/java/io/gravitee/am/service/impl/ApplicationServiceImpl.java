@@ -29,7 +29,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
@@ -45,8 +44,12 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.CimdMetadataDocumentService;
+import io.gravitee.am.service.model.CimdPreview;
+import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.am.service.ApplicationTemplateManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateService;
@@ -194,6 +197,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
+
+    @Autowired
+    private CimdMetadataDocumentService cimdMetadataDocumentService;
 
     private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 
@@ -396,6 +402,93 @@ public class ApplicationServiceImpl implements ApplicationService {
                     LOGGER.error(ERROR_ON_CREATE, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
                 });
+    }
+
+    @Override
+    public Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal) {
+        LOGGER.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
+        return cimdMetadataDocumentService.fetchAndValidate(domain, newApplication.getCimdUrl())
+                .flatMap(preview -> {
+                    final Application application = buildCimdApplication(domain, newApplication, preview);
+                    return create0(domain, application, principal)
+                            .flatMap(created -> cimdMetadataDocumentService
+                                    .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
+                                    .map(doc -> created)
+                                    .onErrorResumeNext(ex -> {
+                                        LOGGER.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
+                                                created.getId(), preview.url(), ex.getMessage());
+                                        return Single.just(created);
+                                    }));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error(ERROR_ON_CREATE, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
+                });
+    }
+
+    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdPreview preview) {
+        final String resolvedClientName = preview.clientName() != null && !preview.clientName().isBlank()
+                ? preview.clientName()
+                : newApplication.getClientName();
+
+        Application application = new Application();
+        application.setId(RandomString.generate());
+        application.setName(newApplication.getName());
+        application.setDescription(newApplication.getDescription());
+        application.setType(newApplication.getType());
+        application.setDomain(domain.getId());
+
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(preview.url());
+        oAuthSettings.setRedirectUris(preview.redirectUris());
+        oAuthSettings.setClientName(resolvedClientName);
+        if (preview.tokenEndpointAuthMethod() != null) {
+            oAuthSettings.setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
+        } else {
+            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
+        }
+        if (preview.grantTypes() != null && !preview.grantTypes().isEmpty()) {
+            oAuthSettings.setGrantTypes(preview.grantTypes());
+        }
+        if (preview.responseTypes() != null && !preview.responseTypes().isEmpty()) {
+            oAuthSettings.setResponseTypes(preview.responseTypes());
+        }
+        if (preview.logoUri() != null) {
+            oAuthSettings.setLogoUri(preview.logoUri());
+        }
+        if (preview.jwksUri() != null) {
+            oAuthSettings.setJwksUri(preview.jwksUri());
+        }
+        if (preview.scopes() != null && !preview.scopes().isEmpty()) {
+            oAuthSettings.setScopeSettings(preview.scopes().stream()
+                    .map(scope -> {
+                        ApplicationScopeSettings s = new ApplicationScopeSettings();
+                        s.setScope(scope);
+                        return s;
+                    })
+                    .toList());
+        }
+        applicationSettings.setOauth(oAuthSettings);
+        application.setSettings(applicationSettings);
+
+        if (newApplication.getIdentityProviders() != null && !newApplication.getIdentityProviders().isEmpty()) {
+            final TreeSet<ApplicationIdentityProvider> identities = new TreeSet<>();
+            int priority = 0;
+            for (String identityId : newApplication.getIdentityProviders()) {
+                ApplicationIdentityProvider link = new ApplicationIdentityProvider();
+                link.setIdentity(identityId);
+                link.setPriority(priority++);
+                identities.add(link);
+            }
+            application.setIdentityProviders(identities);
+        }
+
+        applicationTemplateManager.apply(application);
+        return application;
     }
 
     @Override
