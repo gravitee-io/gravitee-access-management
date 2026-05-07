@@ -17,8 +17,6 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { find } from 'lodash';
 
-import { ProviderService } from '../../../../../services/provider.service';
-
 @Component({
   selector: 'application-creation-step2',
   templateUrl: './step2.component.html',
@@ -29,7 +27,6 @@ export class ApplicationCreationStep2Component implements OnInit {
   @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
-  identityProviders: any[] = [];
   applicationTypes: any[] = [
     {
       icon: 'language',
@@ -53,20 +50,12 @@ export class ApplicationCreationStep2Component implements OnInit {
     },
   ];
 
-  constructor(
-    private route: ActivatedRoute,
-    private providerService: ProviderService,
-  ) {}
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
     if (this.application.creationMode == null) {
       this.application.creationMode = 'manual';
-    }
-    if (this.cimdEnabled()) {
-      this.providerService.findByDomain(this.domain.id).subscribe((data) => {
-        this.identityProviders = (data ?? []).filter((idp) => !idp.external);
-      });
     }
   }
 
@@ -101,7 +90,6 @@ export class ApplicationCreationStep2Component implements OnInit {
       this.application.name = null;
     } else {
       this.application.cimdUrl = null;
-      this.application.cimdIdentityProvider = null;
       this.application.cimdPreview = null;
       this.application.cimdClientName = null;
     }

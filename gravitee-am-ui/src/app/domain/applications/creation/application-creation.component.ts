@@ -132,9 +132,6 @@ export class ApplicationCreationComponent implements OnInit {
     if (this.application?.cimdPreview?.missing?.clientName && this.application.cimdClientName) {
       payload.clientName = this.application.cimdClientName;
     }
-    if (this.application.cimdIdentityProvider) {
-      payload.identityProviders = [this.application.cimdIdentityProvider];
-    }
     this.applicationService.createFromCimd(this.application.domain, payload).subscribe(
       (data) => {
         this.snackbarService.open('Application ' + data.name + ' created');
