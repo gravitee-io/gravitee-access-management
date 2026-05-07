@@ -342,6 +342,7 @@ import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { User } from '@management-models/User';
 import { uniqueName } from '@utils-commands/misc';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 
 /**
  * Fixture interface defining all resources and helper methods available to tests
@@ -383,8 +384,6 @@ export const FEATURE_TEST = {
  * Helper function to setup test environment (domain, IDP)
  * Uses setupDomainForTest which handles create, start, readiness polling, and OIDC config.
  */
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
-
 async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toMatch(JWT_FORMAT);

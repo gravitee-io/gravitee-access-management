@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { setup } from '../../test-fixture';
@@ -20,8 +21,6 @@ import { MtlsAuthFixture, postWithClientCert, setupMtlsAuthFixture } from './fix
 import { readCert } from '@utils/certificate-utils';
 
 setup(300000);
-
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('mTLS OAuth Client Authentication (RFC 8705)', () => {
   let fixture: MtlsAuthFixture;

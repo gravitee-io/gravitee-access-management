@@ -18,14 +18,13 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { updateApplication } from '@management-commands/application-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { IdpLoginFixture, setupIdpLoginFixture } from './fixtures/idp-login-fixture';
 
 // 200s: multiple fixture setups with domain start + sync waits
 setup(200000);
-
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('IdP Login Flows', () => {
   describe('Single Internal IdP', () => {

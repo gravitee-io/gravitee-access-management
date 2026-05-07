@@ -20,13 +20,12 @@ import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { FlowPolicyFixture, setupFlowPolicyFixture } from './fixture/flow-policy-fixture';
 
 setup(200000);
-
-const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('Flow Policy Execution', () => {
   let fixture: FlowPolicyFixture;
