@@ -222,6 +222,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(ApplicationsResource.class);
     }
 
+    @Path("cimd")
+    public CimdResource getCimdResource() {
+        return resourceContext.getResource(CimdResource.class);
+    }
+
     @Path("protected-resources")
     public ProtectedResourcesResource getProtectedResourcesResource() {
         return resourceContext.getResource(ProtectedResourcesResource.class);

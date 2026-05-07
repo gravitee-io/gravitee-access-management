@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewApplication;
+import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -68,6 +69,13 @@ public interface ApplicationService {
     Single<Application> create(Domain domain, NewApplication newApplication, User principal);
 
     Single<Application> create(Domain domain, Application application);
+
+    /**
+     * Bootstraps an application from a CIMD URL: server-side fetches + validates the document,
+     * builds the application with {@code clientId} set to the URL, persists it, then upserts the
+     * {@link io.gravitee.am.model.CimdMetadataDocument} cache entry.
+     */
+    Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal);
 
     Single<Application> update(Application application);
 
