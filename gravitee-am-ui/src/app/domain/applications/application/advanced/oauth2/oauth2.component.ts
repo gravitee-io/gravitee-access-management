@@ -31,7 +31,7 @@ export class ApplicationOAuth2Component implements OnDestroy {
   navLinks: any = [
     { href: 'grantFlows', label: 'Grant flows', icon: 'more_vert' },
     { href: 'scopes', label: 'Scopes', icon: 'transform' },
-    { href: 'tokens', label: 'Tokens', icon: 'swap_horiz' },
+    { href: 'tokens', label: 'Tokens & User Profile', icon: 'swap_horiz' },
   ];
   constructor(
     private router: Router,

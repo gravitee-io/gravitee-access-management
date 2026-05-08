@@ -20,7 +20,7 @@
     <form (keydown.enter)="(false)" (ngSubmit)="patch()">
       <div class="gv-form-section">
         <div class="gv-form-section-title">
-          <h5>Tokens</h5>
+          <h5>Tokens & User Profile</h5>
           <mat-divider></mat-divider>
         </div>
 
@@ -78,9 +78,7 @@
             <h5 style="margin: 0">Custom claims</h5>
             <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
           </div>
-          <small
-            >You can add custom claims to the tokens (ID Token and Access Token) by picking attributes from the execution context.</small
-          >
+          <small>You can add custom claims to the tokens (ID Token, Access Token) by picking attributes from the execution context.</small>
           <mat-divider></mat-divider>
         </div>
         <div class="token-custom-claims">
@@ -93,7 +91,7 @@
             class="material"
             [columnMode]="'flex'"
             [headerHeight]="40"
-            [rowHeight]="55"
+            [rowHeight]="'auto'"
             [messages]="{ emptyMessage: 'There is no custom claims' }"
             [rows]="applicationOauthSettings.tokenCustomClaims"
             [groupRowsBy]="'tokenType'"
@@ -117,7 +115,7 @@
               </ng-template>
             </ngx-datatable-group-header>
 
-            <ngx-datatable-column name="Claims" [flexGrow]="2">
+            <ngx-datatable-column name="Claims" [flexGrow]="1">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <span (dblclick)="editing[row.id + '-claimName'] = true" *ngIf="!editing[row.id + '-claimName']">
                   {{ row.claimName }}
@@ -139,12 +137,11 @@
             <ngx-datatable-column name="" [flexGrow]="4">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <pre
-                  style="margin: 0; white-space: normal; font-size: 12px"
+                  style="margin: 0; white-space: normal; word-break: break-all; font-size: 12px"
                   (dblclick)="editing[row.id + '-claimValue'] = true"
                   *ngIf="!editing[row.id + '-claimValue']"
+                  >{{ row.claimValue }}</pre
                 >
-                  {{ row.claimValue }}
-                </pre>
                 <mat-form-field *ngIf="editing[row.id + '-claimValue']" class="datatable-input">
                   <input
                     matInput
@@ -161,8 +158,86 @@
             </ngx-datatable-column>
             <ngx-datatable-column name="" [flexGrow]="1">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                <div fxLayout="row" class="gv-table-cell-actions" *ngIf="!readonly">
+                <div fxLayout="row" fxLayoutAlign="end center" class="gv-table-cell-actions" *ngIf="!readonly">
                   <button mat-icon-button (click)="deleteClaim(row.tokenType, row.claimName, $event)"><mat-icon>close</mat-icon></button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <div fxLayout="row" style="align-items: center">
+            <h5 style="margin: 0">Userinfo claims</h5>
+            <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
+          </div>
+          <small
+            >Claims returned from the OIDC <span class="code">/userinfo</span> endpoint. Use these to expose user-profile attributes from
+            the execution context.</small
+          >
+          <mat-divider></mat-divider>
+        </div>
+        <div class="token-custom-claims">
+          <app-create-userinfo-claim *ngIf="!readonly" (addClaimChange)="addUserInfoClaim($event)"></app-create-userinfo-claim>
+          <p *ngIf="!userInfoClaimsIsEmpty() && !readonly">
+            <small><i>Double click to edit and press enter to save changes</i></small>
+          </p>
+          <ngx-datatable
+            #userinfoClaimsTable
+            class="material"
+            [columnMode]="'flex'"
+            [headerHeight]="40"
+            [rowHeight]="'auto'"
+            [messages]="{ emptyMessage: 'There is no userinfo claims' }"
+            [rows]="applicationOauthSettings.userinfoCustomClaims"
+          >
+            <ngx-datatable-column name="Claims" [flexGrow]="1">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <span (dblclick)="editing[row.id + '-userinfo-claimName'] = true" *ngIf="!editing[row.id + '-userinfo-claimName']">
+                  {{ row.claimName }}
+                </span>
+                <mat-form-field *ngIf="editing[row.id + '-userinfo-claimName']" class="datatable-input">
+                  <input
+                    matInput
+                    type="text"
+                    required
+                    autofocus
+                    placeholder="Claim name"
+                    (keyup.enter)="updateUserInfoClaim($event, 'claimName', row.id)"
+                    (blur)="editing[row.id + '-userinfo-claimName'] = false"
+                    [value]="row.claimName"
+                  />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="4">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <pre
+                  style="margin: 0; white-space: normal; word-break: break-all; font-size: 12px"
+                  (dblclick)="editing[row.id + '-userinfo-claimValue'] = true"
+                  *ngIf="!editing[row.id + '-userinfo-claimValue']"
+                  >{{ row.claimValue }}</pre
+                >
+                <mat-form-field *ngIf="editing[row.id + '-userinfo-claimValue']" class="datatable-input">
+                  <input
+                    matInput
+                    type="text"
+                    required
+                    autofocus
+                    placeholder="Claim value"
+                    (keyup.enter)="updateUserInfoClaim($event, 'claimValue', row.id)"
+                    (blur)="editing[row.id + '-userinfo-claimValue'] = false"
+                    [value]="row.claimValue"
+                  />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" fxLayoutAlign="end center" class="gv-table-cell-actions" *ngIf="!readonly">
+                  <button mat-icon-button (click)="deleteUserInfoClaim(row.claimName, $event)"><mat-icon>close</mat-icon></button>
                 </div>
               </ng-template>
             </ngx-datatable-column>
@@ -178,7 +253,7 @@
   <div class="gv-page-description" fxFlex>
     <h3>OAuth 2.0 / OpenID Connect</h3>
     <div class="gv-page-description-content">
-      <h4>Tokens</h4>
+      <h4>Tokens & User Profile</h4>
       <p>The ID Token is a JSON Web Token (JWT) that contains claims (user profile information) about the End-User.</p>
       <p>
         You must provide the OAuth 2 scope <span class="code">openid</span> in order to get the <span class="code">id_token</span> which
@@ -191,6 +266,10 @@
         <b><i>exp:</i></b> Expiration time on or after which the ID Token MUST NOT be accepted for processing.<br />
         <b><i>iat:</i></b> Time at which the JWT was issued.<br />
       </small>
+      <p>
+        Use the <b>Userinfo claims</b> section to expose claims returned from the OIDC <span class="code">/userinfo</span> endpoint instead
+        of embedding them in a token.
+      </p>
     </div>
   </div>
 </div>
