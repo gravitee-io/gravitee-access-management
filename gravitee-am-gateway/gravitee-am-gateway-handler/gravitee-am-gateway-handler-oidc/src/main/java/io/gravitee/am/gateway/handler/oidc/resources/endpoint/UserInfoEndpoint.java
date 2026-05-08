@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.EncodedJWT;
+import io.gravitee.am.common.jwt.EvaluableJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
@@ -25,16 +26,27 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.oauth2.service.el.ExecutionContextTokenEnhancer;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
+import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -51,6 +63,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -77,6 +90,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private final JWEService jweService;
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final SubjectManager subjectManager;
+    private final ExecutionContextFactory executionContextFactory;
 
     private final boolean legacyOpenidScope;
 
@@ -85,13 +99,15 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                             JWEService jweService,
                             OpenIDDiscoveryService openIDDiscoveryService,
                             Environment environment,
-                            SubjectManager subjectManager) {
+                            SubjectManager subjectManager,
+                            ExecutionContextFactory executionContextFactory) {
         this.userEnhancer = userEnhancer;
         this.jwtService = jwtService;
         this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.legacyOpenidScope = environment.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false);
         this.subjectManager = subjectManager;
+        this.executionContextFactory = executionContextFactory;
     }
 
     @Override
@@ -103,13 +119,13 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                 // enhance user information
                 .flatMap(user -> enhance(user, accessToken))
                 // process user claims
-                .map(user -> Tuple.of(user, processClaims(user, accessToken)))
+                .map(user -> {
+                    var claims = processClaims(user, accessToken);
+                    var jwt = createJWT(Tuple.of(user, claims));
+                    return processCustomClaims(jwt, accessToken, user, client, context);
+                })
                 // encode response
-                .flatMap(tuple -> {
-                            final var user = tuple.getT1();
-                            final var claims = tuple.getT2();
-                            final var jwt = new JWT(claims);
-                            subjectManager.updateJWT(jwt, user);
+                .flatMap(jwt -> {
                             if (!expectSignedOrEncryptedUserInfo(client)) {
                                 context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
                                 return Single.just(Json.encodePrettily(jwt));
@@ -138,6 +154,47 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                 );
     }
 
+    private JWT createJWT(Tuple<User, Map<String, Object>> tuple) {
+        final var user = tuple.getT1();
+        final var claims = tuple.getT2();
+        final var jwt = new JWT(claims);
+        subjectManager.updateJWT(jwt, user);
+        return jwt;
+    }
+
+    private JWT processCustomClaims(JWT userInfoJwt,
+                                    JWT accessToken,
+                                    User user,
+                                    Client client,
+                                    RoutingContext context) {
+        List<UserInfoClaim> customClaims = client.getUserinfoCustomClaims();
+        if (customClaims == null || customClaims.isEmpty()) {
+            return userInfoJwt;
+        }
+        ExecutionContextTokenEnhancer executionContextTokenEnhancer = new ExecutionContextTokenEnhancer();
+        ExecutionContext executionContext = prepareContext(context, client, user, accessToken);
+        executionContextTokenEnhancer.enhanceToken(userInfoJwt, customClaims, executionContext);
+        return userInfoJwt;
+    }
+
+    private ExecutionContext prepareContext(RoutingContext routingContext, Client client, User user, JWT accessToken) {
+        io.vertx.core.http.HttpServerRequest request = routingContext.request().getDelegate();
+        Request serverRequest = new VertxHttpServerRequest(request);
+        Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
+        ExecutionContext simpleExecutionContext = new SimpleExecutionContext(serverRequest, serverResponse);
+        ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+        executionContext.getAttributes().putAll(getEvaluableAttributes(routingContext));
+        // add current context attributes
+        executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
+        if (user != null) {
+            executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user, false));
+        }
+        if(executionContext.getAttributes().get(ConstantKeys.TOKEN_CONTEXT_KEY) instanceof JWT jwt){
+            executionContext.getAttributes().put(ConstantKeys.TOKEN_CONTEXT_KEY, new EvaluableJWT(jwt));
+        }
+        return executionContext;
+    }
+
     /**
      * Process user claims against user data and access token information
      * @param user the end user
@@ -145,8 +202,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return user claims
      */
     private Map<String, Object> processClaims(User user, JWT accessToken) {
-        final Map<String, Object> additionalInfos = ofNullable(user.getAdditionalInformation()).orElse(Map.of());
-        final Map<String, Object> fullProfileClaims = new HashMap<>(additionalInfos);
+        final Map<String, Object> fullProfileClaims = new HashMap<>(ofNullable(user.getAdditionalInformation()).orElse(Map.of()));
 
         // to be sure that this sub value coming from the IDP will not override the one provided by AM
         // we explicitly remove it from the additional info.

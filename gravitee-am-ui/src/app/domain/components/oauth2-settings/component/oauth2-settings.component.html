@@ -54,7 +54,7 @@
           </app-scopes-settings>
         </div>
       </mat-tab>
-      <mat-tab label="Tokens">
+      <mat-tab label="{{ oauth2Service.getContext() === 'Application' ? 'Tokens & User Profile' : 'Tokens' }}">
         <div class="tab-content">
           <app-tokens-settings
             [oauthSettings]="oauthSettings"

@@ -34,3 +34,20 @@ export class CreateClaimComponent {
     this.form.reset(this.claim);
   }
 }
+
+@Component({
+  selector: 'app-create-userinfo-claim',
+  templateUrl: './add-userinfo-claim.component.html',
+  standalone: false,
+})
+export class CreateUserinfoClaimComponent {
+  claim: any = {};
+  @Output() addClaimChange = new EventEmitter();
+  @ViewChild('claimForm', { static: true }) form: NgForm;
+
+  addClaim() {
+    this.addClaimChange.emit(this.claim);
+    this.claim = {};
+    this.form.reset(this.claim);
+  }
+}

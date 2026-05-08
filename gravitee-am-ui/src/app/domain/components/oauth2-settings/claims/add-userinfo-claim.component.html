@@ -17,13 +17,6 @@
 -->
 <form #claimForm="ngForm" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px">
   <div fxLayout="row" fxLayoutGap="5px" fxLayoutAlign="flex-start flex-start">
-    <mat-form-field appearance="outline" fxFlex="2 1 0">
-      <mat-select placeholder="Token Type" name="tokenType" required [(ngModel)]="claim.tokenType">
-        <mat-option *ngFor="let tokenType of tokenTypes" [value]="tokenType">
-          {{ tokenType | uppercase }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
     <mat-form-field appearance="outline" fxFlex="3 1 0">
       <input matInput name="claimName" placeholder="Claim name" required [(ngModel)]="claim.claimName" />
       <mat-hint>The claim's name.</mat-hint>

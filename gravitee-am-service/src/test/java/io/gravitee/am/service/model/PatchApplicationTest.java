@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -27,6 +28,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -237,6 +239,53 @@ public class PatchApplicationTest {
 
         //apply patch
         patch.patch(toPatch);
+    }
+
+    @Test
+    public void patch_applies_userinfoCustomClaims_when_present() {
+        List<UserInfoClaim> patchedClaims = List.of(UserInfoClaim.of("custom", "#expr"));
+
+        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
+        oauthPatch.setUserinfoCustomClaims(Optional.of(patchedClaims));
+
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setOauth(Optional.of(oauthPatch));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(settingsPatch));
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setOauth(new ApplicationOAuthSettings());
+        toPatch.setSettings(appSettings);
+
+        Application result = patch.patch(toPatch);
+
+        assertEquals(patchedClaims, result.getSettings().getOauth().getUserinfoCustomClaims());
+    }
+
+    @Test
+    public void patch_leaves_userinfoCustomClaims_untouched_when_optional_empty() {
+        List<UserInfoClaim> existing = List.of(UserInfoClaim.of("kept", "#kept"));
+
+        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
+        // not setting userinfoCustomClaims — Optional remains null
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setOauth(Optional.of(oauthPatch));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(settingsPatch));
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        ApplicationOAuthSettings existingOauth = new ApplicationOAuthSettings();
+        existingOauth.setUserinfoCustomClaims(existing);
+        appSettings.setOauth(existingOauth);
+        toPatch.setSettings(appSettings);
+
+        Application result = patch.patch(toPatch);
+
+        assertEquals(existing, result.getSettings().getOauth().getUserinfoCustomClaims());
     }
 
 }

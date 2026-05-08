@@ -74,6 +74,7 @@ public class ApplicationOAuthSettingsMongo {
     private int refreshTokenValiditySeconds;
     private int idTokenValiditySeconds;
     private List<TokenClaimMongo> tokenCustomClaims;
+    private List<UserInfoClaimMongo> userinfoCustomClaims;
     private String tlsClientAuthSubjectDn;
     private String tlsClientAuthSanDns;
     private String tlsClientAuthSanUri;
@@ -481,6 +482,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTokenCustomClaims(List<TokenClaimMongo> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public List<UserInfoClaimMongo> getUserinfoCustomClaims() {
+        return userinfoCustomClaims;
+    }
+
+    public void setUserinfoCustomClaims(List<UserInfoClaimMongo> userinfoCustomClaims) {
+        this.userinfoCustomClaims = userinfoCustomClaims;
     }
 
     public String getTlsClientAuthSubjectDn() {

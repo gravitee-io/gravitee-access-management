@@ -35,6 +35,7 @@ export class TokensComponent implements OnInit {
   @Output() formChanged = new EventEmitter<boolean>();
 
   @ViewChild('claimsTable') table: any;
+  @ViewChild('userinfoClaimsTable') userinfoTable: any;
   editing: any = {};
 
   claimTokenTypes: string[] = [];
@@ -47,6 +48,7 @@ export class TokensComponent implements OnInit {
   ngOnInit() {
     this.oauthSettings = this.oauthSettings || {};
     this.oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims || [];
+    this.oauthSettings.userinfoCustomClaims = this.oauthSettings.userinfoCustomClaims || [];
 
     if (this.context === 'McpServer') {
       this.claimTokenTypes = ['access_token'];
@@ -55,6 +57,7 @@ export class TokensComponent implements OnInit {
     }
 
     this.initCustomClaims();
+    this.initUserInfoCustomClaims();
   }
 
   addClaim(claim) {
@@ -110,6 +113,49 @@ export class TokensComponent implements OnInit {
     this.dialog.open(ClaimsInfoDialogComponent, {});
   }
 
+  addUserInfoClaim(claim) {
+    if (claim) {
+      if (!this.userInfoClaimExists(claim)) {
+        claim.id = Math.random().toString(36).substring(7);
+        this.oauthSettings.userinfoCustomClaims.push(claim);
+        this.oauthSettings.userinfoCustomClaims = [...this.oauthSettings.userinfoCustomClaims];
+        this.modelChanged();
+      } else {
+        this.snackbarService.open('Claim already exists');
+      }
+    }
+  }
+
+  userInfoClaimExists(claim): boolean {
+    return find(this.oauthSettings.userinfoCustomClaims, function (el) {
+      return el.claimName === claim.claimName;
+    });
+  }
+
+  updateUserInfoClaim(event, cell, rowIndex) {
+    const claim = event.target.value;
+    if (claim) {
+      this.editing[rowIndex + '-userinfo-' + cell] = false;
+      const index = findIndex(this.oauthSettings.userinfoCustomClaims, { id: rowIndex });
+      this.oauthSettings.userinfoCustomClaims[index][cell] = claim;
+      this.oauthSettings.userinfoCustomClaims = [...this.oauthSettings.userinfoCustomClaims];
+      this.modelChanged();
+    }
+  }
+
+  deleteUserInfoClaim(key, event) {
+    event.preventDefault();
+    remove(this.oauthSettings.userinfoCustomClaims, function (el: any) {
+      return el.claimName === key;
+    });
+    this.oauthSettings.userinfoCustomClaims = [...this.oauthSettings.userinfoCustomClaims];
+    this.modelChanged();
+  }
+
+  userInfoClaimsIsEmpty() {
+    return this.oauthSettings.userinfoCustomClaims.length === 0;
+  }
+
   modelChanged() {
     this.formChanged.emit(true);
     // clean claims before emitting
@@ -123,12 +169,28 @@ export class TokensComponent implements OnInit {
         return rest;
       });
     }
+    if (settingsToEmit.userinfoCustomClaims && settingsToEmit.userinfoCustomClaims.length > 0) {
+      settingsToEmit.userinfoCustomClaims = settingsToEmit.userinfoCustomClaims.map((c) => {
+        const { id, ...rest } = c;
+        return rest;
+      });
+    }
     this.settingsChange.emit(settingsToEmit);
   }
 
   private initCustomClaims() {
     if (this.oauthSettings.tokenCustomClaims.length > 0) {
       this.oauthSettings.tokenCustomClaims.forEach((claim) => {
+        if (!claim.id) {
+          claim.id = Math.random().toString(36).substring(7);
+        }
+      });
+    }
+  }
+
+  private initUserInfoCustomClaims() {
+    if (this.oauthSettings.userinfoCustomClaims.length > 0) {
+      this.oauthSettings.userinfoCustomClaims.forEach((claim) => {
         if (!claim.id) {
           claim.id = Math.random().toString(36).substring(7);
         }
