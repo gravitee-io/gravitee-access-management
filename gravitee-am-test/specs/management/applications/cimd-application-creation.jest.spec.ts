@@ -97,10 +97,12 @@ describe('CIMD application creation', () => {
     expect(status).toBe(200);
     expect(body).toMatchObject({
       url: VALID_CIMD_URL,
-      clientId: VALID_CIMD_URL,
-      redirectUris: ['https://client.example.com/callback'],
-      tokenEndpointAuthMethod: 'none',
       missing: { clientId: false, clientName: false },
+      metadata: {
+        client_id: VALID_CIMD_URL,
+        redirect_uris: ['https://client.example.com/callback'],
+        token_endpoint_auth_method: 'none',
+      },
     });
   });
 
