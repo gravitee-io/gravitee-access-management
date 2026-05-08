@@ -288,6 +288,7 @@ import {
   ApplicationTokensComponent,
   ClaimsInfoDialogComponent,
   CreateClaimComponent,
+  CreateUserinfoClaimComponent,
 } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
@@ -516,6 +517,7 @@ import { DomainStoreService } from './stores/domain.store';
     LogoutCallbackComponent,
     BreadcrumbComponent,
     CreateClaimComponent,
+    CreateUserinfoClaimComponent,
     CertificateCreationComponent,
     CertificateComponent,
     CertificateCreationStep1Component,
