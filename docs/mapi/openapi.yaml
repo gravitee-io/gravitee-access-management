@@ -3658,6 +3658,10 @@ paths:
       responses:
         "200":
           description: Document validated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CimdValidationResponse"
         "400":
           description: Document invalid or untrusted
         "500":
@@ -13008,6 +13012,99 @@ components:
       properties:
         url:
           type: string
+    CimdValidationResponse:
+      type: object
+      properties:
+        hasInlineJwks:
+          type: boolean
+        metadata:
+          $ref: "#/components/schemas/ClientMetadata"
+        missing:
+          $ref: "#/components/schemas/Missing"
+        url:
+          type: string
+    ClientMetadata:
+      type: object
+      properties:
+        application_type:
+          type: string
+        backchannel_authentication_request_signing_alg:
+          type: string
+        backchannel_client_notification_endpoint:
+          type: string
+        backchannel_token_delivery_mode:
+          type: string
+        backchannel_user_code_parameter:
+          type: boolean
+        client_id:
+          type: string
+        client_name:
+          type: string
+        client_uri:
+          type: string
+        contacts:
+          type: array
+          items:
+            type: string
+        grant_types:
+          type: array
+          items:
+            type: string
+        id_token_signed_response_alg:
+          type: string
+        jwks_uri:
+          type: string
+        logo_uri:
+          type: string
+        policy_uri:
+          type: string
+        post_logout_redirect_uris:
+          type: array
+          items:
+            type: string
+        redirect_uris:
+          type: array
+          items:
+            type: string
+        request_uris:
+          type: array
+          items:
+            type: string
+        response_types:
+          type: array
+          items:
+            type: string
+        scope:
+          type: string
+        sector_identifier_uri:
+          type: string
+        software_id:
+          type: string
+        software_statement:
+          type: string
+        software_version:
+          type: string
+        subject_type:
+          type: string
+        tls_client_auth_san_dns:
+          type: string
+        tls_client_auth_san_email:
+          type: string
+        tls_client_auth_san_ip:
+          type: string
+        tls_client_auth_san_uri:
+          type: string
+        tls_client_auth_subject_dn:
+          type: string
+        tls_client_certificate_bound_access_tokens:
+          type: boolean
+        token_endpoint_auth_method:
+          type: string
+        tos_uri:
+          type: string
+      additionalProperties: true
+      description: OAuth 2.0 client metadata as defined in the IANA OAuth Parameters
+        registry (https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml#client-metadata).
     ClientRegistrationSettings:
       type: object
       properties:
@@ -14049,6 +14146,13 @@ components:
             type: object
             additionalProperties:
               type: object
+    Missing:
+      type: object
+      properties:
+        clientId:
+          type: boolean
+        clientName:
+          type: boolean
     ModifiedCertificateEntity:
       type: object
       properties:
