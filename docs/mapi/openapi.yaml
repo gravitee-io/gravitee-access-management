@@ -12437,6 +12437,10 @@ components:
           $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         tosUri:
           type: string
+        userinfoCustomClaims:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInfoClaim"
         userinfoEncryptedResponseAlg:
           type: string
         userinfoEncryptedResponseEnc:
@@ -15413,6 +15417,10 @@ components:
           $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         tosUri:
           type: string
+        userinfoCustomClaims:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInfoClaim"
         userinfoEncryptedResponseAlg:
           type: string
         userinfoEncryptedResponseEnc:
@@ -17847,6 +17855,13 @@ components:
         userId:
           type: string
         username:
+          type: string
+    UserInfoClaim:
+      type: object
+      properties:
+        claimName:
+          type: string
+        claimValue:
           type: string
     UserNotificationContent:
       type: object

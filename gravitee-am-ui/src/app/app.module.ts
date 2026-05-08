@@ -487,6 +487,7 @@ import { ScopesComponent } from './domain/components/oauth2-settings/scopes/scop
 import { AddScopeComponent } from './domain/components/oauth2-settings/add/add-scope.component';
 import { TokensComponent } from './domain/components/oauth2-settings/tokens/tokens.component';
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
+import { CreateUserinfoClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
@@ -659,6 +660,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopeSelectionComponent,
     ClaimsInfoDialogComponent,
     CreateClaimComponent,
+    CreateUserinfoClaimComponent,
     RoleSelectionComponent,
     CertificateSelectionComponent,
     ApplicationsComponent,
