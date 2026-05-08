@@ -34,31 +34,48 @@ interface JwkDescriptor {
 export class ApplicationCreationStep3CimdConfirmComponent {
   @Input() application: any;
 
-  private parsedMetadataCache: any = null;
-  private parsedMetadataSource: string | null = null;
-
   constructor(private readonly dialog: MatDialog) {}
 
   get preview(): any {
     return this.application?.cimdPreview ?? {};
   }
 
+  get meta(): any {
+    return this.preview?.metadata ?? {};
+  }
+
   get missing(): any {
     return this.preview?.missing ?? {};
   }
 
+  get scopes(): string[] {
+    const scope = this.meta?.scope;
+    if (!scope || typeof scope !== 'string') {
+      return [];
+    }
+    return scope.split(/\s+/).filter(Boolean);
+  }
+
   get inlineJwks(): JwkDescriptor[] {
-    const meta = this.parsedMetadata();
-    const keys = meta?.jwks?.keys;
+    const keys = this.meta?.jwks?.keys;
     if (!Array.isArray(keys)) {
       return [];
     }
     return keys.filter((k) => k && typeof k === 'object').map((k) => ({ kid: k.kid, kty: k.kty, use: k.use, alg: k.alg }));
   }
 
+  hasMetadata(): boolean {
+    return !!this.preview?.metadata && Object.keys(this.preview.metadata).length > 0;
+  }
+
   openMetadataDialog(): void {
-    const json = this.formatMetadata();
-    if (!json) {
+    if (!this.hasMetadata()) {
+      return;
+    }
+    let json: string;
+    try {
+      json = JSON.stringify(this.preview.metadata, null, 2);
+    } catch (_) {
       return;
     }
     this.dialog.open<CimdMetadataDialogComponent, CimdMetadataDialogData>(CimdMetadataDialogComponent, {
@@ -67,34 +84,5 @@ export class ApplicationCreationStep3CimdConfirmComponent {
       width: '90vw',
       autoFocus: 'first-tabbable',
     });
-  }
-
-  private formatMetadata(): string {
-    const meta = this.parsedMetadata();
-    if (meta == null) {
-      return this.preview?.metadataJson ?? '';
-    }
-    try {
-      return JSON.stringify(meta, null, 2);
-    } catch (_) {
-      return this.preview?.metadataJson ?? '';
-    }
-  }
-
-  private parsedMetadata(): any {
-    const raw = this.preview?.metadataJson;
-    if (!raw) {
-      return null;
-    }
-    if (raw === this.parsedMetadataSource) {
-      return this.parsedMetadataCache;
-    }
-    try {
-      this.parsedMetadataCache = JSON.parse(raw);
-    } catch (_) {
-      this.parsedMetadataCache = null;
-    }
-    this.parsedMetadataSource = raw;
-    return this.parsedMetadataCache;
   }
 }
