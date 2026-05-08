@@ -30,6 +30,7 @@ import { AuthService } from '../../../../../../services/auth.service';
 })
 export class ApplicationTokensComponent implements OnInit {
   @ViewChild('claimsTable') table: any;
+  @ViewChild('userinfoClaimsTable') userinfoTable: any;
   private domainId: string;
   formChanged: boolean;
   application: any;
@@ -51,22 +52,29 @@ export class ApplicationTokensComponent implements OnInit {
     this.application = structuredClone(this.route.snapshot.data['application']);
     this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
+    this.applicationOauthSettings.userinfoCustomClaims = this.applicationOauthSettings.userinfoCustomClaims || [];
+    this.migrateLegacyUserProfileClaims();
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initCustomClaims();
+    this.initUserInfoCustomClaims();
   }
 
   patch() {
     this.cleanCustomClaims();
+    this.cleanUserInfoCustomClaims();
     const oauthSettings: any = {};
     oauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims;
+    oauthSettings.userinfoCustomClaims = this.applicationOauthSettings.userinfoCustomClaims;
     oauthSettings.accessTokenValiditySeconds = this.applicationOauthSettings.accessTokenValiditySeconds;
     oauthSettings.refreshTokenValiditySeconds = this.applicationOauthSettings.refreshTokenValiditySeconds;
     oauthSettings.idTokenValiditySeconds = this.applicationOauthSettings.idTokenValiditySeconds;
     this.applicationService.patch(this.domainId, this.application.id, { settings: { oauth: oauthSettings } }).subscribe(() => {
+      this.clearLegacyUserProfileStorage();
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
       this.initCustomClaims();
+      this.initUserInfoCustomClaims();
     });
   }
 
@@ -118,6 +126,49 @@ export class ApplicationTokensComponent implements OnInit {
     this.table.groupHeader.toggleExpandGroup(group);
   }
 
+  addUserInfoClaim(claim) {
+    if (claim) {
+      if (!this.userInfoClaimExists(claim)) {
+        claim.id = Math.random().toString(36).substring(7);
+        this.applicationOauthSettings.userinfoCustomClaims.push(claim);
+        this.applicationOauthSettings.userinfoCustomClaims = [...this.applicationOauthSettings.userinfoCustomClaims];
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open('Claim already exists');
+      }
+    }
+  }
+
+  userInfoClaimExists(claim): boolean {
+    return find(this.applicationOauthSettings.userinfoCustomClaims, function (el) {
+      return el.claimName === claim.claimName;
+    });
+  }
+
+  updateUserInfoClaim(event, cell, rowIndex) {
+    const claim = event.target.value;
+    if (claim) {
+      this.editing[rowIndex + '-userinfo-' + cell] = false;
+      const index = findIndex(this.applicationOauthSettings.userinfoCustomClaims, { id: rowIndex });
+      this.applicationOauthSettings.userinfoCustomClaims[index][cell] = claim;
+      this.applicationOauthSettings.userinfoCustomClaims = [...this.applicationOauthSettings.userinfoCustomClaims];
+      this.formChanged = true;
+    }
+  }
+
+  deleteUserInfoClaim(key, event) {
+    event.preventDefault();
+    remove(this.applicationOauthSettings.userinfoCustomClaims, function (el: any) {
+      return el.claimName === key;
+    });
+    this.applicationOauthSettings.userinfoCustomClaims = [...this.applicationOauthSettings.userinfoCustomClaims];
+    this.formChanged = true;
+  }
+
+  userInfoClaimsIsEmpty() {
+    return this.applicationOauthSettings.userinfoCustomClaims.length === 0;
+  }
+
   openDialog(event) {
     event.preventDefault();
     this.dialog.open(ClaimsInfoDialogComponent, {});
@@ -142,6 +193,55 @@ export class ApplicationTokensComponent implements OnInit {
       });
     }
   }
+
+  private cleanUserInfoCustomClaims() {
+    if (this.applicationOauthSettings.userinfoCustomClaims.length > 0) {
+      this.applicationOauthSettings.userinfoCustomClaims.forEach((claim) => {
+        delete claim.id;
+      });
+    }
+  }
+
+  private initUserInfoCustomClaims() {
+    if (this.applicationOauthSettings.userinfoCustomClaims.length > 0) {
+      this.applicationOauthSettings.userinfoCustomClaims.forEach((claim) => {
+        claim.id = Math.random().toString(36).substring(7);
+      });
+    }
+  }
+
+  private legacyUserProfileStorageKey(): string {
+    return `am.tokenCustomClaims.userProfile:${this.domainId}:${this.application.id}`;
+  }
+
+  private migrateLegacyUserProfileClaims(): void {
+    let legacy: any[];
+    try {
+      const raw = window.localStorage.getItem(this.legacyUserProfileStorageKey());
+      legacy = raw ? JSON.parse(raw) : [];
+    } catch {
+      return;
+    }
+    if (!legacy || legacy.length === 0) {
+      return;
+    }
+    const existingNames = new Set(this.applicationOauthSettings.userinfoCustomClaims.map((c: any) => c.claimName));
+    const migrated = legacy
+      .filter((c: any) => c && c.claimName && !existingNames.has(c.claimName))
+      .map((c: any) => ({ claimName: c.claimName, claimValue: c.claimValue }));
+    if (migrated.length > 0) {
+      this.applicationOauthSettings.userinfoCustomClaims = [...this.applicationOauthSettings.userinfoCustomClaims, ...migrated];
+      this.formChanged = true;
+    }
+  }
+
+  private clearLegacyUserProfileStorage(): void {
+    try {
+      window.localStorage.removeItem(this.legacyUserProfileStorageKey());
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 @Component({
@@ -151,6 +251,22 @@ export class ApplicationTokensComponent implements OnInit {
 export class CreateClaimComponent {
   claim: any = {};
   tokenTypes: any[] = ['id_token', 'access_token'];
+  @Output() addClaimChange = new EventEmitter();
+  @ViewChild('claimForm', { static: true }) form: NgForm;
+
+  addClaim() {
+    this.addClaimChange.emit(this.claim);
+    this.claim = {};
+    this.form.reset(this.claim);
+  }
+}
+
+@Component({
+  selector: 'app-create-userinfo-claim',
+  templateUrl: './claims/add-userinfo-claim.component.html',
+})
+export class CreateUserinfoClaimComponent {
+  claim: any = {};
   @Output() addClaimChange = new EventEmitter();
   @ViewChild('claimForm', { static: true }) form: NgForm;
 
