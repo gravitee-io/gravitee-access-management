@@ -1945,6 +1945,8 @@ workflows:
 
   # Publishes a non-SNAPSHOT gamma artifact to Gravitee's private Artifactory only.
   # Intentionally omits Docker Hub, Maven Central, Aqua and Slack notify jobs.
+  # rc_requested is hardcoded true: gamma always uses qualifier-style versions
+  # (4.12.0-gamma.N), so the pre-release branch in the release job must run.
   release-gamma-version:
     when:
       and:
@@ -1957,7 +1959,7 @@ workflows:
           name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
-          rc_requested: << pipeline.parameters.rc_requested >>
+          rc_requested: true
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           qualifier_label: gamma
