@@ -156,6 +156,8 @@ public class ClientMongo extends Auditable {
 
     private List<TokenClaimMongo> tokenCustomClaims;
 
+    private List<UserInfoClaimMongo> userinfoCustomClaims;
+
     private boolean template;
 
     private Document metadata;
@@ -582,6 +584,14 @@ public class ClientMongo extends Auditable {
 
     public void setTokenCustomClaims(List<TokenClaimMongo> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public List<UserInfoClaimMongo> getUserinfoCustomClaims() {
+        return userinfoCustomClaims;
+    }
+
+    public void setUserinfoCustomClaims(List<UserInfoClaimMongo> userinfoCustomClaims) {
+        this.userinfoCustomClaims = userinfoCustomClaims;
     }
 
     public boolean isTemplate() {

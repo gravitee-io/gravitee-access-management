@@ -26,6 +26,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -63,6 +64,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMo
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.UserInfoClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Completable;
@@ -534,6 +536,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
         applicationOAuthSettingsMongo.setIdTokenValiditySeconds(other.getIdTokenValiditySeconds());
         applicationOAuthSettingsMongo.setTokenCustomClaims(getMongoTokenClaims(other.getTokenCustomClaims()));
+        applicationOAuthSettingsMongo.setUserinfoCustomClaims(getMongoUserInfoClaims(other.getUserinfoCustomClaims()));
         applicationOAuthSettingsMongo.setTlsClientAuthSubjectDn(other.getTlsClientAuthSubjectDn());
         applicationOAuthSettingsMongo.setTlsClientAuthSanDns(other.getTlsClientAuthSanDns());
         applicationOAuthSettingsMongo.setTlsClientAuthSanEmail(other.getTlsClientAuthSanEmail());
@@ -615,6 +618,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
         applicationOAuthSettings.setIdTokenValiditySeconds(other.getIdTokenValiditySeconds());
         applicationOAuthSettings.setTokenCustomClaims(getTokenClaims(other.getTokenCustomClaims()));
+        applicationOAuthSettings.setUserinfoCustomClaims(getUserInfoClaims(other.getUserinfoCustomClaims()));
         applicationOAuthSettings.setTlsClientAuthSubjectDn(other.getTlsClientAuthSubjectDn());
         applicationOAuthSettings.setTlsClientAuthSanDns(other.getTlsClientAuthSanDns());
         applicationOAuthSettings.setTlsClientAuthSanEmail(other.getTlsClientAuthSanEmail());
@@ -790,6 +794,34 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         mongoTokenClaim.setClaimName(tokenClaim.getClaimName());
         mongoTokenClaim.setClaimValue(tokenClaim.getClaimValue());
         return mongoTokenClaim;
+    }
+
+    private static List<UserInfoClaim> getUserInfoClaims(List<UserInfoClaimMongo> mongoUserInfoClaims) {
+        if (mongoUserInfoClaims == null) {
+            return null;
+        }
+        return mongoUserInfoClaims.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
+    }
+
+    private static List<UserInfoClaimMongo> getMongoUserInfoClaims(List<UserInfoClaim> userInfoClaims) {
+        if (userInfoClaims == null) {
+            return null;
+        }
+        return userInfoClaims.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
+    }
+
+    private static UserInfoClaim convert(UserInfoClaimMongo mongoUserInfoClaim) {
+        UserInfoClaim userInfoClaim = new UserInfoClaim();
+        userInfoClaim.setClaimName(mongoUserInfoClaim.getClaimName());
+        userInfoClaim.setClaimValue(mongoUserInfoClaim.getClaimValue());
+        return userInfoClaim;
+    }
+
+    private static UserInfoClaimMongo convert(UserInfoClaim userInfoClaim) {
+        UserInfoClaimMongo mongoUserInfoClaim = new UserInfoClaimMongo();
+        mongoUserInfoClaim.setClaimName(userInfoClaim.getClaimName());
+        mongoUserInfoClaim.setClaimValue(userInfoClaim.getClaimValue());
+        return mongoUserInfoClaim;
     }
 
     private static JWKSet convert(List<JWKMongo> jwksMongo) {

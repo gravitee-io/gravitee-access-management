@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -34,11 +35,14 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.el.TemplateEngine;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
@@ -63,6 +67,9 @@ import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -90,6 +97,9 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Environment env;
 
+    @Mock
+    private ExecutionContextFactory executionContextFactory;
+
     private UserInfoEndpoint userInfoEndpoint;
 
     @Override
@@ -97,7 +107,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         when(env.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false)).thenReturn(false);
-        userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, openIDDiscoveryService, env, subjectManager);
+        userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, openIDDiscoveryService, env, subjectManager, executionContextFactory);
 
         router.route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoEndpoint);
@@ -766,6 +776,76 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                     assertEquals(MediaType.APPLICATION_JWT,resp.getHeader(HttpHeaders.CONTENT_TYPE));
                     resp.bodyHandler(body -> assertEquals("signedJwtBearer",body.toString()));
                 },
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_userinfoCustomClaims_emptyList_skipsEnhancement() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setJti("id-token");
+        jwt.setAud("client-id");
+        jwt.setSub("id-subject");
+        jwt.setScope("openid");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setUserinfoCustomClaims(Collections.emptyList());
+
+        router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
+
+        User user = createUser();
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertFalse(claims.containsKey("custom_userinfo"));
+                }),
+                HttpStatusCode.OK_200, "OK", null);
+
+        verify(executionContextFactory, never()).create(any());
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_userinfoCustomClaims_evaluatesAndAddsClaim() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setJti("id-token");
+        jwt.setAud("client-id");
+        jwt.setSub("id-subject");
+        jwt.setScope("openid");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setUserinfoCustomClaims(List.of(UserInfoClaim.of("custom_userinfo", "#{'evaluated'}")));
+
+        router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
+
+        User user = createUser();
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine templateEngine = mock(TemplateEngine.class);
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+        when(templateEngine.getValue("#{'evaluated'}", Object.class)).thenReturn("evaluated");
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertTrue(claims.containsKey("custom_userinfo"));
+                    assertEquals("evaluated", claims.get("custom_userinfo"));
+                }),
                 HttpStatusCode.OK_200, "OK", null);
     }
 
