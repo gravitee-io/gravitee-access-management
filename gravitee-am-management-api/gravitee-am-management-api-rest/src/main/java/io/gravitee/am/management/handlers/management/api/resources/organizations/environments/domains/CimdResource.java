@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
@@ -24,6 +26,8 @@ import io.gravitee.am.service.model.CimdClientMetadata;
 import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +44,7 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * @author Stuart Clark (stuart.clark at graviteesource.com)
@@ -63,7 +68,9 @@ public class CimdResource extends AbstractDomainResource {
             summary = "Validate a CIMD URL and return parsed metadata preview",
             description = "User must have APPLICATION[CREATE] permission on the specified domain")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Document validated"),
+            @ApiResponse(responseCode = "200", description = "Document validated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CimdValidationResponse.class))),
             @ApiResponse(responseCode = "400", description = "Document invalid or untrusted"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void validate(
@@ -128,84 +135,103 @@ public class CimdResource extends AbstractDomainResource {
     private static CimdValidationResponse toResponse(CimdClientMetadata preview) {
         return new CimdValidationResponse(
                 preview.url(),
-                preview.clientId(),
-                preview.clientName(),
-                preview.redirectUris(),
-                preview.postLogoutRedirectUris(),
-                preview.scopes(),
-                preview.grantTypes(),
-                preview.responseTypes(),
-                preview.contacts(),
-                preview.requestUris(),
-                preview.tokenEndpointAuthMethod(),
-                preview.applicationType(),
-                preview.subjectType(),
-                preview.sectorIdentifierUri(),
-                preview.idTokenSignedResponseAlg(),
-                preview.logoUri(),
-                preview.clientUri(),
-                preview.policyUri(),
-                preview.tosUri(),
-                preview.jwksUri(),
-                preview.hasInlineJwks(),
-                preview.softwareId(),
-                preview.softwareVersion(),
-                preview.softwareStatement(),
-                preview.tlsClientAuthSubjectDn(),
-                preview.tlsClientAuthSanDns(),
-                preview.tlsClientAuthSanUri(),
-                preview.tlsClientAuthSanIp(),
-                preview.tlsClientAuthSanEmail(),
-                preview.tlsClientCertificateBoundAccessTokens(),
-                preview.backchannelTokenDeliveryMode(),
-                preview.backchannelClientNotificationEndpoint(),
-                preview.backchannelAuthRequestSignAlg(),
-                preview.backchannelUserCodeParameter(),
+                Boolean.TRUE.equals(preview.hasInlineJwks()),
                 new CimdValidationResponse.Missing(preview.missing().clientId(), preview.missing().clientName()),
-                preview.metadataJson()
-        );
+                new CimdValidationResponse.ClientMetadata(
+                        preview.clientId(),
+                        preview.clientName(),
+                        preview.redirectUris(),
+                        preview.postLogoutRedirectUris(),
+                        joinScope(preview.scopes()),
+                        preview.grantTypes(),
+                        preview.responseTypes(),
+                        preview.contacts(),
+                        preview.requestUris(),
+                        preview.tokenEndpointAuthMethod(),
+                        preview.applicationType(),
+                        preview.subjectType(),
+                        preview.sectorIdentifierUri(),
+                        preview.idTokenSignedResponseAlg(),
+                        preview.logoUri(),
+                        preview.clientUri(),
+                        preview.policyUri(),
+                        preview.tosUri(),
+                        preview.jwksUri(),
+                        preview.softwareId(),
+                        preview.softwareVersion(),
+                        preview.softwareStatement(),
+                        preview.tlsClientAuthSubjectDn(),
+                        preview.tlsClientAuthSanDns(),
+                        preview.tlsClientAuthSanUri(),
+                        preview.tlsClientAuthSanIp(),
+                        preview.tlsClientAuthSanEmail(),
+                        preview.tlsClientCertificateBoundAccessTokens(),
+                        preview.backchannelTokenDeliveryMode(),
+                        preview.backchannelClientNotificationEndpoint(),
+                        preview.backchannelAuthRequestSignAlg(),
+                        preview.backchannelUserCodeParameter()));
+    }
+
+    private static String joinScope(List<String> scopes) {
+        if (scopes == null || scopes.isEmpty()) {
+            return null;
+        }
+        return String.join(" ", scopes);
     }
 
     public record CimdValidationRequest(@NotNull String url) { }
 
+    /**
+     * Response payload for the CIMD validate endpoint. The {@code metadata} object follows the
+     * IANA OAuth 2.0 Dynamic Client Registration metadata names (RFC 7591 / RFC 8705 / FAPI-CIBA)
+     * with {@code additionalProperties: true} so unknown registered fields are forward-compatible.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record CimdValidationResponse(
             String url,
-            String clientId,
-            String clientName,
-            java.util.List<String> redirectUris,
-            java.util.List<String> postLogoutRedirectUris,
-            java.util.List<String> scopes,
-            java.util.List<String> grantTypes,
-            java.util.List<String> responseTypes,
-            java.util.List<String> contacts,
-            java.util.List<String> requestUris,
-            String tokenEndpointAuthMethod,
-            String applicationType,
-            String subjectType,
-            String sectorIdentifierUri,
-            String idTokenSignedResponseAlg,
-            String logoUri,
-            String clientUri,
-            String policyUri,
-            String tosUri,
-            String jwksUri,
-            Boolean hasInlineJwks,
-            String softwareId,
-            String softwareVersion,
-            String softwareStatement,
-            String tlsClientAuthSubjectDn,
-            String tlsClientAuthSanDns,
-            String tlsClientAuthSanUri,
-            String tlsClientAuthSanIp,
-            String tlsClientAuthSanEmail,
-            Boolean tlsClientCertificateBoundAccessTokens,
-            String backchannelTokenDeliveryMode,
-            String backchannelClientNotificationEndpoint,
-            String backchannelAuthRequestSignAlg,
-            Boolean backchannelUserCodeParameter,
+            boolean hasInlineJwks,
             Missing missing,
-            String metadataJson
+            ClientMetadata metadata
     ) {
         public record Missing(boolean clientId, boolean clientName) {}
+
+        @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE,
+                description = "OAuth 2.0 client metadata as defined in the IANA OAuth Parameters registry " +
+                        "(https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml#client-metadata).")
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public record ClientMetadata(
+                @JsonProperty("client_id") String clientId,
+                @JsonProperty("client_name") String clientName,
+                @JsonProperty("redirect_uris") List<String> redirectUris,
+                @JsonProperty("post_logout_redirect_uris") List<String> postLogoutRedirectUris,
+                @JsonProperty("scope") String scope,
+                @JsonProperty("grant_types") List<String> grantTypes,
+                @JsonProperty("response_types") List<String> responseTypes,
+                @JsonProperty("contacts") List<String> contacts,
+                @JsonProperty("request_uris") List<String> requestUris,
+                @JsonProperty("token_endpoint_auth_method") String tokenEndpointAuthMethod,
+                @JsonProperty("application_type") String applicationType,
+                @JsonProperty("subject_type") String subjectType,
+                @JsonProperty("sector_identifier_uri") String sectorIdentifierUri,
+                @JsonProperty("id_token_signed_response_alg") String idTokenSignedResponseAlg,
+                @JsonProperty("logo_uri") String logoUri,
+                @JsonProperty("client_uri") String clientUri,
+                @JsonProperty("policy_uri") String policyUri,
+                @JsonProperty("tos_uri") String tosUri,
+                @JsonProperty("jwks_uri") String jwksUri,
+                @JsonProperty("software_id") String softwareId,
+                @JsonProperty("software_version") String softwareVersion,
+                @JsonProperty("software_statement") String softwareStatement,
+                @JsonProperty("tls_client_auth_subject_dn") String tlsClientAuthSubjectDn,
+                @JsonProperty("tls_client_auth_san_dns") String tlsClientAuthSanDns,
+                @JsonProperty("tls_client_auth_san_uri") String tlsClientAuthSanUri,
+                @JsonProperty("tls_client_auth_san_ip") String tlsClientAuthSanIp,
+                @JsonProperty("tls_client_auth_san_email") String tlsClientAuthSanEmail,
+                @JsonProperty("tls_client_certificate_bound_access_tokens") Boolean tlsClientCertificateBoundAccessTokens,
+                @JsonProperty("backchannel_token_delivery_mode") String backchannelTokenDeliveryMode,
+                @JsonProperty("backchannel_client_notification_endpoint") String backchannelClientNotificationEndpoint,
+                @JsonProperty("backchannel_authentication_request_signing_alg") String backchannelAuthenticationRequestSigningAlg,
+                @JsonProperty("backchannel_user_code_parameter") Boolean backchannelUserCodeParameter
+        ) {}
     }
 }
