@@ -67,7 +67,7 @@ export class ApplicationCreationComponent implements OnInit {
         this.validating = false;
         this.application.cimdPreview = preview;
         this.application.cimdClientName = null;
-        this.application.name = preview?.clientName ?? null;
+        this.application.name = preview?.metadata?.client_name ?? null;
         this.stepper.next();
       },
       (err: unknown) => {
@@ -123,7 +123,7 @@ export class ApplicationCreationComponent implements OnInit {
   }
 
   private createFromCimd(): void {
-    const resolvedName = this.application?.cimdPreview?.clientName || this.application.cimdClientName;
+    const resolvedName = this.application?.cimdPreview?.metadata?.client_name || this.application.cimdClientName;
     const payload: any = {
       name: resolvedName,
       type: this.application.type,
@@ -151,7 +151,7 @@ export class ApplicationCreationComponent implements OnInit {
     }
     if (this.isCimd()) {
       const preview = this.application?.cimdPreview;
-      const resolvedName = preview?.clientName || this.application.cimdClientName;
+      const resolvedName = preview?.metadata?.client_name || this.application.cimdClientName;
       return !!preview && !!resolvedName;
     }
     if (!this.application.name) {

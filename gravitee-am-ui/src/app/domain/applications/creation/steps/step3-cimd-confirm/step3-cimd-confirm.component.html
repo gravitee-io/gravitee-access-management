@@ -21,7 +21,7 @@
       <h4 class="cimd-confirm-intro-title">Review the imported metadata</h4>
       <p class="cimd-confirm-intro-subtitle">Fields below were parsed from the CIMD document at {{ preview.url }}.</p>
     </div>
-    <button *ngIf="preview.metadataJson" mat-stroked-button type="button" class="cimd-confirm-view-json" (click)="openMetadataDialog()">
+    <button *ngIf="hasMetadata()" mat-stroked-button type="button" class="cimd-confirm-view-json" (click)="openMetadataDialog()">
       <mat-icon class="cimd-confirm-view-json-icon">code</mat-icon>
       View metadata JSON
     </button>
@@ -45,7 +45,7 @@
       <div *ngIf="!missing.clientName" class="cimd-confirm-row">
         <dt>Client Name</dt>
         <dd>
-          <span class="cimd-confirm-value">{{ preview.clientName }}</span>
+          <span class="cimd-confirm-value">{{ meta.client_name }}</span>
         </dd>
       </div>
 
@@ -79,8 +79,8 @@
       <div class="cimd-confirm-row">
         <dt>Redirect URIs</dt>
         <dd>
-          <ul *ngIf="(preview.redirectUris || []).length; else noneTpl" class="cimd-confirm-chips">
-            <li *ngFor="let uri of preview.redirectUris" class="cimd-confirm-mono">{{ uri }}</li>
+          <ul *ngIf="(meta.redirect_uris || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let uri of meta.redirect_uris" class="cimd-confirm-mono">{{ uri }}</li>
           </ul>
         </dd>
       </div>
@@ -88,8 +88,8 @@
       <div class="cimd-confirm-row">
         <dt>Grant types</dt>
         <dd>
-          <ul *ngIf="(preview.grantTypes || []).length; else noneTpl" class="cimd-confirm-chips">
-            <li *ngFor="let gt of preview.grantTypes">{{ gt }}</li>
+          <ul *ngIf="(meta.grant_types || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let gt of meta.grant_types">{{ gt }}</li>
           </ul>
         </dd>
       </div>
@@ -97,8 +97,8 @@
       <div class="cimd-confirm-row">
         <dt>Response types</dt>
         <dd>
-          <ul *ngIf="(preview.responseTypes || []).length; else noneTpl" class="cimd-confirm-chips">
-            <li *ngFor="let rt of preview.responseTypes">{{ rt }}</li>
+          <ul *ngIf="(meta.response_types || []).length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let rt of meta.response_types">{{ rt }}</li>
           </ul>
         </dd>
       </div>
@@ -106,8 +106,8 @@
       <div class="cimd-confirm-row">
         <dt>Scopes</dt>
         <dd>
-          <ul *ngIf="(preview.scopes || []).length; else noneTpl" class="cimd-confirm-chips">
-            <li *ngFor="let s of preview.scopes">{{ s }}</li>
+          <ul *ngIf="scopes.length; else noneTpl" class="cimd-confirm-chips">
+            <li *ngFor="let s of scopes">{{ s }}</li>
           </ul>
         </dd>
       </div>
@@ -115,24 +115,24 @@
       <div class="cimd-confirm-row">
         <dt>Token endpoint auth method</dt>
         <dd>
-          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.tokenEndpointAuthMethod || 'none' }}</span>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ meta.token_endpoint_auth_method || 'none' }}</span>
         </dd>
       </div>
 
-      <div *ngIf="preview.logoUri" class="cimd-confirm-row">
+      <div *ngIf="meta.logo_uri" class="cimd-confirm-row">
         <dt>Logo URI</dt>
         <dd>
-          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.logoUri" target="_blank" rel="noopener noreferrer">{{
-            preview.logoUri
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="meta.logo_uri" target="_blank" rel="noopener noreferrer">{{
+            meta.logo_uri
           }}</a>
         </dd>
       </div>
 
-      <div *ngIf="preview.jwksUri" class="cimd-confirm-row">
+      <div *ngIf="meta.jwks_uri" class="cimd-confirm-row">
         <dt>JWKS URI</dt>
         <dd>
-          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.jwksUri" target="_blank" rel="noopener noreferrer">{{
-            preview.jwksUri
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="meta.jwks_uri" target="_blank" rel="noopener noreferrer">{{
+            meta.jwks_uri
           }}</a>
         </dd>
       </div>
@@ -152,162 +152,162 @@
         </dd>
       </div>
 
-      <div *ngIf="preview.applicationType" class="cimd-confirm-row">
+      <div *ngIf="meta.application_type" class="cimd-confirm-row">
         <dt>Application type</dt>
         <dd>
-          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.applicationType }}</span>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ meta.application_type }}</span>
         </dd>
       </div>
 
-      <div *ngIf="(preview.postLogoutRedirectUris || []).length" class="cimd-confirm-row">
+      <div *ngIf="(meta.post_logout_redirect_uris || []).length" class="cimd-confirm-row">
         <dt>Post-logout redirect URIs</dt>
         <dd>
           <ul class="cimd-confirm-chips">
-            <li *ngFor="let uri of preview.postLogoutRedirectUris" class="cimd-confirm-mono">{{ uri }}</li>
+            <li *ngFor="let uri of meta.post_logout_redirect_uris" class="cimd-confirm-mono">{{ uri }}</li>
           </ul>
         </dd>
       </div>
 
-      <div *ngIf="(preview.contacts || []).length" class="cimd-confirm-row">
+      <div *ngIf="(meta.contacts || []).length" class="cimd-confirm-row">
         <dt>Contacts</dt>
         <dd>
           <ul class="cimd-confirm-chips">
-            <li *ngFor="let c of preview.contacts">{{ c }}</li>
+            <li *ngFor="let c of meta.contacts">{{ c }}</li>
           </ul>
         </dd>
       </div>
 
-      <div *ngIf="preview.clientUri" class="cimd-confirm-row">
+      <div *ngIf="meta.client_uri" class="cimd-confirm-row">
         <dt>Client URI</dt>
         <dd>
-          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.clientUri" target="_blank" rel="noopener noreferrer">{{
-            preview.clientUri
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="meta.client_uri" target="_blank" rel="noopener noreferrer">{{
+            meta.client_uri
           }}</a>
         </dd>
       </div>
 
-      <div *ngIf="preview.policyUri" class="cimd-confirm-row">
+      <div *ngIf="meta.policy_uri" class="cimd-confirm-row">
         <dt>Policy URI</dt>
         <dd>
-          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.policyUri" target="_blank" rel="noopener noreferrer">{{
-            preview.policyUri
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="meta.policy_uri" target="_blank" rel="noopener noreferrer">{{
+            meta.policy_uri
           }}</a>
         </dd>
       </div>
 
-      <div *ngIf="preview.tosUri" class="cimd-confirm-row">
+      <div *ngIf="meta.tos_uri" class="cimd-confirm-row">
         <dt>Terms of service URI</dt>
         <dd>
-          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.tosUri" target="_blank" rel="noopener noreferrer">{{
-            preview.tosUri
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="meta.tos_uri" target="_blank" rel="noopener noreferrer">{{
+            meta.tos_uri
           }}</a>
         </dd>
       </div>
 
-      <div *ngIf="(preview.requestUris || []).length" class="cimd-confirm-row">
+      <div *ngIf="(meta.request_uris || []).length" class="cimd-confirm-row">
         <dt>Request URIs</dt>
         <dd>
           <ul class="cimd-confirm-chips">
-            <li *ngFor="let uri of preview.requestUris" class="cimd-confirm-mono">{{ uri }}</li>
+            <li *ngFor="let uri of meta.request_uris" class="cimd-confirm-mono">{{ uri }}</li>
           </ul>
         </dd>
       </div>
 
-      <div *ngIf="preview.softwareId || preview.softwareVersion" class="cimd-confirm-row">
+      <div *ngIf="meta.software_id || meta.software_version" class="cimd-confirm-row">
         <dt>Software</dt>
         <dd>
           <span class="cimd-confirm-value cimd-confirm-mono"
-            >{{ preview.softwareId || '—' }}<span *ngIf="preview.softwareVersion"> &#64; {{ preview.softwareVersion }}</span></span
+            >{{ meta.software_id || '—' }}<span *ngIf="meta.software_version"> &#64; {{ meta.software_version }}</span></span
           >
         </dd>
       </div>
 
-      <div *ngIf="preview.softwareStatement" class="cimd-confirm-row">
+      <div *ngIf="meta.software_statement" class="cimd-confirm-row">
         <dt>Software statement</dt>
         <dd>
-          <span class="cimd-confirm-value cimd-confirm-mono cimd-confirm-truncate">{{ preview.softwareStatement }}</span>
+          <span class="cimd-confirm-value cimd-confirm-mono cimd-confirm-truncate">{{ meta.software_statement }}</span>
         </dd>
       </div>
 
-      <div *ngIf="preview.subjectType" class="cimd-confirm-row">
+      <div *ngIf="meta.subject_type" class="cimd-confirm-row">
         <dt>Subject type</dt>
         <dd>
-          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.subjectType }}</span>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ meta.subject_type }}</span>
         </dd>
       </div>
 
-      <div *ngIf="preview.sectorIdentifierUri" class="cimd-confirm-row">
+      <div *ngIf="meta.sector_identifier_uri" class="cimd-confirm-row">
         <dt>Sector identifier URI</dt>
         <dd>
-          <a class="cimd-confirm-value cimd-confirm-mono" [href]="preview.sectorIdentifierUri" target="_blank" rel="noopener noreferrer">{{
-            preview.sectorIdentifierUri
+          <a class="cimd-confirm-value cimd-confirm-mono" [href]="meta.sector_identifier_uri" target="_blank" rel="noopener noreferrer">{{
+            meta.sector_identifier_uri
           }}</a>
         </dd>
       </div>
 
-      <div *ngIf="preview.idTokenSignedResponseAlg" class="cimd-confirm-row">
+      <div *ngIf="meta.id_token_signed_response_alg" class="cimd-confirm-row">
         <dt>ID token signing alg</dt>
         <dd>
-          <span class="cimd-confirm-value cimd-confirm-mono">{{ preview.idTokenSignedResponseAlg }}</span>
+          <span class="cimd-confirm-value cimd-confirm-mono">{{ meta.id_token_signed_response_alg }}</span>
         </dd>
       </div>
 
       <div
         *ngIf="
-          preview.tlsClientAuthSubjectDn ||
-          preview.tlsClientAuthSanDns ||
-          preview.tlsClientAuthSanUri ||
-          preview.tlsClientAuthSanIp ||
-          preview.tlsClientAuthSanEmail ||
-          preview.tlsClientCertificateBoundAccessTokens
+          meta.tls_client_auth_subject_dn ||
+          meta.tls_client_auth_san_dns ||
+          meta.tls_client_auth_san_uri ||
+          meta.tls_client_auth_san_ip ||
+          meta.tls_client_auth_san_email ||
+          meta.tls_client_certificate_bound_access_tokens
         "
         class="cimd-confirm-row"
       >
         <dt>mTLS</dt>
         <dd>
-          <span *ngIf="preview.tlsClientAuthSubjectDn" class="cimd-confirm-value cimd-confirm-mono"
-            >DN: {{ preview.tlsClientAuthSubjectDn }}</span
+          <span *ngIf="meta.tls_client_auth_subject_dn" class="cimd-confirm-value cimd-confirm-mono"
+            >DN: {{ meta.tls_client_auth_subject_dn }}</span
           >
-          <span *ngIf="preview.tlsClientAuthSanDns" class="cimd-confirm-value cimd-confirm-mono"
-            >SAN dns: {{ preview.tlsClientAuthSanDns }}</span
+          <span *ngIf="meta.tls_client_auth_san_dns" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN dns: {{ meta.tls_client_auth_san_dns }}</span
           >
-          <span *ngIf="preview.tlsClientAuthSanUri" class="cimd-confirm-value cimd-confirm-mono"
-            >SAN uri: {{ preview.tlsClientAuthSanUri }}</span
+          <span *ngIf="meta.tls_client_auth_san_uri" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN uri: {{ meta.tls_client_auth_san_uri }}</span
           >
-          <span *ngIf="preview.tlsClientAuthSanIp" class="cimd-confirm-value cimd-confirm-mono"
-            >SAN ip: {{ preview.tlsClientAuthSanIp }}</span
+          <span *ngIf="meta.tls_client_auth_san_ip" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN ip: {{ meta.tls_client_auth_san_ip }}</span
           >
-          <span *ngIf="preview.tlsClientAuthSanEmail" class="cimd-confirm-value cimd-confirm-mono"
-            >SAN email: {{ preview.tlsClientAuthSanEmail }}</span
+          <span *ngIf="meta.tls_client_auth_san_email" class="cimd-confirm-value cimd-confirm-mono"
+            >SAN email: {{ meta.tls_client_auth_san_email }}</span
           >
-          <span *ngIf="preview.tlsClientCertificateBoundAccessTokens" class="cimd-confirm-value">Certificate-bound access tokens</span>
+          <span *ngIf="meta.tls_client_certificate_bound_access_tokens" class="cimd-confirm-value">Certificate-bound access tokens</span>
         </dd>
       </div>
 
       <div
         *ngIf="
-          preview.backchannelTokenDeliveryMode ||
-          preview.backchannelAuthRequestSignAlg ||
-          preview.backchannelClientNotificationEndpoint ||
-          preview.backchannelUserCodeParameter
+          meta.backchannel_token_delivery_mode ||
+          meta.backchannel_authentication_request_signing_alg ||
+          meta.backchannel_client_notification_endpoint ||
+          meta.backchannel_user_code_parameter
         "
         class="cimd-confirm-row"
       >
         <dt>CIBA backchannel</dt>
         <dd>
-          <span *ngIf="preview.backchannelTokenDeliveryMode" class="cimd-confirm-value cimd-confirm-mono"
-            >delivery mode: {{ preview.backchannelTokenDeliveryMode }}</span
+          <span *ngIf="meta.backchannel_token_delivery_mode" class="cimd-confirm-value cimd-confirm-mono"
+            >delivery mode: {{ meta.backchannel_token_delivery_mode }}</span
           >
-          <span *ngIf="preview.backchannelAuthRequestSignAlg" class="cimd-confirm-value cimd-confirm-mono"
-            >request signing: {{ preview.backchannelAuthRequestSignAlg }}</span
+          <span *ngIf="meta.backchannel_authentication_request_signing_alg" class="cimd-confirm-value cimd-confirm-mono"
+            >request signing: {{ meta.backchannel_authentication_request_signing_alg }}</span
           >
-          <span *ngIf="preview.backchannelClientNotificationEndpoint" class="cimd-confirm-value cimd-confirm-mono"
-            >notification endpoint: {{ preview.backchannelClientNotificationEndpoint }}</span
+          <span *ngIf="meta.backchannel_client_notification_endpoint" class="cimd-confirm-value cimd-confirm-mono"
+            >notification endpoint: {{ meta.backchannel_client_notification_endpoint }}</span
           >
           <span
-            *ngIf="preview.backchannelUserCodeParameter !== null && preview.backchannelUserCodeParameter !== undefined"
+            *ngIf="meta.backchannel_user_code_parameter !== null && meta.backchannel_user_code_parameter !== undefined"
             class="cimd-confirm-value cimd-confirm-mono"
-            >user_code parameter: {{ preview.backchannelUserCodeParameter }}</span
+            >user_code parameter: {{ meta.backchannel_user_code_parameter }}</span
           >
         </dd>
       </div>
