@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
@@ -77,6 +78,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<Integer> refreshTokenValiditySeconds;
     private Optional<Integer> idTokenValiditySeconds;
     private Optional<List<TokenClaim>> tokenCustomClaims;
+    private Optional<List<UserInfoClaim>> userinfoCustomClaims;
     private Optional<String> tlsClientAuthSubjectDn;
     private Optional<String> tlsClientAuthSanDns;
     private Optional<String> tlsClientAuthSanUri;
@@ -441,6 +443,14 @@ public class PatchApplicationOAuthSettings {
         this.tokenCustomClaims = tokenCustomClaims;
     }
 
+    public Optional<List<UserInfoClaim>> getUserinfoCustomClaims() {
+        return userinfoCustomClaims;
+    }
+
+    public void setUserinfoCustomClaims(Optional<List<UserInfoClaim>> userinfoCustomClaims) {
+        this.userinfoCustomClaims = userinfoCustomClaims;
+    }
+
     public Optional<String> getTlsClientAuthSubjectDn() {
         return tlsClientAuthSubjectDn;
     }
@@ -617,6 +627,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setRefreshTokenValiditySeconds, this.getRefreshTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setIdTokenValiditySeconds, this.getIdTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
+        SetterUtils.safeSet(toPatch::setUserinfoCustomClaims, this.getUserinfoCustomClaims());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSubjectDn, this.getTlsClientAuthSubjectDn());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanDns, this.getTlsClientAuthSanDns());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
