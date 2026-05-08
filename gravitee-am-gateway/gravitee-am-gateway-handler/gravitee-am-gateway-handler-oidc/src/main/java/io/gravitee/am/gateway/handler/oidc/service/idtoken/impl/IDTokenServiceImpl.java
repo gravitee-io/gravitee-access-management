@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.utils.MapUtils;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.oauth2.service.el.ExecutionContextTokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -334,30 +335,8 @@ public class IDTokenServiceImpl implements IDTokenService {
 
     private void enhanceIDToken(JWT jwt, List<TokenClaim> customClaims, ExecutionContext executionContext) {
         if (customClaims != null && !customClaims.isEmpty()) {
-            customClaims
-                    .stream()
-                    .filter(tokenClaim -> TokenTypeHint.ID_TOKEN.equals(tokenClaim.getTokenType()))
-                    .forEach(tokenClaim -> {
-                        try {
-                            String claimName = tokenClaim.getClaimName();
-                            String claimExpression = tokenClaim.getClaimValue();
-                            Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
-                            if (extValue != null) {
-                                if (Claims.AUD.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
-                                    var audiences = new LinkedHashSet<>();
-                                    audiences.add(jwt.getAud()); // make sure the client_id is the first entry of the aud array
-                                    audiences.addAll(extValue instanceof List ? (List)extValue : List.of((String[]) extValue)); // Set will remove duplicate client_id if any
-                                    var jsonArray = new JSONArray();
-                                    jsonArray.addAll(audiences);
-                                    jwt.put(claimName, jsonArray);
-                                } else {
-                                    jwt.put(claimName, extValue);
-                                }
-                            }
-                        } catch (Exception ex) {
-                            log.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
-                        }
-                    });
+            ExecutionContextTokenEnhancer enhancer = new ExecutionContextTokenEnhancer();
+            enhancer.enhanceToken(jwt, TokenTypeHint.ID_TOKEN, customClaims, executionContext);
         }
     }
 

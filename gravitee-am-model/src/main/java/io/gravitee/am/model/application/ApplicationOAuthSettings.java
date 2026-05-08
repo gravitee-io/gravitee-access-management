@@ -16,6 +16,7 @@
 package io.gravitee.am.model.application;
 
 import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -245,6 +246,11 @@ public class ApplicationOAuthSettings {
      */
     private List<TokenClaim> tokenCustomClaims;
 
+    /**
+     * UserInfo claims mapping settings
+     */
+    private List<UserInfoClaim> userinfoCustomClaims;
+
     private String tlsClientAuthSubjectDn;
 
     private String tlsClientAuthSanDns;
@@ -370,6 +376,7 @@ public class ApplicationOAuthSettings {
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
+        this.userinfoCustomClaims = other.userinfoCustomClaims != null ? new ArrayList<>(other.userinfoCustomClaims) : null;
         this.tlsClientAuthSubjectDn = other.tlsClientAuthSubjectDn;
         this.tlsClientAuthSanDns = other.tlsClientAuthSanDns;
         this.tlsClientAuthSanEmail = other.tlsClientAuthSanEmail;
@@ -810,6 +817,14 @@ public class ApplicationOAuthSettings {
         this.tokenCustomClaims = tokenCustomClaims;
     }
 
+    public List<UserInfoClaim> getUserinfoCustomClaims() {
+        return userinfoCustomClaims;
+    }
+
+    public void setUserinfoCustomClaims(List<UserInfoClaim> userinfoCustomClaims) {
+        this.userinfoCustomClaims = userinfoCustomClaims;
+    }
+
     public String getTlsClientAuthSubjectDn() {
         return tlsClientAuthSubjectDn;
     }
@@ -1024,6 +1039,7 @@ public class ApplicationOAuthSettings {
         client.setEnhanceScopesWithUserPermissions(this.enhanceScopesWithUserPermissions);
         client.setScopeSettings(this.scopeSettings);
         client.setTokenCustomClaims(this.tokenCustomClaims);
+        client.setUserinfoCustomClaims(this.userinfoCustomClaims);
         client.setTlsClientAuthSubjectDn(this.tlsClientAuthSubjectDn);
         client.setTlsClientAuthSanDns(this.tlsClientAuthSanDns);
         client.setTlsClientAuthSanEmail(this.tlsClientAuthSanEmail);

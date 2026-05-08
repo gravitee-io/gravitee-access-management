@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -139,6 +140,9 @@ public class OIDCProvider extends AbstractProtocolProvider {
     @Autowired
     private SubjectManager subjectManager;
 
+    @Autowired
+    private ExecutionContextFactory executionContextFactory;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -202,7 +206,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager, executionContextFactory);
         oidcRouter.route("/userinfo").handler(corsHandler);
         oidcRouter
                 .route(HttpMethod.GET, "/userinfo")

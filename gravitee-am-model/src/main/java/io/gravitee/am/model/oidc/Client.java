@@ -29,6 +29,7 @@ import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
@@ -233,6 +234,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private List<TokenClaim> tokenCustomClaims;
 
+    private List<UserInfoClaim> userinfoCustomClaims;
+
     private boolean template;
 
     private Map<String, Object> metadata;
@@ -350,6 +353,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.loginSettings = other.loginSettings;
         this.passwordSettings = other.passwordSettings;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
+        this.userinfoCustomClaims = other.userinfoCustomClaims != null ? new ArrayList<>(other.userinfoCustomClaims) : null;
         this.template = other.template;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
         this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
@@ -873,6 +877,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setTokenCustomClaims(List<TokenClaim> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public List<UserInfoClaim> getUserinfoCustomClaims() {
+        return userinfoCustomClaims;
+    }
+
+    public void setUserinfoCustomClaims(List<UserInfoClaim> userinfoCustomClaims) {
+        this.userinfoCustomClaims = userinfoCustomClaims;
     }
 
     public boolean isTemplate() {

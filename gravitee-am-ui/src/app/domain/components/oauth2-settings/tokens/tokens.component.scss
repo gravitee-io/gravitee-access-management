@@ -1,3 +1,22 @@
 .datatable-input {
   align-self: center;
 }
+
+:host ::ng-deep ngx-datatable.material {
+  .datatable-body-cell {
+    display: flex;
+    align-items: center;
+  }
+
+  .datatable-body-cell-label {
+    width: 100%;
+  }
+
+  .gv-table-cell-actions {
+    margin-left: 0;
+
+    button {
+      top: auto;
+    }
+  }
+}

@@ -46,7 +46,7 @@ export class OAuth2SettingsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private scopeService: ScopeService,
-    @Inject(OAUTH2_SETTINGS_SERVICE) private oauth2Service: OAuth2SettingsService,
+    @Inject(OAUTH2_SETTINGS_SERVICE) public oauth2Service: OAuth2SettingsService,
   ) {}
 
   ngOnInit() {
@@ -93,6 +93,7 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.refreshTokenValiditySeconds = newSettings.refreshTokenValiditySeconds;
     this.oauthSettings.idTokenValiditySeconds = newSettings.idTokenValiditySeconds;
     this.oauthSettings.tokenCustomClaims = newSettings.tokenCustomClaims;
+    this.oauthSettings.userinfoCustomClaims = newSettings.userinfoCustomClaims;
 
     this.formChanged = true;
   }
@@ -160,6 +161,12 @@ export class OAuth2SettingsComponent implements OnInit {
     // Filter out 'id' property from tokenCustomClaims (used only for UI tracking)
     if (this.oauthSettings.tokenCustomClaims !== undefined) {
       oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims.map((claim: any) => {
+        const { id, ...rest } = claim;
+        return rest;
+      });
+    }
+    if (this.oauthSettings.userinfoCustomClaims !== undefined) {
+      oauthSettings.userinfoCustomClaims = this.oauthSettings.userinfoCustomClaims.map((claim: any) => {
         const { id, ...rest } = claim;
         return rest;
       });
