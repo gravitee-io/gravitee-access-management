@@ -14564,6 +14564,12 @@ components:
           type: string
         name:
           type: string
+        subType:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         type:
           type: string
           enum:
