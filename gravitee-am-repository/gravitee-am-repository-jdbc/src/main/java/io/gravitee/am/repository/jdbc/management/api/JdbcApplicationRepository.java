@@ -24,6 +24,7 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationClientSecretRepository;
@@ -292,6 +293,84 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, ApplicationCriteria criteria, int page, int size) {
+        LOGGER.debug("findByDomain({}, criteria, {}, {})", domain, page, size);
+
+        if (skipSearchDueToEmptyAppIds(criteria)) {
+            return Single.just(new Page<>(Collections.emptyList(), page, 0));
+        }
+
+        String search = databaseDialectHelper.buildFindApplicationsByDomainAndCriteria(criteria, page, size);
+        String count = databaseDialectHelper.buildCountApplicationsByDomainAndCriteria(criteria);
+
+        final var searchSpec = bindCriteriaParams(
+                getTemplate().getDatabaseClient().sql(search).bind(COL_DOMAIN, domain), criteria);
+        final var countSpec = bindCriteriaParams(
+                getTemplate().getDatabaseClient().sql(count).bind(COL_DOMAIN, domain), criteria);
+
+        return fluxToFlowable(searchSpec
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all()).map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(countSpec
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve applications with domain {} and criteria (page={}/size={})", domain, page, size, error))
+                .observeOn(Schedulers.computation());
+    }
+
+    private static boolean skipSearchDueToEmptyAppIds(ApplicationCriteria criteria) {
+        return criteria.getApplicationIds().isPresent() && criteria.getApplicationIds().get().isEmpty();
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, ApplicationCriteria criteria, String query, int page, int size) {
+        LOGGER.debug("search({}, criteria, {}, {}, {})", domain, query, page, size);
+
+        if (skipSearchDueToEmptyAppIds(criteria)) {
+            return Single.just(new Page<>(Collections.emptyList(), page, 0));
+        }
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, criteria, page, size, COL_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, criteria);
+
+        final var searchSpec = bindCriteriaParams(
+                getTemplate().getDatabaseClient().sql(search)
+                        .bind(COL_DOMAIN, domain)
+                        .bind("value", escapedQuery.toUpperCase()), criteria);
+        final var countSpec = bindCriteriaParams(
+                getTemplate().getDatabaseClient().sql(count)
+                        .bind(COL_DOMAIN, domain)
+                        .bind("value", escapedQuery.toUpperCase()), criteria);
+
+        return fluxToFlowable(searchSpec
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(countSpec
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to search applications with domain {} and criteria (page={}/size={})", domain, page, size, error));
+    }
+
+    private DatabaseClient.GenericExecuteSpec bindCriteriaParams(DatabaseClient.GenericExecuteSpec spec, ApplicationCriteria criteria) {
+        if (criteria.getApplicationIds().filter(ids -> !ids.isEmpty()).isPresent()) {
+            spec = spec.bind("applicationIds", criteria.getApplicationIds().get());
+        }
+        if (criteria.getEnabled().isPresent()) {
+            spec = spec.bind("enabled", criteria.getEnabled().get());
+        }
+        return spec;
     }
 
     @Override

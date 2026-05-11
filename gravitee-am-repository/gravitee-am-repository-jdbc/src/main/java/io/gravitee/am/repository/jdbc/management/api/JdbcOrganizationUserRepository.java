@@ -346,6 +346,21 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     @Override
+    public Flowable<User> findByEmail(String organizationId, String email) {
+        LOGGER.debug("findByEmail({}, {})", organizationId, email);
+        return fluxToFlowable(getTemplate().getDatabaseClient()
+                .sql(databaseDialectHelper.buildFindUserByReferenceAndEmail(ReferenceType.ORGANIZATION, organizationId, email, true))
+                .bind(REF_ID, organizationId)
+                .bind(REF_TYPE, ReferenceType.ORGANIZATION.name())
+                .bind("email", email)
+                .map((row, rowMetadata) -> rowMapper.read(JdbcOrganizationUser.class, row))
+                .all())
+                .map(this::toEntity)
+                .concatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
         LOGGER.debug("findByUsernameAndSource({},{},{},{})", referenceType, referenceId, username, source);
         return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)

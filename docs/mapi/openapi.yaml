@@ -1025,6 +1025,14 @@ paths:
           type: array
           items:
             type: string
+      - name: status
+        in: query
+        schema:
+          type: string
+      - name: owner.email
+        in: query
+        schema:
+          type: string
       responses:
         "200":
           description: List registered applications for a security domain

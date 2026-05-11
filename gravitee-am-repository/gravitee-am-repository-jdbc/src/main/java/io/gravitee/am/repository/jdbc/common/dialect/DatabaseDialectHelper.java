@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.common.dialect;
 
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -55,6 +56,14 @@ public interface DatabaseDialectHelper {
     String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc);
 
     String buildCountApplicationsQuery(boolean wildcard, boolean withIds);
+
+    String buildSearchApplicationsQuery(boolean wildcard, ApplicationCriteria criteria, int page, int size, String sort, boolean asc);
+
+    String buildCountApplicationsQuery(boolean wildcard, ApplicationCriteria criteria);
+
+    String buildFindApplicationsByDomainAndCriteria(ApplicationCriteria criteria, int page, int size);
+
+    String buildCountApplicationsByDomainAndCriteria(ApplicationCriteria criteria);
 
     String buildSearchProtectedResourceQuery(boolean wildcard, int page, int size, String sort, boolean asc);
 

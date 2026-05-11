@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.common.dialect;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.r2dbc.postgresql.codec.Json;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -32,9 +33,8 @@ import java.util.Map;
  */
 public class PostgresqlHelper extends AbstractDialectHelper {
 
-    public static final String SQL_LIKE = "LIKE ";
     public static final String VALUE_PARAM = ":value";
-    public static final String SQL_LIKE_2 = "' like ";
+    public static final String LIKE_2 = "' like ";
     public static final String ARROW = " ->> '";
 
     public PostgresqlHelper(R2dbcDialect dialect, String collation) {
@@ -85,15 +85,15 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 queryBuilder.append(path[0] + " ? '" + path[1] + "'");
                 break;
             case "co":
-                queryBuilder.append(path[0] + ARROW + path[1] + SQL_LIKE_2 + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + LIKE_2 + bindValueName + " ");
                 search.addBinding(bindValueKey, "%" + value + "%");
                 break;
             case "sw":
-                queryBuilder.append(path[0] + ARROW + path[1] + SQL_LIKE_2 + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + LIKE_2 + bindValueName + " ");
                 search.addBinding(bindValueKey, value + "%");
                 break;
             case "ew":
-                queryBuilder.append(path[0] + ARROW + path[1] + SQL_LIKE_2 + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + LIKE_2 + bindValueName + " ");
                 search.addBinding(bindValueKey, "%" + value);
                 break;
             default:
@@ -109,17 +109,17 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         return builder.append("u.reference_id = :refId")
                 .append(" AND u.reference_type = :refType")
                 .append(" AND (")
-                .append(" u.username ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" u.username ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR u.email ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR u.email ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR  u.additional_information->>email ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR  u.additional_information->>email ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR u.display_name ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR u.display_name ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR u.first_name ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR u.first_name ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR u.last_name ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR u.last_name ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
                 .append(" ) ");
     }
@@ -129,9 +129,9 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         return builder.append("a.domain = :domain")
                 .append(withIds ? " AND a.id IN (:applicationIds)": "")
                 .append(" AND (")
-                .append(" upper(a.name) ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
                 .append(" ) ");
     }
@@ -169,5 +169,21 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     @Override
     public String buildAuthorizationCodeDeleteAndReturnQuery() {
         return "DELETE FROM authorization_codes c where c.code = :code and c.client_id = :clientId and (c.expire_at > :now or c.expire_at is null) RETURNING *";
+    }
+
+
+    protected StringBuilder buildSearchApplicationsWithCriteria(boolean wildcard, ApplicationCriteria criteria, StringBuilder builder) {
+        String escapeSuffix = wildcard ? getLikeEscapeClause() : "";
+        builder.append("a.domain = :domain");
+        appendCriteriaFilters(criteria, builder);
+        builder.append(" AND (")
+                .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(escapeSuffix)
+                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(escapeSuffix)
+                .append(" ) ");
+        return builder;
     }
 }

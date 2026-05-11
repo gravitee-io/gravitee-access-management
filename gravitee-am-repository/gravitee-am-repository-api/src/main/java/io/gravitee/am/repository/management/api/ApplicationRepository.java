@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -43,6 +44,10 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
     Single<Page<Application>> search(String domain, String query, int page, int size);
 
     Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size);
+
+    Single<Page<Application>> findByDomain(String domain, ApplicationCriteria criteria, int page, int size);
+
+    Single<Page<Application>> search(String domain, ApplicationCriteria criteria, String query, int page, int size);
 
     Flowable<Application> findByCertificate(String certificate);
 

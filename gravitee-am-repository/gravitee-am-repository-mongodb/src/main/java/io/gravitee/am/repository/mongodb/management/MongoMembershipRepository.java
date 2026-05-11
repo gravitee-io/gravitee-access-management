@@ -123,7 +123,8 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         }
 
         if (criteria.getRoleId().isPresent()) {
-            eqUserId = eq(FIELD_ROLE, criteria.getRoleId().get());
+            Bson roleFilter = eq(FIELD_ROLE, criteria.getRoleId().get());
+            eqUserId = eqUserId != null ? and(eqUserId, roleFilter) : roleFilter;
         }
 
         return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)
