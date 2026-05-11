@@ -48,10 +48,22 @@ export interface ApplicationSAMLSettings {
   assertionAttributes?: Array<SAMLAssertionAttribute>;
   /**
    *
+   * @type {number}
+   * @memberof ApplicationSAMLSettings
+   */
+  assertionValiditySeconds?: number;
+  /**
+   *
    * @type {string}
    * @memberof ApplicationSAMLSettings
    */
   attributeConsumeServiceUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationSAMLSettings
+   */
+  audiences?: Array<string>;
   /**
    *
    * @type {string}
@@ -72,6 +84,12 @@ export interface ApplicationSAMLSettings {
   entityId?: string;
   /**
    *
+   * @type {boolean}
+   * @memberof ApplicationSAMLSettings
+   */
+  includeAssertionConditions?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ApplicationSAMLSettings
    */
@@ -82,6 +100,18 @@ export interface ApplicationSAMLSettings {
    * @memberof ApplicationSAMLSettings
    */
   nameIdMapping?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationSAMLSettings
+   */
+  notBeforeTimeSkewSeconds?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationSAMLSettings
+   */
+  notOnOrAfterTimeSkewSeconds?: number;
   /**
    *
    * @type {string}
@@ -132,12 +162,17 @@ export function ApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscrimina
   return {
     assertionAttributes:
       json['assertionAttributes'] == null ? undefined : (json['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeFromJSON),
+    assertionValiditySeconds: json['assertionValiditySeconds'] == null ? undefined : json['assertionValiditySeconds'],
     attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
+    audiences: json['audiences'] == null ? undefined : json['audiences'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     dataEncryptionAlgorithm: json['dataEncryptionAlgorithm'] == null ? undefined : json['dataEncryptionAlgorithm'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
+    includeAssertionConditions: json['includeAssertionConditions'] == null ? undefined : json['includeAssertionConditions'],
     keyTransportEncryptionAlgorithm: json['keyTransportEncryptionAlgorithm'] == null ? undefined : json['keyTransportEncryptionAlgorithm'],
     nameIdMapping: json['nameIdMapping'] == null ? undefined : json['nameIdMapping'],
+    notBeforeTimeSkewSeconds: json['notBeforeTimeSkewSeconds'] == null ? undefined : json['notBeforeTimeSkewSeconds'],
+    notOnOrAfterTimeSkewSeconds: json['notOnOrAfterTimeSkewSeconds'] == null ? undefined : json['notOnOrAfterTimeSkewSeconds'],
     responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
     singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
     wantAssertionsEncrypted: json['wantAssertionsEncrypted'] == null ? undefined : json['wantAssertionsEncrypted'],
@@ -158,12 +193,17 @@ export function ApplicationSAMLSettingsToJSONTyped(value?: ApplicationSAMLSettin
   return {
     assertionAttributes:
       value['assertionAttributes'] == null ? undefined : (value['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeToJSON),
+    assertionValiditySeconds: value['assertionValiditySeconds'],
     attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
+    audiences: value['audiences'],
     certificate: value['certificate'],
     dataEncryptionAlgorithm: value['dataEncryptionAlgorithm'],
     entityId: value['entityId'],
+    includeAssertionConditions: value['includeAssertionConditions'],
     keyTransportEncryptionAlgorithm: value['keyTransportEncryptionAlgorithm'],
     nameIdMapping: value['nameIdMapping'],
+    notBeforeTimeSkewSeconds: value['notBeforeTimeSkewSeconds'],
+    notOnOrAfterTimeSkewSeconds: value['notOnOrAfterTimeSkewSeconds'],
     responseBinding: value['responseBinding'],
     singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
     wantAssertionsEncrypted: value['wantAssertionsEncrypted'],

@@ -43,6 +43,12 @@ import {
   ApplicationPage,
   ApplicationPageFromJSON,
   ApplicationPageToJSON,
+  CimdValidationRequest,
+  CimdValidationRequestFromJSON,
+  CimdValidationRequestToJSON,
+  CimdValidationResponse,
+  CimdValidationResponseFromJSON,
+  CimdValidationResponseToJSON,
   ClientSecret,
   ClientSecretFromJSON,
   ClientSecretToJSON,
@@ -64,6 +70,9 @@ import {
   NewApplication,
   NewApplicationFromJSON,
   NewApplicationToJSON,
+  NewCimdApplication,
+  NewCimdApplicationFromJSON,
+  NewCimdApplicationToJSON,
   NewClientSecret,
   NewClientSecretFromJSON,
   NewClientSecretToJSON,
@@ -125,6 +134,13 @@ export interface CreateApplicationFormRequest {
   domain: string;
   application: string;
   newForm: NewForm;
+}
+
+export interface CreateApplicationFromCimdRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  newCimdApplication: NewCimdApplication;
 }
 
 export interface CreateSecretRequest {
@@ -355,6 +371,13 @@ export interface UpdateApplicationTypeRequest {
   domain: string;
   application: string;
   patchApplicationType: PatchApplicationType;
+}
+
+export interface ValidateCimdUrlRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  cimdValidationRequest: CimdValidationRequest;
 }
 
 /**
@@ -696,6 +719,84 @@ export class ApplicationApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.createApplicationFormRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have APPLICATION[CREATE] permission on the specified domain
+   * Create an application from a CIMD document URL
+   */
+  async createApplicationFromCimdRaw(
+    requestParameters: CreateApplicationFromCimdRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createApplicationFromCimd.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createApplicationFromCimd.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createApplicationFromCimd.',
+      );
+    }
+
+    if (requestParameters.newCimdApplication === null || requestParameters.newCimdApplication === undefined) {
+      throw new runtime.RequiredError(
+        'newCimdApplication',
+        'Required parameter requestParameters.newCimdApplication was null or undefined when calling createApplicationFromCimd.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/cimd/applications`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewCimdApplicationToJSON(requestParameters.newCimdApplication),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have APPLICATION[CREATE] permission on the specified domain
+   * Create an application from a CIMD document URL
+   */
+  async createApplicationFromCimd(
+    requestParameters: CreateApplicationFromCimdRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createApplicationFromCimdRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -3090,6 +3191,85 @@ export class ApplicationApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Application> {
     const response = await this.updateApplicationTypeRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have APPLICATION[CREATE] permission on the specified domain
+   * Validate a CIMD URL and return parsed metadata preview
+   */
+  async validateCimdUrlRaw(
+    requestParameters: ValidateCimdUrlRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<CimdValidationResponse>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling validateCimdUrl.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling validateCimdUrl.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling validateCimdUrl.',
+      );
+    }
+
+    if (requestParameters.cimdValidationRequest === null || requestParameters.cimdValidationRequest === undefined) {
+      throw new runtime.RequiredError(
+        'cimdValidationRequest',
+        'Required parameter requestParameters.cimdValidationRequest was null or undefined when calling validateCimdUrl.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/cimd/validate`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: CimdValidationRequestToJSON(requestParameters.cimdValidationRequest),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => CimdValidationResponseFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have APPLICATION[CREATE] permission on the specified domain
+   * Validate a CIMD URL and return parsed metadata preview
+   */
+  async validateCimdUrl(
+    requestParameters: ValidateCimdUrlRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<CimdValidationResponse> {
+    const response = await this.validateCimdUrlRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }
