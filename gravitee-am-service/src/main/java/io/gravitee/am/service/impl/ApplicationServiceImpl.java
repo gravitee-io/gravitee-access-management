@@ -531,6 +531,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setDescription(newApplication.getDescription());
         application.setType(newApplication.getType());
         application.setDomain(domain.getId());
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
+            application.setSubType(newApplication.getSubType());
+        }
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
@@ -539,8 +542,6 @@ public class ApplicationServiceImpl implements ApplicationService {
         oAuthSettings.setClientName(resolvedClientName);
         if (preview.tokenEndpointAuthMethod() != null) {
             oAuthSettings.setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
-        } else {
-            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         }
         if (preview.grantTypes() != null && !preview.grantTypes().isEmpty()) {
             oAuthSettings.setGrantTypes(preview.grantTypes());
@@ -566,6 +567,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         applyExtendedMetadata(preview, oAuthSettings);
 
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
+            applyAgentDefaults(newApplication.getSubType(), oAuthSettings);
+        }
+
         applicationSettings.setOauth(oAuthSettings);
 
         // apply default SAML 2.0 settings (mirrors regular ApplicationService#create)
@@ -585,7 +590,28 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setSettings(applicationSettings);
 
         applicationTemplateManager.apply(application);
+
+        // CIMD forbids secret-based client authentication. When the CIMD doc omitted the auth
+        // method, the template manager has just defaulted it to client_secret_basic (WEB/SERVICE).
+        // Replace that with a CIMD-compatible value: private_key_jwt for confidential clients
+        // (SERVICE / client_credentials), none for public clients.
+        ApplicationOAuthSettings finalOauth = application.getSettings().getOauth();
+        if (preview.tokenEndpointAuthMethod() == null
+                && isSecretBasedAuthMethod(finalOauth.getTokenEndpointAuthMethod())) {
+            boolean confidential = ApplicationType.SERVICE.equals(application.getType())
+                    || (finalOauth.getGrantTypes() != null
+                        && finalOauth.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
+            finalOauth.setTokenEndpointAuthMethod(confidential
+                    ? ClientAuthenticationMethod.PRIVATE_KEY_JWT
+                    : ClientAuthenticationMethod.NONE);
+        }
         return application;
+    }
+
+    private static boolean isSecretBasedAuthMethod(String method) {
+        return ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equalsIgnoreCase(method)
+                || ClientAuthenticationMethod.CLIENT_SECRET_POST.equalsIgnoreCase(method)
+                || ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(method);
     }
 
     private void applyExtendedMetadata(CimdClientMetadata preview, ApplicationOAuthSettings oAuthSettings) {

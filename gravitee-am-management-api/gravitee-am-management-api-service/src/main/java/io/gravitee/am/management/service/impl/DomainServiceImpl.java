@@ -606,6 +606,13 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapCompletable(domain -> {
+                    // The CIMD template guard in applicationService.delete refuses to drop an
+                    // application that's currently registered as the domain's CIMD template.
+                    // When the whole domain is being deleted, that reference goes away regardless,
+                    // so clear it on the in-memory domain so the per-app cascade isn't blocked.
+                    if (domain.getOidc() != null && domain.getOidc().getCimdSettings() != null) {
+                        domain.getOidc().getCimdSettings().setTemplateId(null);
+                    }
                     // delete applications
                     return applicationService.findByDomain(domainId)
                             .flatMapCompletable(applications -> {
