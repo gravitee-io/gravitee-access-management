@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.model.ApplicationExpand;
 import io.gravitee.am.management.handlers.management.api.resources.model.FilteredApplication;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
@@ -60,6 +61,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -101,8 +104,10 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_APPLICATIONS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
+            @QueryParam("expand") List<String> expandsParam,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
+        final Set<ApplicationExpand> expands = convertToApplicationExpands(expandsParam);
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
                 .andThen(checkDomainExists(domain).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
@@ -114,11 +119,19 @@ public class ApplicationsResource extends AbstractDomainResource {
                                         .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query))))
                 .map(apps ->
                         new ApplicationPage(
-                                apps.getData().stream().map(FilteredApplication::of).toList(),
+                                apps.getData().stream().map(app -> FilteredApplication.of(app, expands)).toList(),
                                 apps.getCurrentPage(),
                                 apps.getTotalCount())
                 )
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Set<ApplicationExpand> convertToApplicationExpands(List<String> expandsParam) {
+        return expandsParam == null ? Set.of() :
+                expandsParam.stream()
+                        .map(ApplicationExpand::fromString)
+                        .filter(e -> e != null)
+                        .collect(Collectors.toSet());
     }
 
     private Single<Page<Application>> listApplications(String domain, int page, int size, String query) {

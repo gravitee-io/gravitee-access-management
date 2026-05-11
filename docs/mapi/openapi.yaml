@@ -1019,6 +1019,12 @@ paths:
         in: query
         schema:
           type: string
+      - name: expand
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
       responses:
         "200":
           description: List registered applications for a security domain
@@ -13691,6 +13697,8 @@ components:
     FilteredApplication:
       type: object
       properties:
+        clientId:
+          type: string
         description:
           type: string
         enabled:
