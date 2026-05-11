@@ -8,7 +8,7 @@ databaseChangeLog:
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: client_id, type: nvarchar(2048), constraints: { nullable: false } }
+              - column: { name: client_id, type: nvarchar(512), constraints: { nullable: false } }
               - column: { name: metadata, type: clob, constraints: { nullable: true } }
               - column: { name: fetched_at, type: timestamp(6), constraints: { nullable: true } }
               - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }
