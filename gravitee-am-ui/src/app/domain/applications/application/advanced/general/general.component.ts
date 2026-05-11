@@ -107,7 +107,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.isTemplate = this.application.template || false;
-    this.isCimdTemplate = this.domain?.oidc?.cimdSettings?.templateId === this.application.id;
+    this.isCimdTemplate = !!this.domain?.oidc?.cimdSettings?.enabled && this.domain?.oidc?.cimdSettings?.templateId === this.application.id;
     if (!this.domain.uma || !this.domain.uma.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
