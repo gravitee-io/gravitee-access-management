@@ -79,6 +79,20 @@ curl --location --request POST 'https://circleci.com/api/v2/project/gh/gravitee-
 }'
 ----
 
+== 🏁 Run release gamma version pipeline[[run_release_gamma_version_pipeline]]
+
+Launch only required steps in one CircleCI pipeline to release a gamma version (Artifactory only, no Docker Hub / Maven Central).
+
+[source, shell]
+----
+npm run am-release -- \
+  --branch gamma --gio-version 4.12.0-gamma.1 \
+  --dry-run \
+  release-gamma-version
+----
+
+WARNING: CircleCI auto-cancels in-flight pipelines on the same branch when a new one starts (see <<functional_overview, Functional overview>>). If you push a commit to `gamma` and then trigger the release via API within the same window, the webhook pipeline for your push will be killed mid-run. To avoid this, include `[skip ci]` in the subject of any precursor commits (e.g. CI-config fixes) so the webhook pipeline never spawns and only the release-gamma-version pipeline runs.
+
 == 🏁 Run release version pipeline[[run_release_version_pipeline]]
 
 Lunch all steps in one CircleCI pipeline to release a new version. There are two methods available:
@@ -173,7 +187,7 @@ npm run am-release -- \
 ----
 
 
-== 💡 Functional overview
+== 💡 Functional overview[[functional_overview]]
 
 This is the functional dependencies between each step:
 
