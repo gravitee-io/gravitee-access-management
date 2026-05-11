@@ -14572,6 +14572,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     NewClientSecret:
       required:
       - name
