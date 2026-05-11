@@ -19,7 +19,7 @@ services:
     image: mongo:${MONGO_VERSION:-8.0}
     restart: always
     ports:
-      - 27017:27017
+      - ${AM_MONGO_HOST_PORT:-27017}:27017
   gateway:
     links:
       - mongodb
