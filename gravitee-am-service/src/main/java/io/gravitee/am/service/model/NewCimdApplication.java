@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,4 +43,8 @@ public class NewCimdApplication {
 
     /** User-supplied client_name when the document does not provide one. */
     private String clientName;
+
+    /** Agent persona for AGENT applications. Required when {@link #type} is AGENT, rejected otherwise. */
+    @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
+    private String subType;
 }

@@ -250,13 +250,16 @@ public class CimdMetadataFetcher {
             throw new InvalidClientMetadataException("Client metadata response is not a JSON object.");
         }
 
+        // redirect_uris are required for redirect-based flows only. CIMD docs for AUTONOMOUS-style
+        // clients (client_credentials / token_exchange only) legitimately omit them. Downstream
+        // validators (validateRedirectUris, validateAgentSettings) enforce the right rule per
+        // application type, so we only sanity-check the array contents here.
         final JsonNode redirectUris = metadata.get("redirect_uris");
-        if (redirectUris == null || !redirectUris.isArray() || redirectUris.isEmpty()) {
-            throw new InvalidClientMetadataException("Missing or invalid redirect_uris.");
-        }
-        for (JsonNode item : redirectUris) {
-            if (!item.isTextual() || item.asText().isBlank()) {
-                throw new InvalidClientMetadataException("Invalid redirect_uris.");
+        if (redirectUris != null && redirectUris.isArray()) {
+            for (JsonNode item : redirectUris) {
+                if (!item.isTextual() || item.asText().isBlank()) {
+                    throw new InvalidClientMetadataException("Invalid redirect_uris.");
+                }
             }
         }
 
