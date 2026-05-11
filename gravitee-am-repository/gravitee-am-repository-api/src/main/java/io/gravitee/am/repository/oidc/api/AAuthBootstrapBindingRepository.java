@@ -34,6 +34,16 @@ public interface AAuthBootstrapBindingRepository {
 
     Maybe<AAuthBootstrapBinding> findByDomainAndAgentServerUrlAndUserId(String domain, String agentServerUrl, String userId);
 
+    /**
+     * Look up a binding by its agent-side identity — the natural key for the PS token endpoint,
+     * which knows {@code agent_server_url} (from the verified agent_token's {@code iss} claim)
+     * and {@code agent_identifier} (from the resource_token's {@code agent} claim) but does not
+     * yet know which user the agent represents. The binding row provides that user id, which
+     * the token endpoint then uses to short-circuit to 200 + auth_token when prior consent
+     * exists.
+     */
+    Maybe<AAuthBootstrapBinding> findByDomainAndAgentServerUrlAndAgentIdentifier(String domain, String agentServerUrl, String agentIdentifier);
+
     Single<AAuthBootstrapBinding> create(AAuthBootstrapBinding binding);
 
     Single<AAuthBootstrapBinding> update(AAuthBootstrapBinding binding);

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.aauth.resources.endpoint;
 import io.gravitee.am.gateway.handler.aauth.model.AAuthTokenRequest;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.aauth.service.consent.AAuthConsentService;
 import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
 import io.gravitee.am.gateway.handler.aauth.service.token.AAuthTokenService;
 import io.gravitee.am.gateway.handler.aauth.service.token.ResourceTokenClaims;
@@ -26,7 +27,9 @@ import io.gravitee.am.gateway.handler.aauth.service.token.ResourceTokenValidator
 import io.gravitee.am.gateway.handler.aauth.signing.VerificationResult;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentKeyPairFactory;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.repository.oidc.api.AAuthBootstrapBindingRepository;
 import io.gravitee.am.repository.oidc.model.AAuthPendingRequest;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -59,6 +62,8 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
     private ResourceTokenValidator resourceTokenValidator;
     private AAuthTokenService tokenService;
     private AAuthPendingRequestService pendingService;
+    private AAuthBootstrapBindingRepository bindingRepository;
+    private AAuthConsentService consentService;
     private KeyPair agentKeyPair;
 
     @Override
@@ -68,9 +73,15 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
         resourceTokenValidator = mock(ResourceTokenValidator.class);
         tokenService = mock(AAuthTokenService.class);
         pendingService = mock(AAuthPendingRequestService.class);
+        bindingRepository = mock(AAuthBootstrapBindingRepository.class);
+        consentService = mock(AAuthConsentService.class);
+        // Default: no binding exists → endpoint falls through to the existing 202 path,
+        // preserving the original test scenarios. Tests for the new 200 branch override this.
+        when(bindingRepository.findByDomainAndAgentServerUrlAndAgentIdentifier(anyString(), anyString(), anyString()))
+                .thenReturn(Maybe.empty());
 
         var endpoint = new AAuthTokenEndpoint(resourceTokenValidator, tokenService,
-                pendingService, "domain-1", 600);
+                pendingService, bindingRepository, consentService, "domain-1", 600);
 
         router.route(TOKEN_PATH)
                 .handler(io.vertx.rxjava3.ext.web.handler.BodyHandler.create())
@@ -80,10 +91,16 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
                             new VerificationResult("jwt", "sig", agentKeyPair.getPublic(), "thumbprint", "https://agent.example", "aauth:bot@agent.example"));
                     ctx.put(AAuthTokenRequestParseHandler.AAUTH_TOKEN_REQUEST_CONTEXT_KEY,
                             new AAuthTokenRequest("resource.token.jwt", null, null, null, null, null));
-                    // Set a mock Application so the guard passes
+                    // Set a mock Application so the guard passes. clientId is needed for the
+                    // consent lookup short-circuit; missing clientId would force the 202 path.
                     var app = new io.gravitee.am.model.Application();
                     app.setId("app-1");
                     app.setName("Test Agent");
+                    var settings = new io.gravitee.am.model.application.ApplicationSettings();
+                    var oauth = new io.gravitee.am.model.application.ApplicationOAuthSettings();
+                    oauth.setClientId("test-client-id");
+                    settings.setOauth(oauth);
+                    app.setSettings(settings);
                     ctx.put(io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler.AAUTH_APPLICATION_CONTEXT_KEY, app);
                     ctx.next();
                 })
@@ -148,6 +165,52 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
 
         var result = postToken();
         assertEquals(500, result.statusCode);
+    }
+
+    @Test
+    public void shouldReturn200WithAuthToken_whenBindingAndConsentExist() throws Exception {
+        // Spec §6.6.1: PS SHOULD short-circuit to 200 + auth_token when the agent's user has
+        // previously consented to the requested scope.
+        stubValidResourceToken();
+        var binding = new io.gravitee.am.repository.oidc.model.AAuthBootstrapBinding();
+        binding.setUserId("user-42");
+        // Match any args — the actual values come from rtClaims/verification set up elsewhere
+        // and using anyString() keeps the test resilient to fixture changes.
+        when(bindingRepository.findByDomainAndAgentServerUrlAndAgentIdentifier(anyString(), anyString(), anyString()))
+                .thenReturn(Maybe.just(binding));
+        // checkConsent returns the set of approved scopes — include "read" so a
+        // resource_token requesting "read write" matches the first required scope.
+        when(consentService.checkConsent(any(), anyString()))
+                .thenReturn(Single.just(new java.util.HashSet<>(java.util.Arrays.asList("read", "write"))));
+        when(tokenService.createAuthToken(any(), any(), anyString(), anyString()))
+                .thenReturn(Single.just(new io.gravitee.am.gateway.handler.aauth.model.AAuthTokenResponse("auth.token.jwt", 3600L)));
+
+        var result = postToken();
+        assertEquals(200, result.statusCode);
+        var body = new JsonObject(result.body);
+        assertEquals("auth.token.jwt", body.getString("auth_token"));
+        assertEquals(3600L, body.getLong("expires_in").longValue());
+        // No interaction headers on the direct grant
+        assertEquals(null, result.location);
+        assertEquals(null, result.aauthRequirement);
+    }
+
+    @Test
+    public void shouldFallTo202_whenBindingExistsButConsentMissing() throws Exception {
+        stubValidResourceToken();
+        stubPendingCreation();
+        var binding = new io.gravitee.am.repository.oidc.model.AAuthBootstrapBinding();
+        binding.setUserId("user-42");
+        when(bindingRepository.findByDomainAndAgentServerUrlAndAgentIdentifier(anyString(), anyString(), anyString()))
+                .thenReturn(Maybe.just(binding));
+        // Approved set doesn't contain the requested "read" scope, so the direct-grant path
+        // must drop through to the interactive 202 flow.
+        when(consentService.checkConsent(any(), anyString()))
+                .thenReturn(Single.just(new java.util.HashSet<>(java.util.Arrays.asList("other.scope"))));
+
+        var result = postToken();
+        assertEquals(202, result.statusCode);
+        assertTrue(result.aauthRequirement.contains("requirement=interaction"));
     }
 
     private void stubValidResourceToken() {

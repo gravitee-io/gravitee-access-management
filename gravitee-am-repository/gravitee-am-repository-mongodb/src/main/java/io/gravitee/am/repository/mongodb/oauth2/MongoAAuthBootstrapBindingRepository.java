@@ -50,6 +50,7 @@ public class MongoAAuthBootstrapBindingRepository extends AbstractOAuth2MongoRep
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_USER_ID = "user_id";
     private static final String FIELD_AGENT_SERVER_URL = "agent_server_url";
+    private static final String FIELD_AGENT_IDENTIFIER = "agent_identifier";
 
     private MongoCollection<AAuthBootstrapBindingMongo> collection;
 
@@ -84,6 +85,15 @@ public class MongoAAuthBootstrapBindingRepository extends AbstractOAuth2MongoRep
     public Maybe<AAuthBootstrapBinding> findByDomainAndAgentServerUrlAndUserId(String domain, String agentServerUrl, String userId) {
         return Observable
                 .fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_AGENT_SERVER_URL, agentServerUrl), eq(FIELD_USER_ID, userId))).limit(1).first())
+                .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Maybe<AAuthBootstrapBinding> findByDomainAndAgentServerUrlAndAgentIdentifier(String domain, String agentServerUrl, String agentIdentifier) {
+        return Observable
+                .fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_AGENT_SERVER_URL, agentServerUrl), eq(FIELD_AGENT_IDENTIFIER, agentIdentifier))).limit(1).first())
                 .firstElement()
                 .map(this::convert)
                 .observeOn(Schedulers.computation());

@@ -178,9 +178,12 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     public AAuthTokenEndpoint aAuthTokenEndpoint(ResourceTokenValidator resourceTokenValidator,
                                                   AAuthTokenService aAuthTokenService,
                                                   AAuthPendingRequestService pendingService,
+                                                  AAuthBootstrapBindingRepository bindingRepository,
+                                                  AAuthConsentService consentService,
                                                   Domain domain) {
         int pendingTtl = domain.getAauth() != null ? domain.getAauth().getPendingRequestTtl() : 600;
-        return new AAuthTokenEndpoint(resourceTokenValidator, aAuthTokenService, pendingService, domain.getId(), pendingTtl);
+        return new AAuthTokenEndpoint(resourceTokenValidator, aAuthTokenService, pendingService,
+                bindingRepository, consentService, domain.getId(), pendingTtl);
     }
 
     @Bean

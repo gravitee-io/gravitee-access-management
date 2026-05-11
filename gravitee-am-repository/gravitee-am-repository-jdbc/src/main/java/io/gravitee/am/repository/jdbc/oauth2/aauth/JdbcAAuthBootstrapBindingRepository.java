@@ -79,6 +79,17 @@ public class JdbcAAuthBootstrapBindingRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    public Maybe<AAuthBootstrapBinding> findByDomainAndAgentServerUrlAndAgentIdentifier(String domain, String agentServerUrl, String agentIdentifier) {
+        LOGGER.debug("findByDomainAndAgentServerUrlAndAgentIdentifier({}, {}, {})", domain, agentServerUrl, agentIdentifier);
+        return monoToMaybe(getTemplate().select(Query.query(
+                        where("domain").is(domain)
+                                .and("agent_server_url").is(agentServerUrl)
+                                .and("agent_identifier").is(agentIdentifier)), JdbcAAuthBootstrapBinding.class).singleOrEmpty())
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<AAuthBootstrapBinding> create(AAuthBootstrapBinding binding) {
         binding.setId(binding.getId() == null ? SecureRandomString.generate() : binding.getId());
         LOGGER.debug("Create AAuthBootstrapBinding with id {}", binding.getId());
