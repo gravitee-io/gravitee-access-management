@@ -16,22 +16,17 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.model.ApplicationExpand;
 import io.gravitee.am.management.handlers.management.api.resources.model.FilteredApplication;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.model.ApplicationFilter;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,7 +39,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -105,18 +99,29 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("size") @DefaultValue(MAX_APPLICATIONS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
             @QueryParam("expand") List<String> expandsParam,
+            @QueryParam("status") String status,
+            @QueryParam("owner.email") String ownerEmail,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
+        ApplicationFilter filter = new ApplicationFilter(status, ownerEmail);
+
+        // owner.email filter requires ORGANIZATION_USER[READ] — checked here, resolved in service
+        io.reactivex.rxjava3.core.Completable ownerPermissionCheck = filter.hasOwnerEmailFilter()
+                ? checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
+                : io.reactivex.rxjava3.core.Completable.complete();
+
         final Set<ApplicationExpand> expands = convertToApplicationExpands(expandsParam);
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
+
+        ownerPermissionCheck
+                .andThen(checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST))
                 .andThen(checkDomainExists(domain).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ -> listApplications(domain, page, size, query))
+                        .flatMapSingle(__ -> listApplications(domain, organizationId, filter, page, size, query))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query))))
+                                        .flatMap(ids -> listApplicationsByIds(domain, organizationId, ids, filter, page, size, query))))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(app -> FilteredApplication.of(app, expands)).toList(),
@@ -134,20 +139,30 @@ public class ApplicationsResource extends AbstractDomainResource {
                         .collect(Collectors.toSet());
     }
 
-    private Single<Page<Application>> listApplications(String domain, int page, int size, String query) {
+    private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query) {
+        if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter()) {
+            return query != null
+                    ? applicationService.search(domain, organizationId, filter, query, page, size)
+                    : applicationService.findByDomain(domain, organizationId, filter, page, size);
+        }
         if (query != null) {
             return applicationService.search(domain, query, page, size);
-        } else {
-            return applicationService.findByDomain(domain, page, size);
         }
+        return applicationService.findByDomain(domain, page, size);
     }
 
-    private Single<Page<Application>> listApplicationsByIds(String domain, List<String> applicationIds, int page, int size, String query) {
+    private Single<Page<Application>> listApplicationsByIds(String domain, String organizationId, List<String> applicationIds, ApplicationFilter filter, int page, int size, String query) {
+        if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter()) {
+            // Intersect permission-scoped IDs with any owner/status filter resolution in the service layer
+            ApplicationFilter filterWithScope = new ApplicationFilter(filter.status(), filter.ownerEmail(), applicationIds);
+            return query != null
+                    ? applicationService.search(domain, organizationId, filterWithScope, query, page, size)
+                    : applicationService.findByDomain(domain, organizationId, filterWithScope, page, size);
+        }
         if (query != null) {
             return applicationService.search(domain, applicationIds, query, page, size);
-        } else {
-            return applicationService.findByDomain(domain, applicationIds, page, size);
         }
+        return applicationService.findByDomain(domain, applicationIds, page, size);
     }
 
     @POST

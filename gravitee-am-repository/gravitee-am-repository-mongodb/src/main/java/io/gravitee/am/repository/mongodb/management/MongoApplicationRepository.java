@@ -50,6 +50,7 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
@@ -108,6 +109,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
 
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -118,6 +120,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
     private static final String FIELD_APPLICATION_IDENTITY_PROVIDERS = "identityProviders";
     private static final String FIELD_IDENTITY = "identity";
+    private static final String FIELD_ENABLED = "enabled";
     // Kept for retro-compatibility
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_FACTORS = "factors";
@@ -339,6 +342,36 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public Single<Long> countByDomain(String domain) {
         return Single.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions()))
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, ApplicationCriteria criteria, int page, int size) {
+        Bson query = buildCriteriaQuery(domain, criteria);
+        return queryApplications(query, page, size).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, ApplicationCriteria criteria, String query, int page, int size) {
+        Bson textQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        List<Bson> criteriaFilters = buildCriteriaFilters(criteria);
+        Bson mongoQuery = criteriaFilters.isEmpty() ? textQuery : and(textQuery, and(criteriaFilters));
+        boolean useCollation = !isWildcardQuery(query);
+        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation)
+                .observeOn(Schedulers.computation());
+    }
+
+    private Bson buildCriteriaQuery(String domain, ApplicationCriteria criteria) {
+        List<Bson> filters = new ArrayList<>();
+        filters.add(eq(FIELD_DOMAIN, domain));
+        filters.addAll(buildCriteriaFilters(criteria));
+        return filters.size() == 1 ? filters.get(0) : and(filters);
+    }
+
+    private List<Bson> buildCriteriaFilters(ApplicationCriteria criteria) {
+        List<Bson> filters = new ArrayList<>();
+        criteria.getEnabled().ifPresent(enabled -> filters.add(eq(FIELD_ENABLED, enabled)));
+        criteria.getApplicationIds().ifPresent(ids -> filters.add(in(FIELD_ID, ids)));
+        return filters;
     }
 
     private ApplicationMongo convert(Application other) {

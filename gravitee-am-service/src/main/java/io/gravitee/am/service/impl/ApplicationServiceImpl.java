@@ -44,8 +44,11 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
-import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
+import io.gravitee.am.repository.management.api.OrganizationUserRepository;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
+import io.gravitee.am.service.model.ApplicationFilter;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.model.CimdClientMetadata;
@@ -157,6 +160,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Autowired
     private ApplicationTemplateManager applicationTemplateManager;
 
+    @Lazy
+    @Autowired
+    private OrganizationUserRepository organizationUserRepository;
+
     @Autowired
     private AccountSettingsValidator accountSettingsValidator;
 
@@ -257,6 +264,70 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
                 });
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, String organizationId, ApplicationFilter filter, int page, int size) {
+        LOGGER.debug("Find applications by domain {} with filter", domain);
+        return buildCriteria(filter, organizationId)
+                .flatMap(criteria ->applicationRepository.findByDomain(domain, criteria, page, size))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find applications by domain {} with filter", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find applications by domain %s with filter", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, String organizationId, ApplicationFilter filter, String query, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {} with filter", query, domain);
+        return buildCriteria(filter, organizationId)
+                .flatMap(criteria -> applicationRepository.search(domain, criteria, query, page, size))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {} with filter", query, domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search applications with query %s for domain %s with filter", query, domain), ex));
+                });
+    }
+
+    private Single<ApplicationCriteria> buildCriteria(ApplicationFilter filter, String organizationId) {
+        ApplicationCriteria criteria = new ApplicationCriteria();
+
+        if (filter.hasStatusFilter()) {
+            criteria.setEnabled(ApplicationFilter.STATUS_ENABLED.equalsIgnoreCase(filter.status()));
+        }
+
+        if (!filter.hasOwnerEmailFilter()) {
+            if (filter.hasPermissionScopedIds()) {
+                criteria.setApplicationIds(filter.permissionScopedIds());
+            }
+            return Single.just(criteria);
+        }
+
+        return retrieveOwnerApplicationIds(filter, organizationId)
+                .map(ids -> {
+                    List<String> finalIds = filter.hasPermissionScopedIds()
+                            ? ids.stream().filter(filter.permissionScopedIds()::contains).collect(Collectors.toList())
+                            : ids;
+                    criteria.setApplicationIds(finalIds);
+                    return criteria;
+                }).switchIfEmpty(Single.fromCallable(() -> {
+                    criteria.setApplicationIds(List.of());
+                    return criteria;
+                }));
+    }
+
+    private Maybe<List<String>> retrieveOwnerApplicationIds(ApplicationFilter filter, String organizationId) {
+        return organizationUserRepository.findByEmail(organizationId, filter.ownerEmail())
+                .firstElement()
+                .flatMap(user ->
+                        roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)
+                                .flatMap(role -> membershipService
+                                        .findByCriteria(ReferenceType.APPLICATION, new MembershipCriteria(user.getId()).setRoleId(role.getId()))
+                                        .map(Membership::getReferenceId)
+                                        .toList()
+                                        .toMaybe())
+                );
     }
 
     @Override

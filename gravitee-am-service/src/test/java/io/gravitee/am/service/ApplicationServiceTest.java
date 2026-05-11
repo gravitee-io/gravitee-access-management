@@ -267,7 +267,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainAndApplicationIds() {
-        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(), eq(0), eq(10)))
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(List.class), eq(0), eq(10)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), List.of("id1"),0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -279,7 +279,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldSearchByDomainAndApplicationIds() {
-        when(applicationRepository.search(eq(DOMAIN.getId()), any(), eq("query"), eq(0), eq(10)))
+        when(applicationRepository.search(eq(DOMAIN.getId()), any(List.class), eq("query"), eq(0), eq(10)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Page<Application>> testObserver = applicationService.search(DOMAIN.getId(), List.of("id1"), "query", 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

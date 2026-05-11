@@ -116,7 +116,8 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
         }
 
         if (criteria.getRoleId().isPresent()) {
-            userClause = where("role_id").is(criteria.getRoleId().get());
+            Criteria roleClause = where("role_id").is(criteria.getRoleId().get());
+            userClause = criteria.getUserId().isPresent() ? userClause.and(roleClause) : roleClause;
         }
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));
@@ -147,7 +148,8 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
         }
 
         if (criteria.getRoleId().isPresent()) {
-            userClause = where("role_id").is(criteria.getRoleId().get());
+            Criteria roleClause = where("role_id").is(criteria.getRoleId().get());
+            userClause = criteria.getUserId().isPresent() ? userClause.and(roleClause) : roleClause;
         }
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));

@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Updates;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationUserMongo;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -32,6 +34,7 @@ import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Filters.regex;
 
 /**
@@ -83,6 +86,16 @@ public class MongoOrganizationUserRepository extends AbstractUserRepository<Orga
             updates.add(Updates.set("password", item.getPassword()));
         }
         return updates;
+    }
+
+    @Override
+    public Flowable<User> findByEmail(String organizationId, String email) {
+        Bson mongoQuery = and(
+                eq(FIELD_REFERENCE_TYPE, ReferenceType.ORGANIZATION.name()),
+                eq(FIELD_REFERENCE_ID, organizationId),
+                or(new BasicDBObject(FIELD_EMAIL, email), new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, email)));
+        return Flowable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override

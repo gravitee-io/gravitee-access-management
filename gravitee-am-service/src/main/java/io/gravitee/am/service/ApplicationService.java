@@ -20,6 +20,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.service.model.ApplicationFilter;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -51,6 +52,10 @@ public interface ApplicationService {
     Single<Page<Application>> search(String domain, String query, int page, int size);
 
     Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size);
+
+    Single<Page<Application>> findByDomain(String domain, String organizationId, ApplicationFilter filter, int page, int size);
+
+    Single<Page<Application>> search(String domain, String organizationId, ApplicationFilter filter, String query, int page, int size);
 
     Flowable<Application> findByCertificate(String certificate);
 

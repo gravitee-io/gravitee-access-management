@@ -15,10 +15,15 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Flowable;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface OrganizationUserRepository extends CommonUserRepository {
+
+    Flowable<User> findByEmail(String organizationId, String email);
 
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.common.dialect;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -423,6 +424,55 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
         return new StringBuilder("SELECT * FROM applications a WHERE ")
                 .append(" a.domain = :domain ")
                 .append(" AND a.settings_client_id = :clientId").toString();
+    }
+
+    @Override
+    public String buildSearchApplicationsQuery(boolean wildcard, ApplicationCriteria criteria, int page, int size, String sort, boolean asc) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM applications a WHERE ");
+        return buildSearchApplicationsWithCriteria(wildcard, criteria, builder)
+                .append(buildPagingClause(sort, asc, page, size))
+                .toString();
+    }
+
+    @Override
+    public String buildCountApplicationsQuery(boolean wildcard, ApplicationCriteria criteria) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT a.id) FROM applications a WHERE ");
+        return buildSearchApplicationsWithCriteria(wildcard, criteria, builder).toString();
+    }
+
+    @Override
+    public String buildFindApplicationsByDomainAndCriteria(ApplicationCriteria criteria, int page, int size) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM applications a WHERE a.domain = :domain");
+        appendCriteriaFilters(criteria, builder);
+        builder.append(buildPagingClause("updated_at", false, page, size));
+        return builder.toString();
+    }
+
+    @Override
+    public String buildCountApplicationsByDomainAndCriteria(ApplicationCriteria criteria) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT a.id) FROM applications a WHERE a.domain = :domain");
+        appendCriteriaFilters(criteria, builder);
+        return builder.toString();
+    }
+
+    protected StringBuilder buildSearchApplicationsWithCriteria(boolean wildcard, ApplicationCriteria criteria, StringBuilder builder) {
+        String escapeSuffix = wildcard ? getLikeEscapeClause() : "";
+        builder.append("a.domain = :domain");
+        appendCriteriaFilters(criteria, builder);
+        builder.append(" AND (")
+                .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(escapeSuffix)
+                .append(" OR upper(a.settings_client_id) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(escapeSuffix)
+                .append(" ) ");
+        return builder;
+    }
+
+    protected void appendCriteriaFilters(ApplicationCriteria criteria, StringBuilder builder) {
+        criteria.getApplicationIds().filter(ids -> !ids.isEmpty()).ifPresent(ids -> builder.append(" AND a.id IN (:applicationIds)"));
+        criteria.getEnabled().ifPresent(enabled -> builder.append(" AND a.enabled = :enabled"));
     }
 
     @Override
