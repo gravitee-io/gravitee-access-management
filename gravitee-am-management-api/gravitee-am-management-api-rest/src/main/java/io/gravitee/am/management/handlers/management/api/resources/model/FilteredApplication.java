@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.Date;
+import java.util.Set;
 
 public record FilteredApplication(
         String id,
@@ -27,9 +28,14 @@ public record FilteredApplication(
         ApplicationType type,
         boolean enabled,
         boolean template,
-        Date updatedAt) {
+        Date updatedAt,
+        String clientId) {
 
     public static FilteredApplication of(Application application) {
+        return of(application, Set.of());
+    }
+
+    public static FilteredApplication of(Application application, Set<ApplicationExpand> expands) {
         return new FilteredApplication(
                 application.getId(),
                 application.getName(),
@@ -37,7 +43,9 @@ public record FilteredApplication(
                 application.getType(),
                 application.isEnabled(),
                 application.isTemplate(),
-                application.getUpdatedAt()
+                application.getUpdatedAt(),
+                expands.contains(ApplicationExpand.CLIENT_ID) ? application.clientId() : null
         );
     }
+
 }

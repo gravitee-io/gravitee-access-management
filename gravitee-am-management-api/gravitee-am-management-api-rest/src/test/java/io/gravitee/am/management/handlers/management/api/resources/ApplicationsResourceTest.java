@@ -23,6 +23,8 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
@@ -46,6 +48,7 @@ import java.util.Set;
 
 import static io.gravitee.am.model.ReferenceType.APPLICATION;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -136,5 +139,95 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         assertEquals(result.getDescription(), application.getDescription());
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetApps_withClientIdExpand() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Application mockClient = new Application();
+        mockClient.setId("client-1-id");
+        mockClient.setName("client-1-name");
+        mockClient.setDomain(domainId);
+        mockClient.setUpdatedAt(new Date());
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauthSettings = new ApplicationOAuthSettings();
+        oauthSettings.setClientId("oauth-client-id");
+        settings.setOauth(oauthSettings);
+        mockClient.setSettings(settings);
+
+        final Page<Application> applicationPage = new Page(List.of(mockClient), 0, 1);
+
+        doReturn(Flowable.just("client-1-id"))
+                .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+
+        final Response response = target("domains").path(domainId).path("applications")
+                .queryParam("expand", "clientId")
+                .request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final Map responseEntity = readEntity(response, Map.class);
+        final Map firstApp = (Map) ((List) responseEntity.get("data")).get(0);
+        assertEquals("oauth-client-id", firstApp.get("clientId"));
+    }
+
+    @Test
+    public void shouldGetApps_withoutExpand_doesNotIncludeClientId() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Application mockClient = new Application();
+        mockClient.setId("client-1-id");
+        mockClient.setName("client-1-name");
+        mockClient.setDomain(domainId);
+        mockClient.setUpdatedAt(new Date());
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauthSettings = new ApplicationOAuthSettings();
+        oauthSettings.setClientId("oauth-client-id");
+        settings.setOauth(oauthSettings);
+        mockClient.setSettings(settings);
+
+        final Page<Application> applicationPage = new Page(List.of(mockClient), 0, 1);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+
+        final Response response = target("domains").path(domainId).path("applications").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final Map responseEntity = readEntity(response, Map.class);
+        final Map firstApp = (Map) ((List) responseEntity.get("data")).get(0);
+        assertNull(firstApp.get("clientId"));
+    }
+
+    @Test
+    public void shouldGetApps_unknownExpandValueIsIgnored() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Application mockClient = new Application();
+        mockClient.setId("client-1-id");
+        mockClient.setName("client-1-name");
+        mockClient.setDomain(domainId);
+        mockClient.setUpdatedAt(new Date());
+
+        final Page<Application> applicationPage = new Page(List.of(mockClient), 0, 1);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+
+        final Response response = target("domains").path(domainId).path("applications")
+                .queryParam("expand", "unknownValue")
+                .request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final Map responseEntity = readEntity(response, Map.class);
+        assertEquals(1, ((List) responseEntity.get("data")).size());
     }
 }
