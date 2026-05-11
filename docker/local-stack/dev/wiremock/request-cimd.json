@@ -412,6 +412,84 @@
     {
       "request": {
         "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/autonomous-agent"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/autonomous-agent",
+          "client_name": "CIMD Autonomous Agent",
+          "grant_types": [
+            "client_credentials"
+          ],
+          "token_endpoint_auth_method": "private_key_jwt",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "e": "AQAB",
+                "use": "sig",
+                "kid": "agent-1",
+                "n": "uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/autonomous-agent-no-grants"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/autonomous-agent-no-grants",
+          "client_name": "CIMD Autonomous Agent (no grants)",
+          "token_endpoint_auth_method": "private_key_jwt",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "e": "AQAB",
+                "use": "sig",
+                "kid": "agent-1",
+                "n": "uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/user-embedded-agent-no-grants"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/user-embedded-agent-no-grants",
+          "client_name": "CIMD User Embedded Agent (no grants)",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "urlPath": "/cimd/DISABLED_BASE/valid-none"
       },
       "response": {
