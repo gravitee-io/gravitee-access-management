@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.repository.oauth2.model.Token;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -132,12 +133,31 @@ abstract class BaseIntrospectionTokenService {
         }
 
         // Single-audience: check if the audience is a client ID (Application or Protected Resource)
-        // If not found as a clientId, fall back to resource identifier validation (RFC 8707)
+        // If not found as a clientId, fall back to resource identifier validation (RFC 8707).
+        // A CIMD-aware lookup may throw InvalidClientMetadataException when the audience is a
+        // URL-shaped value that points to something that isn't a CIMD client (e.g. an RFC 8707
+        // resource identifier). Treat that as "not a client" and fall through to PR validation.
         if (audiences.size() == 1) {
             String audience = audiences.getFirst();
+            LOGGER.debug("Introspection: resolving single audience [{}] for domain [{}] (jti={})",
+                    audience, jwt.getDomain(), jwt.getJti());
             return clientLookupService.findByDomainAndClientId(jwt.getDomain(), audience)
-                    .flatMapSingle(client -> Single.just(getCertificateIdFromClient(client)))
-                    .switchIfEmpty(Single.defer(() -> validateProtectedResourcesAndGetCertificateId(jwt, callerClientId)));
+                    .onErrorResumeNext(err -> {
+                        if (err instanceof InvalidClientMetadataException) {
+                            LOGGER.debug("Introspection: audience [{}] not resolvable as a client via CIMD ({}); falling back to protected-resource validation",
+                                    audience, err.getMessage());
+                            return Maybe.empty();
+                        }
+                        return Maybe.error(err);
+                    })
+                    .flatMapSingle(client -> {
+                        LOGGER.debug("Introspection: audience [{}] matched client [{}]", audience, client.getClientId());
+                        return Single.just(getCertificateIdFromClient(client));
+                    })
+                    .switchIfEmpty(Single.defer(() -> {
+                        LOGGER.debug("Introspection: audience [{}] did not match a client, attempting protected-resource validation", audience);
+                        return validateProtectedResourcesAndGetCertificateId(jwt, callerClientId);
+                    }));
         }
 
         // Multiple-audience: validate all audiences by resource identifier (RFC 8707)
