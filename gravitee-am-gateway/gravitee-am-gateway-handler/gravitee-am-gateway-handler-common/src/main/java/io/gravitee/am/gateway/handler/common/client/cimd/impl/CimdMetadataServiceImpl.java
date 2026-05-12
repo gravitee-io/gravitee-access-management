@@ -101,6 +101,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             if (!ClientIds.isUrlShaped(clientId)) {
                 return Maybe.empty();
             }
+            log.debug("CIMD resolveClient invoked for domain={}, clientId={}", domain.getId(), clientId);
 
             if (templateClient == null) {
                 return Maybe.error(new InvalidClientMetadataException("No template client available for CIMD resolution."));
@@ -181,6 +182,8 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                             .rxSend()
                             .flatMap(response -> {
                                 if (response.statusCode() != HttpStatusCode.OK_200) {
+                                    log.warn("CIMD metadata fetch failed: domain={}, url={}, status={}",
+                                            domain.getId(), clientId, response.statusCode());
                                     return Single.error(new InvalidClientMetadataException("Client metadata endpoint returned HTTP " + response.statusCode() + "."));
                                 }
 
