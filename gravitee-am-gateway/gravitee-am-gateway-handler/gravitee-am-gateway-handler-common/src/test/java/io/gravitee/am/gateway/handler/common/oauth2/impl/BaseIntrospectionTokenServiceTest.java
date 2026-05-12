@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -343,6 +344,42 @@ public class BaseIntrospectionTokenServiceTest {
         observer.assertResult(jwt);
         verify(clientLookupService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
         verify(jwtService).decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN));
+        verify(protectedResourceManager, never()).getByIdentifier(anyString());
+    }
+
+    @Test
+    public void shouldFallBackToProtectedResourceWhenClientLookupThrowsCimdError() {
+        // Regression: with CIMD enabled, a URL-shaped audience that's actually an RFC 8707
+        // resource identifier flows into CimdAwareClientLookupService and the CIMD fetch
+        // returns InvalidClientMetadataException. The error must not propagate — we should
+        // fall through to protected-resource validation.
+        JWT jwt = buildJwtWithAudiences(List.of("http://localhost:8080/mcp"));
+        ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, "backend-client");
+
+        mockDecode(jwt);
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "http://localhost:8080/mcp"))
+                .thenReturn(Maybe.error(new InvalidClientMetadataException("Client metadata endpoint returned HTTP 401.")));
+        when(protectedResourceManager.getByIdentifier("http://localhost:8080/mcp")).thenReturn(Set.of(resource));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertResult(jwt);
+        verify(protectedResourceManager).getByIdentifier("http://localhost:8080/mcp");
+    }
+
+    @Test
+    public void shouldPropagateNonCimdErrorsFromClientLookup() {
+        // Only InvalidClientMetadataException is treated as "not a client". Other errors must propagate.
+        JWT jwt = buildJwtWithAudiences(List.of("client-id"));
+
+        mockDecode(jwt);
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "client-id"))
+                .thenReturn(Maybe.error(new RuntimeException("boom")));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertError(throwable -> throwable instanceof RuntimeException && "boom".equals(throwable.getMessage()));
         verify(protectedResourceManager, never()).getByIdentifier(anyString());
     }
 
