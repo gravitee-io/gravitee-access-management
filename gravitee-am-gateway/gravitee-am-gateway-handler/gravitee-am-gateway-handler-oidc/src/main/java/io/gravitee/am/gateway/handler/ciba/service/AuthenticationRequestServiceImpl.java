@@ -29,10 +29,9 @@ import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationRejectedExcept
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
-import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.model.Domain;
@@ -46,6 +45,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
@@ -80,7 +80,8 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     private JWTService jwtService;
 
     @Autowired
-    private ClientSyncService clientService;
+    @Qualifier("regularClientLookupService")
+    private ClientLookupService clientLookupService;
 
     /**
      * How many time (in sec) an auth-request is kept into the DB
@@ -194,7 +195,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
 
     private Single<JWT> verifyState(ADUserResponse userResponse, String clientId) {
         LOGGER.debug("Prepare verification of state '{}' with client id '{}'", userResponse.getState(), clientId);
-        return this.clientService.findByClientId(clientId)
+        return this.clientLookupService.findByClientId(clientId)
                 .switchIfEmpty(Single.error(InvalidClientException::new))
                 .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client, STATE)))
                 .filter(verifiedJwt -> userResponse.getTid().equals(verifiedJwt.getJti()))

@@ -332,6 +332,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         applyOptionalString(metadata, "tls_client_auth_san_uri", client::setTlsClientAuthSanUri);
         applyOptionalString(metadata, "tls_client_auth_san_ip", client::setTlsClientAuthSanIp);
         applyOptionalString(metadata, "tls_client_auth_san_email", client::setTlsClientAuthSanEmail);
+        applyOptionalString(metadata, "request_object_signing_alg", client::setRequestObjectSigningAlg);
         applyOptionalString(metadata, "backchannel_token_delivery_mode", client::setBackchannelTokenDeliveryMode);
         applyOptionalString(metadata, "backchannel_client_notification_endpoint", client::setBackchannelClientNotificationEndpoint);
         applyOptionalString(metadata, "backchannel_authentication_request_signing_alg", client::setBackchannelAuthRequestSignAlg);
