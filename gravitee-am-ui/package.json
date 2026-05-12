@@ -44,7 +44,7 @@
     "@ngx-formly/material": "6.3.12",
     "@openfga/frontend-utils": "0.2.0-beta.11",
     "@openfga/sdk": "0.2.10",
-    "@openfga/syntax-transformer": "0.2.0",
+    "@openfga/syntax-transformer": "0.2.1",
     "@swimlane/ngx-datatable": "20.1.0",
     "asciidoctor": "3.0.4",
     "asciidoctor-highlight.js": "0.4.0",
