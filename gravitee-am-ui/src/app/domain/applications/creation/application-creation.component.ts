@@ -134,6 +134,9 @@ export class ApplicationCreationComponent implements OnInit {
       description: this.application.description,
       cimdUrl: this.application.cimdUrl,
     };
+    if (this.application.type === 'AGENT') {
+      payload.subType = this.application.agentType;
+    }
     if (this.application?.cimdPreview?.missing?.clientName && this.application.cimdClientName) {
       payload.clientName = this.application.cimdClientName;
     }
