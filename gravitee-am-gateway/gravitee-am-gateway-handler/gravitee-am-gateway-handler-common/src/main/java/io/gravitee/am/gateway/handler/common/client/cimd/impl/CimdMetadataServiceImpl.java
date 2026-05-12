@@ -25,13 +25,17 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentMan
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import lombok.extern.slf4j.Slf4j;
+import io.gravitee.am.model.CimdClientState;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.cimd.CimdValidationRules;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
@@ -58,10 +62,13 @@ import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class CimdMetadataServiceImpl implements CimdMetadataService {
@@ -74,25 +81,45 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     private static final List<String> DEFAULT_GRANT_TYPES = List.of(GrantType.AUTHORIZATION_CODE);
     private static final List<String> DEFAULT_RESPONSE_TYPES = List.of(ResponseType.CODE);
 
+    private static final List<String> MONITORED_PROPERTIES = List.of(
+            "client_name",
+            "grant_types",
+            "jwks",
+            "jwks_uri",
+            "logo_uri",
+            "redirect_uris",
+            "scope",
+            "token_endpoint_auth_method"
+        );
+
     private final Domain domain;
     private final WebClient webClient;
     private final CimdMetadataDocumentService cimdMetadataDocumentService;
     private final CimdMetadataDocumentManager cimdMetadataDocumentManager;
     private final CimdUriTrustValidator cimdUriTrustValidator;
     private final CimdLogoCacheService cimdLogoCacheService;
+    private final CimdClientStateService cimdClientStateService;
+    private final ScopeApprovalService scopeApprovalService;
+    private final RevokeTokenGatewayService revokeTokenGatewayService;
 
     public CimdMetadataServiceImpl(Domain domain,
                                    WebClient webClient,
                                    CimdMetadataDocumentService cimdMetadataDocumentService,
                                    CimdMetadataDocumentManager cimdMetadataDocumentManager,
                                    CimdUriTrustValidator cimdUriTrustValidator,
-                                   CimdLogoCacheService cimdLogoCacheService) {
+                                   CimdLogoCacheService cimdLogoCacheService,
+                                   CimdClientStateService cimdClientStateService,
+                                   ScopeApprovalService scopeApprovalService,
+                                   RevokeTokenGatewayService revokeTokenGatewayService) {
         this.domain = domain;
         this.webClient = webClient;
         this.cimdMetadataDocumentService = cimdMetadataDocumentService;
         this.cimdMetadataDocumentManager = cimdMetadataDocumentManager;
         this.cimdUriTrustValidator = cimdUriTrustValidator;
         this.cimdLogoCacheService = cimdLogoCacheService;
+        this.cimdClientStateService = cimdClientStateService;
+        this.scopeApprovalService = scopeApprovalService;
+        this.revokeTokenGatewayService = revokeTokenGatewayService;
     }
 
     @Override
@@ -141,7 +168,10 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                                                 err -> log.warn("CIMD failed to persist metadata for domain={}, clientId={}: {}", domain.getId(), canonicalId, err.getMessage())
                                                         );
                                             }
-                                            return Single.just(synthesizeClient(canonicalId, templateClient, fetchResult.json()));
+                                            return (settings.isRevokeOnDocumentChange()
+                                                    ? detectAndRevokeOnChange(canonicalId, fetchResult.json())
+                                                    : Completable.complete())
+                                                    .andThen(Single.fromCallable(() -> synthesizeClient(canonicalId, templateClient, fetchResult.json())));
                                         })
                                         .toMaybe();
                             })
@@ -436,6 +466,33 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
 
     private static long resolveCacheTtlSeconds(CIMDSettings settings) {
         return Math.max(1L, settings.getCacheTtlSeconds());
+    }
+
+    private Completable detectAndRevokeOnChange(String clientId, JsonObject metadata) {
+        final String newHash = calculateMonitoredPropertiesHash(metadata);
+        return cimdClientStateService.findByDomainAndClientId(domain, clientId)
+                .defaultIfEmpty(new CimdClientState())
+                .flatMapCompletable(existing -> {
+                    if (newHash.equals(existing.getMonitoredPropertiesHash())) {
+                        return Completable.complete(); // unchanged — skip DB write
+                    }
+                    if (existing.getId() != null) {
+                        log.info("CIMD monitored properties changed for domain={}, clientId={} — revoking tokens and consents", domain.getId(), clientId);
+                        return scopeApprovalService.revokeByClient(domain, clientId, revokeTokenGatewayService::process)
+                                .andThen(cimdClientStateService.upsert(domain, clientId, newHash).ignoreElement());
+                    }
+                    return cimdClientStateService.upsert(domain, clientId, newHash).ignoreElement();
+                })
+                .doOnComplete(() -> log.debug("CIMD client state updated for domain={}, clientId={}", domain.getId(), clientId))
+                .doOnError(err -> log.warn("CIMD failed to check/update client state for domain={}, clientId={}: {}", domain.getId(), clientId, err.getMessage()))
+                .onErrorComplete();
+    }
+
+    static String calculateMonitoredPropertiesHash(JsonObject metadata) {
+        final String canonical = MONITORED_PROPERTIES.stream()
+                .map(k -> k + "=" + Optional.ofNullable(metadata.getValue(k)).map(Object::toString).orElse(""))
+                .collect(Collectors.joining("|"));
+        return calculateMetadataHash(canonical);
     }
 
     private static String calculateMetadataHash(String metadataJson) {

@@ -49,4 +49,6 @@ public interface ScopeApprovalService {
 
     Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
 
+    Completable revokeByClient(Domain domain, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor);
+
 }

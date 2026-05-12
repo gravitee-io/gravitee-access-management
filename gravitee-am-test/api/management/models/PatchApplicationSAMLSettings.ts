@@ -48,10 +48,22 @@ export interface PatchApplicationSAMLSettings {
   assertionAttributes?: Array<SAMLAssertionAttribute>;
   /**
    *
+   * @type {number}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  assertionValiditySeconds?: number;
+  /**
+   *
    * @type {string}
    * @memberof PatchApplicationSAMLSettings
    */
   attributeConsumeServiceUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  audiences?: Array<string>;
   /**
    *
    * @type {string}
@@ -63,7 +75,25 @@ export interface PatchApplicationSAMLSettings {
    * @type {string}
    * @memberof PatchApplicationSAMLSettings
    */
+  dataEncryptionAlgorithm?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationSAMLSettings
+   */
   entityId?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  includeAssertionConditions?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  keyTransportEncryptionAlgorithm?: string;
   /**
    *
    * @type {string}
@@ -72,16 +102,16 @@ export interface PatchApplicationSAMLSettings {
   nameIdMapping?: string;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof PatchApplicationSAMLSettings
    */
-  dataEncryptionAlgorithm?: string;
+  notBeforeTimeSkewSeconds?: number;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof PatchApplicationSAMLSettings
    */
-  keyTransportEncryptionAlgorithm?: string;
+  notOnOrAfterTimeSkewSeconds?: number;
   /**
    *
    * @type {string}
@@ -99,13 +129,13 @@ export interface PatchApplicationSAMLSettings {
    * @type {boolean}
    * @memberof PatchApplicationSAMLSettings
    */
-  wantAssertionsSigned?: boolean;
+  wantAssertionsEncrypted?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchApplicationSAMLSettings
    */
-  wantAssertionsEncrypted?: boolean;
+  wantAssertionsSigned?: boolean;
   /**
    *
    * @type {boolean}
@@ -132,18 +162,21 @@ export function PatchApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscr
   return {
     assertionAttributes:
       json['assertionAttributes'] == null ? undefined : (json['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeFromJSON),
+    assertionValiditySeconds: json['assertionValiditySeconds'] == null ? undefined : json['assertionValiditySeconds'],
     attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
+    audiences: json['audiences'] == null ? undefined : json['audiences'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
+    dataEncryptionAlgorithm: json['dataEncryptionAlgorithm'] == null ? undefined : json['dataEncryptionAlgorithm'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
+    includeAssertionConditions: json['includeAssertionConditions'] == null ? undefined : json['includeAssertionConditions'],
+    keyTransportEncryptionAlgorithm: json['keyTransportEncryptionAlgorithm'] == null ? undefined : json['keyTransportEncryptionAlgorithm'],
     nameIdMapping: json['nameIdMapping'] == null ? undefined : json['nameIdMapping'],
-    dataEncryptionAlgorithm:
-      json['dataEncryptionAlgorithm'] == null ? undefined : json['dataEncryptionAlgorithm'],
-    keyTransportEncryptionAlgorithm:
-      json['keyTransportEncryptionAlgorithm'] == null ? undefined : json['keyTransportEncryptionAlgorithm'],
+    notBeforeTimeSkewSeconds: json['notBeforeTimeSkewSeconds'] == null ? undefined : json['notBeforeTimeSkewSeconds'],
+    notOnOrAfterTimeSkewSeconds: json['notOnOrAfterTimeSkewSeconds'] == null ? undefined : json['notOnOrAfterTimeSkewSeconds'],
     responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
     singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
-    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
     wantAssertionsEncrypted: json['wantAssertionsEncrypted'] == null ? undefined : json['wantAssertionsEncrypted'],
+    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
     wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
   };
 }
@@ -163,16 +196,21 @@ export function PatchApplicationSAMLSettingsToJSONTyped(
   return {
     assertionAttributes:
       value['assertionAttributes'] == null ? undefined : (value['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeToJSON),
+    assertionValiditySeconds: value['assertionValiditySeconds'],
     attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
+    audiences: value['audiences'],
     certificate: value['certificate'],
-    entityId: value['entityId'],
-    nameIdMapping: value['nameIdMapping'],
     dataEncryptionAlgorithm: value['dataEncryptionAlgorithm'],
+    entityId: value['entityId'],
+    includeAssertionConditions: value['includeAssertionConditions'],
     keyTransportEncryptionAlgorithm: value['keyTransportEncryptionAlgorithm'],
+    nameIdMapping: value['nameIdMapping'],
+    notBeforeTimeSkewSeconds: value['notBeforeTimeSkewSeconds'],
+    notOnOrAfterTimeSkewSeconds: value['notOnOrAfterTimeSkewSeconds'],
     responseBinding: value['responseBinding'],
     singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
-    wantAssertionsSigned: value['wantAssertionsSigned'],
     wantAssertionsEncrypted: value['wantAssertionsEncrypted'],
+    wantAssertionsSigned: value['wantAssertionsSigned'],
     wantResponseSigned: value['wantResponseSigned'],
   };
 }

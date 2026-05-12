@@ -67,12 +67,12 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
         LOGGER.debug("findByDomainAndUserAndClient({}, {}, {})", domain, userId, clientId);
         LocalDateTime now = LocalDateTime.now(UTC);
-            return findAll(Query.query(userIdMatches(userId)
+        return findAll(Query.query(userIdMatches(userId)
                 .and(client(clientId))
-                .and(domain(domain))))
-                .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
+                .and(domain(domain))
+                .and(notExpiredAt(now))))
                 .map(this::toEntity)
-                    .observeOn(Schedulers.computation());
+                .observeOn(Schedulers.computation());
     }
 
     private Flowable<JdbcScopeApproval> findAll(Query query) {
@@ -92,12 +92,24 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         return where("domain").is(domain);
     }
 
+    private Criteria notExpiredAt(LocalDateTime now) {
+        return where("expires_at").isNull().or(where("expires_at").greaterThan(now));
+    }
+
     @Override
     public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
         LOGGER.debug("findByDomainAndUser({}, {})", domain, userId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return findAll(Query.query(userIdMatches(userId).and(domain(domain))))
-                .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
+        return findAll(Query.query(userIdMatches(userId).and(domain(domain)).and(notExpiredAt(now))))
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<ScopeApproval> findByDomainAndClient(String domain, String clientId) {
+        LOGGER.debug("findByDomainAndClient({}, {})", domain, clientId);
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return findAll(Query.query(domain(domain).and(client(clientId)).and(notExpiredAt(now))))
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }
@@ -156,6 +168,14 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .matching(Query.query(domain(domain)
                         .and(userIdMatches(userId))))
                 .all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndClient(String domain, String clientId) {
+        LOGGER.debug("deleteByDomainAndClient({}, {})", domain, clientId);
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
+                .matching(Query.query(domain(domain).and(client(clientId)))).all())
                 .observeOn(Schedulers.computation());
     }
 

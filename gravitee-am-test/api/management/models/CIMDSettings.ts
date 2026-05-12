@@ -82,6 +82,12 @@ export interface CIMDSettings {
   maxResponseSizeKb?: number;
   /**
    *
+   * @type {boolean}
+   * @memberof CIMDSettings
+   */
+  revokeOnDocumentChange?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof CIMDSettings
    */
@@ -112,6 +118,7 @@ export function CIMDSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     fetchTimeoutMs: json['fetchTimeoutMs'] == null ? undefined : json['fetchTimeoutMs'],
     maxResponseSizeKb: json['maxResponseSizeKb'] == null ? undefined : json['maxResponseSizeKb'],
+    revokeOnDocumentChange: json['revokeOnDocumentChange'] == null ? undefined : json['revokeOnDocumentChange'],
     templateId: json['templateId'] == null ? undefined : json['templateId'],
   };
 }
@@ -134,6 +141,7 @@ export function CIMDSettingsToJSONTyped(value?: CIMDSettings | null, ignoreDiscr
     enabled: value['enabled'],
     fetchTimeoutMs: value['fetchTimeoutMs'],
     maxResponseSizeKb: value['maxResponseSizeKb'],
+    revokeOnDocumentChange: value['revokeOnDocumentChange'],
     templateId: value['templateId'],
   };
 }

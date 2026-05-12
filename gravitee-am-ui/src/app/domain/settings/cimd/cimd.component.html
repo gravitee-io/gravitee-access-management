@@ -130,6 +130,26 @@
 
           <div class="gv-form-section" fxLayout="column">
             <div class="gv-form-section-title">
+              <h5>Security Policy</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-slide-toggle
+              name="revokeOnDocumentChange"
+              (change)="cimdSettings.revokeOnDocumentChange = $event.checked; onFormChange()"
+              [checked]="cimdSettings.revokeOnDocumentChange"
+              [disabled]="!editMode"
+            >
+              Revoke tokens and consents when client metadata changes
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%"
+              >When enabled, all active tokens and user consents for a CIMD client are automatically revoked when any of the monitored
+              metadata properties change (redirect_uris, scope, grant_types, token_endpoint_auth_method, jwks, jwks_uri, client_name,
+              logo_uri).</mat-hint
+            >
+          </div>
+
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
               <h5>Cache Settings</h5>
               <mat-divider></mat-divider>
             </div>

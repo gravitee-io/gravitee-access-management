@@ -48,6 +48,8 @@ public class PatchCIMDSettings {
     // Security Policy
     private Optional<String> templateId;
 
+    private Optional<Boolean> revokeOnDocumentChange;
+
     public Optional<Boolean> getEnabled() {
         return enabled;
     }
@@ -120,6 +122,14 @@ public class PatchCIMDSettings {
         this.templateId = templateId;
     }
 
+    public Optional<Boolean> getRevokeOnDocumentChange() {
+        return revokeOnDocumentChange;
+    }
+
+    public void setRevokeOnDocumentChange(Optional<Boolean> revokeOnDocumentChange) {
+        this.revokeOnDocumentChange = revokeOnDocumentChange;
+    }
+
     public CIMDSettings patch(CIMDSettings toPatch) {
         CIMDSettings result = toPatch != null ? toPatch : CIMDSettings.defaultSettings();
 
@@ -136,6 +146,7 @@ public class PatchCIMDSettings {
         Optional.ofNullable(getCacheMaxEntries())
                 .ifPresent(opt -> result.setCacheMaxEntries(opt.orElse(CIMDSettings.DEFAULT_CACHE_MAX_ENTRIES)));
         SetterUtils.safeSet(result::setTemplateId, this.getTemplateId(), String.class);
+        SetterUtils.safeSet(result::setRevokeOnDocumentChange, this.getRevokeOnDocumentChange(), boolean.class);
 
         return result;
     }

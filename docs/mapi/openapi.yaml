@@ -12893,6 +12893,8 @@ components:
         maxResponseSizeKb:
           type: integer
           format: int32
+        revokeOnDocumentChange:
+          type: boolean
         templateId:
           type: string
     Certificate:
@@ -15624,6 +15626,8 @@ components:
         maxResponseSizeKb:
           type: integer
           format: int32
+        revokeOnDocumentChange:
+          type: boolean
         templateId:
           type: string
     PatchChallengeSettings:

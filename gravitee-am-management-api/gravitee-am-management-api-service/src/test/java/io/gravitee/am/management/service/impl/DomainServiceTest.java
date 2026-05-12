@@ -114,6 +114,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -346,6 +347,14 @@ public class DomainServiceTest {
 
     @Mock
     private AuthorizationEngineService authorizationEngineService;
+
+    @Mock
+    private io.gravitee.am.service.CimdClientStateService cimdClientStateService;
+
+    @BeforeEach
+    void stubCimdClientStateServiceDefaults() {
+        Mockito.lenient().when(cimdClientStateService.deleteByDomain(any(Domain.class))).thenReturn(Completable.complete());
+    }
 
     @Test
     public void shouldDelegateFindById() {
@@ -1930,5 +1939,102 @@ public class DomainServiceTest {
         corsSettings.setAllowedMethods(Set.of("GET", "POST"));
         corsSettings.setAllowedOrigins(allowedOrigins);
         return corsSettings;
+    }
+
+    // ---- CIMD revokeOnDocumentChange cleanup tests ----
+
+    @Test
+    public void shouldPatch_deletesCimdClientState_whenRevokeOnDocumentChangeBecomesDisabled() {
+        Domain oldDomain = buildCimdPatchDomain(true);
+        Domain newDomain = buildCimdPatchDomain(false);
+        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(cimdClientStateService, times(1)).deleteByDomain(any(Domain.class));
+    }
+
+    @Test
+    public void shouldPatch_doesNotDeleteCimdClientState_whenRevokeOnDocumentChangeRemainsEnabled() {
+        Domain oldDomain = buildCimdPatchDomain(true);
+        Domain newDomain = buildCimdPatchDomain(true);
+        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(cimdClientStateService, never()).deleteByDomain(any(Domain.class));
+    }
+
+    @Test
+    public void shouldPatch_doesNotDeleteCimdClientState_whenRevokeOnDocumentChangeRemainsDisabled() {
+        Domain oldDomain = buildCimdPatchDomain(false);
+        Domain newDomain = buildCimdPatchDomain(false);
+        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(cimdClientStateService, never()).deleteByDomain(any(Domain.class));
+    }
+
+    @Test
+    public void shouldPatch_doesNotDeleteCimdClientState_whenRevokeOnDocumentChangeBecomesEnabled() {
+        Domain oldDomain = buildCimdPatchDomain(false);
+        Domain newDomain = buildCimdPatchDomain(true);
+        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(cimdClientStateService, never()).deleteByDomain(any(Domain.class));
+    }
+
+    private Domain buildCimdPatchDomain(boolean revokeOnDocumentChange) {
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(false);
+        cimdSettings.setRevokeOnDocumentChange(revokeOnDocumentChange);
+        OIDCSettings oidc = new OIDCSettings();
+        oidc.setCimdSettings(cimdSettings);
+
+        Domain d = new Domain();
+        d.setId(DOMAIN_ID);
+        d.setHrid(DOMAIN_ID);
+        d.setName(DOMAIN_ID);
+        d.setPath("/cimd-test");
+        d.setReferenceType(ReferenceType.ENVIRONMENT);
+        d.setReferenceId(ENVIRONMENT_ID);
+        d.setVersion(DomainVersion.V2_0);
+        d.setOidc(oidc);
+        return d;
+    }
+
+    private PatchDomain stubCimdPatch(Domain oldDomain, Domain newDomain) {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        when(patchDomain.patch(any())).thenReturn(newDomain);
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(oldDomain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(oldDomain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(newDomain));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        doReturn(Completable.complete()).when(domainValidator).validate(any(), any());
+        doReturn(Completable.complete()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+        return patchDomain;
     }
 }

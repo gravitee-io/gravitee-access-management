@@ -223,4 +223,27 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                 });
 
     }
+
+    @Override
+    public Completable revokeByClient(Domain domain, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor) {
+        LOGGER.debug("Revoke approvals for domain: {}, client: {}", domain, clientId);
+        final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
+        return scopeApprovalRepository.deleteByDomainAndClient(domain.getId(), clientId)
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                        .type(EventType.USER_CONSENT_REVOKED)
+                        .reference(domain.asReference())
+                        .client(clientId)
+                        .approvals(Collections.emptySet())))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                        .type(EventType.USER_CONSENT_REVOKED)
+                        .reference(domain.asReference())
+                        .client(clientId)
+                        .throwable(throwable)))
+                .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byClientId(domain, clientId)))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while revoking scope approvals for domain: {}, client: {}", domain, clientId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while revoking scope approvals for domain: %s, client: %s", domain, clientId), ex));
+                });
+    }
 }

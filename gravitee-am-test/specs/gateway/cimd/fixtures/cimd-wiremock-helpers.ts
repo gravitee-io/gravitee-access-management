@@ -20,6 +20,15 @@ import { expect } from '@jest/globals';
 export const getWireMockAdminBase = (): string => process.env.SFR_URL ?? 'http://localhost:8181';
 
 /**
+ * Resets all WireMock scenarios to their initial "Started" state.
+ * Call in `beforeAll` for tests that rely on scenario-based stub behaviour.
+ */
+export const resetAllWireMockScenarios = async (): Promise<void> => {
+  const res = await fetch(`${getWireMockAdminBase()}/__admin/scenarios/reset`, { method: 'POST' });
+  expect(res.ok).toBe(true);
+};
+
+/**
  * Clears the WireMock request journal (best-effort). Use between tests that assert on request counts.
  */
 export const clearWireMockRequestJournal = async (): Promise<void> => {

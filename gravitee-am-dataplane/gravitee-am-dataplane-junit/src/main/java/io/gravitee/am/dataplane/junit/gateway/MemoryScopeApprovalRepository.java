@@ -45,6 +45,11 @@ public class MemoryScopeApprovalRepository extends MemoryRepository<ScopeApprova
     }
 
     @Override
+    public Flowable<ScopeApproval> findByDomainAndClient(String domain, String clientId) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    @Override
     public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
         throw new UnsupportedOperationException("not implemented yet");
     }
@@ -61,6 +66,11 @@ public class MemoryScopeApprovalRepository extends MemoryRepository<ScopeApprova
 
     @Override
     public Completable deleteByDomainAndUser(String domain, UserId userId) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    @Override
+    public Completable deleteByDomainAndClient(String domain, String clientId) {
         throw new UnsupportedOperationException("not implemented yet");
     }
 

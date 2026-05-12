@@ -31,6 +31,7 @@ public class CIMDSettingsMongo {
     private int cacheTtlSeconds;
     private int cacheMaxEntries;
     private String templateId;
+    private boolean revokeOnDocumentChange;
 
     public boolean isEnabled() {
         return enabled;
@@ -102,5 +103,13 @@ public class CIMDSettingsMongo {
 
     public void setTemplateId(String templateId) {
         this.templateId = templateId;
+    }
+
+    public boolean isRevokeOnDocumentChange() {
+        return revokeOnDocumentChange;
+    }
+
+    public void setRevokeOnDocumentChange(boolean revokeOnDocumentChange) {
+        this.revokeOnDocumentChange = revokeOnDocumentChange;
     }
 }

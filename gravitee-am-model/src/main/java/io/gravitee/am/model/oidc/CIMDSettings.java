@@ -83,6 +83,12 @@ public class CIMDSettings {
      */
     private String templateId;
 
+    /**
+     * When true, all active tokens and user consents for a CIMD client are revoked whenever a re-fetch
+     * of its metadata document reveals that any of the monitored properties have changed.
+     */
+    private boolean revokeOnDocumentChange;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -153,6 +159,14 @@ public class CIMDSettings {
 
     public void setTemplateId(String templateId) {
         this.templateId = templateId;
+    }
+
+    public boolean isRevokeOnDocumentChange() {
+        return revokeOnDocumentChange;
+    }
+
+    public void setRevokeOnDocumentChange(boolean revokeOnDocumentChange) {
+        this.revokeOnDocumentChange = revokeOnDocumentChange;
     }
 
     public static CIMDSettings defaultSettings() {
