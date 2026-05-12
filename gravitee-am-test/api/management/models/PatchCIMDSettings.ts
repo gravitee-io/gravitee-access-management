@@ -82,6 +82,12 @@ export interface PatchCIMDSettings {
   maxResponseSizeKb?: number;
   /**
    *
+   * @type {boolean}
+   * @memberof PatchCIMDSettings
+   */
+  revokeOnDocumentChange?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof PatchCIMDSettings
    */
@@ -112,6 +118,7 @@ export function PatchCIMDSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     fetchTimeoutMs: json['fetchTimeoutMs'] == null ? undefined : json['fetchTimeoutMs'],
     maxResponseSizeKb: json['maxResponseSizeKb'] == null ? undefined : json['maxResponseSizeKb'],
+    revokeOnDocumentChange: json['revokeOnDocumentChange'] == null ? undefined : json['revokeOnDocumentChange'],
     templateId: json['templateId'] == null ? undefined : json['templateId'],
   };
 }
@@ -134,6 +141,7 @@ export function PatchCIMDSettingsToJSONTyped(value?: PatchCIMDSettings | null, i
     enabled: value['enabled'],
     fetchTimeoutMs: value['fetchTimeoutMs'],
     maxResponseSizeKb: value['maxResponseSizeKb'],
+    revokeOnDocumentChange: value['revokeOnDocumentChange'],
     templateId: value['templateId'],
   };
 }

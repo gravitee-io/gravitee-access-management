@@ -41,7 +41,9 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import io.gravitee.am.gateway.handler.common.web.HostSsrfGuard;
 import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServiceImpl;
+import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.CimdAwareClientLookupServiceImpl;
@@ -279,14 +281,20 @@ public class CommonConfiguration {
                                                    CimdMetadataDocumentService cimdMetadataDocumentService,
                                                    CimdMetadataDocumentManager cimdMetadataDocumentManager,
                                                    CimdUriTrustValidator cimdUriTrustValidator,
-                                                   CimdLogoCacheService cimdLogoCacheService) {
+                                                   CimdLogoCacheService cimdLogoCacheService,
+                                                   CimdClientStateService cimdClientStateService,
+                                                   ScopeApprovalService scopeApprovalService,
+                                                   RevokeTokenGatewayService revokeTokenGatewayService) {
         return new CimdMetadataServiceImpl(
                 domain,
                 webClient,
                 cimdMetadataDocumentService,
                 cimdMetadataDocumentManager,
                 cimdUriTrustValidator,
-                cimdLogoCacheService);
+                cimdLogoCacheService,
+                cimdClientStateService,
+                scopeApprovalService,
+                revokeTokenGatewayService);
     }
 
     @Bean

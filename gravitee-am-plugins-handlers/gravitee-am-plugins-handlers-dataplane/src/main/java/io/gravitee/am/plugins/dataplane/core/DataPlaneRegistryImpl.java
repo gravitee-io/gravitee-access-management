@@ -18,6 +18,7 @@ package io.gravitee.am.plugins.dataplane.core;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
+import io.gravitee.am.dataplane.api.repository.CimdClientStateRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
@@ -103,6 +104,11 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
             dataPlaneId = DEFAULT_DATA_PLANE_ID;
         }
         return dataPlaneId;
+    }
+
+    @Override
+    public CimdClientStateRepository getCimdClientStateRepository(Domain domain) {
+        return getProvider(domain).getCimdClientStateRepository();
     }
 
     @Override

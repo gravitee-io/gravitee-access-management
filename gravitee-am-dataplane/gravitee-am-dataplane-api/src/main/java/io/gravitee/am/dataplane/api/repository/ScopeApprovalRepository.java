@@ -34,6 +34,8 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
 
     Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId);
 
+    Flowable<ScopeApproval> findByDomainAndClient(String domain, String clientId);
+
     Single<ScopeApproval> upsert(ScopeApproval scopeApproval);
 
     Completable deleteByDomainAndScopeKey(String domain, String scope);
@@ -41,5 +43,7 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
     Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String client);
 
     Completable deleteByDomainAndUser(String domain, UserId userId);
+
+    Completable deleteByDomainAndClient(String domain, String clientId);
 
 }

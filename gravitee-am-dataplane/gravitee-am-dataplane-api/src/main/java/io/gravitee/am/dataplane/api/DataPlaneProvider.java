@@ -16,6 +16,7 @@
 package io.gravitee.am.dataplane.api;
 
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
+import io.gravitee.am.dataplane.api.repository.CimdClientStateRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
@@ -35,6 +36,8 @@ public interface DataPlaneProvider {
     void stop();
 
     DataPlaneDescription getDataPlaneDescription();
+
+    CimdClientStateRepository getCimdClientStateRepository();
 
     CredentialRepository getCredentialRepository();
 

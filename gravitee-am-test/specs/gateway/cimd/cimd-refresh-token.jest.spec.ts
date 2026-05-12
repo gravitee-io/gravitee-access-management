@@ -15,79 +15,14 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import {
-  extractXsrfTokenAndActionResponse,
-  performFormPost,
-  performGet,
-  performPost,
-} from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { setup } from '../../test-fixture';
 import { CimdRefreshTokenFixture, setupCimdRefreshTokenFixture } from './fixtures/cimd-refresh-token-fixture';
+import { executeCimdAuthCodeFlow } from './fixtures/cimd-auth-flow-helpers';
 
 setup(200000);
-
-/**
- * Browser login for a URL-shaped CIMD client; returns the authorization code.
- */
-async function executeCimdAuthCodeFlow(fixture: CimdRefreshTokenFixture): Promise<string> {
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: fixture.clientId,
-    redirect_uri: fixture.redirectUri,
-    scope: 'openid',
-    state: 'cimd-refresh-state',
-  });
-  const authorizeUrl = `${fixture.oidc.authorization_endpoint}?${params.toString()}`;
-
-  const authResponse = await performGet(authorizeUrl).expect(302);
-  const { headers, token, action } = await extractXsrfTokenAndActionResponse(authResponse);
-
-  const postLogin = await performFormPost(
-    action,
-    '',
-    {
-      'X-XSRF-TOKEN': token,
-      username: fixture.user.username,
-      password: fixture.user.password,
-      client_id: fixture.clientId,
-    },
-    {
-      Cookie: headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-  ).expect(302);
-
-  let redirectResponse = await performGet(postLogin.headers['location'], '', {
-    Cookie: postLogin.headers['set-cookie'],
-  }).expect(302);
-
-  if (redirectResponse.headers['location']?.includes('/oauth/consent')) {
-    const consentResult = await extractXsrfTokenAndActionResponse(redirectResponse);
-    const postConsent = await performFormPost(
-      consentResult.action,
-      '',
-      {
-        'X-XSRF-TOKEN': consentResult.token,
-        'scope.openid': true,
-        user_oauth_approval: true,
-      },
-      {
-        Cookie: consentResult.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
-    ).expect(302);
-
-    redirectResponse = await performGet(postConsent.headers['location'], '', {
-      Cookie: postLogin.headers['set-cookie'],
-    }).expect(302);
-  }
-
-  const codePattern = /code=([-_a-zA-Z0-9]+)&?/;
-  expect(redirectResponse.headers['location']).toMatch(codePattern);
-  return redirectResponse.headers['location'].match(codePattern)![1];
-}
 
 let fixture: CimdRefreshTokenFixture;
 

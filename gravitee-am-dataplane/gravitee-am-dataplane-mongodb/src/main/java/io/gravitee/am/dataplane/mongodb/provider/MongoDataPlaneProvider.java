@@ -19,6 +19,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
+import io.gravitee.am.dataplane.api.repository.CimdClientStateRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
@@ -51,6 +52,9 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
 
     @Autowired
     private ClientWrapper<MongoClient> mongoClientWrapper;
+
+    @Autowired
+    private CimdClientStateRepository cimdClientStateRepository;
 
     @Autowired
     private CredentialRepository credentialRepository;
@@ -117,6 +121,11 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Override
     public ClientWrapper<MongoClient> getClientWrapper() {
         return this.mongoClientWrapper;
+    }
+
+    @Override
+    public CimdClientStateRepository getCimdClientStateRepository() {
+        return cimdClientStateRepository;
     }
 
     @Override

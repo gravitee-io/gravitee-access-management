@@ -431,6 +431,51 @@
       }
     },
     {
+      "scenarioName": "cimd-revoke-on-change",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Changed",
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/revoke-on-change"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/revoke-on-change",
+          "client_name": "CIMD Revoke On Change V1",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "scenarioName": "cimd-revoke-on-change",
+      "requiredScenarioState": "Changed",
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/revoke-on-change"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/revoke-on-change",
+          "client_name": "CIMD Revoke On Change V2",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
       "request": {
         "method": "GET",
         "urlPath": "/cimd/DISABLED_BASE/valid-none"

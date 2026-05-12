@@ -107,6 +107,13 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
     }
 
     @Override
+    public Flowable<ScopeApproval> findByDomainAndClient(String domain, String clientId) {
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(
+                and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<ScopeApproval> findById(String id) {
         return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert)
                 .observeOn(Schedulers.computation());
@@ -181,6 +188,13 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
     public Completable deleteByDomainAndUser(String domain, UserId userId) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
                 and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS))))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndClient(String domain, String clientId) {
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
+                and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))))
                 .observeOn(Schedulers.computation());
     }
 

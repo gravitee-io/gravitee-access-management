@@ -60,6 +60,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -287,6 +288,8 @@ public class DomainServiceImpl implements DomainService {
     private ServiceResourceService serviceResourceService;
     @Autowired
     private AuthorizationEngineService authorizationEngineService;
+    @Autowired
+    private CimdClientStateService cimdClientStateService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -519,7 +522,9 @@ public class DomainServiceImpl implements DomainService {
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
-                                return eventService.create(event, domain1).flatMap(__ -> Single.just(domain1));
+                                return eventService.create(event, domain1)
+                                        .flatMap(__ -> cleanUpCimdClientState(oldDomain, domain1)
+                                                .andThen(Single.just(domain1)));
                             })
                             .doOnSuccess(domain1 -> {
                                 auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1));
@@ -715,6 +720,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete certificate credentials
                             .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
+                            .andThen(cimdClientStateService.deleteByDomain(domain))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
@@ -882,6 +888,26 @@ public class DomainServiceImpl implements DomainService {
                         }));
     }
 
+
+    private static boolean isCimdRevokeOnDocumentChangeEnabled(Domain domain) {
+        return Optional.ofNullable(domain.getOidc())
+                .map(OIDCSettings::getCimdSettings)
+                .map(CIMDSettings::isRevokeOnDocumentChange)
+                .orElse(false);
+    }
+
+    /**
+     * When {@code revokeOnDocumentChange} is turned off for the domain, drops persisted CIMD client state records.
+     */
+    private Completable cleanUpCimdClientState(Domain domainBeforePatch, Domain domainAfterPatch) {
+        if (!isCimdRevokeOnDocumentChangeEnabled(domainBeforePatch)
+                || isCimdRevokeOnDocumentChangeEnabled(domainAfterPatch)) {
+            return Completable.complete();
+        }
+        return cimdClientStateService.deleteByDomain(domainAfterPatch)
+                .doOnError(e -> LOGGER.warn("Failed to clean up CIMD client state for domain {}: {}", domainAfterPatch.getId(), e.getMessage()))
+                .onErrorComplete();
+    }
 
     private Completable validateCIMDSettings(Domain domain) {
         Optional<CIMDSettings> optCIMDSettings = Optional.ofNullable(domain.getOidc()).map(OIDCSettings::getCimdSettings);

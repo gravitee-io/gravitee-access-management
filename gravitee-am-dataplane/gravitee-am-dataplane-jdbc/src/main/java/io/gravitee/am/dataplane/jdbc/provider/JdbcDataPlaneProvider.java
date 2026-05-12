@@ -18,6 +18,7 @@ package io.gravitee.am.dataplane.jdbc.provider;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
+import io.gravitee.am.dataplane.api.repository.CimdClientStateRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
@@ -52,6 +53,9 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
 
     @Autowired
     private R2DBCPoolWrapper clientWrapper;
+
+    @Autowired
+    private CimdClientStateRepository cimdClientStateRepository;
 
     @Autowired
     private CredentialRepository credentialRepository;
@@ -111,6 +115,11 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
     @Override
     public ClientWrapper<ConnectionFactory> getClientWrapper() {
         return this.clientWrapper;
+    }
+
+    @Override
+    public CimdClientStateRepository getCimdClientStateRepository() {
+        return cimdClientStateRepository;
     }
 
     @Override

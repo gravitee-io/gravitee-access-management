@@ -114,6 +114,19 @@ public class RevokeToken extends RevokeTokenDeprecated {
         return request;
     }
 
+    public static RevokeToken byClientId(Domain domain, String clientId) {
+        final var request = new RevokeToken();
+        request.setRevokeType(RevokeType.BY_CLIENT);
+        request.setDomainId(domain.getId());
+        request.setApplication(ApplicationData.builder()
+                .clientId(clientId)
+                .build());
+
+        // For backward compatibility MAPI in newer version may sent an event which is read by GW in older version
+        request.setClientId(clientId);
+        return request;
+    }
+
     public static RevokeToken byUserAndClientId(Domain domain, String clientId, String userId, String username, String principalId, String principalUsername) {
         final var request = new RevokeToken();
         request.setRevokeType(RevokeType.BY_USER_AND_CLIENT);

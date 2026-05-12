@@ -28,9 +28,14 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.model.CimdClientState;
+import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
@@ -111,6 +116,15 @@ public class CimdMetadataServiceImplTest {
     @Mock
     private CimdMetadataDocumentManager cimdMetadataDocumentManager;
 
+    @Mock
+    private CimdClientStateService cimdClientStateService;
+
+    @Mock
+    private ScopeApprovalService scopeApprovalService;
+
+    @Mock
+    private RevokeTokenGatewayService revokeTokenGatewayService;
+
     private CimdMetadataService cimdMetadataService;
     private CIMDSettings cimdSettings;
     private Domain domain;
@@ -146,6 +160,10 @@ public class CimdMetadataServiceImplTest {
         lenient()
                 .when(uriTrustValidator.validateResolvableHost(anyString(), anyString(), any()))
                 .thenReturn(Completable.complete());
+        lenient().when(cimdClientStateService.findByDomainAndClientId(any(Domain.class), anyString()))
+                .thenReturn(Maybe.empty());
+        lenient().when(cimdClientStateService.upsert(any(Domain.class), anyString(), anyString()))
+                .thenReturn(Single.just(new CimdClientState()));
 
         cimdMetadataService = new CimdMetadataServiceImpl(
                 domain,
@@ -153,7 +171,10 @@ public class CimdMetadataServiceImplTest {
                 cimdMetadataDocumentService,
                 cimdMetadataDocumentManager,
                 uriTrustValidator,
-                logoCacheService);
+                logoCacheService,
+                cimdClientStateService,
+                scopeApprovalService,
+                revokeTokenGatewayService);
     }
 
     @After
@@ -1189,6 +1210,81 @@ public class CimdMetadataServiceImplTest {
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
 
         verify(logoCacheService).prefetchLogoAsync(eq(CLIENT_URL), eq("https://localhost/logo.png"), anyLong(), eq(cimdSettings));
+    }
+
+    // --- detectAndRevokeOnChange tests ---
+
+    @Test
+    public void shouldNotCheckClientStateWhenRevokeOnDocumentChangeDisabled() {
+        // revokeOnDocumentChange is false by default — cimdClientStateService must never be called
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(cimdClientStateService, never()).findByDomainAndClientId(any(Domain.class), anyString());
+        verify(cimdClientStateService, never()).upsert(any(Domain.class), anyString(), anyString());
+        verify(scopeApprovalService, never()).revokeByClient(any(), anyString(), any());
+    }
+
+    @Test
+    public void shouldStoreHashOnFirstFetchWithoutRevocation() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        // default stub: findByDomainAndClientId returns Maybe.empty() (no prior state)
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(cimdClientStateService).upsert(eq(domain), eq(CLIENT_URL), anyString());
+        verify(scopeApprovalService, never()).revokeByClient(any(), anyString(), any());
+        verify(revokeTokenGatewayService, never()).process(any(), any());
+    }
+
+    @Test
+    public void shouldNotRevokeWhenMonitoredPropertiesHashUnchanged() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://localhost/jwks");
+        String sameHash = CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(metadata);
+        CimdClientState existingState = new CimdClientState();
+        existingState.setMonitoredPropertiesHash(sameHash);
+        when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
+                .thenReturn(Maybe.just(existingState));
+        mockFetchSuccess(metadata.encode());
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(cimdClientStateService, never()).upsert(any(Domain.class), anyString(), anyString());
+        verify(scopeApprovalService, never()).revokeByClient(any(), anyString(), any());
+        verify(revokeTokenGatewayService, never()).process(any(), any());
+    }
+
+    @Test
+    public void shouldRevokeWhenMonitoredPropertiesHashChanged() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        CimdClientState existingState = new CimdClientState();
+        existingState.setId("existing-state-id");
+        existingState.setMonitoredPropertiesHash("old-hash-that-will-not-match");
+        when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
+                .thenReturn(Maybe.just(existingState));
+        when(scopeApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.complete());
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(scopeApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+        verify(cimdClientStateService).upsert(eq(domain), eq(CLIENT_URL), anyString());
     }
 
     // --- helpers ---

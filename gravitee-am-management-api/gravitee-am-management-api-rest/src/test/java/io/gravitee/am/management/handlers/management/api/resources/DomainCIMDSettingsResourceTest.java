@@ -121,6 +121,8 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         assertEquals("cacheMaxEntries must be 500", Integer.valueOf(500), capturedCimd.getCacheMaxEntries().get());
         assertTrue("templateId must be present", capturedCimd.getTemplateId().isPresent());
         assertEquals("templateId must match", "my-template-id", capturedCimd.getTemplateId().get());
+        assertTrue("revokeOnDocumentChange must be present", capturedCimd.getRevokeOnDocumentChange().isPresent());
+        assertTrue("revokeOnDocumentChange must be true", capturedCimd.getRevokeOnDocumentChange().get());
     }
 
     @Test
@@ -154,6 +156,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         assertEquals("cacheTtlSeconds must be 7200", 7200, cimd.getCacheTtlSeconds());
         assertEquals("cacheMaxEntries must be 500", 500, cimd.getCacheMaxEntries());
         assertEquals("templateId must match", "my-template-id", cimd.getTemplateId());
+        assertTrue("revokeOnDocumentChange must be true", cimd.isRevokeOnDocumentChange());
     }
 
     // -------------------------------------------------------------------------
@@ -189,6 +192,8 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         assertEquals("templateId must match", "my-template-id", capturedCimd.getTemplateId().get());
         assertEquals("fetchTimeoutMs must be 3000", Integer.valueOf(3000), capturedCimd.getFetchTimeoutMs().get());
         assertEquals("cacheTtlSeconds must be 7200", Integer.valueOf(7200), capturedCimd.getCacheTtlSeconds().get());
+        assertTrue("revokeOnDocumentChange must be present", capturedCimd.getRevokeOnDocumentChange().isPresent());
+        assertTrue("revokeOnDocumentChange must be true", capturedCimd.getRevokeOnDocumentChange().get());
     }
 
     @Test
@@ -217,6 +222,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         assertEquals("templateId must match", "my-template-id", cimd.getTemplateId());
         assertEquals("fetchTimeoutMs must be 3000", 3000, cimd.getFetchTimeoutMs());
         assertEquals("cacheTtlSeconds must be 7200", 7200, cimd.getCacheTtlSeconds());
+        assertTrue("revokeOnDocumentChange must be true", cimd.isRevokeOnDocumentChange());
     }
 
     @Test
@@ -280,6 +286,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         cimdSettings.setCacheTtlSeconds(7200);
         cimdSettings.setCacheMaxEntries(500);
         cimdSettings.setTemplateId("my-template-id");
+        cimdSettings.setRevokeOnDocumentChange(true);
 
         OIDCSettings oidcSettings = new OIDCSettings();
         oidcSettings.setCimdSettings(cimdSettings);
@@ -299,6 +306,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         patchCimd.setCacheTtlSeconds(Optional.of(7200));
         patchCimd.setCacheMaxEntries(Optional.of(500));
         patchCimd.setTemplateId(Optional.of("my-template-id"));
+        patchCimd.setRevokeOnDocumentChange(Optional.of(true));
 
         PatchOIDCSettings patchOidc = new PatchOIDCSettings();
         patchOidc.setCimdSettings(Optional.of(patchCimd));

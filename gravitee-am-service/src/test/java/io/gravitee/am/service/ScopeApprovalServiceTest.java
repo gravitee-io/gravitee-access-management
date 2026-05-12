@@ -40,12 +40,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -253,5 +257,32 @@ public class ScopeApprovalServiceTest {
 
         TestObserver<Void> testObserver = scopeApprovalService.revokeByUserAndClient(new Domain(DOMAIN_ID), UserId.internal("user-id"), "client-id", (Domain, RevokeToken) -> Completable.complete(), new DefaultUser("user-id")).test();
         testObserver.assertError(UserNotFoundException.class);
+    }
+
+    @Test
+    public void shouldRevokeByClient() {
+        when(scopeApprovalRepository.deleteByDomainAndClient(DOMAIN_ID, "client-id")).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = scopeApprovalService.revokeByClient(DOMAIN, "client-id", (d, t) -> Completable.complete()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeApprovalRepository, never()).findByDomainAndClient(anyString(), anyString());
+        verify(scopeApprovalRepository).deleteByDomainAndClient(DOMAIN_ID, "client-id");
+        verify(auditService, timeout(3_000).times(1)).report(any(UserConsentAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldRevokeByClient_technicalException() {
+        when(scopeApprovalRepository.deleteByDomainAndClient(DOMAIN_ID, "client-id"))
+                .thenReturn(Completable.error(new TechnicalException()));
+
+        TestObserver<Void> testObserver = scopeApprovalService.revokeByClient(DOMAIN, "client-id", (d, t) -> Completable.complete()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+        verify(auditService, timeout(3_000).times(1)).report(any(UserConsentAuditBuilder.class));
     }
 }

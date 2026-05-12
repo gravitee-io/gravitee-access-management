@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-dataplane-cimd-client-states-table
+      author: GraviteeSource Team
+      changes:
+        - createTable:
+            tableName: cimd_client_states
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: client_id, type: nvarchar(2048), constraints: { nullable: false } }
+              - column: { name: monitored_properties_hash, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_cimd_client_states
+            columnNames: id
+            tableName: cimd_client_states
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+              - column:
+                  name: client_id
+            indexName: idx_cimd_client_states_domain_client
+            tableName: cimd_client_states
+            unique: true
