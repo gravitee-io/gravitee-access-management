@@ -473,7 +473,10 @@ public class ApplicationServiceImpl implements ApplicationService {
             oAuthSettings.setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
         }
         if (preview.grantTypes() != null && !preview.grantTypes().isEmpty()) {
-            oAuthSettings.setGrantTypes(preview.grantTypes());
+            final List<String> filteredGrantTypes = filterUnsupportedCimdGrantTypes(preview);
+            if (!filteredGrantTypes.isEmpty()) {
+                oAuthSettings.setGrantTypes(filteredGrantTypes);
+            }
         }
         if (preview.responseTypes() != null && !preview.responseTypes().isEmpty()) {
             oAuthSettings.setResponseTypes(preview.responseTypes());
@@ -535,6 +538,25 @@ public class ApplicationServiceImpl implements ApplicationService {
                     : ClientAuthenticationMethod.NONE);
         }
         return application;
+    }
+
+    // device_code is advertised by some CIMD clients but is not currently supported by AM.
+    // Drop those entries (logging each one) so the rest of the metadata can still be applied
+    // rather than rejecting the whole client creation in GrantTypeUtils#validateGrantTypes.
+    private List<String> filterUnsupportedCimdGrantTypes(CimdClientMetadata preview) {
+        final List<String> kept = new ArrayList<>(preview.grantTypes().size());
+        for (String grantType : preview.grantTypes()) {
+            if (isUnsupportedDeviceCodeGrant(grantType)) {
+                LOGGER.warn("Ignoring unsupported grant_type '{}' from CIMD metadata at {}: device_code is not supported", grantType, preview.url());
+            } else {
+                kept.add(grantType);
+            }
+        }
+        return kept;
+    }
+
+    private static boolean isUnsupportedDeviceCodeGrant(String grantType) {
+        return "device_code".equals(grantType) || GrantType.DEVIDE_CODE.equals(grantType);
     }
 
     private static boolean isSecretBasedAuthMethod(String method) {
