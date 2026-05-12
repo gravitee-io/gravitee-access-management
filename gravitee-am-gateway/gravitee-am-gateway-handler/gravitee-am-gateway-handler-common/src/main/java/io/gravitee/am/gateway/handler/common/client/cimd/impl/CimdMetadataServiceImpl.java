@@ -212,7 +212,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                             .rxSend()
                             .flatMap(response -> {
                                 if (response.statusCode() != HttpStatusCode.OK_200) {
-                                    log.warn("CIMD metadata fetch failed: domain={}, url={}, status={}",
+                                    log.debug("CIMD metadata fetch failed: domain={}, url={}, status={}",
                                             domain.getId(), clientId, response.statusCode());
                                     return Single.error(new InvalidClientMetadataException("Client metadata endpoint returned HTTP " + response.statusCode() + "."));
                                 }

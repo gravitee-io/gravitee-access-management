@@ -543,11 +543,15 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (preview.tokenEndpointAuthMethod() != null) {
             oAuthSettings.setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
         }
+        final boolean isAgent = ApplicationType.AGENT.equals(newApplication.getType());
         if (preview.grantTypes() != null && !preview.grantTypes().isEmpty()) {
-            oAuthSettings.setGrantTypes(preview.grantTypes());
+            final List<String> filteredGrantTypes = filterUnsupportedCimdGrantTypes(preview, isAgent);
+            if (!filteredGrantTypes.isEmpty()) {
+                oAuthSettings.setGrantTypes(filteredGrantTypes);
+            }
         }
         if (preview.responseTypes() != null && !preview.responseTypes().isEmpty()) {
-            oAuthSettings.setResponseTypes(preview.responseTypes());
+            oAuthSettings.setResponseTypes(filterUnsupportedCimdResponseTypes(preview, isAgent));
         }
         if (preview.logoUri() != null) {
             oAuthSettings.setLogoUri(preview.logoUri());
@@ -606,6 +610,44 @@ public class ApplicationServiceImpl implements ApplicationService {
                     : ClientAuthenticationMethod.NONE);
         }
         return application;
+    }
+
+    // device_code is advertised by some CIMD clients but is not currently supported by AM.
+    // Drop those entries (logging each one) so the rest of the metadata can still be applied
+    // rather than rejecting the whole client creation in GrantTypeUtils#validateGrantTypes.
+    // For AGENT applications, also drop grants forbidden by AgentApplicationConstraints (e.g.
+    // refresh_token) so a CIMD bootstrap does not fail validateAgentSettings.
+    private List<String> filterUnsupportedCimdGrantTypes(CimdClientMetadata preview, boolean isAgent) {
+        final List<String> kept = new ArrayList<>(preview.grantTypes().size());
+        for (String grantType : preview.grantTypes()) {
+            if (isUnsupportedDeviceCodeGrant(grantType)) {
+                LOGGER.warn("Ignoring unsupported grant_type '{}' from CIMD metadata at {}: device_code is not supported", grantType, preview.url());
+            } else if (isAgent && AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES.contains(grantType)) {
+                LOGGER.warn("Ignoring grant_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", grantType, preview.url());
+            } else {
+                kept.add(grantType);
+            }
+        }
+        return kept;
+    }
+
+    private List<String> filterUnsupportedCimdResponseTypes(CimdClientMetadata preview, boolean isAgent) {
+        if (!isAgent) {
+            return preview.responseTypes();
+        }
+        final List<String> kept = new ArrayList<>(preview.responseTypes().size());
+        for (String responseType : preview.responseTypes()) {
+            if (AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES.contains(responseType)) {
+                LOGGER.warn("Ignoring response_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", responseType, preview.url());
+            } else {
+                kept.add(responseType);
+            }
+        }
+        return kept;
+    }
+
+    private static boolean isUnsupportedDeviceCodeGrant(String grantType) {
+        return "device_code".equals(grantType) || GrantType.DEVIDE_CODE.equals(grantType);
     }
 
     private static boolean isSecretBasedAuthMethod(String method) {

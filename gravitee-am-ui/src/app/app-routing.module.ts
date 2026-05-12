@@ -1022,7 +1022,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                           },
@@ -1166,7 +1166,7 @@ export const routes: Routes = [
                                 only: ['application_analytics_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                           },
@@ -1346,7 +1346,7 @@ export const routes: Routes = [
                                     only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
