@@ -118,15 +118,25 @@ export class AuditsComponent implements OnInit {
   getActorUrl(row) {
     const routerLink = [];
 
-    if ('organization' === row.actor.referenceType) {
-      routerLink.push('/settings');
-    } else if ('domain' === row.actor.referenceType) {
-      routerLink.push('..');
+    if (row.actor.type === 'USER') {
+      if ('organization' === row.actor.referenceType) {
+        routerLink.push('/settings');
+      } else if ('domain' === row.actor.referenceType) {
+        routerLink.push('..');
+      }
+      if (routerLink.length > 0) {
+        routerLink.push('users');
+        routerLink.push(row.actor.id);
+      }
+      return routerLink;
     }
 
-    if (routerLink.length > 0) {
-      routerLink.push('users');
-      routerLink.push(row.actor.id);
+    if (row.actor.type === 'APPLICATION' && !row.actor.attributes?.metadataDocumentHash && !this.organizationContext) {
+      const envHrid = this.route.snapshot.paramMap.get('envHrid');
+      const domainId = this.route.snapshot.paramMap.get('domainId');
+      if (envHrid && domainId) {
+        return ['/environments', envHrid, 'domains', domainId, 'applications', row.actor.id];
+      }
     }
 
     return routerLink;

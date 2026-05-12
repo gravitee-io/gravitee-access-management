@@ -16,6 +16,7 @@
 package io.gravitee.am.service.reporter.builder;
 
 import com.google.common.collect.ImmutableMap;
+import io.gravitee.am.common.audit.AuditActorAttributes;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oauth2.ClientIds;
@@ -28,8 +29,6 @@ import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
 import java.util.HashMap;
 
 public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditBuilder> {
-
-    private static final String CIMD_METADATA_DOCUMENT_HASH_KEY = "metadataDocumentHash";
 
     private String metadataDocumentHash;
 
@@ -58,7 +57,7 @@ public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditB
         if (metadataDocumentHash != null) {
             HashMap<String, Object> attributes =
                     actor.getAttributes() == null ? new HashMap<>() : new HashMap<>(actor.getAttributes());
-            attributes.put(CIMD_METADATA_DOCUMENT_HASH_KEY, metadataDocumentHash);
+            attributes.put(AuditActorAttributes.CIMD_METADATA_DOCUMENT_HASH, metadataDocumentHash);
             actor.setAttributes(ImmutableMap.copyOf(attributes));
         }
         return actor;

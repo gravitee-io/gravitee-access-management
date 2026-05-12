@@ -27,6 +27,8 @@ import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -191,6 +193,7 @@ class ClientTokenAuditBuilderTest {
         assertEquals(clientName, audit.getActor().getAlternativeId());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
+        assertFalse(audit.getActor().getAttributes() != null && audit.getActor().getAttributes().containsKey("metadataDocumentHash"));
     }
 
     @Test
@@ -199,11 +202,13 @@ class ClientTokenAuditBuilderTest {
         var clientId = "https://client.example.com/metadata";
         var clientName = "CIMD Client";
         var domainId = "domainId";
+        var metadataHash = "abc123";
         var client = new Client();
         client.setId(applicationId);
         client.setClientId(clientId);
         client.setClientName(clientName);
         client.setDomain(domainId);
+        client.setCimdMetadataHash(metadataHash);
 
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).build(objectMapper);
 
@@ -211,6 +216,8 @@ class ClientTokenAuditBuilderTest {
         assertEquals(clientName, audit.getActor().getDisplayName());
         assertEquals(clientId, audit.getActor().getAlternativeId());
         assertEquals(TOKEN_CREATED, audit.getType());
+        assertNotNull(audit.getActor().getAttributes());
+        assertEquals(metadataHash, audit.getActor().getAttributes().get("metadataDocumentHash"));
     }
 
     @Test
