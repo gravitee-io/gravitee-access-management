@@ -53,7 +53,6 @@ export class ApplicationTokensComponent implements OnInit {
     this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
     this.applicationOauthSettings.userinfoCustomClaims = this.applicationOauthSettings.userinfoCustomClaims || [];
-    this.migrateLegacyUserProfileClaims();
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initCustomClaims();
     this.initUserInfoCustomClaims();
@@ -69,7 +68,6 @@ export class ApplicationTokensComponent implements OnInit {
     oauthSettings.refreshTokenValiditySeconds = this.applicationOauthSettings.refreshTokenValiditySeconds;
     oauthSettings.idTokenValiditySeconds = this.applicationOauthSettings.idTokenValiditySeconds;
     this.applicationService.patch(this.domainId, this.application.id, { settings: { oauth: oauthSettings } }).subscribe(() => {
-      this.clearLegacyUserProfileStorage();
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
@@ -207,39 +205,6 @@ export class ApplicationTokensComponent implements OnInit {
       this.applicationOauthSettings.userinfoCustomClaims.forEach((claim) => {
         claim.id = Math.random().toString(36).substring(7);
       });
-    }
-  }
-
-  private legacyUserProfileStorageKey(): string {
-    return `am.tokenCustomClaims.userProfile:${this.domainId}:${this.application.id}`;
-  }
-
-  private migrateLegacyUserProfileClaims(): void {
-    let legacy: any[];
-    try {
-      const raw = window.localStorage.getItem(this.legacyUserProfileStorageKey());
-      legacy = raw ? JSON.parse(raw) : [];
-    } catch {
-      return;
-    }
-    if (!legacy || legacy.length === 0) {
-      return;
-    }
-    const existingNames = new Set(this.applicationOauthSettings.userinfoCustomClaims.map((c: any) => c.claimName));
-    const migrated = legacy
-      .filter((c: any) => c && c.claimName && !existingNames.has(c.claimName))
-      .map((c: any) => ({ claimName: c.claimName, claimValue: c.claimValue }));
-    if (migrated.length > 0) {
-      this.applicationOauthSettings.userinfoCustomClaims = [...this.applicationOauthSettings.userinfoCustomClaims, ...migrated];
-      this.formChanged = true;
-    }
-  }
-
-  private clearLegacyUserProfileStorage(): void {
-    try {
-      window.localStorage.removeItem(this.legacyUserProfileStorageKey());
-    } catch {
-      /* ignore */
     }
   }
 }
