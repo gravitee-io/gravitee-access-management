@@ -24,6 +24,7 @@ import static io.gravitee.am.common.audit.EventType.CLIENT_AUTHENTICATION;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -132,5 +133,6 @@ class ClientAuthAuditBuilderTest {
         var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).build(objectMapper);
 
         assertNull(audit.getTarget());
+        assertFalse(audit.getActor().getAttributes() != null && audit.getActor().getAttributes().containsKey("metadataDocumentHash"));
     }
 }

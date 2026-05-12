@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import io.gravitee.am.common.audit.AuditActorAttributes;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
@@ -44,6 +45,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
     private static final String ACCESS_TOKEN_SUB_ATTRIBUTE_KEY = "accessTokenSubject";
     private final Map<String, Object> tokenNewValue;
     private String accessTokenSubject;
+    private String metadataDocumentHash;
 
     public ClientTokenAuditBuilder() {
         super();
@@ -121,7 +123,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
             if(client.getDomain() != null){
                 reference(Reference.domain(client.getDomain()));
             }
-
+            this.metadataDocumentHash = client.getCimdMetadataHash();
         }
         return this;
     }
@@ -167,6 +169,17 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
             setNewValue(tokenNewValue);
         }
         return super.build(mapper);
+    }
+
+    @Override
+    protected AuditEntity createActor() {
+        AuditEntity actor = super.createActor();
+        if (metadataDocumentHash != null) {
+            HashMap<String, Object> attributes = actor.getAttributes() == null ? new HashMap<>() : new HashMap<>(actor.getAttributes());
+            attributes.put(AuditActorAttributes.CIMD_METADATA_DOCUMENT_HASH, metadataDocumentHash);
+            actor.setAttributes(ImmutableMap.copyOf(attributes));
+        }
+        return actor;
     }
 
     @Override
