@@ -344,6 +344,10 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         if (userCodeParam != null) {
             client.setBackchannelUserCodeParameter(userCodeParam);
         }
+        Boolean requirePar = optionalBoolean(metadata, "require_pushed_authorization_requests");
+        if (requirePar != null) {
+            client.setRequireParRequest(requirePar);
+        }
 
         List<String> postLogoutRedirectUris = readOptionalStringArray(metadata, "post_logout_redirect_uris");
         if (postLogoutRedirectUris != null && !postLogoutRedirectUris.isEmpty()) {

@@ -337,6 +337,27 @@
     {
       "request": {
         "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/par-required"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/par-required",
+          "client_name": "CIMD PAR Required Client",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "require_pushed_authorization_requests": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "urlPath": "/cimd/ENABLED_BASE/invalid-json"
       },
       "response": {
