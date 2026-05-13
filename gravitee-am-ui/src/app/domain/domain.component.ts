@@ -46,6 +46,7 @@ export class DomainComponent implements OnInit {
     // redirect user according to its permissions
     if (
       this.router.url.indexOf('applications') === -1 &&
+      this.router.url.indexOf('agents') === -1 &&
       this.router.url.indexOf('settings') === -1 &&
       this.router.url.indexOf('mcp-servers') === -1 &&
       this.router.url.indexOf('authorization-engines') === -1

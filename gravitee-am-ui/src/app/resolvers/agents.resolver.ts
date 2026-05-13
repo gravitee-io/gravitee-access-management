@@ -15,27 +15,22 @@
  */
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
-import { DashboardService } from '../services/dashboard.service';
 import { ApplicationService } from '../services/application.service';
 
 @Injectable()
-export class ApplicationsResolver {
+export class AgentsResolver {
   private default_page = 0;
   private default_size = 50;
 
-  constructor(
-    private applicationService: ApplicationService,
-    private dashboardService: DashboardService,
-  ) {}
+  constructor(private applicationService: ApplicationService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domain = route.parent.data['domain'];
-
-    if (domain) {
-      return this.applicationService.findByDomain(domain.id, this.default_page, this.default_size, undefined, 'AGENT');
+    if (!domain) {
+      return of({ data: [], totalCount: 0 });
     }
-    return this.dashboardService.findApplications(null);
+    return this.applicationService.findByDomain(domain.id, this.default_page, this.default_size, 'AGENT');
   }
 }

@@ -31,12 +31,16 @@ export class ApplicationService {
     private authService: AuthService,
   ) {}
 
-  findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size);
+  findByDomain(domainId, page, size, type?: string, excludeType?: string): Observable<any> {
+    const typeParam = type ? '&type=' + type : '';
+    const excludeParam = excludeType ? '&excludeType=' + excludeType : '';
+    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size + typeParam + excludeParam);
   }
 
-  search(domainId, searchTerm): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm);
+  search(domainId, searchTerm, type?: string, excludeType?: string): Observable<any> {
+    const typeParam = type ? '&type=' + type : '';
+    const excludeParam = excludeType ? '&excludeType=' + excludeType : '';
+    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm + typeParam + excludeParam);
   }
 
   get(domainId, id): Observable<any> {

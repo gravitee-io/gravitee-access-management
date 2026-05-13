@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { find } from 'lodash';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'application-creation-step2',
@@ -23,10 +27,11 @@ import { find } from 'lodash';
   styleUrls: ['./step2.component.scss'],
   standalone: false,
 })
-export class ApplicationCreationStep2Component implements OnInit {
+export class ApplicationCreationStep2Component implements OnInit, OnDestroy {
   @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
+  private destroy$ = new Subject<void>();
   creationModes = [
     {
       value: 'manual',
@@ -66,10 +71,25 @@ export class ApplicationCreationStep2Component implements OnInit {
     },
   ];
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private domainStore: DomainStoreService,
+  ) {}
 
   ngOnInit(): void {
-    this.domain = this.route.snapshot.data['domain'];
+    // Track DomainStore so settings changes (e.g. toggling CIMD) take effect without a hard refresh.
+    // Fall back to the route snapshot until the store emits.
+    this.domain = this.domainStore.current ?? this.route.snapshot.data['domain'];
+    this.domainStore.domain$.pipe(takeUntil(this.destroy$)).subscribe((domain) => {
+      if (domain) {
+        this.domain = domain;
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   icon(app) {
