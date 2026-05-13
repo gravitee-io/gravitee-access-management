@@ -216,7 +216,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         doReturn(Flowable.just("client-1-id"))
                 .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, (ApplicationType) null, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications")
                 .queryParam("expand", "clientId")
@@ -248,7 +248,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Page<Application> applicationPage = new Page(List.of(mockClient), 0, 1);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, (ApplicationType) null, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications").request().get();
 
@@ -273,7 +273,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Page<Application> applicationPage = new Page(List.of(mockClient), 0, 1);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, (ApplicationType) null, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications")
                 .queryParam("expand", "unknownValue")
