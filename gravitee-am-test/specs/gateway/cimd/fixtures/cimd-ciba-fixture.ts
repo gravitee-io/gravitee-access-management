@@ -27,7 +27,8 @@ import { createApplication, patchApplication, updateApplication } from '@managem
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
-import { delay, uniqueName } from '@utils-commands/misc';
+import { retryUntil } from '@utils-commands/retry';
+import { uniqueName } from '@utils-commands/misc';
 import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
 import { Fixture } from '../../../test-fixture';
@@ -39,6 +40,28 @@ export const CIMD_CIBA_CLIENT_ID_POLL = 'http://wiremock:8080/cimd/ENABLED_BASE/
 export const CIMD_CIBA_CLIENT_ID_JAR = 'http://wiremock:8080/cimd/ENABLED_BASE/valid-ciba-jar';
 const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 const CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
+/** Polling cadence when waiting for CIBA completion (domain `tokenReqInterval` is 5s). */
+const CIBA_TOKEN_POLL_INTERVAL_MS = 5500;
+const CIBA_TOKEN_POLL_TIMEOUT_MS = 90000;
+
+const isCibaTokenGrantedResponse = (res: any): boolean => {
+  if (res.status === 200 && res.body?.access_token) {
+    return true;
+  }
+  if (res.status === 400) {
+    const err = res.body?.error;
+    if (err === 'authorization_pending' || err === 'slow_down') {
+      return false;
+    }
+  }
+  throw new Error(`Unexpected CIBA token response: HTTP ${res.status} ${JSON.stringify(res.body)}`);
+};
+
+const pollCibaTokenUntilGranted = async (fetchToken: () => Promise<any>): Promise<any> =>
+  retryUntil(fetchToken, isCibaTokenGrantedResponse, {
+    timeoutMillis: CIBA_TOKEN_POLL_TIMEOUT_MS,
+    intervalMillis: CIBA_TOKEN_POLL_INTERVAL_MS,
+  });
 
 const CIMD_CIBA_TEST_USER = {
   username: 'cimd-ciba-user',
@@ -59,6 +82,8 @@ export interface CimdCibaFixture extends Fixture {
   initiateCibaWithPrivateKeyJwt: (clientId: string, loginHint: string, requestJwt?: string) => Promise<any>;
   pollToken: (authReqId: string, clientId: string) => Promise<any>;
   pollTokenWithPrivateKeyJwt: (authReqId: string, clientId: string) => Promise<any>;
+  pollTokenUntilGranted: (authReqId: string, clientId: string) => Promise<any>;
+  pollTokenWithPrivateKeyJwtUntilGranted: (authReqId: string, clientId: string) => Promise<any>;
   createRequestJwt: (clientId: string, loginHint: string) => Promise<string>;
   createPrivateKeyJwtAssertion: (clientId: string) => Promise<string>;
 }
@@ -194,8 +219,8 @@ export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
     });
 
     await startDomain(domain.id, accessToken);
+    // waitForDomainStart already waits for gateway sync (waitForDomainReady) and OIDC well-known (waitForOidcReady).
     const startedDomain = await waitForDomainStart(domain);
-    await delay(6000);
 
     const cibaNotifierRegResponse = await performPost(
       `${cibaUrl}/domains`,
@@ -269,6 +294,12 @@ export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
       );
     };
 
+    const pollTokenUntilGranted = (authReqId: string, clientId: string): Promise<any> =>
+      pollCibaTokenUntilGranted(() => pollToken(authReqId, clientId));
+
+    const pollTokenWithPrivateKeyJwtUntilGranted = (authReqId: string, clientId: string): Promise<any> =>
+      pollCibaTokenUntilGranted(() => pollTokenWithPrivateKeyJwt(authReqId, clientId));
+
     return {
       domain: startedDomain.domain,
       accessToken,
@@ -280,6 +311,8 @@ export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
       initiateCibaWithPrivateKeyJwt,
       pollToken,
       pollTokenWithPrivateKeyJwt,
+      pollTokenUntilGranted,
+      pollTokenWithPrivateKeyJwtUntilGranted,
       createRequestJwt: (clientId: string, loginHint: string) =>
         createRequestJwt(clientId, oidcBaseAudience, loginHint),
       createPrivateKeyJwtAssertion: (clientId: string) =>

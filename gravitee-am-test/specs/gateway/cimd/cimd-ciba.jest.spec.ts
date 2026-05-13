@@ -22,7 +22,6 @@ import {
   CIMD_CIBA_CLIENT_ID_POLL,
   setupCimdCibaFixture,
 } from './fixtures/cimd-ciba-fixture';
-import { delay } from '@utils-commands/misc';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 
 setup(300000);
@@ -54,9 +53,7 @@ describe('CIMD + CIBA — poll flow with device notifier auto-accept (token_endp
     expect(initiateResponse.status).toBe(200);
     const authReqId = initiateResponse.body.auth_req_id;
 
-    await delay(6000);
-
-    const tokenResponse = await fixture.pollToken(authReqId, CIMD_CIBA_CLIENT_ID_POLL);
+    const tokenResponse = await fixture.pollTokenUntilGranted(authReqId, CIMD_CIBA_CLIENT_ID_POLL);
     expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.body.access_token).toBeDefined();
     expect(tokenResponse.body.id_token).toBeDefined();
@@ -66,9 +63,10 @@ describe('CIMD + CIBA — poll flow with device notifier auto-accept (token_endp
     const initiateResponse = await fixture.initiateCiba(CIMD_CIBA_CLIENT_ID_POLL, fixture.user.username);
     expect(initiateResponse.status).toBe(200);
 
-    await delay(6000);
-
-    const tokenResponse = await fixture.pollToken(initiateResponse.body.auth_req_id, CIMD_CIBA_CLIENT_ID_POLL);
+    const tokenResponse = await fixture.pollTokenUntilGranted(
+      initiateResponse.body.auth_req_id,
+      CIMD_CIBA_CLIENT_ID_POLL,
+    );
     expect(tokenResponse.status).toBe(200);
 
     const userInfoResponse = await performGet(fixture.oidcConfig.userinfo_endpoint, '', {
@@ -95,9 +93,10 @@ describe('CIMD + CIBA — poll flow with signed request object (JAR) and private
     const initiateResponse = await fixture.initiateCibaWithPrivateKeyJwt(CIMD_CIBA_CLIENT_ID_JAR, fixture.user.username, requestJwt);
     expect(initiateResponse.status).toBe(200);
 
-    await delay(10000);
-
-    const tokenResponse = await fixture.pollTokenWithPrivateKeyJwt(initiateResponse.body.auth_req_id, CIMD_CIBA_CLIENT_ID_JAR);
+    const tokenResponse = await fixture.pollTokenWithPrivateKeyJwtUntilGranted(
+      initiateResponse.body.auth_req_id,
+      CIMD_CIBA_CLIENT_ID_JAR,
+    );
     expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.body.access_token).toBeDefined();
     expect(tokenResponse.body.id_token).toBeDefined();
