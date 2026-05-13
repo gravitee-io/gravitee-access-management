@@ -50,6 +50,7 @@ public class AbstractDomainResource extends AbstractResource {
         filteredDomain.setName(domain.getName());
         filteredDomain.setDescription(domain.getDescription());
         filteredDomain.setEnabled(domain.isEnabled());
+        filteredDomain.setMaster(domain.isMaster());
         filteredDomain.setCreatedAt(domain.getCreatedAt());
         filteredDomain.setUpdatedAt(domain.getUpdatedAt());
 

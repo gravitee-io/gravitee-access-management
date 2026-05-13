@@ -55,6 +55,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         final Domain mockDomain = new Domain();
         mockDomain.setId("domain-id-1");
         mockDomain.setName("domain-name-1");
+        mockDomain.setMaster(true);
 
         final Domain mockDomain2 = new Domain();
         mockDomain2.setId("domain-id-2");
@@ -67,7 +68,10 @@ public class DomainsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map responseEntity = readEntity(response, Map.class);
-        assertEquals(2, ((List) responseEntity.get("data")).size());
+        List<Map<String, Object>> data = (List<Map<String, Object>>) responseEntity.get("data");
+        assertEquals(2, data.size());
+        assertEquals(Boolean.TRUE, data.get(0).get("master"));
+        assertEquals(Boolean.FALSE, data.get(1).get("master"));
     }
 
     @Test
