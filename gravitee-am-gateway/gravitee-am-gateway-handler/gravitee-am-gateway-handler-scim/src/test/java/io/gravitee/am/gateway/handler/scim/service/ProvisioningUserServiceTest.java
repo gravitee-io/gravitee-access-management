@@ -447,6 +447,42 @@ public class ProvisioningUserServiceTest {
     }
 
     @Test
+    public void shouldUpdateUser_preserveInternalFlag() {
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getSource()).thenReturn("user-idp");
+        when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(existingUser.isInternal()).thenReturn(true);
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(true);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture(), any());
+        assertTrue(userCaptor.getValue().isInternal());
+    }
+
+    @Test
     public void shouldUpdateUser_status_disabled_and_tokens_revoked() {
         io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
         when(existingUser.getId()).thenReturn("user-id");
