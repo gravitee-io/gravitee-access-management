@@ -107,6 +107,7 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("q") String query,
             @QueryParam("expand") List<String> expandsParam,
             @QueryParam("type") ApplicationType type,
+            @QueryParam("excludeType") ApplicationType excludeType,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
         final Set<ApplicationExpand> expands = convertToApplicationExpands(expandsParam);
@@ -119,6 +120,7 @@ public class ApplicationsResource extends AbstractDomainResource {
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
                                         .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query, type))))
+                .map(apps -> applyExcludeType(apps, excludeType))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(app -> FilteredApplication.of(app, expands)).toList(),
@@ -126,6 +128,20 @@ public class ApplicationsResource extends AbstractDomainResource {
                                 apps.getTotalCount())
                 )
                 .subscribe(response::resume, response::resume);
+    }
+
+    // Strips applications of a specific type from a fetched page. Used so agents (a top-level UI concept)
+    // don't leak into the Applications list. Note: totalCount is adjusted by the number of stripped
+    // entries on this page only, so cross-page totals may be slightly off when both types coexist.
+    private Page<Application> applyExcludeType(Page<Application> apps, ApplicationType excludeType) {
+        if (excludeType == null) {
+            return apps;
+        }
+        List<Application> filtered = apps.getData().stream()
+                .filter(app -> app.getType() != excludeType)
+                .toList();
+        long stripped = apps.getData().size() - filtered.size();
+        return new Page<>(filtered, apps.getCurrentPage(), apps.getTotalCount() - stripped);
     }
 
     private Set<ApplicationExpand> convertToApplicationExpands(List<String> expandsParam) {

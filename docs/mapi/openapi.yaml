@@ -1037,6 +1037,17 @@ paths:
           - SERVICE
           - RESOURCE_SERVER
           - AGENT
+      - name: excludeType
+        in: query
+        schema:
+          type: string
+          enum:
+          - WEB
+          - NATIVE
+          - BROWSER
+          - SERVICE
+          - RESOURCE_SERVER
+          - AGENT
       responses:
         "200":
           description: List registered applications for a security domain

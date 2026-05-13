@@ -137,6 +137,44 @@ public class ApplicationsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldListApplications_excludeTypeStripsAgents() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Application webApp = new Application();
+        webApp.setId("web-1");
+        webApp.setName("web");
+        webApp.setDomain(domainId);
+        webApp.setType(ApplicationType.WEB);
+        webApp.setUpdatedAt(new Date());
+
+        final Application agent = new Application();
+        agent.setId("agent-1");
+        agent.setName("agent");
+        agent.setDomain(domainId);
+        agent.setType(ApplicationType.AGENT);
+        agent.setUpdatedAt(new Date());
+
+        final Page<Application> mixedPage = new Page<>(List.of(webApp, agent), 0, 2);
+
+        doReturn(Flowable.just("web-1", "agent-1"))
+                .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(mixedPage)).when(applicationService).findByDomain(domainId, (ApplicationType) null, 0, 50);
+
+        final Response response = target("domains").path(domainId).path("applications")
+                .queryParam("excludeType", "AGENT").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Map responseEntity = readEntity(response, Map.class);
+        final List data = (List) responseEntity.get("data");
+        assertEquals(1, data.size());
+        assertEquals("web-1", ((Map) data.get(0)).get("id"));
+        assertEquals(1, ((Number) responseEntity.get("totalCount")).intValue());
+    }
+
+    @Test
     public void shouldSearchAgentApps_typeFilter() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
