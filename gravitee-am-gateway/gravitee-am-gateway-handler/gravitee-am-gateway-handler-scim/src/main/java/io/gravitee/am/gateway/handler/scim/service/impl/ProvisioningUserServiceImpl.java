@@ -449,6 +449,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                     userToUpdate.setPassword(null);
                                                     // set external id
                                                     userToUpdate.setExternalId(idpUser.getId());
+                                                    userToUpdate.setInternal(existingUser.isInternal());
                                                     // if password has been changed, update last update date
                                                     if (scimUser.getPassword() != null) {
                                                         userToUpdate.setLastPasswordReset(new Date());
@@ -463,6 +464,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                         // idp user does not exist, only update AM user
                                                         // clear password
                                                         userToUpdate.setPassword(null);
+                                                        userToUpdate.setInternal(existingUser.isInternal());
                                                         return updateUser(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                     }
                                                     return Single.error(ex);
