@@ -781,6 +781,146 @@ public class CimdMetadataServiceImplTest {
         verify(request).as(any());
     }
 
+    // --- Extended metadata ---
+
+    @Test
+    public void shouldMapAllExtendedMetadataFields() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("application_type", "native")
+                .put("subject_type", "pairwise")
+                .put("sector_identifier_uri", "https://example.com/sector")
+                .put("id_token_signed_response_alg", "RS256")
+                .put("client_uri", "https://example.com/client")
+                .put("policy_uri", "https://example.com/policy")
+                .put("tos_uri", "https://example.com/tos")
+                .put("software_id", "sw-001")
+                .put("software_version", "1.2.3")
+                .put("software_statement", "eyJhbGciOiJSUzI1NiJ9.e30.sig")
+                .put("tls_client_auth_subject_dn", "CN=client")
+                .put("tls_client_auth_san_dns", "client.example.com")
+                .put("tls_client_auth_san_uri", "https://client.example.com")
+                .put("tls_client_auth_san_ip", "192.0.2.1")
+                .put("tls_client_auth_san_email", "client@example.com")
+                .put("backchannel_token_delivery_mode", "poll")
+                .put("backchannel_client_notification_endpoint", "https://example.com/notify")
+                .put("request_object_signing_alg", "RS256")
+                .put("backchannel_authentication_request_signing_alg", "PS256")
+                .put("tls_client_certificate_bound_access_tokens", true)
+                .put("backchannel_user_code_parameter", true)
+                .put("require_pushed_authorization_requests", true)
+                .put("post_logout_redirect_uris", new JsonArray().add("https://example.com/logout"))
+                .put("contacts", new JsonArray().add("ops@example.com"))
+                .put("request_uris", new JsonArray().add("https://example.com/request.jwt"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(c ->
+                "native".equals(c.getApplicationType())
+                && "pairwise".equals(c.getSubjectType())
+                && "https://example.com/sector".equals(c.getSectorIdentifierUri())
+                && "RS256".equals(c.getIdTokenSignedResponseAlg())
+                && "https://example.com/client".equals(c.getClientUri())
+                && "https://example.com/policy".equals(c.getPolicyUri())
+                && "https://example.com/tos".equals(c.getTosUri())
+                && "sw-001".equals(c.getSoftwareId())
+                && "1.2.3".equals(c.getSoftwareVersion())
+                && "eyJhbGciOiJSUzI1NiJ9.e30.sig".equals(c.getSoftwareStatement())
+                && "CN=client".equals(c.getTlsClientAuthSubjectDn())
+                && "client.example.com".equals(c.getTlsClientAuthSanDns())
+                && "https://client.example.com".equals(c.getTlsClientAuthSanUri())
+                && "192.0.2.1".equals(c.getTlsClientAuthSanIp())
+                && "client@example.com".equals(c.getTlsClientAuthSanEmail())
+                && "poll".equals(c.getBackchannelTokenDeliveryMode())
+                && "https://example.com/notify".equals(c.getBackchannelClientNotificationEndpoint())
+                && "RS256".equals(c.getRequestObjectSigningAlg())
+                && "PS256".equals(c.getBackchannelAuthRequestSignAlg())
+                && c.isTlsClientCertificateBoundAccessTokens()
+                && c.isBackchannelUserCodeParameter()
+                && c.isRequireParRequest()
+                && List.of("https://example.com/logout").equals(c.getPostLogoutRedirectUris())
+                && List.of("ops@example.com").equals(c.getContacts())
+                && List.of("https://example.com/request.jwt").equals(c.getRequestUris()));
+    }
+
+    @Test
+    public void shouldNotApplyBlankExtendedStringFields() {
+        Client template = templateClient();
+        template.setApplicationType("native");
+        template.setSoftwareId("original-sw-id");
+
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("application_type", "")
+                .put("software_id", "  ")
+                .put("backchannel_token_delivery_mode", "");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(c ->
+                "native".equals(c.getApplicationType())
+                && "original-sw-id".equals(c.getSoftwareId())
+                && c.getBackchannelTokenDeliveryMode() == null);
+    }
+
+    @Test
+    public void shouldNotApplyEmptyExtendedArrayFields() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("post_logout_redirect_uris", new JsonArray())
+                .put("contacts", new JsonArray())
+                .put("request_uris", new JsonArray());
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(c ->
+                (c.getPostLogoutRedirectUris() == null || c.getPostLogoutRedirectUris().isEmpty())
+                && (c.getContacts() == null || c.getContacts().isEmpty())
+                && (c.getRequestUris() == null || c.getRequestUris().isEmpty()));
+    }
+
+    @Test
+    public void shouldApplyFalseBooleanExtendedFields() {
+        // Template defaults to false for all three; confirm explicit false in metadata is still applied (not skipped by null guard)
+        Client template = templateClient();
+        template.setTlsClientCertificateBoundAccessTokens(true);
+        template.setBackchannelUserCodeParameter(true);
+        template.setRequireParRequest(true);
+
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("tls_client_certificate_bound_access_tokens", false)
+                .put("backchannel_user_code_parameter", false)
+                .put("require_pushed_authorization_requests", false);
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(c ->
+                !c.isTlsClientCertificateBoundAccessTokens()
+                && !c.isBackchannelUserCodeParameter()
+                && !c.isRequireParRequest());
+    }
+
     private void mockFetchSuccess(String payload) {
         mockRequest();
         when(request.rxSend()).thenReturn(Single.just(response));

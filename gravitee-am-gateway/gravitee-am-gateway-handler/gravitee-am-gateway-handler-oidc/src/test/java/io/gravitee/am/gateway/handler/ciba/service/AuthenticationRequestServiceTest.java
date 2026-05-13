@@ -26,7 +26,7 @@ import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingExcepti
 import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationRejectedException;
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -82,7 +82,7 @@ public class AuthenticationRequestServiceTest {
     private JWTService jwtService;
 
     @Mock
-    private ClientSyncService clientService;
+    private ClientLookupService clientLookupService;
 
 
     @Before
@@ -213,7 +213,7 @@ public class AuthenticationRequestServiceTest {
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
         when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
-        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.clientLookupService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
         when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(stateJwt));
 
         final CibaAuthRequest cibaRequest = new CibaAuthRequest();
@@ -243,7 +243,7 @@ public class AuthenticationRequestServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
-        verify(clientService, never()).findByClientId(any());
+        verify(clientLookupService, never()).findByClientId(any());
         verify(requestRepository, never()).updateStatus(any(), any());
     }
 
@@ -260,7 +260,7 @@ public class AuthenticationRequestServiceTest {
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
         when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
-        when(this.clientService.findByClientId(any())).thenReturn(Maybe.empty());
+        when(this.clientLookupService.findByClientId(any())).thenReturn(Maybe.empty());
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
@@ -283,7 +283,7 @@ public class AuthenticationRequestServiceTest {
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
         when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
-        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.clientLookupService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
         when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.error(new InvalidTokenException()));
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
@@ -291,7 +291,7 @@ public class AuthenticationRequestServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
-        verify(clientService).findByClientId(any());
+        verify(clientLookupService).findByClientId(any());
         verify(requestRepository, never()).updateStatus(any(), any());
     }
 
@@ -308,7 +308,7 @@ public class AuthenticationRequestServiceTest {
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
         when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
-        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.clientLookupService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
         when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(stateJwt));
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
@@ -316,7 +316,7 @@ public class AuthenticationRequestServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
-        verify(clientService).findByClientId(any());
+        verify(clientLookupService).findByClientId(any());
         verify(requestRepository, never()).updateStatus(any(), any());
     }
 
@@ -334,7 +334,7 @@ public class AuthenticationRequestServiceTest {
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
         when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
-        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.clientLookupService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
         when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(stateJwt));
 
         final CibaAuthRequest cibaRequest = new CibaAuthRequest();
@@ -346,7 +346,7 @@ public class AuthenticationRequestServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
-        verify(clientService).findByClientId(any());
+        verify(clientLookupService).findByClientId(any());
         verify(jwtService).decodeAndVerify(anyString(), any(Client.class), any());
         verify(requestRepository, never()).updateStatus(any(), any());
     }

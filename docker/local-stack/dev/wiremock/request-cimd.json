@@ -337,6 +337,27 @@
     {
       "request": {
         "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/par-required"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/par-required",
+          "client_name": "CIMD PAR Required Client",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "require_pushed_authorization_requests": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "urlPath": "/cimd/ENABLED_BASE/invalid-json"
       },
       "response": {
@@ -427,6 +448,67 @@
             "https://client.example.com/callback"
           ],
           "token_endpoint_auth_method": "none"
+        }
+      }
+    }
+    ,{
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/valid-ciba-poll"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/valid-ciba-poll",
+          "client_name": "CIMD CIBA Poll Client",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "grant_types": [
+            "urn:openid:params:grant-type:ciba"
+          ],
+          "token_endpoint_auth_method": "none",
+          "backchannel_token_delivery_mode": "poll"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/valid-ciba-jar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/valid-ciba-jar",
+          "client_name": "CIMD CIBA JAR Client",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "grant_types": [
+            "urn:openid:params:grant-type:ciba"
+          ],
+          "token_endpoint_auth_method": "private_key_jwt",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "n": "lOd-5KMvu9C0sulBE3-NbI-FfLavakLlt6GmoWgO27iUIDE6vcjvrLC_Qu8G4m0BGWqHy9ij9iprJ_ipAIMV5r8sf_3IXVeR0_4DN8U7VOgs8Je1zKMGZUQH5LUuYVq9raQAZYX_70cL5K_8mR1sX07W2txvBzcbP_Sd4MXIT-pcmvLTDXslWQs5XJqqWotbN6SxCRCWNOjdycYi4miGycnTts2GTLkAWPyXEG8tkOIzuA33wfrimC89Zd3baXKSkAzXPhFyvq42m3uKvro_4njMuTyoQwnkXkLedJFSCa1oJom4Ggj7J2OzluKlmFFH45jALybC96XBs2nEGK0hxw",
+                "e": "AQAB",
+                "use": "sig",
+                "kid": "cimd-private-key-jwt"
+              }
+            ]
+          },
+          "backchannel_token_delivery_mode": "poll",
+          "backchannel_authentication_request_signing_alg": "RS256",
+          "request_object_signing_alg": "RS256"
         }
       }
     }
