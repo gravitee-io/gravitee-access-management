@@ -22,9 +22,9 @@
       <form #cimdSettingsForm="ngForm" (ngSubmit)="save()" (keydown.enter)="(false)">
         <div class="gv-form-section" fxLayout="column">
           <mat-slide-toggle (change)="enableCIMD($event)" [checked]="isCIMDEnabled()" [disabled]="!editMode">
-            Client-Initiated Metadata Document (CIMD) support
+            Client ID Metadata Document (CIMD) support
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">Enable support for Client-Initiated Metadata Document (CIMD).</mat-hint>
+          <mat-hint style="font-size: 75%">Enable support for Client ID Metadata Document (CIMD).</mat-hint>
         </div>
 
         <div *ngIf="cimdSettings.enabled">
@@ -193,8 +193,8 @@
       <h3>What is CIMD?</h3>
       <div class="gv-page-description-content">
         <p>
-          Client-Initiated Metadata Document (CIMD) allows OAuth 2.0 clients to retrieve their own metadata from a well-known URI, enabling
-          dynamic configuration of client parameters without prior registration.
+          Client ID Metadata Document (CIMD) allows OAuth 2.0 clients to retrieve their own metadata from a well-known URI, enabling dynamic
+          configuration of client parameters without prior registration.
         </p>
         <h4>Template Application</h4>
         <p>
