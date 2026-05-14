@@ -12428,6 +12428,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationIdentityProvider"
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         metadata:
           type: object
           additionalProperties:
@@ -12446,12 +12452,6 @@ components:
             $ref: "#/components/schemas/ClientSecret"
         settings:
           $ref: "#/components/schemas/ApplicationSettings"
-        kind:
-          type: string
-          enum:
-          - USER_EMBEDDED
-          - HOSTED_DELEGATED
-          - AUTONOMOUS
         template:
           type: boolean
         type:
@@ -13943,14 +13943,14 @@ components:
           type: boolean
         id:
           type: string
-        name:
-          type: string
         kind:
           type: string
           enum:
           - USER_EMBEDDED
           - HOSTED_DELEGATED
           - AUTONOMOUS
+        name:
+          type: string
         template:
           type: boolean
         type:
@@ -14470,6 +14470,12 @@ components:
           type: string
         description:
           type: string
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         metadata:
           type: object
           additionalProperties:
@@ -14480,12 +14486,6 @@ components:
           type: array
           items:
             type: string
-        kind:
-          type: string
-          enum:
-          - USER_EMBEDDED
-          - HOSTED_DELEGATED
-          - AUTONOMOUS
         type:
           type: string
           enum:
@@ -14584,14 +14584,14 @@ components:
           type: string
         description:
           type: string
-        name:
-          type: string
         kind:
           type: string
           enum:
           - USER_EMBEDDED
           - HOSTED_DELEGATED
           - AUTONOMOUS
+        name:
+          type: string
         type:
           type: string
           enum:
@@ -15448,6 +15448,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PatchApplicationIdentityProvider"
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         metadata:
           type: object
           additionalProperties:
@@ -15531,12 +15537,6 @@ components:
             - INSTALLATION
         settings:
           $ref: "#/components/schemas/PatchApplicationSettings"
-        kind:
-          type: string
-          enum:
-          - USER_EMBEDDED
-          - HOSTED_DELEGATED
-          - AUTONOMOUS
         template:
           type: boolean
     PatchApplicationAdvancedSettings:
