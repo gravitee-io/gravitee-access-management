@@ -288,7 +288,7 @@ public class ApplicationResource extends AbstractResource {
             filteredApplication.setId(application.getId());
             filteredApplication.setName(application.getName());
             filteredApplication.setType(application.getType());
-            filteredApplication.setSubType(application.getSubType());
+            filteredApplication.setKind(application.getKind());
             filteredApplication.setDescription(application.getDescription());
             filteredApplication.setDomain(application.getDomain());
             filteredApplication.setEnabled(application.isEnabled());

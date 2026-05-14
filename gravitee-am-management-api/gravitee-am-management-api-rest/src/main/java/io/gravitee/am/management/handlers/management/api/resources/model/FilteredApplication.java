@@ -28,7 +28,7 @@ public record FilteredApplication(
         String description,
         ApplicationType type,
         @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
-        String subType,
+        String kind,
         boolean enabled,
         boolean template,
         Date updatedAt,
@@ -44,7 +44,7 @@ public record FilteredApplication(
                 application.getName(),
                 application.getDescription(),
                 application.getType(),
-                application.getSubType(),
+                application.getKind(),
                 application.isEnabled(),
                 application.isTemplate(),
                 application.getUpdatedAt(),
