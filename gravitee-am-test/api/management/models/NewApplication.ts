@@ -73,7 +73,7 @@ export interface NewApplication {
    * @type {string}
    * @memberof NewApplication
    */
-  subType?: NewApplicationSubTypeEnum;
+  kind?: NewApplicationKindEnum;
   /**
    *
    * @type {string}
@@ -85,12 +85,12 @@ export interface NewApplication {
 /**
  * @export
  */
-export const NewApplicationSubTypeEnum = {
+export const NewApplicationKindEnum = {
   UserEmbedded: 'USER_EMBEDDED',
   HostedDelegated: 'HOSTED_DELEGATED',
   Autonomous: 'AUTONOMOUS',
 } as const;
-export type NewApplicationSubTypeEnum = typeof NewApplicationSubTypeEnum[keyof typeof NewApplicationSubTypeEnum];
+export type NewApplicationKindEnum = typeof NewApplicationKindEnum[keyof typeof NewApplicationKindEnum];
 
 /**
  * @export
@@ -129,7 +129,7 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
-    subType: json['subType'] == null ? undefined : json['subType'],
+    kind: json['kind'] == null ? undefined : json['kind'],
     type: json['type'],
   };
 }
@@ -150,7 +150,7 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
     metadata: value['metadata'],
     name: value['name'],
     redirectUris: value['redirectUris'],
-    subType: value['subType'],
+    kind: value['kind'],
     type: value['type'],
   };
 }

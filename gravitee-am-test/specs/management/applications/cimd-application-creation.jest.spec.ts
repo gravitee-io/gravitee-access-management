@@ -132,7 +132,7 @@ describe('CIMD application creation', () => {
     expect(body.settings?.oauth?.redirectUris).toEqual(['https://client.example.com/callback']);
   });
 
-  it('rejects an AGENT CIMD application without subType', async () => {
+  it('rejects an AGENT CIMD application without kind', async () => {
     const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
       name: uniqueName('cimd-agent-bad', true),
       type: 'AGENT',
@@ -140,53 +140,53 @@ describe('CIMD application creation', () => {
     });
 
     expect(status).toBe(400);
-    expect(JSON.stringify(body)).toContain('subType is required when application type is AGENT');
+    expect(JSON.stringify(body)).toContain('kind is required when application type is AGENT');
   });
 
-  it('creates an AUTONOMOUS AGENT application from a CIMD URL and persists subType', async () => {
+  it('creates an AUTONOMOUS AGENT application from a CIMD URL and persists kind', async () => {
     const appName = uniqueName('cimd-agent', true);
     const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
       name: appName,
       type: 'AGENT',
-      subType: 'AUTONOMOUS',
+      kind: 'AUTONOMOUS',
       cimdUrl: AUTONOMOUS_AGENT_CIMD_URL,
     });
 
     expect(status).toBe(201);
     expect(body.type).toBe('agent');
-    expect(body.subType).toBe('AUTONOMOUS');
+    expect(body.kind).toBe('AUTONOMOUS');
     expect(body.settings?.oauth?.clientId).toBe(AUTONOMOUS_AGENT_CIMD_URL);
   });
 
-  it('applies AUTONOMOUS subType grant_types default when CIMD doc omits grant_types', async () => {
+  it('applies AUTONOMOUS kind grant_types default when CIMD doc omits grant_types', async () => {
     const appName = uniqueName('cimd-agent-auto-defaults', true);
     const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
       name: appName,
       type: 'AGENT',
-      subType: 'AUTONOMOUS',
+      kind: 'AUTONOMOUS',
       cimdUrl: AUTONOMOUS_AGENT_NO_GRANTS_CIMD_URL,
     });
 
     expect(status).toBe(201);
     expect(body.type).toBe('agent');
-    expect(body.subType).toBe('AUTONOMOUS');
+    expect(body.kind).toBe('AUTONOMOUS');
     expect(body.settings?.oauth?.grantTypes).toEqual(
       expect.arrayContaining(['client_credentials', 'urn:ietf:params:oauth:grant-type:token-exchange']),
     );
   });
 
-  it('applies USER_EMBEDDED subType defaults when CIMD doc omits grant_types', async () => {
+  it('applies USER_EMBEDDED kind defaults when CIMD doc omits grant_types', async () => {
     const appName = uniqueName('cimd-agent-ue-defaults', true);
     const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
       name: appName,
       type: 'AGENT',
-      subType: 'USER_EMBEDDED',
+      kind: 'USER_EMBEDDED',
       cimdUrl: USER_EMBEDDED_AGENT_NO_GRANTS_CIMD_URL,
     });
 
     expect(status).toBe(201);
     expect(body.type).toBe('agent');
-    expect(body.subType).toBe('USER_EMBEDDED');
+    expect(body.kind).toBe('USER_EMBEDDED');
     expect(body.settings?.oauth?.grantTypes).toEqual(expect.arrayContaining(['authorization_code']));
     expect(body.settings?.oauth?.responseTypes).toEqual(expect.arrayContaining(['code']));
     expect(body.settings?.oauth?.tokenEndpointAuthMethod).toBe('none');

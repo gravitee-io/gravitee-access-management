@@ -61,7 +61,7 @@ export interface NewCimdApplication {
    * @type {string}
    * @memberof NewCimdApplication
    */
-  subType?: NewCimdApplicationSubTypeEnum;
+  kind?: NewCimdApplicationKindEnum;
   /**
    *
    * @type {string}
@@ -73,12 +73,12 @@ export interface NewCimdApplication {
 /**
  * @export
  */
-export const NewCimdApplicationSubTypeEnum = {
+export const NewCimdApplicationKindEnum = {
   UserEmbedded: 'USER_EMBEDDED',
   HostedDelegated: 'HOSTED_DELEGATED',
   Autonomous: 'AUTONOMOUS',
 } as const;
-export type NewCimdApplicationSubTypeEnum = typeof NewCimdApplicationSubTypeEnum[keyof typeof NewCimdApplicationSubTypeEnum];
+export type NewCimdApplicationKindEnum = typeof NewCimdApplicationKindEnum[keyof typeof NewCimdApplicationKindEnum];
 
 /**
  * @export
@@ -116,7 +116,7 @@ export function NewCimdApplicationFromJSONTyped(json: any, ignoreDiscriminator: 
     clientName: json['clientName'] == null ? undefined : json['clientName'],
     description: json['description'] == null ? undefined : json['description'],
     name: json['name'],
-    subType: json['subType'] == null ? undefined : json['subType'],
+    kind: json['kind'] == null ? undefined : json['kind'],
     type: json['type'],
   };
 }
@@ -135,7 +135,7 @@ export function NewCimdApplicationToJSONTyped(value?: NewCimdApplication | null,
     clientName: value['clientName'],
     description: value['description'],
     name: value['name'],
-    subType: value['subType'],
+    kind: value['kind'],
     type: value['type'],
   };
 }
