@@ -93,7 +93,7 @@ export class ApplicationCreationComponent implements OnInit {
 
     app.type = this.application.type;
     if (this.application.type === 'AGENT') {
-      app.subType = this.application.agentType;
+      app.kind = this.application.agentType;
     }
 
     this.applicationService
@@ -135,7 +135,7 @@ export class ApplicationCreationComponent implements OnInit {
       cimdUrl: this.application.cimdUrl,
     };
     if (this.application.type === 'AGENT') {
-      payload.subType = this.application.agentType;
+      payload.kind = this.application.agentType;
     }
     if (this.application?.cimdPreview?.missing?.clientName && this.application.cimdClientName) {
       payload.clientName = this.application.cimdClientName;
