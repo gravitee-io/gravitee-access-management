@@ -336,7 +336,7 @@ const APPLICATION_DETAIL_CHILDREN: Routes = [
         only: ['application_identity_provider_list'],
       },
       types: {
-        only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+        only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
       },
     },
   },
