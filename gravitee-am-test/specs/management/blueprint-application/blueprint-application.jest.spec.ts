@@ -34,21 +34,21 @@ describe('Blueprint Application — Creation & Profile', () => {
     const app = await fixture.createBlueprintApp('USER_EMBEDDED');
 
     expect(app.type).toEqual('agent');
-    expect(app.subType).toEqual('USER_EMBEDDED');
+    expect(app.kind).toEqual('USER_EMBEDDED');
   });
 
   it('should create HOSTED_DELEGATED agent typed as AGENT', async () => {
     const app = await fixture.createBlueprintApp('HOSTED_DELEGATED');
 
     expect(app.type).toEqual('agent');
-    expect(app.subType).toEqual('HOSTED_DELEGATED');
+    expect(app.kind).toEqual('HOSTED_DELEGATED');
   });
 
   it('should create AUTONOMOUS agent typed as AGENT', async () => {
     const app = await fixture.createBlueprintApp('AUTONOMOUS');
 
     expect(app.type).toEqual('agent');
-    expect(app.subType).toEqual('AUTONOMOUS');
+    expect(app.kind).toEqual('AUTONOMOUS');
   });
 
   it('should apply PKCE defaults for USER_EMBEDDED', async () => {
