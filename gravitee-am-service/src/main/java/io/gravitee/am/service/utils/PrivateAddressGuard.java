@@ -16,6 +16,7 @@
 package io.gravitee.am.service.utils;
 
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -45,6 +46,52 @@ public final class PrivateAddressGuard {
         return Arrays.stream(InetAddress.getAllByName(host))
                 .filter(PrivateAddressGuard::isPrivate)
                 .findFirst();
+    }
+
+    /**
+     * Validates an admin-supplied HTTP(S) URL against a trust policy: parseable URI, http/https
+     * scheme (http only when {@code allowHttp}), non-blank host, and — unless {@code allowPrivateIp}
+     * — DNS resolution that does not hit a private/loopback/link-local address. The returned
+     * reason uses {@code fieldName} as the field prefix; empty when the URL passes.
+     */
+    public static Optional<String> validateHttpUrl(String fieldName, String urlValue, boolean allowHttp, boolean allowPrivateIp) {
+        if (urlValue == null || urlValue.isBlank()) {
+            return Optional.of(fieldName + " is required");
+        }
+        URI uri;
+        try {
+            uri = URI.create(urlValue);
+        } catch (IllegalArgumentException e) {
+            return Optional.of(fieldName + " is not a valid URI");
+        }
+        String scheme = uri.getScheme();
+        if (scheme == null) {
+            return Optional.of(fieldName + " must include a scheme");
+        }
+        boolean isHttp = "http".equalsIgnoreCase(scheme);
+        boolean isHttps = "https".equalsIgnoreCase(scheme);
+        if (!isHttp && !isHttps) {
+            return Optional.of(fieldName + " scheme must be http or https");
+        }
+        if (isHttp && !allowHttp) {
+            return Optional.of("http:// " + fieldName + " is not allowed by current policy");
+        }
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) {
+            return Optional.of(fieldName + " must include a host");
+        }
+        if (!allowPrivateIp) {
+            try {
+                Optional<InetAddress> privateAddr = firstPrivateAddress(host);
+                if (privateAddr.isPresent()) {
+                    return Optional.of(fieldName + " host " + host + " resolves to a private/loopback address ("
+                            + privateAddr.get().getHostAddress() + ")");
+                }
+            } catch (UnknownHostException e) {
+                return Optional.of(fieldName + " host " + host + " could not be resolved");
+            }
+        }
+        return Optional.empty();
     }
 
     private static boolean isUniqueLocalIpv6(InetAddress addr) {
