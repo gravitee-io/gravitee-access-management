@@ -49,9 +49,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -236,42 +233,10 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         if (td.getJwksUrl() == null || td.getJwksUrl().isBlank()) {
             return Completable.error(new InvalidTrustDomainException("jwksUrl is required when bundleSource=JWKS_URL"));
         }
-        URI uri;
-        try {
-            uri = URI.create(td.getJwksUrl());
-        } catch (IllegalArgumentException e) {
-            return Completable.error(new InvalidTrustDomainException("jwksUrl is not a valid URI"));
-        }
-        String scheme = uri.getScheme();
-        if (scheme == null) {
-            return Completable.error(new InvalidTrustDomainException("jwksUrl must include a scheme"));
-        }
-        boolean isHttp = "http".equalsIgnoreCase(scheme);
-        boolean isHttps = "https".equalsIgnoreCase(scheme);
-        if (!isHttp && !isHttps) {
-            return Completable.error(new InvalidTrustDomainException("jwksUrl scheme must be http or https"));
-        }
-        if (isHttp && !settings.isAllowUnsecuredHttpUri()) {
-            return Completable.error(new InvalidTrustDomainException(
-                    "http:// jwksUrl is not allowed; enable allowUnsecuredHttpUri on domain SPIFFE settings to permit it"));
-        }
-        String host = uri.getHost();
-        if (host == null || host.isBlank()) {
-            return Completable.error(new InvalidTrustDomainException("jwksUrl must include a host"));
-        }
-        if (!settings.isAllowPrivateIpAddress()) {
-            try {
-                Optional<InetAddress> privateAddr = PrivateAddressGuard.firstPrivateAddress(host);
-                if (privateAddr.isPresent()) {
-                    return Completable.error(new InvalidTrustDomainException(
-                            "jwksUrl host " + host + " resolves to a private/loopback address ("
-                                    + privateAddr.get().getHostAddress()
-                                    + "); enable allowPrivateIpAddress on domain SPIFFE settings to permit it"));
-                }
-            } catch (UnknownHostException e) {
-                return Completable.error(new InvalidTrustDomainException(
-                        "jwksUrl host " + host + " could not be resolved"));
-            }
+        Optional<String> urlError = PrivateAddressGuard.validateHttpUrl(
+                "jwksUrl", td.getJwksUrl(), settings.isAllowUnsecuredHttpUri(), settings.isAllowPrivateIpAddress());
+        if (urlError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(urlError.get()));
         }
         if (td.getRefreshIntervalSeconds() <= 0) {
             return Completable.error(new InvalidTrustDomainException("refreshIntervalSeconds must be positive"));

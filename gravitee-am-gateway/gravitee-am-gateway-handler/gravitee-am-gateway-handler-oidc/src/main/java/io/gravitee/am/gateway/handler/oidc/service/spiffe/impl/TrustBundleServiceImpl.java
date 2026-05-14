@@ -31,9 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -163,40 +160,9 @@ public class TrustBundleServiceImpl implements TrustBundleService {
      * refused at fetch time.
      */
     private String checkUrlSafety(String jwksUrl) {
-        URI uri;
-        try {
-            uri = URI.create(jwksUrl);
-        } catch (IllegalArgumentException e) {
-            return "jwksUrl is not a valid URI";
-        }
-        String scheme = uri.getScheme();
-        if (scheme == null) {
-            return "jwksUrl must include a scheme";
-        }
-        boolean isHttp = "http".equalsIgnoreCase(scheme);
-        boolean isHttps = "https".equalsIgnoreCase(scheme);
-        if (!isHttp && !isHttps) {
-            return "jwksUrl scheme must be http or https";
-        }
-        if (isHttp && !settings.isAllowUnsecuredHttpUri()) {
-            return "http:// jwksUrl is not allowed by current domain SPIFFE settings";
-        }
-        String host = uri.getHost();
-        if (host == null || host.isBlank()) {
-            return "jwksUrl must include a host";
-        }
-        if (!settings.isAllowPrivateIpAddress()) {
-            try {
-                Optional<InetAddress> privateAddr = PrivateAddressGuard.firstPrivateAddress(host);
-                if (privateAddr.isPresent()) {
-                    return "jwksUrl host " + host + " resolves to a private/loopback address ("
-                            + privateAddr.get().getHostAddress() + ")";
-                }
-            } catch (UnknownHostException e) {
-                return "jwksUrl host " + host + " could not be resolved";
-            }
-        }
-        return null;
+        return PrivateAddressGuard.validateHttpUrl(
+                "jwksUrl", jwksUrl, settings.isAllowUnsecuredHttpUri(), settings.isAllowPrivateIpAddress())
+                .orElse(null);
     }
 
     private static Maybe<JWK> findKid(JWKSet jwks, String kid) {
