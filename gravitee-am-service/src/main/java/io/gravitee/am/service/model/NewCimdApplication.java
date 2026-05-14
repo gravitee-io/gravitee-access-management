@@ -46,5 +46,5 @@ public class NewCimdApplication {
 
     /** Agent persona for AGENT applications. Required when {@link #type} is AGENT, rejected otherwise. */
     @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
-    private String subType;
+    private String kind;
 }

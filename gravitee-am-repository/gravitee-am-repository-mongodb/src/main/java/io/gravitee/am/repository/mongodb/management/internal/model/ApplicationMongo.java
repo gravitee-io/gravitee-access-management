@@ -30,7 +30,7 @@ public class ApplicationMongo extends Auditable {
     private String id;
     private String name;
     private String type;
-    private String subType;
+    private String kind;
     private String description;
     private String domain;
     private boolean enabled = true;
@@ -68,12 +68,12 @@ public class ApplicationMongo extends Auditable {
         this.type = type;
     }
 
-    public String getSubType() {
-        return subType;
+    public String getKind() {
+        return kind;
     }
 
-    public void setSubType(String subType) {
-        this.subType = subType;
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     public String getDescription() {

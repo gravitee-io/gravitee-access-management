@@ -45,10 +45,10 @@ public class NewApplication {
     private Map<String, Object> metadata;
 
     /**
-     * Application sub-type (agent persona for AGENT applications). Validated by service.
+     * Application kind (agent persona for AGENT applications). Validated by service.
      */
     @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
-    private String subType;
+    private String kind;
 
     public String getName() {
         return name;
@@ -106,12 +106,12 @@ public class NewApplication {
         this.metadata = metadata;
     }
 
-    public String getSubType() {
-        return subType;
+    public String getKind() {
+        return kind;
     }
 
-    public void setSubType(String subType) {
-        this.subType = subType;
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     @Override

@@ -12446,7 +12446,7 @@ components:
             $ref: "#/components/schemas/ClientSecret"
         settings:
           $ref: "#/components/schemas/ApplicationSettings"
-        subType:
+        kind:
           type: string
           enum:
           - USER_EMBEDDED
@@ -13945,7 +13945,7 @@ components:
           type: string
         name:
           type: string
-        subType:
+        kind:
           type: string
           enum:
           - USER_EMBEDDED
@@ -14480,7 +14480,7 @@ components:
           type: array
           items:
             type: string
-        subType:
+        kind:
           type: string
           enum:
           - USER_EMBEDDED
@@ -14586,7 +14586,7 @@ components:
           type: string
         name:
           type: string
-        subType:
+        kind:
           type: string
           enum:
           - USER_EMBEDDED
@@ -15531,7 +15531,7 @@ components:
             - INSTALLATION
         settings:
           $ref: "#/components/schemas/PatchApplicationSettings"
-        subType:
+        kind:
           type: string
           enum:
           - USER_EMBEDDED
