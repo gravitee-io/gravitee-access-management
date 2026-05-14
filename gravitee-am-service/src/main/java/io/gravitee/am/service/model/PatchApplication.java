@@ -44,7 +44,7 @@ public class PatchApplication {
 
     private Optional<String> name;
     @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
-    private Optional<String> subType;
+    private Optional<String> kind;
     private Optional<String> description;
     private Optional<Boolean> enabled;
     private Optional<Boolean> template;
@@ -62,12 +62,12 @@ public class PatchApplication {
         this.name = name;
     }
 
-    public Optional<String> getSubType() {
-        return subType;
+    public Optional<String> getKind() {
+        return kind;
     }
 
-    public void setSubType(Optional<String> subType) {
-        this.subType = subType;
+    public void setKind(Optional<String> kind) {
+        this.kind = kind;
     }
 
     public Optional<String> getDescription() {
@@ -139,7 +139,7 @@ public class PatchApplication {
         Application toPatch = new Application(_toPatch);
 
         SetterUtils.safeSet(toPatch::setName, this.getName());
-        SetterUtils.safeSet(toPatch::setSubType, this.getSubType());
+        SetterUtils.safeSet(toPatch::setKind, this.getKind());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);

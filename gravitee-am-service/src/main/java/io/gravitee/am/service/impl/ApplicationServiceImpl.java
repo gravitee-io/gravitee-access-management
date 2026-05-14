@@ -387,8 +387,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         if (ApplicationType.AGENT.equals(newApplication.getType())) {
-            application.setSubType(newApplication.getSubType());
-            applyAgentDefaults(application.getSubType(), oAuthSettings);
+            application.setKind(newApplication.getKind());
+            applyAgentDefaults(application.getKind(), oAuthSettings);
         }
 
         application.setSettings(applicationSettings);
@@ -461,7 +461,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setType(newApplication.getType());
         application.setDomain(domain.getId());
         if (ApplicationType.AGENT.equals(newApplication.getType())) {
-            application.setSubType(newApplication.getSubType());
+            application.setKind(newApplication.getKind());
         }
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
@@ -501,7 +501,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         applyExtendedMetadata(preview, oAuthSettings);
 
         if (ApplicationType.AGENT.equals(newApplication.getType())) {
-            applyAgentDefaults(newApplication.getSubType(), oAuthSettings);
+            applyAgentDefaults(newApplication.getKind(), oAuthSettings);
         }
 
         applicationSettings.setOauth(oAuthSettings);
@@ -1410,23 +1410,23 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Single<Application> validateAgentSettings(Application application) {
         boolean isAgentType = ApplicationType.AGENT.equals(application.getType());
-        String subType = application.getSubType();
+        String kind = application.getKind();
 
         if (!isAgentType) {
-            if (subType != null) {
-                return Single.error(new InvalidClientMetadataException("subType is only allowed when application type is AGENT"));
+            if (kind != null) {
+                return Single.error(new InvalidClientMetadataException("kind is only allowed when application type is AGENT"));
             }
             return Single.just(application);
         }
 
-        if (subType == null) {
-            return Single.error(new InvalidClientMetadataException("subType is required when application type is AGENT"));
+        if (kind == null) {
+            return Single.error(new InvalidClientMetadataException("kind is required when application type is AGENT"));
         }
-        AgentType agentType = AgentType.orNull(subType);
+        AgentType agentType = AgentType.orNull(kind);
         if (agentType == null) {
             String allowed = Arrays.stream(AgentType.values()).map(Enum::name).collect(Collectors.joining(", "));
             return Single.error(new InvalidClientMetadataException(
-                    "Unknown subType '" + subType + "' for AGENT application. Allowed values: [" + allowed + "]"));
+                    "Unknown kind '" + kind + "' for AGENT application. Allowed values: [" + allowed + "]"));
         }
         if (application.isTemplate()) {
             return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
@@ -1481,8 +1481,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         return Single.just(application);
     }
 
-    private void applyAgentDefaults(String subType, ApplicationOAuthSettings oAuthSettings) {
-        AgentType agentType = AgentType.orNull(subType);
+    private void applyAgentDefaults(String kind, ApplicationOAuthSettings oAuthSettings) {
+        AgentType agentType = AgentType.orNull(kind);
         if (agentType == null) {
             return;
         }

@@ -75,7 +75,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     public static final String COL_ID = "id";
     public static final String COL_TYPE = "type";
-    public static final String COL_SUB_TYPE = "sub_type";
+    public static final String COL_KIND = "kind";
     public static final String COL_ENABLED = "enabled";
     public static final String COL_TEMPLATE = "template";
     public static final String COL_NAME = "name";
@@ -90,7 +90,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     private static final List<String> columns = List.of(COL_ID,
             COL_TYPE,
-            COL_SUB_TYPE,
+            COL_KIND,
             COL_ENABLED,
             COL_TEMPLATE,
             COL_NAME,
@@ -409,7 +409,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
-        sql = addQuotedField(sql, COL_SUB_TYPE, item.getSubType(), String.class);
+        sql = addQuotedField(sql, COL_KIND, item.getKind(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
         sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
         sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);
@@ -438,7 +438,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(updateStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
-        sql = addQuotedField(sql, COL_SUB_TYPE, item.getSubType(), String.class);
+        sql = addQuotedField(sql, COL_KIND, item.getKind(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
         sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
         sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);

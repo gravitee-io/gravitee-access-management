@@ -417,7 +417,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         app.setName("agentRtApp");
         app.setDomain(domain);
         app.setType(ApplicationType.AGENT);
-        app.setSubType(AgentType.AUTONOMOUS.name());
+        app.setKind(AgentType.AUTONOMOUS.name());
 
         Application created = applicationRepository.create(app).blockingGet();
 
@@ -426,16 +426,16 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         afterCreate.assertComplete();
         afterCreate.assertNoErrors();
         afterCreate.assertValue(a -> ApplicationType.AGENT.equals(a.getType()));
-        afterCreate.assertValue(a -> AgentType.AUTONOMOUS.name().equals(a.getSubType()));
+        afterCreate.assertValue(a -> AgentType.AUTONOMOUS.name().equals(a.getKind()));
 
         Application loaded = applicationRepository.findById(created.getId()).blockingGet();
-        loaded.setSubType(AgentType.USER_EMBEDDED.name());
+        loaded.setKind(AgentType.USER_EMBEDDED.name());
         applicationRepository.update(loaded).blockingGet();
 
         TestObserver<Application> reloaded = applicationRepository.findById(created.getId()).test();
         reloaded.awaitDone(10, TimeUnit.SECONDS);
         reloaded.assertComplete();
-        reloaded.assertValue(a -> AgentType.USER_EMBEDDED.name().equals(a.getSubType()));
+        reloaded.assertValue(a -> AgentType.USER_EMBEDDED.name().equals(a.getKind()));
         reloaded.assertValue(a -> ApplicationType.AGENT.equals(a.getType()));
     }
 
@@ -447,7 +447,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         agentApp.setName("agent-app");
         agentApp.setDomain(domain);
         agentApp.setType(ApplicationType.AGENT);
-        agentApp.setSubType(AgentType.AUTONOMOUS.name());
+        agentApp.setKind(AgentType.AUTONOMOUS.name());
         applicationRepository.create(agentApp).blockingGet();
 
         Application regularApp = new Application();
@@ -497,7 +497,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         beforeToggle.assertValue(p -> p.getData().isEmpty());
 
         created.setType(ApplicationType.AGENT);
-        created.setSubType(AgentType.USER_EMBEDDED.name());
+        created.setKind(AgentType.USER_EMBEDDED.name());
         applicationRepository.update(created).blockingGet();
 
         TestObserver<Page<Application>> afterToggle = applicationRepository.findByDomain(domain, ApplicationType.AGENT, 0, 20).test();
@@ -513,7 +513,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         matchingAgent.setName("alpha-agent");
         matchingAgent.setDomain(domain);
         matchingAgent.setType(ApplicationType.AGENT);
-        matchingAgent.setSubType(AgentType.AUTONOMOUS.name());
+        matchingAgent.setKind(AgentType.AUTONOMOUS.name());
         applicationRepository.create(matchingAgent).blockingGet();
 
         Application otherAgent = new Application();
