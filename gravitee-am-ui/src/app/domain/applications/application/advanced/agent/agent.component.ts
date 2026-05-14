@@ -37,7 +37,7 @@ export class ApplicationAgentComponent implements OnInit {
 
   ngOnInit(): void {
     this.application = this.route.snapshot.data['application'];
-    this.agentType = this.application.subType ?? '';
+    this.agentType = this.application.kind ?? '';
     this.agentTypeLabel = AGENT_TYPE_LABELS[this.agentType] ?? this.agentType;
   }
 }
