@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.ClientProfile;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
@@ -490,7 +491,7 @@ public class TokenServiceImpl implements TokenService {
         // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
         // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
         if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
-            jwt.put(Claims.CLIENT_PROFILE, Claims.CLIENT_PROFILE_AI_AGENT + " " + client.getAgentType().name().toLowerCase());
+            jwt.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
         }
 
         // Agent application - emit sub_profile only when the subject is the agent itself

@@ -153,13 +153,6 @@ public interface Claims {
     String CLIENT_PROFILE = "client_profile";
 
     /**
-     * draft-mora-oauth-entity-profiles-01 §3.3 registry token identifying an AI agent
-     * client. Used as the prefix portion of {@link #CLIENT_PROFILE} values
-     * (e.g. {@code "ai_agent autonomous"}).
-     */
-    String CLIENT_PROFILE_AI_AGENT = "ai_agent";
-
-    /**
      * draft-mora-oauth-entity-profiles-01 - Sub profile claim used to indicate the operating
      * profile of the token subject (e.g. agent profile). The value is the profile token only
      * (no registry-token prefix). Propagated through {@code act} chain nodes when the
