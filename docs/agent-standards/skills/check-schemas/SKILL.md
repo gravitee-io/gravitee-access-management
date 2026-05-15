@@ -1,6 +1,6 @@
 ---
 name: check-schemas
-description: Detect breaking changes in schema-form.json plugin descriptors; run the schema compatibility checker, interpret findings, and guide fixes.
+description: "Detect breaking changes in schema-form.json plugin descriptors; run the schema compatibility checker, interpret findings, and guide fixes. Use when modifying schema-form.json files, checking backward compatibility of plugin schemas, validating schema changes before merge, or investigating schema migration issues."
 ---
 
 # Schema Backward-Compatibility Check
@@ -9,6 +9,14 @@ Run a schema compatibility check to detect breaking changes in `schema-form.json
 
 The checker works in any repo that contains `schema-form.json` plugin descriptor files. Examples
 below use Gravitee AM conventions but the tooling is generic.
+
+## Workflow
+
+1. **Run the check** — see [Quick usage](#quick-usage) for commands
+2. **Interpret findings** — see [Understanding findings](#understanding-findings)
+3. **Fix errors** — apply the matching fix from [How to fix breaking changes](#how-to-fix-breaking-changes)
+4. **Re-run to verify** — repeat step 1 to confirm the fix resolved the finding
+5. **Commit** — include the schema change alongside the code change
 
 ## Quick usage
 
@@ -49,71 +57,24 @@ node scripts/schema-compatibility/check-schema-compatibility.mjs \
 
 ## What counts as a breaking change?
 
-The table below is a quick reference. The authoritative source is the fixture suite under
-`scripts/schema-compatibility/test/fixtures/breaking/` and `non-breaking/` — each subdirectory
-is a concrete example the checker is tested against.
+The most common breaking changes (ERROR — blocks CI):
 
 | Category | Severity |
 |---|---|
-| Field added to `required` | ERROR |
-| New required field (didn't exist before) | ERROR |
-| Property key removed | ERROR |
-| Property key renamed (= remove + add) | ERROR |
+| Field added to `required` / new required field | ERROR |
+| Property key removed or renamed | ERROR |
 | `type` value changed | ERROR |
-| `const` added or changed | ERROR |
-| Enum value removed | ERROR |
-| `enum` added to previously free-form field | ERROR |
+| Enum value removed / `enum` added to free-form field | ERROR |
 | `additionalProperties: false` added | ERROR |
-| `additionalProperties` schema added (e.g., `{type:"string"}`) | ERROR |
-| `additionalProperties` schema type changed | ERROR |
-| `additionalProperties` schema or `false` removed | Non-breaking |
-| `pattern` or `format` added | ERROR |
-| `minLength` increased or added | ERROR |
-| `maxLength` decreased or added | ERROR |
-| `minimum`/`maximum` tightened or added | ERROR |
-| `minItems` increased or added | ERROR |
-| `maxItems` decreased or added | ERROR |
-| `uniqueItems: true` added | ERROR |
-| `allOf` entry added | ERROR |
-| `anyOf`/`oneOf` added from scratch | ERROR |
-| `anyOf`/`oneOf` branch removed | ERROR |
-| `if`/`then`/`else` added | ERROR |
-| `not` added | ERROR |
-| `allOf`/`anyOf`/`oneOf` branch content changed | ERROR |
-| `then`/`else` content changed | ERROR |
-| `then`/`else` branch added to existing conditional | ERROR |
-| `then`/`else` branch removed from existing conditional | WARN (exit 0) |
-| `if` condition changed (then/else unchanged) | WARN (exit 0) |
-| `not` content changed or removed | WARN (exit 0) |
-| Tuple `items` form or count changed | WARN (exit 0) |
-| Tuple `items` positional schema changed | ERROR or WARN (recursed) |
-| Required field added to `items` schema | ERROR |
-| Property removed from `items` schema | ERROR |
-| Definition removed from `definitions`/`$defs` | ERROR |
-| Breaking change inside a definition | ERROR |
-| Field removed from `required` (demoted to optional) | WARN (exit 0) |
-| Optional field added | Non-breaking |
-| Optional field added to `items` schema | Non-breaking |
-| Definition added to `definitions`/`$defs` | Non-breaking |
-| `const` removed (field becomes free-form) | Non-breaking |
-| `description`/`title` added or changed | Non-breaking |
-| `maxLength` increased | Non-breaking |
-| `minimum`/`maximum` loosened | Non-breaking |
-| Enum value added | Non-breaking |
+| Constraint tightened (`minLength`, `maxLength`, `minimum`, `maximum`, `minItems`, `maxItems`) | ERROR |
+
+Non-breaking: optional field added, `description`/`title` changed, enum value added, constraint loosened, `const` removed.
+
+For the full classification table (40+ categories) and authoritative fixture references, see [BREAKING_CHANGES_REFERENCE.md](BREAKING_CHANGES_REFERENCE.md).
 
 ## Breaking-change exemption
 
-The CI scripts pass `--allow-breaking` (findings printed as warnings, exit 0) in two cases,
-both detected by comparing the `pom.xml` `<version>` at baseline vs. HEAD
-(logic in `.circleci/scripts/_compat_common.sh`):
-
-- **Minor version bump** — e.g. `4.11.x` → `4.12.x`. Breaking changes between releases are
-  expected.
-- **Patch is zero** — e.g. `4.12.0`. No release of this minor version exists yet, so there
-  are no deployed configurations to protect.
-
-If there is no `pom.xml` (non-Maven repos), version detection is skipped and breaking changes
-always fail the build.
+CI passes `--allow-breaking` (warnings only, exit 0) when the `pom.xml` version indicates a **minor version bump** (e.g. `4.11.x` → `4.12.x`) or a **first patch** (`4.12.0`). Logic is in `.circleci/scripts/_compat_common.sh`. Without a `pom.xml`, breaking changes always fail.
 
 ## Understanding findings
 
@@ -141,71 +102,14 @@ always fail the build.
 
 ## Checking schemas from external plugin repos locally
 
-If the repo you're working in depends on plugins from other repos (e.g. EE plugins distributed as
-ZIPs), you can compare their schemas against any baseline manually:
+For checking schemas in external plugins (EE plugins, Maven artifacts, ZIPs), see [EE_PLUGINS_REFERENCE.md](EE_PLUGINS_REFERENCE.md). Quick single-schema check:
 
 ```bash
-# 1. Obtain the new schema — from a ZIP artifact or local build output:
-unzip -p /path/to/plugin.zip 'schemas/schema-form.json' > /tmp/new-schema.json
-# — or, if the plugin is built locally:
-cp other-repo/src/main/resources/schemas/schema-form.json /tmp/new-schema.json
-
-# 2. Get the old schema.
-#    NOTE: git show only works if the schema was previously tracked in THIS repo.
-#    For EE plugins (external ZIPs), use mvn dependency:copy instead — see below.
-git show 4.11.0:path/to/schema-form.json > /tmp/old-schema.json
-
-# 3. Run the check:
 node scripts/schema-compatibility/check-schema-compatibility.mjs \
-  --old /tmp/old-schema.json \
-  --new /tmp/new-schema.json \
+  --old path/to/old-schema-form.json \
+  --new path/to/new-schema-form.json \
   --plugin my-plugin-name
 ```
-
-If the plugin is distributed as a Maven artifact (ZIP), resolve both old and new versions with:
-
-```bash
-mvn dependency:copy \
-  -Dartifact=<groupId>:<artifactId>:<version>:zip \
-  -DoutputDirectory=/tmp/plugins
-unzip -p /tmp/plugins/<artifactId>-<version>.zip 'schemas/schema-form.json' > /tmp/schema.json
-```
-
-> **Schema path inside ZIPs**: try `schemas/schema-form.json` first; some plugins place it at
-> `schema-form.json` in the ZIP root. The `unzip -p` call will produce empty output (not an error)
-> if the path does not exist — always check that the output file is non-empty.
-
-### Gravitee AM — EE (Enterprise) plugin schemas
-
-- The automated `schema-compat-check.sh` covers schemas tracked in this git repository.
-- The automated `ee-schema-compat-check.sh` covers schemas in EE plugins that are distributed as closed-source ZIPs.
-
-> **Prerequisite:** run `mvn install -P full-bundle` first. The EE script locates new plugin
-> ZIPs from the local build output; it will error with a clear message if they are absent.
-
-```bash
-# Run OSS check first — only proceed to EE check if OSS passes:
-bash .circleci/scripts/schema-compat-check.sh --base 4.7.0 && \
-  bash .circleci/scripts/ee-schema-compat-check.sh --base 4.7.0
-```
-
-The EE script auto-discovers plugins, skips unchanged versions, downloads old ZIPs from Maven,
-and applies the same exemption logic as the OSS script.
-
-`--use-head false` on the EE script reads version properties from the working-tree `pom.xml`
-instead of HEAD, but new plugin ZIPs are always sourced from `target/` regardless of this flag.
-
-**How EE plugin coordinates are structured in this repo** (relevant if checking manually):
-
-| What | Where |
-|---|---|
-| Version properties (e.g. `gravitee-am-factor-call.version`) | Root `pom.xml` `<properties>` |
-| GroupId + artifactId + version property reference | Distribution `pom.xml` `<dependencies>` and `<artifactItems>` |
-| GroupId prefix for all EE plugins | `com.graviteesource.am.*` |
-| Built ZIPs for the current version | `gravitee-am-gateway/.../target/distribution/plugins/` and `gravitee-am-management-api/.../target/distribution/plugins/` |
-
-Because version properties and groupIds live in different files, you must cross-reference both to
-form a complete `groupId:artifactId:version` coordinate for `mvn dependency:copy`.
 
 ## Checker coverage and limitations
 
