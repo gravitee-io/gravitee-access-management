@@ -25,11 +25,12 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -135,62 +136,60 @@ abstract class BaseIntrospectionTokenService {
             return Single.error(new InvalidTokenException("The token is invalid", "Token has no audience claim", jwt));
         }
 
-        // Single-audience: check if the audience is a client ID (Application or Protected Resource)
-        // If not found as a clientId, fall back to resource identifier validation (RFC 8707)
-        if (audiences.size() == 1) {
-            String audience = audiences.getFirst();
-            return clientService.findByDomainAndClientId(jwt.getDomain(), audience)
-                    .switchIfEmpty(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), audience))
-                    .flatMapSingle(client -> Single.just(getCertificateIdFromClient(client)))
-                    .switchIfEmpty(Single.defer(() -> validateProtectedResourcesAndGetCertificateId(jwt, callerClientId)));
-        }
-
-        // Multiple-audience: validate all audiences by resource identifier (RFC 8707)
-        return validateProtectedResourcesAndGetCertificateId(jwt, callerClientId);
+        return Observable.fromIterable(audiences)
+                .concatMapSingle(audience -> resolveAudience(jwt.getDomain(), audience))
+                .toList()
+                .flatMap(matches -> resolveCertificateIdFromAudMatches(matches, jwt, callerClientId));
     }
 
-    private String getCertificateIdFromClient(io.gravitee.am.model.oidc.Client client) {
-        // If the client's certificate is null, assume the token is signed with an HMAC key
-        return Objects.requireNonNullElse(client.getCertificate(), "");
-    }
-
-    private Single<String> validateProtectedResourcesAndGetCertificateId(JWT jwt, String callerClientId) {
-        return validateResourcesBelongToDomain(jwt)
-                .flatMapCompletable(matchedResources -> {
-                    if (isLegacyRfc8707Enabled && callerClientId != null) {
-                        return validateResourcesBelongToAuthorizedClient(matchedResources, jwt, callerClientId);
+    private Single<AudienceMatch> resolveAudience(String domain, String audience) {
+        return clientService.findByDomainAndClientId(domain, audience)
+                .switchIfEmpty(protectedResourceSyncService.findByDomainAndClientId(domain, audience))
+                .<AudienceMatch>map(client -> new ClientMatch(audience, client))
+                .switchIfEmpty(Single.fromCallable(() -> {
+                    Set<ProtectedResource> resources = protectedResourceManager.getByIdentifier(audience);
+                    if (!resources.isEmpty()) {
+                        return new ResourceMatch(audience, resources);
                     }
-                    return Completable.complete();
-                })
-                .toSingle(() -> "");
+                    return new UnmatchedAudience(audience);
+                }));
     }
 
-    private Single<Set<ProtectedResource>> validateResourcesBelongToDomain(JWT jwt) {
-        List<String> audiences = jwt.getAudList();
-        String domainId = jwt.getDomain();
-        Set<ProtectedResource> matchedResources = new HashSet<>();
-        Set<String> unmatchedAudiences = new HashSet<>();
+    private Single<String> resolveCertificateIdFromAudMatches(List<AudienceMatch> matches, JWT jwt, String callerClientId) {
+        Set<String> unmatched = matches.stream()
+                .filter(UnmatchedAudience.class::isInstance)
+                .map(AudienceMatch::audience)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        for (String audience : audiences) {
-            Set<ProtectedResource> resources = protectedResourceManager.getByIdentifier(audience);
-            if (!resources.isEmpty()) {
-                matchedResources.addAll(resources);
-            } else {
-                unmatchedAudiences.add(audience);
-            }
-        }
-
-        if (!unmatchedAudiences.isEmpty()) {
+        if (!unmatched.isEmpty()) {
             String details = String.format("Token audience values [%s] do not match any client or protected resource identifiers in domain [%s]",
-                    String.join(", ", unmatchedAudiences), domainId);
+                    String.join(", ", unmatched), jwt.getDomain());
             return Single.error(new InvalidTokenException("The token is invalid", details, jwt));
         }
 
-        return Single.just(matchedResources);
+        // Use first matched client's certificate.
+        // Protected-resource-only tokens fall back to "" (HMAC/default certificate).
+        String certificateId = matches.stream()
+                .filter(ClientMatch.class::isInstance)
+                .map(ClientMatch.class::cast)
+                .map(cm -> cm.client().getCertificate())
+                .map(cert -> Objects.requireNonNullElse(cert, ""))
+                .findFirst()
+                .orElse("");
+
+        return validateResourcesBelongToAuthorizedClient(matches, jwt, callerClientId)
+                .toSingleDefault(certificateId);
     }
 
-    private Completable validateResourcesBelongToAuthorizedClient(Set<ProtectedResource> matchedResources, JWT jwt, @NotNull String callerClientId) {
-        Set<String> mismatchedClientIds = matchedResources.stream()
+    private Completable validateResourcesBelongToAuthorizedClient(List<AudienceMatch> matches, JWT jwt, String callerClientId) {
+        if (!isLegacyRfc8707Enabled || callerClientId == null) {
+            return Completable.complete();
+        }
+
+        Set<String> mismatchedClientIds = matches.stream()
+                .filter(ResourceMatch.class::isInstance)
+                .map(ResourceMatch.class::cast)
+                .flatMap(rm -> rm.resources().stream())
                 .map(ProtectedResource::getClientId)
                 .filter(clientId -> !callerClientId.equals(clientId))
                 .collect(Collectors.toSet());
@@ -203,4 +202,12 @@ abstract class BaseIntrospectionTokenService {
 
         return Completable.complete();
     }
+
+    private sealed interface AudienceMatch permits ClientMatch, ResourceMatch, UnmatchedAudience {
+        String audience();
+    }
+
+    private record ClientMatch(String audience, Client client) implements AudienceMatch { }
+    private record ResourceMatch(String audience, Set<ProtectedResource> resources) implements AudienceMatch { }
+    private record UnmatchedAudience(String audience) implements AudienceMatch { }
 }
