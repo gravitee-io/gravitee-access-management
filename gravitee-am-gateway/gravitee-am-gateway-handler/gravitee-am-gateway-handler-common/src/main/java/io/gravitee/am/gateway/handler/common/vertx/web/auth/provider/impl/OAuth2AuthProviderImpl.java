@@ -22,7 +22,9 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -52,9 +54,9 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
     @Override
     public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
         introspect(token, offlineVerification)
-                .flatMap(jwt -> clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("The token is invalid", "Client or resource not found: " + jwt.getAud(), jwt)))
-                .map(client -> new OAuth2AuthResponse(jwt, client)))
+                .flatMap(jwt -> findFirstClientByAudience(jwt)
+                        .switchIfEmpty(Maybe.error(new InvalidTokenException("The token is invalid", "Client or resource not found: " + jwt.getAud(), jwt)))
+                        .map(client -> new OAuth2AuthResponse(jwt, client)))
                 .subscribe(
                         accessToken -> {
                             try {
@@ -74,5 +76,11 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
                 .flatMapMaybe(jtiCached -> jtiCached ?
                         introspectionTokenService.introspect(token, true) :
                         introspectionTokenService.introspect(token, offlineVerification));
+    }
+
+    private Maybe<Client> findFirstClientByAudience(JWT jwt) {
+        return Observable.fromIterable(jwt.getAudList())
+                .concatMapMaybe(audience -> clientLookupService.findByDomainAndClientId(jwt.getDomain(), audience))
+                .firstElement();
     }
 }

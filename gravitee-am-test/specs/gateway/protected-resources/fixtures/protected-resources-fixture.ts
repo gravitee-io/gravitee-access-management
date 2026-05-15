@@ -28,8 +28,8 @@ import { IdentityProvider } from '@management-models/IdentityProvider';
 import { uniqueName } from '@utils-commands/misc';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
-import { applicationBase64Token } from '@gateway-commands/utils';
 import { Fixture } from '../../../test-fixture';
+import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 
 export interface ProtectedResourcesFixture extends Fixture {
   domain: Domain;
@@ -44,6 +44,10 @@ export interface ProtectedResourcesFixture extends Fixture {
   exchangeAuthCodeForToken: (authCode: string, resources?: string[]) => any;
   exchangeAuthCodeForTokenWithoutResources: (authCode: string) => any;
   exchangeRefreshToken: (refreshToken: string, resources?: string[]) => any;
+  introspectToken: (
+    accessToken: string,
+    introspectingResource: { clientId?: string; clientSecret?: string },
+  ) => any;
 }
 
 // Test constants
@@ -121,7 +125,7 @@ async function createTestApplication(domain: Domain, defaultIdp: IdentityProvide
           },
           advanced: { skipConsent: true },
         },
-        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
+        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
       },
       app.id,
     ).then((updatedApp) => {
@@ -174,6 +178,14 @@ async function createTestUser(domain: Domain, application: Application, defaultI
   return testUser;
 }
 
+// A single protected resource exposing multiple resource identifiers is the
+// natural way to mint multi-aud tokens that pass the legacy RFC 8707 caller-client
+// check on introspection: every matched resource shares this one backing client.
+export const MULTI_AUD_RESOURCE_IDENTIFIERS = [
+  'https://api.example.com/multi-aud/photos',
+  'https://api.example.com/multi-aud/albums',
+] as const;
+
 async function createTestProtectedResources(domain: Domain, accessToken: string) {
   const resources = [
     {
@@ -192,6 +204,12 @@ async function createTestProtectedResources(domain: Domain, accessToken: string)
       name: 'Meta API',
       resourceIdentifiers: ['https://api.example.com/meta?foo=bar'],
       description: 'Meta API with query',
+      type: 'MCP_SERVER',
+    },
+    {
+      name: 'Multi-Audience API',
+      resourceIdentifiers: [...MULTI_AUD_RESOURCE_IDENTIFIERS],
+      description: 'Single protected resource exposing two identifiers',
       type: 'MCP_SERVER',
     },
   ];
@@ -272,6 +290,21 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
       });
     };
 
+  const introspectToken = (
+    accessToken: string,
+    introspectingResource: { clientId?: string; clientSecret?: string },
+  ) => {
+    return performPost(
+      openIdConfiguration.introspection_endpoint,
+      '',
+      `token=${accessToken}&token_type_hint=access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + getBase64BasicAuth(introspectingResource.clientId, introspectingResource.clientSecret),
+      },
+    );
+  };
+
     const cleanUp = async () => {
       // Delete domain (this will cascade delete applications, users, protected resources, etc.)
       await safeDeleteDomain(domain?.id, accessToken);
@@ -292,6 +325,7 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
       exchangeAuthCodeForToken: exchangeCodeForTokenWithResources,
       exchangeAuthCodeForTokenWithoutResources: exchangeCodeForTokenWithoutResources,
       exchangeRefreshToken: exchangeRefreshForTokenWithResources,
+      introspectToken,
     };
   } catch (error) {
     // Cleanup domain if setup fails partway through

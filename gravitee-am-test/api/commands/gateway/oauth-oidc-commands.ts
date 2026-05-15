@@ -218,7 +218,7 @@ export async function requestClientCredentialsToken(
   clientSecret: string,
   openIdConfiguration: any,
   scope?: string,
-  resource?: string,
+  resource?: string | string[],
 ): Promise<string> {
   const tokenParams = new URLSearchParams({
     grant_type: 'client_credentials',
@@ -226,8 +226,8 @@ export async function requestClientCredentialsToken(
   if (scope) {
     tokenParams.append('scope', scope);
   }
-  if (resource) {
-    tokenParams.append('resource', resource);
+  for (const r of resource == null ? [] : Array.isArray(resource) ? resource : [resource]) {
+    tokenParams.append('resource', r);
   }
 
   const response = await performPost(

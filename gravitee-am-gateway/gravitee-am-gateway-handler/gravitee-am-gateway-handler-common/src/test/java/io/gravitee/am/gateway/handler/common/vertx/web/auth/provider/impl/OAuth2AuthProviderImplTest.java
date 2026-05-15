@@ -33,6 +33,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -150,6 +151,81 @@ public class OAuth2AuthProviderImplTest {
         verify(jtiCache, never()).put(anyString(), anyLong());
         verify(introspectionTokenService).introspect(TOKEN, false);
         verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+    }
+
+    @Test
+    public void shouldDecodeMultiAudienceTokenAndAttachFirstMatchingClient() throws InterruptedException {
+        // Given - aud is [resource-id, client-id]; only the second audience resolves to a client
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, List.of("resource-id", CLIENT_ID),
+                Claims.DOMAIN, DOMAIN
+        ));
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+        client.setDomain(DOMAIN);
+
+        when(introspectionTokenService.introspect(TOKEN, false))
+                .thenReturn(Maybe.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "resource-id"))
+                .thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
+                .thenReturn(Maybe.just(client));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        // When
+        oAuth2AuthProvider.decodeToken(TOKEN, false, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        // Then
+        assertTrue("Handler should be called", latch.await(1, TimeUnit.SECONDS));
+        assertTrue("Result should be successful", result[0].succeeded());
+        assertEquals("Client should match", client, result[0].result().getClient());
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, "resource-id");
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+    }
+
+    @Test
+    public void shouldFailWhenNoAudienceResolvesToClient() throws InterruptedException {
+        // Given - both audiences are protected-resource identifiers; none resolves to a client
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, List.of("resource-one", "resource-two"),
+                Claims.DOMAIN, DOMAIN
+        ));
+
+        when(introspectionTokenService.introspect(TOKEN, false))
+                .thenReturn(Maybe.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "resource-one"))
+                .thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "resource-two"))
+                .thenReturn(Maybe.empty());
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        // When
+        oAuth2AuthProvider.decodeToken(TOKEN, false, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        // Then
+        assertTrue("Handler should be called", latch.await(1, TimeUnit.SECONDS));
+        assertTrue("Result should be failed", result[0].failed());
+        assertTrue("Failure should be InvalidTokenException",
+                result[0].cause() instanceof InvalidTokenException);
+        InvalidTokenException exception = (InvalidTokenException) result[0].cause();
+        assertEquals("The token is invalid", exception.getMessage());
+        assertEquals("Client or resource not found: resource-one", exception.getDetails());
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, "resource-one");
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, "resource-two");
     }
 
     @Test
