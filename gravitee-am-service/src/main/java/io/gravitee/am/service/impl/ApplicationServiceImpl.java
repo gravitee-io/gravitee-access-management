@@ -428,18 +428,17 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal) {
         LOGGER.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
         return cimdMetadataFetcher.fetchAndValidate(domain, newApplication.getCimdUrl())
-                .flatMap(preview -> {
-                    final Application application = buildCimdApplication(domain, newApplication, preview);
-                    return create0(domain, application, principal)
-                            .flatMap(created -> cimdMetadataDocumentService
-                                    .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
-                                    .map(doc -> created)
-                                    .onErrorResumeNext(ex -> {
-                                        LOGGER.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
-                                                created.getId(), preview.url(), ex.getMessage());
-                                        return Single.just(created);
-                                    }));
-                })
+                .flatMap(preview -> resolveCimdTemplateScopeSettings(domain)
+                        .map(templateScopes -> buildCimdApplication(domain, newApplication, preview, templateScopes))
+                        .flatMap(application -> create0(domain, application, principal))
+                        .flatMap(created -> cimdMetadataDocumentService
+                                .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
+                                .map(doc -> created)
+                                .onErrorResumeNext(ex -> {
+                                    LOGGER.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
+                                            created.getId(), preview.url(), ex.getMessage());
+                                    return Single.just(created);
+                                })))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -449,7 +448,30 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview) {
+    private Single<List<ApplicationScopeSettings>> resolveCimdTemplateScopeSettings(Domain domain) {
+        final String templateId = retrieveCIMDTemplateId(domain);
+        if (templateId == null) {
+            return Single.just(List.of());
+        }
+        return applicationRepository.findById(templateId)
+                .map(template -> {
+                    List<ApplicationScopeSettings> scopes = Optional.ofNullable(template.getSettings())
+                            .map(ApplicationSettings::getOauth)
+                            .map(ApplicationOAuthSettings::getScopeSettings)
+                            .orElse(null);
+                    if (scopes == null) {
+                        return List.<ApplicationScopeSettings>of();
+                    }
+                    return scopes.stream()
+                            .map(ApplicationScopeSettings::new)
+                            .toList();
+                })
+                .defaultIfEmpty(List.<ApplicationScopeSettings>of())
+                .onErrorReturnItem(List.of());
+    }
+
+    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview,
+                                             List<ApplicationScopeSettings> templateScopeSettings) {
         final String resolvedClientName = preview.clientName() != null && !preview.clientName().isBlank()
                 ? preview.clientName()
                 : newApplication.getClientName();
@@ -496,6 +518,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return s;
                     })
                     .toList());
+        } else if (templateScopeSettings != null && !templateScopeSettings.isEmpty()) {
+            // CIMD doc omitted `scope` — inherit from the CIMD template so callers can request the
+            // domain's standard scopes (e.g. `openid`) without a follow-up PATCH.
+            oAuthSettings.setScopeSettings(new ArrayList<>(templateScopeSettings));
         }
 
         applyExtendedMetadata(preview, oAuthSettings);
@@ -654,6 +680,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         if (Boolean.TRUE.equals(preview.backchannelUserCodeParameter())) {
             oAuthSettings.setBackchannelUserCodeParameter(true);
+        }
+        if (preview.requestObjectSigningAlg() != null) {
+            oAuthSettings.setRequestObjectSigningAlg(preview.requestObjectSigningAlg());
         }
         if (Boolean.TRUE.equals(preview.hasInlineJwks())) {
             oAuthSettings.setJwks(parseInlineJwks(preview.metadataJson()));

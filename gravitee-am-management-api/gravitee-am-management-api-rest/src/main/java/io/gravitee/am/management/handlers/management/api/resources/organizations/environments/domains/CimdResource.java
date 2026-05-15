@@ -169,7 +169,8 @@ public class CimdResource extends AbstractDomainResource {
                         preview.backchannelTokenDeliveryMode(),
                         preview.backchannelClientNotificationEndpoint(),
                         preview.backchannelAuthRequestSignAlg(),
-                        preview.backchannelUserCodeParameter()));
+                        preview.backchannelUserCodeParameter(),
+                        preview.requestObjectSigningAlg()));
     }
 
     private static String joinScope(List<String> scopes) {
@@ -231,7 +232,8 @@ public class CimdResource extends AbstractDomainResource {
                 @JsonProperty("backchannel_token_delivery_mode") String backchannelTokenDeliveryMode,
                 @JsonProperty("backchannel_client_notification_endpoint") String backchannelClientNotificationEndpoint,
                 @JsonProperty("backchannel_authentication_request_signing_alg") String backchannelAuthenticationRequestSigningAlg,
-                @JsonProperty("backchannel_user_code_parameter") Boolean backchannelUserCodeParameter
+                @JsonProperty("backchannel_user_code_parameter") Boolean backchannelUserCodeParameter,
+                @JsonProperty("request_object_signing_alg") String requestObjectSigningAlg
         ) {}
     }
 }
