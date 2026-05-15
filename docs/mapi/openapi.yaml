@@ -13310,6 +13310,8 @@ components:
           type: array
           items:
             type: string
+        request_object_signing_alg:
+          type: string
         request_uris:
           type: array
           items:
