@@ -332,6 +332,7 @@ public class CimdMetadataFetcher {
                 optionalText(metadata, "backchannel_client_notification_endpoint"),
                 optionalText(metadata, "backchannel_authentication_request_signing_alg"),
                 optionalBoolean(metadata, "backchannel_user_code_parameter"),
+                optionalText(metadata, "request_object_signing_alg"),
                 missing,
                 body,
                 fetched.ttl()
