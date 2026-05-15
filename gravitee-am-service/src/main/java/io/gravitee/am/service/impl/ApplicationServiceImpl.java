@@ -517,7 +517,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         s.setScope(scope);
                         return s;
                     })
-                    .toList());
+                    .collect(Collectors.toCollection(ArrayList::new)));
         } else if (templateScopeSettings != null && !templateScopeSettings.isEmpty()) {
             // CIMD doc omitted `scope` — inherit from the CIMD template so callers can request the
             // domain's standard scopes (e.g. `openid`) without a follow-up PATCH.
