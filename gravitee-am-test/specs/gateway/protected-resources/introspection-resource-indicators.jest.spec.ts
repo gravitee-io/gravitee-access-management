@@ -16,10 +16,13 @@
 
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
-import { getBase64BasicAuth } from '@gateway-commands/utils';
-import { setupProtectedResourcesFixture, ProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
+import {
+  MULTI_AUD_RESOURCE_IDENTIFIERS,
+  ProtectedResourcesFixture,
+  setupProtectedResourcesFixture,
+} from './fixtures/protected-resources-fixture';
 import { delay } from '@utils-commands/misc';
+import { requestClientCredentialsToken } from '@gateway-commands/oauth-oidc-commands';
 
 // RFC 8707 Introspection: Protected Resource can introspect tokens obtained via authorization_code grant with resource indicators
 
@@ -64,15 +67,7 @@ describe('Protected Resource Introspection with Resource Indicators (RFC 8707)',
 
     // Step 4: Introspect the token using the Protected Resource credentials
     // Note that the client ID of the resources indicated in the token exchange must match the client ID of the Authorization header
-    const introspectionResponse = await performPost(
-      fixture.openIdConfiguration.introspection_endpoint,
-      '',
-      `token=${accessToken}&token_type_hint=access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: 'Basic ' + getBase64BasicAuth(protectedResource.clientId, protectedResource.clientSecret),
-      },
-    ).expect(200);
+    const introspectionResponse = await fixture.introspectToken(accessToken, protectedResource).expect(200);
 
     // Verify introspection response
     expect(introspectionResponse.body).toBeDefined();
@@ -92,6 +87,27 @@ describe('Protected Resource Introspection with Resource Indicators (RFC 8707)',
     expect(introspectionResponse.body.exp).toBeDefined();
     expect(introspectionResponse.body.iat).toBeDefined();
     expect(introspectionResponse.body.exp).toBeGreaterThan(introspectionResponse.body.iat);
+  });
+
+  it('Protected Resource can introspect token with multiple aud values (RFC 8707 multi-resource)', async () => {
+    const resourceIdentifiers = [...MULTI_AUD_RESOURCE_IDENTIFIERS];
+    const multiAudResource = fixture.protectedResources.find((r) => r.name === 'Multi-Audience API');
+    expect(multiAudResource).toBeDefined();
+    expect(multiAudResource.clientId).toBeDefined();
+    expect(multiAudResource.clientSecret).toBeDefined();
+
+    // Mint a token via client_credentials carrying both resources -> aud is a 2-element array.
+    const tokenResponse = await fixture.requestClientCredentialsToken(resourceIdentifiers).expect(200);
+    expect(tokenResponse.body.access_token).toBeDefined();
+
+    // No offline-verification wait: exercise with the offline path
+    const introspectionResponse = await fixture
+    .introspectToken(tokenResponse.body.access_token, multiAudResource)
+    .expect(200);
+
+    expect(introspectionResponse.body.active).toBe(true);
+    expect(Array.isArray(introspectionResponse.body.aud)).toBe(true);
+    expect(introspectionResponse.body.aud).toEqual(expect.arrayContaining(resourceIdentifiers));
   });
 });
 
