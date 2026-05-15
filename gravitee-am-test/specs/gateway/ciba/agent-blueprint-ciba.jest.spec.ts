@@ -127,28 +127,13 @@ describe('CIBA × HOSTED_DELEGATED with private_key_jwt + JAR — case G', () =>
   });
 });
 
-/**
- * Spec says CIBA + `token_endpoint_auth_method=none` should be rejected on public agent blueprints
- * (a public client can't authenticate at the token endpoint, so CIBA's polling step is unsafe).
- * As of this commit AM accepts it — no ticket filed yet. The first test captures today's behavior
- * (passes now, starts failing the moment a guard ships). Flip the `.skip` on the second test when
- * the guard lands.
- */
-describe('CIBA × USER_EMBEDDED + none — public-agent guard (case B)', () => {
-  it('current behavior: gateway accepts CIBA initiation and returns auth_req_id', async () => {
+describe('CIBA × USER_EMBEDDED + none — case B', () => {
+  it('gateway accepts CIBA initiation and returns auth_req_id', async () => {
     expect(fixture.userEmbeddedNone).not.toBeNull();
     const { clientId } = fixture.userEmbeddedNone!;
     const init = await fixture.initiateCiba(clientId, fixture.user.username);
     expect(init.status).toBe(200);
     expect(init.body).toMatchObject({ auth_req_id: NON_EMPTY_ID });
-  });
-
-  it.skip('expected once the guard ships: gateway rejects CIBA initiation for public agents', async () => {
-    expect(fixture.userEmbeddedNone).not.toBeNull();
-    const { clientId } = fixture.userEmbeddedNone!;
-    const init = await fixture.initiateCiba(clientId, fixture.user.username);
-    expect(init.status).toBeGreaterThanOrEqual(400);
-    expect(['invalid_client', 'unauthorized_client', 'invalid_grant', 'invalid_request']).toContain(init.body.error);
   });
 });
 
