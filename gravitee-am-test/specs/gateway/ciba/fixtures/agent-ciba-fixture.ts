@@ -361,21 +361,6 @@ async function createCimdHostedDelegated(
   if (res.status >= 400) {
     return { app: null, error: { phase: 'create', status: res.status, body: res.body } };
   }
-  // CIMD-created agent app doesn't inherit `openid` scope from the template — patch it in.
-  const patchRes = await managementFetch(
-    `${managementBase}/domains/${domainId}/applications/${res.body.id}`,
-    {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        settings: { oauth: { scopeSettings: [{ scope: 'openid', defaultScope: true }] } },
-      }),
-    },
-    accessToken,
-  );
-  if (patchRes.status >= 400) {
-    return { app: null, error: { phase: 'scope-patch', status: patchRes.status, body: patchRes.body } };
-  }
   return {
     app: {
       id: res.body.id,

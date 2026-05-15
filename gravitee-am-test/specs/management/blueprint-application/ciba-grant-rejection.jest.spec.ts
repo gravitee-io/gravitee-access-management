@@ -46,12 +46,12 @@ async function patchAppRaw(domainId: string, appId: string, body: any, accessTok
 }
 
 /**
- * The AM-6854 walkthrough doc anticipated that AM would either reject CIBA on a public/AUTONOMOUS agent
- * at the management API or filter the grant from the persisted app. Neither happens today — the grant
- * persists. These tests capture that current behavior. When AM-6854 lands the assertions will start
- * failing and the spec needs to flip back to expecting rejection.
+ * The agent-blueprint walkthrough doc anticipated that AM would either reject CIBA on a public/AUTONOMOUS
+ * agent at the management API or filter the grant from the persisted app. Neither happens today — the
+ * grant persists. These tests capture that current behavior; they'll start failing the moment a guard
+ * ships and the assertions need flipping back to expect rejection.
  */
-describe('AM-6854 — current behavior: CIBA grant is accepted on public agent blueprints', () => {
+describe('Current behavior: CIBA grant is accepted on public agent blueprints', () => {
   it('USER_EMBEDDED (token_endpoint_auth_method=none) currently persists the CIBA grant', async () => {
     const app = await fixture.createBlueprintApp('USER_EMBEDDED');
     expect(app.settings.oauth.tokenEndpointAuthMethod).toEqual('none');
@@ -64,8 +64,8 @@ describe('AM-6854 — current behavior: CIBA grant is accepted on public agent b
     expect(body.settings.oauth.grantTypes).toContain(CIBA_GRANT_TYPE);
     expect(body.settings.oauth.tokenEndpointAuthMethod).toEqual('none');
     console.warn(
-      'AM-6854 gap: CIBA grant accepted on public USER_EMBEDDED agent. ' +
-        'When AM-6854 enforces the public-client ban, flip this assertion back to expect rejection.',
+      'Blueprint guard gap: CIBA grant accepted on public USER_EMBEDDED agent. ' +
+        'When the public-client ban ships, flip this assertion back to expect rejection.',
     );
   });
 });
@@ -81,7 +81,7 @@ describe('AUTONOMOUS agents — current behavior: CIBA grant is accepted', () =>
     const body = await res.json();
     expect(body.settings.oauth.grantTypes).toContain(CIBA_GRANT_TYPE);
     console.warn(
-      'AM-6854 gap: CIBA grant accepted on AUTONOMOUS agent (Type C is meant to be client_credentials-only). ' +
+      'Blueprint guard gap: CIBA grant accepted on AUTONOMOUS agent (Type C is meant to be client_credentials-only). ' +
         'When the blueprint guard ships, flip this assertion back to expect rejection.',
     );
   });

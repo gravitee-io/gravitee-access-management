@@ -95,9 +95,8 @@ describe('CIBA × CIMD HOSTED_DELEGATED — case F', () => {
       fixture.hostedDelegatedBasic.clientId,
       fixture.hostedDelegatedBasic.clientSecret,
     );
-    // No JAR — CIMD doesn't map `request_object_signing_alg`, so a signed request JWT would be rejected.
-    // Plain `private_key_jwt` still proves the CIMD-resolved client is recognised.
-    const init = await fixture.initiateCibaWithPrivateKeyJwt(clientId, fixture.user.username);
+    const requestJwt = await fixture.createRequestJwt(clientId, fixture.user.username);
+    const init = await fixture.initiateCibaWithPrivateKeyJwt(clientId, fixture.user.username, requestJwt);
     expect(init.status).toBe(200);
     expect(init.body).toMatchObject({ auth_req_id: NON_EMPTY_ID });
 
@@ -129,12 +128,13 @@ describe('CIBA × HOSTED_DELEGATED with private_key_jwt + JAR — case G', () =>
 });
 
 /**
- * AM-6854 says CIBA + `token_endpoint_auth_method=none` must be rejected on public agent blueprints.
- * As of this commit AM accepts it. The first test below captures today's behavior (passes now,
- * starts failing the moment the guard ships). The second is the placeholder for the expected
- * behavior — flip the `.skip` when AM-6854 lands.
+ * Spec says CIBA + `token_endpoint_auth_method=none` should be rejected on public agent blueprints
+ * (a public client can't authenticate at the token endpoint, so CIBA's polling step is unsafe).
+ * As of this commit AM accepts it — no ticket filed yet. The first test captures today's behavior
+ * (passes now, starts failing the moment a guard ships). Flip the `.skip` on the second test when
+ * the guard lands.
  */
-describe('CIBA × USER_EMBEDDED + none — AM-6854 guard (case B)', () => {
+describe('CIBA × USER_EMBEDDED + none — public-agent guard (case B)', () => {
   it('current behavior: gateway accepts CIBA initiation and returns auth_req_id', async () => {
     expect(fixture.userEmbeddedNone).not.toBeNull();
     const { clientId } = fixture.userEmbeddedNone!;
@@ -143,7 +143,7 @@ describe('CIBA × USER_EMBEDDED + none — AM-6854 guard (case B)', () => {
     expect(init.body).toMatchObject({ auth_req_id: NON_EMPTY_ID });
   });
 
-  it.skip('expected once AM-6854 ships: gateway rejects CIBA initiation for public agents', async () => {
+  it.skip('expected once the guard ships: gateway rejects CIBA initiation for public agents', async () => {
     expect(fixture.userEmbeddedNone).not.toBeNull();
     const { clientId } = fixture.userEmbeddedNone!;
     const init = await fixture.initiateCiba(clientId, fixture.user.username);
