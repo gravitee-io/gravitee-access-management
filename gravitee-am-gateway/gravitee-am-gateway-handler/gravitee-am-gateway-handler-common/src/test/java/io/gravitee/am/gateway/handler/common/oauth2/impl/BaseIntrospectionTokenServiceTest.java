@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
@@ -123,6 +124,8 @@ public class BaseIntrospectionTokenServiceTest {
         ProtectedResource resourceTwo = buildProtectedResource("resource-two", DOMAIN, backendClient.getClientId());
 
         mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "resource-one")).thenReturn(Maybe.empty());
+        when(clientService.findByDomainAndClientId(DOMAIN, "resource-two")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-one")).thenReturn(Set.of(resourceOne));
         when(protectedResourceManager.getByIdentifier("resource-two")).thenReturn(Set.of(resourceTwo));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
@@ -130,7 +133,116 @@ public class BaseIntrospectionTokenServiceTest {
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
-        verify(clientService, never()).findByDomainAndClientId(DOMAIN, "resource-one");
+        verify(protectedResourceManager).getByIdentifier("resource-one");
+        verify(protectedResourceManager).getByIdentifier("resource-two");
+    }
+
+    @Test
+    public void shouldValidateMultipleAudiencesAllClients() {
+        JWT jwt = buildJwtWithAudiences(Arrays.asList("client-one", "client-two"));
+        Client clientOne = buildClient("client-one");
+        clientOne.setCertificate("cert-one");
+        Client clientTwo = buildClient("client-two");
+        clientTwo.setCertificate("cert-two");
+
+        mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-one")).thenReturn(Maybe.just(clientOne));
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-two")).thenReturn(Maybe.just(clientTwo));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertResult(jwt);
+        // Client lookup short-circuits the protected-resource manager once a client match is found.
+        verify(protectedResourceManager, never()).getByIdentifier(anyString());
+        // First matched client's certificate should be used.
+        ArgumentCaptor<Supplier<String>> captor = ArgumentCaptor.forClass(Supplier.class);
+        verify(jwtService).decodeAndVerify(eq(TOKEN), captor.capture(), eq(ACCESS_TOKEN));
+        org.junit.Assert.assertEquals("cert-one", captor.getValue().get());
+    }
+
+    @Test
+    public void shouldValidateMixedAudiencesClientThenProtectedResource() {
+        JWT jwt = buildJwtWithAudiences(Arrays.asList("client-id", "resource-id"));
+        Client client = buildClient("client-id");
+        client.setCertificate("cert-from-client");
+        Client backendClient = buildClient("backend-client");
+        ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, backendClient.getClientId());
+
+        mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
+        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertResult(jwt);
+        ArgumentCaptor<Supplier<String>> captor = ArgumentCaptor.forClass(Supplier.class);
+        verify(jwtService).decodeAndVerify(eq(TOKEN), captor.capture(), eq(ACCESS_TOKEN));
+        org.junit.Assert.assertEquals("cert-from-client", captor.getValue().get());
+    }
+
+    @Test
+    public void shouldValidateMixedAudiencesProtectedResourceThenClient() {
+        JWT jwt = buildJwtWithAudiences(Arrays.asList("resource-id", "client-id"));
+        Client client = buildClient("client-id");
+        client.setCertificate("cert-from-client");
+        Client backendClient = buildClient("backend-client");
+        ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, backendClient.getClientId());
+
+        mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
+        when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertResult(jwt);
+        // Even when the client aud appears second, its certificate must still be picked up.
+        ArgumentCaptor<Supplier<String>> captor = ArgumentCaptor.forClass(Supplier.class);
+        verify(jwtService).decodeAndVerify(eq(TOKEN), captor.capture(), eq(ACCESS_TOKEN));
+        org.junit.Assert.assertEquals("cert-from-client", captor.getValue().get());
+    }
+
+    @Test
+    public void shouldFailWhenAnyAudienceInMixedSetUnmatched() {
+        JWT jwt = buildJwtWithAudiences(Arrays.asList("client-id", "resource-id", "unknown"));
+        Client client = buildClient("client-id");
+        Client backendClient = buildClient("backend-client");
+        ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, backendClient.getClientId());
+
+        mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
+        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(clientService.findByDomainAndClientId(DOMAIN, "unknown")).thenReturn(Maybe.empty());
+        when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
+        when(protectedResourceManager.getByIdentifier("unknown")).thenReturn(Set.of());
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertError(throwable -> throwable instanceof InvalidTokenException e
+                && e.getMessage().equals("The token is invalid")
+                && e.getDetails().equals("Token audience values [unknown] do not match any client or protected resource identifiers in domain [" + DOMAIN + "]"));
+    }
+
+    @Test
+    public void shouldFailWhenLegacyFlagRejectsMixedAudienceProtectedResource() {
+        JWT jwt = buildJwtWithAudiences(Arrays.asList("client-id", "resource-id"));
+        Client client = buildClient("client-id");
+        ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, "backend-client");
+
+        mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
+        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, "caller-client").test();
+
+        observer.assertError(throwable -> throwable instanceof InvalidTokenException e
+                && e.getMessage().equals("The token is invalid")
+                && e.getDetails().equals("Protected resources matched by token audience have client IDs [backend-client] that do not match the introspecting client ID [caller-client]"));
     }
 
     @Test

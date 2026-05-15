@@ -16,11 +16,14 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -43,11 +46,19 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
     @Override
     public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
         introspectionTokenService.introspect(token, offlineVerification)
-                .flatMap(jwt -> clientSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
+                .flatMap(jwt -> findClientByAudience(jwt)
                         .switchIfEmpty(Maybe.error(new InvalidTokenException("The token is invalid", "Client not found")))
                         .map(client -> new OAuth2AuthResponse(jwt, client)))
                 .subscribe(
                         accessToken -> handler.handle(Future.succeededFuture(accessToken)),
                         error -> handler.handle(Future.failedFuture(error)));
+    }
+
+    private Maybe<Client> findClientByAudience(JWT jwt) {
+        // Return the first registered client that resolves.
+        // RFC 8707 resource indicators return nothing here.
+        return Observable.fromIterable(jwt.getAudList())
+                .concatMapMaybe(audience -> clientSyncService.findByDomainAndClientId(jwt.getDomain(), audience))
+                .firstElement();
     }
 }
