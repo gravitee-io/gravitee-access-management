@@ -9,7 +9,11 @@ const logger = pino({
     },
   },
   redact: {
-    paths: ['init.headers["Circle-Token"]'],
+    paths: [
+      'init.headers["Circle-Token"]',
+      'init.headers.Authorization',
+      '*.headers.Authorization',
+    ],
     censor: '*****',
   },
 });
