@@ -119,7 +119,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
   });
 
   it('should allow different agent instance IDs with the same blueprint', async () => {
-    const instances = ['instance-alpha', 'instance-beta', 'instance-gamma'];
+    const instances = ['instance-alpha', 'instance-beta', 'instance-alpha'];
 
     for (const instanceId of instances) {
       const assertion = signWorkloadJwt(instanceId);

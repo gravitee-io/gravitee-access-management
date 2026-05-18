@@ -15,14 +15,12 @@ CLOUD_AM_BRANCH="${4:-devs-preprod}"
 determine_target_dir() {
     if [[ "$BRANCH" == "master" ]]; then
         echo "master"
-    elif [[ "$BRANCH" == "gamma" ]]; then
-        echo "gamma"
     elif [[ "$BRANCH" =~ ^[0-9] ]]; then
         # Version branches: convert dots to dashes (e.g., 4.7.x -> 4-7-x)
         echo "${BRANCH//./-}"
     else
         echo "❌ Error: Unsupported branch for deployment: $BRANCH" >&2
-        echo "Supported branches: master, gamma, or version branches matching /^[0-9]/ (e.g., 4.7.x)" >&2
+        echo "Supported branches: master, or version branches matching /^[0-9]/ (e.g., 4.7.x)" >&2
         exit 1
     fi
 }

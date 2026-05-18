@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
-        <version>4.12.0-gamma.4-SNAPSHOT</version>
+        <version>4.12.0-alpha.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-management-api-sdk-java</artifactId>
@@ -34,7 +34,7 @@
     <properties>
         <!--
             Pin bytecode target to JDK 21 so consumers on the mainline gravitee
-            toolchain (e.g. gravitee-gamma-module-aim) can compile against this
+            toolchain (e.g. gravitee-alpha-module-aim) can compile against this
             SDK. AM server modules stay on JDK 25; only this thin generated
             client downgrades. JDK 25 JVMs load class files compiled against
             release 21 without issue.
