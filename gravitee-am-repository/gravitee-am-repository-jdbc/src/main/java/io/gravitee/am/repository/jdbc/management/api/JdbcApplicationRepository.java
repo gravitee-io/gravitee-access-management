@@ -258,6 +258,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("value", escapedQuery.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<>(data, page, total)))
+                .observeOn(Schedulers.computation())
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
 
@@ -291,6 +292,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("value", escapedQuery.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
+                .observeOn(Schedulers.computation())
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
 
@@ -299,7 +301,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByCertificate({})", certificate);
         return applicationRepository.findByCertificate(certificate)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -313,7 +316,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .bind(IDENTITY, identityProvider)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -321,7 +325,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByFactor({})", factor);
         return applicationRepository.findAllByFactor(factor)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -329,7 +334,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByDomainAndExtensionGrant({}, {})", domain, extensionGrant);
         return applicationRepository.findAllByDomainAndGrant(domain, extensionGrant)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -340,17 +346,20 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
         return applicationRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> count() {
-        return applicationRepository.count();
+        return applicationRepository.count()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByDomain(String domain) {
-        return applicationRepository.countByDomain(domain);
+        return applicationRepository.countByDomain(domain)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -363,7 +372,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
-                .firstElement();
+                .firstElement()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -371,7 +381,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findById({}", id);
         return applicationRepository.findById(id)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toMaybe());
+                .flatMap(app -> completeApplication(app).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -400,7 +411,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -429,7 +441,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         updateAction = persistChildEntities(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -438,7 +451,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().delete(JdbcApplication.class).matching(query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
-                .andThen(applicationRepository.deleteById(id));
+                .andThen(applicationRepository.deleteById(id))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> deleteChildEntities(String appId) {
