@@ -28,12 +28,17 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.AgentJwtBearerClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.JwtBearerClientAssertionValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.SpiffeClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
@@ -43,7 +48,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -95,17 +99,29 @@ public class ClientAssertionServiceTest {
     @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
 
-    @InjectMocks
-    private ClientAssertionService clientAssertionService = new ClientAssertionServiceImpl();
-
     @Mock
     private Domain domain;
 
     @Mock
+    private TrustBundleService trustBundleService;
+
+    @Mock
+    private TrustDomainRepository trustDomainRepository;
+
+    @Mock
     private io.gravitee.am.service.AuditService auditService;
+
+    private ClientAssertionService clientAssertionService;
 
     @BeforeEach
     void setUp() {
+        var jwtBearer = new JwtBearerClientAssertionValidator(
+                clientLookupService, jwkService, jwsService, openIDDiscoveryService, domain);
+        var agentJwtBearer = new AgentJwtBearerClientAssertionValidator(
+                clientLookupService, jwkService, jwsService, openIDDiscoveryService, domain);
+        var spiffe = new SpiffeClientAssertionValidator(
+                clientLookupService, jwsService, openIDDiscoveryService, domain, trustBundleService, trustDomainRepository);
+        clientAssertionService = new ClientAssertionServiceImpl(List.of(jwtBearer, agentJwtBearer, spiffe));
         lenient().when(clientLookupService.findByClientId(any())).thenReturn(Maybe.empty());
     }
 

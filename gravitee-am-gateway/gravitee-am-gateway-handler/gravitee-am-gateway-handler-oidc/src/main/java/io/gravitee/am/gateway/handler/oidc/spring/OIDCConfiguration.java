@@ -17,9 +17,15 @@ package io.gravitee.am.gateway.handler.oidc.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.AgentJwtBearerClientAssertionValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.JwtBearerClientAssertionValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.SpiffeClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.impl.PushedAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
+import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientSecretService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
@@ -114,5 +120,33 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public PushedAuthorizationRequestService pushedAuthorizationRequestService() {
         return new PushedAuthorizationRequestServiceImpl();
+    }
+
+    @Bean
+    public ClientAssertionValidator jwtBearerClientAssertionValidator(ClientLookupService clientLookupService,
+                                                                      JWKService jwkService,
+                                                                      JWSService jwsService,
+                                                                      OpenIDDiscoveryService openIDDiscoveryService,
+                                                                      Domain domain) {
+        return new JwtBearerClientAssertionValidator(clientLookupService, jwkService, jwsService, openIDDiscoveryService, domain);
+    }
+
+    @Bean
+    public ClientAssertionValidator agentJwtBearerClientAssertionValidator(ClientLookupService clientLookupService,
+                                                                           JWKService jwkService,
+                                                                           JWSService jwsService,
+                                                                           OpenIDDiscoveryService openIDDiscoveryService,
+                                                                           Domain domain) {
+        return new AgentJwtBearerClientAssertionValidator(clientLookupService, jwkService, jwsService, openIDDiscoveryService, domain);
+    }
+
+    @Bean
+    public ClientAssertionValidator spiffeClientAssertionValidator(ClientLookupService clientLookupService,
+                                                                   JWSService jwsService,
+                                                                   OpenIDDiscoveryService openIDDiscoveryService,
+                                                                   Domain domain,
+                                                                   TrustBundleService trustBundleService,
+                                                                   TrustDomainRepository trustDomainRepository) {
+        return new SpiffeClientAssertionValidator(clientLookupService, jwsService, openIDDiscoveryService, domain, trustBundleService, trustDomainRepository);
     }
 }

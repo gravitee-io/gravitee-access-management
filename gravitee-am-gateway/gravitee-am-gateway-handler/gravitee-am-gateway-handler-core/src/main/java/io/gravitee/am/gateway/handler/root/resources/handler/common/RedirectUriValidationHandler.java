@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator;
+import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator.CheckMethod;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
@@ -30,6 +31,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -60,6 +62,7 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
 public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedirectUriValidationHandler.class);
+    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "::1");
 
     private final Domain domain;
     private final Function<String, Maybe<JWT>> tokenVerifier;
@@ -128,30 +131,30 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             List<String> registeredRedirectUris = domain.isRedirectUriExpressionLanguageEnabled() ?
                     getFilteredRegisteredRedirectUris(context) : getRegisteredRedirectUris(context);
             final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            final boolean urlShaped = ClientIds.isUrlShaped(client.getClientId());
-            final boolean loopback = isLoopbackUri(requestedRedirectUri);
-            final boolean localhostAllowed = isLocalhostRedirectAllowed();
-            LOGGER.info("[redirect-uri-validation] client_id={} url_shaped={} requested={} loopback={} localhost_allowed={} registered={}",
-                    client.getClientId(), urlShaped, requestedRedirectUri, loopback, localhostAllowed, registeredRedirectUris);
-            // CIMD clients require exact URI matching, except for RFC 8252 §7.3
-            // loopback callbacks when the domain allows localhost redirects — there
-            // the port is ignored so native clients can pick an ephemeral one.
-            final RedirectUriValidator.CheckMethod checkMethod;
-            if (urlShaped) {
-                if (loopback && localhostAllowed) {
-                    checkMethod = this::checkLoopbackRedirectUri;
-                } else {
-                    checkMethod = this::checkExactRedirectUri;
-                }
-            } else {
-                checkMethod = this::checkMatchingRedirectUri;
-            }
+            final CheckMethod checkMethod = getCheckMethod(client, requestedRedirectUri);
             RedirectUriValidator validator = new RedirectUriValidator(checkMethod);
             validator.validate(registeredRedirectUris, requestedRedirectUri, operation);
         }
     }
 
-    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "::1");
+    private @NonNull CheckMethod getCheckMethod(Client client, String requestedRedirectUri) {
+        final boolean urlShaped = ClientIds.isUrlShaped(client.getClientId());
+        final boolean loopback = isLoopbackUri(requestedRedirectUri);
+        final boolean localhostAllowed = isLocalhostRedirectAllowed();
+
+        // CIMD clients require exact URI matching, except for RFC 8252 §7.3
+        // loopback callbacks when the domain allows localhost redirects — there
+        // the port is ignored so native clients can pick an ephemeral one.
+        if (!urlShaped) {
+            return this::checkMatchingRedirectUri;
+        }
+
+        if (loopback && localhostAllowed) {
+            return this::checkLoopbackRedirectUri;
+        }
+
+        return this::checkExactRedirectUri;
+    }
 
     private static boolean isLoopbackUri(String uri) {
         if (uri == null) {
@@ -190,8 +193,6 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             boolean schemeMatch = Objects.equals(req.getScheme(), reg.getScheme());
             boolean hostMatch = Objects.equals(normalizeHost(req.getHost()), normalizeHost(reg.getHost()));
             boolean pathMatch = Objects.equals(req.getPath(), reg.getPath());
-            LOGGER.info("[redirect-uri-validation] candidate registered={} scheme={} host={} path={}",
-                    registered, schemeMatch, hostMatch, pathMatch);
             return schemeMatch && hostMatch && pathMatch;
         } catch (URISyntaxException e) {
             LOGGER.info("[redirect-uri-validation] candidate registered={} parse error: {}", registered, e.getMessage());

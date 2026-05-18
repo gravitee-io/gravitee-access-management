@@ -349,10 +349,6 @@ public class BaseIntrospectionTokenServiceTest {
 
     @Test
     public void shouldFallBackToProtectedResourceWhenClientLookupThrowsCimdError() {
-        // Regression: with CIMD enabled, a URL-shaped audience that's actually an RFC 8707
-        // resource identifier flows into CimdAwareClientLookupService and the CIMD fetch
-        // returns InvalidClientMetadataException. The error must not propagate — we should
-        // fall through to protected-resource validation.
         JWT jwt = buildJwtWithAudiences(List.of("http://localhost:8080/mcp"));
         ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, "backend-client");
 
@@ -370,7 +366,6 @@ public class BaseIntrospectionTokenServiceTest {
 
     @Test
     public void shouldPropagateNonCimdErrorsFromClientLookup() {
-        // Only InvalidClientMetadataException is treated as "not a client". Other errors must propagate.
         JWT jwt = buildJwtWithAudiences(List.of("client-id"));
 
         mockDecode(jwt);
