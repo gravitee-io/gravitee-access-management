@@ -16,6 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
@@ -24,7 +25,12 @@ import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
+import io.gravitee.am.service.exception.TrustDomainAlreadyExistsException;
+import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.reporter.builder.management.TrustDomainAuditBuilder;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
@@ -272,5 +278,92 @@ public class TrustDomainServiceImplTest {
         // repository.findByName is already stubbed in @Before; override is unnecessary.
         when(repository.create(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+    }
+
+    // ---- audit-on-failure tests ----------------------------------------------------
+    // Verify that error paths outside the persistence chain (validation, duplicate name,
+    // not-found, wrong-domain) still emit an audit event. Prior to the audit refactor
+    // these paths exited without being recorded.
+
+    @Test
+    public void create_audits_whenValidationFails() {
+        spiffeSettings.setEnabled(false);
+
+        service.create(domain, validInput(), null).test().assertError(InvalidTrustDomainException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void create_audits_whenDuplicateName() {
+        TrustDomain existing = new TrustDomain();
+        existing.setId("existing-1");
+        existing.setName("example.org");
+        when(repository.findByName(any(), any(), any())).thenReturn(Maybe.just(existing));
+
+        service.create(domain, validInput(), null).test().assertError(TrustDomainAlreadyExistsException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void update_audits_whenNotFound() {
+        when(repository.findById("missing")).thenReturn(Maybe.empty());
+
+        service.update(domain, "missing", new UpdateTrustDomain(), null).test()
+                .assertError(TrustDomainNotFoundException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void update_audits_whenLinkedToWrongDomain() {
+        TrustDomain other = new TrustDomain();
+        other.setId("td-1");
+        other.setReferenceType(ReferenceType.DOMAIN);
+        other.setReferenceId("some-other-domain");
+        when(repository.findById("td-1")).thenReturn(Maybe.just(other));
+
+        service.update(domain, "td-1", new UpdateTrustDomain(), null).test()
+                .assertError(InvalidTrustDomainException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void delete_audits_whenNotFound() {
+        when(repository.findById("missing")).thenReturn(Maybe.empty());
+
+        service.delete(domain, "missing", null).test().assertError(TrustDomainNotFoundException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void delete_audits_whenLinkedToWrongDomain() {
+        TrustDomain other = new TrustDomain();
+        other.setId("td-1");
+        other.setReferenceType(ReferenceType.DOMAIN);
+        other.setReferenceId("some-other-domain");
+        when(repository.findById("td-1")).thenReturn(Maybe.just(other));
+
+        service.delete(domain, "td-1", null).test().assertError(InvalidTrustDomainException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void delete_audits_onSuccess() {
+        TrustDomain td = new TrustDomain();
+        td.setId("td-1");
+        td.setReferenceType(ReferenceType.DOMAIN);
+        td.setReferenceId(DOMAIN_ID);
+        when(repository.findById("td-1")).thenReturn(Maybe.just(td));
+        when(repository.delete("td-1")).thenReturn(Completable.complete());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+
+        service.delete(domain, "td-1", null).test().assertNoErrors();
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
     }
 }

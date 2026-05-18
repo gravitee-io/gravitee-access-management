@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.common.event.Type.TRUST_DOMAIN;
@@ -122,17 +123,17 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                                 return Single.error(new TrustDomainAlreadyExistsException(td.getName()));
                             }
                             return repository.create(td)
-                                    .flatMap(created -> publish(domain, created, Action.CREATE).andThen(Single.just(created)))
-                                    .doOnSuccess(created -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                            .principal(principal)
-                                            .type(EventType.TRUST_DOMAIN_CREATED)
-                                            .trustDomain(created)))
-                                    .doOnError(ex -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                            .principal(principal)
-                                            .type(EventType.TRUST_DOMAIN_CREATED)
-                                            .trustDomain(td)
-                                            .throwable(ex)));
-                        }));
+                                    .flatMap(created -> publish(domain, created, Action.CREATE).andThen(Single.just(created)));
+                        }))
+                .doOnSuccess(created -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.TRUST_DOMAIN_CREATED)
+                        .trustDomain(created)))
+                .doOnError(ex -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.TRUST_DOMAIN_CREATED)
+                        .trustDomain(td)
+                        .throwable(ex)));
     }
 
     @Override
@@ -141,9 +142,13 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         Objects.requireNonNull(input, "updateTrustDomain is required");
         Objects.requireNonNull(id, "id is required");
 
+        AtomicReference<TrustDomain> existingRef = new AtomicReference<>();
+        AtomicReference<TrustDomain> updatedRef = new AtomicReference<>();
+
         return repository.findById(id)
                 .switchIfEmpty(Single.error(new TrustDomainNotFoundException(id)))
                 .flatMap(existing -> {
+                    existingRef.set(existing);
                     if (!ReferenceType.DOMAIN.equals(existing.getReferenceType())
                             || !domain.getId().equals(existing.getReferenceId())) {
                         return Single.error(new InvalidTrustDomainException("Trust domain is not linked to domain " + domain.getId()));
@@ -163,46 +168,69 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                         updated.setAllowedAlgorithms(input.getAllowedAlgorithms());
                     }
                     updated.setUpdatedAt(new Date());
+                    updatedRef.set(updated);
 
                     return validate(domain, updated)
                             .andThen(repository.update(updated))
-                            .flatMap(saved -> publish(domain, saved, Action.UPDATE).andThen(Single.just(saved)))
-                            .doOnSuccess(saved -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.TRUST_DOMAIN_UPDATED)
-                                    .trustDomain(saved)
-                                    .oldValue(existing)))
-                            .doOnError(ex -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.TRUST_DOMAIN_UPDATED)
-                                    .trustDomain(updated)
-                                    .oldValue(existing)
-                                    .throwable(ex)));
+                            .flatMap(saved -> publish(domain, saved, Action.UPDATE).andThen(Single.just(saved)));
+                })
+                .doOnSuccess(saved -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.TRUST_DOMAIN_UPDATED)
+                        .trustDomain(saved)
+                        .oldValue(existingRef.get())))
+                .doOnError(ex -> {
+                    TrustDomainAuditBuilder builder = AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.TRUST_DOMAIN_UPDATED)
+                            .throwable(ex);
+                    TrustDomain updated = updatedRef.get();
+                    if (updated != null) {
+                        builder.trustDomain(updated).oldValue(existingRef.get());
+                    } else {
+                        // pre-load failure (not-found or repository error) — anchor the audit to the domain
+                        // so it still surfaces in the domain audit log without a concrete trust-domain target.
+                        builder.reference(new Reference(ReferenceType.DOMAIN, domain.getId()));
+                    }
+                    auditService.report(builder);
                 });
     }
 
     @Override
     public Completable delete(Domain domain, String id, User principal) {
+        AtomicReference<TrustDomain> tdRef = new AtomicReference<>();
         return repository.findById(id)
                 .switchIfEmpty(Maybe.error(new TrustDomainNotFoundException(id)))
                 .flatMapCompletable(td -> {
+                    tdRef.set(td);
                     if (!ReferenceType.DOMAIN.equals(td.getReferenceType())
                             || !domain.getId().equals(td.getReferenceId())) {
                         return Completable.error(new InvalidTrustDomainException("Trust domain is not linked to domain " + domain.getId()));
                     }
                     return repository.delete(id)
-                            .andThen(publish(domain, td, Action.DELETE))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.TRUST_DOMAIN_DELETED)
-                                    .trustDomain(td)
-                                    .reference(new Reference(td.getReferenceType(), td.getReferenceId()))
-                                    .oldValue(td)))
-                            .doOnError(ex -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.TRUST_DOMAIN_DELETED)
-                                    .trustDomain(td)
-                                    .throwable(ex)));
+                            .andThen(publish(domain, td, Action.DELETE));
+                })
+                .doOnComplete(() -> {
+                    TrustDomain td = tdRef.get();
+                    auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.TRUST_DOMAIN_DELETED)
+                            .trustDomain(td)
+                            .reference(new Reference(td.getReferenceType(), td.getReferenceId()))
+                            .oldValue(td));
+                })
+                .doOnError(ex -> {
+                    TrustDomainAuditBuilder builder = AuditBuilder.builder(TrustDomainAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.TRUST_DOMAIN_DELETED)
+                            .throwable(ex);
+                    TrustDomain td = tdRef.get();
+                    if (td != null) {
+                        builder.trustDomain(td).oldValue(td);
+                    } else {
+                        builder.reference(new Reference(ReferenceType.DOMAIN, domain.getId()));
+                    }
+                    auditService.report(builder);
                 });
     }
 
