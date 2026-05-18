@@ -164,6 +164,7 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             String host = new URI(uri).getHost();
             return host != null && LOOPBACK_HOSTS.contains(host.toLowerCase());
         } catch (URISyntaxException e) {
+            LOGGER.debug("[redirect-uri-validation] uri={} parse error: {}", uri, e.getMessage());
             return false;
         }
     }
