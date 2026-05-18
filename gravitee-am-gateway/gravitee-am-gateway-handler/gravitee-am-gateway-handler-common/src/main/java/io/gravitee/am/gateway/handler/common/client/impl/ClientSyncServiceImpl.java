@@ -17,10 +17,13 @@ package io.gravitee.am.gateway.handler.common.client.impl;
 
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -34,6 +37,7 @@ import static java.util.Optional.ofNullable;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class ClientSyncServiceImpl implements ClientSyncService {
 
     @Autowired
@@ -42,9 +46,27 @@ public class ClientSyncServiceImpl implements ClientSyncService {
     @Autowired
     private ClientManager clientManager;
 
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
     @Override
     public Maybe<Client> findById(String id) {
-        return ofNullable(clientManager.get(id)).map(Maybe::just).orElseGet(Maybe::empty);
+        return ofNullable(clientManager.get(id))
+                .map(Maybe::just)
+                .orElseGet(Maybe::empty)
+                .switchIfEmpty(Maybe.defer(() -> {
+                    return applicationRepository.findById(id)
+                        .map(Application::toClient)
+                        .filter(this::canLoadNotSynchronizedClient)
+                        .doOnSuccess(client -> {
+                            log.debug("Client {} not in cache, loaded from repository and deployed locally", id);
+                            clientManager.deploy(client);
+                        })
+                        .onErrorResumeNext(error -> {
+                            log.debug("Failed to load client {} from repository", id, error);
+                            return Maybe.empty();
+                        });
+                }));
     }
 
 
@@ -58,7 +80,32 @@ public class ClientSyncServiceImpl implements ClientSyncService {
         return fromIterable(clientManager.entities())
                 .filter(client -> !client.isTemplate())
                 .filter(client -> client.getClientId().equals(clientId) && client.getDomain().equals(domain))
-                .firstElement();
+                .firstElement()
+                .switchIfEmpty(Maybe.defer(() -> {
+                    return applicationRepository.findByDomainAndClientId(domain, clientId)
+                        .map(Application::toClient)
+                        .filter(this::canLoadNotSynchronizedClient)
+                        .doOnSuccess(client -> {
+                            log.debug("Client {}/{} not in cache, loaded from repository and deployed locally", domain, clientId);
+                            clientManager.deploy(client);
+                        })
+                        .onErrorResumeNext(error -> {
+                            log.debug("Failed to load client {}/{} from repository", domain, clientId, error);
+                            return Maybe.empty();
+                        });
+                }));
+    }
+
+    /**
+     * Return true if the application is not a template, is enabled.
+     * This is useful to avoid providing an invalid Client instance when the cache retrieval fallback
+     * to the repository layer.
+     *
+     * @param client
+     * @return
+     */
+    private boolean canLoadNotSynchronizedClient(Client client) {
+        return client.isEnabled() && !client.isTemplate();
     }
 
     @Override
