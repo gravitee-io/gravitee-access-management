@@ -35,8 +35,8 @@ import org.springframework.context.annotation.Configuration;
 public class CIBAConfiguration implements ProtocolConfiguration {
 
     @Bean
-    public ClientAssertionService clientAssertionService() {
-        return new ClientAssertionServiceImpl();
+    public ClientAssertionService clientAssertionService(java.util.List<io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator> validators) {
+        return new ClientAssertionServiceImpl(validators);
     }
     
     @Bean

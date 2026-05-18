@@ -177,10 +177,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
-            // Always attempt direct lookup first — CIMD permits pre-registering a
-            // blueprint client whose client_id is itself a canonical URL. Only when
-            // no registered client matches do we hand off to the assertion provider
-            // for CIMD metadata resolution (signalled by passing a null client).
+
             clientLookupService
                     .findByClientId(clientId)
                     .subscribe(
@@ -229,19 +226,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 // Same decode as the secret path so lookup id and comparison stay symmetric.
                 clientId = ClientBasicAuthProvider.urlDecode(clientId);
             } else if(clientAssertion != null && clientAssertionType != null) {
-                JWT jwt = JWTParser.parse(clientAssertion);
-                String iss = jwt.getJWTClaimsSet().getIssuer();
-                String sub = jwt.getJWTClaimsSet().getSubject();
-                if (ClientAuthenticationMethod.JWT_SPIFFE.equals(clientAssertionType)) {
-                    // SPIFFE JWT-SVID: form client_id is authoritative; fall back to SPIFFE URI in sub.
-                    String formClientId = request.getParam(Parameters.CLIENT_ID);
-                    clientId = (formClientId != null && !formClientId.isEmpty()) ? formClientId : sub;
-                } else if (ClientAuthenticationMethod.AGENT_JWT_BEARER.equals(clientAssertionType)) {
-                    // Agent jwt-bearer: blueprint client_id is in iss; sub is the agent instance id.
-                    clientId = iss;
-                } else {
-                    clientId = sub;
-                }
+                clientId = determineClientIdFromAssertion(request, clientAssertion, clientAssertionType);
             } else {
                 // if no authorization header found, check client_id via the query parameter
                 clientId = request.getParam(Parameters.CLIENT_ID);
@@ -254,6 +239,24 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
         } catch (ParseException | RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
+        }
+    }
+
+    private static String determineClientIdFromAssertion(HttpServerRequest request, String clientAssertion, String clientAssertionType) throws ParseException {
+        JWT jwt = JWTParser.parse(clientAssertion);
+
+        String iss = jwt.getJWTClaimsSet().getIssuer();
+        String sub = jwt.getJWTClaimsSet().getSubject();
+
+        if (ClientAuthenticationMethod.JWT_SPIFFE.equals(clientAssertionType)) {
+            // SPIFFE JWT-SVID: form client_id is authoritative; fall back to SPIFFE URI in sub.
+            String formClientId = request.getParam(Parameters.CLIENT_ID);
+            return (formClientId != null && !formClientId.isEmpty()) ? formClientId : sub;
+        } else if (ClientAuthenticationMethod.AGENT_JWT_BEARER.equals(clientAssertionType)) {
+            // Agent jwt-bearer: blueprint client_id is in iss; sub is the agent instance id.
+            return iss;
+        } else {
+            return sub;
         }
     }
 }

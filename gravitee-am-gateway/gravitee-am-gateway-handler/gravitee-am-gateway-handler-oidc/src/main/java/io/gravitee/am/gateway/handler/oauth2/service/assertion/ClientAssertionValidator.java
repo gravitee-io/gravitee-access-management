@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.jwt;
+package io.gravitee.am.gateway.handler.oauth2.service.assertion;
+
+import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
- * @author GraviteeSource Team
+ * Strategy handling a single {@code client_assertion_type} URN. The
+ * {@link ClientAssertionService} dispatcher selects the matching validator by
+ * {@link #assertionType()} and delegates to {@link #validate}.
  */
-public interface ClientProfile {
+public interface ClientAssertionValidator {
 
-    /**
-     * draft-mora-oauth-entity-profiles-01 §3.3 — registry token identifying an AI agent client.
-     * Used as the prefix portion of a {@link Claims#CLIENT_PROFILE} value (e.g. {@code "ai_agent autonomous"}).
-     */
-    String AI_AGENT = "ai_agent";
+    /** The {@code client_assertion_type} URN this validator handles. */
+    String assertionType();
+
+    Maybe<Client> validate(String assertion, String basePath, String clientIdHint);
 }
