@@ -474,6 +474,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     protected void appendCriteriaFilters(ApplicationCriteria criteria, StringBuilder builder) {
         criteria.getApplicationIds().filter(ids -> !ids.isEmpty()).ifPresent(ids -> builder.append(" AND a.id IN (:applicationIds)"));
         criteria.getEnabled().ifPresent(enabled -> builder.append(" AND a.enabled = :enabled"));
+        criteria.getType().ifPresent(type -> builder.append(" AND a.type = :type"));
     }
 
     @Override

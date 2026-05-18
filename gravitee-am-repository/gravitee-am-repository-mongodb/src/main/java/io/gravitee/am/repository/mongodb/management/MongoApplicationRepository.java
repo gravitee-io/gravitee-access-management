@@ -380,6 +380,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         List<Bson> filters = new ArrayList<>();
         criteria.getEnabled().ifPresent(enabled -> filters.add(eq(FIELD_ENABLED, enabled)));
         criteria.getApplicationIds().ifPresent(ids -> filters.add(in(FIELD_ID, ids)));
+        criteria.getType().ifPresent(type -> filters.add(eq(FIELD_TYPE, type.name())));
         return filters;
     }
 

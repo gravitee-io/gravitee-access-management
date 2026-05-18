@@ -105,7 +105,7 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("type") ApplicationType type,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
-        ApplicationFilter filter = new ApplicationFilter(status, ownerEmail);
+        ApplicationFilter filter = new ApplicationFilter(status, ownerEmail, type);
 
         // owner.email filter requires ORGANIZATION_USER[READ] — checked here, resolved in service
         io.reactivex.rxjava3.core.Completable ownerPermissionCheck = filter.hasOwnerEmailFilter()
@@ -141,7 +141,7 @@ public class ApplicationsResource extends AbstractDomainResource {
     }
 
     private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query, ApplicationType type) {
-        if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter()) {
+        if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter() || filter.hasTypeFilter()) {
             return query != null
                     ? applicationService.search(domain, organizationId, filter, query, page, size)
                     : applicationService.findByDomain(domain, organizationId, filter, page, size);
@@ -153,8 +153,8 @@ public class ApplicationsResource extends AbstractDomainResource {
     }
 
     private Single<Page<Application>> listApplicationsByIds(String domain, String organizationId, List<String> applicationIds, ApplicationFilter filter, int page, int size, String query, ApplicationType type) {
-        if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter()) {
-            ApplicationFilter filterWithScope = new ApplicationFilter(filter.status(), filter.ownerEmail(), applicationIds);
+        if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter() || filter.hasTypeFilter()) {
+            ApplicationFilter filterWithScope = new ApplicationFilter(filter.status(), filter.ownerEmail(), filter.type(), applicationIds);
             return query != null
                     ? applicationService.search(domain, organizationId, filterWithScope, query, page, size)
                     : applicationService.findByDomain(domain, organizationId, filterWithScope, page, size);
