@@ -66,11 +66,17 @@ export class SpiffeSettingsComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe((data) => {
-      this.domainStore.set(data);
-      this.domain = data;
-      this.formChanged = false;
-      this.snackbarService.open('SPIFFE configuration updated');
+    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe({
+      next: (data) => {
+        this.domainStore.set(data);
+        this.domain = data;
+        this.formChanged = false;
+        this.snackbarService.open('SPIFFE configuration updated');
+      },
+      error: (err) => {
+        const message = err?.error?.message || 'Failed to update SPIFFE configuration';
+        this.snackbarService.open(message);
+      },
     });
   }
 
