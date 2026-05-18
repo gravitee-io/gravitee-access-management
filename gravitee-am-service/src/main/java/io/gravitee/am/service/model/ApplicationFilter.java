@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.application.ApplicationType;
+
 import java.util.List;
 
 /**
@@ -27,13 +29,21 @@ import java.util.List;
  *
  * @author GraviteeSource Team
  */
-public record ApplicationFilter(String status, String ownerEmail, List<String> permissionScopedIds) {
+public record ApplicationFilter(String status, String ownerEmail, ApplicationType type, List<String> permissionScopedIds) {
 
     public static final String STATUS_ENABLED = "enabled";
     public static final String STATUS_DISABLED = "disabled";
 
     public ApplicationFilter(String status, String ownerEmail) {
-        this(status, ownerEmail, null);
+        this(status, ownerEmail, null, null);
+    }
+
+    public ApplicationFilter(String status, String ownerEmail, ApplicationType type) {
+        this(status, ownerEmail, type, null);
+    }
+
+    public ApplicationFilter(String status, String ownerEmail, List<String> permissionScopedIds) {
+        this(status, ownerEmail, null, permissionScopedIds);
     }
 
     public boolean hasStatusFilter() {
@@ -44,11 +54,15 @@ public record ApplicationFilter(String status, String ownerEmail, List<String> p
         return ownerEmail != null && !ownerEmail.isBlank();
     }
 
+    public boolean hasTypeFilter() {
+        return type != null;
+    }
+
     public boolean hasPermissionScopedIds() {
         return permissionScopedIds != null;
     }
 
     public static ApplicationFilter empty() {
-        return new ApplicationFilter(null, null, null);
+        return new ApplicationFilter(null, null, null, null);
     }
 }

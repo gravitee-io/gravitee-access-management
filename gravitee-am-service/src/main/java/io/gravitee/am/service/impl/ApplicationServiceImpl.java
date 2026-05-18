@@ -304,6 +304,10 @@ public class ApplicationServiceImpl implements ApplicationService {
             criteria.setEnabled(ApplicationFilter.STATUS_ENABLED.equalsIgnoreCase(filter.status()));
         }
 
+        if (filter.hasTypeFilter()) {
+            criteria.setType(filter.type());
+        }
+
         if (!filter.hasOwnerEmailFilter()) {
             if (filter.hasPermissionScopedIds()) {
                 criteria.setApplicationIds(filter.permissionScopedIds());

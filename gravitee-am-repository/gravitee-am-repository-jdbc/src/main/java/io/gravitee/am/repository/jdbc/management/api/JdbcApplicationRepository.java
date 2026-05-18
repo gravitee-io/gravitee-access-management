@@ -395,6 +395,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (criteria.getEnabled().isPresent()) {
             spec = spec.bind("enabled", criteria.getEnabled().get());
         }
+        if (criteria.getType().isPresent()) {
+            spec = spec.bind("type", criteria.getType().get().name());
+        }
         return spec;
     }
 
