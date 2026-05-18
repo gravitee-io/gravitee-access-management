@@ -65,7 +65,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-gamma-version, release-hotfix-version ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-alpha-version, release-hotfix-version ]
     default: pull_requests
   gio_product:
     type: enum
@@ -924,9 +924,6 @@ jobs:
             az acr run --cmd "acr purge --filter 'am-gateway:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-api:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-ui:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
-            az acr run --cmd "acr purge --filter 'am-gateway:gamma-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
-            az acr run --cmd "acr purge --filter 'am-management-api:gamma-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
-            az acr run --cmd "acr purge --filter 'am-management-ui:gamma-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             # use an iteration from 5 to 20 to avoid updating the ci config at each version
             for minor in `seq 5 20`
             do
@@ -1205,7 +1202,7 @@ jobs:
       qualifier_label:
         type: string
         default: "alpha"
-        description: "Pre-release qualifier label used in versions like 4.12.0-<qualifier>.N (e.g. alpha, gamma)"
+        description: "Pre-release qualifier label used in versions like 4.12.0-<qualifier>.N (e.g. alpha)"
     executor:
       name: openjdk
       class: xlarge
@@ -1943,29 +1940,6 @@ workflows:
             - publish docker images
             - publish maven packages
 
-  # Publishes a non-SNAPSHOT gamma artifact to Gravitee's private Artifactory only.
-  # Intentionally omits Docker Hub, Maven Central, Aqua and Slack notify jobs.
-  # rc_requested is hardcoded true: gamma always uses qualifier-style versions
-  # (4.12.0-gamma.N), so the pre-release branch in the release job must run.
-  release-gamma-version:
-    when:
-      and:
-        - equal: [ release-gamma-version, << pipeline.parameters.gio_action >> ]
-    jobs:
-      - setup:
-          name: setup
-          context: cicd-orchestrator
-      - release:
-          name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-          context: cicd-orchestrator
-          dry_run: << pipeline.parameters.dry_run >>
-          rc_requested: true
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
-          qualifier_label: gamma
-          requires:
-            - setup
-
   release-hotfix-version:
     when:
       and:
@@ -2194,7 +2168,6 @@ workflows:
             branches:
               only:
                 - master
-                - gamma
                 - /^\d\.\d+\.x$/
       - build:
           requires:
@@ -2203,7 +2176,6 @@ workflows:
             branches:
               only:
                 - master
-                - gamma
                 - /^\d\.\d+\.x$/
 
       - deploy-snapshot-on-nexus:
@@ -2224,7 +2196,6 @@ workflows:
             branches:
               only:
                 - master
-                - gamma
                 - /^\d\.\d+\.x$/
 
       - gitops-deploy:
@@ -2235,7 +2206,6 @@ workflows:
             branches:
               only:
                 - master
-                - gamma
                 - /^\d\.\d+\.x$/
 
       - aquasec/docker_image_scan:

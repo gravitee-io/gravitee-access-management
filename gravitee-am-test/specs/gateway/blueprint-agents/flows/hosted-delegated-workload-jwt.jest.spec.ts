@@ -172,7 +172,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
   });
 
   it('should allow multiple agent instance IDs with same blueprint', async () => {
-    const instances = ['instance-alpha', 'instance-beta', 'instance-gamma'];
+    const instances = ['instance-alpha', 'instance-beta', 'instance-alpha'];
 
     for (const instanceId of instances) {
       const assertion = signWorkloadJwt(instanceId);

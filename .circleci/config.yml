@@ -16,7 +16,7 @@ parameters:
         publish-images-azure-registry,
         release-version,
         release-alpha-version,
-        release-gamma-version,
+        release-alpha-version,
         release-hotfix-version,
       ]
     default: pull_requests
