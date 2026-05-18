@@ -142,6 +142,9 @@ abstract class BaseIntrospectionTokenService {
     private Single<AudienceMatch> resolveAudience(String domain, String audience) {
         return clientLookupService.findByDomainAndClientId(domain, audience)
                 .onErrorResumeNext(err -> {
+                    // CIMD lookups reject malformed/non-URL audiences with InvalidClientMetadataException;
+                    // treat as "not a CIMD client" and fall through to protected-resource matching.
+                    // Other errors (repository failures, etc.) must still propagate.
                     if (err instanceof InvalidClientMetadataException) {
                         LOGGER.debug("Introspection: audience [{}] not resolvable as a client via CIMD ({}); falling back to protected-resource validation",
                                 audience, err.getMessage());
