@@ -26,6 +26,12 @@ import { resetAllWireMockScenarios } from './fixtures/cimd-wiremock-helpers';
 import { executeCimdAuthCodeFlow } from './fixtures/cimd-auth-flow-helpers';
 import { waitFor } from '@management-commands/domain-management-commands';
 
+// Cache TTL configured on the revoke fixture is 1s; wait it out plus a safety buffer.
+const CACHE_TTL_EXPIRY_WAIT_MS = 1500;
+// Window over which we confirm an erroneous asynchronous revocation does NOT occur.
+const NO_REVOCATION_OBSERVATION_MS = 3000;
+const REVOCATION_POLL_INTERVAL_MS = 300;
+
 setup(200000);
 
 let fixture: CimdRevokeOnDocumentChangeFixture;
@@ -67,7 +73,7 @@ describe('CIMD revoke on document change', () => {
     expect(baseline.active).toBe(true);
 
     // Wait for the 1-second cache TTL to expire (plus a buffer).
-    await waitFor(2500);
+    await waitFor(CACHE_TTL_EXPIRY_WAIT_MS);
 
     // Trigger a new CIMD metadata fetch by initiating an authorization request.
     // The gateway will re-fetch the document (cache expired), receive V2 from WireMock
@@ -91,5 +97,51 @@ describe('CIMD revoke on document change', () => {
 
     const revoked = await fixture.introspectToken(accessToken);
     expect(revoked.active).toBe(false);
+  });
+
+  it('should NOT revoke an access token when the CIMD metadata document is unchanged after cache TTL expires', async () => {
+    // valid-none is a static WireMock stub (no scenario state) so every fetch returns an identical
+    // document. The monitored-properties hash must match across refreshes and tokens must survive.
+    const stableClientId = 'http://wiremock:8080/cimd/ENABLED_BASE/valid-none';
+    const stableFlowFixture = { ...fixture, clientId: stableClientId };
+
+    const code = await executeCimdAuthCodeFlow(stableFlowFixture);
+    const tokenResponse = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: fixture.redirectUri,
+        client_id: stableClientId,
+      }).toString(),
+      { 'Content-Type': 'application/x-www-form-urlencoded' },
+    ).expect(200);
+
+    const accessToken: string = tokenResponse.body.access_token;
+    expect(accessToken).toBeDefined();
+
+    const baseline = await fixture.introspectToken(accessToken);
+    expect(baseline.active).toBe(true);
+
+    // Let the 1-second cache TTL expire, then force a fresh fetch of the (unchanged) document.
+    await waitFor(CACHE_TTL_EXPIRY_WAIT_MS);
+    const triggerParams = new URLSearchParams({
+      response_type: 'code',
+      client_id: stableClientId,
+      redirect_uri: fixture.redirectUri,
+      scope: 'openid',
+      state: 'cimd-no-revoke-trigger',
+    });
+    await performGet(`${fixture.oidc.authorization_endpoint}?${triggerParams.toString()}`);
+
+    // Continuously assert the token stays active across the observation window. This catches an
+    // erroneous asynchronous revocation the moment it happens, rather than only at a single point.
+    const deadline = Date.now() + NO_REVOCATION_OBSERVATION_MS;
+    do {
+      const probe = await fixture.introspectToken(accessToken);
+      expect(probe.active).toBe(true);
+      await waitFor(REVOCATION_POLL_INTERVAL_MS);
+    } while (Date.now() < deadline);
   });
 });

@@ -556,6 +556,50 @@
           "request_object_signing_alg": "RS256"
         }
       }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/scope-intersection"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/scope-intersection",
+          "client_name": "CIMD Scope Intersection",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "scope": "openid profile email"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/grant-types-intersection"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/grant-types-intersection",
+          "client_name": "CIMD Grant Types Intersection",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "grant_types": [
+            "client_credentials"
+          ]
+        }
+      }
     }
   ],
   "importOptions": {
