@@ -73,8 +73,8 @@ export class SpiffeSettingsComponent implements OnInit {
         this.formChanged = false;
         this.snackbarService.open('SPIFFE configuration updated');
       },
-      error: (err) => {
-        const message = err?.error?.message || 'Failed to update SPIFFE configuration';
+      error: (err: unknown) => {
+        const message = (err as any)?.error?.message || 'Failed to update SPIFFE configuration';
         this.snackbarService.open(message);
       },
     });
