@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.common.client;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.ApplicationRepository;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -51,6 +53,9 @@ public class ClientSyncServiceTest {
 
     @Mock
     private ClientManager clientManager;
+
+    @Mock
+    private ApplicationRepository applicationRepository;
 
     @BeforeClass
     public static void initializeClients() {
@@ -110,6 +115,8 @@ public class ClientSyncServiceTest {
     public void setUp() {
         when(domain.getId()).thenReturn("domainA");
         when(clientManager.entities()).thenReturn(clientSet);
+        when(applicationRepository.findByDomainAndClientId(anyString(), anyString())).thenReturn(Maybe.empty());
+        when(applicationRepository.findById(anyString())).thenReturn(Maybe.empty());
     }
 
     @Test
