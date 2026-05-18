@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.spring;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
@@ -123,7 +124,7 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public ClientAssertionValidator jwtBearerClientAssertionValidator(ClientLookupService clientLookupService,
+    public ClientAssertionValidator jwtBearerClientAssertionValidator(@Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
                                                                       JWKService jwkService,
                                                                       JWSService jwsService,
                                                                       OpenIDDiscoveryService openIDDiscoveryService,
@@ -132,7 +133,7 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public ClientAssertionValidator agentJwtBearerClientAssertionValidator(ClientLookupService clientLookupService,
+    public ClientAssertionValidator agentJwtBearerClientAssertionValidator(@Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
                                                                            JWKService jwkService,
                                                                            JWSService jwsService,
                                                                            OpenIDDiscoveryService openIDDiscoveryService,
@@ -141,7 +142,7 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public ClientAssertionValidator spiffeClientAssertionValidator(ClientLookupService clientLookupService,
+    public ClientAssertionValidator spiffeClientAssertionValidator(@Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
                                                                    JWSService jwsService,
                                                                    OpenIDDiscoveryService openIDDiscoveryService,
                                                                    Domain domain,
