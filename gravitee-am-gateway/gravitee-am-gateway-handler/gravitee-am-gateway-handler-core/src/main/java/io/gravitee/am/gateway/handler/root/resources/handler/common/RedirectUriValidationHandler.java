@@ -30,10 +30,16 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
@@ -52,6 +58,8 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  * @author GraviteeSource Team
  */
 public class RedirectUriValidationHandler implements Handler<RoutingContext> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedirectUriValidationHandler.class);
 
     private final Domain domain;
     private final Function<String, Maybe<JWT>> tokenVerifier;
@@ -120,13 +128,79 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             List<String> registeredRedirectUris = domain.isRedirectUriExpressionLanguageEnabled() ?
                     getFilteredRegisteredRedirectUris(context) : getRegisteredRedirectUris(context);
             final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            // CIMD clients always require exact URI matching
-            final RedirectUriValidator.CheckMethod checkMethod = ClientIds.isUrlShaped(client.getClientId())
-                    ? this::checkExactRedirectUri
-                    : this::checkMatchingRedirectUri;
+            final boolean urlShaped = ClientIds.isUrlShaped(client.getClientId());
+            final boolean loopback = isLoopbackUri(requestedRedirectUri);
+            final boolean localhostAllowed = isLocalhostRedirectAllowed();
+            LOGGER.info("[redirect-uri-validation] client_id={} url_shaped={} requested={} loopback={} localhost_allowed={} registered={}",
+                    client.getClientId(), urlShaped, requestedRedirectUri, loopback, localhostAllowed, registeredRedirectUris);
+            // CIMD clients require exact URI matching, except for RFC 8252 §7.3
+            // loopback callbacks when the domain allows localhost redirects — there
+            // the port is ignored so native clients can pick an ephemeral one.
+            final RedirectUriValidator.CheckMethod checkMethod;
+            if (urlShaped) {
+                if (loopback && localhostAllowed) {
+                    checkMethod = this::checkLoopbackRedirectUri;
+                } else {
+                    checkMethod = this::checkExactRedirectUri;
+                }
+            } else {
+                checkMethod = this::checkMatchingRedirectUri;
+            }
             RedirectUriValidator validator = new RedirectUriValidator(checkMethod);
             validator.validate(registeredRedirectUris, requestedRedirectUri, operation);
         }
+    }
+
+    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "::1");
+
+    private static boolean isLoopbackUri(String uri) {
+        if (uri == null) {
+            return false;
+        }
+        try {
+            String host = new URI(uri).getHost();
+            return host != null && LOOPBACK_HOSTS.contains(host.toLowerCase());
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private boolean isLocalhostRedirectAllowed() {
+        return Optional.ofNullable(domain.getOidc())
+                .map(oidc -> oidc.getClientRegistrationSettings())
+                .map(settings -> settings.isAllowLocalhostRedirectUri())
+                .orElse(false);
+    }
+
+    private void checkLoopbackRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
+        if (registeredClientRedirectUris.stream().anyMatch(registered -> loopbackMatches(requestedRedirect, registered))) {
+            return;
+        }
+        throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST match the registered callback URL for this application", requestedRedirect));
+    }
+
+    private static boolean loopbackMatches(String requested, String registered) {
+        if (!isLoopbackUri(registered)) {
+            LOGGER.info("[redirect-uri-validation] candidate registered={} skipped (not loopback)", registered);
+            return false;
+        }
+        try {
+            URI req = new URI(requested);
+            URI reg = new URI(registered);
+            boolean schemeMatch = Objects.equals(req.getScheme(), reg.getScheme());
+            boolean hostMatch = Objects.equals(normalizeHost(req.getHost()), normalizeHost(reg.getHost()));
+            boolean pathMatch = Objects.equals(req.getPath(), reg.getPath());
+            LOGGER.info("[redirect-uri-validation] candidate registered={} scheme={} host={} path={}",
+                    registered, schemeMatch, hostMatch, pathMatch);
+            return schemeMatch && hostMatch && pathMatch;
+        } catch (URISyntaxException e) {
+            LOGGER.info("[redirect-uri-validation] candidate registered={} parse error: {}", registered, e.getMessage());
+            return false;
+        }
+    }
+
+    private static String normalizeHost(String host) {
+        return host == null ? null : host.toLowerCase();
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
