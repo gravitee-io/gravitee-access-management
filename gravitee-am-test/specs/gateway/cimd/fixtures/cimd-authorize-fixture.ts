@@ -50,7 +50,14 @@ const CIMD_TEST_USER = {
   email: 'cimd.user@test.com',
 };
 
-export type CimdAuthorizeProfile = 'ENABLED_BASE' | 'ENABLED_TIMEOUT' | 'ENABLED_MAXSIZE' | 'DISABLED_BASE';
+export type CimdAuthorizeProfile =
+  | 'ENABLED_BASE'
+  | 'ENABLED_TIMEOUT'
+  | 'ENABLED_MAXSIZE'
+  | 'DISABLED_BASE'
+  | 'ENABLED_DOMAIN_DENY'
+  | 'ENABLED_HTTPS_ONLY'
+  | 'ENABLED_PRIVATE_IP_DENY';
 
 const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
   ENABLED_BASE: {
@@ -91,6 +98,39 @@ const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
     fetchTimeoutMs: 1500,
     maxResponseSizeKb: 10,
   },
+  ENABLED_DOMAIN_DENY: {
+    enabled: true,
+    allowUnsecuredHttpUri: true,
+    allowPrivateIpAddress: true,
+    allowedDomains: ['trusted.example.com'],
+    fetchTimeoutMs: 1500,
+    maxResponseSizeKb: 10,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
+  },
+  // Unsecured http client_id must be rejected when only https is allowed.
+  ENABLED_HTTPS_ONLY: {
+    enabled: true,
+    allowUnsecuredHttpUri: false,
+    allowPrivateIpAddress: true,
+    allowedDomains: [],
+    fetchTimeoutMs: 1500,
+    maxResponseSizeKb: 10,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
+  },
+  // SSRF guard: the CIMD host ("wiremock") resolves to a private Docker IP, so with
+  // private addresses disallowed the metadata fetch must be rejected.
+  ENABLED_PRIVATE_IP_DENY: {
+    enabled: true,
+    allowUnsecuredHttpUri: true,
+    allowPrivateIpAddress: false,
+    allowedDomains: [],
+    fetchTimeoutMs: 1500,
+    maxResponseSizeKb: 10,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
+  },
 };
 
 type OAuthAuthorizeError = {
@@ -112,23 +152,35 @@ export interface CimdAuthorizeFixture extends Fixture {
   user: any;
   buildClientId: (clientId: string) => string;
   buildAuthorizeUrl: (clientId: string, redirectUri?: string) => string;
-  authorize: (clientId: string, redirectUri?: string) => Promise<any>;
+  authorize: (clientId: string, redirectUri?: string, extraParams?: AuthorizeExtraParams) => Promise<any>;
   fetchCimdLogo: (clientId?: string) => ReturnType<typeof performGet>;
   readOAuthError: (response: any) => OAuthAuthorizeError;
   expectInvalidClientMetadata: (response: any, messagePart: string) => void;
   expectInvalidRequest: (response: any, messagePart: string) => void;
   expectLoginRedirect: (response: any) => void;
-  completeAuthorizationCodeFlow: (clientId: string, redirectUri?: string) => Promise<string>;
-  exchangeAuthCodeForToken: (code: string, clientId: string, redirectUri?: string) => Promise<any>;
+  loginAndGetCallbackLocation: (clientId: string, redirectUri?: string, extraParams?: AuthorizeExtraParams) => Promise<string>;
+  completeAuthorizationCodeFlow: (clientId: string, redirectUri?: string, extraParams?: AuthorizeExtraParams) => Promise<string>;
+  exchangeAuthCodeForToken: (code: string, clientId: string, redirectUri?: string, extraParams?: Record<string, string>) => Promise<any>;
+  exchangeAuthCodeForTokenExpectingError: (
+    code: string,
+    clientId: string,
+    redirectUri?: string,
+    extraParams?: Record<string, string>,
+  ) => Promise<any>;
   exchangeAuthCodeForTokenWithPrivateKeyJwt: (code: string, clientId: string, redirectUri?: string) => Promise<any>;
   revokeAccessToken: (token: string, clientId: string) => Promise<void>;
   introspectToken: (token: string) => Promise<any>;
   introspectTokenWithPrivateKeyJwt: (token: string, clientId: string) => Promise<any>;
+  fetchUserInfo: (accessToken: string) => Promise<any>;
 }
 
 const buildClientId = (profile: CimdAuthorizeProfile, scenario: string): string => `http://wiremock:8080/cimd/${profile}/${scenario}`;
 
-const buildAuthorizeUrl = (endpoint: string, clientId: string, redirectUri: string): string => {
+/** Extra query parameters that can be layered onto the base authorize request (PKCE, nonce, scope override...). */
+export type AuthorizeExtraParams = Partial<Record<'scope' | 'nonce' | 'state' | 'code_challenge' | 'code_challenge_method', string>> &
+  Record<string, string>;
+
+const buildAuthorizeUrl = (endpoint: string, clientId: string, redirectUri: string, extraParams: AuthorizeExtraParams = {}): string => {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
@@ -136,6 +188,12 @@ const buildAuthorizeUrl = (endpoint: string, clientId: string, redirectUri: stri
     scope: 'openid',
     state: 'cimd-state',
   });
+
+  for (const [key, value] of Object.entries(extraParams)) {
+    if (value !== undefined) {
+      params.set(key, value);
+    }
+  }
 
   return `${endpoint}?${params.toString()}`;
 };
@@ -256,8 +314,8 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
     await startDomain(domain.id, accessToken);
     const startedDomain = await waitForDomainStart(domain);
 
-    const authorize = async (clientId: string, redirectUri = CIMD_REDIRECT_URI) =>
-      performGet(buildAuthorizeUrl(startedDomain.oidcConfig.authorization_endpoint, clientId, redirectUri)).expect(302);
+    const authorize = async (clientId: string, redirectUri = CIMD_REDIRECT_URI, extraParams: AuthorizeExtraParams = {}) =>
+      performGet(buildAuthorizeUrl(startedDomain.oidcConfig.authorization_endpoint, clientId, redirectUri, extraParams)).expect(302);
 
     const fetchCimdLogo = (clientId?: string) => {
       const base = `${process.env.AM_GATEWAY_URL}/${startedDomain.domain.hrid}/cimd/logo`;
@@ -284,32 +342,61 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       expect(location).not.toContain('error=');
     };
 
-    const completeAuthorizationCodeFlow = async (clientId: string, redirectUri = CIMD_REDIRECT_URI): Promise<string> => {
+    // Runs the authorize + login hops and returns the post-authentication callback location.
+    // OAuth validations such as invalid_scope surface here (after login), not on the initial GET.
+    const loginAndGetCallbackLocation = async (
+      clientId: string,
+      redirectUri = CIMD_REDIRECT_URI,
+      extraParams: AuthorizeExtraParams = {},
+    ): Promise<string> => {
       const authResponse = await performGet(
-        buildAuthorizeUrl(startedDomain.oidcConfig.authorization_endpoint, clientId, redirectUri),
+        buildAuthorizeUrl(startedDomain.oidcConfig.authorization_endpoint, clientId, redirectUri, extraParams),
       ).expect(302);
       const postLogin = await login(authResponse, CIMD_TEST_USER.username, clientId, CIMD_TEST_USER.password, false, false);
       const callbackResponse = await performGet(postLogin.headers['location'], '', {
         Cookie: postLogin.headers['set-cookie'],
       }).expect(302);
-      const callbackLocation = callbackResponse.headers['location'];
+      return callbackResponse.headers['location'];
+    };
+
+    const completeAuthorizationCodeFlow = async (
+      clientId: string,
+      redirectUri = CIMD_REDIRECT_URI,
+      extraParams: AuthorizeExtraParams = {},
+    ): Promise<string> => {
+      const callbackLocation = await loginAndGetCallbackLocation(clientId, redirectUri, extraParams);
       expect(callbackLocation).toContain(redirectUri);
       const codeMatch = /[?&]code=([-_a-zA-Z0-9]+)/.exec(callbackLocation);
       expect(codeMatch).toBeTruthy();
       return codeMatch![1];
     };
 
-    const exchangeAuthCodeForToken = async (code: string, clientId: string, redirectUri = CIMD_REDIRECT_URI): Promise<any> => {
+    const requestTokenRaw = (code: string, clientId: string, redirectUri: string, extraParams: Record<string, string>) => {
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
         code,
         redirect_uri: redirectUri,
         client_id: clientId,
+        ...extraParams,
       });
       return performPost(startedDomain.oidcConfig.token_endpoint, '', params.toString(), {
         'Content-Type': 'application/x-www-form-urlencoded',
-      }).expect(200);
+      });
     };
+
+    const exchangeAuthCodeForToken = async (
+      code: string,
+      clientId: string,
+      redirectUri = CIMD_REDIRECT_URI,
+      extraParams: Record<string, string> = {},
+    ): Promise<any> => requestTokenRaw(code, clientId, redirectUri, extraParams).expect(200);
+
+    const exchangeAuthCodeForTokenExpectingError = async (
+      code: string,
+      clientId: string,
+      redirectUri = CIMD_REDIRECT_URI,
+      extraParams: Record<string, string> = {},
+    ): Promise<any> => requestTokenRaw(code, clientId, redirectUri, extraParams);
 
     const appendPrivateKeyJwtAuthentication = async (params: URLSearchParams, clientId: string): Promise<URLSearchParams> => {
       params.set('client_id', clientId);
@@ -378,6 +465,13 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       return response.body;
     };
 
+    const fetchUserInfo = async (token: string): Promise<any> => {
+      const response = await performGet(startedDomain.oidcConfig.userinfo_endpoint, '', {
+        Authorization: 'Bearer ' + token,
+      }).expect(200);
+      return response.body;
+    };
+
     return {
       profile,
       accessToken,
@@ -398,12 +492,15 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       expectInvalidClientMetadata,
       expectInvalidRequest,
       expectLoginRedirect,
+      loginAndGetCallbackLocation,
       completeAuthorizationCodeFlow,
       exchangeAuthCodeForToken,
+      exchangeAuthCodeForTokenExpectingError,
       exchangeAuthCodeForTokenWithPrivateKeyJwt,
       revokeAccessToken,
       introspectToken,
       introspectTokenWithPrivateKeyJwt,
+      fetchUserInfo,
       cleanUp: async () => {
         await safeDeleteDomain(domain?.id, accessToken);
       },

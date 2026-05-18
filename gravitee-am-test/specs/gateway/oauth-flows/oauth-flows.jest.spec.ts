@@ -25,7 +25,7 @@ import { applicationBase64Token } from '@gateway-commands/utils';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { OAuth2Fixture, setupFixture, assertGeneratedToken } from '../oauth2/fixture/oauth2-fixture';
-import crypto from 'crypto';
+import { generatePkcePair } from '@utils-commands/pkce';
 
 setup(200000);
 
@@ -153,14 +153,12 @@ describe('OAuth Grant Flows — Regression Suite', () => {
     });
 
     it(jira`should complete auth code + PKCE (S256) flow ${'AM-2238'}`, async () => {
-      // Generate PKCE code_verifier and code_challenge
-      const codeVerifier = crypto.randomBytes(32).toString('base64url');
-      const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+      const { codeVerifier, codeChallenge, codeChallengeMethod } = generatePkcePair();
 
       const { code, lastRedirect } = await executeAuthCodeFlow(
         fixture,
         user,
-        `code_challenge=${codeChallenge}&code_challenge_method=S256`,
+        `code_challenge=${codeChallenge}&code_challenge_method=${codeChallengeMethod}`,
       );
 
       // Exchange code for token with code_verifier
