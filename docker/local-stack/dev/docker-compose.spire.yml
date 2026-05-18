@@ -27,9 +27,25 @@
 #
 
 services:
+  # One-shot init: pre-chowns the spire-server data volume so the server can
+  # run as a non-root user (1000:1000) and the bootstrap/agent containers
+  # can read the UDS that the server writes into the shared volume.
+  spire-perms-init:
+    image: alpine:3.19
+    command: ["sh", "-c", "mkdir -p /data /shared && chown -R 1000:1000 /data /shared && chmod 0755 /data /shared"]
+    volumes:
+      - spire-server-data:/data
+      - spire-shared:/shared
+
   spire-server:
     image: ghcr.io/spiffe/spire-server:1.9.6
+    # Run as the same unprivileged uid as the bootstrap/agent containers so
+    # they can read the server-created UDS in the shared volume.
+    user: "1000:1000"
     command: ["-config", "/run/spire/config/server.conf"]
+    depends_on:
+      spire-perms-init:
+        condition: service_completed_successfully
     volumes:
       - ./spire/server.conf:/run/spire/config/server.conf:ro
       - spire-server-data:/run/spire/data
@@ -69,6 +85,10 @@ services:
 
   spire-oidc:
     image: ghcr.io/spiffe/oidc-discovery-provider:1.9.6
+    # Run as the same uid as spire-agent so the unix workload attestor can
+    # readlink /proc/<pid>/exe; otherwise SPIRE's path-discovery step is
+    # denied for cross-uid processes.
+    user: "1000:1000"
     depends_on:
       spire-agent:
         condition: service_healthy
