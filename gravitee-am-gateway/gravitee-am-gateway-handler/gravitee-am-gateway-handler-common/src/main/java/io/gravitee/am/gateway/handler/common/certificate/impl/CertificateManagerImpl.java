@@ -298,10 +298,12 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private void initDefaultCertificateProvider() throws InvalidKeyException {
         this.defaultCertificateProvider = certificateProviderManager.create(CertificateProviders.createShaCertificateProvider(signingKeyId(), signingKeySecret()));
+        this.defaultCertificateProvider.setDomain(domain.getId());
     }
 
     private void initNoneAlgorithmCertificateProvider() {
         this.noneAlgorithmCertificateProvider = certificateProviderManager.create(CertificateProviders.createNoneCertificateProvider());
+        this.noneAlgorithmCertificateProvider.setDomain(domain.getId());
     }
 
     private void initCertificateSettings() {
