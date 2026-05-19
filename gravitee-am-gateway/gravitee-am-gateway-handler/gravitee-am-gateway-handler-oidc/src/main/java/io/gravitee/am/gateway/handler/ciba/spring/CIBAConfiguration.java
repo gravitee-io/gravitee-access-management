@@ -21,11 +21,14 @@ import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,7 +38,7 @@ import org.springframework.context.annotation.Configuration;
 public class CIBAConfiguration implements ProtocolConfiguration {
 
     @Bean
-    public ClientAssertionService clientAssertionService(java.util.List<io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator> validators) {
+    public ClientAssertionService clientAssertionService(List<ClientAssertionValidator> validators) {
         return new ClientAssertionServiceImpl(validators);
     }
     

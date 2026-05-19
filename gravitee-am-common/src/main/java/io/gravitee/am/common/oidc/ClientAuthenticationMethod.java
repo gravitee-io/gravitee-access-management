@@ -82,7 +82,7 @@ public interface ClientAuthenticationMethod {
      * URN to identify a ClientAssertion issued by an agent instance under a blueprint application.
      * The JWT {@code iss} is the blueprint {@code client_id}; {@code sub} is the agent instance id.
      */
-    String AGENT_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer";
+    String AGENT_JWT_BEARER = "urn:gravitee:params:oauth:client-assertion-type:agent-jwt-bearer";
 
     /**
      * Client authenticates with a SPIFFE JWT-SVID verified against a configured trust domain.

@@ -81,56 +81,54 @@ public class AgentJwtBearerClientAssertionValidator implements ClientAssertionVa
     }
 
     private Maybe<Client> validateAgentAssertion(JWT jwt, String basePath) {
-        return Maybe.defer(() -> {
-            if (!(jwt instanceof SignedJWT signedJWT)) {
-                return Maybe.error(NOT_VALID);
-            }
+        if (!(jwt instanceof SignedJWT signedJWT)) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            final JWTClaimsSet claims;
-            try {
-                claims = jwt.getJWTClaimsSet();
-            } catch (ParseException ex) {
-                log.debug("Failed to parse agent jwt-bearer assertion claims: {}", ex.getMessage());
-                return Maybe.error(NOT_VALID);
-            }
+        final JWTClaimsSet claims;
+        try {
+            claims = jwt.getJWTClaimsSet();
+        } catch (ParseException ex) {
+            log.debug("Failed to parse agent jwt-bearer assertion claims: {}", ex.getMessage());
+            return Maybe.error(NOT_VALID);
+        }
 
-            String iss = claims.getIssuer();
-            String sub = claims.getSubject();
-            List<String> aud = claims.getAudience();
-            Date exp = claims.getExpirationTime();
+        String iss = claims.getIssuer();
+        String sub = claims.getSubject();
+        List<String> aud = claims.getAudience();
+        Date exp = claims.getExpirationTime();
 
-            if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty()
-                    || aud == null || aud.isEmpty() || exp == null) {
-                return Maybe.error(NOT_VALID);
-            }
+        if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty()
+                || aud == null || aud.isEmpty() || exp == null) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            if (exp.toInstant().isBefore(Instant.now())) {
-                return Maybe.error(new InvalidClientException("assertion has expired"));
-            }
+        if (exp.toInstant().isBefore(Instant.now())) {
+            return Maybe.error(new InvalidClientException("assertion has expired"));
+        }
 
-            if (this.domain.usePlainFapiProfile()
-                    && !isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
-                return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
-            }
+        if (this.domain.usePlainFapiProfile()
+                && !isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
+            return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
+        }
 
-            // Per the Agent Identity proposal, the audience for a workload jwt-bearer
-            // assertion MUST be the AM token endpoint — not the base issuer or PAR
-            // endpoint. Discovery + token endpoint are always available (derived from
-            // basePath), so no null guard is required.
-            String tokenEndpoint = openIDDiscoveryService.getConfiguration(basePath).getTokenEndpoint();
-            if (aud.stream().noneMatch(tokenEndpoint::equals)) {
-                return Maybe.error(NOT_VALID);
-            }
+        // Per the Agent Identity proposal, the audience for a workload jwt-bearer
+        // assertion MUST be the AM token endpoint — not the base issuer or PAR
+        // endpoint. Discovery + token endpoint are always available (derived from
+        // basePath), so no null guard is required.
+        String tokenEndpoint = openIDDiscoveryService.getConfiguration(basePath).getTokenEndpoint();
+        if (aud.stream().noneMatch(tokenEndpoint::equals)) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            String kid = signedJWT.getHeader().getKeyID();
+        String kid = signedJWT.getHeader().getKeyID();
 
-            // For URL-shaped iss the CIMD-aware lookup resolves a synthesized client via
-            // the domain's CIMD metadata flow.
-            return clientLookupService.findByClientId(iss)
-                    .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
-                    .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid))
-                    .map(blueprint -> buildAgentClient(blueprint, sub));
-        });
+        // For URL-shaped iss the CIMD-aware lookup resolves a synthesized client via
+        // the domain's CIMD metadata flow.
+        return clientLookupService.findByClientId(iss)
+                .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
+                .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid))
+                .map(blueprint -> buildAgentClient(blueprint, sub));
     }
 
     private Maybe<Client> verifyAgentBlueprint(Client blueprint, SignedJWT signedJWT, String kid) {
