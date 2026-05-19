@@ -25,7 +25,7 @@ import jwt from 'jsonwebtoken';
 
 setup(180000);
 
-const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer';
+const JWT_BEARER_TYPE = 'urn:gravitee:params:oauth:client-assertion-type:agent-jwt-bearer';
 const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
 

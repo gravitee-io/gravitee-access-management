@@ -23,7 +23,7 @@ import crypto from 'crypto';
 
 setup(120000);
 
-const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer';
+const JWT_BEARER_TYPE = 'urn:gravitee:params:oauth:client-assertion-type:agent-jwt-bearer';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('Blueprint Agent — Workload-JWT Assertion', () => {
