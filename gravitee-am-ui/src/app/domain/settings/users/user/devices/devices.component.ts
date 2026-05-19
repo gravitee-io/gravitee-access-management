@@ -80,11 +80,8 @@ export class UserDevicesComponent implements OnInit {
           filter((res) => res),
           switchMap(() => this.userService.removeDevice(this.domainId, this.user.id, device.id)),
           tap(() => {
-            this.snackbarService.open('Device has been deleted deleted');
-            const index = this.devices.indexOf(device);
-            if (index > -1) {
-              this.devices.splice(index, 1);
-            }
+            this.snackbarService.open('Device has been deleted');
+            this.devices = this.devices.filter((d) => d !== device);
           }),
         )
         .subscribe();
