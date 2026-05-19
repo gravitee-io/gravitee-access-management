@@ -80,7 +80,7 @@ public class ClientAssertionServiceTest {
 
     private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     private static final String JWT_SPIFFE_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-spiffe";
-    private static final String AGENT_JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:agent-jwt-bearer";
+    private static final String AGENT_JWT_BEARER_TYPE = "urn:gravitee:params:oauth:client-assertion-type:agent-jwt-bearer";
     private static final String CLIENT_ID = "clientIdentifier";
     private static final String AGENT_INSTANCE_ID = "agent-instance-42";
     private static final String ISSUER = CLIENT_ID;
