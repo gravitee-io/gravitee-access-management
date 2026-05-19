@@ -35,13 +35,11 @@ final class JwtAssertionSupport {
     }
 
     static Maybe<JWT> parseJwt(String assertion) {
-        return Maybe.defer(() -> {
-            try {
-                return Maybe.just(JWTParser.parse(assertion));
-            } catch (ParseException pe) {
-                return Maybe.error(NOT_VALID);
-            }
-        });
+        try {
+            return Maybe.just(JWTParser.parse(assertion));
+        } catch (ParseException pe) {
+            return Maybe.error(NOT_VALID);
+        }
     }
 
     static InvalidClientException unableToValidateClient() {

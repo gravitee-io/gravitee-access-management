@@ -88,31 +88,35 @@ public class JwtBearerClientAssertionValidator implements ClientAssertionValidat
     }
 
     private Maybe<Client> dispatch(JWT jwt, String basePath) {
-        return Maybe.defer(() -> {
+        final String iss;
+        final String sub;
+        try {
             JWTClaimsSet claims = jwt.getJWTClaimsSet();
-            String iss = claims.getIssuer();
-            String sub = claims.getSubject();
+            iss = claims.getIssuer();
+            sub = claims.getSubject();
+        } catch (ParseException ex) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            // SPIFFE JWT-SVID on the jwt-bearer assertion type is a client misconfiguration.
-            if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
-                return Maybe.error(new InvalidClientException(
-                        "SPIFFE JWT-SVID must be sent with client_assertion_type="
-                                + ClientAuthenticationMethod.JWT_SPIFFE));
-            }
+        // SPIFFE JWT-SVID on the jwt-bearer assertion type is a client misconfiguration.
+        if (SpiffeJwtSvidValidator.isSpiffeId(sub)) {
+            return Maybe.error(new InvalidClientException(
+                    "SPIFFE JWT-SVID must be sent with client_assertion_type="
+                            + ClientAuthenticationMethod.JWT_SPIFFE));
+        }
 
-            // Strict RFC 7523: iss MUST equal sub for private_key_jwt / client_secret_jwt.
-            if (iss == null || !iss.equals(sub)) {
-                return Maybe.error(NOT_VALID);
-            }
+        // Strict RFC 7523: iss MUST equal sub for private_key_jwt / client_secret_jwt.
+        if (iss == null || !iss.equals(sub)) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            return validateJWT(jwt, basePath)
-                    .flatMap(validated -> {
-                        if (JWSAlgorithm.Family.HMAC_SHA.contains(validated.getHeader().getAlgorithm())) {
-                            return validateSignatureWithHMAC(validated);
-                        }
-                        return validateSignatureWithPublicKey(validated);
-                    });
-        });
+        return validateJWT(jwt, basePath)
+                .flatMap(validated -> {
+                    if (JWSAlgorithm.Family.HMAC_SHA.contains(validated.getHeader().getAlgorithm())) {
+                        return validateSignatureWithHMAC(validated);
+                    }
+                    return validateSignatureWithPublicKey(validated);
+                });
     }
 
     /**
@@ -120,128 +124,130 @@ public class JwtBearerClientAssertionValidator implements ClientAssertionValidat
      * See <a href="https://tools.ietf.org/html/rfc7523#section-3">RFC 7523 §3</a>.
      */
     private Maybe<JWT> validateJWT(JWT jwt, String basePath) {
-        return Maybe.defer(() -> {
+        final String iss;
+        final String sub;
+        final List<String> aud;
+        final Date exp;
+        try {
             JWTClaimsSet claims = jwt.getJWTClaimsSet();
-            String iss = claims.getIssuer();
-            String sub = claims.getSubject();
-            List<String> aud = claims.getAudience();
-            Date exp = claims.getExpirationTime();
+            iss = claims.getIssuer();
+            sub = claims.getSubject();
+            aud = claims.getAudience();
+            exp = claims.getExpirationTime();
+        } catch (ParseException ex) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty()
-                    || aud == null || aud.isEmpty() || exp == null) {
-                return Maybe.error(NOT_VALID);
-            }
+        if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty()
+                || aud == null || aud.isEmpty() || exp == null) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            if (exp.before(Date.from(Instant.now()))) {
-                return Maybe.error(new InvalidClientException("assertion has expired"));
-            }
+        if (exp.before(Date.from(Instant.now()))) {
+            return Maybe.error(new InvalidClientException("assertion has expired"));
+        }
 
-            OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
-            if (discovery == null || discovery.getTokenEndpoint() == null) {
-                return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
-            }
+        OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
+        if (discovery == null || discovery.getTokenEndpoint() == null) {
+            return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
+        }
 
-            // OIDC: "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint."
-            // PAR allows Issuer, Token endpoint, or PAR endpoint.
-            boolean audMatches = aud.stream().anyMatch(discovery.getTokenEndpoint()::equals)
-                    || (discovery.getIssuer() != null && aud.stream().anyMatch(discovery.getIssuer()::equals))
-                    || (discovery.getParEndpoint() != null && aud.stream().anyMatch(discovery.getParEndpoint()::equals))
-                    || (discovery.getBackchannelAuthenticationEndpoint() != null
-                            && aud.stream().anyMatch(discovery.getBackchannelAuthenticationEndpoint()::equals));
-            if (!audMatches) {
-                return Maybe.error(NOT_VALID);
-            }
+        // OIDC: "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint."
+        // PAR allows Issuer, Token endpoint, or PAR endpoint.
+        boolean audMatches = aud.stream().anyMatch(discovery.getTokenEndpoint()::equals)
+                || (discovery.getIssuer() != null && aud.stream().anyMatch(discovery.getIssuer()::equals))
+                || (discovery.getParEndpoint() != null && aud.stream().anyMatch(discovery.getParEndpoint()::equals))
+                || (discovery.getBackchannelAuthenticationEndpoint() != null
+                        && aud.stream().anyMatch(discovery.getBackchannelAuthenticationEndpoint()::equals));
+        if (!audMatches) {
+            return Maybe.error(NOT_VALID);
+        }
 
-            if (this.domain.usePlainFapiProfile()
-                    && !isSignAlgCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
-                return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
-            }
+        if (this.domain.usePlainFapiProfile()
+                && !isSignAlgCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
+            return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
+        }
 
-            return Maybe.just(jwt);
-        });
+        return Maybe.just(jwt);
     }
 
     private Maybe<Client> validateSignatureWithPublicKey(JWT jwt) {
-        return Maybe.defer(() -> {
-            final SignedJWT signedJWT;
-            final String clientId;
-            try {
-                signedJWT = (SignedJWT) jwt;
-                clientId = jwt.getJWTClaimsSet().getSubject();
-            } catch (ClassCastException | ParseException ex) {
-                log.error(ex.getMessage(), ex);
-                return Maybe.error(NOT_VALID);
-            } catch (IllegalArgumentException ex) {
-                return Maybe.error(new InvalidClientException(ex.getMessage()));
-            }
+        final SignedJWT signedJWT;
+        final String clientId;
+        try {
+            signedJWT = (SignedJWT) jwt;
+            clientId = jwt.getJWTClaimsSet().getSubject();
+        } catch (ClassCastException | ParseException ex) {
+            log.error(ex.getMessage(), ex);
+            return Maybe.error(NOT_VALID);
+        } catch (IllegalArgumentException ex) {
+            return Maybe.error(new InvalidClientException(ex.getMessage()));
+        }
 
-            return clientLookupService.findByClientId(clientId)
-                    .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
-                    .flatMap(client -> {
-                        if (client.getTokenEndpointAuthMethod() != null &&
-                                !ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
-                            return Maybe.error(new InvalidClientException(
-                                    "Invalid client: missing or unsupported authentication method"));
-                        }
-                        return getClientJwkSet(client)
-                                .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
-                                .flatMap(jwkSet -> jwkService.getKey(jwkSet, signedJWT.getHeader().getKeyID()))
-                                .switchIfEmpty(Maybe.error(new InvalidClientException(
-                                        "Unable to validate client, no matching key.")))
-                                .flatMap(jwk -> {
-                                    if (jwsService.isValidSignature(signedJWT, jwk)) {
-                                        return Maybe.just(client);
-                                    }
-                                    return Maybe.error(unableToValidateClient());
-                                });
-                    });
-        });
+        return clientLookupService.findByClientId(clientId)
+                .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
+                .flatMap(client -> {
+                    if (client.getTokenEndpointAuthMethod() != null &&
+                            !ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                        return Maybe.error(new InvalidClientException(
+                                "Invalid client: missing or unsupported authentication method"));
+                    }
+                    return getClientJwkSet(client)
+                            .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
+                            .flatMap(jwkSet -> jwkService.getKey(jwkSet, signedJWT.getHeader().getKeyID()))
+                            .switchIfEmpty(Maybe.error(new InvalidClientException(
+                                    "Unable to validate client, no matching key.")))
+                            .flatMap(jwk -> {
+                                if (jwsService.isValidSignature(signedJWT, jwk)) {
+                                    return Maybe.just(client);
+                                }
+                                return Maybe.error(unableToValidateClient());
+                            });
+                });
     }
 
     private Maybe<Client> validateSignatureWithHMAC(JWT jwt) {
-        return Maybe.defer(() -> {
-            Algorithm algorithm = jwt.getHeader().getAlgorithm();
-            if (!(algorithm instanceof JWSAlgorithm)) {
-                return Maybe.error(unableToValidateClient());
-            }
-            JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(algorithm.getName());
-            if (jwsAlgorithm != JWSAlgorithm.HS256 && jwsAlgorithm != JWSAlgorithm.HS384 && jwsAlgorithm != JWSAlgorithm.HS512) {
-                return Maybe.error(unableToValidateClient());
-            }
+        Algorithm algorithm = jwt.getHeader().getAlgorithm();
+        if (!(algorithm instanceof JWSAlgorithm)) {
+            return Maybe.error(unableToValidateClient());
+        }
+        JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(algorithm.getName());
+        if (jwsAlgorithm != JWSAlgorithm.HS256 && jwsAlgorithm != JWSAlgorithm.HS384 && jwsAlgorithm != JWSAlgorithm.HS512) {
+            return Maybe.error(unableToValidateClient());
+        }
 
-            final SignedJWT signedJWT;
-            final String clientId;
-            try {
-                signedJWT = (SignedJWT) jwt;
-                clientId = jwt.getJWTClaimsSet().getSubject();
-            } catch (ClassCastException | ParseException ex) {
-                log.error(ex.getMessage(), ex);
-                return Maybe.error(NOT_VALID);
-            } catch (IllegalArgumentException ex) {
-                return Maybe.error(new InvalidClientException(ex.getMessage()));
-            }
+        final SignedJWT signedJWT;
+        final String clientId;
+        try {
+            signedJWT = (SignedJWT) jwt;
+            clientId = jwt.getJWTClaimsSet().getSubject();
+        } catch (ClassCastException | ParseException ex) {
+            log.error(ex.getMessage(), ex);
+            return Maybe.error(NOT_VALID);
+        } catch (IllegalArgumentException ex) {
+            return Maybe.error(new InvalidClientException(ex.getMessage()));
+        }
 
-            return clientLookupService.findByClientId(clientId)
-                    .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
-                    .flatMap(client -> {
-                        if (client.getTokenEndpointAuthMethod() != null &&
-                                !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
-                            return Maybe.error(new InvalidClientException(
-                                    "Invalid client: missing or unsupported authentication method"));
+        return clientLookupService.findByClientId(clientId)
+                .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
+                .flatMap(client -> {
+                    if (client.getTokenEndpointAuthMethod() != null &&
+                            !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                        return Maybe.error(new InvalidClientException(
+                                "Invalid client: missing or unsupported authentication method"));
+                    }
+                    try {
+                        if (verifyJws(client, signedJWT)) {
+                            return Maybe.just(client);
                         }
-                        try {
-                            if (verifyJws(client, signedJWT)) {
-                                return Maybe.just(client);
-                            }
-                            return Maybe.error(new InvalidClientException(
-                                    "Invalid client: JWT signature verification failed"));
-                        } catch (JOSEException josee) {
-                            log.error("Error validating signature: {}", josee.getMessage(), josee);
-                            return Maybe.error(new InvalidClientException(
-                                    "Error validating client JWT signature", josee));
-                        }
-                    });
-        });
+                        return Maybe.error(new InvalidClientException(
+                                "Invalid client: JWT signature verification failed"));
+                    } catch (JOSEException josee) {
+                        log.error("Error validating signature: {}", josee.getMessage(), josee);
+                        return Maybe.error(new InvalidClientException(
+                                "Error validating client JWT signature", josee));
+                    }
+                });
     }
 
     private static boolean verifyJws(Client client, SignedJWT signedJWT) throws JOSEException {
