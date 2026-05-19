@@ -150,21 +150,16 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType) {
-        String certificateId = extractKid(jwt).orElseGet(() -> getDefaultCertificateId != null ? getDefaultCertificateId.get() : null);
-        if (certificateId == null) {
-            return Single.error(new IllegalArgumentException("Certificate identifier is required"));
+        if (getDefaultCertificateId == null) {
+            return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
         }
-        return certificateManager.get(certificateId)
-                .switchIfEmpty(Single.defer(() -> {
-                    logger.warn("Falling back to default certificate provider for certificateId: {}", certificateId);
-                    return Single.just(certificateManager.defaultCertificateProvider());
-                }))
-                .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
-    }
+        String kid = extractKid(jwt).orElse(null);
 
-    @Override
-    public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
-        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
+        return certificateManager.get(kid)
+                .switchIfEmpty(Single.defer(() -> {
+                    logger.warn("Falling back to default certificate provider for certificateId: {}", kid);
+                    return certificateManager.getClientCertificateProvider(getDefaultCertificateId.get(), fallbackToHmacSignature);
+                }))
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
     }
 

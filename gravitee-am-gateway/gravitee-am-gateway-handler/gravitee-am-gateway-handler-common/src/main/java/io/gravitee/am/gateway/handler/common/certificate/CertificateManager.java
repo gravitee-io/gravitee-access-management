@@ -43,17 +43,21 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
     CertificateProvider noneAlgorithmCertificateProvider();
 
     default Single<CertificateProvider> getClientCertificateProvider(Client client, boolean fallbackToHmacSignature) {
-        if (client.getCertificate() == null) {
+        return getClientCertificateProvider(client.getCertificate(), fallbackToHmacSignature);
+    }
+
+    default Single<CertificateProvider> getClientCertificateProvider(String certificateId, boolean fallbackToHmacSignature) {
+        if (certificateId== null) {
             return Single.just(defaultCertificateProvider());
         }
 
-        return get(client.getCertificate())
+        return get(certificateId)
                 .switchIfEmpty(Maybe.defer(() ->
                         fallbackCertificateProvider()
                                 .doOnSuccess(fallback -> {
                                     Logger logger = LoggerFactory.getLogger(this.getClass());
                                     String fallbackCertificateId = fallback.getCertificateInfo().certificateId();
-                                    logger.warn("Certificate: {} not loaded, using: {} as fallback", client.getCertificate(), fallbackCertificateId);
+                                    logger.warn("Certificate: {} not loaded, using: {} as fallback", certificateId, fallbackCertificateId);
                                 })
                                 .switchIfEmpty(
                                     Maybe.defer(() ->
@@ -62,7 +66,7 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
                                                 : Maybe.empty()
                                     ).doOnSuccess(defaultCertificateProvider -> {
                                         Logger logger = LoggerFactory.getLogger(this.getClass());
-                                        logger.warn("Certificate: {} not loaded, using default certificate as fallback", client.getCertificate());
+                                        logger.warn("Certificate: {} not loaded, using default certificate as fallback", certificateId);
                                     })
                                 )
 

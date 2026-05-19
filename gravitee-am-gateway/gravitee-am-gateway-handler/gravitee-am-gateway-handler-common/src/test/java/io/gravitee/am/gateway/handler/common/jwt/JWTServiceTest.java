@@ -52,6 +52,8 @@ import java.util.function.Supplier;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -80,9 +82,11 @@ public class JWTServiceTest {
 
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
+        lenient().when(certificateManager.get(nullable(String.class))).thenReturn(Maybe.empty());
         when(certificateManager.get("notExistingId")).thenReturn(Maybe.empty());
         when(certificateManager.get("existingId")).thenReturn(Maybe.just(rs256CertProvider));
-        when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
+        when(certificateManager.getClientCertificateProvider(nullable(String.class), anyBoolean())).thenCallRealMethod();
+        when(certificateManager.getClientCertificateProvider(any(Client.class), anyBoolean())).thenCallRealMethod();
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCertProvider);
         when(certificateManager.noneAlgorithmCertificateProvider()).thenReturn(noneAlgCertProvider);
         when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(fallbackCertProvider));
@@ -263,7 +267,7 @@ public class JWTServiceTest {
         when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
         io.gravitee.am.gateway.certificate.CertificateProvider kidCertProvider = mockCertProviderWithParser(mockParser);
 
-        // Mock CertificateManager to return the kid certificate provider
+        // Mock CertificateManager to resolve the kid to the matching certificate provider
         when(certificateManager.get(kid)).thenReturn(Maybe.just(kidCertProvider));
 
         // Mock default certificate ID supplier
@@ -277,6 +281,7 @@ public class JWTServiceTest {
 
         // Verify that the kid certificate provider was used, not the default
         verify(certificateManager).get(kid);
+        verify(certificateManager, never()).get("default-cert-id");
         verify(mockParser).parse(jwtToken);
     }
 

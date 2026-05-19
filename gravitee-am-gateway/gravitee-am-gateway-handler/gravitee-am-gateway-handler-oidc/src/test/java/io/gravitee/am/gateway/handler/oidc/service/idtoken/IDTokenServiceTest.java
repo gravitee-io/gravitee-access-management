@@ -69,6 +69,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
@@ -119,7 +120,8 @@ public class IDTokenServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        lenient().when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
+        when(certificateManager.getClientCertificateProvider(nullable(String.class), anyBoolean())).thenCallRealMethod();
+        when(certificateManager.getClientCertificateProvider(any(Client.class), anyBoolean())).thenCallRealMethod();
         ReflectionTestUtils.setField(idTokenService, "fallbackToHmacSignature", true);
     }
 
