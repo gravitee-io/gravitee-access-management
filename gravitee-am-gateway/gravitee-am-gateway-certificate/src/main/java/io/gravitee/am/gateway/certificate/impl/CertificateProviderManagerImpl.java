@@ -69,6 +69,7 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
         return certificateProviders.get(certificateId);
     }
 
+
     @Override
     public Collection<CertificateProvider> certificateProviders() {
         return certificateProviders.values();
