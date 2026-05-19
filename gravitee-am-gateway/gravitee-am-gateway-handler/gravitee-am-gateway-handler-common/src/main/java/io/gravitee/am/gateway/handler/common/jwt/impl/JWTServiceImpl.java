@@ -153,18 +153,13 @@ public class JWTServiceImpl implements JWTService {
         if (getDefaultCertificateId == null) {
             return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
         }
-        String certificateId = extractKid(jwt).orElseGet(getDefaultCertificateId);
-        return certificateManager.get(certificateId)
-                .switchIfEmpty(Single.defer(() -> {
-                    logger.warn("Falling back to default certificate provider for certificateId: {}", certificateId);
-                    return Single.just(certificateManager.defaultCertificateProvider());
-                }))
-                .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
-    }
+        String kid = extractKid(jwt).orElse(null);
 
-    @Override
-    public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
-        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
+        return certificateManager.get(kid)
+                .switchIfEmpty(Single.defer(() -> {
+                    logger.warn("Falling back to default certificate provider for certificateId: {}", kid);
+                    return certificateManager.getClientCertificateProvider(getDefaultCertificateId.get(), fallbackToHmacSignature);
+                }))
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
     }
 
