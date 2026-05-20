@@ -1477,7 +1477,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private Single<Application> validateSpiffeSettings(Application application) {
+    Single<Application> validateSpiffeSettings(Application application) {
         ApplicationOAuthSettings oauth = application.getSettings() != null ? application.getSettings().getOauth() : null;
         io.gravitee.am.model.application.SpiffeApplicationSettings spiffe =
                 application.getSettings() != null ? application.getSettings().getSpiffe() : null;
@@ -1503,6 +1503,21 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (!spiffe.getSubject().startsWith(anchor)) {
             return Single.error(new InvalidClientMetadataException(
                     "spiffe.subject must start with " + anchor));
+        }
+
+        io.gravitee.am.model.application.SpiffeApplicationSettings.SubjectMatchMode mode = spiffe.getSubjectMatchMode();
+        if (mode == io.gravitee.am.model.application.SpiffeApplicationSettings.SubjectMatchMode.PREFIX) {
+            AgentType agentType = AgentType.orNull(application.getKind());
+            boolean prefixEligible = ApplicationType.AGENT.equals(application.getType())
+                    && (agentType == AgentType.HOSTED_DELEGATED || agentType == AgentType.AUTONOMOUS);
+            if (!prefixEligible) {
+                return Single.error(new InvalidClientMetadataException(
+                        "spiffe.subjectMatchMode=PREFIX is only allowed for HOSTED_DELEGATED or AUTONOMOUS agent applications"));
+            }
+            if (spiffe.getSubject().endsWith("/")) {
+                return Single.error(new InvalidClientMetadataException(
+                        "spiffe.subject must not end with '/' when subjectMatchMode=PREFIX"));
+            }
         }
 
         return trustDomainRepository.findByName(io.gravitee.am.model.ReferenceType.DOMAIN,

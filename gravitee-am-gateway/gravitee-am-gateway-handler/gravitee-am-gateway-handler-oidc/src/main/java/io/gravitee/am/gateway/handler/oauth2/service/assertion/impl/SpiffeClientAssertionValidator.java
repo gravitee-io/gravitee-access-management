@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oidc.service.spiffe.SpiffeJwtSvidValidator
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
@@ -133,13 +134,24 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
                                 String fail = new SpiffeJwtSvidValidator(settings)
                                         .validate(signedJWT, td, spiffe, tokenEndpoint);
                                 if (fail != null) {
-                                    log.debug("SPIFFE assertion rejected for client {}: {}", client.getClientId(), fail);
-                                    return Maybe.error(NOT_VALID);
+                                    log.info("SPIFFE assertion rejected for client {}: {}", client.getClientId(), fail);
+                                    return Maybe.error(new InvalidClientException("assertion is not valid: " + fail));
                                 }
                                 return verifySpiffeSignature(signedJWT, td)
-                                        .map(ok -> client);
+                                        .map(ok -> buildAgentClientIfApplicable(client, sub));
                             });
                 });
+    }
+
+    private static Client buildAgentClientIfApplicable(Client client, String spiffeId) {
+        if (client.isAgentApplication()
+                && (client.getAgentType() == AgentType.HOSTED_DELEGATED
+                    || client.getAgentType() == AgentType.AUTONOMOUS)) {
+            Client instance = new Client(client);
+            instance.setAgentInstanceId(spiffeId);
+            return instance;
+        }
+        return client;
     }
 
     private Maybe<Boolean> verifySpiffeSignature(SignedJWT signedJWT, TrustDomain td) {

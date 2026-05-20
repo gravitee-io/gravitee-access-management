@@ -30,6 +30,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.AgentType;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.Client;
@@ -344,6 +346,114 @@ class SpiffeClientAssertionValidatorTest {
         validator.validate(svid().serialize(), BASE_PATH, null).test()
                 .assertNoErrors()
                 .assertValue(c -> SUBJECT.equals(c.getClientId()));
+    }
+
+    @Test
+    void synthesises_perInstanceAgentClient_forHostedDelegated_withPrefixSubject() throws Exception {
+        stubDiscovery();
+        stubDomainOidc();
+        stubDomainId();
+
+        String parent = "spiffe://example.org/hotel-agent";
+        String instanceSpiffeId = parent + "/instance-a";
+        String blueprintClientId = "blueprint-1";
+
+        Client blueprint = new Client();
+        blueprint.setClientId(blueprintClientId);
+        blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.SPIFFE_JWT);
+        blueprint.setAppType(ApplicationType.AGENT);
+        blueprint.setAgentType(AgentType.HOSTED_DELEGATED);
+        SpiffeApplicationSettings appSettings = new SpiffeApplicationSettings();
+        appSettings.setTrustDomain(TRUST_DOMAIN_NAME);
+        appSettings.setSubject(parent);
+        appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
+        blueprint.setSpiffeSettings(appSettings);
+
+        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        RSAKey jwk = new RSAKey();
+        jwk.setKid(KID);
+        when(clientLookupService.findByClientId(blueprintClientId)).thenReturn(Maybe.just(blueprint));
+        when(trustDomainRepository.findByName(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
+                .thenReturn(Maybe.just(td));
+        when(trustBundleService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        String assertion = instanceSvid(instanceSpiffeId).serialize();
+
+        validator.validate(assertion, BASE_PATH, blueprintClientId).test()
+                .assertNoErrors()
+                .assertValue(c -> blueprintClientId.equals(c.getClientId())
+                        && instanceSpiffeId.equals(c.getAgentInstanceId()));
+    }
+
+    @Test
+    void synthesises_perInstanceAgentClient_forAutonomous_withPrefixSubject() throws Exception {
+        stubDiscovery();
+        stubDomainOidc();
+        stubDomainId();
+
+        String parent = "spiffe://example.org/hotel-agent";
+        String instanceSpiffeId = parent + "/instance-b";
+        String blueprintClientId = "blueprint-2";
+
+        Client blueprint = new Client();
+        blueprint.setClientId(blueprintClientId);
+        blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.SPIFFE_JWT);
+        blueprint.setAppType(ApplicationType.AGENT);
+        blueprint.setAgentType(AgentType.AUTONOMOUS);
+        SpiffeApplicationSettings appSettings = new SpiffeApplicationSettings();
+        appSettings.setTrustDomain(TRUST_DOMAIN_NAME);
+        appSettings.setSubject(parent);
+        appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
+        blueprint.setSpiffeSettings(appSettings);
+
+        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        RSAKey jwk = new RSAKey();
+        jwk.setKid(KID);
+        when(clientLookupService.findByClientId(blueprintClientId)).thenReturn(Maybe.just(blueprint));
+        when(trustDomainRepository.findByName(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
+                .thenReturn(Maybe.just(td));
+        when(trustBundleService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        validator.validate(instanceSvid(instanceSpiffeId).serialize(), BASE_PATH, blueprintClientId).test()
+                .assertNoErrors()
+                .assertValue(c -> instanceSpiffeId.equals(c.getAgentInstanceId()));
+    }
+
+    @Test
+    void doesNotSynthesise_forNonAgentClient_evenWithMatchingSvid() throws Exception {
+        stubDiscovery();
+        stubDomainOidc();
+        stubDomainId();
+        Client client = clientWithSpiffeSettings(); // SERVICE-style, no appType=AGENT
+        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        RSAKey jwk = new RSAKey();
+        jwk.setKid(KID);
+        when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
+        when(trustDomainRepository.findByName(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
+                .thenReturn(Maybe.just(td));
+        when(trustBundleService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        validator.validate(svid().serialize(), BASE_PATH, null).test()
+                .assertNoErrors()
+                .assertValue(c -> c.getAgentInstanceId() == null && SUBJECT.equals(c.getClientId()));
+    }
+
+    private SignedJWT instanceSvid(String spiffeId) throws Exception {
+        Instant now = Instant.now();
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .subject(spiffeId)
+                .audience(TOKEN_ENDPOINT)
+                .issueTime(Date.from(now))
+                .expirationTime(Date.from(now.plusSeconds(60)))
+                .build();
+        SignedJWT jwt = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(KID).build(),
+                claims);
+        jwt.sign(new RSASSASigner(privateKey));
+        return jwt;
     }
 
     // --- helpers -----------------------------------------------------------

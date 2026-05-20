@@ -39,12 +39,32 @@ export interface SpiffeApplicationSettings {
    */
   subject?: string;
   /**
+   * How `subject` is matched against the SVID `sub` claim. `EXACT` (default)
+   * requires equality. `PREFIX` is only allowed for HOSTED_DELEGATED or
+   * AUTONOMOUS agent applications; the SVID is accepted when its `sub` equals
+   * the configured subject or starts with `<subject>/`, and the full SVID
+   * SPIFFE ID becomes the per-instance `act.sub` in minted tokens.
+   * @type {string}
+   * @memberof SpiffeApplicationSettings
+   */
+  subjectMatchMode?: SpiffeApplicationSettingsSubjectMatchModeEnum;
+  /**
    *
    * @type {string}
    * @memberof SpiffeApplicationSettings
    */
   trustDomain?: string;
 }
+
+/**
+ * @export
+ */
+export const SpiffeApplicationSettingsSubjectMatchModeEnum = {
+  Exact: 'EXACT',
+  Prefix: 'PREFIX',
+} as const;
+export type SpiffeApplicationSettingsSubjectMatchModeEnum =
+  (typeof SpiffeApplicationSettingsSubjectMatchModeEnum)[keyof typeof SpiffeApplicationSettingsSubjectMatchModeEnum];
 
 /**
  * Check if a given object implements the SpiffeApplicationSettings interface.
@@ -63,6 +83,7 @@ export function SpiffeApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimi
   }
   return {
     subject: json['subject'] == null ? undefined : json['subject'],
+    subjectMatchMode: json['subjectMatchMode'] == null ? undefined : json['subjectMatchMode'],
     trustDomain: json['trustDomain'] == null ? undefined : json['trustDomain'],
   };
 }
@@ -78,6 +99,7 @@ export function SpiffeApplicationSettingsToJSONTyped(value?: SpiffeApplicationSe
 
   return {
     subject: value['subject'],
+    subjectMatchMode: value['subjectMatchMode'],
     trustDomain: value['trustDomain'],
   };
 }
