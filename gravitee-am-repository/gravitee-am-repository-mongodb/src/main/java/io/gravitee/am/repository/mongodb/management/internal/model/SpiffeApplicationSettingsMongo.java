@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.application.SpiffeApplicationSettings.SubjectMatchMode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,4 +25,5 @@ public class SpiffeApplicationSettingsMongo {
 
     private String trustDomain;
     private String subject;
+    private SubjectMatchMode subjectMatchMode;
 }

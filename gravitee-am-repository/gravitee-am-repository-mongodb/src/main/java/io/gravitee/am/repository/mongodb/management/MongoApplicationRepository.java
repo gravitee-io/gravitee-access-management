@@ -851,6 +851,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         SpiffeApplicationSettings settings = new SpiffeApplicationSettings();
         settings.setTrustDomain(other.getTrustDomain());
         settings.setSubject(other.getSubject());
+        settings.setSubjectMatchMode(other.getSubjectMatchMode());
         return settings;
     }
 
@@ -862,6 +863,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         SpiffeApplicationSettingsMongo settings = new SpiffeApplicationSettingsMongo();
         settings.setTrustDomain(other.getTrustDomain());
         settings.setSubject(other.getSubject());
+        settings.setSubjectMatchMode(other.getSubjectMatchMode());
         return settings;
     }
 
