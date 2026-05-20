@@ -40,6 +40,7 @@ export class GrantFlowsComponent implements OnInit {
   // Or better, pass specifically what is needed.
   @Input() secretSettings: any[] = [];
   @Input() applicationType: string = 'service'; // Default to service if not provided? Or make optional
+  @Input() applicationKind: string | null = null; // For AGENT applications: HOSTED_DELEGATED | AUTONOMOUS | USER_EMBEDDED
 
   @Input() customGrantTypes: any[] = [];
   @Input() readonly = false;
@@ -123,6 +124,13 @@ export class GrantFlowsComponent implements OnInit {
   spiffeChanged() {
     this.spiffeSettingsChange.emit({ ...this.spiffeSettings });
     this.formChanged.emit(true);
+  }
+
+  isAgentPrefixCapable(): boolean {
+    return (
+      (this.applicationType || '').toUpperCase() === 'AGENT' &&
+      (this.applicationKind === 'HOSTED_DELEGATED' || this.applicationKind === 'AUTONOMOUS')
+    );
   }
 
   // Helper getters
