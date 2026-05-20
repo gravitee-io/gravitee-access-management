@@ -224,4 +224,65 @@ describe('GrantFlowsComponent', () => {
       expect(component.oauthSettings.tokenExchangeOAuthSettings.scopeHandling).toBe('downscoping');
     });
   });
+
+  describe('isAgentPrefixCapable', () => {
+    it('returns true for AGENT application with HOSTED_DELEGATED kind', () => {
+      component.applicationType = 'AGENT';
+      component.applicationKind = 'HOSTED_DELEGATED';
+      expect(component.isAgentPrefixCapable()).toBe(true);
+    });
+
+    it('returns true for AGENT application with AUTONOMOUS kind', () => {
+      component.applicationType = 'AGENT';
+      component.applicationKind = 'AUTONOMOUS';
+      expect(component.isAgentPrefixCapable()).toBe(true);
+    });
+
+    it('returns false for AGENT application with USER_EMBEDDED kind', () => {
+      component.applicationType = 'AGENT';
+      component.applicationKind = 'USER_EMBEDDED';
+      expect(component.isAgentPrefixCapable()).toBe(false);
+    });
+
+    it('returns false for AGENT application without a kind', () => {
+      component.applicationType = 'AGENT';
+      component.applicationKind = null;
+      expect(component.isAgentPrefixCapable()).toBe(false);
+    });
+
+    it('returns false for non-AGENT applications even with an agent kind', () => {
+      component.applicationType = 'SERVICE';
+      component.applicationKind = 'HOSTED_DELEGATED';
+      expect(component.isAgentPrefixCapable()).toBe(false);
+    });
+
+    it('matches applicationType case-insensitively', () => {
+      component.applicationType = 'agent';
+      component.applicationKind = 'HOSTED_DELEGATED';
+      expect(component.isAgentPrefixCapable()).toBe(true);
+    });
+  });
+
+  describe('spiffeChanged', () => {
+    it('emits a copy of the current spiffeSettings (including subjectMatchMode)', () => {
+      const emitted: unknown[] = [];
+      component.spiffeSettingsChange.subscribe((s: unknown) => emitted.push(s));
+      component.spiffeSettings = {
+        trustDomain: 'acme',
+        subject: 'spiffe://acme/hotel-agent',
+        subjectMatchMode: 'PREFIX',
+      };
+
+      component.spiffeChanged();
+
+      expect(emitted).toHaveLength(1);
+      expect(emitted[0]).toEqual({
+        trustDomain: 'acme',
+        subject: 'spiffe://acme/hotel-agent',
+        subjectMatchMode: 'PREFIX',
+      });
+      // emitted object should be a shallow copy, not the same reference
+      expect(emitted[0]).not.toBe(component.spiffeSettings);
+    });
+  });
 });
