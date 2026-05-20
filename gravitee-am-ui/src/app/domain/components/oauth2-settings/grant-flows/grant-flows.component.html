@@ -278,6 +278,24 @@
             />
             <mat-hint>Must start with <code>spiffe://&lt;trust-domain&gt;/</code>.</mat-hint>
           </mat-form-field>
+
+          <mat-form-field *ngIf="isAgentPrefixCapable()" appearance="outline" floatLabel="always">
+            <mat-label>Subject match mode</mat-label>
+            <mat-select
+              name="spiffeSubjectMatchMode"
+              [(ngModel)]="spiffeSettings.subjectMatchMode"
+              (ngModelChange)="spiffeChanged()"
+              [disabled]="readonly"
+            >
+              <mat-option value="EXACT">Exact — SVID sub must equal the configured subject</mat-option>
+              <mat-option value="PREFIX">Prefix — one Blueprint backs many instances under the configured subject</mat-option>
+            </mat-select>
+            <mat-hint>
+              <code>PREFIX</code> accepts SVIDs whose <code>sub</code> starts with <code>&lt;subject&gt;/…</code>; the full SPIFFE ID
+              becomes the per-instance <code>act.sub</code> in minted tokens. Do not include a trailing <code>/</code> in Subject when using
+              <code>PREFIX</code>.
+            </mat-hint>
+          </mat-form-field>
         </div>
       </div>
 
