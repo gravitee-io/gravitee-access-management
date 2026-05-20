@@ -31,11 +31,20 @@ public class SpiffeApplicationSettings {
     /** Name of the {@code TrustDomain} this application authenticates against. */
     private String trustDomain;
 
-    /** Exact SPIFFE ID expected in the SVID's {@code sub} claim. */
+    /** SPIFFE ID expected in the SVID's {@code sub} claim. Interpreted per {@link #subjectMatchMode}. */
     private String subject;
+
+    /** How {@link #subject} is matched against the SVID {@code sub}. Defaults to {@link SubjectMatchMode#EXACT}. */
+    private SubjectMatchMode subjectMatchMode = SubjectMatchMode.EXACT;
 
     public SpiffeApplicationSettings(SpiffeApplicationSettings other) {
         this.trustDomain = other.trustDomain;
         this.subject = other.subject;
+        this.subjectMatchMode = other.subjectMatchMode != null ? other.subjectMatchMode : SubjectMatchMode.EXACT;
+    }
+
+    public enum SubjectMatchMode {
+        EXACT,
+        PREFIX
     }
 }

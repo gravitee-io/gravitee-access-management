@@ -100,7 +100,18 @@ public final class SpiffeJwtSvidValidator {
             return "client missing spiffe settings";
         }
         String expected = spiffeApplicationSettings.getSubject();
-        if (expected == null || expected.isBlank() || !expected.equals(sub)) {
+        if (expected == null || expected.isBlank()) {
+            return "sub does not match client subject";
+        }
+        SpiffeApplicationSettings.SubjectMatchMode mode = spiffeApplicationSettings.getSubjectMatchMode();
+        if (mode == null) {
+            mode = SpiffeApplicationSettings.SubjectMatchMode.EXACT;
+        }
+        boolean match = switch (mode) {
+            case EXACT -> expected.equals(sub);
+            case PREFIX -> sub.equals(expected) || sub.startsWith(expected + "/");
+        };
+        if (!match) {
             return "sub does not match client subject";
         }
 
