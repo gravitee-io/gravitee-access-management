@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
@@ -172,31 +173,29 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 return;
             }
             final String clientId = h.result();
-            // client_id can be null if client authentication method is private_jwt
+            // client_id can be null (private_key_jwt — identity carried in the assertion).
             if (clientId == null) {
                 handler.handle(Future.succeededFuture());
                 return;
             }
+
+            // URL-shaped client_ids are CIMD identifiers and may not be pre-registered;
+            // the lookup is attempted (a blueprint may match the URL literally) but an
+            // empty result hands off to ClientAssertionAuthProvider, which resolves the
+            // client by fetching the metadata document.
+            final boolean cimdCandidate = ClientIds.isUrlShaped(clientId);
 
             clientLookupService
                     .findByClientId(clientId)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
-                            () -> {
-                                if (isUri(clientId)) {
-                                    handler.handle(Future.succeededFuture());
-                                } else {
-                                    handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
-                                }
-                            }
+                            () -> handler.handle(cimdCandidate
+                                    ? Future.succeededFuture()
+                                    : Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)))
                     );
 
         });
-    }
-
-    private static boolean isUri(String value) {
-        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     private void parseClientId(HttpServerRequest request, Handler<AsyncResult<String>> handler) {
