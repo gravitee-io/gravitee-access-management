@@ -52,6 +52,12 @@ export interface NewApplication {
   description?: string;
   /**
    *
+   * @type {string}
+   * @memberof NewApplication
+   */
+  kind?: NewApplicationKindEnum;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof NewApplication
    */
@@ -68,12 +74,6 @@ export interface NewApplication {
    * @memberof NewApplication
    */
   redirectUris?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof NewApplication
-   */
-  kind?: NewApplicationKindEnum;
   /**
    *
    * @type {string}
@@ -126,10 +126,10 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     description: json['description'] == null ? undefined : json['description'],
+    kind: json['kind'] == null ? undefined : json['kind'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
-    kind: json['kind'] == null ? undefined : json['kind'],
     type: json['type'],
   };
 }
@@ -147,10 +147,10 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
     description: value['description'],
+    kind: value['kind'],
     metadata: value['metadata'],
     name: value['name'],
     redirectUris: value['redirectUris'],
-    kind: value['kind'],
     type: value['type'],
   };
 }

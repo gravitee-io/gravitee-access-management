@@ -160,7 +160,7 @@ export interface ApplicationSettings {
    * @type {SpiffeApplicationSettings}
    * @memberof ApplicationSettings
    */
-  spiffe?: SpiffeApplicationSettings;
+  workloadIdentitySettings?: SpiffeApplicationSettings;
 }
 
 /**
@@ -190,7 +190,8 @@ export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator:
     saml: json['saml'] == null ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    spiffe: json['spiffe'] == null ? undefined : SpiffeApplicationSettingsFromJSON(json['spiffe']),
+    workloadIdentitySettings:
+      json['workloadIdentitySettings'] == null ? undefined : SpiffeApplicationSettingsFromJSON(json['workloadIdentitySettings']),
   };
 }
 
@@ -214,6 +215,6 @@ export function ApplicationSettingsToJSONTyped(value?: ApplicationSettings | nul
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: ApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
-    spiffe: SpiffeApplicationSettingsToJSON(value['spiffe']),
+    workloadIdentitySettings: SpiffeApplicationSettingsToJSON(value['workloadIdentitySettings']),
   };
 }

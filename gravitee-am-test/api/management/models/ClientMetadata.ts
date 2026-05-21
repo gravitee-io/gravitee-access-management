@@ -131,6 +131,12 @@ export interface ClientMetadata {
   redirect_uris?: Array<string>;
   /**
    *
+   * @type {string}
+   * @memberof ClientMetadata
+   */
+  request_object_signing_alg?: string;
+  /**
+   *
    * @type {Array<string>}
    * @memberof ClientMetadata
    */
@@ -262,6 +268,7 @@ export function ClientMetadataFromJSONTyped(json: any, ignoreDiscriminator: bool
     policy_uri: json['policy_uri'] == null ? undefined : json['policy_uri'],
     post_logout_redirect_uris: json['post_logout_redirect_uris'] == null ? undefined : json['post_logout_redirect_uris'],
     redirect_uris: json['redirect_uris'] == null ? undefined : json['redirect_uris'],
+    request_object_signing_alg: json['request_object_signing_alg'] == null ? undefined : json['request_object_signing_alg'],
     request_uris: json['request_uris'] == null ? undefined : json['request_uris'],
     response_types: json['response_types'] == null ? undefined : json['response_types'],
     scope: json['scope'] == null ? undefined : json['scope'],
@@ -309,6 +316,7 @@ export function ClientMetadataToJSONTyped(value?: ClientMetadata | null, ignoreD
     policy_uri: value['policy_uri'],
     post_logout_redirect_uris: value['post_logout_redirect_uris'],
     redirect_uris: value['redirect_uris'],
+    request_object_signing_alg: value['request_object_signing_alg'],
     request_uris: value['request_uris'],
     response_types: value['response_types'],
     scope: value['scope'],

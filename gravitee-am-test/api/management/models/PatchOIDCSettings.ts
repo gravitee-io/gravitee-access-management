@@ -121,7 +121,7 @@ export interface PatchOIDCSettings {
    * @type {PatchSpiffeDomainSettings}
    * @memberof PatchOIDCSettings
    */
-  spiffeSettings?: PatchSpiffeDomainSettings;
+  workloadIdentitySettings?: PatchSpiffeDomainSettings;
 }
 
 /**
@@ -227,7 +227,8 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : PatchSecurityProfileSettingsFromJSON(json['securityProfileSettings']),
-    spiffeSettings: json['spiffeSettings'] == null ? undefined : PatchSpiffeDomainSettingsFromJSON(json['spiffeSettings']),
+    workloadIdentitySettings:
+      json['workloadIdentitySettings'] == null ? undefined : PatchSpiffeDomainSettingsFromJSON(json['workloadIdentitySettings']),
   };
 }
 
@@ -249,6 +250,6 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
     requestUris: value['requestUris'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
     securityProfileSettings: PatchSecurityProfileSettingsToJSON(value['securityProfileSettings']),
-    spiffeSettings: PatchSpiffeDomainSettingsToJSON(value['spiffeSettings']),
+    workloadIdentitySettings: PatchSpiffeDomainSettingsToJSON(value['workloadIdentitySettings']),
   };
 }

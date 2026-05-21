@@ -1329,7 +1329,10 @@ export interface ListApplicationsRequest {
   page?: number;
   size?: number;
   q?: string;
-  type?: ListApplicationsTypeEnum;
+  expand?: Array<string>;
+  status?: string;
+  ownerEmail?: string;
+  type?: Array<ListApplicationsTypeEnum>;
 }
 
 export interface ListAuthenticationDeviceNotifiersRequest {
@@ -11987,7 +11990,19 @@ export class DomainApi extends runtime.BaseAPI {
       queryParameters['q'] = requestParameters.q;
     }
 
-    if (requestParameters.type !== undefined) {
+    if (requestParameters.expand) {
+      queryParameters['expand'] = requestParameters.expand;
+    }
+
+    if (requestParameters.status !== undefined) {
+      queryParameters['status'] = requestParameters.status;
+    }
+
+    if (requestParameters.ownerEmail !== undefined) {
+      queryParameters['owner.email'] = requestParameters.ownerEmail;
+    }
+
+    if (requestParameters.type) {
       queryParameters['type'] = requestParameters.type;
     }
 

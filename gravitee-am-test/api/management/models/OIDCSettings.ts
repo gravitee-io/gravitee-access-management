@@ -105,7 +105,7 @@ export interface OIDCSettings {
    * @type {SpiffeDomainSettings}
    * @memberof OIDCSettings
    */
-  spiffeSettings?: SpiffeDomainSettings;
+  workloadIdentitySettings?: SpiffeDomainSettings;
 }
 
 /**
@@ -133,7 +133,8 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : SecurityProfileSettingsFromJSON(json['securityProfileSettings']),
-    spiffeSettings: json['spiffeSettings'] == null ? undefined : SpiffeDomainSettingsFromJSON(json['spiffeSettings']),
+    workloadIdentitySettings:
+      json['workloadIdentitySettings'] == null ? undefined : SpiffeDomainSettingsFromJSON(json['workloadIdentitySettings']),
   };
 }
 
@@ -154,6 +155,6 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],
     securityProfileSettings: SecurityProfileSettingsToJSON(value['securityProfileSettings']),
-    spiffeSettings: SpiffeDomainSettingsToJSON(value['spiffeSettings']),
+    workloadIdentitySettings: SpiffeDomainSettingsToJSON(value['workloadIdentitySettings']),
   };
 }

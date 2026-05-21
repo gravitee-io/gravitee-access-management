@@ -37,6 +37,8 @@ import {
   ApplicationScopeSettingsToJSON,
   ApplicationScopeSettingsToJSONTyped,
 } from './ApplicationScopeSettings';
+import type { UserInfoClaim } from './UserInfoClaim';
+import { UserInfoClaimFromJSON, UserInfoClaimFromJSONTyped, UserInfoClaimToJSON, UserInfoClaimToJSONTyped } from './UserInfoClaim';
 import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
 import {
   TokenExchangeOAuthSettingsFromJSON,
@@ -455,6 +457,12 @@ export interface ApplicationOAuthSettings {
   tosUri?: string;
   /**
    *
+   * @type {Array<UserInfoClaim>}
+   * @memberof ApplicationOAuthSettings
+   */
+  userinfoCustomClaims?: Array<UserInfoClaim>;
+  /**
+   *
    * @type {string}
    * @memberof ApplicationOAuthSettings
    */
@@ -562,6 +570,8 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     tokenExchangeOAuthSettings:
       json['tokenExchangeOAuthSettings'] == null ? undefined : TokenExchangeOAuthSettingsFromJSON(json['tokenExchangeOAuthSettings']),
     tosUri: json['tosUri'] == null ? undefined : json['tosUri'],
+    userinfoCustomClaims:
+      json['userinfoCustomClaims'] == null ? undefined : (json['userinfoCustomClaims'] as Array<any>).map(UserInfoClaimFromJSON),
     userinfoEncryptedResponseAlg: json['userinfoEncryptedResponseAlg'] == null ? undefined : json['userinfoEncryptedResponseAlg'],
     userinfoEncryptedResponseEnc: json['userinfoEncryptedResponseEnc'] == null ? undefined : json['userinfoEncryptedResponseEnc'],
     userinfoSignedResponseAlg: json['userinfoSignedResponseAlg'] == null ? undefined : json['userinfoSignedResponseAlg'],
@@ -646,6 +656,8 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     tokenEndpointAuthSigningAlg: value['tokenEndpointAuthSigningAlg'],
     tokenExchangeOAuthSettings: TokenExchangeOAuthSettingsToJSON(value['tokenExchangeOAuthSettings']),
     tosUri: value['tosUri'],
+    userinfoCustomClaims:
+      value['userinfoCustomClaims'] == null ? undefined : (value['userinfoCustomClaims'] as Array<any>).map(UserInfoClaimToJSON),
     userinfoEncryptedResponseAlg: value['userinfoEncryptedResponseAlg'],
     userinfoEncryptedResponseEnc: value['userinfoEncryptedResponseEnc'],
     userinfoSignedResponseAlg: value['userinfoSignedResponseAlg'],
