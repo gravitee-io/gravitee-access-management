@@ -596,6 +596,11 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         applicationTemplateManager.apply(application);
 
+        // WEB template overrides this to client_secret_basic when grant_types is empty; CIMD forbids secret-based auth.
+        if (preview.tokenEndpointAuthMethod() != null) {
+            application.getSettings().getOauth().setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
+        }
+
         return application;
     }
 
