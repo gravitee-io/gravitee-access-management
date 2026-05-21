@@ -22,11 +22,13 @@ import {
     PatchApplication,
     PatchApplicationTypeTypeEnum
 } from '../../management/models';
+import { ListApplicationsTypeEnum } from '../../management/apis/ApplicationApi';
 
 export type ApplicationListOptions = {
   page?: number;
   size?: number;
   q?: string;
+  type?: Array<ListApplicationsTypeEnum>;
 };
 
 export const createApplication = (domainId: string, accessToken: string, body: NewApplication): Promise<Application> =>
@@ -53,6 +55,7 @@ export const listApplications = (domainId: string, accessToken: string, options?
     page: options?.page,
     size: options?.size,
     q: options?.q,
+    type: options?.type,
   });
 
 export const patchApplication = (domainId: string, accessToken: string, body: PatchApplication, applicationId: string) =>
