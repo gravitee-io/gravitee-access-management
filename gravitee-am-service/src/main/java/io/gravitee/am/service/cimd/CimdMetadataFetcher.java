@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -308,7 +309,8 @@ public class CimdMetadataFetcher {
                 readStringArray(metadata, "response_types"),
                 readStringArray(metadata, "contacts"),
                 readStringArray(metadata, "request_uris"),
-                optionalText(metadata, "token_endpoint_auth_method"),
+                Optional.ofNullable(optionalText(metadata, "token_endpoint_auth_method"))
+                        .orElse(ClientAuthenticationMethod.NONE),
                 optionalText(metadata, "application_type"),
                 optionalText(metadata, "subject_type"),
                 optionalText(metadata, "sector_identifier_uri"),
