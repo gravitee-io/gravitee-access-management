@@ -38,6 +38,7 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
@@ -53,6 +54,8 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -135,6 +138,10 @@ public class ApplicationsResourceTest extends JerseySpringTest {
 
         final Map responseEntity = readEntity(response, Map.class);
         assertEquals(1, ((List) responseEntity.get("data")).size());
+
+        final ArgumentCaptor<ApplicationFilter> filterCaptor = ArgumentCaptor.forClass(ApplicationFilter.class);
+        verify(applicationService, atLeastOnce()).findByDomain(eq(domainId), eq("DEFAULT"), filterCaptor.capture(), eq(0), eq(50));
+        assertEquals(Set.of(ApplicationType.AGENT), filterCaptor.getValue().types());
     }
 
     @Test
@@ -171,6 +178,10 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Map responseEntity = readEntity(response, Map.class);
         assertEquals(2, ((List) responseEntity.get("data")).size());
         assertEquals(2, ((Number) responseEntity.get("totalCount")).intValue());
+
+        final ArgumentCaptor<ApplicationFilter> filterCaptor = ArgumentCaptor.forClass(ApplicationFilter.class);
+        verify(applicationService, atLeastOnce()).findByDomain(eq(domainId), eq("DEFAULT"), filterCaptor.capture(), eq(0), eq(50));
+        assertEquals(Set.of(ApplicationType.WEB, ApplicationType.SERVICE), filterCaptor.getValue().types());
     }
 
     @Test
@@ -196,6 +207,10 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("applications")
                 .queryParam("type", "AGENT").queryParam("q", "alpha*").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final ArgumentCaptor<ApplicationFilter> filterCaptor = ArgumentCaptor.forClass(ApplicationFilter.class);
+        verify(applicationService, atLeastOnce()).search(eq(domainId), eq("DEFAULT"), filterCaptor.capture(), eq("alpha*"), eq(0), eq(50));
+        assertEquals(Set.of(ApplicationType.AGENT), filterCaptor.getValue().types());
     }
 
     @Test
