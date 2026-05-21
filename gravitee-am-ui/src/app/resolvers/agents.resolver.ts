@@ -16,6 +16,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { ApplicationService } from '../services/application.service';
 
@@ -31,6 +32,8 @@ export class AgentsResolver {
     if (!domain) {
       return of({ data: [], totalCount: 0 });
     }
-    return this.applicationService.findByDomain(domain.id, this.default_page, this.default_size, 'AGENT');
+    return this.applicationService
+      .findByDomain(domain.id, this.default_page, this.default_size, 'AGENT')
+      .pipe(catchError(() => of({ data: [], totalCount: 0 })));
   }
 }

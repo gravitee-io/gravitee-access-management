@@ -120,9 +120,15 @@ export class AgentCreationComponent implements OnInit {
             ),
         ),
       )
-      .subscribe((data) => {
-        this.router.navigate(['..', data.id], { relativeTo: this.route });
-      });
+      .subscribe(
+        (data) => {
+          this.router.navigate(['..', data.id], { relativeTo: this.route });
+        },
+        (err: unknown) => {
+          const message = (err as { error?: { message?: string } })?.error?.message ?? 'Unable to create agent';
+          this.snackbarService.open(message);
+        },
+      );
   }
 
   private createFromCimd(): void {

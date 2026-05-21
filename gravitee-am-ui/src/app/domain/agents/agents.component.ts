@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { ApplicationService } from '../../services/application.service';
+import { SnackbarService } from '../../services/snackbar.service';
 
 @Component({
   selector: 'app-agents',
@@ -32,6 +33,7 @@ export class AgentsComponent implements OnInit {
 
   constructor(
     private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
     private route: ActivatedRoute,
   ) {
     this.page.pageNumber = 0;
@@ -56,10 +58,16 @@ export class AgentsComponent implements OnInit {
       ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*', 'AGENT')
       : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size, 'AGENT');
 
-    find.subscribe((pagedAgents) => {
-      this.page.totalElements = pagedAgents.totalCount;
-      this.agents = pagedAgents.data;
-    });
+    find.subscribe(
+      (pagedAgents) => {
+        this.page.totalElements = pagedAgents.totalCount;
+        this.agents = pagedAgents.data;
+      },
+      (err: unknown) => {
+        const message = (err as { error?: { message?: string } })?.error?.message ?? 'Unable to load agents';
+        this.snackbarService.open(message);
+      },
+    );
   }
 
   setPage(pageInfo) {
