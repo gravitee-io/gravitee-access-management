@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -43,6 +45,19 @@ public class CIBASettings {
      * Authentication Device Notifiers to use when the EndUser has to be notified
      */
     private List<CIBASettingNotifier> deviceNotifiers;
+
+    public CIBASettings() {
+    }
+
+    public CIBASettings(CIBASettings other) {
+        this.enabled = other.enabled;
+        this.authReqExpiry = other.authReqExpiry;
+        this.tokenReqInterval = other.tokenReqInterval;
+        this.bindingMessageLength = other.bindingMessageLength;
+        this.deviceNotifiers = other.deviceNotifiers != null
+                ? other.deviceNotifiers.stream().map(CIBASettingNotifier::new).collect(Collectors.toCollection(ArrayList::new))
+                : null;
+    }
 
     public boolean isEnabled() {
         return enabled;

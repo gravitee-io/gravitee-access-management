@@ -162,7 +162,7 @@ public class PatchClientRegistrationSettings {
     }
 
     public ClientRegistrationSettings patch(ClientRegistrationSettings toPatch) {
-        ClientRegistrationSettings result=toPatch!=null?toPatch: ClientRegistrationSettings.defaultSettings();
+        ClientRegistrationSettings result = toPatch == null ? ClientRegistrationSettings.defaultSettings() : new ClientRegistrationSettings(toPatch);
 
         SetterUtils.safeSet(result::setAllowWildCardRedirectUri, this.getAllowWildCardRedirectUri(), boolean.class);
         SetterUtils.safeSet(result::setAllowHttpSchemeRedirectUri, this.getAllowHttpSchemeRedirectUri(), boolean.class);

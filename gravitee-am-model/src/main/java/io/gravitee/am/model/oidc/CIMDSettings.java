@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -88,6 +89,22 @@ public class CIMDSettings {
      * of its metadata document reveals that any of the monitored properties have changed.
      */
     private boolean revokeOnDocumentChange;
+
+    public CIMDSettings() {
+    }
+
+    public CIMDSettings(CIMDSettings other) {
+        this.enabled = other.enabled;
+        this.allowUnsecuredHttpUri = other.allowUnsecuredHttpUri;
+        this.allowPrivateIpAddress = other.allowPrivateIpAddress;
+        this.fetchTimeoutMs = other.fetchTimeoutMs;
+        this.maxResponseSizeKb = other.maxResponseSizeKb;
+        this.allowedDomains = other.allowedDomains != null ? new ArrayList<>(other.allowedDomains) : null;
+        this.cacheTtlSeconds = other.cacheTtlSeconds;
+        this.cacheMaxEntries = other.cacheMaxEntries;
+        this.templateId = other.templateId;
+        this.revokeOnDocumentChange = other.revokeOnDocumentChange;
+    }
 
     public boolean isEnabled() {
         return enabled;

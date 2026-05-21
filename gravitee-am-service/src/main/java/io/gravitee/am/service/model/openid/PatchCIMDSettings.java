@@ -131,7 +131,7 @@ public class PatchCIMDSettings {
     }
 
     public CIMDSettings patch(CIMDSettings toPatch) {
-        CIMDSettings result = toPatch != null ? toPatch : CIMDSettings.defaultSettings();
+        CIMDSettings result = toPatch == null ? CIMDSettings.defaultSettings() : new CIMDSettings(toPatch);
 
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAllowUnsecuredHttpUri, this.getAllowUnsecuredHttpUri(), boolean.class);

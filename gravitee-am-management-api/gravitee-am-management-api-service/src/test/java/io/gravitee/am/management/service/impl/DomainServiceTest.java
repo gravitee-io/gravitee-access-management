@@ -104,6 +104,8 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
+import io.gravitee.am.service.model.openid.PatchCIMDSettings;
+import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
@@ -1946,8 +1948,8 @@ public class DomainServiceTest {
     @Test
     public void shouldPatch_deletesCimdClientState_whenRevokeOnDocumentChangeBecomesDisabled() {
         Domain oldDomain = buildCimdPatchDomain(true);
-        Domain newDomain = buildCimdPatchDomain(false);
-        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+        PatchDomain patchDomain = realPatchTurningRevokeOnDocumentChange(false);
+        stubCimdPatch(oldDomain);
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -1961,8 +1963,8 @@ public class DomainServiceTest {
     @Test
     public void shouldPatch_doesNotDeleteCimdClientState_whenRevokeOnDocumentChangeRemainsEnabled() {
         Domain oldDomain = buildCimdPatchDomain(true);
-        Domain newDomain = buildCimdPatchDomain(true);
-        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+        PatchDomain patchDomain = realPatchTurningRevokeOnDocumentChange(true);
+        stubCimdPatch(oldDomain);
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -1976,8 +1978,8 @@ public class DomainServiceTest {
     @Test
     public void shouldPatch_doesNotDeleteCimdClientState_whenRevokeOnDocumentChangeRemainsDisabled() {
         Domain oldDomain = buildCimdPatchDomain(false);
-        Domain newDomain = buildCimdPatchDomain(false);
-        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+        PatchDomain patchDomain = realPatchTurningRevokeOnDocumentChange(false);
+        stubCimdPatch(oldDomain);
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -1991,8 +1993,8 @@ public class DomainServiceTest {
     @Test
     public void shouldPatch_doesNotDeleteCimdClientState_whenRevokeOnDocumentChangeBecomesEnabled() {
         Domain oldDomain = buildCimdPatchDomain(false);
-        Domain newDomain = buildCimdPatchDomain(true);
-        PatchDomain patchDomain = stubCimdPatch(oldDomain, newDomain);
+        PatchDomain patchDomain = realPatchTurningRevokeOnDocumentChange(true);
+        stubCimdPatch(oldDomain);
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -2022,19 +2024,27 @@ public class DomainServiceTest {
         return d;
     }
 
-    private PatchDomain stubCimdPatch(Domain oldDomain, Domain newDomain) {
-        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
-        when(patchDomain.patch(any())).thenReturn(newDomain);
+    private static PatchDomain realPatchTurningRevokeOnDocumentChange(boolean newValue) {
+        PatchCIMDSettings patchCimd = new PatchCIMDSettings();
+        patchCimd.setRevokeOnDocumentChange(Optional.of(newValue));
+        PatchOIDCSettings patchOidc = new PatchOIDCSettings();
+        patchOidc.setCimdSettings(Optional.of(patchCimd));
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setOidc(Optional.of(patchOidc));
+        return patchDomain;
+    }
+
+    private void stubCimdPatch(Domain oldDomain) {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(oldDomain));
         when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(oldDomain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(newDomain));
+        when(domainRepository.update(any(Domain.class)))
+                .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Completable.complete()).when(domainValidator).validate(any(), any());
         doReturn(Completable.complete()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
         doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
-        return patchDomain;
     }
 }

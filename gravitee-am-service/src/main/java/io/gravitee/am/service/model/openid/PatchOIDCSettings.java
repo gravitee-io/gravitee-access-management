@@ -111,11 +111,7 @@ public class PatchOIDCSettings {
     }
 
     public OIDCSettings patch(OIDCSettings toPatch) {
-
-        //If source may be null, in such case init with default values
-        if (toPatch == null ) {
-            toPatch = OIDCSettings.defaultSettings();
-        }
+        toPatch = toPatch == null ? OIDCSettings.defaultSettings() : new OIDCSettings(toPatch);
         SetterUtils.safeSet(toPatch::setRedirectUriStrictMatching, this.getRedirectUriStrictMatching(), boolean.class);
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
         SetterUtils.safeSet(toPatch::setRequestUris, this.getRequestUris());

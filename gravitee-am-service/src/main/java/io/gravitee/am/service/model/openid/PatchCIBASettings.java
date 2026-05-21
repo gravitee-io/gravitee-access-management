@@ -92,7 +92,7 @@ public class PatchCIBASettings {
     }
 
     public CIBASettings patch(CIBASettings toPatch) {
-        CIBASettings result=toPatch!=null ? toPatch : CIBASettings.defaultSettings();
+        CIBASettings result = toPatch == null ? CIBASettings.defaultSettings() : new CIBASettings(toPatch);
 
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAuthReqExpiry, this.getAuthReqExpiry(), int.class);

@@ -15,11 +15,20 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -143,5 +152,91 @@ public class DomainTest {
 
         boolean isEnabled = domain.isRedirectUriExpressionLanguageEnabled();
         assertFalse("By default EL param evaluation should be disabled",isEnabled);
+    }
+
+    @Test
+    public void copyConstructor_deepCopiesNestedSettings() {
+        Domain original = new Domain("d1");
+        original.setOidc(OIDCSettings.defaultSettings());
+        original.getOidc().setCimdSettings(new CIMDSettings());
+        original.getOidc().getCimdSettings().setRevokeOnDocumentChange(true);
+        original.setLoginSettings(new LoginSettings());
+        original.setAccountSettings(new AccountSettings());
+        original.setPasswordSettings(new PasswordSettings());
+        original.setSaml(new SAMLSettings());
+        original.setSecretExpirationSettings(new SecretExpirationSettings());
+        original.setCertificateSettings(new CertificateSettings());
+
+        Domain copy = new Domain(original);
+
+        assertNotSame("oidc must be deep-copied", original.getOidc(), copy.getOidc());
+        assertNotSame("oidc.cimdSettings must be deep-copied",
+                original.getOidc().getCimdSettings(), copy.getOidc().getCimdSettings());
+        assertNotSame("oidc.clientRegistrationSettings must be deep-copied",
+                original.getOidc().getClientRegistrationSettings(), copy.getOidc().getClientRegistrationSettings());
+        assertNotSame("oidc.securityProfileSettings must be deep-copied",
+                original.getOidc().getSecurityProfileSettings(), copy.getOidc().getSecurityProfileSettings());
+        assertNotSame("oidc.cibaSettings must be deep-copied",
+                original.getOidc().getCibaSettings(), copy.getOidc().getCibaSettings());
+        assertNotSame("loginSettings must be deep-copied", original.getLoginSettings(), copy.getLoginSettings());
+        assertNotSame("accountSettings must be deep-copied", original.getAccountSettings(), copy.getAccountSettings());
+        assertNotSame("passwordSettings must be deep-copied", original.getPasswordSettings(), copy.getPasswordSettings());
+        assertNotSame("saml must be deep-copied", original.getSaml(), copy.getSaml());
+        assertNotSame("secretExpirationSettings must be deep-copied",
+                original.getSecretExpirationSettings(), copy.getSecretExpirationSettings());
+        assertNotSame("certificateSettings must be deep-copied",
+                original.getCertificateSettings(), copy.getCertificateSettings());
+
+        copy.getOidc().getCimdSettings().setRevokeOnDocumentChange(false);
+        assertTrue("Mutating the copy's CIMD settings must not affect the original",
+                original.getOidc().getCimdSettings().isRevokeOnDocumentChange());
+        assertFalse(copy.getOidc().getCimdSettings().isRevokeOnDocumentChange());
+    }
+
+    @Test
+    public void copyConstructor_preservesNullNestedSettings() {
+        Domain original = new Domain("d1");
+        // Nested settings deliberately left null.
+
+        Domain copy = new Domain(original);
+
+        assertEquals("d1", copy.getId());
+        Assert.assertNull(copy.getOidc());
+        Assert.assertNull(copy.getLoginSettings());
+        Assert.assertNull(copy.getAccountSettings());
+        Assert.assertNull(copy.getPasswordSettings());
+        Assert.assertNull(copy.getSaml());
+        Assert.assertNull(copy.getSecretExpirationSettings());
+        Assert.assertNull(copy.getCertificateSettings());
+    }
+
+    @Test
+    public void copyConstructor_copiesVhosts() {
+        VirtualHost vhost = new VirtualHost();
+        vhost.setHost("auth.example.com");
+        vhost.setPath("/am");
+        List<VirtualHost> vhosts = new ArrayList<>();
+        vhosts.add(vhost);
+
+        Domain original = new Domain("d1");
+        original.setVhosts(vhosts);
+
+        Domain copy = new Domain(original);
+
+        assertEquals(1, copy.getVhosts().size());
+        assertEquals("auth.example.com", copy.getVhosts().get(0).getHost());
+        assertNotSame(original.getVhosts(), copy.getVhosts());
+
+        original.getVhosts().add(new VirtualHost());
+        assertEquals(1, copy.getVhosts().size());
+    }
+
+    @Test
+    public void copyConstructor_preservesNullVhosts() {
+        Domain original = new Domain("d1");
+
+        Domain copy = new Domain(original);
+
+        Assert.assertNull(copy.getVhosts());
     }
 }
