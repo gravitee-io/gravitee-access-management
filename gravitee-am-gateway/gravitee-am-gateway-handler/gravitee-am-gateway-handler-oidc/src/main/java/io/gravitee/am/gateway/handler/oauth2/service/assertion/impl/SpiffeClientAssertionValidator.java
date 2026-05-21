@@ -109,7 +109,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
         String tokenEndpoint = discovery.getTokenEndpoint();
 
         SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
-                .map(o -> o.getSpiffeSettings())
+                .map(o -> o.getWorkloadIdentitySettings())
                 .orElseGet(SpiffeDomainSettings::defaultSettings);
         if (!settings.isEnabled()) {
             return Maybe.error(new InvalidClientException("SPIFFE auth disabled for this domain"));
@@ -123,7 +123,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
                     if (!ClientAuthenticationMethod.SPIFFE_JWT.equals(client.getTokenEndpointAuthMethod())) {
                         return Maybe.error(new InvalidClientException("Client is not configured for spiffe_jwt"));
                     }
-                    SpiffeApplicationSettings spiffe = client.getSpiffeSettings();
+                    SpiffeApplicationSettings spiffe = client.getWorkloadIdentitySettings();
                     if (spiffe == null || spiffe.getTrustDomain() == null) {
                         return Maybe.error(new InvalidClientException("Client missing SPIFFE settings"));
                     }

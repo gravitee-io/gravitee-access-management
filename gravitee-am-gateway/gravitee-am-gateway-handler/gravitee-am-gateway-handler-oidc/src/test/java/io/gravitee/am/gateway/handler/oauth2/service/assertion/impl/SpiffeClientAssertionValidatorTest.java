@@ -97,7 +97,7 @@ class SpiffeClientAssertionValidatorTest {
         spiffeSettings = new SpiffeDomainSettings();
         spiffeSettings.setEnabled(true);
         oidcSettings = new OIDCSettings();
-        oidcSettings.setSpiffeSettings(spiffeSettings);
+        oidcSettings.setWorkloadIdentitySettings(spiffeSettings);
 
         validator = new SpiffeClientAssertionValidator(
                 clientLookupService, jwsService, openIDDiscoveryService, domain,
@@ -355,7 +355,7 @@ class SpiffeClientAssertionValidatorTest {
         SpiffeApplicationSettings appSettings = new SpiffeApplicationSettings();
         appSettings.setTrustDomain(TRUST_DOMAIN_NAME);
         appSettings.setSubject(SUBJECT);
-        client.setSpiffeSettings(appSettings);
+        client.setWorkloadIdentitySettings(appSettings);
         return client;
     }
 

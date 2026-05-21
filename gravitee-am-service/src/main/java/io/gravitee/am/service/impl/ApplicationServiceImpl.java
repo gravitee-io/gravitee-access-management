@@ -1480,7 +1480,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateSpiffeSettings(Application application) {
         ApplicationOAuthSettings oauth = application.getSettings() != null ? application.getSettings().getOauth() : null;
         io.gravitee.am.model.application.SpiffeApplicationSettings spiffe =
-                application.getSettings() != null ? application.getSettings().getSpiffe() : null;
+                application.getSettings() != null ? application.getSettings().getWorkloadIdentitySettings() : null;
 
         boolean usesSpiffeAuth = oauth != null && io.gravitee.am.common.oidc.ClientAuthenticationMethod.SPIFFE_JWT
                 .equalsIgnoreCase(oauth.getTokenEndpointAuthMethod());

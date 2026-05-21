@@ -90,7 +90,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -513,7 +512,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
-        applicationSettingsMongo.setSpiffe(convert(other.getSpiffe()));
+        applicationSettingsMongo.setWorkloadIdentitySettings(convert(other.getWorkloadIdentitySettings()));
         return applicationSettingsMongo;
     }
 
@@ -533,7 +532,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
-        applicationSettings.setSpiffe(convert(other.getSpiffe()));
+        applicationSettings.setWorkloadIdentitySettings(convert(other.getWorkloadIdentitySettings()));
         return applicationSettings;
     }
 

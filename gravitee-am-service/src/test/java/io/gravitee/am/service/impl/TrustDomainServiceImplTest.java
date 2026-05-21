@@ -81,7 +81,7 @@ public class TrustDomainServiceImplTest {
         spiffeSettings = new SpiffeDomainSettings();
         spiffeSettings.setEnabled(true);
         OIDCSettings oidc = new OIDCSettings();
-        oidc.setSpiffeSettings(spiffeSettings);
+        oidc.setWorkloadIdentitySettings(spiffeSettings);
         domain.setOidc(oidc);
 
         // create() builds the post-validate chain eagerly via andThen(...); the repository

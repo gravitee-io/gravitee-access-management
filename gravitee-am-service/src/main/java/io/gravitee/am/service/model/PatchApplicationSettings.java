@@ -55,7 +55,7 @@ public class PatchApplicationSettings {
     private Optional<CookieSettings> cookieSettings;
     private Optional<RiskAssessmentSettings> riskAssessment;
     private Optional<SecretExpirationSettings> secretExpirationSettings;
-    private Optional<SpiffeApplicationSettings> spiffe;
+    private Optional<SpiffeApplicationSettings> workloadIdentitySettings;
 
     public ApplicationSettings patch(ApplicationSettings _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -82,7 +82,7 @@ public class PatchApplicationSettings {
         if (this.getSaml() != null && this.getSaml().isPresent()) {
             toPatch.setSaml(this.getSaml().get().patch(toPatch.getSaml()));
         }
-        SetterUtils.safeSet(toPatch::setSpiffe, this.getSpiffe());
+        SetterUtils.safeSet(toPatch::setWorkloadIdentitySettings, this.getWorkloadIdentitySettings());
         return toPatch;
     }
 

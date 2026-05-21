@@ -28,7 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -58,7 +57,7 @@ class TrustBundleServiceImplTest {
         settings = new SpiffeDomainSettings();
         settings.setFetchTimeoutMs(0); // disable timeout for deterministic tests
         OIDCSettings oidc = new OIDCSettings();
-        oidc.setSpiffeSettings(settings);
+        oidc.setWorkloadIdentitySettings(settings);
         when(domain.getOidc()).thenReturn(oidc);
     }
 

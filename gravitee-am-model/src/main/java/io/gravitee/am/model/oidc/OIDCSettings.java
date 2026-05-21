@@ -49,7 +49,7 @@ public class OIDCSettings {
 
     private CIMDSettings cimdSettings;
 
-    private SpiffeDomainSettings spiffeSettings;
+    private SpiffeDomainSettings workloadIdentitySettings;
 
     public OIDCSettings() {
     }
@@ -124,12 +124,12 @@ public class OIDCSettings {
         this.cimdSettings = cimdSettings;
     }
 
-    public SpiffeDomainSettings getSpiffeSettings() {
-        return spiffeSettings;
+    public SpiffeDomainSettings getWorkloadIdentitySettings() {
+        return workloadIdentitySettings;
     }
 
-    public void setSpiffeSettings(SpiffeDomainSettings spiffeSettings) {
-        this.spiffeSettings = spiffeSettings;
+    public void setWorkloadIdentitySettings(SpiffeDomainSettings workloadIdentitySettings) {
+        this.workloadIdentitySettings = workloadIdentitySettings;
     }
 
     public static OIDCSettings defaultSettings() {
@@ -139,7 +139,7 @@ public class OIDCSettings {
         defaultSettings.setRedirectUriStrictMatching(false);
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
         defaultSettings.setCimdSettings(CIMDSettings.defaultSettings());
-        defaultSettings.setSpiffeSettings(SpiffeDomainSettings.defaultSettings());
+        defaultSettings.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());
         return defaultSettings;
     }
 

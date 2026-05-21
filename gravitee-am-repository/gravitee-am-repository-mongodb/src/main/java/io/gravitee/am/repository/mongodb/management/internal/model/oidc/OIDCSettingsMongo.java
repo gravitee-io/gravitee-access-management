@@ -32,7 +32,7 @@ public class OIDCSettingsMongo {
 
     private CIMDSettingsMongo cimdSettings;
 
-    private SpiffeDomainSettingsMongo spiffeSettings;
+    private SpiffeDomainSettingsMongo workloadIdentitySettings;
 
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -90,11 +90,11 @@ public class OIDCSettingsMongo {
         this.cimdSettings = cimdSettings;
     }
 
-    public SpiffeDomainSettingsMongo getSpiffeSettings() {
-        return spiffeSettings;
+    public SpiffeDomainSettingsMongo getWorkloadIdentitySettings() {
+        return workloadIdentitySettings;
     }
 
-    public void setSpiffeSettings(SpiffeDomainSettingsMongo spiffeSettings) {
-        this.spiffeSettings = spiffeSettings;
+    public void setWorkloadIdentitySettings(SpiffeDomainSettingsMongo workloadIdentitySettings) {
+        this.workloadIdentitySettings = workloadIdentitySettings;
     }
 }

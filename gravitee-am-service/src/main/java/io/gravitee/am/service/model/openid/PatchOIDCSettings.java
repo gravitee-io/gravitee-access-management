@@ -16,11 +16,7 @@
 package io.gravitee.am.service.model.openid;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.gravitee.am.model.oidc.CIBASettings;
-import io.gravitee.am.model.oidc.CIMDSettings;
-import io.gravitee.am.model.oidc.ClientRegistrationSettings;
-import io.gravitee.am.model.oidc.OIDCSettings;
-import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.*;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 import lombok.NoArgsConstructor;
@@ -49,8 +45,8 @@ public class PatchOIDCSettings {
     @JsonProperty("cimdSettings")
     private Optional<PatchCIMDSettings> cimdSettings;
 
-    @JsonProperty("spiffeSettings")
-    private Optional<PatchSpiffeDomainSettings> spiffeSettings;
+    @JsonProperty("workloadIdentitySettings")
+    private Optional<PatchSpiffeDomainSettings> workloadIdentitySettings;
 
     private Optional<Boolean> redirectUriStrictMatching;
 
@@ -113,12 +109,12 @@ public class PatchOIDCSettings {
         this.cimdSettings = cimdSettings;
     }
 
-    public Optional<PatchSpiffeDomainSettings> getSpiffeSettings() {
-        return spiffeSettings;
+    public Optional<PatchSpiffeDomainSettings> getWorkloadIdentitySettings() {
+        return workloadIdentitySettings;
     }
 
-    public void setSpiffeSettings(Optional<PatchSpiffeDomainSettings> spiffeSettings) {
-        this.spiffeSettings = spiffeSettings;
+    public void setWorkloadIdentitySettings(Optional<PatchSpiffeDomainSettings> workloadIdentitySettings) {
+        this.workloadIdentitySettings = workloadIdentitySettings;
     }
 
     public OIDCSettings patch(OIDCSettings toPatch) {
@@ -168,14 +164,12 @@ public class PatchOIDCSettings {
             }
         }
 
-        if (getSpiffeSettings() != null) {
-            if (getSpiffeSettings().isPresent()) {
-                final PatchSpiffeDomainSettings patcher = getSpiffeSettings().get();
-                final io.gravitee.am.model.oidc.SpiffeDomainSettings source = toPatch.getSpiffeSettings();
-                toPatch.setSpiffeSettings(patcher.patch(source));
-            } else {
-                toPatch.setSpiffeSettings(io.gravitee.am.model.oidc.SpiffeDomainSettings.defaultSettings());
-            }
+        if (getWorkloadIdentitySettings().isPresent()) {
+                final PatchSpiffeDomainSettings patcher = getWorkloadIdentitySettings().get();
+                final SpiffeDomainSettings source = toPatch.getWorkloadIdentitySettings();
+                toPatch.setWorkloadIdentitySettings(patcher.patch(source));
+        } else {
+            toPatch.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());
         }
 
         return toPatch;
@@ -190,7 +184,7 @@ public class PatchOIDCSettings {
                 || (redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent())
                 || (cibaSettings != null && cibaSettings.isPresent())
                 || (cimdSettings != null && cimdSettings.isPresent())
-                || (spiffeSettings != null && spiffeSettings.isPresent())
+                || (workloadIdentitySettings != null && workloadIdentitySettings.isPresent())
                 || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
                 || (requestUris != null && requestUris.isPresent())
                 || (securityProfileSettings != null && securityProfileSettings.isPresent())) {

@@ -64,7 +64,7 @@ public class TrustBundleServiceImpl implements TrustBundleService {
     public TrustBundleServiceImpl(JWKService jwkService, Domain domain) {
         this.jwkService = jwkService;
         this.settings = Optional.ofNullable(domain.getOidc())
-                .map(o -> o.getSpiffeSettings())
+                .map(o -> o.getWorkloadIdentitySettings())
                 .orElseGet(SpiffeDomainSettings::defaultSettings);
         long hardTtl = Math.max(
                 (long) settings.getCacheTtlSeconds() * HARD_TTL_MULTIPLIER,

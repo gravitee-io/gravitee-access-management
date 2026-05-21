@@ -37,5 +37,5 @@ public class ApplicationSettingsMongo {
     private CookieSettingsMongo cookieSettings;
     private RiskAssessmentSettingsMongo riskAssessment;
     private SecretSettingsMongo secretExpirationSettings;
-    private SpiffeApplicationSettingsMongo spiffe;
+    private SpiffeApplicationSettingsMongo workloadIdentitySettings;
 }

@@ -241,7 +241,7 @@ public class TrustDomainServiceImpl implements TrustDomainService {
 
     private Completable validate(Domain domain, TrustDomain td) {
         SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
-                .map(o -> o.getSpiffeSettings())
+                .map(o -> o.getWorkloadIdentitySettings())
                 .orElseGet(SpiffeDomainSettings::defaultSettings);
 
         if (!settings.isEnabled()) {

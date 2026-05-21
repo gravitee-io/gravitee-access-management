@@ -292,7 +292,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
         oidcSettings.setCimdSettings(convert(oidcMongo.getCimdSettings()));
-        oidcSettings.setSpiffeSettings(convert(oidcMongo.getSpiffeSettings()));
+        oidcSettings.setWorkloadIdentitySettings(convert(oidcMongo.getWorkloadIdentitySettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidcMongo.getRequestUris());
 
@@ -380,7 +380,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
         oidcSettings.setCimdSettings(convert(oidc.getCimdSettings()));
-        oidcSettings.setSpiffeSettings(convert(oidc.getSpiffeSettings()));
+        oidcSettings.setWorkloadIdentitySettings(convert(oidc.getWorkloadIdentitySettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidc.getRequestUris());
 

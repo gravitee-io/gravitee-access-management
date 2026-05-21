@@ -31,12 +31,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.AgentType;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
-import io.gravitee.am.model.application.SAMLAssertionAttribute;
-import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -319,7 +314,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private transient String agentInstanceId;
 
-    private io.gravitee.am.model.application.SpiffeApplicationSettings spiffeSettings;
+    private io.gravitee.am.model.application.SpiffeApplicationSettings workloadIdentitySettings;
 
     public Client() {
     }
@@ -426,8 +421,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
-        this.spiffeSettings = other.spiffeSettings != null
-                ? new io.gravitee.am.model.application.SpiffeApplicationSettings(other.spiffeSettings)
+        this.workloadIdentitySettings = other.workloadIdentitySettings != null
+                ? new io.gravitee.am.model.application.SpiffeApplicationSettings(other.workloadIdentitySettings)
                 : null;
     }
 
@@ -1349,12 +1344,12 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.agentInstanceId = agentInstanceId;
     }
 
-    public io.gravitee.am.model.application.SpiffeApplicationSettings getSpiffeSettings() {
-        return spiffeSettings;
+    public SpiffeApplicationSettings getWorkloadIdentitySettings() {
+        return workloadIdentitySettings;
     }
 
-    public void setSpiffeSettings(io.gravitee.am.model.application.SpiffeApplicationSettings spiffeSettings) {
-        this.spiffeSettings = spiffeSettings;
+    public void setWorkloadIdentitySettings(SpiffeApplicationSettings workloadIdentitySettings) {
+        this.workloadIdentitySettings = workloadIdentitySettings;
     }
 
     @Override
