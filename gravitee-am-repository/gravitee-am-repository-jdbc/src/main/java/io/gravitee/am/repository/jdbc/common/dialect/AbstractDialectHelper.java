@@ -390,25 +390,26 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc) {
+    public String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, boolean withType, int page, int size, String sort, boolean asc) {
         StringBuilder builder = new StringBuilder("SELECT * FROM applications a WHERE ");
-        return buildSearchApplications(wildcard, withIds, builder)
+        return buildSearchApplications(wildcard, withIds, withType, builder)
                 .append(buildPagingClause(sort, asc, page, size))
                 .toString();
     }
 
 
     @Override
-    public String buildCountApplicationsQuery(boolean wildcard, boolean withIds) {
+    public String buildCountApplicationsQuery(boolean wildcard, boolean withIds, boolean withType) {
         StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT a.id) FROM applications a WHERE ");
-        return buildSearchApplications(wildcard, withIds, builder)
+        return buildSearchApplications(wildcard, withIds, withType, builder)
                 .toString();
     }
 
-    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, StringBuilder builder) {
+    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, boolean withType, StringBuilder builder) {
         String escapeSuffix = wildcard ? getLikeEscapeClause() : "";
         return builder.append("a.domain = :domain")
                 .append(withIds ? " AND a.id IN (:applicationIds)" : "")
+                .append(withType ? " AND a.type = :type" : "")
                 .append(" AND (")
                 .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
@@ -473,6 +474,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     protected void appendCriteriaFilters(ApplicationCriteria criteria, StringBuilder builder) {
         criteria.getApplicationIds().filter(ids -> !ids.isEmpty()).ifPresent(ids -> builder.append(" AND a.id IN (:applicationIds)"));
         criteria.getEnabled().ifPresent(enabled -> builder.append(" AND a.enabled = :enabled"));
+        criteria.getType().ifPresent(type -> builder.append(" AND a.type = :type"));
     }
 
     @Override

@@ -86,11 +86,15 @@ export class ApplicationCreationComponent implements OnInit {
 
     const app: any = {};
     app.name = this.application.name;
-    app.type = this.application.type;
     app.description = this.application.description;
     app.clientId = this.application.clientId;
     app.clientSecret = this.application.clientSecret;
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
+
+    app.type = this.application.type;
+    if (this.application.type === 'AGENT') {
+      app.kind = this.application.agentType;
+    }
 
     this.applicationService
       .create(this.application.domain, app)
@@ -130,6 +134,9 @@ export class ApplicationCreationComponent implements OnInit {
       description: this.application.description,
       cimdUrl: this.application.cimdUrl,
     };
+    if (this.application.type === 'AGENT') {
+      payload.kind = this.application.agentType;
+    }
     if (this.application?.cimdPreview?.missing?.clientName && this.application.cimdClientName) {
       payload.clientName = this.application.cimdClientName;
     }
@@ -157,7 +164,19 @@ export class ApplicationCreationComponent implements OnInit {
     if (!this.application.name) {
       return false;
     }
-    return this.application.type !== 'SERVICE' ? !!this.application.redirectUri : true;
+    if (this.application.type === 'AGENT') {
+      if (!this.application.agentType) {
+        return false;
+      }
+      if (this.application.agentType === 'AUTONOMOUS') {
+        return true;
+      }
+      return !!this.application.redirectUri;
+    }
+    if (this.application.type === 'SERVICE') {
+      return true;
+    }
+    return !!this.application.redirectUri;
   }
 
   step2Valid(): boolean {

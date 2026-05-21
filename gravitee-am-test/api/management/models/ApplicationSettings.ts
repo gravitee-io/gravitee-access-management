@@ -81,6 +81,13 @@ import {
   PasswordSettingsToJSON,
   PasswordSettingsToJSONTyped,
 } from './PasswordSettings';
+import type { SpiffeApplicationSettings } from './SpiffeApplicationSettings';
+import {
+  SpiffeApplicationSettingsFromJSON,
+  SpiffeApplicationSettingsFromJSONTyped,
+  SpiffeApplicationSettingsToJSON,
+  SpiffeApplicationSettingsToJSONTyped,
+} from './SpiffeApplicationSettings';
 
 /**
  *
@@ -148,6 +155,12 @@ export interface ApplicationSettings {
    * @memberof ApplicationSettings
    */
   secretExpirationSettings?: SecretExpirationSettings;
+  /**
+   *
+   * @type {SpiffeApplicationSettings}
+   * @memberof ApplicationSettings
+   */
+  spiffe?: SpiffeApplicationSettings;
 }
 
 /**
@@ -177,6 +190,7 @@ export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator:
     saml: json['saml'] == null ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
+    spiffe: json['spiffe'] == null ? undefined : SpiffeApplicationSettingsFromJSON(json['spiffe']),
   };
 }
 
@@ -200,5 +214,6 @@ export function ApplicationSettingsToJSONTyped(value?: ApplicationSettings | nul
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: ApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
+    spiffe: SpiffeApplicationSettingsToJSON(value['spiffe']),
   };
 }

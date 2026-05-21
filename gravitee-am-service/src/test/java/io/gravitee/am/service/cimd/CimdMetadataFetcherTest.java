@@ -130,8 +130,19 @@ public class CimdMetadataFetcherTest {
     }
 
     @Test
-    public void fetchAndValidate_missingRedirectUris_fails() {
+    public void fetchAndValidate_missingRedirectUris_allowed() {
+        // Autonomous agents (client_credentials / token_exchange only) legitimately omit
+        // redirect_uris. Per-application enforcement happens downstream.
         respondJson("{ \"client_id\": \"x\" }");
+
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void fetchAndValidate_invalidRedirectUris_fails() {
+        respondJson("{ \"redirect_uris\": [\"\"] }");
 
         TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
         obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);

@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.ClientProfile;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
@@ -476,6 +477,33 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, request.getActClaim());
         }
 
+        // Agent application - inject "act" claim (actor = agent or blueprint client_id) and
+        // tag the actor with sub_profile so downstream consumers can reason about the chain.
+        if (client.isAgentApplication() && jwt.get(Claims.ACT) == null) {
+            Map<String, Object> act = new HashMap<>();
+            act.put(Claims.SUB, client.getClientId());
+            if (client.getAgentType() != null) {
+                act.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
+            }
+            jwt.put(Claims.ACT, act);
+        }
+
+        // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
+        // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
+        if (client.isAgentApplication() && client.getAgentType() != null && jwt.get(Claims.CLIENT_PROFILE) == null) {
+            jwt.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
+        }
+
+        // Agent application - emit sub_profile only when the subject is the agent itself
+        // (client-credentials / autonomous flows). For user-bound flows (USER_EMBEDDED auth code,
+        // HOSTED_DELEGATED token exchange with a user subject) the subject is the end-user, so
+        // top-level sub_profile must not advertise the agent profile — the agent identity is
+        // already carried via client_profile and act.sub_profile.
+        if (client.isAgentApplication() && client.getAgentType() != null
+                && request.isClientOnly() && jwt.get(Claims.SUB_PROFILE) == null) {
+            jwt.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
+        }
+
         // Apply resource to aud
         setResources(request, jwt);
 
@@ -516,7 +544,9 @@ public class TokenServiceImpl implements TokenService {
         JWT jwt = new JWT();
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         if (oAuth2Request.isClientOnly()) {
-            jwt.setSub(client.getClientId());
+            // For blueprint-agent jwt-bearer assertions in client_credentials flow, use the agent instance ID as sub
+            String sub = client.getAgentInstanceId() != null ? client.getAgentInstanceId() : client.getClientId();
+            jwt.setSub(sub);
         } else {
             subjectManager.updateJWT(jwt, user);
         }
@@ -634,6 +664,7 @@ public class TokenServiceImpl implements TokenService {
                 .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
                 .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
                 .tokenActor(client)
+                .agentApplication(client)
                 .withParams(() -> buildAuditParams(oAuth2Request, tokenWithCertInfo.certificateInfo))
                 .tokenTarget(endUser)
                 .accessTokenSubject(enhancedToken.getSubject());

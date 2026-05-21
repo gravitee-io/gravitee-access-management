@@ -26,6 +26,11 @@ setup(120000);
 
 const VALID_CIMD_URL = 'http://wiremock:8080/cimd/ENABLED_BASE/valid-none';
 const NOT_FOUND_URL = 'http://wiremock:8080/cimd/does-not-exist';
+const AUTONOMOUS_AGENT_CIMD_URL = 'http://wiremock:8080/cimd/ENABLED_BASE/autonomous-agent';
+const AUTONOMOUS_AGENT_NO_GRANTS_CIMD_URL = 'http://wiremock:8080/cimd/ENABLED_BASE/autonomous-agent-no-grants';
+const USER_EMBEDDED_AGENT_NO_GRANTS_CIMD_URL = 'http://wiremock:8080/cimd/ENABLED_BASE/user-embedded-agent-no-grants';
+const MISSING_TOKEN_AUTH_METHOD_CIMD_URL = 'http://wiremock:8080/cimd/ENABLED_BASE/missing-token-auth-method';
+const SECRET_BASIC_CIMD_URL = 'http://wiremock:8080/cimd/ENABLED_BASE/secret-basic';
 
 const cimdBaseUrl = (domainId: string): string =>
   `${process.env.AM_MANAGEMENT_ENDPOINT}/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainId}/cimd`;
@@ -126,4 +131,87 @@ describe('CIMD application creation', () => {
     expect(body.settings?.oauth?.clientId).toBe(VALID_CIMD_URL);
     expect(body.settings?.oauth?.redirectUris).toEqual(['https://client.example.com/callback']);
   });
+
+  it('rejects an AGENT CIMD application without kind', async () => {
+    const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
+      name: uniqueName('cimd-agent-bad', true),
+      type: 'AGENT',
+      cimdUrl: AUTONOMOUS_AGENT_CIMD_URL,
+    });
+
+    expect(status).toBe(400);
+    expect(JSON.stringify(body)).toContain('kind is required when application type is AGENT');
+  });
+
+  it('creates an AUTONOMOUS AGENT application from a CIMD URL and persists kind', async () => {
+    const appName = uniqueName('cimd-agent', true);
+    const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
+      name: appName,
+      type: 'AGENT',
+      kind: 'AUTONOMOUS',
+      cimdUrl: AUTONOMOUS_AGENT_CIMD_URL,
+    });
+
+    expect(status).toBe(201);
+    expect(body.type).toBe('agent');
+    expect(body.kind).toBe('AUTONOMOUS');
+    expect(body.settings?.oauth?.clientId).toBe(AUTONOMOUS_AGENT_CIMD_URL);
+  });
+
+  it('applies AUTONOMOUS kind grant_types default when CIMD doc omits grant_types', async () => {
+    const appName = uniqueName('cimd-agent-auto-defaults', true);
+    const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
+      name: appName,
+      type: 'AGENT',
+      kind: 'AUTONOMOUS',
+      cimdUrl: AUTONOMOUS_AGENT_NO_GRANTS_CIMD_URL,
+    });
+
+    expect(status).toBe(201);
+    expect(body.type).toBe('agent');
+    expect(body.kind).toBe('AUTONOMOUS');
+    expect(body.settings?.oauth?.grantTypes).toEqual(
+      expect.arrayContaining(['client_credentials', 'urn:ietf:params:oauth:grant-type:token-exchange']),
+    );
+  });
+
+  it('applies USER_EMBEDDED kind defaults when CIMD doc omits grant_types', async () => {
+    const appName = uniqueName('cimd-agent-ue-defaults', true);
+    const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
+      name: appName,
+      type: 'AGENT',
+      kind: 'USER_EMBEDDED',
+      cimdUrl: USER_EMBEDDED_AGENT_NO_GRANTS_CIMD_URL,
+    });
+
+    expect(status).toBe(201);
+    expect(body.type).toBe('agent');
+    expect(body.kind).toBe('USER_EMBEDDED');
+    expect(body.settings?.oauth?.grantTypes).toEqual(expect.arrayContaining(['authorization_code']));
+    expect(body.settings?.oauth?.responseTypes).toEqual(expect.arrayContaining(['code']));
+    expect(body.settings?.oauth?.tokenEndpointAuthMethod).toBe('none');
+  });
+
+  it('defaults token_endpoint_auth_method to none for a public WEB CIMD app when the doc omits it', async () => {
+    const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
+      name: uniqueName('cimd-app-no-auth', true),
+      type: 'WEB',
+      cimdUrl: MISSING_TOKEN_AUTH_METHOD_CIMD_URL,
+    });
+
+    expect(status).toBe(201);
+    expect(body.settings?.oauth?.tokenEndpointAuthMethod).toBe('none');
+  });
+
+  it('still rejects a CIMD doc that declares a secret-based token_endpoint_auth_method', async () => {
+    const { status, body } = await post(`${cimdBaseUrl(domain.id!)}/applications`, accessToken, {
+      name: uniqueName('cimd-app-secret-basic', true),
+      type: 'WEB',
+      cimdUrl: SECRET_BASIC_CIMD_URL,
+    });
+
+    expect(status).toBe(400);
+    expect(JSON.stringify(body)).toMatch(/token_endpoint_auth_method/);
+  });
+
 });

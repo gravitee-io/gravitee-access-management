@@ -73,8 +73,24 @@ export interface NewApplication {
    * @type {string}
    * @memberof NewApplication
    */
+  kind?: NewApplicationKindEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof NewApplication
+   */
   type: NewApplicationTypeEnum;
 }
+
+/**
+ * @export
+ */
+export const NewApplicationKindEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type NewApplicationKindEnum = typeof NewApplicationKindEnum[keyof typeof NewApplicationKindEnum];
 
 /**
  * @export
@@ -85,6 +101,7 @@ export const NewApplicationTypeEnum = {
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
 } as const;
 export type NewApplicationTypeEnum = typeof NewApplicationTypeEnum[keyof typeof NewApplicationTypeEnum];
 
@@ -112,6 +129,7 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    kind: json['kind'] == null ? undefined : json['kind'],
     type: json['type'],
   };
 }
@@ -132,6 +150,7 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
     metadata: value['metadata'],
     name: value['name'],
     redirectUris: value['redirectUris'],
+    kind: value['kind'],
     type: value['type'],
   };
 }

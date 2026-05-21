@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -42,6 +43,12 @@ public class NewApplication {
     private List<String> redirectUris;
 
     private Map<String, Object> metadata;
+
+    /**
+     * Application kind (agent persona for AGENT applications). Validated by service.
+     */
+    @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
+    private String kind;
 
     public String getName() {
         return name;
@@ -97,6 +104,14 @@ public class NewApplication {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     @Override

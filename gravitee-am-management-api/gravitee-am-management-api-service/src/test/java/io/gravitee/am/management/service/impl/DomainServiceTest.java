@@ -56,6 +56,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -984,6 +986,89 @@ public class DomainServiceTest {
         assertInvalidDomainExceptionMessage(observer, "CIMD settings are invalid: cache maximum entries must be higher than 0");
         verify(domainRepository).findById(anyString());
         verify(applicationService, never()).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldNoPatch_CIMD_reference_classical_app_not_template_nor_blueprint() {
+        // An app that is not a template should be rejected as a CIMD templateId reference
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        OIDCSettings oidcSettings = new OIDCSettings();
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setTemplateId("template-id");
+        cimdSettings.setAllowedDomains(List.of("*.gravitee.io"));
+        oidcSettings.setCimdSettings(cimdSettings);
+        domain.setOidc(oidcSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
+        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
+        Application app = new Application();
+        app.setTemplate(false);
+        // not a template, type defaults to non-AGENT
+        when(applicationService.findById(anyString())).thenReturn(Maybe.just(app));
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNotComplete()
+                .assertError(InvalidDomainException.class);
+
+        verify(applicationService).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldNotPatch_CIMD_reference_agent_app_not_marked_template() {
+        // Agent applications are not templates; CIMD templateId must point to a real template.
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        OIDCSettings oidcSettings = new OIDCSettings();
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setTemplateId("blueprint-app-id");
+        oidcSettings.setCimdSettings(cimdSettings);
+        domain.setOidc(oidcSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
+        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
+
+        Application blueprintApp = new Application();
+        blueprintApp.setTemplate(false);
+        blueprintApp.setType(io.gravitee.am.model.application.ApplicationType.AGENT);
+        when(applicationService.findById("blueprint-app-id")).thenReturn(Maybe.just(blueprintApp));
+
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
+
+        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template");
+        verify(applicationService).findById("blueprint-app-id");
         verify(domainRepository, never()).update(any(Domain.class));
     }
 

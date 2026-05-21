@@ -31,6 +31,8 @@ public class JdbcApplication {
     private String id;
     private String name;
     private String type;
+    @Column("kind")
+    private String kind;
     private String description;
     private String domain;
 
@@ -87,6 +89,14 @@ public class JdbcApplication {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     public String getDescription() {
@@ -365,4 +375,5 @@ public class JdbcApplication {
             this.scopeApproval = scopeApproval;
         }
     }
+
 }

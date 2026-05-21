@@ -103,6 +103,12 @@ export interface PatchApplication {
   settings?: PatchApplicationSettings;
   /**
    *
+   * @type {string}
+   * @memberof PatchApplication
+   */
+  kind?: PatchApplicationKindEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof PatchApplication
    */
@@ -161,6 +167,7 @@ export const PatchApplicationRequiredPermissionsEnum = {
   DomainAuthdeviceNotifier: 'DOMAIN_AUTHDEVICE_NOTIFIER',
   DomainI18NDictionary: 'DOMAIN_I18N_DICTIONARY',
   DomainTheme: 'DOMAIN_THEME',
+  DomainTrustDomain: 'DOMAIN_TRUST_DOMAIN',
   Application: 'APPLICATION',
   ApplicationSettings: 'APPLICATION_SETTINGS',
   ApplicationIdentityProvider: 'APPLICATION_IDENTITY_PROVIDER',
@@ -184,6 +191,16 @@ export const PatchApplicationRequiredPermissionsEnum = {
 } as const;
 export type PatchApplicationRequiredPermissionsEnum =
   typeof PatchApplicationRequiredPermissionsEnum[keyof typeof PatchApplicationRequiredPermissionsEnum];
+
+/**
+ * @export
+ */
+export const PatchApplicationKindEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type PatchApplicationKindEnum = typeof PatchApplicationKindEnum[keyof typeof PatchApplicationKindEnum];
 
 /**
  * Check if a given object implements the PatchApplication interface.
@@ -213,6 +230,7 @@ export function PatchApplicationFromJSONTyped(json: any, ignoreDiscriminator: bo
     name: json['name'] == null ? undefined : json['name'],
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
+    kind: json['kind'] == null ? undefined : json['kind'],
     template: json['template'] == null ? undefined : json['template'],
   };
 }
@@ -239,6 +257,7 @@ export function PatchApplicationToJSONTyped(value?: PatchApplication | null, ign
     name: value['name'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
     settings: PatchApplicationSettingsToJSON(value['settings']),
+    kind: value['kind'],
     template: value['template'],
   };
 }

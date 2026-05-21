@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCodeServiceImpl;
@@ -166,24 +167,22 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public ClientAssertionService clientAssertionService() {
-        return new ClientAssertionServiceImpl();
-    }
+    public ClientAssertionService clientAssertionService(List<ClientAssertionValidator> validators) { return new ClientAssertionServiceImpl(validators); }
 
     @Bean
     public ScopeManager scopeManager() {
         return new ScopeManagerImpl();
     }
 
-        @Bean
-        public ResourceValidationService resourceValidationService(ProtectedResourceManager protectedResourceManager, Environment environment) {
-            return new ResourceValidationServiceImpl(protectedResourceManager, environment);
-        }
+    @Bean
+    public ResourceValidationService resourceValidationService(ProtectedResourceManager protectedResourceManager, Environment environment) {
+        return new ResourceValidationServiceImpl(protectedResourceManager, environment);
+    }
 
-        @Bean
-        public ResourceConsistencyValidationService resourceConsistencyValidationService(Environment environment) {
-            return new ResourceConsistencyValidationServiceImpl(environment);
-        }
+    @Bean
+    public ResourceConsistencyValidationService resourceConsistencyValidationService(Environment environment) {
+        return new ResourceConsistencyValidationServiceImpl(environment);
+    }
 
     @Bean
     public ProtocolProvider oAuth2Provider() {

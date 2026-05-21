@@ -30,6 +30,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -52,6 +53,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SpiffeApplicationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
@@ -88,7 +90,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -126,6 +127,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
+    private static final String FIELD_TYPE = "type";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct
@@ -142,6 +144,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         indexes.put(new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
         indexes.put(new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_TYPE, 1), new IndexOptions().name("d1t1"));
 
         // Case-insensitive indexes for search functionality
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), indexOptionsWithCollation("d1soc1_ci"));
@@ -178,14 +181,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        Bson query = eq(FIELD_DOMAIN, domain);
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        Bson query = type == null
+                ? eq(FIELD_DOMAIN, domain)
+                : and(eq(FIELD_DOMAIN, domain), eq(FIELD_TYPE, type.name()));
         return queryApplications(query, page, size).observeOn(Schedulers.computation());
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        Bson query = and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds));
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        Bson query = type == null
+                ? and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds))
+                : and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds), eq(FIELD_TYPE, type.name()));
         return queryApplications(query, page, size).observeOn(Schedulers.computation());
     }
 
@@ -204,15 +211,16 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
         // search - use collation for non-wildcard queries to leverage case-insensitive indexes
-        Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson mongoQuery = type == null ? baseQuery : and(baseQuery, eq(FIELD_TYPE, type.name()));
         boolean useCollation = !isWildcardQuery(query);
         return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
         // Search on client_id and name fields with case-insensitive matching
         boolean useWildcard = isWildcardQuery(query);
 
@@ -230,9 +238,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
             searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
         }
 
-        Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
-                searchQuery);
+        Bson mongoQuery = type == null
+                ? and(eq(FIELD_DOMAIN, domain), searchQuery)
+                : and(eq(FIELD_DOMAIN, domain), searchQuery, eq(FIELD_TYPE, type.name()));
 
         CountOptions countOpts = useWildcard ? countOptions() : countOptions().collation(CASE_INSENSITIVE_COLLATION);
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOpts)).first(0L);
@@ -371,6 +379,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         List<Bson> filters = new ArrayList<>();
         criteria.getEnabled().ifPresent(enabled -> filters.add(eq(FIELD_ENABLED, enabled)));
         criteria.getApplicationIds().ifPresent(ids -> filters.add(in(FIELD_ID, ids)));
+        criteria.getType().ifPresent(type -> filters.add(eq(FIELD_TYPE, type.name())));
         return filters;
     }
 
@@ -379,6 +388,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setId(other.getId());
         applicationMongo.setName(other.getName());
         applicationMongo.setType(other.getType() != null ? other.getType().toString() : null);
+        applicationMongo.setKind(other.getKind());
         applicationMongo.setDescription(other.getDescription());
         applicationMongo.setDomain(other.getDomain());
         applicationMongo.setEnabled(other.isEnabled());
@@ -403,6 +413,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setId(other.getId());
         application.setName(other.getName());
         application.setType(ApplicationType.orNull(other.getType()));
+        application.setKind(other.getKind());
         application.setDescription(other.getDescription());
         application.setDomain(other.getDomain());
         application.setEnabled(other.isEnabled());
@@ -501,6 +512,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
+        applicationSettingsMongo.setWorkloadIdentitySettings(convert(other.getWorkloadIdentitySettings()));
         return applicationSettingsMongo;
     }
 
@@ -520,6 +532,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
+        applicationSettings.setWorkloadIdentitySettings(convert(other.getWorkloadIdentitySettings()));
         return applicationSettings;
     }
 
@@ -828,6 +841,28 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
         return applicationAdvancedSettingsMongo;
+    }
+
+    private static SpiffeApplicationSettings convert(SpiffeApplicationSettingsMongo other) {
+        if (other == null) {
+            return null;
+        }
+
+        SpiffeApplicationSettings settings = new SpiffeApplicationSettings();
+        settings.setTrustDomain(other.getTrustDomain());
+        settings.setSubject(other.getSubject());
+        return settings;
+    }
+
+    private static SpiffeApplicationSettingsMongo convert(SpiffeApplicationSettings other) {
+        if (other == null) {
+            return null;
+        }
+
+        SpiffeApplicationSettingsMongo settings = new SpiffeApplicationSettingsMongo();
+        settings.setTrustDomain(other.getTrustDomain());
+        settings.setSubject(other.getSubject());
+        return settings;
     }
 
     private static MFASettings convert(MFASettingsMongo mfaSettingsMongo) {

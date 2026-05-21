@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.model;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 import java.util.Set;
@@ -26,6 +27,8 @@ public record FilteredApplication(
         String name,
         String description,
         ApplicationType type,
+        @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
+        String kind,
         boolean enabled,
         boolean template,
         Date updatedAt,
@@ -41,6 +44,7 @@ public record FilteredApplication(
                 application.getName(),
                 application.getDescription(),
                 application.getType(),
+                application.getKind(),
                 application.isEnabled(),
                 application.isTemplate(),
                 application.getUpdatedAt(),

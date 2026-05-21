@@ -60,6 +60,10 @@ export class ApplicationCreationStep2Component implements OnInit {
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',
     },
+    {
+      icon: 'smart_toy',
+      type: 'AGENT',
+    },
   ];
 
   constructor(private route: ActivatedRoute) {}
@@ -75,7 +79,14 @@ export class ApplicationCreationStep2Component implements OnInit {
   }
 
   displayRedirectUri(): boolean {
-    return this.application.type !== 'SERVICE';
+    if (this.application.type === 'SERVICE') {
+      return false;
+    }
+    // Autonomous agents don't need redirect URIs (client_credentials only)
+    if (this.application.type === 'AGENT' && this.application.agentType === 'AUTONOMOUS') {
+      return false;
+    }
+    return true;
   }
 
   elRedirectUriEnabled(): boolean {

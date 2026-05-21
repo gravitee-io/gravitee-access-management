@@ -140,6 +140,7 @@ import { ApplicationAccountSettingsComponent } from './domain/applications/appli
 import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
+import { ApplicationAgentComponent } from './domain/applications/application/advanced/agent/agent.component';
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/advanced/client-secrets/domain-mcp-server-client-secrets.component';
 import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
@@ -208,6 +209,11 @@ import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
 import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
 import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
 import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
+import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
+import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
+import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
 import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
@@ -230,6 +236,7 @@ import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-en
 import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
+import { SpiffeSettingsComponent } from './domain/settings/openid/spiffe/spiffe-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
 import { CimdSettingsComponent } from './domain/settings/cimd/cimd.component';
 import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
@@ -1015,7 +1022,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                           },
@@ -1054,7 +1061,7 @@ export const routes: Routes = [
                                     only: ['application_form_list', 'application_form_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                                 children: [
@@ -1093,7 +1100,7 @@ export const routes: Routes = [
                                     only: ['application_email_template_list', 'application_email_template_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                                 children: [
@@ -1159,7 +1166,7 @@ export const routes: Routes = [
                                 only: ['application_analytics_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                           },
@@ -1208,7 +1215,22 @@ export const routes: Routes = [
                                   },
                                 },
                               },
-
+                              {
+                                path: 'agent',
+                                component: ApplicationAgentComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Agent Identity',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                  requiresAgentIdentity: true,
+                                },
+                              },
                               {
                                 path: 'metadata',
                                 component: ApplicationMetadataComponent,
@@ -1324,7 +1346,7 @@ export const routes: Routes = [
                                     only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
@@ -2275,6 +2297,56 @@ export const routes: Routes = [
                         ],
                       },
                       {
+                        path: 'trust-domains',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Trust Domains',
+                            section: 'Workload Identity',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_trust_domain_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainSettingsTrustDomainsComponent,
+                            resolve: {
+                              trustDomains: TrustDomainsResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: TrustDomainCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_trust_domain_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':trustDomainId',
+                            component: TrustDomainComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              trustDomain: TrustDomainResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'trustDomain.name',
+                              },
+                              perms: {
+                                only: ['domain_trust_domain_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                      {
                         path: 'bot-detection',
                         canActivate: [AuthGuard],
                         data: {
@@ -2950,6 +3022,21 @@ export const routes: Routes = [
                           menu: {
                             label: 'Security Profile',
                             section: 'Openid',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_openid_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'spiffe',
+                        component: SpiffeSettingsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'SPIFFE Settings',
+                            section: 'Workload Identity',
                             level: 'level2',
                           },
                           perms: {

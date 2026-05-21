@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResource
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.Token;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -140,6 +141,14 @@ abstract class BaseIntrospectionTokenService {
 
     private Single<AudienceMatch> resolveAudience(String domain, String audience) {
         return clientLookupService.findByDomainAndClientId(domain, audience)
+                .onErrorResumeNext(err -> {
+                    if (err instanceof InvalidClientMetadataException) {
+                        LOGGER.debug("Introspection: audience [{}] could not be resolved as a client ({}); falling back to protected-resource validation",
+                                audience, err.getMessage());
+                        return Maybe.empty();
+                    }
+                    return Maybe.error(err);
+                })
                 .<AudienceMatch>map(client -> new ClientMatch(audience, client))
                 .switchIfEmpty(Single.fromCallable(() -> {
                     Set<ProtectedResource> resources = protectedResourceManager.getByIdentifier(audience);

@@ -145,6 +145,21 @@ public interface Claims {
      */
     String ACT = "act";
 
+    /**
+     * draft-mora-oauth-entity-profiles-00 - Client profile claim used to advertise
+     * the operating profile of the requesting client (e.g. agent profile).
+     * See <a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01#name-client_profile-claim-2">draft-mora § client_profile</a>
+     */
+    String CLIENT_PROFILE = "client_profile";
+
+    /**
+     * draft-mora-oauth-entity-profiles-01 - Sub profile claim used to indicate the operating
+     * profile of the token subject (e.g. agent profile). The value is the profile token only
+     * (no registry-token prefix). Propagated through {@code act} chain nodes when the
+     * intermediate actor is itself a profiled subject.
+     */
+    String SUB_PROFILE = "sub_profile";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF, CLIENT_ID);

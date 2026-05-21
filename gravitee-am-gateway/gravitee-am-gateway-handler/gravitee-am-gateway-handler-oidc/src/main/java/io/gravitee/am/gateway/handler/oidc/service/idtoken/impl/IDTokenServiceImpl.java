@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.idtoken.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.ClientProfile;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
@@ -253,6 +254,10 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         // 4. Enhance ID token with custom claims
         enhanceIDToken(idToken, client.getTokenCustomClaims(), executionContext);
+
+        if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
+            idToken.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
+        }
 
         return idToken;
     }

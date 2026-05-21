@@ -67,6 +67,7 @@ tags:
 - name: scope
 - name: sharding-tags
 - name: theme
+- name: trust-domain
 - name: user
 - name: user notifications
 paths:
@@ -1033,6 +1034,17 @@ paths:
         in: query
         schema:
           type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - WEB
+          - NATIVE
+          - BROWSER
+          - SERVICE
+          - RESOURCE_SERVER
+          - AGENT
       responses:
         "200":
           description: List registered applications for a security domain
@@ -8039,6 +8051,207 @@ paths:
           description: Theme successfully deleted
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trust-domains:
+    get:
+      tags:
+      - trust-domain
+      - domain
+      summary: List trust domains registered against the security domain
+      description: "User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization"
+      operationId: listTrustDomains
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of trust domains
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrustDomain"
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - trust-domain
+      - domain
+      summary: Register a SPIFFE trust domain on the security domain
+      description: "User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization"
+      operationId: createTrustDomain
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTrustDomain"
+        required: true
+      responses:
+        "201":
+          description: Trust domain successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustDomain"
+        "400":
+          description: Invalid trust domain configuration
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trust-domains/{trustDomainId}:
+    get:
+      tags:
+      - trust-domain
+      - domain
+      summary: Get a trust domain
+      description: "User must have the DOMAIN_TRUST_DOMAIN[READ] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[READ] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[READ] permission on the specified organization"
+      operationId: getTrustDomain
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trustDomainId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Trust domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustDomain"
+        "404":
+          description: Trust domain not found
+    put:
+      tags:
+      - trust-domain
+      - domain
+      summary: Update a trust domain
+      description: "User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization"
+      operationId: updateTrustDomain
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trustDomainId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTrustDomain"
+        required: true
+      responses:
+        "200":
+          description: Trust domain successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustDomain"
+        "404":
+          description: Trust domain not found
+        "500":
+          description: Internal server error
+    delete:
+      tags:
+      - trust-domain
+      - domain
+      summary: Delete a trust domain
+      description: "User must have the DOMAIN_TRUST_DOMAIN[DELETE] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified organization"
+      operationId: deleteTrustDomain
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trustDomainId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Trust domain successfully deleted
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users:
     get:
       tags:
@@ -12190,6 +12403,8 @@ components:
     Application:
       type: object
       properties:
+        agentApplication:
+          type: boolean
         certificate:
           type: string
         createdAt:
@@ -12213,6 +12428,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationIdentityProvider"
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         metadata:
           type: object
           additionalProperties:
@@ -12241,6 +12462,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -12552,6 +12774,8 @@ components:
           $ref: "#/components/schemas/ApplicationSAMLSettings"
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        workloadIdentitySettings:
+          $ref: "#/components/schemas/SpiffeApplicationSettings"
     AssessmentSettings:
       type: object
       properties:
@@ -13086,6 +13310,8 @@ components:
           type: array
           items:
             type: string
+        request_object_signing_alg:
+          type: string
         request_uris:
           type: array
           items:
@@ -13719,6 +13945,12 @@ components:
           type: boolean
         id:
           type: string
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         name:
           type: string
         template:
@@ -13731,6 +13963,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -14239,6 +14472,12 @@ components:
           type: string
         description:
           type: string
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         metadata:
           type: object
           additionalProperties:
@@ -14257,6 +14496,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -14346,6 +14586,12 @@ components:
           type: string
         description:
           type: string
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         name:
           type: string
         type:
@@ -14356,6 +14602,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     NewClientSecret:
       required:
       - name
@@ -14878,6 +15125,27 @@ components:
           type: string
         secondaryTextColorHex:
           type: string
+    NewTrustDomain:
+      type: object
+      properties:
+        allowedAlgorithms:
+          type: array
+          items:
+            type: string
+        bundleSource:
+          type: string
+          enum:
+          - JWKS_URL
+          - STATIC_JWKS
+        description:
+          type: string
+        jwksUrl:
+          type: string
+        name:
+          type: string
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
     NewUser:
       required:
       - username
@@ -14979,6 +15247,8 @@ components:
             type: string
         securityProfileSettings:
           $ref: "#/components/schemas/SecurityProfileSettings"
+        workloadIdentitySettings:
+          $ref: "#/components/schemas/SpiffeDomainSettings"
     OrganizationUserBulkRequest:
       required:
       - action
@@ -15180,6 +15450,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PatchApplicationIdentityProvider"
+        kind:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
         metadata:
           type: object
           additionalProperties:
@@ -15240,6 +15516,7 @@ components:
             - DOMAIN_AUTHDEVICE_NOTIFIER
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
+            - DOMAIN_TRUST_DOMAIN
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -15552,6 +15829,7 @@ components:
             - DOMAIN_AUTHDEVICE_NOTIFIER
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
+            - DOMAIN_TRUST_DOMAIN
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -15578,6 +15856,8 @@ components:
           $ref: "#/components/schemas/PatchApplicationSAMLSettings"
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        workloadIdentitySettings:
+          $ref: "#/components/schemas/SpiffeApplicationSettings"
     PatchApplicationType:
       required:
       - type
@@ -15591,6 +15871,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     PatchCIBASettings:
       type: object
       properties:
@@ -15770,6 +16051,7 @@ components:
             - DOMAIN_AUTHDEVICE_NOTIFIER
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
+            - DOMAIN_TRUST_DOMAIN
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -15948,6 +16230,7 @@ components:
             - DOMAIN_AUTHDEVICE_NOTIFIER
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
+            - DOMAIN_TRUST_DOMAIN
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -15970,6 +16253,8 @@ components:
             - INSTALLATION
         securityProfileSettings:
           $ref: "#/components/schemas/PatchSecurityProfileSettings"
+        workloadIdentitySettings:
+          $ref: "#/components/schemas/PatchSpiffeDomainSettings"
     PatchOrganization:
       type: object
       properties:
@@ -16111,6 +16396,7 @@ components:
             - DOMAIN_AUTHDEVICE_NOTIFIER
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
+            - DOMAIN_TRUST_DOMAIN
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -16154,6 +16440,37 @@ components:
           type: boolean
         enablePlainFapi:
           type: boolean
+    PatchSpiffeDomainSettings:
+      type: object
+      properties:
+        allowPrivateIpAddress:
+          type: boolean
+        allowUnsecuredHttpUri:
+          type: boolean
+        cacheMaxEntries:
+          type: integer
+          format: int32
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+        clockSkewSeconds:
+          type: integer
+          format: int32
+        defaultAllowedAlgorithms:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+        maxJwtLifetimeSeconds:
+          type: integer
+          format: int32
+        maxResponseSizeKb:
+          type: integer
+          format: int32
     PatchStepUpAuthentication:
       type: object
       properties:
@@ -16706,6 +17023,44 @@ components:
       properties:
         persistent:
           type: boolean
+    SpiffeApplicationSettings:
+      type: object
+      properties:
+        subject:
+          type: string
+        trustDomain:
+          type: string
+    SpiffeDomainSettings:
+      type: object
+      properties:
+        allowPrivateIpAddress:
+          type: boolean
+        allowUnsecuredHttpUri:
+          type: boolean
+        cacheMaxEntries:
+          type: integer
+          format: int32
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+        clockSkewSeconds:
+          type: integer
+          format: int32
+        defaultAllowedAlgorithms:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+        maxJwtLifetimeSeconds:
+          type: integer
+          format: int32
+        maxResponseSizeKb:
+          type: integer
+          format: int32
     StatusEntity:
       type: object
       properties:
@@ -16881,6 +17236,48 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TrustedIssuer"
+    TrustDomain:
+      type: object
+      properties:
+        allowedAlgorithms:
+          type: array
+          items:
+            type: string
+        bundleSource:
+          type: string
+          enum:
+          - JWKS_URL
+          - STATIC_JWKS
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        id:
+          type: string
+        jwksUrl:
+          type: string
+        name:
+          type: string
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
+        staticJwks:
+          $ref: "#/components/schemas/JWKSet"
+        updatedAt:
+          type: string
+          format: date-time
     TrustedIssuer:
       type: object
       properties:
@@ -17310,6 +17707,25 @@ components:
           type: string
         name:
           type: string
+    UpdateTrustDomain:
+      type: object
+      properties:
+        allowedAlgorithms:
+          type: array
+          items:
+            type: string
+        bundleSource:
+          type: string
+          enum:
+          - JWKS_URL
+          - STATIC_JWKS
+        description:
+          type: string
+        jwksUrl:
+          type: string
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
     UpdateUser:
       type: object
       properties:

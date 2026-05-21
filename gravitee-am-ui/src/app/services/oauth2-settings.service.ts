@@ -36,7 +36,7 @@ export interface OAuth2SettingsService {
   getPermission(): string;
   getContext(): OAuth2Context;
   getSettings(route: ActivatedRoute): OAuth2Settings;
-  update(domainId: string, resourceId: string, resource: any, oauthSettings: any): Observable<any>;
+  update(domainId: string, resourceId: string, resource: any, oauthSettings: any, spiffeSettings?: any): Observable<any>;
 }
 
 @Injectable()
@@ -62,8 +62,14 @@ export class ApplicationOAuth2Service implements OAuth2SettingsService {
     };
   }
 
-  update(domainId: string, resourceId: string, resource: any, oauthSettings: any): Observable<any> {
-    return this.applicationService.patch(domainId, resourceId, { settings: { oauth: oauthSettings } });
+  update(domainId: string, resourceId: string, resource: any, oauthSettings: any, spiffeSettings?: any): Observable<any> {
+    const settings: any = { oauth: oauthSettings };
+    if (oauthSettings?.tokenEndpointAuthMethod === 'spiffe_jwt') {
+      settings.workloadIdentitySettings = spiffeSettings ?? null;
+    } else {
+      settings.workloadIdentitySettings = null;
+    }
+    return this.applicationService.patch(domainId, resourceId, { settings });
   }
 }
 
@@ -90,7 +96,7 @@ export class McpServerOAuth2Service implements OAuth2SettingsService {
     };
   }
 
-  update(domainId: string, resourceId: string, resource: any, oauthSettings: any): Observable<any> {
+  update(domainId: string, resourceId: string, resource: any, oauthSettings: any, _spiffeSettings?: any): Observable<any> {
     const basePayload = toUpdateProtectedResourceRequest(resource);
     const updatePayload = {
       ...basePayload,

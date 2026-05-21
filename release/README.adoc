@@ -173,7 +173,7 @@ npm run am-release -- \
 ----
 
 
-== 💡 Functional overview
+== 💡 Functional overview[[functional_overview]]
 
 This is the functional dependencies between each step:
 

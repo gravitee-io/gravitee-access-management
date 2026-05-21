@@ -65,6 +65,12 @@ import {
 export interface Application {
   /**
    *
+   * @type {boolean}
+   * @memberof Application
+   */
+  agentApplication?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof Application
    */
@@ -149,6 +155,12 @@ export interface Application {
   settings?: ApplicationSettings;
   /**
    *
+   * @type {string}
+   * @memberof Application
+   */
+  kind?: ApplicationKindEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof Application
    */
@@ -170,12 +182,23 @@ export interface Application {
 /**
  * @export
  */
+export const ApplicationKindEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type ApplicationKindEnum = typeof ApplicationKindEnum[keyof typeof ApplicationKindEnum];
+
+/**
+ * @export
+ */
 export const ApplicationTypeEnum = {
   Web: 'WEB',
   Native: 'NATIVE',
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
 } as const;
 export type ApplicationTypeEnum = typeof ApplicationTypeEnum[keyof typeof ApplicationTypeEnum];
 
@@ -195,6 +218,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
+    agentApplication: json['agentApplication'] == null ? undefined : json['agentApplication'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     description: json['description'] == null ? undefined : json['description'],
@@ -213,6 +237,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     secrets: json['secrets'] == null ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    kind: json['kind'] == null ? undefined : json['kind'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
@@ -229,6 +254,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
   }
 
   return {
+    agentApplication: value['agentApplication'],
     certificate: value['certificate'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     description: value['description'],
@@ -247,6 +273,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     secrets: value['secrets'] == null ? undefined : (value['secrets'] as Array<any>).map(ClientSecretToJSON),
     settings: ApplicationSettingsToJSON(value['settings']),
+    kind: value['kind'],
     template: value['template'],
     type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),

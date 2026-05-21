@@ -58,6 +58,12 @@ export interface FilteredApplication {
   name?: string;
   /**
    *
+   * @type {string}
+   * @memberof FilteredApplication
+   */
+  kind?: FilteredApplicationKindEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof FilteredApplication
    */
@@ -79,12 +85,23 @@ export interface FilteredApplication {
 /**
  * @export
  */
+export const FilteredApplicationKindEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type FilteredApplicationKindEnum = typeof FilteredApplicationKindEnum[keyof typeof FilteredApplicationKindEnum];
+
+/**
+ * @export
+ */
 export const FilteredApplicationTypeEnum = {
   Web: 'WEB',
   Native: 'NATIVE',
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
 } as const;
 export type FilteredApplicationTypeEnum = typeof FilteredApplicationTypeEnum[keyof typeof FilteredApplicationTypeEnum];
 
@@ -108,6 +125,7 @@ export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator:
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
+    kind: json['kind'] == null ? undefined : json['kind'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
@@ -128,6 +146,7 @@ export function FilteredApplicationToJSONTyped(value?: FilteredApplication | nul
     enabled: value['enabled'],
     id: value['id'],
     name: value['name'],
+    kind: value['kind'],
     template: value['template'],
     type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),

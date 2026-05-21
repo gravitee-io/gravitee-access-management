@@ -31,11 +31,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
-import io.gravitee.am.model.application.SAMLAssertionAttribute;
-import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -314,6 +310,12 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private SecretExpirationSettings secretExpirationSettings;
 
+    private AgentType agentType;
+
+    private transient String agentInstanceId;
+
+    private io.gravitee.am.model.application.SpiffeApplicationSettings workloadIdentitySettings;
+
     public Client() {
     }
 
@@ -417,6 +419,11 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
+        this.agentType = other.agentType;
+        this.agentInstanceId = other.agentInstanceId;
+        this.workloadIdentitySettings = other.workloadIdentitySettings != null
+                ? new io.gravitee.am.model.application.SpiffeApplicationSettings(other.workloadIdentitySettings)
+                : null;
     }
 
     public String getId() {
@@ -1315,6 +1322,34 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setSecretExpirationSettings(SecretExpirationSettings secretExpirationSettings) {
         this.secretExpirationSettings = secretExpirationSettings;
+    }
+
+    public boolean isAgentApplication() {
+        return io.gravitee.am.model.application.ApplicationType.AGENT.equals(appType);
+    }
+
+    public AgentType getAgentType() {
+        return agentType;
+    }
+
+    public void setAgentType(AgentType agentType) {
+        this.agentType = agentType;
+    }
+
+    public String getAgentInstanceId() {
+        return agentInstanceId;
+    }
+
+    public void setAgentInstanceId(String agentInstanceId) {
+        this.agentInstanceId = agentInstanceId;
+    }
+
+    public SpiffeApplicationSettings getWorkloadIdentitySettings() {
+        return workloadIdentitySettings;
+    }
+
+    public void setWorkloadIdentitySettings(SpiffeApplicationSettings workloadIdentitySettings) {
+        this.workloadIdentitySettings = workloadIdentitySettings;
     }
 
     @Override

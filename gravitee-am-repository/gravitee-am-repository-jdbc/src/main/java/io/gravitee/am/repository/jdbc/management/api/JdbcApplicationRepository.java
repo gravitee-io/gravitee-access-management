@@ -20,6 +20,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -75,6 +76,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     public static final String COL_ID = "id";
     public static final String COL_TYPE = "type";
+    public static final String COL_KIND = "kind";
     public static final String COL_ENABLED = "enabled";
     public static final String COL_TEMPLATE = "template";
     public static final String COL_NAME = "name";
@@ -89,6 +91,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     private static final List<String> columns = List.of(COL_ID,
             COL_TYPE,
+            COL_KIND,
             COL_ENABLED,
             COL_TEMPLATE,
             COL_NAME,
@@ -203,60 +206,77 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        LOGGER.debug("findByDomain({}, {}, {}, {})", domain, type, page, size);
+        var criteria = type == null
+                ? where(COL_DOMAIN).is(domain)
+                : where(COL_DOMAIN).is(domain).and(where(COL_TYPE).is(type.name()));
+        Single<Long> countQuery = type == null
+                ? applicationRepository.countByDomain(domain)
+                : applicationRepository.countByDomainAndType(domain, type.name());
         return fluxToFlowable(getTemplate().select(JdbcApplication.class)
-                .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .matching(query(criteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
                 .all())
                 .map(this::toEntity)
                 .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<>(data, page, total)))
+                .flatMap(data -> countQuery.map(total -> new Page<>(data, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
         if(applicationIds == null || applicationIds.isEmpty()) {
             return Single.just(new Page<>());
         }
-        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
+        LOGGER.debug("findByDomain({}, ids, {}, {}, {})", domain, type, page, size);
+        var criteria = where(COL_DOMAIN).is(domain).and(where(COL_ID).in(applicationIds));
+        if (type != null) {
+            criteria = criteria.and(where(COL_TYPE).is(type.name()));
+        }
+        Query matchingQuery = query(criteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending()));
+        Query countQuery = query(criteria);
         return fluxToFlowable(getTemplate().select(JdbcApplication.class)
-                .matching(query(where(COL_DOMAIN).is(domain).and(where(COL_ID).in(applicationIds)))
-                        .with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .matching(matchingQuery)
                 .all())
                 .map(this::toEntity)
                 .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(data -> applicationRepository.countByDomainAndApplicationIds(domain, applicationIds).map(total -> new Page<>(data, page, total)))
+                .flatMap(data -> monoToSingle(getTemplate().select(JdbcApplication.class).matching(countQuery).count())
+                        .map(total -> new Page<>(data, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("search({}, {}, {}, {}, {})", domain, query, type, page, size);
 
         boolean wildcardMatch = query.contains("*");
         String wildcardQuery = query.replaceAll("\\*+", "%");
         // Escape LIKE special characters (e.g., [ and ] for SQL Server)
         String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
 
-        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, page, size, COL_UPDATED_AT, false);
-        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false);
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, type != null, page, size, COL_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false, type != null);
 
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+        DatabaseClient.GenericExecuteSpec searchSpecBase = getTemplate().getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
-                .bind("value", escapedQuery.toUpperCase())
+                .bind("value", escapedQuery.toUpperCase());
+        DatabaseClient.GenericExecuteSpec countSpecBase = getTemplate().getDatabaseClient().sql(count)
+                .bind(COL_DOMAIN, domain)
+                .bind("value", escapedQuery.toUpperCase());
+        final DatabaseClient.GenericExecuteSpec searchSpec = type != null ? searchSpecBase.bind("type", type.name()) : searchSpecBase;
+        final DatabaseClient.GenericExecuteSpec countSpec = type != null ? countSpecBase.bind("type", type.name()) : countSpecBase;
+
+        return fluxToFlowable(searchSpec
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(COL_DOMAIN, domain)
-                        .bind("value", escapedQuery.toUpperCase())
+                .flatMap(data -> monoToSingle(countSpec
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<>(data, page, total)))
                 .observeOn(Schedulers.computation())
@@ -264,8 +284,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
-        LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("search({}, ids, {}, {}, {}, {})", domain, query, type, page, size);
         if(applicationIds == null || applicationIds.isEmpty()) {
             return Single.just(new Page<>());
         }
@@ -275,22 +295,27 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         // Escape LIKE special characters (e.g., [ and ] for SQL Server)
         String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
 
-        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, page, size, COL_UPDATED_AT, false);
-        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true);
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, type != null, page, size, COL_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true, type != null);
 
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+        DatabaseClient.GenericExecuteSpec searchSpecBase = getTemplate().getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
                 .bind("applicationIds", applicationIds)
-                .bind("value", escapedQuery.toUpperCase())
+                .bind("value", escapedQuery.toUpperCase());
+        DatabaseClient.GenericExecuteSpec countSpecBase = getTemplate().getDatabaseClient().sql(count)
+                .bind(COL_DOMAIN, domain)
+                .bind("applicationIds", applicationIds)
+                .bind("value", escapedQuery.toUpperCase());
+        final DatabaseClient.GenericExecuteSpec searchSpec = type != null ? searchSpecBase.bind("type", type.name()) : searchSpecBase;
+        final DatabaseClient.GenericExecuteSpec countSpec = type != null ? countSpecBase.bind("type", type.name()) : countSpecBase;
+
+        return fluxToFlowable(searchSpec
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(COL_DOMAIN, domain)
-                        .bind("applicationIds", applicationIds)
-                        .bind("value", escapedQuery.toUpperCase())
+                .flatMap(data -> monoToSingle(countSpec
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
                 .observeOn(Schedulers.computation())
@@ -371,6 +396,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
         if (criteria.getEnabled().isPresent()) {
             spec = spec.bind("enabled", criteria.getEnabled().get());
+        }
+        if (criteria.getType().isPresent()) {
+            spec = spec.bind("type", criteria.getType().get().name());
         }
         return spec;
     }
@@ -474,6 +502,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        sql = addQuotedField(sql, COL_KIND, item.getKind(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
         sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
         sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);
@@ -503,6 +532,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(updateStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        sql = addQuotedField(sql, COL_KIND, item.getKind(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
         sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
         sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);

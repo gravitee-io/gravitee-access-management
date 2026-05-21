@@ -288,6 +288,7 @@ public class ApplicationResource extends AbstractResource {
             filteredApplication.setId(application.getId());
             filteredApplication.setName(application.getName());
             filteredApplication.setType(application.getType());
+            filteredApplication.setKind(application.getKind());
             filteredApplication.setDescription(application.getDescription());
             filteredApplication.setDomain(application.getDomain());
             filteredApplication.setEnabled(application.isEnabled());
@@ -328,6 +329,7 @@ public class ApplicationResource extends AbstractResource {
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
                 filteredApplicationSettings.setOauth(settings.getOauth());
+                filteredApplicationSettings.setWorkloadIdentitySettings(settings.getWorkloadIdentitySettings());
             }
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_SAML, Acl.READ)) {

@@ -20,6 +20,7 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.PermissionSettingUtils;
 import io.gravitee.am.service.utils.SetterUtils;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -42,6 +43,8 @@ import static java.util.stream.Collectors.toCollection;
 public class PatchApplication {
 
     private Optional<String> name;
+    @Schema(allowableValues = {"USER_EMBEDDED", "HOSTED_DELEGATED", "AUTONOMOUS"})
+    private Optional<String> kind;
     private Optional<String> description;
     private Optional<Boolean> enabled;
     private Optional<Boolean> template;
@@ -57,6 +60,14 @@ public class PatchApplication {
 
     public void setName(Optional<String> name) {
         this.name = name;
+    }
+
+    public Optional<String> getKind() {
+        return kind;
+    }
+
+    public void setKind(Optional<String> kind) {
+        this.kind = kind;
     }
 
     public Optional<String> getDescription() {
@@ -128,6 +139,7 @@ public class PatchApplication {
         Application toPatch = new Application(_toPatch);
 
         SetterUtils.safeSet(toPatch::setName, this.getName());
+        SetterUtils.safeSet(toPatch::setKind, this.getKind());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);

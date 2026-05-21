@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -250,13 +251,16 @@ public class CimdMetadataFetcher {
             throw new InvalidClientMetadataException("Client metadata response is not a JSON object.");
         }
 
+        // redirect_uris are required for redirect-based flows only. CIMD docs for AUTONOMOUS-style
+        // clients (client_credentials / token_exchange only) legitimately omit them. Downstream
+        // validators (validateRedirectUris, validateAgentSettings) enforce the right rule per
+        // application type, so we only sanity-check the array contents here.
         final JsonNode redirectUris = metadata.get("redirect_uris");
-        if (redirectUris == null || !redirectUris.isArray() || redirectUris.isEmpty()) {
-            throw new InvalidClientMetadataException("Missing or invalid redirect_uris.");
-        }
-        for (JsonNode item : redirectUris) {
-            if (!item.isTextual() || item.asText().isBlank()) {
-                throw new InvalidClientMetadataException("Invalid redirect_uris.");
+        if (redirectUris != null && redirectUris.isArray()) {
+            for (JsonNode item : redirectUris) {
+                if (!item.isTextual() || item.asText().isBlank()) {
+                    throw new InvalidClientMetadataException("Invalid redirect_uris.");
+                }
             }
         }
 
@@ -305,7 +309,8 @@ public class CimdMetadataFetcher {
                 readStringArray(metadata, "response_types"),
                 readStringArray(metadata, "contacts"),
                 readStringArray(metadata, "request_uris"),
-                optionalText(metadata, "token_endpoint_auth_method"),
+                Optional.ofNullable(optionalText(metadata, "token_endpoint_auth_method"))
+                        .orElse(ClientAuthenticationMethod.NONE),
                 optionalText(metadata, "application_type"),
                 optionalText(metadata, "subject_type"),
                 optionalText(metadata, "sector_identifier_uri"),
@@ -329,6 +334,7 @@ public class CimdMetadataFetcher {
                 optionalText(metadata, "backchannel_client_notification_endpoint"),
                 optionalText(metadata, "backchannel_authentication_request_signing_alg"),
                 optionalBoolean(metadata, "backchannel_user_code_parameter"),
+                optionalText(metadata, "request_object_signing_alg"),
                 missing,
                 body,
                 fetched.ttl()

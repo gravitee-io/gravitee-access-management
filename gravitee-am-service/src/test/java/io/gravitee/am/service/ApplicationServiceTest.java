@@ -36,6 +36,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -105,7 +106,9 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import org.mockito.ArgumentMatchers;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doAnswer;
@@ -256,7 +259,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(0), eq(Integer.MAX_VALUE))).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Set<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -267,7 +270,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainAndApplicationIds() {
-        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(List.class), eq(0), eq(10)))
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(), isNull(), eq(0), eq(10)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), List.of("id1"),0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -279,7 +282,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldSearchByDomainAndApplicationIds() {
-        when(applicationRepository.search(eq(DOMAIN.getId()), any(List.class), eq("query"), eq(0), eq(10)))
+        when(applicationRepository.search(eq(DOMAIN.getId()), any(), eq("query"), isNull(), eq(0), eq(10)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Page<Application>> testObserver = applicationService.search(DOMAIN.getId(), List.of("id1"), "query", 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -291,7 +294,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(0), eq(Integer.MAX_VALUE))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         applicationService.findByDomain(DOMAIN.getId()).subscribe(testObserver);
@@ -303,7 +306,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldFindByDomainPagination() {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.just(pageClients));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(1), eq(1))).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), 1, 1).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -313,8 +316,56 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldFindAgentsByDomain() {
+        Page<Application> page = new Page<>(Collections.singleton(new Application()), 0, 1);
+        when(applicationRepository.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10)).thenReturn(Single.just(page));
+
+        TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(agents -> agents.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldFindAgentsByDomain_technicalException() {
+        when(applicationRepository.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver<Page<Application>> testObserver = new TestObserver<>();
+        applicationService.findByDomain(DOMAIN.getId(), ApplicationType.AGENT, 0, 10).subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldSearchAgents() {
+        Page<Application> page = new Page<>(Collections.singleton(new Application()), 0, 1);
+        when(applicationRepository.search(DOMAIN.getId(), "agent*", ApplicationType.AGENT, 0, 10)).thenReturn(Single.just(page));
+
+        TestObserver<Page<Application>> testObserver = applicationService.search(DOMAIN.getId(), "agent*", ApplicationType.AGENT, 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(agents -> agents.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldSearchAgents_technicalException() {
+        when(applicationRepository.search(DOMAIN.getId(), "q", ApplicationType.AGENT, 0, 10)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver<Page<Application>> testObserver = new TestObserver<>();
+        applicationService.search(DOMAIN.getId(), "q", ApplicationType.AGENT, 0, 10).subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(1), eq(1))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         applicationService.findByDomain(DOMAIN.getId(), 1, 1).subscribe(testObserver);
@@ -725,7 +776,8 @@ public class ApplicationServiceTest {
     private NewApplication prepareCreateApp(boolean withRedirectUri) {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
-        when(newClient.getType()).thenReturn(Stream.of(ApplicationType.values()).filter(type -> type != ApplicationType.SERVICE).toList().get(new Random().nextInt(0, ApplicationType.values().length - 1)));
+        var pickable = Stream.of(ApplicationType.values()).filter(type -> type != ApplicationType.SERVICE && type != ApplicationType.AGENT).toList();
+        when(newClient.getType()).thenReturn(pickable.get(new Random().nextInt(0, pickable.size())));
         if (withRedirectUri) {
             when(newClient.getRedirectUris()).thenReturn(List.of("https://redirect"));
         } else {
@@ -1987,6 +2039,202 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withoutKind() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(null);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withUnknownKind() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind("BOGUS");
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_nonAgentApp_withKind() {
+        Application existing = emptyAppWithDomain();
+        existing.setType(ApplicationType.SERVICE);
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(existing));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setType(ApplicationType.SERVICE);
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setGrantTypes(Arrays.asList(GrantType.CLIENT_CREDENTIALS));
+        oauth.setResponseTypes(Arrays.asList());
+        oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        settings.setOauth(oauth);
+        toPatch.setSettings(settings);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_userEmbeddedAgent_withoutRedirectUris() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        toPatch.getSettings().getOauth().setRedirectUris(null);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("redirect"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_hostedDelegatedAgent_withoutRedirectUris() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.HOSTED_DELEGATED.name());
+        toPatch.getSettings().getOauth().setRedirectUris(null);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("redirect"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_markedAsTemplate() {
+        Application toPatch = agentBaseline();
+        // baseline is HOSTED_DELEGATED-friendly (authorization_code), make it valid for that profile
+        toPatch.setKind(AgentType.HOSTED_DELEGATED.name());
+        toPatch.setTemplate(true);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("template"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenGrant_implicit() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        // Use grant+response combo accepted by GrantTypeUtils so the agent forbidden-grant check is reached.
+        toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT));
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oauth2.ResponseType.TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenGrant_password() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("password"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenGrant_refreshToken() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        toPatch.getSettings().getOauth().setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
+                && ((Throwable) error).getMessage().toLowerCase().contains("refresh_token"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenResponseType_token() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oauth2.ResponseType.TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenResponseType_idToken() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNot_update_agentApp_withForbiddenResponseType_idTokenToken() {
+        Application toPatch = agentBaseline();
+        toPatch.setKind(AgentType.USER_EMBEDDED.name());
+        toPatch.getSettings().getOauth().setResponseTypes(Arrays.asList("code", io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN));
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    private Application agentBaseline() {
+        Application existing = emptyAppWithDomain();
+        existing.setType(ApplicationType.AGENT);
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(existing));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setType(ApplicationType.AGENT);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE));
+        oauth.setResponseTypes(Arrays.asList("code"));
+        oauth.setRedirectUris(Arrays.asList("https://example.com/cb"));
+        oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
+        settings.setOauth(oauth);
+        toPatch.setSecretSettings(List.of(ApplicationSecretConfig.buildNoneSecretSettings()));
+        toPatch.setSettings(settings);
+        return toPatch;
     }
 
     private static Application emptyAppWithDomain() {

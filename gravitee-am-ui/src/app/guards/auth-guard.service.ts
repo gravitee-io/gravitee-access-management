@@ -101,6 +101,13 @@ export class AuthGuard {
         return false;
       }
     }
+    // hide menu items that require an agent application
+    if (path.data?.requiresAgentIdentity === true) {
+      const app = route.data['application'];
+      if (app?.type?.toUpperCase() !== 'AGENT') {
+        return false;
+      }
+    }
     // if no permission required, continue
     if (!path.data.perms || !path.data.perms.only) {
       return true;

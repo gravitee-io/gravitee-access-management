@@ -478,6 +478,84 @@
     {
       "request": {
         "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/autonomous-agent"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/autonomous-agent",
+          "client_name": "CIMD Autonomous Agent",
+          "grant_types": [
+            "client_credentials"
+          ],
+          "token_endpoint_auth_method": "private_key_jwt",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "e": "AQAB",
+                "use": "sig",
+                "kid": "agent-1",
+                "n": "uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/autonomous-agent-no-grants"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/autonomous-agent-no-grants",
+          "client_name": "CIMD Autonomous Agent (no grants)",
+          "token_endpoint_auth_method": "private_key_jwt",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "e": "AQAB",
+                "use": "sig",
+                "kid": "agent-1",
+                "n": "uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/user-embedded-agent-no-grants"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/user-embedded-agent-no-grants",
+          "client_name": "CIMD User Embedded Agent (no grants)",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "urlPath": "/cimd/DISABLED_BASE/valid-none"
       },
       "response": {
@@ -598,6 +676,43 @@
           "grant_types": [
             "client_credentials"
           ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/agent-hosted-delegated-ciba"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/agent-hosted-delegated-ciba",
+          "client_name": "Hosted Delegated Agent CIBA",
+          "redirect_uris": [
+            "https://agent.example.com/callback"
+          ],
+          "grant_types": [
+            "urn:openid:params:grant-type:ciba"
+          ],
+          "token_endpoint_auth_method": "private_key_jwt",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "n": "lOd-5KMvu9C0sulBE3-NbI-FfLavakLlt6GmoWgO27iUIDE6vcjvrLC_Qu8G4m0BGWqHy9ij9iprJ_ipAIMV5r8sf_3IXVeR0_4DN8U7VOgs8Je1zKMGZUQH5LUuYVq9raQAZYX_70cL5K_8mR1sX07W2txvBzcbP_Sd4MXIT-pcmvLTDXslWQs5XJqqWotbN6SxCRCWNOjdycYi4miGycnTts2GTLkAWPyXEG8tkOIzuA33wfrimC89Zd3baXKSkAzXPhFyvq42m3uKvro_4njMuTyoQwnkXkLedJFSCa1oJom4Ggj7J2OzluKlmFFH45jALybC96XBs2nEGK0hxw",
+                "e": "AQAB",
+                "use": "sig",
+                "kid": "cimd-private-key-jwt"
+              }
+            ]
+          },
+          "backchannel_token_delivery_mode": "poll",
+          "backchannel_authentication_request_signing_alg": "RS256",
+          "request_object_signing_alg": "RS256"
         }
       }
     }

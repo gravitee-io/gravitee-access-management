@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.management.api.search;
 
+import io.gravitee.am.model.application.ApplicationType;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -34,12 +36,19 @@ public class ApplicationCriteria {
      */
     private List<String> applicationIds;
 
+    /** null means "no type filter". */
+    private ApplicationType type;
+
     public Optional<Boolean> getEnabled() {
         return Optional.ofNullable(enabled);
     }
 
     public Optional<List<String>> getApplicationIds() {
         return Optional.ofNullable(applicationIds);
+    }
+
+    public Optional<ApplicationType> getType() {
+        return Optional.ofNullable(type);
     }
 
     public ApplicationCriteria setEnabled(Boolean enabled) {
@@ -49,6 +58,11 @@ public class ApplicationCriteria {
 
     public ApplicationCriteria setApplicationIds(List<String> applicationIds) {
         this.applicationIds = applicationIds;
+        return this;
+    }
+
+    public ApplicationCriteria setType(ApplicationType type) {
+        this.type = type;
         return this;
     }
 }

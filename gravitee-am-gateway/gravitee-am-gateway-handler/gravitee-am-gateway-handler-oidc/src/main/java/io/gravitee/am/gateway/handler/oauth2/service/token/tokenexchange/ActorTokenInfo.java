@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
 import io.gravitee.am.common.jwt.Claims;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +47,7 @@ import java.util.Map;
 public record ActorTokenInfo(
         String subject,
         String gis,
+        String subProfile,
         Object subjectTokenActClaim,
         Object actorTokenActClaim,
         int delegationDepth,
@@ -63,6 +65,14 @@ public record ActorTokenInfo(
      */
     public boolean hasGis() {
         return gis != null;
+    }
+
+    /**
+     * Check if the actor token carries a {@code sub_profile} claim (e.g. an agent profile).
+     * Per RFC entity-profiles draft, only profiled actors propagate sub_profile in the act node.
+     */
+    public boolean hasSubProfile() {
+        return StringUtils.hasLength(subProfile);
     }
 
     /**

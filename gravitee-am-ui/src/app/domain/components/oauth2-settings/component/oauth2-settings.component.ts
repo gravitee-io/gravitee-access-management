@@ -32,6 +32,7 @@ export class OAuth2SettingsComponent implements OnInit {
   private resourceId: string;
   resource: any;
   oauthSettings: any = {};
+  spiffeSettings: any = {};
   readonly = false;
   formChanged = false;
   context: OAuth2Context;
@@ -55,6 +56,7 @@ export class OAuth2SettingsComponent implements OnInit {
     this.resourceId = settings.resourceId;
     this.resource = settings.resource;
     this.oauthSettings = settings.settings;
+    this.spiffeSettings = this.resource?.settings?.workloadIdentitySettings ? { ...this.resource.settings.workloadIdentitySettings } : {};
     this.context = this.oauth2Service.getContext();
 
     // Load resolvers data
@@ -100,6 +102,11 @@ export class OAuth2SettingsComponent implements OnInit {
 
   onFormChanged(changed: boolean) {
     this.formChanged = changed;
+  }
+
+  updateSpiffeSettings(settings: any) {
+    this.spiffeSettings = settings;
+    this.formChanged = true;
   }
 
   save() {
@@ -172,7 +179,7 @@ export class OAuth2SettingsComponent implements OnInit {
       });
     }
 
-    this.oauth2Service.update(this.domainId, this.resourceId, this.resource, oauthSettings).subscribe(() => {
+    this.oauth2Service.update(this.domainId, this.resourceId, this.resource, oauthSettings, this.spiffeSettings).subscribe(() => {
       this.snackbarService.open('OAuth2 settings updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;

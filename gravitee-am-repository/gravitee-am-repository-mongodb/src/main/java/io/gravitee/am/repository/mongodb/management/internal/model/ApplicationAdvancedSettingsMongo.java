@@ -48,5 +48,4 @@ public class ApplicationAdvancedSettingsMongo {
     public void setMfaSelectionRule(String mfaSelectionRule) {
         this.mfaSelectionRule = mfaSelectionRule;
     }
-
 }

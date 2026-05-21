@@ -54,6 +54,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { MaterialDesignFrameworkModule } from '@ajsf/material';
@@ -154,6 +155,7 @@ import { CertificateComponent } from './domain/settings/certificates/certificate
 import { CertificatesResolver } from './resolvers/certificates.resolver';
 import { SignCertificatesResolver } from './resolvers/sign-certificates.resolver';
 import { CertificateService } from './services/certificate.service';
+import { TrustDomainService } from './services/trust-domain.service';
 import { CertificateCreationStep1Component } from './domain/settings/certificates/creation/steps/step1/step1.component';
 import { CertificateFormComponent } from './domain/settings/certificates/certificate/form/form.component';
 import { CertificateResolver } from './resolvers/certificate.resolver';
@@ -292,6 +294,7 @@ import { ApplicationAccountSettingsComponent } from './domain/applications/appli
 import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
+import { ApplicationAgentComponent } from './domain/applications/application/advanced/agent/agent.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
@@ -342,6 +345,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { UmaComponent } from './domain/settings/uma/uma.component';
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
+import { SpiffeSettingsComponent } from './domain/settings/openid/spiffe/spiffe-settings.component';
 import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
 import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
 import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
@@ -381,6 +385,11 @@ import { PlatformAlertStatusResolver } from './resolvers/platform-alert-status.r
 import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
 import { BotDetectionService } from './services/bot-detection.service';
 import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
+import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
+import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
+import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
 import { BotDetectionCreationStep1Component } from './domain/settings/botdetections/creation/steps/step1/step1.component';
 import { BotDetectionCreationStep2Component } from './domain/settings/botdetections/creation/steps/step2/step2.component';
@@ -689,6 +698,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationSaml2Component,
     AddScopeComponent,
     ApplicationSecretsCertificatesComponent,
+    ApplicationAgentComponent,
 
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,
@@ -722,6 +732,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     OIDCProfileComponent,
     CibaComponent,
     CibaSettingsComponent,
+    SpiffeSettingsComponent,
     Saml2Component,
     CimdSettingsComponent,
     DeviceNotifiersComponent,
@@ -745,6 +756,9 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AlertNotifierFormComponent,
     DomainAlertNotifierComponent,
     DomainSettingsBotDetectionsComponent,
+    DomainSettingsTrustDomainsComponent,
+    TrustDomainCreationComponent,
+    TrustDomainComponent,
     BotDetectionCreationComponent,
     BotDetectionCreationStep1Component,
     BotDetectionCreationStep2Component,
@@ -835,6 +849,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     GioSaveBarModule,
     GioLicenseExpirationNotificationModule,
     DragDropModule,
+    TextFieldModule,
     FlexLayoutModule,
     NgxDatatableModule,
     CodemirrorModule,
@@ -860,6 +875,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     EnvironmentService,
     AuthService,
     CertificateService,
+    TrustDomainService,
     RoleService,
     DashboardService,
     UserService,
@@ -963,6 +979,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     PlatformAlertStatusResolver,
     BotDetectionService,
     BotDetectionsResolver,
+    TrustDomainsResolver,
+    TrustDomainResolver,
     BotDetectionResolver,
     BotDetectionPluginsResolver,
     ScopesAllResolver,

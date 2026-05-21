@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -34,6 +35,7 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -105,6 +107,7 @@ import org.springframework.util.ObjectUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -215,6 +218,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Autowired
     private io.gravitee.am.service.cimd.CimdMetadataFetcher cimdMetadataFetcher;
 
+    @Lazy
+    @Autowired
+    private io.gravitee.am.repository.management.api.TrustDomainRepository trustDomainRepository;
+
     private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 
     @Override
@@ -234,9 +241,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find applications by domain {}", domain);
-        return applicationRepository.findByDomain(domain, page, size)
+    public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
+        LOGGER.debug("Find applications by domain {} and type {}", domain, type);
+        return applicationRepository.findByDomain(domain, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -245,9 +252,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
-        LOGGER.debug("Find applications by domain {} and appIds {}", domain, applicationIds);
-        return applicationRepository.findByDomain(domain, applicationIds, page, size)
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
+        LOGGER.debug("Find applications by domain {}, type {} and appIds {}", domain, type, applicationIds);
+        return applicationRepository.findByDomain(domain, applicationIds, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -256,9 +263,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {}", query, domain);
-        return applicationRepository.search(domain, query, page, size)
+    public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {} and type {}", query, domain, type);
+        return applicationRepository.search(domain, query, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -297,6 +304,10 @@ public class ApplicationServiceImpl implements ApplicationService {
             criteria.setEnabled(ApplicationFilter.STATUS_ENABLED.equalsIgnoreCase(filter.status()));
         }
 
+        if (filter.hasTypeFilter()) {
+            criteria.setType(filter.type());
+        }
+
         if (!filter.hasOwnerEmailFilter()) {
             if (filter.hasPermissionScopedIds()) {
                 criteria.setApplicationIds(filter.permissionScopedIds());
@@ -331,9 +342,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {} and appIds={}", query, domain, applicationIds);
-        return applicationRepository.search(domain, applicationIds, query, page, size)
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {}, type {} and appIds={}", query, domain, type, applicationIds);
+        return applicationRepository.search(domain, applicationIds, query, type, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -417,6 +428,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
         LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
+
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
@@ -447,6 +459,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // redirect_uri can use custom URI (especially for mobile deep links)
                 LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
             }
+        }
+
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
+            application.setKind(newApplication.getKind());
+            applyAgentDefaults(application.getKind(), oAuthSettings);
         }
 
         application.setSettings(applicationSettings);
@@ -486,18 +503,17 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal) {
         LOGGER.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
         return cimdMetadataFetcher.fetchAndValidate(domain, newApplication.getCimdUrl())
-                .flatMap(preview -> {
-                    final Application application = buildCimdApplication(domain, newApplication, preview);
-                    return create0(domain, application, principal)
-                            .flatMap(created -> cimdMetadataDocumentService
-                                    .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
-                                    .map(doc -> created)
-                                    .onErrorResumeNext(ex -> {
-                                        LOGGER.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
-                                                created.getId(), preview.url(), ex.getMessage());
-                                        return Single.just(created);
-                                    }));
-                })
+                .flatMap(preview -> resolveCimdTemplateScopeSettings(domain)
+                        .map(templateScopes -> buildCimdApplication(domain, newApplication, preview, templateScopes))
+                        .flatMap(application -> create0(domain, application, principal))
+                        .flatMap(created -> cimdMetadataDocumentService
+                                .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
+                                .map(doc -> created)
+                                .onErrorResumeNext(ex -> {
+                                    LOGGER.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
+                                            created.getId(), preview.url(), ex.getMessage());
+                                    return Single.just(created);
+                                })))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -507,7 +523,30 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview) {
+    private Single<List<ApplicationScopeSettings>> resolveCimdTemplateScopeSettings(Domain domain) {
+        final String templateId = retrieveCIMDTemplateId(domain);
+        if (templateId == null) {
+            return Single.just(List.of());
+        }
+        return applicationRepository.findById(templateId)
+                .map(template -> {
+                    List<ApplicationScopeSettings> scopes = Optional.ofNullable(template.getSettings())
+                            .map(ApplicationSettings::getOauth)
+                            .map(ApplicationOAuthSettings::getScopeSettings)
+                            .orElse(null);
+                    if (scopes == null) {
+                        return List.<ApplicationScopeSettings>of();
+                    }
+                    return scopes.stream()
+                            .map(ApplicationScopeSettings::new)
+                            .toList();
+                })
+                .defaultIfEmpty(List.<ApplicationScopeSettings>of())
+                .onErrorReturnItem(List.of());
+    }
+
+    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview,
+                                             List<ApplicationScopeSettings> templateScopeSettings) {
         final String resolvedClientName = preview.clientName() != null && !preview.clientName().isBlank()
                 ? preview.clientName()
                 : newApplication.getClientName();
@@ -518,6 +557,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setDescription(newApplication.getDescription());
         application.setType(newApplication.getType());
         application.setDomain(domain.getId());
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
+            application.setKind(newApplication.getKind());
+        }
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
@@ -526,14 +568,16 @@ public class ApplicationServiceImpl implements ApplicationService {
         oAuthSettings.setClientName(resolvedClientName);
         if (preview.tokenEndpointAuthMethod() != null) {
             oAuthSettings.setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
-        } else {
-            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         }
+        final boolean isAgent = ApplicationType.AGENT.equals(newApplication.getType());
         if (preview.grantTypes() != null && !preview.grantTypes().isEmpty()) {
-            oAuthSettings.setGrantTypes(preview.grantTypes());
+            final List<String> filteredGrantTypes = filterUnsupportedCimdGrantTypes(preview, isAgent);
+            if (!filteredGrantTypes.isEmpty()) {
+                oAuthSettings.setGrantTypes(filteredGrantTypes);
+            }
         }
         if (preview.responseTypes() != null && !preview.responseTypes().isEmpty()) {
-            oAuthSettings.setResponseTypes(preview.responseTypes());
+            oAuthSettings.setResponseTypes(filterUnsupportedCimdResponseTypes(preview, isAgent));
         }
         if (preview.logoUri() != null) {
             oAuthSettings.setLogoUri(preview.logoUri());
@@ -548,10 +592,18 @@ public class ApplicationServiceImpl implements ApplicationService {
                         s.setScope(scope);
                         return s;
                     })
-                    .toList());
+                    .collect(Collectors.toCollection(ArrayList::new)));
+        } else if (templateScopeSettings != null && !templateScopeSettings.isEmpty()) {
+            // CIMD doc omitted `scope` — inherit from the CIMD template so callers can request the
+            // domain's standard scopes (e.g. `openid`) without a follow-up PATCH.
+            oAuthSettings.setScopeSettings(new ArrayList<>(templateScopeSettings));
         }
 
         applyExtendedMetadata(preview, oAuthSettings);
+
+        if (ApplicationType.AGENT.equals(newApplication.getType())) {
+            applyAgentDefaults(newApplication.getKind(), oAuthSettings);
+        }
 
         applicationSettings.setOauth(oAuthSettings);
 
@@ -572,7 +624,51 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setSettings(applicationSettings);
 
         applicationTemplateManager.apply(application);
+
+        // WEB template overrides this to client_secret_basic when grant_types is empty; CIMD forbids secret-based auth.
+        if (preview.tokenEndpointAuthMethod() != null) {
+            application.getSettings().getOauth().setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
+        }
+
         return application;
+    }
+
+    // device_code is advertised by some CIMD clients but is not currently supported by AM.
+    // Drop those entries (logging each one) so the rest of the metadata can still be applied
+    // rather than rejecting the whole client creation in GrantTypeUtils#validateGrantTypes.
+    // For AGENT applications, also drop grants forbidden by AgentApplicationConstraints (e.g.
+    // refresh_token) so a CIMD bootstrap does not fail validateAgentSettings.
+    private List<String> filterUnsupportedCimdGrantTypes(CimdClientMetadata preview, boolean isAgent) {
+        final List<String> kept = new ArrayList<>(preview.grantTypes().size());
+        for (String grantType : preview.grantTypes()) {
+            if (isUnsupportedDeviceCodeGrant(grantType)) {
+                LOGGER.warn("Ignoring unsupported grant_type '{}' from CIMD metadata at {}: device_code is not supported", grantType, preview.url());
+            } else if (isAgent && AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES.contains(grantType)) {
+                LOGGER.warn("Ignoring grant_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", grantType, preview.url());
+            } else {
+                kept.add(grantType);
+            }
+        }
+        return kept;
+    }
+
+    private List<String> filterUnsupportedCimdResponseTypes(CimdClientMetadata preview, boolean isAgent) {
+        if (!isAgent) {
+            return preview.responseTypes();
+        }
+        final List<String> kept = new ArrayList<>(preview.responseTypes().size());
+        for (String responseType : preview.responseTypes()) {
+            if (AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES.contains(responseType)) {
+                LOGGER.warn("Ignoring response_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", responseType, preview.url());
+            } else {
+                kept.add(responseType);
+            }
+        }
+        return kept;
+    }
+
+    private static boolean isUnsupportedDeviceCodeGrant(String grantType) {
+        return "device_code".equals(grantType) || GrantType.DEVIDE_CODE.equals(grantType);
     }
 
     private void applyExtendedMetadata(CimdClientMetadata preview, ApplicationOAuthSettings oAuthSettings) {
@@ -644,6 +740,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         if (Boolean.TRUE.equals(preview.backchannelUserCodeParameter())) {
             oAuthSettings.setBackchannelUserCodeParameter(true);
+        }
+        if (preview.requestObjectSigningAlg() != null) {
+            oAuthSettings.setRequestObjectSigningAlg(preview.requestObjectSigningAlg());
         }
         if (Boolean.TRUE.equals(preview.hasInlineJwks())) {
             oAuthSettings.setJwks(parseInlineJwks(preview.metadataJson()));
@@ -1070,7 +1169,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(this::validateTokenEndpointAuthMethod)
                             .flatMap(this::validateTlsClientAuth)
                             .flatMap(this::validatePostLogoutRedirectUris)
-                            .flatMap(this::validateRequestUris);
+                            .flatMap(this::validateRequestUris)
+                            .flatMap(this::validateAgentSettings)
+                            .flatMap(this::validateSpiffeSettings);
                 });
     }
 
@@ -1183,7 +1284,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE
+                            && application.getType() != ApplicationType.AGENT
+                            && !updateTypeOnly) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
@@ -1357,5 +1460,158 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    private Single<Application> validateSpiffeSettings(Application application) {
+        ApplicationOAuthSettings oauth = application.getSettings() != null ? application.getSettings().getOauth() : null;
+        io.gravitee.am.model.application.SpiffeApplicationSettings spiffe =
+                application.getSettings() != null ? application.getSettings().getWorkloadIdentitySettings() : null;
+
+        boolean usesSpiffeAuth = oauth != null && io.gravitee.am.common.oidc.ClientAuthenticationMethod.SPIFFE_JWT
+                .equalsIgnoreCase(oauth.getTokenEndpointAuthMethod());
+
+        if (!usesSpiffeAuth) {
+            if (spiffe != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "spiffe settings may only be set when token_endpoint_auth_method=spiffe_jwt"));
+            }
+            return Single.just(application);
+        }
+
+        if (spiffe == null || spiffe.getTrustDomain() == null || spiffe.getTrustDomain().isBlank()) {
+            return Single.error(new InvalidClientMetadataException("spiffe.trustDomain is required for spiffe_jwt"));
+        }
+        if (spiffe.getSubject() == null || spiffe.getSubject().isBlank()) {
+            return Single.error(new InvalidClientMetadataException("spiffe.subject is required for spiffe_jwt"));
+        }
+        String anchor = "spiffe://" + spiffe.getTrustDomain().toLowerCase(java.util.Locale.ROOT) + "/";
+        if (!spiffe.getSubject().startsWith(anchor)) {
+            return Single.error(new InvalidClientMetadataException(
+                    "spiffe.subject must start with " + anchor));
+        }
+
+        return trustDomainRepository.findByName(io.gravitee.am.model.ReferenceType.DOMAIN,
+                        application.getDomain(), spiffe.getTrustDomain())
+                .switchIfEmpty(Single.error(new InvalidClientMetadataException(
+                        "spiffe.trustDomain '" + spiffe.getTrustDomain() + "' is not registered for this domain")))
+                .map(td -> application);
+    }
+
+    private Single<Application> validateAgentSettings(Application application) {
+        boolean isAgentType = ApplicationType.AGENT.equals(application.getType());
+        String kind = application.getKind();
+
+        if (!isAgentType) {
+            if (kind != null) {
+                return Single.error(new InvalidClientMetadataException("kind is only allowed when application type is AGENT"));
+            }
+            return Single.just(application);
+        }
+
+        if (kind == null) {
+            return Single.error(new InvalidClientMetadataException("kind is required when application type is AGENT"));
+        }
+        AgentType agentType = AgentType.orNull(kind);
+        if (agentType == null) {
+            String allowed = Arrays.stream(AgentType.values()).map(Enum::name).collect(Collectors.joining(", "));
+            return Single.error(new InvalidClientMetadataException(
+                    "Unknown kind '" + kind + "' for AGENT application. Allowed values: [" + allowed + "]"));
+        }
+        if (application.isTemplate()) {
+            return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
+        }
+
+        // USER_EMBEDDED and HOSTED_DELEGATED rely on authorization_code; redirect_uri is required.
+        // AUTONOMOUS uses client_credentials only — no redirect needed.
+        if (agentType != AgentType.AUTONOMOUS) {
+            ApplicationOAuthSettings authSettings = application.getSettings().getOauth();
+            List<String> redirectUris = authSettings != null ? authSettings.getRedirectUris() : null;
+            if (redirectUris == null || redirectUris.isEmpty()) {
+                return Single.error(new InvalidClientMetadataException(
+                        agentType.name() + " agents require at least one redirect_uri"));
+            }
+        }
+
+        ApplicationOAuthSettings oauth = application.getSettings().getOauth();
+        List<String> grantTypes = oauth != null ? oauth.getGrantTypes() : null;
+        if (grantTypes != null) {
+            String forbiddenGrant = grantTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES::contains)
+                    .findFirst()
+                    .orElse(null);
+            if (forbiddenGrant != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "Agent applications cannot use grant type: " + forbiddenGrant));
+            }
+            String typeSpecific = switch (agentType) {
+                case USER_EMBEDDED -> grantTypes.contains(GrantType.CLIENT_CREDENTIALS)
+                        ? "USER_EMBEDDED agents cannot use client_credentials grant" : null;
+                case AUTONOMOUS -> grantTypes.contains(GrantType.AUTHORIZATION_CODE)
+                        ? "AUTONOMOUS agents cannot use authorization_code grant" : null;
+                case HOSTED_DELEGATED -> null;
+            };
+            if (typeSpecific != null) {
+                return Single.error(new InvalidClientMetadataException(typeSpecific));
+            }
+        }
+
+        List<String> responseTypes = oauth != null ? oauth.getResponseTypes() : null;
+        if (responseTypes != null) {
+            String forbiddenResponse = responseTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES::contains)
+                    .findFirst()
+                    .orElse(null);
+            if (forbiddenResponse != null) {
+                return Single.error(new InvalidClientMetadataException(
+                        "Agent applications cannot use response type: " + forbiddenResponse));
+            }
+        }
+
+        return Single.just(application);
+    }
+
+    private void applyAgentDefaults(String kind, ApplicationOAuthSettings oAuthSettings) {
+        AgentType agentType = AgentType.orNull(kind);
+        if (agentType == null) {
+            return;
+        }
+        switch (agentType) {
+            case USER_EMBEDDED -> {
+                oAuthSettings.setClientType("public");
+                oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
+                oAuthSettings.setForcePKCE(true);
+                oAuthSettings.setForceS256CodeChallengeMethod(true);
+                defaultGrantTypes(oAuthSettings, GrantType.AUTHORIZATION_CODE);
+                defaultResponseTypesForAuthorizationCode(oAuthSettings);
+            }
+            case HOSTED_DELEGATED -> {
+                if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
+                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+                }
+                defaultGrantTypes(oAuthSettings,
+                        GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
+                defaultResponseTypesForAuthorizationCode(oAuthSettings);
+            }
+            case AUTONOMOUS -> {
+                if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
+                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+                }
+                oAuthSettings.setRedirectUris(null);
+                defaultGrantTypes(oAuthSettings, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
+            }
+        }
+    }
+
+    private static void defaultResponseTypesForAuthorizationCode(ApplicationOAuthSettings oAuthSettings) {
+        // GrantTypeUtils.completeGrantTypeCorrespondance strips authorization_code if response_types lacks "code".
+        if (oAuthSettings.getResponseTypes() == null || oAuthSettings.getResponseTypes().isEmpty()) {
+            oAuthSettings.setResponseTypes(new ArrayList<>(List.of(io.gravitee.am.common.oauth2.ResponseType.CODE)));
+        }
+    }
+
+    private static void defaultGrantTypes(ApplicationOAuthSettings oAuthSettings, String... grantTypes) {
+        if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+            oAuthSettings.setGrantTypes(new ArrayList<>(List.of(grantTypes)));
+        }
     }
 }

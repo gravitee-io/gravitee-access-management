@@ -18,6 +18,7 @@ import { some, minBy } from 'lodash';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainStoreService } from '../../../../stores/domain.store';
+import { TrustDomainService } from '../../../../services/trust-domain.service';
 import {
   TokenExchangeScopeHandling,
   TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
@@ -43,8 +44,13 @@ export class GrantFlowsComponent implements OnInit {
   @Input() customGrantTypes: any[] = [];
   @Input() readonly = false;
 
+  @Input() spiffeSettings: any = {};
+
   @Output() settingsChange = new EventEmitter<any>();
+  @Output() spiffeSettingsChange = new EventEmitter<any>();
   @Output() formChanged = new EventEmitter<boolean>();
+
+  trustDomains: any[] = [];
 
   readonly MCP_SERVER_CONTEXT = 'McpServer' as const;
   readonly CLIENT_CREDENTIALS_GRANT_TYPE = 'client_credentials';
@@ -63,6 +69,7 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'private_key_jwt', value: 'private_key_jwt' },
     { name: 'Mutual TLS - PKI Mutual (tls_client_auth)', value: 'tls_client_auth' },
     { name: 'Mutual TLS - Self-Signed Certificate Mutual (self_signed_tls_client_auth)', value: 'self_signed_tls_client_auth' },
+    { name: 'spiffe_jwt', value: 'spiffe_jwt' },
     { name: 'none', value: 'none' },
   ];
 
@@ -77,7 +84,10 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'TOKEN EXCHANGE', value: this.TOKEN_EXCHANGE_GRANT_TYPE, checked: false, disabled: false },
   ];
 
-  constructor(@Inject(DomainStoreService) private domainStore: DomainStoreService) {}
+  constructor(
+    @Inject(DomainStoreService) private domainStore: DomainStoreService,
+    private trustDomainService: TrustDomainService,
+  ) {}
 
   ngOnInit() {
     this.oauthSettings = this.oauthSettings || {};
@@ -93,6 +103,26 @@ export class GrantFlowsComponent implements OnInit {
     this.initTokenEndpointAuthMethods();
     this.initGrantTypes();
     this.initCustomGrantTypes();
+    this.initSpiffeSettings();
+  }
+
+  private initSpiffeSettings() {
+    this.spiffeSettings = this.spiffeSettings || {};
+    if (this.isSpiffeEnabledAtDomain() && this.domainId) {
+      this.trustDomainService.list(this.domainId).subscribe({
+        next: (results) => (this.trustDomains = results || []),
+        error: () => (this.trustDomains = []),
+      });
+    }
+  }
+
+  isSpiffeEnabledAtDomain(): boolean {
+    return this.domainStore.current?.oidc?.workloadIdentitySettings?.enabled === true;
+  }
+
+  spiffeChanged() {
+    this.spiffeSettingsChange.emit({ ...this.spiffeSettings });
+    this.formChanged.emit(true);
   }
 
   // Helper getters
@@ -117,6 +147,9 @@ export class GrantFlowsComponent implements OnInit {
     if (this.context === this.MCP_SERVER_CONTEXT) {
       const allowedMethods = ['client_secret_basic', 'client_secret_post', 'client_secret_jwt'];
       return this.tokenEndpointAuthMethods.filter((method) => allowedMethods.includes(method.value));
+    }
+    if (!this.isSpiffeEnabledAtDomain()) {
+      return this.tokenEndpointAuthMethods.filter((method) => method.value !== 'spiffe_jwt');
     }
     return this.tokenEndpointAuthMethods;
   }

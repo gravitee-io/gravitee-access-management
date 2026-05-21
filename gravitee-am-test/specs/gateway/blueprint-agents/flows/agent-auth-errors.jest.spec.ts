@@ -1,0 +1,245 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { setup } from '../../../test-fixture';
+import {
+  setupBlueprintFixture,
+  BlueprintFixture,
+} from '../../../../specs/management/blueprint-application/fixtures/blueprint-fixture';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
+setup(180000);
+
+const JWT_BEARER_TYPE = 'urn:gravitee:params:oauth:client-assertion-type:agent-jwt-bearer';
+const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
+const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
+
+describe('Agent auth flows — cross-agent error handling', () => {
+  let fixture: BlueprintFixture;
+  let userEmbedded: any;
+  let hostedDelegated: any;
+  let autonomous: any;
+  let basicAuthAutonomous: any;
+  let basicAuthPrivateKey: crypto.KeyObject;
+  let basicAuthKid: string;
+
+  beforeAll(async () => {
+    fixture = await setupBlueprintFixture();
+    userEmbedded = await fixture.createBlueprintApp('USER_EMBEDDED', undefined, 'https://user-embedded.example.com');
+    hostedDelegated = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com');
+    autonomous = await fixture.createBlueprintApp('AUTONOMOUS');
+
+    basicAuthAutonomous = await fixture.createBlueprintApp('AUTONOMOUS', undefined, undefined, 'client_secret_basic');
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+    basicAuthPrivateKey = privateKey;
+    basicAuthKid = `basic-auth-key-${Date.now()}`;
+    const basicJwk = publicKey.export({ format: 'jwk' });
+    const jwkRes = await fixture.registerJwk(basicAuthAutonomous.id, {
+      kty: basicJwk.kty,
+      n: basicJwk.n,
+      e: basicJwk.e,
+      kid: basicAuthKid,
+      use: 'sig',
+      alg: 'RS256',
+    });
+    expect(jwkRes.ok).toEqual(true);
+
+    await fixture.waitForOidc();
+  });
+
+  afterAll(async () => {
+    if (fixture) {
+      await fixture.cleanUp();
+    }
+  });
+
+  it('should reject user-embedded agent attempting client_credentials flow', async () => {
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_id=${userEmbedded.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+  });
+
+  it('should reject user-embedded agent attempting token_exchange flow', async () => {
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=dummy&subject_token_type=${encodeURIComponent(ACCESS_TOKEN_TYPE)}&client_id=${userEmbedded.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+    if (response.body.error) {
+      expect(['unsupported_grant_type', 'invalid_grant']).toContain(response.body.error);
+    }
+  });
+
+  it('should reject hosted-delegated agent using wrong secret in client_credentials', async () => {
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_id=${hostedDelegated.settings.oauth.clientId}&client_secret=wrong-secret`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([401, 400]).toContain(response.status);
+  });
+
+  it('should reject autonomous agent without client credentials', async () => {
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_id=${autonomous.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([401, 400]).toContain(response.status);
+  });
+
+  it('should reject workload-jwt assertion with wrong issuer', async () => {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+    const kid = `key-${Date.now()}`;
+
+    const publicJwk = publicKey.export({ format: 'jwk' });
+    const agentJwk = {
+      kty: publicJwk.kty,
+      n: publicJwk.n,
+      e: publicJwk.e,
+      kid,
+      use: 'sig',
+      alg: 'RS256',
+    };
+
+    const addKeyResponse = await fixture.registerJwk(hostedDelegated.id, agentJwk);
+    expect(addKeyResponse.ok).toEqual(true);
+
+    const now = Math.floor(Date.now() / 1000);
+    const wrongIssuerAssertion = jwt.sign(
+      {
+        iss: autonomous.settings.oauth.clientId,
+        sub: 'instance-123',
+        aud: fixture.oidc.token_endpoint,
+        jti: crypto.randomUUID(),
+        iat: now,
+        exp: now + 300,
+      },
+      privateKey.export({ format: 'pem', type: 'pkcs8' }),
+      { algorithm: 'RS256', keyid: kid },
+    );
+
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(wrongIssuerAssertion)}&client_id=${hostedDelegated.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+  });
+
+  it('should reject workload-jwt assertion signed with key from different agent', async () => {
+    const { publicKey: autoKey, privateKey: autoPrivateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+    const autoKid = `auto-key-${Date.now()}`;
+
+    const autoPublicJwk = autoKey.export({ format: 'jwk' });
+    const autoAgentJwk = {
+      kty: autoPublicJwk.kty,
+      n: autoPublicJwk.n,
+      e: autoPublicJwk.e,
+      kid: autoKid,
+      use: 'sig',
+      alg: 'RS256',
+    };
+
+    const hostedAgent2 = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted2.example.com');
+
+    const now = Math.floor(Date.now() / 1000);
+    const crossSignedAssertion = jwt.sign(
+      {
+        iss: hostedAgent2.settings.oauth.clientId,
+        sub: 'instance-456',
+        aud: fixture.oidc.token_endpoint,
+        jti: crypto.randomUUID(),
+        iat: now,
+        exp: now + 300,
+      },
+      autoPrivateKey.export({ format: 'pem', type: 'pkcs8' }),
+      { algorithm: 'RS256', keyid: autoKid },
+    );
+
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(crossSignedAssertion)}&client_id=${hostedAgent2.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+  });
+
+  it('should reject token_exchange with mismatched subject_token_type', async () => {
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=dummy-jwt&subject_token_type=urn:ietf:params:oauth:token-type:jwt&client_id=${autonomous.settings.oauth.clientId}&client_secret=${autonomous.settings.oauth.clientSecret}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+  });
+
+  it('should reject client_credentials from user-embedded (public app trying to authenticate)', async () => {
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_id=${userEmbedded.settings.oauth.clientId}&client_secret=some-secret`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+  });
+
+  it('should reject workload-jwt assertion when blueprint auth method is client_secret_basic', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const assertion = jwt.sign(
+      {
+        iss: basicAuthAutonomous.settings.oauth.clientId,
+        sub: 'basic-auth-instance-1',
+        aud: fixture.oidc.token_endpoint,
+        jti: crypto.randomUUID(),
+        iat: now,
+        exp: now + 300,
+      },
+      basicAuthPrivateKey.export({ format: 'pem', type: 'pkcs8' }),
+      { algorithm: 'RS256', keyid: basicAuthKid },
+    );
+
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}&client_id=${basicAuthAutonomous.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    expect([400, 401]).toContain(response.status);
+  });
+});

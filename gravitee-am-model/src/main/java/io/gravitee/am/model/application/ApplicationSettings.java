@@ -89,6 +89,11 @@ public class ApplicationSettings {
      */
     private SecretExpirationSettings secretExpirationSettings;
 
+    /**
+     * SPIFFE workload-identity settings, set when the application uses {@code spiffe_jwt} auth.
+     */
+    private SpiffeApplicationSettings workloadIdentitySettings;
+
 
     public ApplicationAdvancedSettings getAdvanced() {
         return advanced != null ? advanced : new ApplicationAdvancedSettings();
@@ -105,6 +110,7 @@ public class ApplicationSettings {
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
+        this.workloadIdentitySettings = other.workloadIdentitySettings != null ? new SpiffeApplicationSettings(other.workloadIdentitySettings) : null;
     }
 
     public void copyTo(Client client) {
@@ -118,6 +124,7 @@ public class ApplicationSettings {
         client.setRiskAssessment(this.getRiskAssessment());
         Optional.ofNullable(this.saml).ifPresent(s -> s.copyTo(client));
         client.setSecretExpirationSettings(this.secretExpirationSettings);
+        client.setWorkloadIdentitySettings(this.workloadIdentitySettings != null ? new SpiffeApplicationSettings(this.workloadIdentitySettings) : null);
     }
 
     private RiskAssessmentSettings getRiskAssessment(RiskAssessmentSettings settings) {

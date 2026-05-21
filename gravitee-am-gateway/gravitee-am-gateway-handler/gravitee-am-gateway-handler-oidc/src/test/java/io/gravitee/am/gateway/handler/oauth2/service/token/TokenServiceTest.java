@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -187,6 +188,82 @@ public class TokenServiceTest {
 
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(tokenRepository, never()).deleteByJti(anyString());
+
+        expectTokenCreatedAuditLog();
+    }
+
+    @Test
+    public void shouldCreate_blueprintAgentWithActClaimContainingOnlySub() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setSubject("userid");
+
+        Client client = new Client();
+        client.setClientId("my-agent-client-id");
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
+        client.setAgentType(AgentType.USER_EMBEDDED);
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<JWT> jwtArgumentCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtArgumentCaptor.capture(), eq(client));
+        Object actClaimObject = jwtArgumentCaptor.getValue().get(Claims.ACT);
+        assertTrue(actClaimObject instanceof Map<?, ?>);
+        Map<?, ?> actClaim = (Map<?, ?>) actClaimObject;
+        assertNotNull(actClaim);
+        assertEquals(client.getClientId(), actClaim.get(Claims.SUB));
+        Assertions.assertFalse(actClaim.containsKey(Claims.CLIENT_ID));
+        assertEquals("ai_agent user_embedded", jwtArgumentCaptor.getValue().get(Claims.CLIENT_PROFILE));
+        // Subject is a user (oAuth2Request.subject = "userid"), so top-level sub_profile must NOT carry the agent profile.
+        Assertions.assertFalse(jwtArgumentCaptor.getValue().containsKey(Claims.SUB_PROFILE));
+        assertEquals("user_embedded", actClaim.get(Claims.SUB_PROFILE));
+
+        expectTokenCreatedAuditLog();
+    }
+
+    @Test
+    public void shouldCreate_workloadAgentWithActClaimPointingToBlueprint() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        // No subject set — client_credentials flow, sub comes from client.getClientId()
+
+        Client client = new Client();
+        client.setClientId("blueprint-client-id");
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
+        client.setAgentType(AgentType.AUTONOMOUS);
+        client.setAgentInstanceId("agent-instance-001");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<JWT> jwtArgumentCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtArgumentCaptor.capture(), eq(client));
+        JWT capturedJwt = jwtArgumentCaptor.getValue();
+
+        // sub should be the agent instance ID (client credentials flow)
+        assertEquals("agent-instance-001", capturedJwt.getSub());
+
+        // act claim should point to the blueprint
+        Object actClaimObject = capturedJwt.get(Claims.ACT);
+        assertTrue(actClaimObject instanceof Map<?, ?>);
+        Map<?, ?> actClaim = (Map<?, ?>) actClaimObject;
+        assertEquals("blueprint-client-id", actClaim.get(Claims.SUB));
+        assertEquals("ai_agent autonomous", capturedJwt.get(Claims.CLIENT_PROFILE));
+        assertEquals("autonomous", capturedJwt.get(Claims.SUB_PROFILE));
+        assertEquals("autonomous", actClaim.get(Claims.SUB_PROFILE));
 
         expectTokenCreatedAuditLog();
     }

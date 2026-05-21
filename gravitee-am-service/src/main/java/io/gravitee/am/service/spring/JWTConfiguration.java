@@ -54,14 +54,15 @@ public class JWTConfiguration {
     }
 
     @Bean
-    public JWKSetFetcher jwkSetFetcher(Vertx vertx,
-                                       WebClientBuilder webClient,
+    public JWKSetFetcher jwkSetFetcher(@Qualifier("uncachedJwkSetFetcher") JWKSetFetcher delegate,
                                        @Value("${jwt.jwks.cache.maximumSize:100}") long maximumSize,
                                        @Value("${jwt.jwks.cache.ttlAfterWriteSeconds:3600}") long expireAfterWriteSeconds){
-        return new CachedJWKSetFetcher(
-                new WebClientJWKSetFetcher(webClient.createWebClient(vertx)),
-                maximumSize,
-                Duration.ofSeconds(expireAfterWriteSeconds));
+        return new CachedJWKSetFetcher(delegate, maximumSize, Duration.ofSeconds(expireAfterWriteSeconds));
+    }
+
+    @Bean("uncachedJwkSetFetcher")
+    public JWKSetFetcher uncachedJwkSetFetcher(Vertx vertx, WebClientBuilder webClient) {
+        return new WebClientJWKSetFetcher(webClient.createWebClient(vertx));
     }
 
     @Bean("managementSecretKey")

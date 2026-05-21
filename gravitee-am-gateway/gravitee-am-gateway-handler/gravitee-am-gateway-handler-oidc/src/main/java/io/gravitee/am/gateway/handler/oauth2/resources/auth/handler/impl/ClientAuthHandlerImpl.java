@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
+import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
@@ -137,9 +139,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                     }
                 }
 
-                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(authenticatedClient)
                         .ipAddress(routingContext)
                         .userAgent(routingContext)
+                        .agentContext(authenticatedClient)
                 );
                 // put client in context and continue
                 routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
@@ -170,18 +173,26 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 return;
             }
             final String clientId = h.result();
-            // client_id can be null if client authentication method is private_jwt
+            // client_id can be null (private_key_jwt — identity carried in the assertion).
             if (clientId == null) {
                 handler.handle(Future.succeededFuture());
                 return;
             }
-            // get client - first try regular client, then fallback to protected resource
+
+            // URL-shaped client_ids are CIMD identifiers and may not be pre-registered;
+            // the lookup is attempted (a blueprint may match the URL literally) but an
+            // empty result hands off to ClientAssertionAuthProvider, which resolves the
+            // client by fetching the metadata document.
+            final boolean cimdCandidate = ClientIds.isUrlShaped(clientId);
+
             clientLookupService
                     .findByClientId(clientId)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
-                            () -> handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)))
+                            () -> handler.handle(cimdCandidate
+                                    ? Future.succeededFuture()
+                                    : Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)))
                     );
 
         });
@@ -214,8 +225,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 // Same decode as the secret path so lookup id and comparison stay symmetric.
                 clientId = ClientBasicAuthProvider.urlDecode(clientId);
             } else if(clientAssertion != null && clientAssertionType != null) {
-                JWT jwt = JWTParser.parse(clientAssertion);
-                clientId = jwt.getJWTClaimsSet().getSubject();
+                clientId = determineClientIdFromAssertion(request, clientAssertion, clientAssertionType);
             } else {
                 // if no authorization header found, check client_id via the query parameter
                 clientId = request.getParam(Parameters.CLIENT_ID);
@@ -228,6 +238,24 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
         } catch (ParseException | RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
+        }
+    }
+
+    private static String determineClientIdFromAssertion(HttpServerRequest request, String clientAssertion, String clientAssertionType) throws ParseException {
+        JWT jwt = JWTParser.parse(clientAssertion);
+
+        String iss = jwt.getJWTClaimsSet().getIssuer();
+        String sub = jwt.getJWTClaimsSet().getSubject();
+
+        if (ClientAuthenticationMethod.JWT_SPIFFE.equals(clientAssertionType)) {
+            // SPIFFE JWT-SVID: form client_id is authoritative; fall back to SPIFFE URI in sub.
+            String formClientId = request.getParam(Parameters.CLIENT_ID);
+            return (formClientId != null && !formClientId.isEmpty()) ? formClientId : sub;
+        } else if (ClientAuthenticationMethod.AGENT_JWT_BEARER.equals(clientAssertionType)) {
+            // Agent jwt-bearer: blueprint client_id is in iss; sub is the agent instance id.
+            return iss;
+        } else {
+            return sub;
         }
     }
 }
