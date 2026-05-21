@@ -65,7 +65,7 @@ public class OIDCSettings {
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
         this.cibaSettings = other.cibaSettings != null ? new CIBASettings(other.cibaSettings) : null;
         this.cimdSettings = other.cimdSettings != null ? new CIMDSettings(other.cimdSettings) : null;
-        this.spiffeSettings = other.spiffeSettings != null ? new SpiffeDomainSettings(other.spiffeSettings) : null;
+        this.workloadIdentitySettings = other.workloadIdentitySettings != null ? new SpiffeDomainSettings(other.workloadIdentitySettings) : null;
     }
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
