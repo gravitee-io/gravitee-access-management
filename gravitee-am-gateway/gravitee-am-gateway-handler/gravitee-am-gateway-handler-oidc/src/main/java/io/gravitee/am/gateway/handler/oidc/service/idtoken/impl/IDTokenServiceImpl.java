@@ -255,26 +255,6 @@ public class IDTokenServiceImpl implements IDTokenService {
         // 4. Enhance ID token with custom claims
         enhanceIDToken(idToken, client.getTokenCustomClaims(), executionContext);
 
-        // Token Exchange (RFC 8693) - propagate "act" claim to id_token for delegation
-        if (oAuth2Request.isDelegation() && oAuth2Request.getActClaim() != null) {
-            idToken.put(Claims.ACT, oAuth2Request.getActClaim());
-        }
-
-        // Agent application - inject "act" claim (mirrors access-token logic) and tag with sub_profile.
-        if (client.isAgentApplication() && idToken.get(Claims.ACT) == null) {
-            Map<String, Object> act = new HashMap<>();
-            act.put(Claims.SUB, client.getClientId());
-            if (client.getAgentType() != null) {
-                act.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
-            }
-            idToken.put(Claims.ACT, act);
-        }
-
-        // Agent application - advertise client_profile per draft-mora-oauth-entity-profiles-01 §3.3
-        // Format: "ai_agent <profile_token>" (registry token + space + lowercase sub-profile).
-        // Top-level sub_profile is intentionally NOT set on ID tokens: ID tokens are issued for
-        // an end-user subject, and sub_profile must describe the subject (the user), not the
-        // agent client. The agent profile travels on client_profile and act.sub_profile.
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
             idToken.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
         }

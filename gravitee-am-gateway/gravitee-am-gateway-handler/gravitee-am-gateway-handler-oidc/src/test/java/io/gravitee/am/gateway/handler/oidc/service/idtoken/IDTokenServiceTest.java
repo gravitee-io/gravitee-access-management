@@ -893,7 +893,7 @@ public class IDTokenServiceTest {
     }
 
     @Test
-    public void shouldCreateIDToken_blueprintAgent_userEmbedded_setsActAndClientProfile() {
+    public void shouldCreateIDToken_blueprintAgent_userEmbedded_setsClientProfileAndOmitsAct() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("agent-client-id");
         oAuth2Request.setScopes(Collections.singleton("openid"));
@@ -920,17 +920,13 @@ public class IDTokenServiceTest {
         verify(jwtService).encode(captor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
         JWT captured = captor.getValue();
 
-        Object act = captured.get(io.gravitee.am.common.jwt.Claims.ACT);
-        assertTrue(act instanceof Map);
-        assertEquals("agent-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
-        assertEquals("user_embedded", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
+        assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.ACT));
         assertEquals("ai_agent user_embedded", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
-        // ID token subject is the end-user; top-level sub_profile must NOT carry the agent profile.
         assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
     }
 
     @Test
-    public void shouldCreateIDToken_blueprintAgent_workload_setsActToBlueprintAndClientProfile() {
+    public void shouldCreateIDToken_blueprintAgent_workload_setsClientProfileAndOmitsAct() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("blueprint-client-id");
         oAuth2Request.setScopes(Collections.singleton("openid"));
@@ -958,12 +954,8 @@ public class IDTokenServiceTest {
         verify(jwtService).encode(captor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
         JWT captured = captor.getValue();
 
-        Object act = captured.get(io.gravitee.am.common.jwt.Claims.ACT);
-        assertTrue(act instanceof Map);
-        assertEquals("blueprint-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
-        assertEquals("hosted_delegated", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
+        assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.ACT));
         assertEquals("ai_agent hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
-        // ID token subject is the end-user; top-level sub_profile must NOT carry the agent profile.
         assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
     }
 }
