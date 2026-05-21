@@ -60,8 +60,8 @@ export class SpiffeSettingsComponent implements OnInit {
     this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
-    if (!this.domain.oidc.spiffeSettings) {
-      this.domain.oidc.spiffeSettings = { ...DEFAULT_SETTINGS };
+    if (!this.domain.oidc.workloadIdentitySettings) {
+      this.domain.oidc.workloadIdentitySettings = { ...DEFAULT_SETTINGS };
     }
   }
 
@@ -81,24 +81,24 @@ export class SpiffeSettingsComponent implements OnInit {
   }
 
   enableSpiffe(event) {
-    if (!this.domain.oidc.spiffeSettings) {
-      this.domain.oidc.spiffeSettings = { ...DEFAULT_SETTINGS };
+    if (!this.domain.oidc.workloadIdentitySettings) {
+      this.domain.oidc.workloadIdentitySettings = { ...DEFAULT_SETTINGS };
     }
-    this.domain.oidc.spiffeSettings.enabled = event.checked;
+    this.domain.oidc.workloadIdentitySettings.enabled = event.checked;
     this.formChanged = true;
   }
 
   isSpiffeEnabled(): boolean {
-    return this.domain.oidc?.spiffeSettings?.enabled === true;
+    return this.domain.oidc?.workloadIdentitySettings?.enabled === true;
   }
 
   toggleAllowUnsecuredHttpUri(event) {
-    this.domain.oidc.spiffeSettings.allowUnsecuredHttpUri = event.checked;
+    this.domain.oidc.workloadIdentitySettings.allowUnsecuredHttpUri = event.checked;
     this.formChanged = true;
   }
 
   toggleAllowPrivateIpAddress(event) {
-    this.domain.oidc.spiffeSettings.allowPrivateIpAddress = event.checked;
+    this.domain.oidc.workloadIdentitySettings.allowPrivateIpAddress = event.checked;
     this.formChanged = true;
   }
 

@@ -117,7 +117,7 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   isSpiffeEnabledAtDomain(): boolean {
-    return this.domainStore.current?.oidc?.spiffeSettings?.enabled === true;
+    return this.domainStore.current?.oidc?.workloadIdentitySettings?.enabled === true;
   }
 
   spiffeChanged() {

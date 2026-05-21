@@ -56,7 +56,9 @@ export class OAuth2SettingsComponent implements OnInit {
     this.resourceId = settings.resourceId;
     this.resource = settings.resource;
     this.oauthSettings = settings.settings;
-    this.spiffeSettings = this.resource?.settings?.spiffe ? { ...this.resource.settings.spiffe } : {};
+    this.spiffeSettings = this.resource?.settings?.workloadIdentitySettings
+      ? { ...this.resource.settings.workloadIdentitySettings }
+      : {};
     this.context = this.oauth2Service.getContext();
 
     // Load resolvers data

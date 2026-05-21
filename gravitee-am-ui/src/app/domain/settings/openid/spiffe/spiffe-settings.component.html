@@ -37,7 +37,7 @@
           </div>
           <mat-slide-toggle
             (change)="toggleAllowUnsecuredHttpUri($event)"
-            [checked]="domain.oidc.spiffeSettings.allowUnsecuredHttpUri"
+            [checked]="domain.oidc.workloadIdentitySettings.allowUnsecuredHttpUri"
             [disabled]="!editMode"
           >
             Allow unsecured HTTP JWKS URLs
@@ -46,7 +46,7 @@
 
           <mat-slide-toggle
             (change)="toggleAllowPrivateIpAddress($event)"
-            [checked]="domain.oidc.spiffeSettings.allowPrivateIpAddress"
+            [checked]="domain.oidc.workloadIdentitySettings.allowPrivateIpAddress"
             [disabled]="!editMode"
             style="margin-top: 12px"
           >
@@ -63,7 +63,7 @@
               name="fetchTimeoutMs"
               min="100"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.spiffeSettings.fetchTimeoutMs"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.fetchTimeoutMs"
               [disabled]="!editMode"
             />
             <mat-hint>Maximum time to wait when fetching a JWKS endpoint. Default: 5000.</mat-hint>
@@ -78,7 +78,7 @@
               name="maxResponseSizeKb"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.spiffeSettings.maxResponseSizeKb"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.maxResponseSizeKb"
               [disabled]="!editMode"
             />
             <mat-hint>Reject JWKS responses larger than this. Default: 32.</mat-hint>
@@ -99,7 +99,7 @@
               name="cacheTtlSeconds"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.spiffeSettings.cacheTtlSeconds"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.cacheTtlSeconds"
               [disabled]="!editMode"
             />
             <mat-hint>Default cache lifetime when a Trust Domain does not override the refresh interval. Default: 300.</mat-hint>
@@ -113,7 +113,7 @@
               name="cacheMaxEntries"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.spiffeSettings.cacheMaxEntries"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.cacheMaxEntries"
               [disabled]="!editMode"
             />
             <mat-hint>Max number of cached JWKS bundles. Default: 50.</mat-hint>
@@ -134,7 +134,7 @@
               name="maxJwtLifetimeSeconds"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.spiffeSettings.maxJwtLifetimeSeconds"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.maxJwtLifetimeSeconds"
               [disabled]="!editMode"
             />
             <mat-hint>Reject SVIDs whose <code>exp - iat</code> exceeds this. SPIFFE recommends ≤ 300. Default: 300.</mat-hint>
@@ -148,7 +148,7 @@
               name="clockSkewSeconds"
               min="0"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.spiffeSettings.clockSkewSeconds"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.clockSkewSeconds"
               [disabled]="!editMode"
             />
             <mat-hint>Allowed clock drift when checking <code>exp</code>/<code>nbf</code>. Default: 30.</mat-hint>
@@ -158,7 +158,7 @@
             <mat-select
               multiple
               name="defaultAllowedAlgorithms"
-              [(ngModel)]="domain.oidc.spiffeSettings.defaultAllowedAlgorithms"
+              [(ngModel)]="domain.oidc.workloadIdentitySettings.defaultAllowedAlgorithms"
               (selectionChange)="modelChanged()"
               [disabled]="!editMode"
             >

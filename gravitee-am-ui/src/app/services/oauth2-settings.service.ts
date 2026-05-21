@@ -65,9 +65,9 @@ export class ApplicationOAuth2Service implements OAuth2SettingsService {
   update(domainId: string, resourceId: string, resource: any, oauthSettings: any, spiffeSettings?: any): Observable<any> {
     const settings: any = { oauth: oauthSettings };
     if (oauthSettings?.tokenEndpointAuthMethod === 'spiffe_jwt') {
-      settings.spiffe = spiffeSettings ?? null;
+      settings.workloadIdentitySettings = spiffeSettings ?? null;
     } else {
-      settings.spiffe = null;
+      settings.workloadIdentitySettings = null;
     }
     return this.applicationService.patch(domainId, resourceId, { settings });
   }
