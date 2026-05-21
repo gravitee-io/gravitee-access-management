@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -81,19 +82,23 @@ public class TokenExchangeServiceImplTest {
     @Mock
     private UserGatewayService userGatewayService;
 
+    @Mock
+    private ScopeManager scopeManager;
+
     private TokenExchangeServiceImpl service;
 
     @BeforeEach
     public void setUp() {
         service = createService(List.of(new FixedSubjectTokenValidator()));
         lenient().when(subjectManager.findUserBySub(any())).thenReturn(Maybe.empty());
+        lenient().when(scopeManager.isParameterizedScope(anyString())).thenReturn(false);
     }
 
     private TokenExchangeServiceImpl createService(List<TokenValidator> validators) {
         TokenUserResolver subjectResolver = new TokenUserResolver(subjectManager, userGatewayService);
         TrustedIssuerUserResolver trustedResolver = new TrustedIssuerUserResolver(userGatewayService);
         TokenExchangeUserResolver userResolver = new TokenExchangeUserResolverFacade(subjectResolver, trustedResolver);
-        return new TokenExchangeServiceImpl(validators, protectedResourceManager, userResolver);
+        return new TokenExchangeServiceImpl(validators, protectedResourceManager, userResolver, scopeManager);
     }
 
     @Test
@@ -2127,6 +2132,265 @@ public class TokenExchangeServiceImplTest {
 
             // Downscoping: {A,B} ∩ {A,B,C} = {A,B}
             assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B");
+        }
+    }
+
+    @Nested
+    class ParameterizedScopeHandling {
+
+        /** Bare parameterized scope in subject → exact match request → granted (both modes). */
+        @Test
+        public void shouldGrantExactMatchOnParameterizedScopeDownscoping() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = scopeValidator(Set.of("mcp"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp");
+        }
+
+        /** Bare parameterized scope in subject → suffixed request → granted (narrowing, downscoping). */
+        @Test
+        public void shouldGrantSuffixedRequestWhenSubjectHoldsBareParameterizedScopeDownscoping() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = scopeValidator(Set.of("mcp"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp:tenant-a");
+        }
+
+        /** Same scenario in PERMISSIVE mode (subject scopes ignored). */
+        @Test
+        public void shouldGrantSuffixedRequestWhenSubjectHoldsBareParameterizedScopePermissive() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = scopeValidator(Set.of("mcp"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings teSettings = new TokenExchangeOAuthSettings();
+            teSettings.setInherited(false);
+            teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            client.setTokenExchangeOAuthSettings(teSettings);
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp:tenant-a");
+        }
+
+        /** Suffixed scope already in subject token → identical request → granted (exact match). */
+        @Test
+        public void shouldGrantExactSuffixedRequestWhenSubjectAlreadyHoldsItDownscoping() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = scopeValidator(Set.of("mcp:tenant-a"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp:tenant-a");
+        }
+
+        /** Upscope rejection: subject holds suffixed scope, request bare scope → reject (strips the binding). */
+        @Test
+        public void shouldRejectUpscopeFromSuffixedSubjectToBareScopeDownscoping() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = scopeValidator(Set.of("mcp:tenant-a"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** Lateral move rejection: subject holds <scope>:<a>, request <scope>:<b> → reject (downscoping). */
+        @Test
+        public void shouldRejectLateralMoveBetweenSuffixesDownscoping() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = scopeValidator(Set.of("mcp:tenant-a"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-b"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** Suffix on a non-parameterized scope is rejected even in PERMISSIVE mode. */
+        @Test
+        public void shouldRejectSuffixedRequestWhenScopeIsNotParameterizedPermissive() throws Exception {
+            // scopeManager returns false for all (default) → "openid" is not parameterized
+            TokenValidator validator = scopeValidator(Set.of("openid"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "openid:tenant-a"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings teSettings = new TokenExchangeOAuthSettings();
+            teSettings.setInherited(false);
+            teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            client.setTokenExchangeOAuthSettings(teSettings);
+            client.setScopeSettings(defaultClientScopeSettings("openid"));
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** Suffix on a non-parameterized scope is rejected in DOWNSCOPING mode too. */
+        @Test
+        public void shouldRejectSuffixedRequestWhenScopeIsNotParameterizedDownscoping() throws Exception {
+            TokenValidator validator = scopeValidator(Set.of("openid"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "openid:tenant-a"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("openid"));
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        // ---- Delegation: subject ∩ actor uses parameterized-aware intersection (more specific wins). ----
+
+        /** Delegation: subject bare parameterized, actor suffixed → intersection narrows to actor's suffix. */
+        @Test
+        public void shouldNarrowDelegationIntersectionToActorSuffixWhenSubjectHoldsBareParameterized() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = delegationScopeValidator(Set.of("mcp"), Set.of("mcp:tenant-a"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithDelegation();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp:tenant-a");
+        }
+
+        /** Delegation: subject suffixed, actor bare parameterized → intersection narrows to subject's suffix. */
+        @Test
+        public void shouldNarrowDelegationIntersectionToSubjectSuffixWhenActorHoldsBareParameterized() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = delegationScopeValidator(Set.of("mcp:tenant-a"), Set.of("mcp"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithDelegation();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp:tenant-a");
+        }
+
+        /** Delegation: both sides hold the same suffixed scope → exact match preserved. */
+        @Test
+        public void shouldGrantExactSuffixedScopeWhenBothSubjectAndActorHoldItDelegation() throws Exception {
+            when(scopeManager.isParameterizedScope("mcp")).thenReturn(true);
+            TokenValidator validator = delegationScopeValidator(Set.of("mcp:tenant-a"), Set.of("mcp:tenant-a"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithDelegation();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            service.exchange(tokenRequest, client, domain).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("mcp:tenant-a");
+        }
+
+        /** Delegation: subject and actor hold different suffixes of the same base → lateral move rejected. */
+        @Test
+        public void shouldRejectLateralMoveBetweenSubjectAndActorSuffixesDelegation() throws Exception {
+            TokenValidator validator = delegationScopeValidator(Set.of("mcp:tenant-a"), Set.of("mcp:tenant-b"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "mcp:tenant-a"));
+
+            Domain domain = domainWithDelegation();
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setScopeSettings(defaultClientScopeSettings("mcp"));
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
         }
     }
 
