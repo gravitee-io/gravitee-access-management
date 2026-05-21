@@ -501,11 +501,14 @@ jobs:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
+          name: Bring up SPIRE overlay
+          command: npm --prefix docker/local-stack run stack:dev:spire
+      - run:
           name: Run Management Jest tests (parallel)
           command: JEST_JUNIT_OUTPUT_NAME=junit-management.xml npm --prefix gravitee-am-test run ci:management:parallel
       - run:
           name: Run Gateway Jest tests (sequential)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml npm --prefix gravitee-am-test run ci:gateway
+          command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
