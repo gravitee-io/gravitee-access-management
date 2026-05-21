@@ -29,12 +29,12 @@ import {
 } from '../../../components/client-secrets-management/dialog/copy-client-secret/copy-client-secret.component';
 
 @Component({
-  selector: 'app-creation',
-  templateUrl: './application-creation.component.html',
-  styleUrls: ['./application-creation.component.scss'],
+  selector: 'app-agent-creation',
+  templateUrl: './agent-creation.component.html',
+  styleUrls: ['./agent-creation.component.scss'],
   standalone: false,
 })
-export class ApplicationCreationComponent implements OnInit {
+export class AgentCreationComponent implements OnInit {
   public application: any = {};
   public validating = false;
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
@@ -51,6 +51,7 @@ export class ApplicationCreationComponent implements OnInit {
   ngOnInit() {
     this.application.domain = this.route.snapshot.parent.data['domain'].id;
     this.application.creationMode = 'manual';
+    this.application.type = 'AGENT';
   }
 
   isCimd(): boolean {
@@ -84,14 +85,15 @@ export class ApplicationCreationComponent implements OnInit {
       return;
     }
 
-    const app: any = {};
-    app.name = this.application.name;
-    app.description = this.application.description;
-    app.clientId = this.application.clientId;
-    app.clientSecret = this.application.clientSecret;
-    app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
-
-    app.type = this.application.type;
+    const app: any = {
+      name: this.application.name,
+      description: this.application.description,
+      clientId: this.application.clientId,
+      clientSecret: this.application.clientSecret,
+      redirectUris: this.application.redirectUri ? [this.application.redirectUri] : null,
+      type: 'AGENT',
+      subType: this.application.agentType,
+    };
 
     this.applicationService
       .create(this.application.domain, app)
@@ -111,7 +113,7 @@ export class ApplicationCreationComponent implements OnInit {
             .afterClosed()
             .pipe(
               tap(() => {
-                this.snackbarService.open('Application ' + data.name + ' created');
+                this.snackbarService.open('Agent ' + data.name + ' created');
               }),
               map(() => data),
               takeUntil(this.unsubscribe$),
@@ -127,30 +129,28 @@ export class ApplicationCreationComponent implements OnInit {
     const resolvedName = this.application?.cimdPreview?.metadata?.client_name || this.application.cimdClientName;
     const payload: any = {
       name: resolvedName,
-      type: this.application.type,
+      type: 'AGENT',
+      subType: this.application.agentType,
       description: this.application.description,
       cimdUrl: this.application.cimdUrl,
     };
-    if (this.application.type === 'AGENT') {
-      payload.kind = this.application.agentType;
-    }
     if (this.application?.cimdPreview?.missing?.clientName && this.application.cimdClientName) {
       payload.clientName = this.application.cimdClientName;
     }
     this.applicationService.createFromCimd(this.application.domain, payload).subscribe(
       (data) => {
-        this.snackbarService.open('Application ' + data.name + ' created');
+        this.snackbarService.open('Agent ' + data.name + ' created');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (err: unknown) => {
-        const message = (err as { error?: { message?: string } })?.error?.message ?? 'Unable to create application from CIMD URL';
+        const message = (err as { error?: { message?: string } })?.error?.message ?? 'Unable to create agent from CIMD URL';
         this.snackbarService.open(message);
       },
     );
   }
 
   stepperValid(): boolean {
-    if (!this.application?.type || !this.application.domain) {
+    if (!this.application?.agentType || !this.application.domain) {
       return false;
     }
     if (this.isCimd()) {
@@ -161,7 +161,7 @@ export class ApplicationCreationComponent implements OnInit {
     if (!this.application.name) {
       return false;
     }
-    if (this.application.type === 'SERVICE') {
+    if (this.application.agentType === 'AUTONOMOUS') {
       return true;
     }
     return !!this.application.redirectUri;
@@ -174,6 +174,9 @@ export class ApplicationCreationComponent implements OnInit {
     if (!this.application?.name) {
       return false;
     }
-    return this.application.type !== 'SERVICE' ? !!this.application.redirectUri : true;
+    if (this.application.agentType === 'AUTONOMOUS') {
+      return true;
+    }
+    return !!this.application.redirectUri;
   }
 }

@@ -22,6 +22,12 @@ import { AppConfig } from '../../config/app.config';
 
 import { AuthService } from './auth.service';
 
+// Mirrors io.gravitee.am.model.application.ApplicationType (server-side enum).
+// Keep in sync — see TripwireSpec in gravitee-am-test for the enforcing test.
+export const ALL_APPLICATION_TYPES = ['WEB', 'NATIVE', 'BROWSER', 'SERVICE', 'RESOURCE_SERVER', 'AGENT'] as const;
+export const AGENT_APPLICATION_TYPES: string[] = ['AGENT'];
+export const NON_AGENT_APPLICATION_TYPES: string[] = ALL_APPLICATION_TYPES.filter((t) => !AGENT_APPLICATION_TYPES.includes(t));
+
 @Injectable()
 export class ApplicationService {
   private appsURL = AppConfig.settings.domainBaseURL;
@@ -31,12 +37,20 @@ export class ApplicationService {
     private authService: AuthService,
   ) {}
 
-  findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size);
+  findByDomain(domainId, page, size, type?: string | string[]): Observable<any> {
+    const typeParam = this.buildTypeParam(type);
+    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size + typeParam);
   }
 
-  search(domainId, searchTerm): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm);
+  search(domainId, searchTerm, type?: string | string[]): Observable<any> {
+    const typeParam = this.buildTypeParam(type);
+    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm + typeParam);
+  }
+
+  private buildTypeParam(type?: string | string[]): string {
+    if (!type) return '';
+    const values = Array.isArray(type) ? type : [type];
+    return values.map((t) => '&type=' + encodeURIComponent(t)).join('');
   }
 
   get(domainId, id): Observable<any> {
