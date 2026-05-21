@@ -21,12 +21,14 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.model.Domain;
@@ -41,6 +43,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,13 +61,16 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     private final List<TokenValidator> validators;
     private final ProtectedResourceManager protectedResourceManager;
     private final TokenExchangeUserResolver userResolver;
+    private final ScopeManager scopeManager;
 
     public TokenExchangeServiceImpl(List<TokenValidator> validators,
                                     ProtectedResourceManager protectedResourceManager,
-                                    TokenExchangeUserResolver userResolver) {
+                                    TokenExchangeUserResolver userResolver,
+                                    ScopeManager scopeManager) {
         this.validators = validators;
         this.protectedResourceManager = protectedResourceManager;
         this.userResolver = userResolver;
+        this.scopeManager = scopeManager;
     }
 
     @Override
@@ -311,6 +317,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
     /**
      * DOWNSCOPING: allowed = base ∩ (client ∪ resource); subject/actor token scopes cap what can be granted.
+     * Parameterized scopes match by base: a base scope <s> in the pool that is declared parameterized
+     * admits any <s>:<suffix> coming from the cap (subject/actor token).
      */
     private Set<String> computeDownscopingAllowedScopes(Set<String> requestedResourceUris,
             Set<String> baseAllowedScopes,
@@ -319,9 +327,46 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             return Collections.emptySet();
         }
         Set<String> scopePool = buildScopePool(requestedResourceUris, clientScopes);
-        Set<String> allowedScopes = new HashSet<>(baseAllowedScopes);
-        allowedScopes.retainAll(scopePool);
-        return allowedScopes;
+        List<String> parameterizedPool = parameterizedScopesIn(scopePool);
+        return baseAllowedScopes.stream()
+                .filter(scope -> scopePool.contains(scope)
+                        || ParameterizedScopeUtils.isParameterizedScope(parameterizedPool, scope))
+                .collect(Collectors.toSet());
+    }
+
+    private List<String> parameterizedScopesIn(Collection<String> scopes) {
+        if (scopeManager == null) {
+            return Collections.emptyList();
+        }
+        return scopes.stream().filter(scopeManager::isParameterizedScope).toList();
+    }
+
+    /**
+     * Parameterized-aware intersection of two scope sets (used for subject ∩ actor in delegation).
+     * Exact-string matches are kept; when one side declares the bare parameterized base {@code <s>}
+     * and the other holds {@code <s>:<suffix>}, the suffixed form is kept (more specific wins).
+     * Lateral moves ({@code <s>:<a>} vs {@code <s>:<b>}) collapse to empty.
+     */
+    private Set<String> parameterizedAwareIntersection(Set<String> left, Set<String> right) {
+        if (left.isEmpty() || right.isEmpty()) {
+            return Collections.emptySet();
+        }
+        List<String> leftParameterized = parameterizedScopesIn(left);
+        List<String> rightParameterized = parameterizedScopesIn(right);
+        Set<String> result = new HashSet<>();
+        for (String scope : left) {
+            if (right.contains(scope)
+                    || ParameterizedScopeUtils.isParameterizedScope(rightParameterized, scope)) {
+                result.add(scope);
+            }
+        }
+        for (String scope : right) {
+            if (!result.contains(scope)
+                    && ParameterizedScopeUtils.isParameterizedScope(leftParameterized, scope)) {
+                result.add(scope);
+            }
+        }
+        return result;
     }
 
     /**
@@ -382,7 +427,11 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         if (noRequestedScopes) {
             return Single.just(allowedScopes);
         }
-        if (allowedScopes.containsAll(requestedScopes)) {
+        List<String> parameterizedAllowed = parameterizedScopesIn(allowedScopes);
+        boolean allValid = requestedScopes.stream().allMatch(scope ->
+                allowedScopes.contains(scope)
+                        || ParameterizedScopeUtils.isParameterizedScope(parameterizedAllowed, scope));
+        if (allValid) {
             return Single.just(requestedScopes);
         }
         return Single.error(new InvalidScopeException("Requested scope is not allowed"));
@@ -421,8 +470,9 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                               Client client,
                                                               Domain domain) {
         Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
-        Set<String> baseAllowed = new HashSet<>(Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet()));
-        baseAllowed.retainAll(Optional.ofNullable(actorToken.getScopes()).orElse(Collections.emptySet()));
+        Set<String> baseAllowed = parameterizedAwareIntersection(
+                Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet()),
+                Optional.ofNullable(actorToken.getScopes()).orElse(Collections.emptySet()));
         return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain)
                 .flatMap(grantedScopes -> userResolver.resolve(subjectToken)
                         .switchIfEmpty(Single.error(() -> new IllegalStateException("could not resolve subject token")))
