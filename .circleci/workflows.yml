@@ -1199,7 +1199,7 @@ jobs:
         type: boolean
         default: false
         description: "Create maintenance version branch"
-      qualifier_label:
+      pre_release_qualifier_label:
         type: string
         default: "alpha"
         description: "Pre-release qualifier label used in versions like 4.12.0-<qualifier>.N (e.g. alpha)"
@@ -1213,7 +1213,7 @@ jobs:
       GIO_VERSION: << parameters.graviteeio_version >>
       HOTFIX_VERSION: << parameters.hotfix_version >>
       CREATE_MAINT_VER_BRANCH: << parameters.create_maintenance_version_branch >>
-      QUALIFIER_LABEL: << parameters.qualifier_label >>
+      QUALIFIER_LABEL: << parameters.pre_release_qualifier_label >>
     steps:
       - checkout
       - restore-maven-job-cache:
