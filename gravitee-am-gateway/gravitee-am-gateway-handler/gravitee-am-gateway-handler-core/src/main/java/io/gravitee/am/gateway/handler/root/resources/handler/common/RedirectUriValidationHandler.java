@@ -187,7 +187,8 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             boolean schemeMatch = Objects.equals(req.getScheme(), reg.getScheme());
             boolean hostMatch = Objects.equals(normalizeHost(req.getHost()), normalizeHost(reg.getHost()));
             boolean pathMatch = Objects.equals(req.getPath(), reg.getPath());
-            return schemeMatch && hostMatch && pathMatch;
+            boolean portMatch = reg.getPort() == -1 || normalizePort(req) == normalizePort(reg);
+            return schemeMatch && hostMatch && pathMatch && portMatch;
         } catch (URISyntaxException e) {
             LOGGER.info("[redirect-uri-validation] candidate registered={} parse error: {}", registered, e.getMessage());
             return false;
@@ -196,6 +197,17 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private static String normalizeHost(String host) {
         return host == null ? null : host.toLowerCase();
+    }
+
+    private static int normalizePort(URI uri) {
+        if (uri.getPort() != -1) {
+            return uri.getPort();
+        }
+        return switch (uri.getScheme() == null ? "" : uri.getScheme().toLowerCase()) {
+            case "http" -> 80;
+            case "https" -> 443;
+            default -> -1;
+        };
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
