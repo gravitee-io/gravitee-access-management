@@ -92,7 +92,7 @@ export class AgentCreationComponent implements OnInit {
       clientSecret: this.application.clientSecret,
       redirectUris: this.application.redirectUri ? [this.application.redirectUri] : null,
       type: 'AGENT',
-      subType: this.application.agentType,
+      kind: this.application.agentType,
     };
 
     this.applicationService
@@ -130,7 +130,7 @@ export class AgentCreationComponent implements OnInit {
     const payload: any = {
       name: resolvedName,
       type: 'AGENT',
-      subType: this.application.agentType,
+      kind: this.application.agentType,
       description: this.application.description,
       cimdUrl: this.application.cimdUrl,
     };
