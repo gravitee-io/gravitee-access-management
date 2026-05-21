@@ -164,12 +164,14 @@ public class PatchOIDCSettings {
             }
         }
 
-        if (getWorkloadIdentitySettings().isPresent()) {
+        if (getWorkloadIdentitySettings() != null) {
+            if (getWorkloadIdentitySettings().isPresent()) {
                 final PatchSpiffeDomainSettings patcher = getWorkloadIdentitySettings().get();
                 final SpiffeDomainSettings source = toPatch.getWorkloadIdentitySettings();
                 toPatch.setWorkloadIdentitySettings(patcher.patch(source));
-        } else {
-            toPatch.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());
+            } else {
+                toPatch.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());
+            }
         }
 
         return toPatch;
