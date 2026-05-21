@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.oauth2.ClientIds;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator.CheckMethod;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -41,7 +42,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
@@ -62,7 +62,6 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
 public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedirectUriValidationHandler.class);
-    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "::1");
 
     private final Domain domain;
     private final Function<String, Maybe<JWT>> tokenVerifier;
@@ -161,8 +160,8 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             return false;
         }
         try {
-            String host = new URI(uri).getHost();
-            return host != null && LOOPBACK_HOSTS.contains(host.toLowerCase());
+            String host = UriBuilder.fromURIString(uri).build().getHost();
+            return host != null && UriBuilder.isLocalhost(host);
         } catch (URISyntaxException e) {
             LOGGER.debug("[redirect-uri-validation] uri={} parse error: {}", uri, e.getMessage());
             return false;
@@ -182,8 +181,8 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             return false;
         }
         try {
-            URI req = new URI(requested);
-            URI reg = new URI(registered);
+            URI req = UriBuilder.fromURIString(requested).build();
+            URI reg = UriBuilder.fromURIString(registered).build();
             boolean schemeMatch = Objects.equals(req.getScheme(), reg.getScheme());
             boolean hostMatch = Objects.equals(normalizeHost(req.getHost()), normalizeHost(reg.getHost()));
             boolean pathMatch = Objects.equals(req.getPath(), reg.getPath());
