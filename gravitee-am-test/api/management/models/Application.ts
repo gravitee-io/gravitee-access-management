@@ -119,6 +119,12 @@ export interface Application {
   identityProviders?: Set<ApplicationIdentityProvider>;
   /**
    *
+   * @type {string}
+   * @memberof Application
+   */
+  kind?: ApplicationKindEnum;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof Application
    */
@@ -153,12 +159,6 @@ export interface Application {
    * @memberof Application
    */
   settings?: ApplicationSettings;
-  /**
-   *
-   * @type {string}
-   * @memberof Application
-   */
-  kind?: ApplicationKindEnum;
   /**
    *
    * @type {boolean}
@@ -230,6 +230,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
       json['identityProviders'] == null
         ? undefined
         : new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON)),
+    kind: json['kind'] == null ? undefined : json['kind'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
     passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
@@ -237,7 +238,6 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     secrets: json['secrets'] == null ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
-    kind: json['kind'] == null ? undefined : json['kind'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
@@ -266,6 +266,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
       value['identityProviders'] == null
         ? undefined
         : Array.from(value['identityProviders'] as Set<any>).map(ApplicationIdentityProviderToJSON),
+    kind: value['kind'],
     metadata: value['metadata'],
     name: value['name'],
     passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
@@ -273,7 +274,6 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     secrets: value['secrets'] == null ? undefined : (value['secrets'] as Array<any>).map(ClientSecretToJSON),
     settings: ApplicationSettingsToJSON(value['settings']),
-    kind: value['kind'],
     template: value['template'],
     type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),

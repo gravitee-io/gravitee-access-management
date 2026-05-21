@@ -264,6 +264,7 @@ export * from './UserEntity';
 export * from './UserId';
 export * from './UserIdentity';
 export * from './UserIdentityEntity';
+export * from './UserInfoClaim';
 export * from './UserNotificationContent';
 export * from './UserPage';
 export * from './UsernameEntity';

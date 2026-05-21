@@ -37,6 +37,12 @@ export interface FilteredApplication {
    * @type {string}
    * @memberof FilteredApplication
    */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FilteredApplication
+   */
   description?: string;
   /**
    *
@@ -55,13 +61,13 @@ export interface FilteredApplication {
    * @type {string}
    * @memberof FilteredApplication
    */
-  name?: string;
+  kind?: FilteredApplicationKindEnum;
   /**
    *
    * @type {string}
    * @memberof FilteredApplication
    */
-  kind?: FilteredApplicationKindEnum;
+  name?: string;
   /**
    *
    * @type {boolean}
@@ -121,11 +127,12 @@ export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
     description: json['description'] == null ? undefined : json['description'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
     kind: json['kind'] == null ? undefined : json['kind'],
+    name: json['name'] == null ? undefined : json['name'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
@@ -142,11 +149,12 @@ export function FilteredApplicationToJSONTyped(value?: FilteredApplication | nul
   }
 
   return {
+    clientId: value['clientId'],
     description: value['description'],
     enabled: value['enabled'],
     id: value['id'],
-    name: value['name'],
     kind: value['kind'],
+    name: value['name'],
     template: value['template'],
     type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),

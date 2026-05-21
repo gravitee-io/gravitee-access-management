@@ -55,13 +55,13 @@ export interface NewCimdApplication {
    * @type {string}
    * @memberof NewCimdApplication
    */
-  name: string;
+  kind?: NewCimdApplicationKindEnum;
   /**
    *
    * @type {string}
    * @memberof NewCimdApplication
    */
-  kind?: NewCimdApplicationKindEnum;
+  name: string;
   /**
    *
    * @type {string}
@@ -115,8 +115,8 @@ export function NewCimdApplicationFromJSONTyped(json: any, ignoreDiscriminator: 
     cimdUrl: json['cimdUrl'],
     clientName: json['clientName'] == null ? undefined : json['clientName'],
     description: json['description'] == null ? undefined : json['description'],
-    name: json['name'],
     kind: json['kind'] == null ? undefined : json['kind'],
+    name: json['name'],
     type: json['type'],
   };
 }
@@ -134,8 +134,8 @@ export function NewCimdApplicationToJSONTyped(value?: NewCimdApplication | null,
     cimdUrl: value['cimdUrl'],
     clientName: value['clientName'],
     description: value['description'],
-    name: value['name'],
     kind: value['kind'],
+    name: value['name'],
     type: value['type'],
   };
 }

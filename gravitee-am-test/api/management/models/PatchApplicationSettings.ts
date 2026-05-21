@@ -171,7 +171,7 @@ export interface PatchApplicationSettings {
    * @type {SpiffeApplicationSettings}
    * @memberof PatchApplicationSettings
    */
-  spiffe?: SpiffeApplicationSettings;
+  workloadIdentitySettings?: SpiffeApplicationSettings;
 }
 
 /**
@@ -279,7 +279,8 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
     saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    spiffe: json['spiffe'] == null ? undefined : SpiffeApplicationSettingsFromJSON(json['spiffe']),
+    workloadIdentitySettings:
+      json['workloadIdentitySettings'] == null ? undefined : SpiffeApplicationSettingsFromJSON(json['workloadIdentitySettings']),
   };
 }
 
@@ -304,6 +305,6 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
-    spiffe: SpiffeApplicationSettingsToJSON(value['spiffe']),
+    workloadIdentitySettings: SpiffeApplicationSettingsToJSON(value['workloadIdentitySettings']),
   };
 }

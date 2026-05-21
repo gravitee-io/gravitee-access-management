@@ -79,6 +79,12 @@ export interface PatchApplication {
   identityProviders?: Set<PatchApplicationIdentityProvider>;
   /**
    *
+   * @type {string}
+   * @memberof PatchApplication
+   */
+  kind?: PatchApplicationKindEnum;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof PatchApplication
    */
@@ -103,17 +109,21 @@ export interface PatchApplication {
   settings?: PatchApplicationSettings;
   /**
    *
-   * @type {string}
-   * @memberof PatchApplication
-   */
-  kind?: PatchApplicationKindEnum;
-  /**
-   *
    * @type {boolean}
    * @memberof PatchApplication
    */
   template?: boolean;
 }
+
+/**
+ * @export
+ */
+export const PatchApplicationKindEnum = {
+  UserEmbedded: 'USER_EMBEDDED',
+  HostedDelegated: 'HOSTED_DELEGATED',
+  Autonomous: 'AUTONOMOUS',
+} as const;
+export type PatchApplicationKindEnum = typeof PatchApplicationKindEnum[keyof typeof PatchApplicationKindEnum];
 
 /**
  * @export
@@ -193,16 +203,6 @@ export type PatchApplicationRequiredPermissionsEnum =
   typeof PatchApplicationRequiredPermissionsEnum[keyof typeof PatchApplicationRequiredPermissionsEnum];
 
 /**
- * @export
- */
-export const PatchApplicationKindEnum = {
-  UserEmbedded: 'USER_EMBEDDED',
-  HostedDelegated: 'HOSTED_DELEGATED',
-  Autonomous: 'AUTONOMOUS',
-} as const;
-export type PatchApplicationKindEnum = typeof PatchApplicationKindEnum[keyof typeof PatchApplicationKindEnum];
-
-/**
  * Check if a given object implements the PatchApplication interface.
  */
 export function instanceOfPatchApplication(value: object): value is PatchApplication {
@@ -226,11 +226,11 @@ export function PatchApplicationFromJSONTyped(json: any, ignoreDiscriminator: bo
       json['identityProviders'] == null
         ? undefined
         : new Set((json['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderFromJSON)),
+    kind: json['kind'] == null ? undefined : json['kind'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
-    kind: json['kind'] == null ? undefined : json['kind'],
     template: json['template'] == null ? undefined : json['template'],
   };
 }
@@ -253,11 +253,11 @@ export function PatchApplicationToJSONTyped(value?: PatchApplication | null, ign
       value['identityProviders'] == null
         ? undefined
         : Array.from(value['identityProviders'] as Set<any>).map(PatchApplicationIdentityProviderToJSON),
+    kind: value['kind'],
     metadata: value['metadata'],
     name: value['name'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
     settings: PatchApplicationSettingsToJSON(value['settings']),
-    kind: value['kind'],
     template: value['template'],
   };
 }

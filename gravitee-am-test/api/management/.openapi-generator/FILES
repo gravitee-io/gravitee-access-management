@@ -279,6 +279,7 @@ models/UserEntity.ts
 models/UserId.ts
 models/UserIdentity.ts
 models/UserIdentityEntity.ts
+models/UserInfoClaim.ts
 models/UserNotificationContent.ts
 models/UserPage.ts
 models/UsernameEntity.ts

@@ -1037,14 +1037,16 @@ paths:
       - name: type
         in: query
         schema:
-          type: string
-          enum:
-          - WEB
-          - NATIVE
-          - BROWSER
-          - SERVICE
-          - RESOURCE_SERVER
-          - AGENT
+          type: array
+          items:
+            type: string
+            enum:
+            - WEB
+            - NATIVE
+            - BROWSER
+            - SERVICE
+            - RESOURCE_SERVER
+            - AGENT
       responses:
         "200":
           description: List registered applications for a security domain
