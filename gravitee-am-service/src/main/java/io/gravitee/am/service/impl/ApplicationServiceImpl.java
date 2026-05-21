@@ -503,9 +503,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal) {
         LOGGER.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
         return cimdMetadataFetcher.fetchAndValidate(domain, newApplication.getCimdUrl())
-                .flatMap(preview -> resolveCimdTemplateScopeSettings(domain)
-                        .map(templateScopes -> buildCimdApplication(domain, newApplication, preview, templateScopes))
-                        .flatMap(application -> create0(domain, application, principal))
+                .flatMap(preview -> create0(domain, buildCimdApplication(domain, newApplication, preview), principal)
                         .flatMap(created -> cimdMetadataDocumentService
                                 .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
                                 .map(doc -> created)
@@ -523,30 +521,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private Single<List<ApplicationScopeSettings>> resolveCimdTemplateScopeSettings(Domain domain) {
-        final String templateId = retrieveCIMDTemplateId(domain);
-        if (templateId == null) {
-            return Single.just(List.of());
-        }
-        return applicationRepository.findById(templateId)
-                .map(template -> {
-                    List<ApplicationScopeSettings> scopes = Optional.ofNullable(template.getSettings())
-                            .map(ApplicationSettings::getOauth)
-                            .map(ApplicationOAuthSettings::getScopeSettings)
-                            .orElse(null);
-                    if (scopes == null) {
-                        return List.<ApplicationScopeSettings>of();
-                    }
-                    return scopes.stream()
-                            .map(ApplicationScopeSettings::new)
-                            .toList();
-                })
-                .defaultIfEmpty(List.<ApplicationScopeSettings>of())
-                .onErrorReturnItem(List.of());
-    }
-
-    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview,
-                                             List<ApplicationScopeSettings> templateScopeSettings) {
+    private Application buildCimdApplication(Domain domain, NewCimdApplication newApplication, CimdClientMetadata preview) {
         final String resolvedClientName = preview.clientName() != null && !preview.clientName().isBlank()
                 ? preview.clientName()
                 : newApplication.getClientName();
@@ -593,10 +568,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return s;
                     })
                     .collect(Collectors.toCollection(ArrayList::new)));
-        } else if (templateScopeSettings != null && !templateScopeSettings.isEmpty()) {
-            // CIMD doc omitted `scope` — inherit from the CIMD template so callers can request the
-            // domain's standard scopes (e.g. `openid`) without a follow-up PATCH.
-            oAuthSettings.setScopeSettings(new ArrayList<>(templateScopeSettings));
         }
 
         applyExtendedMetadata(preview, oAuthSettings);
