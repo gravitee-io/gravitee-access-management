@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Raw filter parameters for application list/search endpoints.
@@ -29,7 +30,7 @@ import java.util.List;
  *
  * @author GraviteeSource Team
  */
-public record ApplicationFilter(String status, String ownerEmail, ApplicationType type, List<String> permissionScopedIds) {
+public record ApplicationFilter(String status, String ownerEmail, Set<ApplicationType> types, List<String> permissionScopedIds) {
 
     public static final String STATUS_ENABLED = "enabled";
     public static final String STATUS_DISABLED = "disabled";
@@ -38,8 +39,8 @@ public record ApplicationFilter(String status, String ownerEmail, ApplicationTyp
         this(status, ownerEmail, null, null);
     }
 
-    public ApplicationFilter(String status, String ownerEmail, ApplicationType type) {
-        this(status, ownerEmail, type, null);
+    public ApplicationFilter(String status, String ownerEmail, Set<ApplicationType> types) {
+        this(status, ownerEmail, types, null);
     }
 
     public ApplicationFilter(String status, String ownerEmail, List<String> permissionScopedIds) {
@@ -55,7 +56,7 @@ public record ApplicationFilter(String status, String ownerEmail, ApplicationTyp
     }
 
     public boolean hasTypeFilter() {
-        return type != null;
+        return types != null && !types.isEmpty();
     }
 
     public boolean hasPermissionScopedIds() {

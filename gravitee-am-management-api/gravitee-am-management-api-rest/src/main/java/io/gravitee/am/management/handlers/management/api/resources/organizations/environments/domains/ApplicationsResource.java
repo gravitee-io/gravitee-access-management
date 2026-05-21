@@ -55,6 +55,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -102,10 +103,11 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("expand") List<String> expandsParam,
             @QueryParam("status") String status,
             @QueryParam("owner.email") String ownerEmail,
-            @QueryParam("type") ApplicationType type,
+            @QueryParam("type") List<ApplicationType> typeParams,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
-        ApplicationFilter filter = new ApplicationFilter(status, ownerEmail, type);
+        Set<ApplicationType> types = (typeParams == null || typeParams.isEmpty()) ? null : new HashSet<>(typeParams);
+        ApplicationFilter filter = new ApplicationFilter(status, ownerEmail, types);
 
         // owner.email filter requires ORGANIZATION_USER[READ] — checked here, resolved in service
         io.reactivex.rxjava3.core.Completable ownerPermissionCheck = filter.hasOwnerEmailFilter()
@@ -118,11 +120,11 @@ public class ApplicationsResource extends AbstractDomainResource {
                 .andThen(checkDomainExists(domain).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ -> listApplications(domain, organizationId, filter, page, size, query, type))
+                        .flatMapSingle(__ -> listApplications(domain, organizationId, filter, page, size, query))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> listApplicationsByIds(domain, organizationId, ids, filter, page, size, query, type))))
+                                        .flatMap(ids -> listApplicationsByIds(domain, organizationId, ids, filter, page, size, query))))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(app -> FilteredApplication.of(app, expands)).toList(),
@@ -140,29 +142,29 @@ public class ApplicationsResource extends AbstractDomainResource {
                         .collect(Collectors.toSet());
     }
 
-    private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query, ApplicationType type) {
+    private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query) {
         if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter() || filter.hasTypeFilter()) {
             return query != null
                     ? applicationService.search(domain, organizationId, filter, query, page, size)
                     : applicationService.findByDomain(domain, organizationId, filter, page, size);
         }
         if (query != null) {
-            return applicationService.search(domain, query, type, page, size);
+            return applicationService.search(domain, query, null, page, size);
         }
-        return applicationService.findByDomain(domain, type, page, size);
+        return applicationService.findByDomain(domain, (ApplicationType) null, page, size);
     }
 
-    private Single<Page<Application>> listApplicationsByIds(String domain, String organizationId, List<String> applicationIds, ApplicationFilter filter, int page, int size, String query, ApplicationType type) {
+    private Single<Page<Application>> listApplicationsByIds(String domain, String organizationId, List<String> applicationIds, ApplicationFilter filter, int page, int size, String query) {
         if (filter.hasStatusFilter() || filter.hasOwnerEmailFilter() || filter.hasTypeFilter()) {
-            ApplicationFilter filterWithScope = new ApplicationFilter(filter.status(), filter.ownerEmail(), filter.type(), applicationIds);
+            ApplicationFilter filterWithScope = new ApplicationFilter(filter.status(), filter.ownerEmail(), filter.types(), applicationIds);
             return query != null
                     ? applicationService.search(domain, organizationId, filterWithScope, query, page, size)
                     : applicationService.findByDomain(domain, organizationId, filterWithScope, page, size);
         }
         if (query != null) {
-            return applicationService.search(domain, applicationIds, query, type, page, size);
+            return applicationService.search(domain, applicationIds, query, null, page, size);
         }
-        return applicationService.findByDomain(domain, applicationIds, type, page, size);
+        return applicationService.findByDomain(domain, applicationIds, null, page, size);
     }
 
     @POST
