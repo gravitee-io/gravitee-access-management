@@ -94,8 +94,9 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public TokenExchangeService tokenExchangeService(List<TokenValidator> validators,
                                                      ProtectedResourceManager protectedResourceManager,
-                                                     TokenExchangeUserResolver tokenExchangeUserResolver) {
-        return new TokenExchangeServiceImpl(validators, protectedResourceManager, tokenExchangeUserResolver);
+                                                     TokenExchangeUserResolver tokenExchangeUserResolver,
+                                                     ScopeManager scopeManager) {
+        return new TokenExchangeServiceImpl(validators, protectedResourceManager, tokenExchangeUserResolver, scopeManager);
     }
 
     @Bean
