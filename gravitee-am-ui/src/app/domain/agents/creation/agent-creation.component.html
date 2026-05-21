@@ -16,8 +16,8 @@
 
 -->
 <div class="gv-page-container" fxLayout="column">
-  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to applications</small></a>
-  <h1>New application</h1>
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to agents</small></a>
+  <h1>New agent</h1>
   <div class="gv-page-content" fxLayout="row">
     <mat-horizontal-stepper linear labelPosition="bottom" fxFlex="70" #stepper="matHorizontalStepper">
       <ng-template matStepperIcon="edit">
@@ -25,18 +25,18 @@
       </ng-template>
       <mat-step>
         <ng-template matStepLabel>
-          <h5>Platform</h5>
-          <small>Application type</small>
+          <h5>Type</h5>
+          <small>Agent persona</small>
         </ng-template>
-        <application-creation-step1 [application]="application"></application-creation-step1>
+        <agent-creation-step1 [application]="application"></agent-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!application.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!application.agentType">Next</button>
         </div>
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>
           <h5>Settings</h5>
-          <small>Application configuration</small>
+          <small>Agent configuration</small>
         </ng-template>
         <application-creation-step2 *ngIf="stepper.selectedIndex === 1" [application]="application"></application-creation-step2>
         <div class="stepper-button-zone">
@@ -65,10 +65,13 @@
       </mat-step>
     </mat-horizontal-stepper>
     <div class="gv-page-description" fxFlex>
-      <h3>Application ?</h3>
+      <h3>Agent ?</h3>
       <div class="gv-page-description-content">
-        <p>Applications are used by users to log in and access protected resources.</p>
-        <p>Applications can be mobile native applications, frontend applications, web applications or backend applications.</p>
+        <p>Agents are managed identities for AI assistants, autonomous services, and on-behalf-of workloads.</p>
+        <p>
+          Pick a persona that matches how the agent authenticates: in a user session, on a server with delegated authority, or as a fully
+          autonomous machine client.
+        </p>
       </div>
     </div>
   </div>

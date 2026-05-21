@@ -276,6 +276,10 @@ import { ApplicationCreationStep1Component } from './domain/applications/creatio
 import { ApplicationCreationStep2Component } from './domain/applications/creation/steps/step2/step2.component';
 import { ApplicationCreationStep3CimdConfirmComponent } from './domain/applications/creation/steps/step3-cimd-confirm/step3-cimd-confirm.component';
 import { CimdMetadataDialogComponent } from './domain/applications/creation/steps/step3-cimd-confirm/cimd-metadata-dialog.component';
+import { AgentsComponent } from './domain/agents/agents.component';
+import { AgentsResolver } from './resolvers/agents.resolver';
+import { AgentCreationComponent } from './domain/agents/creation/agent-creation.component';
+import { AgentCreationStep1Component } from './domain/agents/creation/steps/step1/step1.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
 import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
@@ -679,6 +683,9 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationCreationStep2Component,
     ApplicationCreationStep3CimdConfirmComponent,
     CimdMetadataDialogComponent,
+    AgentsComponent,
+    AgentCreationComponent,
+    AgentCreationStep1Component,
     ApplicationComponent,
     ApplicationOverviewComponent,
     ApplicationEndpointsComponent,
@@ -945,6 +952,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ProtectedResourceService,
     McpServersService,
     ApplicationsResolver,
+    AgentsResolver,
     ApplicationResolver,
     MembershipsResolver,
     McpServerMembershipsResolver,

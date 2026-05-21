@@ -16,25 +16,21 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { DialogService } from '../../services/dialog.service';
-import { SnackbarService } from '../../services/snackbar.service';
-import { ApplicationService, NON_AGENT_APPLICATION_TYPES } from '../../services/application.service';
+import { ApplicationService } from '../../services/application.service';
 
 @Component({
-  selector: 'app-applications',
-  templateUrl: './applications.component.html',
-  styleUrls: ['./applications.component.scss'],
+  selector: 'app-agents',
+  templateUrl: './agents.component.html',
+  styleUrls: ['./agents.component.scss'],
   standalone: false,
 })
-export class ApplicationsComponent implements OnInit {
-  applications: any[];
+export class AgentsComponent implements OnInit {
+  agents: any[];
   private searchValue: string;
   domainId: string;
   page: any = {};
 
   constructor(
-    private dialogService: DialogService,
-    private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private route: ActivatedRoute,
   ) {
@@ -44,34 +40,34 @@ export class ApplicationsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    const pagedApps = this.route.snapshot.data['applications'];
-    this.applications = pagedApps.data;
-    this.page.totalElements = pagedApps.totalCount;
+    const pagedAgents = this.route.snapshot.data['applications'];
+    this.agents = pagedAgents.data;
+    this.page.totalElements = pagedAgents.totalCount;
   }
 
   onSearch(event) {
     this.page.pageNumber = 0;
     this.searchValue = event.target.value;
-    this.loadApps();
+    this.loadAgents();
   }
 
-  loadApps() {
-    const findApps = this.searchValue
-      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*', NON_AGENT_APPLICATION_TYPES)
-      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size, NON_AGENT_APPLICATION_TYPES);
+  loadAgents() {
+    const find = this.searchValue
+      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*', 'AGENT')
+      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size, 'AGENT');
 
-    findApps.subscribe((pagedApps) => {
-      this.page.totalElements = pagedApps.totalCount;
-      this.applications = pagedApps.data;
+    find.subscribe((pagedAgents) => {
+      this.page.totalElements = pagedAgents.totalCount;
+      this.agents = pagedAgents.data;
     });
   }
 
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
-    this.loadApps();
+    this.loadAgents();
   }
 
   get isEmpty() {
-    return !this.applications || (this.applications.length === 0 && !this.searchValue);
+    return !this.agents || (this.agents.length === 0 && !this.searchValue);
   }
 }
