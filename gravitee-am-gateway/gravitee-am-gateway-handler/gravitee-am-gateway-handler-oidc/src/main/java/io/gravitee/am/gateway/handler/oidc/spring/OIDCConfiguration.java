@@ -46,6 +46,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.impl.TrustBundleServiceImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
+import org.springframework.beans.factory.annotation.Qualifier;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.impl.JWSServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
@@ -104,8 +106,8 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TrustBundleService trustBundleService(JWKService jwkService, Domain domain) {
-        return new TrustBundleServiceImpl(jwkService, domain);
+    public TrustBundleService trustBundleService(@Qualifier("uncachedJwkSetFetcher") JWKSetFetcher jwkSetFetcher, Domain domain) {
+        return new TrustBundleServiceImpl(jwkSetFetcher, domain);
     }
 
     @Bean

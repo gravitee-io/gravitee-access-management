@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.spiffe.impl;
 
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
+import io.gravitee.am.service.jwk.JWKSetFetcher.JWKSetFetchResponse;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -46,7 +47,7 @@ class TrustBundleServiceImplTest {
     private static final String JWKS_URL = "https://example.com/keys";
 
     @Mock
-    private JWKService jwkService;
+    private JWKSetFetcher jwkSetFetcher;
     @Mock
     private Domain domain;
 
@@ -63,15 +64,15 @@ class TrustBundleServiceImplTest {
 
     @Test
     void getKeys_returnsEmpty_whenTrustDomainNull() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
 
         service.getKeys(null).test().assertNoErrors().assertComplete().assertNoValues();
-        verify(jwkService, never()).getKeys(anyString());
+        verify(jwkSetFetcher, never()).getKeys(anyString());
     }
 
     @Test
     void getKeys_errorsForUnsupportedBundleSource() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         td.setBundleSource(SpiffeBundleSource.STATIC_JWKS);
 
@@ -81,41 +82,41 @@ class TrustBundleServiceImplTest {
 
     @Test
     void getKeys_returnsEmpty_whenJwksUrlBlank() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         td.setJwksUrl("");
 
         service.getKeys(td).test().assertNoErrors().assertComplete().assertNoValues();
-        verify(jwkService, never()).getKeys(anyString());
+        verify(jwkSetFetcher, never()).getKeys(anyString());
     }
 
     @Test
     void getKeys_rejectsFetch_whenUrlResolvesToPrivateAddress() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         td.setJwksUrl("https://10.0.0.5/keys");
 
         service.getKeys(td).test()
                 .assertError(SecurityException.class)
                 .assertError(err -> err.getMessage().contains("Refused to fetch JWKS"));
-        verify(jwkService, never()).getKeys(anyString());
+        verify(jwkSetFetcher, never()).getKeys(anyString());
     }
 
     @Test
     void getKeys_allowsPrivateAddress_whenDomainPolicyPermits() {
         settings.setAllowPrivateIpAddress(true);
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         td.setJwksUrl("https://10.0.0.5/keys");
         JWKSet bundle = jwks("kid-1");
-        when(jwkService.getKeys("https://10.0.0.5/keys")).thenReturn(Maybe.just(bundle));
+        when(jwkSetFetcher.getKeys("https://10.0.0.5/keys")).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
         service.getKeys(td).test().assertNoErrors().assertValue(bundle);
     }
 
     @Test
     void getKeys_rejectsHttp_unlessAllowedByPolicy() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         td.setJwksUrl("http://bundle.example.org/keys");
 
@@ -125,27 +126,27 @@ class TrustBundleServiceImplTest {
 
     @Test
     void getKeys_cachesBundle_betweenCalls() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
-        when(jwkService.getKeys(JWKS_URL)).thenReturn(Maybe.just(bundle));
+        when(jwkSetFetcher.getKeys(JWKS_URL)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
         service.getKeys(td).test().assertValue(bundle);
         service.getKeys(td).test().assertValue(bundle);
 
-        verify(jwkService, times(1)).getKeys(JWKS_URL);
+        verify(jwkSetFetcher, times(1)).getKeys(JWKS_URL);
     }
 
     @Test
     void getKeys_servesStaleBundle_whenRefreshFails() throws InterruptedException {
         // Force soft-TTL = 0 so the second call always refreshes.
         settings.setCacheTtlSeconds(0);
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
 
-        when(jwkService.getKeys(JWKS_URL))
-                .thenReturn(Maybe.just(bundle))
+        when(jwkSetFetcher.getKeys(JWKS_URL))
+                .thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)))
                 .thenReturn(Maybe.error(new RuntimeException("upstream down")));
 
         // First call primes the cache.
@@ -154,34 +155,34 @@ class TrustBundleServiceImplTest {
 
         // Second call: refresh fails → stale bundle is returned.
         service.getKeys(td).test().assertNoErrors().assertValue(bundle);
-        verify(jwkService, times(2)).getKeys(JWKS_URL);
+        verify(jwkSetFetcher, times(2)).getKeys(JWKS_URL);
     }
 
     @Test
     void getKeys_propagatesError_whenNoStaleAvailable() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
-        when(jwkService.getKeys(JWKS_URL)).thenReturn(Maybe.error(new RuntimeException("upstream down")));
+        when(jwkSetFetcher.getKeys(JWKS_URL)).thenReturn(Maybe.error(new RuntimeException("upstream down")));
 
         service.getKeys(td).test().assertError(RuntimeException.class);
     }
 
     @Test
     void getKey_returnsEmpty_forNullOrBlankKid() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
 
         service.getKey(td, null).test().assertNoErrors().assertComplete().assertNoValues();
         service.getKey(td, "  ").test().assertNoErrors().assertComplete().assertNoValues();
-        verify(jwkService, never()).getKeys(anyString());
+        verify(jwkSetFetcher, never()).getKeys(anyString());
     }
 
     @Test
     void getKey_returnsMatchingKey() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1", "kid-2");
-        when(jwkService.getKeys(JWKS_URL)).thenReturn(Maybe.just(bundle));
+        when(jwkSetFetcher.getKeys(JWKS_URL)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
         service.getKey(td, "kid-2").test()
                 .assertNoErrors()
@@ -190,14 +191,14 @@ class TrustBundleServiceImplTest {
 
     @Test
     void getKey_refreshesOnMiss_andReturnsNewKid() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         JWKSet first = jwks("kid-1");
         JWKSet second = jwks("kid-1", "kid-2");
 
-        when(jwkService.getKeys(JWKS_URL))
-                .thenReturn(Maybe.just(first))
-                .thenReturn(Maybe.just(second));
+        when(jwkSetFetcher.getKeys(JWKS_URL))
+                .thenReturn(Maybe.just(new JWKSetFetchResponse(first, null)))
+                .thenReturn(Maybe.just(new JWKSetFetchResponse(second, null)));
 
         // Prime cache with first bundle.
         service.getKeys(td).test().assertValue(first);
@@ -207,26 +208,26 @@ class TrustBundleServiceImplTest {
                 .assertNoErrors()
                 .assertValue(k -> "kid-2".equals(k.getKid()));
 
-        verify(jwkService, times(2)).getKeys(JWKS_URL);
+        verify(jwkSetFetcher, times(2)).getKeys(JWKS_URL);
     }
 
     @Test
     void evict_clearsCachedBundle() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         TrustDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
-        when(jwkService.getKeys(JWKS_URL)).thenReturn(Maybe.just(bundle));
+        when(jwkSetFetcher.getKeys(JWKS_URL)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
         service.getKeys(td).test().assertValue(bundle);
         service.evict(td.getId());
         service.getKeys(td).test().assertValue(bundle);
 
-        verify(jwkService, times(2)).getKeys(JWKS_URL);
+        verify(jwkSetFetcher, times(2)).getKeys(JWKS_URL);
     }
 
     @Test
     void evict_ignoresNullId() {
-        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkService, domain);
+        TrustBundleServiceImpl service = new TrustBundleServiceImpl(jwkSetFetcher, domain);
         // No throw is success here.
         service.evict(null);
     }

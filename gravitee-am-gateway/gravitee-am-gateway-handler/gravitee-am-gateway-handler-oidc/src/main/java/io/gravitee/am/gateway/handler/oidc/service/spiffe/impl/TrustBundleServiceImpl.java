@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oidc.service.spiffe.impl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
@@ -25,11 +24,11 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.gravitee.am.service.utils.PrivateAddressGuard;
 import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -56,13 +55,12 @@ public class TrustBundleServiceImpl implements TrustBundleService {
 
     private static final long HARD_TTL_FLOOR_SECONDS = Duration.ofHours(1).toSeconds();
 
-    private final JWKService jwkService;
+    private final JWKSetFetcher jwkSetFetcher;
     private final SpiffeDomainSettings settings;
     private final Cache<String, CachedBundle> cache;
 
-    @Autowired
-    public TrustBundleServiceImpl(JWKService jwkService, Domain domain) {
-        this.jwkService = jwkService;
+    public TrustBundleServiceImpl(JWKSetFetcher jwkSetFetcher, Domain domain) {
+        this.jwkSetFetcher = jwkSetFetcher;
         this.settings = Optional.ofNullable(domain.getOidc())
                 .map(o -> o.getWorkloadIdentitySettings())
                 .orElseGet(SpiffeDomainSettings::defaultSettings);
@@ -137,7 +135,8 @@ public class TrustBundleServiceImpl implements TrustBundleService {
             return Maybe.error(new SecurityException(
                     "Refused to fetch JWKS for trust domain " + trustDomain.getName() + ": " + urlSafetyError));
         }
-        Maybe<JWKSet> upstream = jwkService.getKeys(trustDomain.getJwksUrl());
+        Maybe<JWKSet> upstream = jwkSetFetcher.getKeys(trustDomain.getJwksUrl())
+                .map(JWKSetFetcher.JWKSetFetchResponse::jwkSet);
         if (settings.getFetchTimeoutMs() > 0) {
             upstream = upstream.timeout(settings.getFetchTimeoutMs(), TimeUnit.MILLISECONDS);
         }
