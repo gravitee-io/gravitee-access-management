@@ -12774,7 +12774,7 @@ components:
           $ref: "#/components/schemas/ApplicationSAMLSettings"
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        spiffe:
+        workloadIdentitySettings:
           $ref: "#/components/schemas/SpiffeApplicationSettings"
     AssessmentSettings:
       type: object
@@ -15247,7 +15247,7 @@ components:
             type: string
         securityProfileSettings:
           $ref: "#/components/schemas/SecurityProfileSettings"
-        spiffeSettings:
+        workloadIdentitySettings:
           $ref: "#/components/schemas/SpiffeDomainSettings"
     OrganizationUserBulkRequest:
       required:
@@ -15856,7 +15856,7 @@ components:
           $ref: "#/components/schemas/PatchApplicationSAMLSettings"
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        spiffe:
+        workloadIdentitySettings:
           $ref: "#/components/schemas/SpiffeApplicationSettings"
     PatchApplicationType:
       required:
@@ -16253,7 +16253,7 @@ components:
             - INSTALLATION
         securityProfileSettings:
           $ref: "#/components/schemas/PatchSecurityProfileSettings"
-        spiffeSettings:
+        workloadIdentitySettings:
           $ref: "#/components/schemas/PatchSpiffeDomainSettings"
     PatchOrganization:
       type: object
