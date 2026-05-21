@@ -19,6 +19,7 @@ import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author GraviteeSource Team
@@ -36,8 +37,8 @@ public class ApplicationCriteria {
      */
     private List<String> applicationIds;
 
-    /** null means "no type filter". */
-    private ApplicationType type;
+    /** null or empty means "no type filter"; otherwise the result is restricted to applications whose type is in this set. */
+    private Set<ApplicationType> types;
 
     public Optional<Boolean> getEnabled() {
         return Optional.ofNullable(enabled);
@@ -47,8 +48,8 @@ public class ApplicationCriteria {
         return Optional.ofNullable(applicationIds);
     }
 
-    public Optional<ApplicationType> getType() {
-        return Optional.ofNullable(type);
+    public Optional<Set<ApplicationType>> getTypes() {
+        return (types == null || types.isEmpty()) ? Optional.empty() : Optional.of(types);
     }
 
     public ApplicationCriteria setEnabled(Boolean enabled) {
@@ -61,8 +62,8 @@ public class ApplicationCriteria {
         return this;
     }
 
-    public ApplicationCriteria setType(ApplicationType type) {
-        this.type = type;
+    public ApplicationCriteria setTypes(Set<ApplicationType> types) {
+        this.types = types;
         return this;
     }
 }

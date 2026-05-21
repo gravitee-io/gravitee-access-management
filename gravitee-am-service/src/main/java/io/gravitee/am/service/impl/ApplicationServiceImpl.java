@@ -305,7 +305,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         if (filter.hasTypeFilter()) {
-            criteria.setType(filter.type());
+            criteria.setTypes(filter.types());
         }
 
         if (!filter.hasOwnerEmailFilter()) {
