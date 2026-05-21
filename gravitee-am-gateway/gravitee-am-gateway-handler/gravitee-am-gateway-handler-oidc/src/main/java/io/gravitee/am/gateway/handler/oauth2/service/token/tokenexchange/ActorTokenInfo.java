@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
 import io.gravitee.am.common.jwt.Claims;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +72,7 @@ public record ActorTokenInfo(
      * Per RFC entity-profiles draft, only profiled actors propagate sub_profile in the act node.
      */
     public boolean hasSubProfile() {
-        return subProfile != null;
+        return StringUtils.hasLength(subProfile);
     }
 
     /**
