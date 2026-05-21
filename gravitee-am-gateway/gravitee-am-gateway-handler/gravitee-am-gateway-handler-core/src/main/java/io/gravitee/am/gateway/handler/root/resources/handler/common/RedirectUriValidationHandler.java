@@ -140,7 +140,7 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
     private @NonNull CheckMethod getCheckMethod(Client client, String requestedRedirectUri) {
         final boolean urlShaped = ClientIds.isUrlShaped(client.getClientId());
         final boolean loopback = isLoopbackUri(requestedRedirectUri);
-        final boolean localhostAllowed = isLocalhostRedirectAllowed();
+        final boolean localhostAllowed = domain.isRedirectUriLocalhostAllowed();
 
         // CIMD clients require exact URI matching, except for RFC 8252 §7.3
         // loopback callbacks when the domain allows localhost redirects — there
@@ -167,13 +167,6 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             LOGGER.debug("[redirect-uri-validation] uri={} parse error: {}", uri, e.getMessage());
             return false;
         }
-    }
-
-    private boolean isLocalhostRedirectAllowed() {
-        return Optional.ofNullable(domain.getOidc())
-                .map(oidc -> oidc.getClientRegistrationSettings())
-                .map(settings -> settings.isAllowLocalhostRedirectUri())
-                .orElse(false);
     }
 
     private void checkLoopbackRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
