@@ -22,6 +22,13 @@ package io.gravitee.am.model.oidc;
 public class CIBASettingNotifier {
     private String id;
 
+    public CIBASettingNotifier() {
+    }
+
+    public CIBASettingNotifier(CIBASettingNotifier other) {
+        this.id = other.id;
+    }
+
     public String getId() {
         return id;
     }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,6 +73,22 @@ public class ClientRegistrationSettings {
      * Enable client to be used as template for dynamic client registration
      */
     private boolean isClientTemplateEnabled;
+
+    public ClientRegistrationSettings() {
+    }
+
+    public ClientRegistrationSettings(ClientRegistrationSettings other) {
+        this.allowLocalhostRedirectUri = other.allowLocalhostRedirectUri;
+        this.allowHttpSchemeRedirectUri = other.allowHttpSchemeRedirectUri;
+        this.allowWildCardRedirectUri = other.allowWildCardRedirectUri;
+        this.isDynamicClientRegistrationEnabled = other.isDynamicClientRegistrationEnabled;
+        this.isOpenDynamicClientRegistrationEnabled = other.isOpenDynamicClientRegistrationEnabled;
+        this.allowRedirectUriParamsExpressionLanguage = other.allowRedirectUriParamsExpressionLanguage;
+        this.defaultScopes = other.defaultScopes != null ? new ArrayList<>(other.defaultScopes) : null;
+        this.isAllowedScopesEnabled = other.isAllowedScopesEnabled;
+        this.allowedScopes = other.allowedScopes != null ? new ArrayList<>(other.allowedScopes) : null;
+        this.isClientTemplateEnabled = other.isClientTemplateEnabled;
+    }
 
     public boolean isAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;

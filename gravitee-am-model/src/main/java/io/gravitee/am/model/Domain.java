@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -226,22 +227,22 @@ public class Domain implements Resource {
         this.identities = other.identities;
         this.master = other.master;
         this.vhostMode = other.vhostMode;
-        this.vhosts = other.vhosts;
+        this.vhosts = other.vhosts != null ? new ArrayList<>(other.vhosts) : null;
         this.tags = other.tags;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
-        this.oidc = other.oidc;
+        this.oidc = other.oidc != null ? new OIDCSettings(other.oidc) : null;
         this.uma = other.uma;
-        this.loginSettings = other.loginSettings;
+        this.loginSettings = other.loginSettings != null ? new LoginSettings(other.loginSettings) : null;
         this.webAuthnSettings = other.webAuthnSettings;
         this.scim = other.scim;
-        this.accountSettings = other.accountSettings;
-        this.passwordSettings = other.passwordSettings;
+        this.accountSettings = other.accountSettings != null ? new AccountSettings(other.accountSettings) : null;
+        this.passwordSettings = other.passwordSettings != null ? new PasswordSettings(other.passwordSettings) : null;
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
-        this.saml = other.saml;
+        this.saml = other.saml != null ? new SAMLSettings(other.saml) : null;
         this.corsSettings = other.corsSettings;
         this.dataPlaneId = other.dataPlaneId;
-        this.secretExpirationSettings = other.secretExpirationSettings;
+        this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
         this.tokenExchangeSettings = other.tokenExchangeSettings;
         this.certificateSettings = other.certificateSettings != null ? new CertificateSettings(other.certificateSettings) : null;
     }

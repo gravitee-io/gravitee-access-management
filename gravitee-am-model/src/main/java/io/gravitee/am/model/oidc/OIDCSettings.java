@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,6 +48,22 @@ public class OIDCSettings {
     private CIBASettings cibaSettings;
 
     private CIMDSettings cimdSettings;
+
+    public OIDCSettings() {
+    }
+
+    public OIDCSettings(OIDCSettings other) {
+        this.clientRegistrationSettings = other.clientRegistrationSettings != null
+                ? new ClientRegistrationSettings(other.clientRegistrationSettings) : null;
+        this.securityProfileSettings = other.securityProfileSettings != null
+                ? new SecurityProfileSettings(other.securityProfileSettings) : null;
+        this.redirectUriStrictMatching = other.redirectUriStrictMatching;
+        this.postLogoutRedirectUris = other.postLogoutRedirectUris != null
+                ? new ArrayList<>(other.postLogoutRedirectUris) : null;
+        this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
+        this.cibaSettings = other.cibaSettings != null ? new CIBASettings(other.cibaSettings) : null;
+        this.cimdSettings = other.cimdSettings != null ? new CIMDSettings(other.cimdSettings) : null;
+    }
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();

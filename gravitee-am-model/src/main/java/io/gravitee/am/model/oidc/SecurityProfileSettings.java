@@ -31,6 +31,14 @@ public class SecurityProfileSettings {
      */
     private boolean enableFapiBrazil;
 
+    public SecurityProfileSettings() {
+    }
+
+    public SecurityProfileSettings(SecurityProfileSettings other) {
+        this.enablePlainFapi = other.enablePlainFapi;
+        this.enableFapiBrazil = other.enableFapiBrazil;
+    }
+
     public boolean isEnablePlainFapi() {
         return enablePlainFapi;
     }

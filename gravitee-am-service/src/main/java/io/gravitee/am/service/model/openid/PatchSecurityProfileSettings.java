@@ -54,7 +54,7 @@ public class PatchSecurityProfileSettings {
     }
 
     public SecurityProfileSettings patch(SecurityProfileSettings toPatch) {
-        SecurityProfileSettings result=toPatch!=null? toPatch: SecurityProfileSettings.defaultSettings();
+        SecurityProfileSettings result = toPatch == null ? SecurityProfileSettings.defaultSettings() : new SecurityProfileSettings(toPatch);
 
         SetterUtils.safeSet(result::setEnablePlainFapi, this.getEnablePlainFapi(), boolean.class);
         SetterUtils.safeSet(result::setEnableFapiBrazil, this.getEnableFapiBrazil(), boolean.class);

@@ -904,6 +904,7 @@ public class DomainServiceImpl implements DomainService {
                 || isCimdRevokeOnDocumentChangeEnabled(domainAfterPatch)) {
             return Completable.complete();
         }
+        LOGGER.info("Cleaning up CIMD client state for domain {}", domainAfterPatch.getId());
         return cimdClientStateService.deleteByDomain(domainAfterPatch)
                 .doOnError(e -> LOGGER.warn("Failed to clean up CIMD client state for domain {}: {}", domainAfterPatch.getId(), e.getMessage()))
                 .onErrorComplete();
