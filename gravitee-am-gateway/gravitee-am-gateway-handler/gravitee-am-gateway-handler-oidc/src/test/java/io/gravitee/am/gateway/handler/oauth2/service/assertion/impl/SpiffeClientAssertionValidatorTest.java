@@ -354,8 +354,8 @@ class SpiffeClientAssertionValidatorTest {
         stubDomainOidc();
         stubDomainId();
 
-        String parent = "spiffe://example.org/hotel-agent";
-        String instanceSpiffeId = parent + "/instance-a";
+        String parent = "spiffe://example.org/hotel-agent/";
+        String instanceSpiffeId = parent + "instance-a";
         String blueprintClientId = "blueprint-1";
 
         Client blueprint = new Client();
@@ -392,8 +392,8 @@ class SpiffeClientAssertionValidatorTest {
         stubDomainOidc();
         stubDomainId();
 
-        String parent = "spiffe://example.org/hotel-agent";
-        String instanceSpiffeId = parent + "/instance-b";
+        String parent = "spiffe://example.org/hotel-agent/";
+        String instanceSpiffeId = parent + "instance-b";
         String blueprintClientId = "blueprint-2";
 
         Client blueprint = new Client();

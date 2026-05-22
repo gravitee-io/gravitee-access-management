@@ -109,7 +109,7 @@ public final class SpiffeJwtSvidValidator {
         }
         boolean match = switch (mode) {
             case EXACT -> expected.equals(sub);
-            case PREFIX -> sub.equals(expected) || sub.startsWith(expected + "/");
+            case PREFIX -> sub.startsWith(expected);
         };
         if (!match) {
             return "sub does not match client subject";

@@ -67,7 +67,7 @@ class ApplicationServiceImplSpiffeValidationTest {
     @Test
     void prefixMode_passes_forHostedDelegatedAgent() {
         Application app = agentApp(AgentType.HOSTED_DELEGATED,
-                spiffeSettings("spiffe://acme/hotel-agent",
+                spiffeSettings("spiffe://acme/hotel-agent/",
                         SpiffeApplicationSettings.SubjectMatchMode.PREFIX));
 
         service.validateSpiffeSettings(app).test().assertNoErrors().assertValue(app);
@@ -76,7 +76,7 @@ class ApplicationServiceImplSpiffeValidationTest {
     @Test
     void prefixMode_passes_forAutonomousAgent() {
         Application app = agentApp(AgentType.AUTONOMOUS,
-                spiffeSettings("spiffe://acme/hotel-agent",
+                spiffeSettings("spiffe://acme/hotel-agent/",
                         SpiffeApplicationSettings.SubjectMatchMode.PREFIX));
 
         service.validateSpiffeSettings(app).test().assertNoErrors().assertValue(app);
@@ -111,14 +111,14 @@ class ApplicationServiceImplSpiffeValidationTest {
     }
 
     @Test
-    void prefixMode_rejected_whenSubjectHasTrailingSlash() {
+    void prefixMode_rejected_whenSubjectMissingTrailingSlash() {
         Application app = agentApp(AgentType.HOSTED_DELEGATED,
-                spiffeSettings("spiffe://acme/hotel-agent/",
+                spiffeSettings("spiffe://acme/hotel-agent",
                         SpiffeApplicationSettings.SubjectMatchMode.PREFIX));
 
         service.validateSpiffeSettings(app).test()
                 .assertError(err -> err instanceof InvalidClientMetadataException
-                        && err.getMessage().contains("must not end with '/'"));
+                        && err.getMessage().contains("must end with '/'"));
     }
 
     @Test

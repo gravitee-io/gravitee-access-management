@@ -1499,9 +1499,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                 return Single.error(new InvalidClientMetadataException(
                         "spiffe.subjectMatchMode=PREFIX is only allowed for HOSTED_DELEGATED or AUTONOMOUS agent applications"));
             }
-            if (spiffe.getSubject().endsWith("/")) {
+            if (!spiffe.getSubject().endsWith("/")) {
                 return Single.error(new InvalidClientMetadataException(
-                        "spiffe.subject must not end with '/' when subjectMatchMode=PREFIX"));
+                        "spiffe.subject must end with '/' when subjectMatchMode=PREFIX"));
             }
         }
 
