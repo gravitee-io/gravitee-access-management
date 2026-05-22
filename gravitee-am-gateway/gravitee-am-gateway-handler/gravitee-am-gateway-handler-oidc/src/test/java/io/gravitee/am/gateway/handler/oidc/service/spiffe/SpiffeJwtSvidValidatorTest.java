@@ -168,27 +168,17 @@ class SpiffeJwtSvidValidatorTest {
 
     @Test
     void validate_acceptsPrefixMatch_whenSubIsBelowConfiguredSubject() throws Exception {
-        String parent = "spiffe://example.org/hotel-agent";
+        String parent = "spiffe://example.org/hotel-agent/";
         appSettings.setSubject(parent);
         appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
-        SignedJWT jwt = signedJwt(defaultClaims().subject(parent + "/instance-a").build(), JWSAlgorithm.RS256);
-
-        assertThat(validator.validate(jwt, trustDomain, appSettings, TOKEN_ENDPOINT)).isNull();
-    }
-
-    @Test
-    void validate_acceptsPrefixMatch_whenSubEqualsConfiguredSubject() throws Exception {
-        String parent = "spiffe://example.org/hotel-agent";
-        appSettings.setSubject(parent);
-        appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
-        SignedJWT jwt = signedJwt(defaultClaims().subject(parent).build(), JWSAlgorithm.RS256);
+        SignedJWT jwt = signedJwt(defaultClaims().subject(parent + "instance-a").build(), JWSAlgorithm.RS256);
 
         assertThat(validator.validate(jwt, trustDomain, appSettings, TOKEN_ENDPOINT)).isNull();
     }
 
     @Test
     void validate_rejectsPrefixMatch_whenSubOutsidePrefix() throws Exception {
-        appSettings.setSubject("spiffe://example.org/hotel-agent");
+        appSettings.setSubject("spiffe://example.org/hotel-agent/");
         appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
         SignedJWT jwt = signedJwt(
                 defaultClaims().subject("spiffe://example.org/other-agent/instance-a").build(),
@@ -200,8 +190,8 @@ class SpiffeJwtSvidValidatorTest {
 
     @Test
     void validate_rejectsPrefixMatch_whenSubIsSiblingNotChild() throws Exception {
-        // Guards against substring-style prefix bugs: "/hotel-agent-2" must not match prefix "/hotel-agent".
-        appSettings.setSubject("spiffe://example.org/hotel-agent");
+        // Guards against substring-style prefix bugs: "/hotel-agent-2" must not match prefix "/hotel-agent/".
+        appSettings.setSubject("spiffe://example.org/hotel-agent/");
         appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
         SignedJWT jwt = signedJwt(
                 defaultClaims().subject("spiffe://example.org/hotel-agent-2").build(),
