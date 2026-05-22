@@ -180,6 +180,9 @@ export class OAuth2SettingsComponent implements OnInit {
     }
 
     this.oauth2Service.update(this.domainId, this.resourceId, this.resource, oauthSettings, this.spiffeSettings).subscribe(() => {
+      if (oauthSettings.tokenEndpointAuthMethod !== 'spiffe_jwt') {
+        this.spiffeSettings = {};
+      }
       this.snackbarService.open('OAuth2 settings updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
