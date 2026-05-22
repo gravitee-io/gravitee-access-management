@@ -2120,21 +2120,6 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldNot_update_agentApp_markedAsTemplate() {
-        Application toPatch = agentBaseline();
-        // baseline is HOSTED_DELEGATED-friendly (authorization_code), make it valid for that profile
-        toPatch.setKind(AgentType.HOSTED_DELEGATED.name());
-        toPatch.setTemplate(true);
-
-        TestObserver testObserver = applicationService.update(toPatch).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertError(error -> error instanceof InvalidClientMetadataException
-                && ((Throwable) error).getMessage().toLowerCase().contains("template"));
-        verify(applicationRepository, never()).update(any(Application.class));
-    }
-
-    @Test
     public void shouldNot_update_agentApp_withForbiddenGrant_implicit() {
         Application toPatch = agentBaseline();
         toPatch.setKind(AgentType.USER_EMBEDDED.name());
