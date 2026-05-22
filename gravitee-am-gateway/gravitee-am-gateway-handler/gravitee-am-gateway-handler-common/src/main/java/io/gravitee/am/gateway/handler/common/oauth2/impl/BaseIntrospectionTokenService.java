@@ -82,7 +82,7 @@ abstract class BaseIntrospectionTokenService {
     protected Maybe<IntrospectionResult> introspectToken(String token, boolean offlineVerification, String callerClientId) {
         return jwtService.decode(token, tokenType)
                 .flatMap(jwt -> validateAudienceAndGetCertificateId(jwt, callerClientId)
-                        .flatMap(certificateId -> jwtService.decodeAndVerify(token, () -> certificateId, tokenType)))
+                        .flatMap(certificateId -> jwtService.decodeAndVerify(token, Maybe.just(certificateId), tokenType)))
                 .toMaybe()
                 .flatMap(jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled

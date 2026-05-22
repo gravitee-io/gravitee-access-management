@@ -76,10 +76,8 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
             KeyStore keystore = keyStore();
             keystore.load(is, getStorepass().toCharArray());
             // generate JWK set
-            // TODO : should be moved to the gravitee-am-jwt module
-            String keyId = certificateMetadata.getMetadata().get(CertificateMetadata.ID).toString();
-            this.certificateKeyId = keyId;
-            jwkSet = loadJwkSet(keystore, keyId);
+            this.certificateKeyId = certificateMetadata.getMetadata().get(CertificateMetadata.ID).toString();
+            jwkSet = loadJwkSet(keystore, getAlias());
             keys = getKeys();
             // generate Key pair
             java.security.Key key = keystore.getKey(getAlias(), getKeypass().toCharArray());
@@ -89,7 +87,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 // create key pair
                 KeyPair keyPair = new KeyPair(cert.getPublicKey(), (PrivateKey) key);
                 // create key
-                certificateKey = new DefaultKey(keyId, keyPair);
+                certificateKey = new DefaultKey(getAlias(), keyPair);
                 // update metadata
                 certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
                 // generate public certificate keys
@@ -141,7 +139,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
         // CertificateProvider only manage RSA key.
         com.nimbusds.jose.jwk.JWK nimbusJwk = new com.nimbusds.jose.jwk.RSAKey.Builder((RSAPublicKey) ((KeyPair) certificateKey.getValue()).getPublic())
                 .privateKey((RSAPrivateKey) ((KeyPair) certificateKey.getValue()).getPrivate())
-                .keyID(certificateKey.getKeyId())
+                .keyID(getAlias())
                 .build();
         List<JWK> jwks = converter(nimbusJwk, true, getUse(), signatureAlgorithm()).createJwk().toList();
         return Flowable.fromIterable(jwks);
@@ -188,25 +186,25 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     }
 
     private Set<JWK> getKeys() {
-        Set<JWK> keysWithCertId = jwkSet.toPublicJWKSet().getKeys().stream()
+        Set<JWK> keysWithAlias = jwkSet.toPublicJWKSet().getKeys().stream()
                 .map(nimbusJwk -> converter(nimbusJwk, false, getUse(), getAlgorithm()))
                 .flatMap(JwkNimbusConverter::createJwk)
                 .collect(Collectors.toSet());
 
         // TODO remove this backwards-compatibility after 2027-02-13
-        return addLegacyAliasKidEntries(keysWithCertId);
+        return addLegacyAliasKidEntries(keysWithAlias);
     }
 
-    private Set<JWK> addLegacyAliasKidEntries(Set<JWK> keysWithCertId) {
+    private Set<JWK> addLegacyAliasKidEntries(Set<JWK> keysWithAlias) {
         if (Objects.equals(certificateKeyId, getAlias())) {
-            return keysWithCertId;
+            return keysWithAlias;
         }
-        Set<JWK> result = new HashSet<>(keysWithCertId);
-        keysWithCertId.stream()
+        Set<JWK> result = new HashSet<>(keysWithAlias);
+        keysWithAlias.stream()
             .map(AbstractCertificateProvider::copyPublicJwk)
             .flatMap(Optional::stream)
             .forEach(copy -> {
-                copy.setKid(getAlias());
+                copy.setKid(certificateKeyId);
                 result.add(copy);
             });
         return result;

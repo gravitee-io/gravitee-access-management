@@ -25,6 +25,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.Client;
 import com.nimbusds.jose.JOSEException;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -34,6 +35,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -78,7 +80,7 @@ public class DefaultTokenValidatorTest {
     @Test
     public void testValidateSuccess() {
         JWT jwt = createValidJWT();
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -108,7 +110,7 @@ public class DefaultTokenValidatorTest {
         JWT jwt = createValidJWT();
         jwt.setExp((System.currentTimeMillis() / 1000) - 3600);
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -123,7 +125,7 @@ public class DefaultTokenValidatorTest {
         JWT jwt = createValidJWT();
         jwt.setNbf((System.currentTimeMillis() / 1000) + 3600);
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -135,7 +137,7 @@ public class DefaultTokenValidatorTest {
 
     @Test
     public void testSignatureFailure_throwsTokenVerificationException() {
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -150,7 +152,7 @@ public class DefaultTokenValidatorTest {
         JWT jwt = createValidJWT();
         jwt.setExp((System.currentTimeMillis() / 1000) - 3600);
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
