@@ -19,6 +19,7 @@ import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.function.Supplier;
@@ -98,7 +99,7 @@ public interface JWTService {
      * @param getDefaultCertificateId supplier of ID of certificate to use to decode the token if <code>kid</code> header parameter is not set
      * @return JWT object
      */
-    Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType);
+    Single<JWT> decodeAndVerify(String jwt, Maybe<String> getDefaultCertificateId, TokenType tokenType);
 
     /**
      * Decode JWT signed string representation to JWT
@@ -107,7 +108,7 @@ public interface JWTService {
      * @return JWT object
      */
     default Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
-        return decodeAndVerify(jwt, client::getCertificate, tokenType);
+        return decodeAndVerify(jwt, Maybe.just(client.getCertificate()), tokenType);
     }
 
     /**
