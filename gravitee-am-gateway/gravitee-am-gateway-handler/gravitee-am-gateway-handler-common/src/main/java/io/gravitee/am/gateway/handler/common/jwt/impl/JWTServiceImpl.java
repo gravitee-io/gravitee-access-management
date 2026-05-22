@@ -16,22 +16,21 @@
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEObject;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-
-import com.nimbusds.jose.util.Base64URL;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
+import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleEmitter;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -47,7 +46,9 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -149,18 +150,56 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType) {
-        if (getDefaultCertificateId == null) {
-            return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
+    public Single<JWT> decodeAndVerify(String jwt, Maybe<String> clientCertificateId, TokenType tokenType) {
+        if (clientCertificateId == null) {
+            return Single.error(new IllegalArgumentException("clientCertificateId is required"));
         }
-        String kid = extractKid(jwt).orElse(null);
-
-        return certificateManager.get(kid)
-                .switchIfEmpty(Single.defer(() -> {
-                    logger.warn("Falling back to default certificate provider for certificateId: {}", kid);
-                    return certificateManager.getClientCertificateProvider(getDefaultCertificateId.get(), fallbackToHmacSignature);
-                }))
+        return Maybe.fromOptional(parseSignedToken(jwt)
+                        .flatMap(this::findProviderByKid))
+                .switchIfEmpty(resolveClientCertificateProvider(clientCertificateId))
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
+    }
+
+    private static Optional<SignedJWT> parseSignedToken(String jwt) {
+        try {
+            return Optional.of(SignedJWT.parse(jwt));
+        } catch (ParseException e) {
+            logger.debug("Unable to parse JWT to verify it", e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<CertificateProvider> findProviderByKid(SignedJWT signedJWT) {
+        String kid = signedJWT.getHeader().getKeyID();
+        if (kid == null) {
+            return Optional.empty();
+        }
+
+        String issuerDomain = extractDomain(signedJWT);
+
+        return Stream.concat(certificateManager.providers().stream(), Stream.of(certificateManager.defaultCertificateProvider()))
+                .filter(Objects::nonNull)
+                .filter(provider -> kid.equals(provider.getKeyId()) || kid.equals(ofNullable(provider.getCertificateInfo()).map(CertificateInfo::certificateId).orElse(null)))
+                .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()))
+                .findFirst();
+    }
+
+    private static String extractDomain(SignedJWT jwt) {
+        try {
+            return jwt.getJWTClaimsSet().getStringClaim("domain");
+        } catch (ParseException e) {
+            logger.debug("Unable to parse JWT claims to extract domain", e);
+            return null;
+        }
+    }
+
+    private Single<CertificateProvider> resolveClientCertificateProvider(Maybe<String> clientCertificateId) {
+        return clientCertificateId
+                .flatMap(certificateId -> certificateManager.get(certificateId)
+                        .switchIfEmpty(fallbackToHmacSignature
+                                ? Maybe.just(certificateManager.defaultCertificateProvider())
+                                : Maybe.error(new TemporarilyUnavailableException("The certificate cannot be loaded"))))
+                .switchIfEmpty(Single.just(certificateManager.defaultCertificateProvider()));
     }
 
     @Override
@@ -251,21 +290,6 @@ public class JWTServiceImpl implements JWTService {
             return verifier.subscribeOn(Schedulers.from(executor.getExecutor())).observeOn(Schedulers.computation());
         } else {
             return verifier;
-        }
-    }
-
-    private Optional<String> extractKid(String jwt) {
-        final String parameterName = "kid";
-        try {
-            Base64URL[] parts = JOSEObject.split(jwt);
-            JWSHeader header = JWSHeader.parse(parts[0]);
-            Object value = header.toJSONObject().get(parameterName);
-            return value instanceof String stringValue && RandomString.isUuid(stringValue)
-                ? Optional.of(stringValue)
-                : Optional.empty();
-        } catch (IllegalArgumentException | ParseException e) {
-            logger.debug("Unable to parse JWT header to extract {}", parameterName, e);
-            return Optional.empty();
         }
     }
 
