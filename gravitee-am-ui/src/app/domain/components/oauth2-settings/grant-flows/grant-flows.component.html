@@ -291,8 +291,8 @@
               <mat-option value="PREFIX">Prefix — one Blueprint backs many instances under the configured subject</mat-option>
             </mat-select>
             <mat-hint>
-              <code>PREFIX</code> accepts SVIDs whose <code>sub</code> starts with <code>&lt;subject&gt;/…</code>; the full SPIFFE ID
-              becomes the per-instance <code>act.sub</code> in minted tokens. Do not include a trailing <code>/</code> in Subject when using
+              <code>PREFIX</code> accepts SVIDs whose <code>sub</code> starts with <code>&lt;subject&gt;</code>; the full SPIFFE ID
+              becomes the per-instance <code>act.sub</code> in minted tokens. Subject must end with a trailing <code>/</code> when using
               <code>PREFIX</code>.
             </mat-hint>
           </mat-form-field>
