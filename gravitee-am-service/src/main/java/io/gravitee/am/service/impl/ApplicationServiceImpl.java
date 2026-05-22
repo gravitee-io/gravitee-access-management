@@ -1517,10 +1517,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.error(new InvalidClientMetadataException(
                     "Unknown kind '" + kind + "' for AGENT application. Allowed values: [" + allowed + "]"));
         }
-        if (application.isTemplate()) {
-            return Single.error(new InvalidClientMetadataException("Agent applications cannot be marked as a template"));
-        }
-
         // USER_EMBEDDED and HOSTED_DELEGATED rely on authorization_code; redirect_uri is required.
         // AUTONOMOUS uses client_credentials only — no redirect needed.
         if (agentType != AgentType.AUTONOMOUS) {
