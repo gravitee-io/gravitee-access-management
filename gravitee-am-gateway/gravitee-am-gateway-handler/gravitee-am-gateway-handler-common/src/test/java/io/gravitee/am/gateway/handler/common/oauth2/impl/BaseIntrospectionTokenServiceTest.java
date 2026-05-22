@@ -76,7 +76,7 @@ public class BaseIntrospectionTokenServiceTest {
 
         mockDecode(jwt);
         when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
@@ -92,7 +92,7 @@ public class BaseIntrospectionTokenServiceTest {
 
         mockDecode(jwt);
         when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
@@ -109,7 +109,7 @@ public class BaseIntrospectionTokenServiceTest {
         mockDecode(jwt);
         when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
@@ -128,7 +128,7 @@ public class BaseIntrospectionTokenServiceTest {
         when(clientService.findByDomainAndClientId(DOMAIN, "resource-two")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-one")).thenReturn(Set.of(resourceOne));
         when(protectedResourceManager.getByIdentifier("resource-two")).thenReturn(Set.of(resourceTwo));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
@@ -148,7 +148,7 @@ public class BaseIntrospectionTokenServiceTest {
         mockDecode(jwt);
         when(clientService.findByDomainAndClientId(DOMAIN, "client-one")).thenReturn(Maybe.just(clientOne));
         when(clientService.findByDomainAndClientId(DOMAIN, "client-two")).thenReturn(Maybe.just(clientTwo));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
@@ -156,9 +156,9 @@ public class BaseIntrospectionTokenServiceTest {
         // Client lookup short-circuits the protected-resource manager once a client match is found.
         verify(protectedResourceManager, never()).getByIdentifier(anyString());
         // First matched client's certificate should be used.
-        ArgumentCaptor<Supplier<String>> captor = ArgumentCaptor.forClass(Supplier.class);
+        ArgumentCaptor<Maybe<String>> captor = ArgumentCaptor.forClass(Maybe.class);
         verify(jwtService).decodeAndVerify(eq(TOKEN), captor.capture(), eq(ACCESS_TOKEN));
-        org.junit.Assert.assertEquals("cert-one", captor.getValue().get());
+        org.junit.Assert.assertEquals("cert-one", captor.getValue().blockingGet());
     }
 
     @Test
@@ -173,14 +173,14 @@ public class BaseIntrospectionTokenServiceTest {
         when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
         when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
-        ArgumentCaptor<Supplier<String>> captor = ArgumentCaptor.forClass(Supplier.class);
+        ArgumentCaptor<Maybe<String>> captor = ArgumentCaptor.forClass(Maybe.class);
         verify(jwtService).decodeAndVerify(eq(TOKEN), captor.capture(), eq(ACCESS_TOKEN));
-        org.junit.Assert.assertEquals("cert-from-client", captor.getValue().get());
+        org.junit.Assert.assertEquals("cert-from-client", captor.getValue().blockingGet());
     }
 
     @Test
@@ -195,15 +195,15 @@ public class BaseIntrospectionTokenServiceTest {
         when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
         // Even when the client aud appears second, its certificate must still be picked up.
-        ArgumentCaptor<Supplier<String>> captor = ArgumentCaptor.forClass(Supplier.class);
+        ArgumentCaptor<Maybe<String>> captor = ArgumentCaptor.forClass(Maybe.class);
         verify(jwtService).decodeAndVerify(eq(TOKEN), captor.capture(), eq(ACCESS_TOKEN));
-        org.junit.Assert.assertEquals("cert-from-client", captor.getValue().get());
+        org.junit.Assert.assertEquals("cert-from-client", captor.getValue().blockingGet());
     }
 
     @Test
@@ -302,7 +302,7 @@ public class BaseIntrospectionTokenServiceTest {
         mockDecode(jwt);
         when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, "caller-client").test();
 
