@@ -45,9 +45,9 @@ import javax.crypto.KeyGenerator;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPairGenerator;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -266,12 +266,11 @@ public class JWTServiceTest {
         JWTParser mockParser = mock(JWTParser.class);
         when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
         io.gravitee.am.gateway.certificate.CertificateProvider kidCertProvider = mockCertProviderWithParser(mockParser);
-
-        // Mock CertificateManager to resolve the kid to the matching certificate provider
-        when(certificateManager.get(kid)).thenReturn(Maybe.just(kidCertProvider));
+        when(kidCertProvider.getKeyId()).thenReturn(kid);
+        when(certificateManager.providers()).thenReturn(List.of(kidCertProvider));
 
         // Mock default certificate ID supplier
-        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+        Maybe<String> defaultCertIdSupplier =Maybe.just("default-cert-id");
 
         // Test decodeAndVerify
         TestObserver<JWT> testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
@@ -280,7 +279,7 @@ public class JWTServiceTest {
         testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
 
         // Verify that the kid certificate provider was used, not the default
-        verify(certificateManager).get(kid);
+        verify(certificateManager).providers();
         verify(certificateManager, never()).get("default-cert-id");
         verify(mockParser).parse(jwtToken);
     }
@@ -305,7 +304,7 @@ public class JWTServiceTest {
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
 
         // Mock default certificate ID supplier
-        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+        Maybe<String> defaultCertIdSupplier =Maybe.just("default-cert-id");
 
         // Test decodeAndVerify - alias kid should be ignored and default certificate used
         var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
@@ -338,7 +337,7 @@ public class JWTServiceTest {
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
 
         // Mock default certificate ID supplier
-        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+        Maybe<String> defaultCertIdSupplier =Maybe.just("default-cert-id");
 
         // Test decodeAndVerify
         TestObserver<JWT> testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
@@ -366,7 +365,7 @@ public class JWTServiceTest {
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
 
         // Mock default certificate ID supplier
-        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+        Maybe<String> defaultCertIdSupplier =Maybe.just("default-cert-id");
 
         // Test decodeAndVerify - should fallback to default certificate
         var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
@@ -398,7 +397,7 @@ public class JWTServiceTest {
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
 
         // Mock default certificate ID supplier
-        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+        Maybe<String> defaultCertIdSupplier =Maybe.just("default-cert-id");
 
         // Test decodeAndVerify - should fallback to default certificate
         var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
@@ -429,7 +428,7 @@ public class JWTServiceTest {
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
 
         // Mock default certificate ID supplier
-        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+        Maybe<String> defaultCertIdSupplier =Maybe.just("default-cert-id");
 
         // Test decodeAndVerify - should fallback to default certificate
         var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();

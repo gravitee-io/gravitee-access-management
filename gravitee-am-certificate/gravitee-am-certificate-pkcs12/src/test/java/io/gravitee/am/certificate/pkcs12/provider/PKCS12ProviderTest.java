@@ -70,13 +70,13 @@ public class PKCS12ProviderTest {
     }
 
     @Test
-    public void should_have_certificate_key_id() throws Exception {
+    public void should_have_alias_instead_of_certificate_key_id() throws Exception {
         final var provider = loadProvider("/server-no-extension.p12", null);
-        Assertions.assertEquals(CERTIFICATE_ID, provider.key().blockingGet().getKeyId());
-        Assertions.assertEquals(CERTIFICATE_ID, provider.privateKey().blockingFirst().getKid());
+        Assertions.assertEquals(ALIAS, provider.key().blockingGet().getKeyId());
+        Assertions.assertEquals(ALIAS, provider.privateKey().blockingFirst().getKid());
 
         final List<JWK> keys = provider.keys().toList().blockingGet();
-        Assertions.assertTrue(keys.stream().anyMatch(jwk -> CERTIFICATE_ID.equals(jwk.getKid())),
+        Assertions.assertTrue(keys.stream().anyMatch(jwk -> ALIAS.equals(provider.key().blockingGet().getKeyId())),
                 "keys() should contain a JWK with kid = certificate ID");
         Assertions.assertTrue(keys.stream().anyMatch(jwk -> ALIAS.equals(jwk.getKid())),
                 "keys() should contain a JWK with kid = alias (backward compat)");

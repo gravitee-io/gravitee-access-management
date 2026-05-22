@@ -81,6 +81,7 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
         CertificateProvider certificateProvider = new CertificateProvider(provider);
         try {
             io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
+            certificateProvider.setKeyId(providerKey.getKeyId());
             Object keyValue = providerKey.getValue();
             if (keyValue instanceof KeyPair) {
                 PrivateKey privateKey = ((KeyPair) keyValue).getPrivate();

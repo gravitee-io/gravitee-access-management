@@ -30,6 +30,7 @@ import lombok.Setter;
 public class CertificateProvider {
     private io.gravitee.am.certificate.api.CertificateProvider provider;
     private String domain;
+    private String keyId;
     private JWTParser jwtParser;
     private JWTBuilder jwtBuilder;
     private CertificateInfo certificateInfo;
