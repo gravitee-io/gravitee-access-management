@@ -46,6 +46,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -477,11 +478,14 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, request.getActClaim());
         }
 
-        // Agent application - inject "act" claim (actor = agent or blueprint client_id) and
-        // tag the actor with sub_profile so downstream consumers can reason about the chain.
+        // Agent application - inject "act" claim (actor = agent instance or blueprint client_id)
+        // and tag the actor with sub_profile so downstream consumers can reason about the chain.
+        // For user-bound kinds (USER_EMBEDDED, HOSTED_DELEGATED) the agent's instance id is the
+        // truer actor identity than the blueprint client_id, matching the top-level sub idiom
+        // used for client-only flows in createJWT.
         if (client.isAgentApplication() && jwt.get(Claims.ACT) == null) {
             Map<String, Object> act = new HashMap<>();
-            act.put(Claims.SUB, client.getClientId());
+            act.put(Claims.SUB, resolveAgentActSubject(client));
             if (client.getAgentType() != null) {
                 act.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
             }
@@ -508,6 +512,18 @@ public class TokenServiceImpl implements TokenService {
         setResources(request, jwt);
 
         return jwt;
+    }
+
+    // For user-bound agent kinds the issued token's top-level sub is the end-user, so the agent
+    // instance id (when known) is the truer actor identity to expose in act.sub. AUTONOMOUS keeps
+    // the blueprint client_id since its top-level sub already exposes the instance id.
+    private static String resolveAgentActSubject(Client client) {
+        AgentType agentType = client.getAgentType();
+        boolean userBound = agentType == AgentType.USER_EMBEDDED || agentType == AgentType.HOSTED_DELEGATED;
+        if (userBound && client.getAgentInstanceId() != null) {
+            return client.getAgentInstanceId();
+        }
+        return client.getClientId();
     }
 
     private void setResources(OAuth2Request request, JWT jwt) {
