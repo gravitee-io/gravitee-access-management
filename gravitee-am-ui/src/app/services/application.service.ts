@@ -22,8 +22,7 @@ import { AppConfig } from '../../config/app.config';
 
 import { AuthService } from './auth.service';
 
-// Mirrors io.gravitee.am.model.application.ApplicationType (server-side enum).
-// Keep in sync — see TripwireSpec in gravitee-am-test for the enforcing test.
+// Mirrors io.gravitee.am.model.application.ApplicationType (server-side enum). Keep in sync.
 export const ALL_APPLICATION_TYPES = ['WEB', 'NATIVE', 'BROWSER', 'SERVICE', 'RESOURCE_SERVER', 'AGENT'] as const;
 export const AGENT_APPLICATION_TYPES: string[] = ['AGENT'];
 export const NON_AGENT_APPLICATION_TYPES: string[] = ALL_APPLICATION_TYPES.filter((t) => !AGENT_APPLICATION_TYPES.includes(t));
