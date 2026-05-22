@@ -107,7 +107,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
 
     const decoded = decodeJwt(response.body.access_token);
     expect(decoded.sub).toEqual(agentInstanceId);
-    expect((decoded.act as any)?.sub).toEqual(agent.settings.oauth.clientId);
+    expect((decoded.act as any)?.sub).toEqual(agentInstanceId);
   });
 
   it('should reject workload-jwt with invalid signature', async () => {
@@ -186,7 +186,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
 
       const decoded = decodeJwt(response.body.access_token);
       expect(decoded.sub).toEqual(instanceId);
-      expect((decoded.act as any)?.sub).toEqual(agent.settings.oauth.clientId);
+      expect((decoded.act as any)?.sub).toEqual(instanceId);
     }
   });
 
