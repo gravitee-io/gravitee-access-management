@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -47,6 +49,7 @@ public class JsonFileAuditReporterTest extends FileAuditReporterTest {
     @Override
     protected  void checkAuditLogs(List<Audit> reportables, int loop) throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
+        assertEquals("expected " + loop + " audit lines but got " + lines.size(), loop, lines.size());
         final ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
