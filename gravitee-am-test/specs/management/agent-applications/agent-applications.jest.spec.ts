@@ -16,6 +16,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { Application } from '@management-models/Application';
+import { patchApplication } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import { AgentApplicationsFixture, setupAgentApplicationsFixture } from './fixtures/agent-applications-fixture';
@@ -115,5 +116,25 @@ describe('GET /applications?type=AGENT', () => {
   it('rejects requests without a bearer token with 401', async () => {
     const response = await fixture.listAgentsRaw(fixture.domain.id!, '', { size: 1 });
     expect(response.status).toEqual(401);
+  });
+});
+
+describe('PATCH /applications/:id template flag', () => {
+  it('allows an agent application to be marked as a template', async () => {
+    const agent = await fixture.createAgentApp(
+      fixture.domain.id!,
+      uniqueName(`${RUN}-template-toggle`, true),
+      'AUTONOMOUS',
+    );
+    expect(agent.template).toBeFalsy();
+
+    const patched = await patchApplication(
+      fixture.domain.id!,
+      fixture.accessToken,
+      { template: true } as any,
+      agent.id!,
+    );
+
+    expect(patched.template).toEqual(true);
   });
 });
