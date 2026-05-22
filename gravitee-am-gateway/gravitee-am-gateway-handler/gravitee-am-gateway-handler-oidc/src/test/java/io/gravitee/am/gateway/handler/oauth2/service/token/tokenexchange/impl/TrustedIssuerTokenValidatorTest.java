@@ -29,6 +29,7 @@ import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -92,7 +93,7 @@ public class TrustedIssuerTokenValidatorTest {
     @Test
     public void testDelegateSuccess_noFallback() {
         JWT jwt = createValidJWT();
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -111,7 +112,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testDelegateExpired_propagatesWithoutFallback() {
         JWT jwt = createValidJWT();
         jwt.setExp((System.currentTimeMillis() / 1000) - 3600);
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -125,7 +126,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testNoTrustedIssuers_signatureFailurePropagates() {
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -145,7 +146,7 @@ public class TrustedIssuerTokenValidatorTest {
         // InvalidRequestException (not TokenVerificationException) propagates without checking trusted issuers
         JWT expiredJwt = createValidJWT();
         expiredJwt.setExp((System.currentTimeMillis() / 1000) - 3600);
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(expiredJwt));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
@@ -164,7 +165,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
         // Delegate fails with TokenVerificationException
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         // Decode extracts iss that doesn't match any trusted issuer
@@ -187,7 +188,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -211,7 +212,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -251,7 +252,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -277,7 +278,7 @@ public class TrustedIssuerTokenValidatorTest {
         ti.setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -313,7 +314,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -347,7 +348,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -398,7 +399,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();
@@ -429,7 +430,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
 
-        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
         JWT decodedJwt = new JWT();

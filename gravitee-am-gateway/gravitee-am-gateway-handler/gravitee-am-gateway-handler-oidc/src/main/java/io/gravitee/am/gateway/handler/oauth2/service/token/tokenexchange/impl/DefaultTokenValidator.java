@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class DefaultTokenValidator implements TokenValidator {
 
     @Override
     public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
-        return jwtService.decodeAndVerify(token, client::getCertificate, jwtTokenType)
+        return jwtService.decodeAndVerify(token, Maybe.fromSupplier(client::getCertificate), jwtTokenType)
                 .map(jwt -> {
                     TokenValidationUtils.validateTemporalClaims(jwt.getExp(), jwt.getNbf(), supportedTokenType);
 
