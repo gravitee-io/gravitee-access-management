@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.application;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -35,6 +36,15 @@ public class SpiffeApplicationSettings {
     private String subject;
 
     /** How {@link #subject} is matched against the SVID {@code sub}. Defaults to {@link SubjectMatchMode#EXACT}. */
+    @Schema(
+            defaultValue = "EXACT",
+            description = """
+                    How the configured `subject` is matched against the SVID `sub` claim.
+                    `EXACT` (default) requires equality.
+                    `PREFIX` is only allowed for HOSTED_DELEGATED or AUTONOMOUS agent applications;
+                    the configured `subject` must end with `/` and the SVID `sub` is accepted when
+                    it starts with that subject. The full SVID SPIFFE ID then becomes the
+                    per-instance `act.sub` in minted tokens.""")
     private SubjectMatchMode subjectMatchMode = SubjectMatchMode.EXACT;
 
     public SpiffeApplicationSettings(SpiffeApplicationSettings other) {
