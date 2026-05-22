@@ -114,7 +114,7 @@ export const setupSpiffePrefixFixture = async (): Promise<SpiffePrefixFixture> =
 
     // 4. Switch the app to spiffe_jwt with a PREFIX subject under the bootstrap SPIRE
     //    entry `spiffe://am.local/agent/test/sample`.
-    const prefixSubject = 'spiffe://am.local/agent/test';
+    const prefixSubject = 'spiffe://am.local/agent/test/';
     const patchAppResp = await fetch(managementUrl(`/domains/${domain.id}/applications/${blueprintApp.id}`), {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

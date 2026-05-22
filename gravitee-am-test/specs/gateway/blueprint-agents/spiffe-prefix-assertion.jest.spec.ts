@@ -83,7 +83,7 @@ describeIfSpire('Blueprint Agent — SPIFFE PREFIX subject matching', () => {
   });
 
   it('rejects SVIDs whose sub falls outside the configured subject prefix', async () => {
-    // Provisioned but unrelated to fixture.prefixSubject (spiffe://am.local/agent/test).
+    // Provisioned but unrelated to fixture.prefixSubject (spiffe://am.local/agent/test/).
     const outOfPrefix = 'spiffe://am.local/agent/billing';
     const svid = fixture.fetchSvid(outOfPrefix, fixture.oidc.token_endpoint);
 
