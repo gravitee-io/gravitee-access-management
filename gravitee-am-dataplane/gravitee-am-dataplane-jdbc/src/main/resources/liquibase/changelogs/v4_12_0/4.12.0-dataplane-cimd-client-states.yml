@@ -17,12 +17,26 @@ databaseChangeLog:
             columnNames: id
             tableName: cimd_client_states
 
-        - createIndex:
-            columns:
-              - column:
-                  name: domain_id
-              - column:
-                  name: client_id
-            indexName: idx_cimd_client_states_domain_client
-            tableName: cimd_client_states
-            unique: true
+        # PostgreSQL: use functional unique index (client_id is too long for a direct index)
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: "CREATE UNIQUE INDEX uq_cimd_client_states_domain_client ON cimd_client_states(domain_id, md5(client_id))"
+
+        # SQL Server: add persisted computed column using HASHBYTES('SHA2_256', client_id)
+        - sql:
+            dbms: mssql
+            splitStatements: false
+            sql: "ALTER TABLE cimd_client_states ADD client_id_hash AS LOWER(CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', client_id), 2)) PERSISTED"
+
+        # MySQL/MariaDB: add generated column using SHA2(client_id, 256)
+        - sql:
+            dbms: mysql, mariadb
+            splitStatements: false
+            sql: "ALTER TABLE cimd_client_states ADD COLUMN client_id_hash VARCHAR(64) GENERATED ALWAYS AS (SHA2(client_id, 256)) STORED"
+
+        # Unique constraint for MySQL/MariaDB/MSSQL (PostgreSQL uses functional index above)
+        - sql:
+            dbms: mysql, mariadb, mssql
+            splitStatements: false
+            sql: "ALTER TABLE cimd_client_states ADD CONSTRAINT uq_cimd_client_states_domain_client UNIQUE (domain_id, client_id_hash)"
