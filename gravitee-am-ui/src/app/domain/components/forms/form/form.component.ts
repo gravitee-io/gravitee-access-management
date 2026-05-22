@@ -51,6 +51,7 @@ export class FormComponent implements OnInit, AfterViewInit {
   @Input() createMode: boolean;
   @Input() editMode: boolean;
   @Input() deleteMode: boolean;
+  @Input() isCustom: boolean;
 
   constructor(
     private router: Router,
@@ -166,13 +167,17 @@ export class FormComponent implements OnInit, AfterViewInit {
         switchMap(() => this.formService.delete(this.domainId, this.appId, this.form.id, this.organizationContext)),
         tap(() => {
           this.snackbarService.open('Form deleted');
-          this.form = {};
-          this.form.template = this.route.snapshot.queryParams['template'];
-          this.formContent = (' ' + this.defaultFormContent).slice(1);
-          this.originalFormContent = (' ' + this.formContent).slice(1);
-          this.formFound = false;
-          this.formChanged = false;
-          this.enableCodeMirror();
+          if (this.isCustom) {
+            this.router.navigate(['..'], { relativeTo: this.route });
+          } else {
+            this.form = {};
+            this.form.template = this.route.snapshot.queryParams['template'];
+            this.formContent = (' ' + this.defaultFormContent).slice(1);
+            this.originalFormContent = (' ' + this.formContent).slice(1);
+            this.formFound = false;
+            this.formChanged = false;
+            this.enableCodeMirror();
+          }
         }),
       )
       .subscribe();

@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -69,6 +70,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpo
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.user.action.UserActionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
@@ -131,7 +133,6 @@ import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -196,6 +197,7 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
     private static final String PASSWORD_HISTORY = "/passwordHistory";
+    private static final String PATH_USER_ACTION = "/userAction";
 
     @Autowired
     private Vertx vertx;
@@ -308,9 +310,6 @@ public class RootProvider extends AbstractProtocolProvider {
     private UserActivityGatewayService userActivityService;
 
     @Autowired
-    private FactorService factorService;
-
-    @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
     @Autowired
@@ -340,6 +339,9 @@ public class RootProvider extends AbstractProtocolProvider {
 
     @Autowired
     private PasswordPolicyManager passwordPolicyManager;
+
+    @Autowired
+    private FlowManager flowManager;
 
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
@@ -729,6 +731,14 @@ public class RootProvider extends AbstractProtocolProvider {
                   .handler(clientRequestParseHandlerOptional)
                   .handler(new PasswordValidationHandler(passwordService, userService, passwordPolicyManager, identityProviderManager));
 
+        // Custom user action route
+        rootRouter.route(PATH_USER_ACTION)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(new UserActionEndpoint(thymeleafTemplateEngine, flowManager, executionContextFactory, jwtService, domain, environment))
+                .failureHandler(new ErrorHandler(PATH_USER_ACTION));
+
         // error route
         rootRouter.route(GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
@@ -833,6 +843,10 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_VERIFY_REGISTRATION)
                 .handler(sessionHandler);
 
+        // User action endpoint
+        router.route(PATH_USER_ACTION)
+                .handler(sessionHandler);
+
         // Error endpoint
         router.route(PATH_ERROR)
                 .handler(sessionHandler);
@@ -866,6 +880,9 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // Identifier First Login endpoint
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
+
+        // User action endpoint
+        router.route(PATH_USER_ACTION).handler(authenticationFlowContextHandler);
     }
 
     private void csrfHandler(Router router) {
@@ -885,6 +902,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(csrfHandler);
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(csrfHandler);
+        router.route(PATH_USER_ACTION).handler(csrfHandler);
     }
 
     private void cspHandler(Router router) {
@@ -911,6 +929,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(cspHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(cspHandler);
+        router.route(PATH_USER_ACTION).handler(cspHandler);
         router.route(PATH_ERROR).handler(cspHandler);
     }
 
@@ -935,6 +954,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_FORGOT_PASSWORD).handler(xframeHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xframeHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(xframeHandler);
+        router.route(PATH_USER_ACTION).handler(xframeHandler);
         router.route(PATH_ERROR).handler(xframeHandler);
     }
 
@@ -959,6 +979,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_FORGOT_PASSWORD).handler(xssHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xssHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(xssHandler);
+        router.route(PATH_USER_ACTION).handler(xssHandler);
         router.route(PATH_ERROR).handler(xssHandler);
     }
 
@@ -982,12 +1003,10 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
         router.route(PATH_VERIFY_REGISTRATION).failureHandler(errorHandler);
-
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).failureHandler(errorHandler);
         router.route(PATH_MFA_RECOVERY_CODE).failureHandler(errorHandler);
-
         router.route(PATH_CONFIRM_REGISTRATION).failureHandler(errorHandler);
-
         router.route(PATH_RESET_PASSWORD).failureHandler(errorHandler);
+        router.route(PATH_USER_ACTION).failureHandler(errorHandler);
     }
 }

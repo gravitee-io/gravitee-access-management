@@ -46,9 +46,16 @@
             matTooltip="Domain settings {{ appId ? 'or application type ' : '' }} does not allow '{{ row.name }}' template customisation"
             >block</mat-icon
           >
-          <a *ngIf="row.enabled && canView()" mat-button [routerLink]="['form']" [queryParams]="{ template: row.template }"
+          <a
+            *ngIf="row.enabled && canView()"
+            mat-button
+            [routerLink]="['form']"
+            [queryParams]="{ template: row.template, isCustom: isCustom }"
             ><mat-icon matTooltip="Edit template">edit</mat-icon></a
           >
+          <a *ngIf="canDelete" mat-button color="warn" (click)="delete(row.id, $event)">
+            <mat-icon matTooltip="Delete template">delete</mat-icon>
+          </a>
           <mat-icon *ngIf="row.enabled && !canView()" matTooltip="You don't have required permission">block</mat-icon>
         </div>
       </ng-template>

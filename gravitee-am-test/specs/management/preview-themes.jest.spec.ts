@@ -111,11 +111,12 @@ describe('Testing invalid preview form api...', () => {
     });
   });
 
-  describe('With unknown template', () => {
-    it('must return an error', async () => {
-      await expect(testRequestPreview('unknown', 'content')).rejects.toMatchObject({
-        response: { status: 400 },
-      });
+  describe('With custom template', () => {
+    it('must render the form with custom content', async () => {
+        let preview = await testRequestPreview('custom', 'customContent');
+        expect(preview).toBeDefined;
+        expect(preview['content']).toBeDefined;
+        expect(preview['content']).toContain('customContent');
     });
   });
 });

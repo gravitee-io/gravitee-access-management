@@ -34,6 +34,14 @@ export class FormService {
     return this.http.get<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms?template=' + formTemplate);
   }
 
+  findCustoms(domainId, appId): Observable<any> {
+    return this.http.get<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms/custom');
+  }
+
+  getById(domainId, appId, formId): Observable<any> {
+    return this.http.get<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms/' + formId);
+  }
+
   create(domainId, appId, form, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.createForm(form);

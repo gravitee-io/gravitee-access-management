@@ -84,6 +84,11 @@ public class PolicyImpl implements Policy {
                 policyMetadata.method(OnResponse.class) != null);
     }
 
+    @Override
+    public Object policyInst() {
+        return policyInst;
+    }
+
     public static Builder target(Object policyInstance) {
         return new Builder(policyInstance);
     }

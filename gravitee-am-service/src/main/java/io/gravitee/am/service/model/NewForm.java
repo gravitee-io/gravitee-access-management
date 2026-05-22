@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.Template;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -26,7 +25,7 @@ public class NewForm {
 
     private boolean enabled;
     @NotNull
-    private Template template;
+    private String template;
     @NotNull
     private String content;
     private String assets;
@@ -39,11 +38,11 @@ public class NewForm {
         this.enabled = enabled;
     }
 
-    public Template getTemplate() {
+    public String getTemplate() {
         return template;
     }
 
-    public void setTemplate(Template template) {
+    public void setTemplate(String template) {
         this.template = template;
     }
 

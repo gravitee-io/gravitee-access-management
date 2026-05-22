@@ -81,4 +81,21 @@ public enum Template {
 
         throw new IllegalArgumentException("No template is matching");
     }
+
+    public static boolean contains(String toParse) {
+        return Arrays.stream(values()).map(Template::template).map(String::toUpperCase).toList().contains(toParse.toUpperCase());
+    }
+
+    public static String parseTemplateValue(String toParse) {
+        if (toParse == null || toParse.trim().isEmpty()) {
+            throw new IllegalArgumentException("template must not be null");
+        }
+
+        try {
+            Template template1 = Template.valueOf(toParse);
+            return template1.template();
+        } catch (IllegalArgumentException e) {
+            return toParse;
+        }
+    }
 }

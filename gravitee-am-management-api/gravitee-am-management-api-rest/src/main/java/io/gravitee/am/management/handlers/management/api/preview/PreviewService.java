@@ -93,19 +93,13 @@ public class PreviewService implements InitializingBean {
     }
 
     public Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest, Locale locale, String assetBaseUrl) {
-        if (!isNullOrEmpty(previewRequest.getTemplate())) {
-            try {
-                Template.parse(previewRequest.getTemplate());
-            } catch (IllegalArgumentException e) {
-                return Maybe.error(new PreviewException("Invalid template ['" + previewRequest.getTemplate() +"']"));
-            }
-        }
-
         // evaluate the request content. If null, load the default template
         var contentLookUp = Maybe.just(Optional.ofNullable(previewRequest.getContent()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .switchIfEmpty(Maybe.defer(() -> formService.getDefaultByDomainAndTemplate(domainId, previewRequest.getTemplate()).map(Form::getContent).toMaybe()));
+                .switchIfEmpty(Maybe.defer(() -> (Template.contains(previewRequest.getTemplate())) ?
+                        formService.getDefaultByDomainAndTemplate(domainId, previewRequest.getTemplate()).toMaybe() :
+                        formService.findByTemplate(ReferenceType.DOMAIN, domainId, previewRequest.getTemplate())).map(Form::getContent));
 
         return this.themeService.validate(previewRequest.getTheme())
                 .andThen(domainService.findById(domainId)

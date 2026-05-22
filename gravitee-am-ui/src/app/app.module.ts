@@ -287,6 +287,7 @@ import { ApplicationIdPComponent, CreateIdpSelectionRuleComponent } from './doma
 import { ApplicationDesignComponent } from './domain/applications/application/design/design.component';
 import { ApplicationFormsComponent } from './domain/applications/application/design/forms/forms.component';
 import { ApplicationFormComponent } from './domain/applications/application/design/forms/form/form.component';
+import { CreateCustomFormDialogComponent } from './domain/components/forms/create-custom-form-dialog/create-custom-form-dialog.component';
 import { ApplicationEmailsComponent } from './domain/applications/application/design/emails/emails.component';
 import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
@@ -504,6 +505,8 @@ import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-ex
 import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
 import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
+import { ApplicationCustomFormsResolver } from './resolvers/application-custom-forms.resolver';
+import { DomainCustomFormsResolver } from './resolvers/domain-custom-forms.resolver';
 
 @NgModule({
   declarations: [
@@ -690,6 +693,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationDesignComponent,
     ApplicationFormsComponent,
     ApplicationFormComponent,
+    CreateCustomFormDialogComponent,
     ApplicationEmailsComponent,
     ApplicationEmailComponent,
     ApplicationAdvancedComponent,
@@ -1006,6 +1010,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     DomainNewMcpServerToolDialogFactory,
     McpServerResolver,
     McpServerPermissionsResolver,
+    ApplicationCustomFormsResolver,
+    DomainCustomFormsResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

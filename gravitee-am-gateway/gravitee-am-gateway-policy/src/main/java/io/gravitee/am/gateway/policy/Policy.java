@@ -38,4 +38,6 @@ public interface Policy {
     void activate() throws Exception;
 
     void deactivate() throws Exception;
+
+    Object policyInst();
 }

@@ -163,7 +163,7 @@ public class FormServiceImpl implements FormService {
                 .flatMapSingle(source -> {
                     NewForm form = new NewForm();
                     form.setEnabled(source.isEnabled());
-                    form.setTemplate(Template.parse(source.getTemplate()));
+                    form.setTemplate(source.getTemplate());
                     form.setContent(source.getContent());
                     form.setAssets(source.getAssets());
                     return this.create(domain, clientTarget, form);
@@ -237,7 +237,7 @@ public class FormServiceImpl implements FormService {
         String formId = RandomString.generate();
 
         // check if form is unique
-        return checkFormUniqueness(referenceType, referenceId, client, newForm.getTemplate().template())
+        return checkFormUniqueness(referenceType, referenceId, client, newForm.getTemplate())
                 .flatMap(irrelevant -> {
                     Form form = new Form();
                     form.setId(formId);
@@ -245,7 +245,7 @@ public class FormServiceImpl implements FormService {
                     form.setReferenceId(referenceId);
                     form.setClient(client);
                     form.setEnabled(newForm.isEnabled());
-                    form.setTemplate(newForm.getTemplate().template());
+                    form.setTemplate(newForm.getTemplate());
                     form.setContent(newForm.getContent());
                     form.setAssets(newForm.getAssets());
                     form.setCreatedAt(new Date());
