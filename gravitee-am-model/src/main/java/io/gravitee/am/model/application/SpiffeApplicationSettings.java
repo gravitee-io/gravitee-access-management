@@ -37,7 +37,6 @@ public class SpiffeApplicationSettings {
 
     /** How {@link #subject} is matched against the SVID {@code sub}. Defaults to {@link SubjectMatchMode#EXACT}. */
     @Schema(
-            defaultValue = "EXACT",
             description = """
                     How the configured `subject` is matched against the SVID `sub` claim.
                     `EXACT` (default) requires equality.
