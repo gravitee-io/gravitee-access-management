@@ -1478,7 +1478,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     "spiffe.subject must start with " + anchor));
         }
 
-        if (spiffe.getSubjectMatchMode().equals(SpiffeApplicationSettings.SubjectMatchMode.PREFIX)) {
+        if (SpiffeApplicationSettings.SubjectMatchMode.PREFIX.equals(spiffe.getSubjectMatchMode())) {
             AgentType agentType = AgentType.orNull(application.getKind());
             boolean prefixEligible = ApplicationType.AGENT.equals(application.getType())
                     && (agentType == AgentType.HOSTED_DELEGATED || agentType == AgentType.AUTONOMOUS);
