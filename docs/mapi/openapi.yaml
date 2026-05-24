@@ -16992,7 +16992,6 @@ components:
           enum:
           - EXACT
           - PREFIX
-          default: EXACT
         trustDomain:
           type: string
     SpiffeDomainSettings:
