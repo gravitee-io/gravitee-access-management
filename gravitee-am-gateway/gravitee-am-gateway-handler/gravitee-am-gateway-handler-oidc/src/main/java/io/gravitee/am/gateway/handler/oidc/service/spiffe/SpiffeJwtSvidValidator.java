@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -103,10 +104,8 @@ public final class SpiffeJwtSvidValidator {
         if (expected == null || expected.isBlank()) {
             return "sub does not match client subject";
         }
-        SpiffeApplicationSettings.SubjectMatchMode mode = spiffeApplicationSettings.getSubjectMatchMode();
-        if (mode == null) {
-            mode = SpiffeApplicationSettings.SubjectMatchMode.EXACT;
-        }
+        SpiffeApplicationSettings.SubjectMatchMode mode = Optional.ofNullable(spiffeApplicationSettings.getSubjectMatchMode())
+                .orElse(SpiffeApplicationSettings.SubjectMatchMode.EXACT);
         boolean match = switch (mode) {
             case EXACT -> expected.equals(sub);
             case PREFIX -> sub.startsWith(expected);
