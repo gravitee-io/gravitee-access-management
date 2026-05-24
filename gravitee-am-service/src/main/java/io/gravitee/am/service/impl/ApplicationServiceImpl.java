@@ -30,17 +30,12 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.AgentType;
-import io.gravitee.am.model.application.ApplicationOAuthSettings;
-import io.gravitee.am.model.application.ApplicationSAMLSettings;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -106,14 +101,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -1467,7 +1455,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         io.gravitee.am.model.application.SpiffeApplicationSettings spiffe =
                 application.getSettings() != null ? application.getSettings().getWorkloadIdentitySettings() : null;
 
-        boolean usesSpiffeAuth = oauth != null && io.gravitee.am.common.oidc.ClientAuthenticationMethod.SPIFFE_JWT
+        boolean usesSpiffeAuth = oauth != null && ClientAuthenticationMethod.SPIFFE_JWT
                 .equalsIgnoreCase(oauth.getTokenEndpointAuthMethod());
 
         if (!usesSpiffeAuth) {
@@ -1484,14 +1472,13 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (spiffe.getSubject() == null || spiffe.getSubject().isBlank()) {
             return Single.error(new InvalidClientMetadataException("spiffe.subject is required for spiffe_jwt"));
         }
-        String anchor = "spiffe://" + spiffe.getTrustDomain().toLowerCase(java.util.Locale.ROOT) + "/";
+        String anchor = "spiffe://" + spiffe.getTrustDomain().toLowerCase(Locale.ROOT) + "/";
         if (!spiffe.getSubject().startsWith(anchor)) {
             return Single.error(new InvalidClientMetadataException(
                     "spiffe.subject must start with " + anchor));
         }
 
-        io.gravitee.am.model.application.SpiffeApplicationSettings.SubjectMatchMode mode = spiffe.getSubjectMatchMode();
-        if (mode == io.gravitee.am.model.application.SpiffeApplicationSettings.SubjectMatchMode.PREFIX) {
+        if (spiffe.getSubjectMatchMode().equals(SpiffeApplicationSettings.SubjectMatchMode.PREFIX)) {
             AgentType agentType = AgentType.orNull(application.getKind());
             boolean prefixEligible = ApplicationType.AGENT.equals(application.getType())
                     && (agentType == AgentType.HOSTED_DELEGATED || agentType == AgentType.AUTONOMOUS);
@@ -1505,7 +1492,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        return trustDomainRepository.findByName(io.gravitee.am.model.ReferenceType.DOMAIN,
+        return trustDomainRepository.findByName(ReferenceType.DOMAIN,
                         application.getDomain(), spiffe.getTrustDomain())
                 .switchIfEmpty(Single.error(new InvalidClientMetadataException(
                         "spiffe.trustDomain '" + spiffe.getTrustDomain() + "' is not registered for this domain")))
