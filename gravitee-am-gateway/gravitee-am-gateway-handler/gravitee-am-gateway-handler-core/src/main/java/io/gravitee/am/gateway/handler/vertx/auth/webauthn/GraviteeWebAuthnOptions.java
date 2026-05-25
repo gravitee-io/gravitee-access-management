@@ -244,9 +244,9 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
             cert.checkValidity();
             this.additionalRootCertificates.putIfAbsent(key, new ArrayList<>());
             this.additionalRootCertificates.get(key).add(cert);
-            return this;
         } catch (CertificateException e) {
-            throw new IllegalArgumentException("Invalid additional root certificate", e);
+            LOGGER.warn("Invalid additional root certificate for {}", key, e);
         }
+        return this;
     }
 }
