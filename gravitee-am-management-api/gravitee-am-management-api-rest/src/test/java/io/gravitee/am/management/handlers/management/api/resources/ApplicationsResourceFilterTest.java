@@ -39,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 
 /**
  * Tests for the status and owner.email filter parameters on the application list endpoint.
@@ -82,6 +83,18 @@ public class ApplicationsResourceFilterTest extends JerseySpringTest {
         assertEquals(1, ((List) ((Map) readEntity(response, Map.class)).get("data")).size());
         Mockito.verify(applicationService).findByDomain(eq(domainId), eq("DEFAULT"), any(ApplicationFilter.class), eq(0), eq(50));
         Mockito.verify(applicationService, Mockito.never()).findByDomain(domainId, 0, 50);
+    }
+
+    @Test
+    public void shouldNotGetApps_withInvalidStatusFilter() {
+        final String domainId = "domain-1";
+        final Response response = target("domains").path(domainId).path("applications")
+                .queryParam("status", "unknwown")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        Mockito.verify(applicationService, never()).findByDomain(eq(domainId), eq("DEFAULT"), any(ApplicationFilter.class), any(Integer.class), any(Integer.class));
+        Mockito.verify(applicationService, Mockito.never()).findByDomain(eq(domainId), any(Integer.class), any(Integer.class));
     }
 
     @Test

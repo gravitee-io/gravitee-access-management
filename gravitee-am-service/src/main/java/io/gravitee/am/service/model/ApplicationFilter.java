@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.service.exception.InvalidParameterException;
 
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,12 @@ public record ApplicationFilter(String status, String ownerEmail, Set<Applicatio
 
     public static final String STATUS_ENABLED = "enabled";
     public static final String STATUS_DISABLED = "disabled";
+
+    public ApplicationFilter {
+        if (status != null && !(status.equals(STATUS_ENABLED) || status.equals(STATUS_DISABLED))) {
+            throw new InvalidParameterException("Invalid status filter value: " + status);
+        }
+    }
 
     public ApplicationFilter(String status, String ownerEmail) {
         this(status, ownerEmail, null, null);
