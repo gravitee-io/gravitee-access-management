@@ -363,8 +363,6 @@ import { ApplicationFlowsComponent } from './domain/applications/application/des
 import { IdentitiesResolver } from './resolvers/identities.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
-import { NewsletterComponent } from './newsletter/newsletter.component';
-import { NewsletterResolver } from './resolvers/newsletter.resolver';
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
 import { EnvironmentResolver } from './resolvers/environment-resolver.service';
@@ -751,7 +749,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     CookieSettingsComponent,
     LoginSettingsComponent,
     UsersSearchInfoDialogComponent,
-    NewsletterComponent,
     UserHistoryComponent,
     EnvironmentComponent,
     DomainAlertsComponent,
@@ -978,7 +975,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     IdentitiesOrganizationResolver,
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
-    NewsletterResolver,
     ApplicationFlowsResolver,
     InstallationResolver,
     NotifiersResolver,
