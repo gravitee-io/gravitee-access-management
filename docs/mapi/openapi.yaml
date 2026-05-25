@@ -31,7 +31,6 @@ tags:
 - name: Extension Grant
 - name: Factor
 - name: Identity Provider
-- name: Newsletter
 - name: Notifier
 - name: Password Policy
 - name: Plugin
@@ -12082,48 +12081,6 @@ paths:
                   type: string
         "500":
           description: Internal server error
-  /user/newsletter/_subscribe:
-    post:
-      tags:
-      - Newsletter
-      - user
-      summary: Subscribe to the newsletter the authenticated user
-      operationId: subscribeNewsletter
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: "#/components/schemas/EmailValue"
-        required: true
-      responses:
-        "200":
-          description: Updated user
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserEntity"
-        "400":
-          description: Invalid user profile
-        "404":
-          description: User not found
-        "500":
-          description: Internal server error
-  /user/newsletter/taglines:
-    get:
-      tags:
-      - Newsletter
-      - user
-      summary: Get taglines to display in the newsletter
-      operationId: getTaglines
-      responses:
-        "200":
-          description: Retrieved taglines
-          content:
-            application/json:
-              schema:
-                type: string
-        "500":
-          description: Internal server error
   /user/notifications:
     get:
       tags:
@@ -13707,13 +13664,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-    EmailValue:
-      required:
-      - email
-      type: object
-      properties:
-        email:
-          type: string
     EnrollSettings:
       type: object
       properties:

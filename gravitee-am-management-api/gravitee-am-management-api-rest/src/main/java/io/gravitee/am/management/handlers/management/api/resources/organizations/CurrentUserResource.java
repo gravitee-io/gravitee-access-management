@@ -26,12 +26,10 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.StringToClassMapItem;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -57,9 +55,6 @@ public class CurrentUserResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
-
-    @Value("${newsletter.enabled:true}")
-    private boolean newsletterEnabled = true;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -93,17 +88,11 @@ public class CurrentUserResource extends AbstractResource {
                     // prepare profile information with role permissions
                     Map<String, Object> profile = new HashMap<>(authenticatedUser.getAdditionalInformation());
                     profile.put("permissions", permissions);
-                    profile.put("newsletter_enabled", newsletterEnabled);
                     profile.remove(CustomClaims.ROLES);
                     profile.remove(CustomClaims.GROUPS);
 
                     return profile;
                 }).subscribe(response::resume, response::resume);
-    }
-
-    @Path("/newsletter")
-    public NewsletterResource getNewsletterResource() {
-        return resourceContext.getResource(NewsletterResource.class);
     }
 
     @Path("/notifications")

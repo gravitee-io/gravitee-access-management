@@ -49,10 +49,4 @@ public class WebClientsConfiguration {
         return webClientBuilder.createWebClient(vertx, URI.create(recaptchaServiceUrl).toURL());
     }
 
-    @Bean("newsletterWebClient")
-    protected WebClient newsletterWebClient(Vertx vertx, WebClientBuilder webClientBuilder, io.gravitee.node.api.configuration.Configuration configuration) throws MalformedURLException {
-        final String newsletterURL =  configuration.getProperty("newsletter.url", "https://newsletter.gravitee.io");
-        return webClientBuilder.createWebClient(vertx, URI.create(newsletterURL).toURL());
-    }
-
 }

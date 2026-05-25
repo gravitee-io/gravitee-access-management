@@ -39,13 +39,9 @@ export class LoginCallbackComponent implements OnInit {
       .pipe(
         filter((authentSuccess) => authentSuccess),
         switchMap(() => this.authService.userInfo()),
-        tap((user) => {
+        tap(() => {
           this.snackbarService.open('Login successful');
-          if (user['newsletter_enabled'] && user['login_count'] === 1) {
-            this.router.navigate(['/newsletter']);
-          } else {
-            this.router.navigate(['/']);
-          }
+          this.router.navigate(['/']);
         }),
         catchError((error: unknown) => {
           this.snackbarService.open(toString(error).replace(/%20/g, ' '));
