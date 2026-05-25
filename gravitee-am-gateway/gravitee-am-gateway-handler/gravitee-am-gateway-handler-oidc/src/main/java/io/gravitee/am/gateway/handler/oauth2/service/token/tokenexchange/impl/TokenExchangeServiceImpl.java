@@ -329,8 +329,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         Set<String> scopePool = buildScopePool(requestedResourceUris, clientScopes);
         List<String> parameterizedPool = parameterizedScopesIn(scopePool);
         return baseAllowedScopes.stream()
-                .filter(scope -> scopePool.contains(scope)
-                        || ParameterizedScopeUtils.isParameterizedScope(parameterizedPool, scope))
+                .filter(scope -> coversScope(scopePool, parameterizedPool, scope))
                 .collect(Collectors.toSet());
     }
 
@@ -339,6 +338,15 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             return Collections.emptyList();
         }
         return scopes.stream().filter(scopeManager::isParameterizedScope).toList();
+    }
+
+    /**
+     * True iff {@code scope} is an exact member of {@code pool}, or it is a suffixed form
+     * {@code <base>:<suffix>} whose base is declared parameterized in {@code parameterizedPool}.
+     */
+    private static boolean coversScope(Set<String> pool, List<String> parameterizedPool, String scope) {
+        return pool.contains(scope)
+                || ParameterizedScopeUtils.isParameterizedScope(parameterizedPool, scope);
     }
 
     /**
@@ -355,14 +363,12 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         List<String> rightParameterized = parameterizedScopesIn(right);
         Set<String> result = new HashSet<>();
         for (String scope : left) {
-            if (right.contains(scope)
-                    || ParameterizedScopeUtils.isParameterizedScope(rightParameterized, scope)) {
+            if (coversScope(right, rightParameterized, scope)) {
                 result.add(scope);
             }
         }
         for (String scope : right) {
-            if (!result.contains(scope)
-                    && ParameterizedScopeUtils.isParameterizedScope(leftParameterized, scope)) {
+            if (coversScope(left, leftParameterized, scope)) {
                 result.add(scope);
             }
         }
@@ -428,9 +434,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             return Single.just(allowedScopes);
         }
         List<String> parameterizedAllowed = parameterizedScopesIn(allowedScopes);
-        boolean allValid = requestedScopes.stream().allMatch(scope ->
-                allowedScopes.contains(scope)
-                        || ParameterizedScopeUtils.isParameterizedScope(parameterizedAllowed, scope));
+        boolean allValid = requestedScopes.stream()
+                .allMatch(scope -> coversScope(allowedScopes, parameterizedAllowed, scope));
         if (allValid) {
             return Single.just(requestedScopes);
         }
