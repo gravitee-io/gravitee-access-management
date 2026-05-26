@@ -123,6 +123,7 @@ abstract class BaseIntrospectionTokenService {
                 });
     }
 
+<<<<<<< HEAD
     private Single<String> validateAudienceAndGetCertificateId(JWT jwt, String callerClientId) {
         List<String> audiences = jwt.getAudList();
 
@@ -134,6 +135,14 @@ abstract class BaseIntrospectionTokenService {
                 .concatMapSingle(audience -> resolveAudience(jwt.getDomain(), audience))
                 .toList()
                 .flatMap(matches -> resolveCertificateIdFromAudMatches(matches, jwt, callerClientId));
+=======
+    private Maybe<String> getClientCertificateId(JWT jwt) {
+        return clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
+                .switchIfEmpty(Maybe.error(() -> new InvalidTokenException("Invalid or unknown client for this token")))
+                .flatMap(client -> client.getCertificate() != null
+                        ? Maybe.just(client.getCertificate())
+                        : Maybe.empty());
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
     }
 
     private Single<AudienceMatch> resolveAudience(String domain, String audience) {

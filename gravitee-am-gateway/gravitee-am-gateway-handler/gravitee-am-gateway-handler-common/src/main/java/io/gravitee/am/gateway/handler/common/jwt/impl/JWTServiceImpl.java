@@ -31,6 +31,7 @@ import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleEmitter;
@@ -63,14 +64,17 @@ public class JWTServiceImpl implements JWTService {
     private final CertificateManager certificateManager;
     private final ObjectMapper objectMapper;
     private final Boolean fallbackToHmacSignature;
+    private final Domain domain;
 
     @Autowired
     public JWTServiceImpl(CertificateManager certificateManager,
+                          Domain domain,
                           ObjectMapper objectMapper,
                           Boolean fallbackToHmacSignature) {
         this.certificateManager = certificateManager;
         this.objectMapper = objectMapper;
         this.fallbackToHmacSignature = fallbackToHmacSignature;
+        this.domain = domain;
     }
 
     @Autowired
@@ -163,6 +167,35 @@ public class JWTServiceImpl implements JWTService {
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
     }
 
+<<<<<<< HEAD
+=======
+    private Optional<CertificateProvider> findProviderByKid(SignedJWT signedJWT) {
+        String kid = signedJWT.getHeader().getKeyID();
+        if (kid == null) {
+            return Optional.empty();
+        }
+
+        String issuerDomain = extractDomain(signedJWT);
+
+        Stream<CertificateProvider> certs = domain.isMaster() ? certificateManager.allProviders().stream() : certificateManager.providers(domain.getId()).stream();
+
+        return Stream.concat(certs, Stream.of(certificateManager.defaultCertificateProvider()))
+                .filter(Objects::nonNull)
+                .filter(provider -> kid.equals(provider.getKeyId()))
+                .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()))
+                .findFirst();
+    }
+
+    private Single<CertificateProvider> resolveClientCertificateProvider(Maybe<String> clientCertificateId) {
+        return clientCertificateId
+                .flatMap(certificateId -> certificateManager.get(certificateId)
+                        .switchIfEmpty(fallbackToHmacSignature
+                                ? Maybe.just(certificateManager.defaultCertificateProvider())
+                                : Maybe.error(new TemporarilyUnavailableException("The certificate cannot be loaded"))))
+                .switchIfEmpty(Single.just(certificateManager.defaultCertificateProvider()));
+    }
+
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
     @Override
     public Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider, TokenType tokenType) {
         return decode(certificateProvider, jwt, tokenType)

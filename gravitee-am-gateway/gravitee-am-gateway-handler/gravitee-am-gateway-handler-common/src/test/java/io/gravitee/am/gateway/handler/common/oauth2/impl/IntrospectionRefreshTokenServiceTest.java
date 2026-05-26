@@ -70,8 +70,13 @@ public class IntrospectionRefreshTokenServiceTest {
 
     @Before
     public void setUp() throws Exception {
+<<<<<<< HEAD
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(false);
         introspectionTokenService = new IntrospectionRefreshTokenService(jwtService, clientService, protectedResourceManager, environment, refreshTokenRepository);
+=======
+        introspectionTokenService = new IntrospectionRefreshTokenService(jwtService, clientService, refreshTokenRepository);
+        when(clientService.findByDomainAndClientId(anyString(), anyString())).thenReturn(Maybe.empty());
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
     }
 
     @Test

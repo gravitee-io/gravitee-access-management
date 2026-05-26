@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -61,9 +62,13 @@ public class JWTServiceTest {
     @Mock
     private CertificateManager certificateManager;
 
+    @Mock
+    private Domain domain;
+
     @Before
     public void setUp() {
-        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), true);
+        when(domain.isMaster()).thenReturn(false);
+        jwtService = new JWTServiceImpl(certificateManager, domain, new ObjectMapper(), true);
         var rs256CertProvider = mockCertProvider(mockJwtBuilder("token_rs_256"));
         var rs512CertProvider = mockCertProvider(mockJwtBuilder("token_rs_512"));
         var defaultCertProvider = mockCertProvider(mockJwtBuilder("token_default"));
@@ -71,7 +76,11 @@ public class JWTServiceTest {
 
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
+<<<<<<< HEAD
         lenient().when(certificateManager.get(nullable(String.class))).thenReturn(Maybe.empty());
+=======
+        when(certificateManager.get(anyString())).thenReturn(Maybe.empty());
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
         when(certificateManager.get("notExistingId")).thenReturn(Maybe.empty());
         when(certificateManager.get("existingId")).thenReturn(Maybe.just(rs256CertProvider));
         when(certificateManager.getClientCertificateProvider(nullable(String.class), anyBoolean())).thenCallRealMethod();
@@ -215,7 +224,7 @@ public class JWTServiceTest {
 
     @Test
     public void encode_noClientCertificateFound_noFallback() throws Exception {
-        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), false);
+        jwtService = new JWTServiceImpl(certificateManager, domain, new ObjectMapper(), false);
 
         Client client = new Client();
         client.setCertificate("notExistingId");
@@ -235,6 +244,7 @@ public class JWTServiceTest {
         String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
         String jwtToken = headerB64 + "." + payloadB64 + ".signature";
 
+<<<<<<< HEAD
         // Mock CertificateProvider for the kid UUID
         JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
         JWTParser mockParser = mock(JWTParser.class);
@@ -257,6 +267,15 @@ public class JWTServiceTest {
         verify(certificateManager).get(kid);
         verify(certificateManager, never()).get("default-cert-id");
         verify(mockParser).parse(jwtToken);
+=======
+        when(certificateManager.providers("domainD")).thenReturn(List.of(matched, alsoInDomain));
+        when(domain.getId()).thenReturn("domainD");
+        String signed = signedJwt("keyA", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("matched-A", test.values().get(0).get("marker"));
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
     }
 
     @Test
@@ -269,11 +288,15 @@ public class JWTServiceTest {
         String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
         String jwtToken = headerB64 + "." + payloadB64 + ".signature";
 
+<<<<<<< HEAD
         // Mock CertificateProvider for default certificate
         JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
         JWTParser mockParser = mock(JWTParser.class);
         when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
         io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+=======
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultProvider);
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
 
         // Mock CertificateManager
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
@@ -302,6 +325,7 @@ public class JWTServiceTest {
         String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
         String jwtToken = headerB64 + "." + payloadB64 + ".signature";
 
+<<<<<<< HEAD
         // Mock CertificateProvider for default certificate
         JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
         JWTParser mockParser = mock(JWTParser.class);
@@ -323,6 +347,15 @@ public class JWTServiceTest {
         // Verify that the default certificate was used
         verify(certificateManager).get("default-cert-id");
         verify(mockParser).parse(jwtToken);
+=======
+        when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
+
+        String signed = signedJwt("keyB", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("fallback-decoded", test.values().get(0).get("marker"));
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
     }
 
     @Test
@@ -362,11 +395,15 @@ public class JWTServiceTest {
         String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
         String jwtToken = headerB64 + "." + payloadB64 + ".signature";
 
+<<<<<<< HEAD
         // Mock CertificateProvider for default certificate
         JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
         JWTParser mockParser = mock(JWTParser.class);
         when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
         io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+=======
+        when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
 
         // Mock CertificateManager
         when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
@@ -386,12 +423,20 @@ public class JWTServiceTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void decodeAndVerify_withInvalidJsonHeader_shouldFallBackToDefaultCertificate() throws Exception {
         // Create a JWT token with invalid JSON in the header
         String headerJson = "{\"kid\":\"my-cert-id\",invalid-json";
         String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
         String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString("{\"sub\":\"test\"}".getBytes(StandardCharsets.UTF_8));
         String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+=======
+    public void decodeAndVerify_supplier_supplierReturnsNull_usesDefaultProvider() throws Exception {
+        // certificateManager.defaultCertificateProvider() returns the cert built in setUp() which signs as "token_default"
+        // For decoding we need a JwtParser on it; rebind a parser to that mock
+        var defaultProvider = certificateManager.defaultCertificateProvider();
+        when(defaultProvider.getJwtParser()).thenReturn(parserReturning("default-decoded"));
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
 
         // Mock CertificateProvider for default certificate
         JWT expectedJwt = new JWT(Map.of("sub", "test"));
@@ -415,7 +460,47 @@ public class JWTServiceTest {
         verify(mockParser).parse(jwtToken);
     }
 
+<<<<<<< HEAD
     private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithParser(JWTParser jwtParser) {
+=======
+    @Test
+    public void decodeAndVerify_supplier_malformedJwt_fallsThroughToSupplier() throws Exception {
+        var fallback = providerWithKey("fallback-key", "domainD", "fallback-decoded");
+        when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
+
+        // not a parseable signed JWT
+        TestObserver<JWT> test = jwtService.decodeAndVerify("not-a-jwt", Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("fallback-decoded", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_nullDefaultCertificateId_errors() {
+        Maybe<String> nullMaybe = null;
+        jwtService.decodeAndVerify("token", nullMaybe, JWTService.TokenType.ACCESS_TOKEN)
+                .test()
+                .assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void decodeAndVerify_masterDomain_acceptFromDifferentDomain() throws Exception {
+        when(domain.isMaster()).thenReturn(true);
+        var matched = providerWithKey("keyA", "domainD", "matched-A");
+        var alsoInDomain = providerWithKey("keyB", "domainD", "matched-B");
+
+        when(certificateManager.allProviders()).thenReturn(List.of(matched, alsoInDomain));
+
+        String signed = signedJwt("keyA", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("matched-A", test.values().get(0).get("marker"));
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider providerWithKey(String keyId, String domain, String marker) {
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
         var actualProvider = mock(CertificateProvider.class);
 
         var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
