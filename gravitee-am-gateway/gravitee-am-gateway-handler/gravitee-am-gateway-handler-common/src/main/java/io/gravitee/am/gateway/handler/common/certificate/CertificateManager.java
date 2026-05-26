@@ -36,6 +36,10 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
 
     Collection<CertificateProvider> providers();
 
+    Collection<CertificateProvider> allProviders();
+
+    Collection<CertificateProvider> providers(String domainId);
+
     CertificateProvider defaultCertificateProvider();
 
     CertificateProvider noneAlgorithmCertificateProvider();

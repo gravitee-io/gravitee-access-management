@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -65,9 +66,13 @@ public class JWTServiceTest {
     @Mock
     private CertificateManager certificateManager;
 
+    @Mock
+    private Domain domain;
+
     @Before
     public void setUp() {
-        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), true);
+        when(domain.isMaster()).thenReturn(false);
+        jwtService = new JWTServiceImpl(certificateManager, domain, new ObjectMapper(), true);
         var rs256CertProvider = mockCertProvider(mockJwtBuilder("token_rs_256"));
         var rs512CertProvider = mockCertProvider(mockJwtBuilder("token_rs_512"));
         var defaultCertProvider = mockCertProvider(mockJwtBuilder("token_default"));
@@ -75,6 +80,7 @@ public class JWTServiceTest {
 
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
+        when(certificateManager.get(anyString())).thenReturn(Maybe.empty());
         when(certificateManager.get("notExistingId")).thenReturn(Maybe.empty());
         when(certificateManager.get("existingId")).thenReturn(Maybe.just(rs256CertProvider));
         when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
@@ -217,7 +223,7 @@ public class JWTServiceTest {
 
     @Test
     public void encode_noClientCertificateFound_noFallback() throws Exception {
-        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), false);
+        jwtService = new JWTServiceImpl(certificateManager, domain, new ObjectMapper(), false);
 
         Client client = new Client();
         client.setCertificate("notExistingId");
@@ -232,8 +238,8 @@ public class JWTServiceTest {
         var matched = providerWithKey("keyA", "domainD", "matched-A");
         var alsoInDomain = providerWithKey("keyB", "domainD", "matched-B");
 
-        when(certificateManager.providers()).thenReturn(List.of(matched, alsoInDomain));
-
+        when(certificateManager.providers("domainD")).thenReturn(List.of(matched, alsoInDomain));
+        when(domain.getId()).thenReturn("domainD");
         String signed = signedJwt("keyA", "domainD");
         TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
         test.await(10, TimeUnit.SECONDS);
@@ -245,7 +251,6 @@ public class JWTServiceTest {
     public void decodeAndVerify_supplier_picksDefaultProviderMatchingKid() throws Exception {
         var defaultProvider = providerWithKey("default-key", "domainD", "default-decoded");
 
-        when(certificateManager.providers()).thenReturn(List.of());
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultProvider);
 
         String signed = signedJwt("default-key", "domainD");
@@ -260,10 +265,9 @@ public class JWTServiceTest {
         var wrongDomain = providerWithKey("keyA", "otherDomain", "wrong-domain");
         var fallback = providerWithKey("fallback-key", "domainD", "fallback-decoded");
 
-        when(certificateManager.providers()).thenReturn(List.of(wrongDomain));
         when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
 
-        String signed = signedJwt("keyA", "domainD");
+        String signed = signedJwt("keyB", "domainD");
         TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
         test.await(10, TimeUnit.SECONDS);
         test.assertComplete();
@@ -287,7 +291,6 @@ public class JWTServiceTest {
         var unrelated = providerWithKey("other-key", "domainD", "other-marker");
         var fallback = providerWithKey("fallback-key", "domainD", "fallback-decoded");
 
-        when(certificateManager.providers()).thenReturn(List.of(unrelated));
         when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
 
         String signed = signedJwt("missing-key", "domainD");
@@ -299,7 +302,6 @@ public class JWTServiceTest {
 
     @Test
     public void decodeAndVerify_supplier_supplierReturnsNull_usesDefaultProvider() throws Exception {
-        when(certificateManager.providers()).thenReturn(List.of());
         // certificateManager.defaultCertificateProvider() returns the cert built in setUp() which signs as "token_default"
         // For decoding we need a JwtParser on it; rebind a parser to that mock
         var defaultProvider = certificateManager.defaultCertificateProvider();
@@ -330,6 +332,21 @@ public class JWTServiceTest {
         jwtService.decodeAndVerify("token", nullMaybe, JWTService.TokenType.ACCESS_TOKEN)
                 .test()
                 .assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void decodeAndVerify_masterDomain_acceptFromDifferentDomain() throws Exception {
+        when(domain.isMaster()).thenReturn(true);
+        var matched = providerWithKey("keyA", "domainD", "matched-A");
+        var alsoInDomain = providerWithKey("keyB", "domainD", "matched-B");
+
+        when(certificateManager.allProviders()).thenReturn(List.of(matched, alsoInDomain));
+
+        String signed = signedJwt("keyA", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("matched-A", test.values().get(0).get("marker"));
     }
 
     private io.gravitee.am.gateway.certificate.CertificateProvider providerWithKey(String keyId, String domain, String marker) {
