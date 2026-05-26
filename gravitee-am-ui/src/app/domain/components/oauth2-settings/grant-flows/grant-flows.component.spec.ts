@@ -270,7 +270,7 @@ describe('GrantFlowsComponent', () => {
       component.spiffeSettings = {
         trustDomain: 'acme',
         subject: 'spiffe://acme/hotel-agent',
-        subjectMatchMode: 'PREFIX',
+        subjectMatchMode: 'prefix',
       };
 
       component.spiffeChanged();
@@ -279,7 +279,7 @@ describe('GrantFlowsComponent', () => {
       expect(emitted[0]).toEqual({
         trustDomain: 'acme',
         subject: 'spiffe://acme/hotel-agent',
-        subjectMatchMode: 'PREFIX',
+        subjectMatchMode: 'prefix',
       });
       // emitted object should be a shallow copy, not the same reference
       expect(emitted[0]).not.toBe(component.spiffeSettings);
