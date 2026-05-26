@@ -520,10 +520,12 @@ public class TokenServiceImpl implements TokenService {
     private static String resolveAgentActSubject(Client client) {
         AgentType agentType = client.getAgentType();
         boolean userBound = agentType == AgentType.USER_EMBEDDED || agentType == AgentType.HOSTED_DELEGATED;
-        if (userBound && client.getAgentInstanceId() != null) {
-            return client.getAgentInstanceId();
-        }
-        return client.getClientId();
+        return userBound ? resolveAgentSubject(client) : client.getClientId();
+    }
+
+    // The agent's subject identity: its instance id when known, otherwise the blueprint client_id.
+    private static String resolveAgentSubject(Client client) {
+        return client.getAgentInstanceId() != null ? client.getAgentInstanceId() : client.getClientId();
     }
 
     private void setResources(OAuth2Request request, JWT jwt) {
@@ -561,8 +563,7 @@ public class TokenServiceImpl implements TokenService {
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         if (oAuth2Request.isClientOnly()) {
             // For blueprint-agent jwt-bearer assertions in client_credentials flow, use the agent instance ID as sub
-            String sub = client.getAgentInstanceId() != null ? client.getAgentInstanceId() : client.getClientId();
-            jwt.setSub(sub);
+            jwt.setSub(resolveAgentSubject(client));
         } else {
             subjectManager.updateJWT(jwt, user);
         }
