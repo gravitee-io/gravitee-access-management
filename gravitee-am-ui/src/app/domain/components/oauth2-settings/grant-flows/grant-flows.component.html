@@ -287,8 +287,8 @@
               (ngModelChange)="spiffeChanged()"
               [disabled]="readonly"
             >
-              <mat-option value="EXACT">Exact — SVID sub must equal the configured subject</mat-option>
-              <mat-option value="PREFIX">Prefix — one Blueprint backs many instances under the configured subject</mat-option>
+              <mat-option value="exact">Exact — SVID sub must equal the configured subject</mat-option>
+              <mat-option value="prefix">Prefix — one Blueprint backs many instances under the configured subject</mat-option>
             </mat-select>
             <mat-hint>
               <code>PREFIX</code> accepts SVIDs whose <code>sub</code> starts with <code>&lt;subject&gt;</code>; the full SPIFFE ID becomes
