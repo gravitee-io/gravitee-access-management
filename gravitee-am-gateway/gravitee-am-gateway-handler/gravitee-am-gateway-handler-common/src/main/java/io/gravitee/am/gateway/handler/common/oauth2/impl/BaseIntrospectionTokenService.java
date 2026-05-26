@@ -102,10 +102,10 @@ abstract class BaseIntrospectionTokenService {
     }
 
     private Maybe<String> getClientCertificateId(JWT jwt) {
-        return Maybe.defer(() -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
+        return clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
                 .switchIfEmpty(Maybe.error(() -> new InvalidTokenException("Invalid or unknown client for this token")))
                 .flatMap(client -> client.getCertificate() != null
                         ? Maybe.just(client.getCertificate())
-                        : Maybe.empty()));
+                        : Maybe.empty());
     }
 }
