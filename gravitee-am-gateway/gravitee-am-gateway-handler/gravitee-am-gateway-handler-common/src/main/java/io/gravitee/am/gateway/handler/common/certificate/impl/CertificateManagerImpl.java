@@ -49,7 +49,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicReference;
+=======
+import java.util.function.Predicate;
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
@@ -217,10 +221,24 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Override
     public Collection<CertificateProvider> providers() {
+        return providers(cert -> domain.getId().equals(cert.getDomain()));
+    }
+
+    @Override
+    public Collection<CertificateProvider> allProviders() {
+        return providers(cert -> true);
+    }
+
+    @Override
+    public Collection<CertificateProvider> providers(String domainId) {
+        return providers(c -> domainId.equals(c.getDomain()));
+    }
+
+    private Collection<CertificateProvider> providers(Predicate<CertificateProvider> filter) {
         return certificateProviderManager
                 .certificateProviders()
                 .stream()
-                .filter(c -> domain.getId().equals(c.getDomain()))
+                .filter(filter)
                 .collect(Collectors.toList());
     }
 
