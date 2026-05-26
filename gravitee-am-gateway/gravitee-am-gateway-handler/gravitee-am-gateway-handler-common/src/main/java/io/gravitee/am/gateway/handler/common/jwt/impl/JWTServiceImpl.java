@@ -27,6 +27,7 @@ import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -60,14 +61,17 @@ public class JWTServiceImpl implements JWTService {
     private final CertificateManager certificateManager;
     private final ObjectMapper objectMapper;
     private final Boolean fallbackToHmacSignature;
+    private final Domain domain;
 
     @Autowired
     public JWTServiceImpl(CertificateManager certificateManager,
+                          Domain domain,
                           ObjectMapper objectMapper,
                           Boolean fallbackToHmacSignature) {
         this.certificateManager = certificateManager;
         this.objectMapper = objectMapper;
         this.fallbackToHmacSignature = fallbackToHmacSignature;
+        this.domain = domain;
     }
 
     @Autowired
@@ -158,7 +162,9 @@ public class JWTServiceImpl implements JWTService {
 
         String issuerDomain = extractDomain(signedJWT);
 
-        return Stream.concat(certificateManager.providers().stream(), Stream.of(certificateManager.defaultCertificateProvider()))
+        Stream<CertificateProvider> certs = domain.isMaster() ? certificateManager.allProviders().stream() : certificateManager.providers(domain.getId()).stream();
+
+        return Stream.concat(certs, Stream.of(certificateManager.defaultCertificateProvider()))
                 .filter(Objects::nonNull)
                 .filter(provider -> kid.equals(provider.getKeyId()))
                 .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()))

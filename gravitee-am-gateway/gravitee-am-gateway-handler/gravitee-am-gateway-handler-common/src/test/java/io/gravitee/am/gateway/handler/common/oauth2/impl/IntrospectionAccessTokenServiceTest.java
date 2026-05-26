@@ -64,6 +64,7 @@ public class IntrospectionAccessTokenServiceTest {
     @Before
     public void setUp() throws Exception {
         introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, accessTokenRepository);
+        when(clientService.findByDomainAndClientId(anyString(), anyString())).thenReturn(Maybe.empty());
     }
 
     @Test
