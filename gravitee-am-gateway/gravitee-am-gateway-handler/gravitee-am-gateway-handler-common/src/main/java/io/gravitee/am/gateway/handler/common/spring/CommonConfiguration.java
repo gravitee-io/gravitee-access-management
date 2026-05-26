@@ -225,9 +225,15 @@ public class CommonConfiguration {
     @Bean
     public JWTService jwtService(
             CertificateManager certificateManager,
+            Domain domain,
             ObjectMapper objectMapper,
+<<<<<<< HEAD
             @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":false}") Boolean fallbackToHmacSignature) {
         return new JWTServiceImpl(certificateManager, objectMapper, fallbackToHmacSignature);
+=======
+            @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}") Boolean fallbackToHmacSignature) {
+        return new JWTServiceImpl(certificateManager, domain, objectMapper, fallbackToHmacSignature);
+>>>>>>> 803f101dc (fix: master domain should introspect token generated in all other domains)
     }
 
     @Bean
