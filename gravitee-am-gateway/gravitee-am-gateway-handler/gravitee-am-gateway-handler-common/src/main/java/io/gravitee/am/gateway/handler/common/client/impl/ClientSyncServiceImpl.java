@@ -105,7 +105,7 @@ public class ClientSyncServiceImpl implements ClientSyncService {
      * @return
      */
     private boolean canLoadNotSynchronizedClient(Client client) {
-        return client.isEnabled() && !client.isTemplate();
+        return client.isEnabled() && !client.isTemplate() && (domain.isMaster() || client.getDomain().equals(domain.getId()));
     }
 
     @Override
