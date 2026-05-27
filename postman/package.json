@@ -4,7 +4,8 @@
   "description": "Gravitee.io AM - Tests - Postman",
   "license": "MIT License",
   "scripts": {
-    "test:collections": "for f in collections/*.json; do echo \"Running $f\" && newman run \"$f\" -e environment/docker.json --ignore-redirects --insecure --bail || { echo \"Failed: $f\"; exit 1; }; done"
+    "test:collections": "for f in collections/*.json; do echo \"Running $f\" && newman run \"$f\" -e environment/docker.json --ignore-redirects --insecure --bail || { echo \"Failed: $f\"; exit 1; }; done",
+    "test:collections:parallel": "bash scripts/run-collections.sh"
   },
   "devDependencies": {
     "newman": "6.2.2"
