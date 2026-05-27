@@ -21,8 +21,15 @@ import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.gateway.api.el.EvaluableRequest;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Reference;
@@ -39,12 +46,18 @@ import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.MFAAuditBuilder;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.common.http.MediaType;
 import io.gravitee.common.util.Maps;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -55,30 +68,144 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
+import static io.gravitee.am.common.audit.EventType.MFA_RATE_LIMIT_REACHED;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
+import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.lang.Boolean.TRUE;
 
 
 abstract class MFAChallengeEndpoint extends MFAEndpoint {
+
+    private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
+
     public static final String PREVIOUS_TRANSACTION_ID_KEY = "prev-tid";
 
     protected final FactorManager factorManager;
+    protected final ApplicationContext applicationContext;
     protected final DomainDataPlane domainDataPlane;
+    protected final RateLimiterService rateLimiterService;
     protected final AuditService auditService;
 
     public MFAChallengeEndpoint(FactorManager factorManager,
                                 TemplateEngine engine,
+                                ApplicationContext applicationContext,
                                 DomainDataPlane domainDataPlane,
+                                RateLimiterService rateLimiterService,
                                 AuditService auditService) {
         super(engine);
         this.factorManager = factorManager;
+        this.applicationContext = applicationContext;
         this.domainDataPlane = domainDataPlane;
+        this.rateLimiterService = rateLimiterService;
         this.auditService = auditService;
+    }
+
+    protected String challengePagePath(RoutingContext routingContext) {
+        return routingContext.get(CONTEXT_PATH) + "/mfa/challenge";
+    }
+
+    protected void sendMfaChallenge(FactorProvider factorProvider,
+                                    RoutingContext routingContext,
+                                    Factor factor,
+                                    User endUser,
+                                    boolean forceResend,
+                                    boolean jsonResponse,
+                                    Handler<AsyncResult<EnrolledFactor>> handler) {
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
+
+        factorContext.getData().putAll(getEvaluableAttributes(routingContext));
+        factorContext.registerData(FactorContext.KEY_CLIENT, client);
+        factorContext.registerData(KEY_USER, endUser);
+        factorContext.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+
+        // do not send challenge in case of error param to avoid useless code generation
+        // to provide EnrolledFactor we call the getEnrolledFactor but the overrideMovingFactor is set to false
+        // so during the enrolment phase, in case of wrong code provided by the user, the code is not reset
+        // otherwise the persisted value will not be the same as the one computed based on the session information
+        if (!factorProvider.needChallengeSending()
+                || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null
+                || routingContext.get(RATE_LIMIT_ERROR_PARAM_KEY) != null
+                || routingContext.get(VERIFY_ATTEMPT_ERROR_PARAM_KEY) != null) {
+            final EnrolledFactor currentEnrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, false);
+            handler.handle(Future.succeededFuture(currentEnrolledFactor));
+            return;
+        }
+
+        if (!forceResend && !shouldSendChallenge(routingContext, factor)) {
+            final EnrolledFactor currentEnrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, false);
+            handler.handle(Future.succeededFuture(currentEnrolledFactor));
+            return;
+        }
+
+        final String rateLimitRedirectPath = challengePagePath(routingContext);
+        if (rateLimiterService.isRateLimitEnabled()) {
+            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), client.getId(), client.getDomain())
+                    .subscribe(allowRequest -> {
+                                final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, allowRequest);
+                                factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
+                                if (allowRequest) {
+                                    invokeSendChallenge(routingContext, factorProvider, factorContext, endUser, client, factor, handler);
+                                } else {
+                                    updateAuditLog(routingContext, MFA_RATE_LIMIT_REACHED, endUser, client, factor, factorContext, new Throwable("MFA rate limit reached"));
+                                    if (jsonResponse) {
+                                        respondJsonChallengeError(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed",
+                                                HttpStatusCode.TOO_MANY_REQUESTS_429);
+                                    } else {
+                                        handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed", rateLimitRedirectPath);
+                                    }
+                                }
+                            },
+                            error -> handler.handle(Future.failedFuture(error))
+                    );
+        } else {
+            final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, true);
+            factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
+            invokeSendChallenge(routingContext, factorProvider, factorContext, endUser, client, factor, handler);
+        }
+    }
+
+    protected boolean shouldSendChallenge(RoutingContext routingContext, Factor factor) {
+        final String sentFactorId = routingContext.session().get(MFA_CHALLENGE_SENT_FACTOR_ID_KEY);
+        return !factor.getId().equals(sentFactorId);
+    }
+
+    protected void markChallengeSent(RoutingContext routingContext, Factor factor) {
+        routingContext.session().put(MFA_CHALLENGE_SENT_FACTOR_ID_KEY, factor.getId());
+    }
+
+    private void invokeSendChallenge(RoutingContext routingContext,
+                                     FactorProvider factorProvider,
+                                     FactorContext factorContext,
+                                     User endUser,
+                                     Client client,
+                                     Factor factor,
+                                     Handler<AsyncResult<EnrolledFactor>> handler) {
+        factorProvider.sendChallenge(factorContext)
+                .doOnComplete(() -> logger.debug("Challenge sent to user {}", factorContext.getUser().getId()))
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        () -> {
+                            markChallengeSent(routingContext, factor);
+                            updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, null);
+                            handler.handle(Future.succeededFuture((EnrolledFactor) factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR)));
+                        },
+                        error -> {
+                            updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, error);
+                            handler.handle(Future.failedFuture(error));
+                        }
+                );
     }
 
     protected Factor getFactor(RoutingContext routingContext, Client client, User endUser) {
@@ -226,11 +353,29 @@ abstract class MFAChallengeEndpoint extends MFAEndpoint {
         return Template.MFA_CHALLENGE.template();
     }
 
-    private void doRedirect(HttpServerResponse response, String url) {
+    protected void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
+    protected void respondJsonChallengeError(RoutingContext routingContext, String errorKey, String errorValue, int statusCode) {
+        respondJson(routingContext, statusCode, new JsonObject().put(errorKey, errorValue), errorValue);
+    }
+
+    protected void respondJson(RoutingContext routingContext, int statusCode, JsonObject body, String sessionErrorHashSource) {
+        if (sessionErrorHashSource != null && routingContext.session() != null) {
+            routingContext.session().put(ERROR_HASH, HashUtil.generateSHA256(sessionErrorHashSource));
+        }
+        routingContext.response()
+                .setStatusCode(statusCode)
+                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                .end(body.encode());
+    }
+
     protected void handleException(RoutingContext context, String errorKey, String errorValue) {
+        handleException(context, errorKey, errorValue, context.request().path());
+    }
+
+    protected void handleException(RoutingContext context, String errorKey, String errorValue, String redirectPath) {
         final HttpServerRequest req = context.request();
         final HttpServerResponse resp = context.response();
 
@@ -238,10 +383,10 @@ abstract class MFAChallengeEndpoint extends MFAEndpoint {
         QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
         Map<String, String> parameters = new LinkedHashMap<>(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
         parameters.put(errorKey, errorValue);
-        if(context.session() != null){
+        if (context.session() != null) {
             context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorValue));
         }
-        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
+        String uri = UriBuilderRequest.resolveProxyRequest(req, redirectPath, parameters, true);
         doRedirect(resp, uri);
     }
 

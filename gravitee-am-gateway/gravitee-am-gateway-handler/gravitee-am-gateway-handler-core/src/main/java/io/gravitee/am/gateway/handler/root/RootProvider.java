@@ -47,11 +47,11 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
-import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.handler.GraviteeLoggerHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeGetEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeSendEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
@@ -131,26 +131,17 @@ import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
-import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpVersion;
-import io.vertx.ext.web.handler.LoggerFormat;
-import io.vertx.ext.web.impl.Utils;
-import io.vertx.rxjava3.ext.web.handler.LoggerFormatter;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
-import io.vertx.rxjava3.ext.web.handler.LoggerHandler;
 import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,6 +169,7 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_REMEMBERED_LOGIN = "/rememberedLogin";
     public static final String PATH_MFA_ENROLL = "/mfa/enroll";
     public static final String PATH_MFA_CHALLENGE = "/mfa/challenge";
+    public static final String PATH_MFA_CHALLENGE_SEND = "/mfa/challenge/send";
     public static final String PATH_MFA_CHALLENGE_ALTERNATIVES = "/mfa/challenge/alternatives";
     public static final String PATH_MFA_RECOVERY_CODE = "/mfa/recovery_code";
     public static final String PATH_LOGOUT = "/logout";
@@ -257,9 +249,6 @@ public class RootProvider extends AbstractProtocolProvider {
     private UserService userService;
 
     @Autowired
-    private ExecutionContextFactory executionContextFactory;
-
-    @Autowired
     private PolicyChainHandler policyChainHandler;
 
     @Autowired
@@ -306,9 +295,6 @@ public class RootProvider extends AbstractProtocolProvider {
 
     @Autowired
     private UserActivityGatewayService userActivityService;
-
-    @Autowired
-    private FactorService factorService;
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
@@ -553,6 +539,16 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new MFAChallengeGetEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
                         domainDataPlane,  rateLimiterService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+        rootRouter.post(PATH_MFA_CHALLENGE_SEND)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(rememberDeviceSettingsHandler)
+                .handler(localeHandler)
+                .handler(mfaChallengeUserHandler)
+                .handler(new MFAChallengeSendEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
+                        domainDataPlane, rateLimiterService, auditService))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.post(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
@@ -561,8 +557,8 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengePostEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domainDataPlane,  credentialService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
-                        jwtService, rememberDeviceCookieName))
+                        domainDataPlane, rateLimiterService, credentialService, verifyAttemptService, emailService, auditService,
+                        deviceIdentifierManager, jwtService, rememberDeviceCookieName))
                 .handler(handleWhen(ctx -> Boolean.TRUE.equals(ctx.session().get(MFA_CHALLENGE_COMPLETED_KEY)), policyChainHandler.create(ExtensionPoint.POST_MFA_CHALLENGE)))
                 .handler(new FinalRedirectLocationHandler())
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
@@ -772,6 +768,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_MFA_CHALLENGE)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
+        router.route(PATH_MFA_CHALLENGE_SEND)
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
@@ -849,6 +848,7 @@ public class RootProvider extends AbstractProtocolProvider {
         // MFA endpoint
         router.route(PATH_MFA_ENROLL).handler(authenticationFlowContextHandler);
         router.route(PATH_MFA_CHALLENGE).handler(authenticationFlowContextHandler);
+        router.route(PATH_MFA_CHALLENGE_SEND).handler(authenticationFlowContextHandler);
         router.route(PATH_MFA_RECOVERY_CODE).handler(authenticationFlowContextHandler);
 
         // Registration confirmation endpoint
@@ -877,6 +877,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(csrfHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(csrfHandler);
         router.route(PATH_MFA_CHALLENGE).handler(csrfHandler);
+        router.route(PATH_MFA_CHALLENGE_SEND).handler(csrfHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(csrfHandler);
         router.route(PATH_MFA_RECOVERY_CODE).handler(csrfHandler);
         router.route(PATH_MFA_ENROLL).handler(csrfHandler);

@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -111,6 +112,8 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
     @Mock
     private DomainDataPlane domainDataPlane;
     @Mock
+    private RateLimiterService rateLimiterService;
+    @Mock
     private CredentialGatewayService credentialService;
     @Mock
     private VerifyAttemptService verifyAttemptService;
@@ -151,7 +154,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
         localSessionStore = LocalSessionStore.create(vertx);
         mfaChallengeEndpoint =
                 new MFAChallengePostEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
-                        domainDataPlane, credentialService, verifyAttemptService, emailService, auditService,
+                        domainDataPlane, rateLimiterService, credentialService, verifyAttemptService, emailService, auditService,
                         deviceIdentifierManager, jwtService, ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME);
 
         router.route("/mfa/challenge")
