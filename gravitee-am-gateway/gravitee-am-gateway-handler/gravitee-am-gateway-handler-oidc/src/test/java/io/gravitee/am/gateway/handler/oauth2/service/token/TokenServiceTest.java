@@ -269,6 +269,41 @@ public class TokenServiceTest {
     }
 
     @Test
+    public void shouldCreate_hostedDelegatedAgentClientCredentialsSetsActSubToBlueprint() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        // No subject set — client_credentials (SPIFFE per-instance blueprint) flow.
+
+        Client client = new Client();
+        client.setClientId("blueprint-client-id");
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
+        client.setAgentType(AgentType.HOSTED_DELEGATED);
+        client.setAgentInstanceId("spiffe://am.local/agent/test/sample");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<JWT> jwtArgumentCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtArgumentCaptor.capture(), eq(client));
+        JWT capturedJwt = jwtArgumentCaptor.getValue();
+
+        // sub is the agent instance id; act.sub must point to the blueprint, not duplicate sub.
+        assertEquals("spiffe://am.local/agent/test/sample", capturedJwt.getSub());
+        Map<?, ?> actClaim = (Map<?, ?>) capturedJwt.get(Claims.ACT);
+        assertNotNull(actClaim);
+        assertEquals("blueprint-client-id", actClaim.get(Claims.SUB));
+        assertEquals("hosted_delegated", actClaim.get(Claims.SUB_PROFILE));
+
+        expectTokenCreatedAuditLog();
+    }
+
+    @Test
     public void shouldCreate_userEmbeddedAgentWithInstanceIdSetsActSubToInstanceId() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setSubject("userid");
