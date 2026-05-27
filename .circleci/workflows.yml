@@ -1259,7 +1259,7 @@ jobs:
       - run:
           name: "Maven Package Install (no tests)"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean install -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -T 1C -P gio-artifactory-snapshot,full-bundle clean install -DskipTests
       - save-maven-job-cache:
           jobName: pull_requests
       - run:
