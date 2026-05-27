@@ -107,7 +107,8 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
 
     const decoded = decodeJwt(response.body.access_token);
     expect(decoded.sub).toEqual(agentInstanceId);
-    expect((decoded.act as any)?.sub).toEqual(agentInstanceId);
+    // client_credentials flow: top-level sub is the instance id, so act.sub points to the blueprint client_id.
+    expect((decoded.act as any)?.sub).toEqual(agent.settings.oauth.clientId);
   });
 
   it('should reject workload-jwt with invalid signature', async () => {
@@ -186,7 +187,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
 
       const decoded = decodeJwt(response.body.access_token);
       expect(decoded.sub).toEqual(instanceId);
-      expect((decoded.act as any)?.sub).toEqual(instanceId);
+      expect((decoded.act as any)?.sub).toEqual(agent.settings.oauth.clientId);
     }
   });
 
