@@ -92,6 +92,9 @@ public interface ConstantKeys {
     String MFA_ENROLL_CONDITIONAL_SKIPPED_KEY = "mfaEnrollmentCanBeSkippedConditionally";
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
+    String MFA_CHALLENGE_SENT_FACTOR_ID_KEY = "mfaChallengeSentFactorId";
+    String MFA_CHALLENGE_RESEND_ACTION_KEY = "mfaChallengeResendAction";
+    String MFA_CHALLENGE_RESEND_ENABLED_KEY = "mfaChallengeResendEnabled";
     String STRONG_AUTH_COMPLETED_KEY = "strongAuthCompleted";
     String ENROLLED_FACTOR_ID_KEY = "enrolledFactorId";
     String ENROLLED_FACTOR_SECURITY_VALUE_KEY = "enrolledFactorSecurityValue";

@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -97,12 +98,10 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
     public static final String REMEMBER_DEVICE_CONSENT_ON = "on";
 
     private final UserService userService;
-    private final ApplicationContext applicationContext;
     private final DeviceGatewayService deviceService;
     private final CredentialGatewayService credentialService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
-    private final AuditService auditService;
     private final DeviceIdentifierManager deviceIdentifierManager;
     private final JWTService jwtService;
     private final String rememberDeviceCookieName;
@@ -113,6 +112,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                     DeviceGatewayService deviceService,
                                     ApplicationContext applicationContext,
                                     DomainDataPlane domainDataPlane,
+                                    RateLimiterService rateLimiterService,
                                     CredentialGatewayService credentialService,
                                     VerifyAttemptService verifyAttemptService,
                                     EmailService emailService,
@@ -121,14 +121,12 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                     JWTService jwtService,
                                     String rememberDeviceCookieName
     ) {
-        super(factorManager, engine, domainDataPlane, auditService);
-        this.applicationContext = applicationContext;
+        super(factorManager, engine, applicationContext, domainDataPlane, rateLimiterService, auditService);
         this.userService = userService;
         this.deviceService = deviceService;
         this.credentialService = credentialService;
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
-        this.auditService = auditService;
         this.deviceIdentifierManager = deviceIdentifierManager;
         this.jwtService = jwtService;
         this.rememberDeviceCookieName = rememberDeviceCookieName;
@@ -442,6 +440,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS);
+        ctx.session().remove(ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY);
     }
 
     private boolean userHasFido2Factor(User endUser) {

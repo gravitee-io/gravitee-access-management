@@ -711,6 +711,7 @@ div#passwordSettings > p {
 }
 .valid:before {
     padding-right: 10px;
+    padding-left: 10px;
     content: url("../images/valid.svg");
 }
 .invalid {
@@ -718,6 +719,7 @@ div#passwordSettings > p {
 }
 .invalid:before {
     padding-right: 10px;
+    padding-left: 10px;
     content: url("../images/invalid.svg");
 }
 

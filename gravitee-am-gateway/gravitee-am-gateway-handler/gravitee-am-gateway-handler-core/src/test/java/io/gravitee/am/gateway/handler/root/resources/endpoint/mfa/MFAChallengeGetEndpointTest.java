@@ -192,9 +192,58 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals("factorId", spyRoutingContext.session().get(ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY));
+        verify(factorProvider, times(1)).sendChallenge(any());
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
+    }
+
+    @Test
+    public void shouldNotSendCode_onPageReload() {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Collections.singleton("factorId"));
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
+        awaitResponseEnd(spyRoutingContext);
+
+        assertEquals("factorId", spyRoutingContext.session().get(ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY));
+
+        SpyRoutingContext reloadContext = new SpyRoutingContext();
+        reloadContext.setMethod(HttpMethod.GET);
+        reloadContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        reloadContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        reloadContext.session().put(ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY,
+                spyRoutingContext.session().get(ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY));
+        reloadContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY,
+                spyRoutingContext.session().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        reloadContext.setUser(spyRoutingContext.user());
+        reloadContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        reloadContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        mfaChallengeGetEndpoint.handle(reloadContext);
+        awaitResponseEnd(reloadContext);
+
+        verify(factorProvider, times(1)).sendChallenge(any());
     }
 
     @Test
@@ -219,15 +268,16 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         String previousTid = UUID.randomUUID().toString();
-        spyRoutingContext.session().put(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
         spyRoutingContext.putParam(ConstantKeys.ERROR_PARAM_KEY, "dummy_error");
 
         mfaChallengeGetEndpoint.handle(spyRoutingContext);
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
-        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        verify(factorProvider, never()).sendChallenge(any());
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
     }
@@ -253,7 +303,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         String previousTid = UUID.randomUUID().toString();
-        spyRoutingContext.session().put(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
 
         when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
         when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(false));
@@ -262,8 +312,8 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
-        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertTrue(spyRoutingContext.response().headers().get("location").contains("request_limit_error"));
     }
 
@@ -290,7 +340,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         String previousTid = UUID.randomUUID().toString();
-        spyRoutingContext.session().put(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
 
         when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
         when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(true));
@@ -299,8 +349,8 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
 
         awaitResponseEnd(spyRoutingContext);
 
-        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
-        Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeGetEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
     }
