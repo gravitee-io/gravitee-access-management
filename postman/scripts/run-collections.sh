@@ -32,12 +32,14 @@ PARALLELISM="${NEWMAN_PARALLELISM:-4}"
 LOGDIR="$(mktemp -d)"
 export LOGDIR
 
-# npm puts node + node_modules/.bin on PATH for this script, but the bash -c
-# subshells xargs spawns don't inherit the node binary's dir (CI installs node
-# via nvm). newman's `#!/usr/bin/env node` shebang then fails. Propagate node's
-# directory explicitly so the parallel workers can find it.
-if command -v node > /dev/null 2>&1; then
-  export PATH="$(dirname "$(command -v node)"):$PATH"
+# The bash -c subshells that xargs spawns don't inherit the node binary's dir
+# (CI installs node via nvm, which isn't on the plain PATH), so newman's
+# `#!/usr/bin/env node` shebang fails with "node: No such file or directory".
+# npm exports npm_node_execpath (absolute path to the node running this script);
+# prepend its dir so the parallel workers can resolve node.
+NODE_BIN="${npm_node_execpath:-$(command -v node 2>/dev/null || true)}"
+if [ -n "$NODE_BIN" ]; then
+  export PATH="$(dirname "$NODE_BIN"):$PATH"
 fi
 
 run_one() {
