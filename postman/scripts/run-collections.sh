@@ -42,10 +42,20 @@ if [ -n "$NODE_BIN" ]; then
   export PATH="$(dirname "$NODE_BIN"):$PATH"
 fi
 
+# --- TEMP DIAGNOSTICS (remove once node resolution confirmed) ---
+{
+  echo "DIAG top: node=$(command -v node 2>/dev/null || echo NONE) newman=$(command -v newman 2>/dev/null || echo NONE)"
+  echo "DIAG top: npm_node_execpath=${npm_node_execpath:-UNSET} npm_execpath=${npm_execpath:-UNSET}"
+  echo "DIAG top: BASH_ENV=${BASH_ENV:-UNSET} NVM_DIR=${NVM_DIR:-UNSET}"
+  echo "DIAG top: PATH=$PATH"
+} >&2
+# --- END DIAGNOSTICS ---
+
 run_one() {
   local f="$1" base start rc
   base="$(basename "$f")"
   start="$(date +%s)"
+  echo "DIAG worker[$base]: node=$(command -v node 2>/dev/null || echo NONE) PATH=$PATH" >&2
   if newman run "$f" -e environment/docker.json --ignore-redirects --insecure --bail \
         > "$LOGDIR/$base.log" 2>&1; then
     echo "PASS $base ($(($(date +%s) - start))s)"
