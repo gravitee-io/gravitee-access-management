@@ -33,6 +33,15 @@ import { setup } from '../../test-fixture';
 
 setup(200000);
 
+/**
+ * When multiple entrypoints exist (tag-based routing), the non-default entrypoint
+ * is the effective one for a domain — it represents the tag-matched routing path.
+ * Falls back to the first entrypoint in single-entrypoint environments.
+ */
+function selectEffectiveEntrypoint(entrypoints: Entrypoint[]): Entrypoint {
+  return entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find((e) => !e.defaultEntrypoint) ?? entrypoints[0]);
+}
+
 let accessToken: string;
 let domain: Domain;
 let application: Application;
@@ -77,8 +86,17 @@ describe('GET domain entrypoints', () => {
     }
   });
 
+  it('should use the non-default entrypoint for tag-based routing when multiple entrypoints are configured', () => {
+    if (entrypoints.length > 1) {
+      const selected = selectEffectiveEntrypoint(entrypoints);
+      expect(selected.defaultEntrypoint).toBeFalsy();
+    } else {
+      expect(selectEffectiveEntrypoint(entrypoints)).toBe(entrypoints[0]);
+    }
+  });
+
   it('should resolve to standard OAuth2/OIDC endpoint paths from the entrypoint base URL', async () => {
-    const entrypoint = entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find((e) => !e.defaultEntrypoint) ?? entrypoints[0]);
+    const entrypoint = selectEffectiveEntrypoint(entrypoints);
     const oidcConfig = (await getWellKnownOpenIdConfiguration(domain.hrid)).body;
 
     expect(oidcConfig.authorization_endpoint).toContain(entrypoint.url);
