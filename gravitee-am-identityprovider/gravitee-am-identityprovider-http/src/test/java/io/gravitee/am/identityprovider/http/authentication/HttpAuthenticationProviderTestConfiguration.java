@@ -51,7 +51,7 @@ public class HttpAuthenticationProviderTestConfiguration {
     public HttpIdentityProviderConfiguration httpIdentityProviderConfiguration() {
         HttpIdentityProviderConfiguration configuration = new HttpIdentityProviderConfiguration();
         HttpResourceConfiguration httpResourceConfiguration = new HttpResourceConfiguration();
-        httpResourceConfiguration.setBaseURL("http://localhost:19999/api/authentication");
+        httpResourceConfiguration.setBaseURL("http://localhost:" + HttpAuthenticationProviderTest.WIREMOCK_PORT + "/api/authentication");
         httpResourceConfiguration.setHttpMethod(HttpMethod.POST);
         HttpHeader httpHeader = new HttpHeader();
         httpHeader.setName("Content-Type");

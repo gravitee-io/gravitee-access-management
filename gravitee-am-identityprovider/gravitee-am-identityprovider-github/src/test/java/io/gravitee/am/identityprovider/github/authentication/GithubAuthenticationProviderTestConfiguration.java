@@ -45,9 +45,9 @@ public class GithubAuthenticationProviderTestConfiguration {
 
         configuration.setClientId("test-client-id");
         configuration.setClientSecret("test-client-secret");
-        configuration.setAccessTokenUri("http://localhost:19998/oauth/token");
-        configuration.setUserAuthorizationUri("http://localhost:19998/oauth/authorize");
-        configuration.setUserProfileUri("http://localhost:19998/profile");
+        configuration.setAccessTokenUri("http://localhost:" + GithubAuthenticationProviderTest.WIREMOCK_PORT + "/oauth/token");
+        configuration.setUserAuthorizationUri("http://localhost:" + GithubAuthenticationProviderTest.WIREMOCK_PORT + "/oauth/authorize");
+        configuration.setUserProfileUri("http://localhost:" + GithubAuthenticationProviderTest.WIREMOCK_PORT + "/profile");
 
         return configuration;
     }

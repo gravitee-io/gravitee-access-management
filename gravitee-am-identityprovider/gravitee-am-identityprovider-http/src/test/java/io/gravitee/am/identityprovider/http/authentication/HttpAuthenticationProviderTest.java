@@ -70,8 +70,18 @@ public class HttpAuthenticationProviderTest {
     @Autowired
     private DefaultIdentityProviderMapper mapper;
 
+    public static final int WIREMOCK_PORT = freePort();
+
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(WIREMOCK_PORT));
+
+    private static int freePort() {
+        try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("No free port available for WireMock", e);
+        }
+    }
 
     @Test
     public void shouldLoadUserByUsername_authentication() {

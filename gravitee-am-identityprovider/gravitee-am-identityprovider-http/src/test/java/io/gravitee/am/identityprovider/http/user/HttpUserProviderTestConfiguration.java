@@ -99,7 +99,7 @@ public class HttpUserProviderTestConfiguration {
         deleteResource.setHttpResponseErrorConditions(Arrays.asList(deleteErrorCondition));
 
         HttpUsersResourceConfiguration usersResourceConfiguration = new HttpUsersResourceConfiguration();
-        usersResourceConfiguration.setBaseURL("http://localhost:19998/api");
+        usersResourceConfiguration.setBaseURL("http://localhost:" + HttpUserProviderTest.WIREMOCK_PORT + "/api");
         usersResourceConfiguration.setIdentifierAttribute("id");
         usersResourceConfiguration.setApplyUserMapper(true);
 

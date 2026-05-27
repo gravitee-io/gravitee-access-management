@@ -50,9 +50,9 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
         configuration.setResponseType(ProviderResponseType.CODE);
         configuration.setClientId("test-client-id");
         configuration.setClientSecret("test-client-secret");
-        configuration.setAccessTokenUri("http://localhost:19999/oauth/token");
-        configuration.setUserAuthorizationUri("http://localhost:19999/oauth/authorize");
-        configuration.setUserProfileUri("http://localhost:19999/profile");
+        configuration.setAccessTokenUri("http://localhost:" + OAuth2GenericAuthenticationProviderTest.WIREMOCK_PORT + "/oauth/token");
+        configuration.setUserAuthorizationUri("http://localhost:" + OAuth2GenericAuthenticationProviderTest.WIREMOCK_PORT + "/oauth/authorize");
+        configuration.setUserProfileUri("http://localhost:" + OAuth2GenericAuthenticationProviderTest.WIREMOCK_PORT + "/profile");
 
         return configuration;
     }
