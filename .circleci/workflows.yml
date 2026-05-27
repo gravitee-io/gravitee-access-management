@@ -1214,7 +1214,7 @@ jobs:
       - run:
           name: "Maven verify (backend)"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui -Dlicense.skip=true
+            mvn -s /tmp/.gravitee.settings.xml -T 1C verify -pl \!gravitee-am-ui -Dlicense.skip=true
       - run:
           name: Save test results
           command: |
