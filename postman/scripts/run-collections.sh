@@ -30,32 +30,11 @@ cd "$(dirname "$0")/.."
 
 PARALLELISM="${NEWMAN_PARALLELISM:-4}"
 LOGDIR="$(mktemp -d)"
-export LOGDIR
-
-# The bash -c subshells that xargs spawns don't inherit the node binary's dir
-# (CI installs node via nvm, which isn't on the plain PATH), so newman's
-# `#!/usr/bin/env node` shebang fails with "node: No such file or directory".
-# npm exports npm_node_execpath (absolute path to the node running this script);
-# prepend its dir so the parallel workers can resolve node.
-NODE_BIN="${npm_node_execpath:-$(command -v node 2>/dev/null || true)}"
-if [ -n "$NODE_BIN" ]; then
-  export PATH="$(dirname "$NODE_BIN"):$PATH"
-fi
-
-# --- TEMP DIAGNOSTICS (remove once node resolution confirmed) ---
-{
-  echo "DIAG top: node=$(command -v node 2>/dev/null || echo NONE) newman=$(command -v newman 2>/dev/null || echo NONE)"
-  echo "DIAG top: npm_node_execpath=${npm_node_execpath:-UNSET} npm_execpath=${npm_execpath:-UNSET}"
-  echo "DIAG top: BASH_ENV=${BASH_ENV:-UNSET} NVM_DIR=${NVM_DIR:-UNSET}"
-  echo "DIAG top: PATH=$PATH"
-} >&2
-# --- END DIAGNOSTICS ---
 
 run_one() {
   local f="$1" base start rc
   base="$(basename "$f")"
   start="$(date +%s)"
-  echo "DIAG worker[$base]: node=$(command -v node 2>/dev/null || echo NONE) PATH=$PATH" >&2
   if newman run "$f" -e environment/docker.json --ignore-redirects --insecure --bail \
         > "$LOGDIR/$base.log" 2>&1; then
     echo "PASS $base ($(($(date +%s) - start))s)"
@@ -65,10 +44,23 @@ run_one() {
     touch "$LOGDIR/$base.failed"
   fi
 }
-export -f run_one
 
+# Run with bounded concurrency using background jobs (forks of THIS shell), so
+# each worker inherits the exact environment npm set up for the script - notably
+# node on PATH. (A previous xargs/`bash -c` approach spawned fresh shells that
+# re-sourced CI's BASH_ENV and lost node, breaking newman's env-node shebang.)
 echo "Running $(ls collections/*.json | wc -l | tr -d ' ') collections, ${PARALLELISM} at a time"
-ls collections/*.json | xargs -P "$PARALLELISM" -I{} bash -c 'run_one "$@"' _ {}
+i=0
+for f in collections/*.json; do
+  run_one "$f" &
+  i=$((i + 1))
+  # Wait for the current batch to drain before launching the next. Plain `wait`
+  # (vs `wait -n`) keeps this portable across bash versions.
+  if [ $((i % PARALLELISM)) -eq 0 ]; then
+    wait
+  fi
+done
+wait
 
 if compgen -G "$LOGDIR/*.failed" > /dev/null; then
   echo "=== Failed collection logs ==="
