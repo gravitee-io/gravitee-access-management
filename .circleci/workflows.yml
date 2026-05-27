@@ -468,7 +468,7 @@ jobs:
             mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true deploy -DskipTests
       - save-maven-job-cache:
           jobName: build_branch_nexus
-  run_jest_tests_mongo:
+  run_management_jest_mongo:
     parameters:
       mongo_version:
         type: string
@@ -501,14 +501,8 @@ jobs:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
-          name: Bring up SPIRE overlay
-          command: npm --prefix docker/local-stack run stack:dev:spire
-      - run:
           name: Run Management Jest tests (parallel)
           command: JEST_JUNIT_OUTPUT_NAME=junit-management.xml npm --prefix gravitee-am-test run ci:management:parallel
-      - run:
-          name: Run Gateway Jest tests (sequential)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -519,7 +513,7 @@ jobs:
           when: always
           command: npm --prefix docker/local-stack run stack:down
 
-  run_jest_tests_psql:
+  run_management_jest_psql:
     parameters:
       psql_version:
         type: string
@@ -555,9 +549,110 @@ jobs:
       - run:
           name: Run Management Jest tests (parallel)
           command: JEST_JUNIT_OUTPUT_NAME=junit-management.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
       - run:
-          name: Run Gateway Jest tests (sequential)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_gateway_jest_mongo:
+    parameters:
+      mongo_version:
+        type: string
+    parallelism: 5
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: mongodb
+      GIO_MAX_MEM: 512m
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Create CIBA image
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+      - run:
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up stack with Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
+      - run:
+          name: Bring up SPIRE overlay
+          command: npm --prefix docker/local-stack run stack:dev:spire
+      - run:
+          name: Run Gateway Jest tests (this container's split, sequential)
+          command: |
+            cd gravitee-am-test
+            SPECS=$(circleci tests glob "specs/gateway/**/*.spec.ts" | circleci tests split --split-by=timings)
+            echo "This container will run:"; echo "$SPECS"
+            JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm run ci -- $SPECS
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_gateway_jest_psql:
+    parameters:
+      psql_version:
+        type: string
+    parallelism: 5
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: jdbc
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Create CIBA image
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+      - run:
+          name: Prepare JDBC plugins
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
+      - run:
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up stack with Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
+      - run:
+          name: Run Gateway Jest tests (this container's split, sequential)
+          command: |
+            cd gravitee-am-test
+            SPECS=$(circleci tests glob "specs/gateway/**/*.spec.ts" | circleci tests split --split-by=timings)
+            echo "This container will run:"; echo "$SPECS"
+            JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm run ci -- $SPECS
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -588,10 +683,10 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
+      - install-jdk-25
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
@@ -642,10 +737,10 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
+      - install-jdk-25
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
@@ -2088,14 +2183,28 @@ workflows:
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "17.2"]
-      - run_jest_tests_mongo:
+      - run_management_jest_mongo:
           context: cicd-orchestrator
           requires:
             - process_pull_request
           matrix:
             parameters:
               mongo_version: ["4.4", "8.2"]
-      - run_jest_tests_psql:
+      - run_management_jest_psql:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              psql_version: ["11.18-bullseye", "17.2"]
+      - run_gateway_jest_mongo:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              mongo_version: ["4.4", "8.2"]
+      - run_gateway_jest_psql:
           context: cicd-orchestrator
           requires:
             - process_pull_request
