@@ -32,6 +32,14 @@ PARALLELISM="${NEWMAN_PARALLELISM:-4}"
 LOGDIR="$(mktemp -d)"
 export LOGDIR
 
+# npm puts node + node_modules/.bin on PATH for this script, but the bash -c
+# subshells xargs spawns don't inherit the node binary's dir (CI installs node
+# via nvm). newman's `#!/usr/bin/env node` shebang then fails. Propagate node's
+# directory explicitly so the parallel workers can find it.
+if command -v node > /dev/null 2>&1; then
+  export PATH="$(dirname "$(command -v node)"):$PATH"
+fi
+
 run_one() {
   local f="$1" base start rc
   base="$(basename "$f")"
