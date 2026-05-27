@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Copyright (C) 2015 The Gravitee team (http://gravitee.io)
 #
@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 # Run all Postman collections with bounded concurrency.
 #
 # Each collection provisions its own uniquely-named domain (flows-app-version,
@@ -22,6 +23,7 @@
 # to avoid overwhelming the single-container gateway with simultaneous domain
 # deploys. Each collection logs to its own file; on failure the failing logs are
 # printed and the script exits non-zero.
+
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
