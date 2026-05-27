@@ -46,7 +46,6 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -485,7 +484,7 @@ public class TokenServiceImpl implements TokenService {
         // used for client-only flows in createJWT.
         if (client.isAgentApplication() && jwt.get(Claims.ACT) == null) {
             Map<String, Object> act = new HashMap<>();
-            act.put(Claims.SUB, resolveAgentActSubject(client));
+            act.put(Claims.SUB, resolveAgentActSubject(request, client));
             if (client.getAgentType() != null) {
                 act.put(Claims.SUB_PROFILE, client.getAgentType().name().toLowerCase());
             }
@@ -514,13 +513,12 @@ public class TokenServiceImpl implements TokenService {
         return jwt;
     }
 
-    // For user-bound agent kinds the issued token's top-level sub is the end-user, so the agent
-    // instance id (when known) is the truer actor identity to expose in act.sub. AUTONOMOUS keeps
-    // the blueprint client_id since its top-level sub already exposes the instance id.
-    private static String resolveAgentActSubject(Client client) {
-        AgentType agentType = client.getAgentType();
-        boolean userBound = agentType == AgentType.USER_EMBEDDED || agentType == AgentType.HOSTED_DELEGATED;
-        return userBound ? resolveAgentSubject(client) : client.getClientId();
+    // act.sub is the counterpart to the token's top-level sub. In user-bound flows the top-level sub
+    // is the end-user, so the agent instance id (when known) is the truer actor identity to expose.
+    // In client-only flows (client_credentials, incl. SPIFFE per-instance blueprints) the top-level
+    // sub is already the agent instance id, so act.sub must point to the blueprint client_id.
+    private static String resolveAgentActSubject(OAuth2Request request, Client client) {
+        return request.isClientOnly() ? client.getClientId() : resolveAgentSubject(client);
     }
 
     // The agent's subject identity: its instance id when known, otherwise the blueprint client_id.
