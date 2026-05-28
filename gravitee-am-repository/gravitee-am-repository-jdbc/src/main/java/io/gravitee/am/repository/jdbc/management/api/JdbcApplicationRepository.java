@@ -123,7 +123,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     private String insertStatement;
     private String updateStatement;
 
-    protected Application toEntity(JdbcApplication entity) {
+    Application toEntity(JdbcApplication entity) {
         return mapper.map(entity, Application.class);
     }
 
@@ -137,7 +137,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         this.updateStatement = createUpdateStatement("applications", columns, List.of(COL_ID));
     }
 
-    private Single<Application> completeApplication(Application entity) {
+    Single<Application> completeApplication(Application entity) {
         return Single.just(entity).flatMap(app ->
                 identityRepository.findAllByApplicationId(app.getId()).toList()
                         .map(idps -> idps.stream().map(this::convertIdentity).collect(toCollection(TreeSet::new)))
@@ -341,7 +341,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         return fluxToFlowable(searchSpec
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
                 .all()).map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
+                .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
                 .flatMap(data -> monoToSingle(countSpec
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())

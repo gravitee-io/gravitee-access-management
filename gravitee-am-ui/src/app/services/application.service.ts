@@ -19,6 +19,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
+import { CursorResponse } from '../utils/cursor';
 
 import { AuthService } from './auth.service';
 
@@ -35,6 +36,28 @@ export class ApplicationService {
     private http: HttpClient,
     private authService: AuthService,
   ) {}
+
+  cursorSearch(
+    domainId: string,
+    size: number,
+    page: number,
+    sort: { prop: string; dir: string },
+    query?: string,
+  ): Observable<CursorResponse> {
+    if (query) {
+      return this.http.get<any>(
+        this.appsURL + domainId + `/applications/search?page=${page}&limit=${size}&sort=${sort.prop}&dir=${sort.dir}&q=${query}`,
+      );
+    } else {
+      return this.http.get<any>(
+        this.appsURL + domainId + `/applications/search?page=${page}&limit=${size}&sort=${sort.prop}&dir=${sort.dir}`,
+      );
+    }
+  }
+
+  cursorNext(next: string): Observable<CursorResponse> {
+    return this.http.get<any>(AppConfig.settings.baseURL + next);
+  }
 
   findByDomain(domainId, page, size, type?: string | string[]): Observable<any> {
     const typeParam = this.buildTypeParam(type);

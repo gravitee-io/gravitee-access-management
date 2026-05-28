@@ -91,6 +91,11 @@ public class MsSqlHelper extends AbstractDialectHelper {
     }
 
     @Override
+    public String buildPagingClauseUsingOffset(String orderByClause, int offset, int size) {
+        return " ORDER BY " + orderByClause + " OFFSET " + offset + " ROWS FETCH NEXT " + size + " ROWS ONLY ";
+    }
+
+    @Override
     public boolean supportsReturningOnDelete() {
         return true;
     }

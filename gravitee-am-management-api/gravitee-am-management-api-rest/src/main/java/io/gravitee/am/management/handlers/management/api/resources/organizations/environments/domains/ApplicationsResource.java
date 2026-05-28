@@ -114,7 +114,7 @@ public class ApplicationsResource extends AbstractDomainResource {
                 ? checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
                 : io.reactivex.rxjava3.core.Completable.complete();
 
-        final Set<ApplicationExpand> expands = convertToApplicationExpands(expandsParam);
+        final Set<ApplicationExpand> expands = ApplicationExpand.convertToApplicationExpands(expandsParam);
         ownerPermissionCheck
                 .andThen(checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST))
                 .andThen(checkDomainExists(domain).ignoreElement())
@@ -132,14 +132,6 @@ public class ApplicationsResource extends AbstractDomainResource {
                                 apps.getTotalCount())
                 )
                 .subscribe(response::resume, response::resume);
-    }
-
-    private Set<ApplicationExpand> convertToApplicationExpands(List<String> expandsParam) {
-        return expandsParam == null ? Set.of() :
-                expandsParam.stream()
-                        .map(ApplicationExpand::fromString)
-                        .filter(e -> e != null)
-                        .collect(Collectors.toSet());
     }
 
     private Single<Page<Application>> listApplications(String domain, String organizationId, ApplicationFilter filter, int page, int size, String query) {
@@ -204,6 +196,11 @@ public class ApplicationsResource extends AbstractDomainResource {
     @Path("{application}")
     public ApplicationResource getApplicationResource() {
         return resourceContext.getResource(ApplicationResource.class);
+    }
+
+    @Path("search")
+    public ApplicationsResourceSearcher search() {
+        return resourceContext.getResource(ApplicationsResourceSearcher.class);
     }
 
     public static final class ApplicationPage extends Page<FilteredApplication> {

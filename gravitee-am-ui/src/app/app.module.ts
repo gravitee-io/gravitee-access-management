@@ -269,7 +269,6 @@ import { RoleSelectionComponent } from './domain/components/role-selection/role-
 import { CertificateSelectionComponent } from './domain/components/certificate-selection/certificate-selection.component';
 import { ApplicationsComponent } from './domain/applications/applications.component';
 import { ApplicationService } from './services/application.service';
-import { ApplicationsResolver } from './resolvers/applications.resolver';
 import { ApplicationResolver } from './resolvers/application.resolver';
 import { ApplicationCreationComponent } from './domain/applications/creation/application-creation.component';
 import { ApplicationCreationStep1Component } from './domain/applications/creation/steps/step1/step1.component';
@@ -948,7 +947,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationService,
     ProtectedResourceService,
     McpServersService,
-    ApplicationsResolver,
     AgentsResolver,
     ApplicationResolver,
     MembershipsResolver,

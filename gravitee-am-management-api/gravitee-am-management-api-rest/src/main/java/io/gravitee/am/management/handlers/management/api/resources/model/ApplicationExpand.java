@@ -16,6 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.model;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public enum ApplicationExpand {
     CLIENT_ID("clientId");
@@ -35,4 +38,13 @@ public enum ApplicationExpand {
                 .findFirst()
                 .orElse(null);
     }
+
+    public static Set<ApplicationExpand> convertToApplicationExpands(List<String> expandsParam) {
+        return expandsParam == null ? Set.of() :
+                expandsParam.stream()
+                        .map(ApplicationExpand::fromString)
+                        .filter(e -> e != null)
+                        .collect(Collectors.toSet());
+    }
+
 }

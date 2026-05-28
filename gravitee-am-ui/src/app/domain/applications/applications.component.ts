@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
 
-import { DialogService } from '../../services/dialog.service';
-import { SnackbarService } from '../../services/snackbar.service';
-import { ApplicationService, NON_AGENT_APPLICATION_TYPES } from '../../services/application.service';
+import { ApplicationService } from '../../services/application.service';
+import { CursorResponse, NgxTablePageInfo } from '../../utils/cursor';
 
 @Component({
   selector: 'app-applications',
@@ -26,15 +27,25 @@ import { ApplicationService, NON_AGENT_APPLICATION_TYPES } from '../../services/
   styleUrls: ['./applications.component.scss'],
   standalone: false,
 })
-export class ApplicationsComponent implements OnInit {
+export class ApplicationsComponent implements OnInit, OnDestroy {
+  private searchSubject = new Subject<string>();
+  private loadSubject = new Subject<{ cursor?: string }>();
+  private searchSubscription: Subscription;
+  private loadSubscription: Subscription;
   applications: any[];
   private searchValue: string;
   domainId: string;
-  page: any = {};
+  loadingApplications = false;
+  page = {
+    totalElements: 0,
+    pageNumber: 0,
+    size: 10,
+  };
+  nextCursor: string;
+
+  sorts = [{ prop: 'updatedAt', dir: 'desc' }];
 
   constructor(
-    private dialogService: DialogService,
-    private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private route: ActivatedRoute,
   ) {
@@ -44,34 +55,91 @@ export class ApplicationsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    const pagedApps = this.route.snapshot.data['applications'];
-    this.applications = pagedApps.data;
-    this.page.totalElements = pagedApps.totalCount;
+    this.loadSubscription = this.loadSubject
+      .pipe(
+        switchMap(({ cursor }) => {
+          this.loadingApplications = true;
+          return this.getAppsRequest(cursor).pipe(finalize(() => (this.loadingApplications = false)));
+        }),
+      )
+      .subscribe((pagedApps) => this.applyPage(pagedApps));
+
+    this.searchSubscription = this.searchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
+      this.page.pageNumber = 0;
+      this.nextCursor = undefined;
+      this.searchValue = value;
+      this.loadApps();
+    });
+
+    this.loadApps();
+  }
+
+  ngOnDestroy() {
+    this.searchSubscription?.unsubscribe();
+    this.loadSubscription?.unsubscribe();
   }
 
   onSearch(event) {
-    this.page.pageNumber = 0;
-    this.searchValue = event.target.value;
-    this.loadApps();
+    this.searchSubject.next(event?.target?.value);
   }
 
   loadApps() {
-    const findApps = this.searchValue
-      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*', NON_AGENT_APPLICATION_TYPES)
-      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size, NON_AGENT_APPLICATION_TYPES);
-
-    findApps.subscribe((pagedApps) => {
-      this.page.totalElements = pagedApps.totalCount;
-      this.applications = pagedApps.data;
-    });
+    this.loadSubject.next({});
   }
 
-  setPage(pageInfo) {
-    this.page.pageNumber = pageInfo.offset;
-    this.loadApps();
+  loadAppsWithCursor(cursor: string) {
+    this.loadSubject.next({ cursor });
+  }
+
+  setPage(pageInfo: NgxTablePageInfo) {
+    if (this.page.pageNumber + 1 === pageInfo.offset && this.nextCursor) {
+      this.page.pageNumber = pageInfo.offset;
+      this.loadAppsWithCursor(this.nextCursor);
+    } else {
+      this.page.pageNumber = pageInfo.offset;
+      this.loadApps();
+    }
   }
 
   get isEmpty() {
     return !this.applications || (this.applications.length === 0 && !this.searchValue);
+  }
+
+  get showTable() {
+    return !this.isEmpty || this.loadingApplications;
+  }
+
+  setSort($event: any) {
+    const sort = $event?.sorts?.[0];
+    if (!sort) {
+      return;
+    }
+    this.sorts = [sort];
+    this.page.pageNumber = 0;
+    this.nextCursor = undefined;
+    this.loadApps();
+  }
+
+  private getAppsRequest(cursor?: string) {
+    if (cursor) {
+      return this.applicationService.cursorNext(cursor);
+    }
+
+    return this.searchValue
+      ? this.applicationService.cursorSearch(
+          this.domainId,
+          this.page.size,
+          this.page.pageNumber,
+          this.sorts[0],
+          '*' + this.searchValue + '*',
+        )
+      : this.applicationService.cursorSearch(this.domainId, this.page.size, this.page.pageNumber, this.sorts[0]);
+  }
+
+  private applyPage(pagedApps: CursorResponse) {
+    this.page.totalElements = pagedApps.totalCount;
+    this.applications = pagedApps.data;
+    this.nextCursor = pagedApps.nextCursor;
+    this.page.pageNumber = pagedApps.page;
   }
 }

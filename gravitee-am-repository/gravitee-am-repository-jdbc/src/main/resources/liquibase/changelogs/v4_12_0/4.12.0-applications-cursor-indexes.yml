@@ -1,0 +1,92 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-create-idx_application_domain_updated_at_id
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_application_domain_updated_at_id
+                tableName: applications
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: updated_at
+              - column:
+                  name: id
+            indexName: idx_application_domain_updated_at_id
+            tableName: applications
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-idx_application_domain_updated_at_id_desc
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_application_domain_updated_at_id_desc
+                tableName: applications
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: updated_at
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+            indexName: idx_application_domain_updated_at_id_desc
+            tableName: applications
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-idx_application_domain_name_id
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_application_domain_name_id
+                tableName: applications
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: name
+              - column:
+                  name: id
+            indexName: idx_application_domain_name_id
+            tableName: applications
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-idx_application_domain_name_id_desc
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_application_domain_name_id_desc
+                tableName: applications
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: name
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+            indexName: idx_application_domain_name_id_desc
+            tableName: applications
+            unique: false
