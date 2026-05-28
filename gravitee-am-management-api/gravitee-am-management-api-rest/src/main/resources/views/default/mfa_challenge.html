@@ -91,7 +91,7 @@
 </div>
 
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
-<script th:if="${mfaChallengeResendEnabled}" th:inline="javascript">
+<script th:if="${mfaChallengeResendEnabled}" th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
     window.mfaChallengeResendConfig = {
         url: /*[[${mfaChallengeResendAction}]]*/ '',
         csrfParameterName: /*[[${_csrf.parameterName}]]*/ '',
