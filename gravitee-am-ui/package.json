@@ -39,7 +39,7 @@
     "@asciidoctor/core": "3.0.4",
     "@ctrl/ngx-codemirror": "7.0.0",
     "@gravitee/ui-components": "4.3.3",
-    "@gravitee/ui-particles-angular": "16.4.0",
+    "@gravitee/ui-particles-angular": "16.4.2",
     "@ngx-formly/core": "6.3.12",
     "@ngx-formly/material": "6.3.12",
     "@openfga/frontend-utils": "0.2.0-beta.11",
