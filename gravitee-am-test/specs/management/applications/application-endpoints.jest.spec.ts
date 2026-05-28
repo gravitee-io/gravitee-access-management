@@ -86,13 +86,12 @@ describe('GET domain entrypoints', () => {
     }
   });
 
-  it('should use the non-default entrypoint for tag-based routing when multiple entrypoints are configured', () => {
-    if (entrypoints.length > 1) {
-      const selected = selectEffectiveEntrypoint(entrypoints);
-      expect(selected.defaultEntrypoint).toBeFalsy();
-    } else {
-      expect(selectEffectiveEntrypoint(entrypoints)).toBe(entrypoints[0]);
-    }
+  it('should return the sole entrypoint in a single-entrypoint environment', () => {
+    // No other test creates or modifies environment-level entrypoints so the count
+    // is always 1 in this environment. The non-default tag-based routing path in
+    // selectEffectiveEntrypoint requires a multi-entrypoint environment to exercise directly.
+    expect(entrypoints.length).toBe(1);
+    expect(selectEffectiveEntrypoint(entrypoints)).toBe(entrypoints[0]);
   });
 
   it('should resolve to standard OAuth2/OIDC endpoint paths from the entrypoint base URL', async () => {
