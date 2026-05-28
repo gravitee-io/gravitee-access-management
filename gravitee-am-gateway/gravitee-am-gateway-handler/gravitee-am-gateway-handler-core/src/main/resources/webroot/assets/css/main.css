@@ -121,6 +121,12 @@
     --error-text-border-color: rgba(202, 71, 71, 0.2);
     --error-text-border-radius: 8px;
     --error-text-color: #CA4747;
+    --success-text-background: var(--white);
+    --success-text-border-width: 2px;
+    --success-text-background: var(--white);
+    --success-text-border-color: rgba(27, 94, 32, 0.2);
+    --success-text-color: #1b5e20;
+    --success-text-border-radius: 8px;
     --link-text-color: #22233B;
     --radio-card-background-color: var(--white);
     --radio-card-border-width: 1px;
@@ -714,6 +720,25 @@ div#passwordSettings > p {
     padding-left: 10px;
     content: url("../images/valid.svg");
 }
+
+.resend-success {
+    background: var(--success-text-background);
+    border: var(--success-text-border-width) solid var(--success-text-border-color);
+    border-radius: var(--success-text-border-radius);
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: var(--success-text-color);
+    flex-grow: 1;
+    padding: 0;
+    height: auto;
+}
+
+.resend-success > span {
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
+
 .invalid {
     color: var(--font-light-color);
 }
