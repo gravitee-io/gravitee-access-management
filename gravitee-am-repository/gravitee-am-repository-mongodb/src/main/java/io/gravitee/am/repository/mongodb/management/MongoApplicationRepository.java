@@ -118,7 +118,7 @@ import static java.util.stream.Collectors.toSet;
 @Component
 public class MongoApplicationRepository extends AbstractManagementMongoRepository implements ApplicationRepository {
 
-    private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
+    static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
     private static final String FIELD_APPLICATION_IDENTITY_PROVIDERS = "identityProviders";
     private static final String FIELD_IDENTITY = "identity";
     private static final String FIELD_ENABLED = "enabled";
@@ -149,6 +149,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         // Case-insensitive indexes for search functionality
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), indexOptionsWithCollation("d1soc1_ci"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), indexOptionsWithCollation("d1n1_ci"));
+
+        // Cursor pagination indexes: (domain, sortField, _id) in both directions for updatedAt and name
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_UPDATED_AT, 1).append(FIELD_ID, 1), new IndexOptions().name("d1u1i1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_UPDATED_AT, -1).append(FIELD_ID, -1), new IndexOptions().name("d1u_1i_1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_ID, 1), new IndexOptions().name("d1n1i1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, -1).append(FIELD_ID, -1), new IndexOptions().name("d1n_1i_1"));
 
         super.createIndex(applicationsCollection, indexes);
     }
@@ -383,7 +389,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return filters;
     }
 
-    private ApplicationMongo convert(Application other) {
+    static ApplicationMongo convert(Application other) {
         ApplicationMongo applicationMongo = new ApplicationMongo();
         applicationMongo.setId(other.getId());
         applicationMongo.setName(other.getName());
@@ -408,7 +414,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
 
-    private static Application convert(ApplicationMongo other) {
+    static Application convert(ApplicationMongo other) {
         Application application = new Application();
         application.setId(other.getId());
         application.setName(other.getName());

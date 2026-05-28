@@ -11,6 +11,29 @@
   }
 }
 
+.applications-loading-wrapper {
+  position: relative;
+}
+
+.applications-table-overlay {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 65%);
+  inset: 0;
+}
+
+.applications-table-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgb(0 0 0 / 15%);
+  border-radius: 50%;
+  border-top-color: #1976d2;
+  animation: applications-spinner 0.8s linear infinite;
+}
+
 .gv-page-content {
   ngx-datatable {
     .app-header {
@@ -53,6 +76,12 @@
 :host ::ng-deep.app-disabled .mat-badge-content {
   background: red;
   color: white;
+}
+
+@keyframes applications-spinner {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 :host ::ng-deep.app-is-template .mat-badge-content {

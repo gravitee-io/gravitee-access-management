@@ -91,11 +91,15 @@ public interface DatabaseDialectHelper {
         return buildPagingClauseUsingOffset(field, asc, page * size, size);
     }
 
+    String buildPagingClauseUsingOffset(String orderByClause, int offset, int size);
+
     boolean supportsReturningOnDelete();
 
     String buildAuthorizationCodeDeleteAndReturnQuery();
 
     String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size);
+
+    String applicationClientIdColumn(String alias);
 
     /**
      * Escapes special characters in a value that will be used in a SQL LIKE pattern.

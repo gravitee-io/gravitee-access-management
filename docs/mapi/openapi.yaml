@@ -1095,6 +1095,188 @@ paths:
                 $ref: "#/components/schemas/Application"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search:
+    get:
+      tags:
+      - application
+      - domain
+      summary: List applications with cursor-based pagination
+      description: "List applications using cursor-based pagination for improved performance\
+        \ at scale. User must have APPLICATION[LIST] permission on the specified domain,\
+        \ environment or organization."
+      operationId: searchApplications
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: updatedAt
+      - name: dir
+        in: query
+        schema:
+          type: string
+          default: DESC
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: expand
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          pattern: ^enabled|disabled$
+          type: string
+      - name: owner.email
+        in: query
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - WEB
+            - NATIVE
+            - BROWSER
+            - SERVICE
+            - RESOURCE_SERVER
+            - AGENT
+      responses:
+        "200":
+          description: List applications with cursor pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationCursorPage"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor:
+    get:
+      tags:
+      - application
+      - domain
+      summary: List applications with cursor-based pagination
+      description: "List applications using cursor-based pagination for improved performance\
+        \ at scale. User must have APPLICATION[LIST] permission on the specified domain,\
+        \ environment or organization."
+      operationId: searchApplicationsCursor
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: expand
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: updatedAt
+      - name: dir
+        in: query
+        schema:
+          type: string
+          default: DESC
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          pattern: ^enabled|disabled$
+          type: string
+      - name: owner.email
+        in: query
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - WEB
+            - NATIVE
+            - BROWSER
+            - SERVICE
+            - RESOURCE_SERVER
+            - AGENT
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List applications with cursor pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationCursorPage"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}:
     get:
       tags:
@@ -12432,6 +12614,8 @@ components:
           type: boolean
         skipConsent:
           type: boolean
+    ApplicationCursorPage:
+      type: object
     ApplicationEntity:
       type: object
       properties:

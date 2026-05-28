@@ -120,7 +120,6 @@ import { TagComponent } from './settings/management/tags/tag/tag.component';
 import { TagResolver } from './resolvers/tag.resolver';
 import { GroupMembersResolver } from './resolvers/group-members.resolver';
 import { ApplicationsComponent } from './domain/applications/applications.component';
-import { ApplicationsResolver } from './resolvers/applications.resolver';
 import { AgentsComponent } from './domain/agents/agents.component';
 import { AgentsResolver } from './resolvers/agents.resolver';
 import { AgentCreationComponent } from './domain/agents/creation/agent-creation.component';
@@ -1439,9 +1438,6 @@ export const routes: Routes = [
                         path: '',
                         pathMatch: 'full',
                         component: ApplicationsComponent,
-                        resolve: {
-                          applications: ApplicationsResolver,
-                        },
                       },
                       {
                         path: 'new',

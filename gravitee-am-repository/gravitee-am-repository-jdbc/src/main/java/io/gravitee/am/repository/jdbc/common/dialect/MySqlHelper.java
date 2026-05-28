@@ -80,6 +80,11 @@ public class MySqlHelper extends AbstractDialectHelper {
     }
 
     @Override
+    public String buildPagingClauseUsingOffset(String orderByClause, int offset, int size) {
+        return " ORDER BY " + orderByClause + " LIMIT " + size + " OFFSET " + offset;
+    }
+
+    @Override
     public boolean supportsReturningOnDelete() {
         return false;
     }

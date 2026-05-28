@@ -421,6 +421,16 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
+    public String buildPagingClauseUsingOffset(String orderByClause, int offset, int size) {
+        throw new UnsupportedOperationException("Dialect must implement cursor paging clause generation");
+    }
+
+    @Override
+    public String applicationClientIdColumn(String alias) {
+        return alias + "." + toSql(SqlIdentifier.quoted("settings_client_id"));
+    }
+
+    @Override
     public String buildFindApplicationByDomainAndClient() {
         return new StringBuilder("SELECT * FROM applications a WHERE ")
                 .append(" a.domain = :domain ")
@@ -472,7 +482,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     protected void appendCriteriaFilters(ApplicationCriteria criteria, StringBuilder builder) {
-        criteria.getApplicationIds().filter(ids -> !ids.isEmpty()).ifPresent(ids -> builder.append(" AND a.id IN (:applicationIds)"));
+        criteria.getApplicationIds().ifPresent(ids -> builder.append(" AND a.id IN (:applicationIds)"));
         criteria.getEnabled().ifPresent(enabled -> builder.append(" AND a.enabled = :enabled"));
         criteria.getTypes().ifPresent(types -> builder.append(" AND a.type IN (:types)"));
     }

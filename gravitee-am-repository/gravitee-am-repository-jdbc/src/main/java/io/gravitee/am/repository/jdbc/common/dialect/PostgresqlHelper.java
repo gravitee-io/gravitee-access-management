@@ -132,7 +132,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(" AND (")
                 .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? LIKE : "= ")
+                .append(" OR upper(" + applicationClientIdColumn("a") + ") ").append(wildcard ? LIKE : "= ")
                 .append(VALUE_PARAM)
                 .append(" ) ");
     }
@@ -140,6 +140,16 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     public String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size) {
         String direction = asc ? "" : " DESC";
         return " ORDER BY " + field + direction + " LIMIT " + size + " OFFSET " + offset;
+    }
+
+    @Override
+    public String buildPagingClauseUsingOffset(String orderByClause, int offset, int size) {
+        return " ORDER BY " + orderByClause + " LIMIT " + size + " OFFSET " + offset;
+    }
+
+    @Override
+    public String applicationClientIdColumn(String alias) {
+        return alias + ".settings->'oauth'->>'clientId'";
     }
 
     @Override
@@ -159,7 +169,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     public String buildFindApplicationByDomainAndClient() {
         return new StringBuilder("SELECT * FROM applications a WHERE ")
                 .append(" a.domain = :domain ")
-                .append(" AND a.settings->'oauth'->>'clientId' = :clientId").toString();
+                .append(" AND " + applicationClientIdColumn("a") + " = :clientId").toString();
     }
 
     @Override
@@ -181,7 +191,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
                 .append(escapeSuffix)
-                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? LIKE : "= ")
+                .append(" OR upper(" + applicationClientIdColumn("a") + ") ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
                 .append(escapeSuffix)
                 .append(" ) ");

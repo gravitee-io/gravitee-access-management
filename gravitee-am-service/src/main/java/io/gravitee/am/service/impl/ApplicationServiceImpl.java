@@ -151,9 +151,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Autowired
     private ApplicationTemplateManager applicationTemplateManager;
 
-    @Lazy
     @Autowired
-    private OrganizationUserRepository organizationUserRepository;
+    private ApplicationOwnerService applicationOwnerService;
 
     @Autowired
     private AccountSettingsValidator accountSettingsValidator;
@@ -303,7 +302,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.just(criteria);
         }
 
-        return retrieveOwnerApplicationIds(filter, organizationId)
+        return applicationOwnerService.retrieveOwnerApplicationIds(filter.ownerEmail(), organizationId)
                 .map(ids -> {
                     List<String> finalIds = filter.hasPermissionScopedIds()
                             ? ids.stream().filter(filter.permissionScopedIds()::contains).collect(Collectors.toList())
@@ -316,18 +315,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }));
     }
 
-    private Maybe<List<String>> retrieveOwnerApplicationIds(ApplicationFilter filter, String organizationId) {
-        return organizationUserRepository.findByEmail(organizationId, filter.ownerEmail())
-                .firstElement()
-                .flatMap(user ->
-                        roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)
-                                .flatMap(role -> membershipService
-                                        .findByCriteria(ReferenceType.APPLICATION, new MembershipCriteria(user.getId()).setRoleId(role.getId()))
-                                        .map(Membership::getReferenceId)
-                                        .toList()
-                                        .toMaybe())
-                );
-    }
+
 
     @Override
     public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
