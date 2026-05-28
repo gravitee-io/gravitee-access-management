@@ -5,9 +5,9 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@a2a-js/sdk@npm:0.3.10":
-  version: 0.3.10
-  resolution: "@a2a-js/sdk@npm:0.3.10"
+"@a2a-js/sdk@npm:0.3.13":
+  version: 0.3.13
+  resolution: "@a2a-js/sdk@npm:0.3.13"
   dependencies:
     uuid: "npm:^11.1.0"
   peerDependencies:
@@ -21,7 +21,7 @@ __metadata:
       optional: true
     express:
       optional: true
-  checksum: 10c0/7b24d36ef75dac89f628c8e2a7bf6563357ee96745c78309df77f7ddb7b4ce1796d4d6b035afd4ff3d363b355bdbee440bbaf5e86f230de5ca8ca6def4f22867
+  checksum: 10c0/066c621329c397baeedf7460c8ac74973f520f88574b65119ca0414c8f4279fa03d0875795da4e46f1ae9870142e6d1a0a0a04daabf4c8e25f52bf98e525ab9d
   languageName: node
   linkType: hard
 
@@ -10981,7 +10981,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "gravitee-am-webui@workspace:."
   dependencies:
-    "@a2a-js/sdk": "npm:0.3.10"
+    "@a2a-js/sdk": "npm:0.3.13"
     "@ajsf/core": "npm:0.8.0"
     "@ajsf/material": "npm:0.8.0"
     "@angular-builders/jest": "npm:19.0.1"
