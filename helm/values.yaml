@@ -444,6 +444,9 @@ api:
     #responseHeaderSize: 8192
 #    api:
 #      entrypoint: /management
+#      automation:
+#        enabled: false
+#        entrypoint: /management/automation
     services:
       metrics:
         enabled: false
