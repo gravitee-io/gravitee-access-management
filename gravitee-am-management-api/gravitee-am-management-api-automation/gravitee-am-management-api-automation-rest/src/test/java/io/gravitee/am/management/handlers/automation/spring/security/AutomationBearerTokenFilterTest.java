@@ -15,14 +15,8 @@
  */
 package io.gravitee.am.management.handlers.automation.spring.security;
 
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.jwt.JWTParser;
-import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.management.handlers.management.api.authentication.BearerTokenAuthenticator;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,31 +26,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.Date;
+import java.util.List;
 
 import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AutomationBearerTokenFilterTest {
 
-    private static final String ORG_ID = "DEFAULT";
-    private static final String USER_ID = "user-123";
-    private static final String USERNAME = "admin";
-    private static final long BLOCKING_GET_TIMEOUT_MILLIS = 120_000L;
-
     @Mock
-    private JWTParser jwtParser;
-
-    @Mock
-    private OrganizationUserService userService;
+    private BearerTokenAuthenticator bearerTokenAuthenticator;
 
     @Mock
     private HttpServletRequest request;
@@ -71,7 +59,7 @@ class AutomationBearerTokenFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new AutomationBearerTokenFilter(jwtParser, userService, BLOCKING_GET_TIMEOUT_MILLIS);
+        filter = new AutomationBearerTokenFilter(bearerTokenAuthenticator);
         SecurityContextHolder.clearContext();
     }
 
@@ -81,38 +69,13 @@ class AutomationBearerTokenFilterTest {
     }
 
     @Test
-    void shouldAuthenticateWithValidBearerToken() throws Exception {
-        String token = "valid.jwt.token";
-        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer " + token);
-
-        JWT jwt = new JWT();
-        jwt.put("org", ORG_ID);
-        jwt.put(StandardClaims.SUB, USER_ID);
-        jwt.put(StandardClaims.PREFERRED_USERNAME, USERNAME);
-        jwt.setIat(System.currentTimeMillis() / 1000);
-        when(jwtParser.parse(token)).thenReturn(jwt);
-
-        User orgUser = new User();
-        orgUser.setId(USER_ID);
-        orgUser.setUsername(USERNAME);
-        when(userService.findById(eq(ReferenceType.ORGANIZATION), eq(ORG_ID), eq(USER_ID)))
-                .thenReturn(Single.just(orgUser));
-
-        filter.doFilterInternal(request, response, chain);
-
-        verify(chain).doFilter(request, response);
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(auth);
-        assertEquals(USERNAME, ((io.gravitee.am.identityprovider.api.User) auth.getPrincipal()).getUsername());
-    }
-
-    @Test
     void shouldContinueChainWithoutAuthWhenNoAuthorizationHeader() throws Exception {
         when(request.getHeader(AUTHORIZATION)).thenReturn(null);
 
         filter.doFilterInternal(request, response, chain);
 
         verify(chain).doFilter(request, response);
+        verify(bearerTokenAuthenticator, never()).authenticate(any(), any());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -123,95 +86,36 @@ class AutomationBearerTokenFilterTest {
         filter.doFilterInternal(request, response, chain);
 
         verify(chain).doFilter(request, response);
+        verify(bearerTokenAuthenticator, never()).authenticate(any(), any());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void shouldClearContextOnInvalidToken() throws Exception {
-        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer invalid.token");
-        when(jwtParser.parse("invalid.token")).thenThrow(new RuntimeException("Invalid JWT"));
+    void shouldDelegateToBearerTokenAuthenticatorAndSetContext() throws Exception {
+        String token = "any.jwt.token";
+        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer " + token);
+
+        DefaultUser principal = new DefaultUser("u");
+        principal.setId("id");
+        var delegated = new UsernamePasswordAuthenticationToken(principal, null, List.of());
+        when(bearerTokenAuthenticator.authenticate(any(String.class), any(BearerTokenAuthenticator.Context.class)))
+                .thenReturn(delegated);
+
+        filter.doFilterInternal(request, response, chain);
+
+        verify(chain).doFilter(request, response);
+        assertSame(delegated, SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldClearContextAndContinueChainWhenAuthenticatorThrows() throws Exception {
+        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer anything");
+        when(bearerTokenAuthenticator.authenticate(any(String.class), any(BearerTokenAuthenticator.Context.class)))
+                .thenThrow(new BadCredentialsException("nope"));
 
         filter.doFilterInternal(request, response, chain);
 
         verify(chain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
-
-    @Test
-    void shouldClearContextOnExpiredSession() throws Exception {
-        String token = "valid.jwt.token";
-        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer " + token);
-
-        JWT jwt = new JWT();
-        jwt.put("org", ORG_ID);
-        jwt.put(StandardClaims.SUB, USER_ID);
-        jwt.put(StandardClaims.PREFERRED_USERNAME, USERNAME);
-        jwt.setIat(1000L); // very old token
-        when(jwtParser.parse(token)).thenReturn(jwt);
-
-        User orgUser = new User();
-        orgUser.setId(USER_ID);
-        orgUser.setUsername(USERNAME);
-        orgUser.setLastLogoutAt(new Date()); // logged out after token issued
-        when(userService.findById(eq(ReferenceType.ORGANIZATION), eq(ORG_ID), eq(USER_ID)))
-                .thenReturn(Single.just(orgUser));
-
-        filter.doFilterInternal(request, response, chain);
-
-        verify(chain).doFilter(request, response);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
-
-    @Test
-    void shouldClearContextWhenUserLookupExceedsBlockingGetTimeout() throws Exception {
-        String token = "valid.jwt.token";
-        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer " + token);
-
-        JWT jwt = new JWT();
-        jwt.put("org", ORG_ID);
-        jwt.put(StandardClaims.SUB, USER_ID);
-        jwt.put(StandardClaims.PREFERRED_USERNAME, USERNAME);
-        jwt.setIat(System.currentTimeMillis() / 1000);
-        when(jwtParser.parse(token)).thenReturn(jwt);
-
-        when(userService.findById(eq(ReferenceType.ORGANIZATION), eq(ORG_ID), eq(USER_ID)))
-                .thenReturn(Single.<User>never().subscribeOn(Schedulers.io()));
-
-        var filterWithShortTimeout = new AutomationBearerTokenFilter(jwtParser, userService, 50L);
-
-        filterWithShortTimeout.doFilterInternal(request, response, chain);
-
-        verify(chain).doFilter(request, response);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
-
-    @Test
-    void shouldAuthenticateRegardlessOfHttpMethod() throws Exception {
-        // OncePerRequestFilter processes ALL methods — no method-based filtering.
-        // This is the key difference from AbstractAuthenticationProcessingFilter.
-        assertAuthenticatesSuccessfully();
-    }
-
-    private void assertAuthenticatesSuccessfully() throws Exception {
-        String token = "valid.jwt.token";
-        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer " + token);
-
-        JWT jwt = new JWT();
-        jwt.put("org", ORG_ID);
-        jwt.put(StandardClaims.SUB, USER_ID);
-        jwt.put(StandardClaims.PREFERRED_USERNAME, USERNAME);
-        jwt.setIat(System.currentTimeMillis() / 1000);
-        when(jwtParser.parse(token)).thenReturn(jwt);
-
-        User orgUser = new User();
-        orgUser.setId(USER_ID);
-        orgUser.setUsername(USERNAME);
-        when(userService.findById(eq(ReferenceType.ORGANIZATION), eq(ORG_ID), eq(USER_ID)))
-                .thenReturn(Single.just(orgUser));
-
-        filter.doFilterInternal(request, response, chain);
-
-        verify(chain).doFilter(request, response);
-        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
     }
 }

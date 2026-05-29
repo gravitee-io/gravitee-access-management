@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.automation.spring.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.management.handlers.management.api.authentication.AccountAccessTokenAuthenticator;
+import io.gravitee.am.management.handlers.management.api.authentication.BearerTokenAuthenticator;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.am.management.service.OrganizationUserService;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -51,12 +53,26 @@ public class AutomationSecurityConfiguration {
     }
 
     @Bean
-    public AutomationBearerTokenFilter automationBearerTokenFilter(
-            @Qualifier("managementJwtParser") JWTParser jwtParser,
+    public AccountAccessTokenAuthenticator automationAccountAccessTokenAuthenticator(
             OrganizationUserService userService,
             @Value("${http.blockingGet.timeoutMillis:120000}") long blockingGetTimeoutMillis
     ) {
-        return new AutomationBearerTokenFilter(jwtParser, userService, blockingGetTimeoutMillis);
+        return new AccountAccessTokenAuthenticator(userService, blockingGetTimeoutMillis);
+    }
+
+    @Bean
+    public BearerTokenAuthenticator automationBearerTokenAuthenticator(
+            @Qualifier("managementJwtParser") JWTParser jwtParser,
+            OrganizationUserService userService,
+            AccountAccessTokenAuthenticator automationAccountAccessTokenAuthenticator,
+            @Value("${http.blockingGet.timeoutMillis:120000}") long blockingGetTimeoutMillis
+    ) {
+        return new BearerTokenAuthenticator(jwtParser, userService, automationAccountAccessTokenAuthenticator, blockingGetTimeoutMillis);
+    }
+
+    @Bean
+    public AutomationBearerTokenFilter automationBearerTokenFilter(BearerTokenAuthenticator automationBearerTokenAuthenticator) {
+        return new AutomationBearerTokenFilter(automationBearerTokenAuthenticator);
     }
 
     @Bean
