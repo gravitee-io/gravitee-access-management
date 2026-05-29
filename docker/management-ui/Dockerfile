@@ -19,6 +19,8 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
+USER root
+
 # Update to get support Bash
 RUN apk --update add bash
 
