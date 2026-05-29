@@ -42,7 +42,14 @@ let oidcConfig2: any;
 let app2: any;
 let user2: any;
 
-async function setupDomainWithApp(name: string) {
+type DomainDefinition = {
+  domain: any;
+  oidcConfig: any;
+  app: any;
+  user: any;
+};
+
+async function setupDomainWithApp(name: string): Promise<DomainDefinition> {
   const { domain, oidcConfig } = await setupDomainForTest(uniqueName(name, true), { accessToken, waitForStart: true });
 
   const idps = await getAllIdps(domain.id, accessToken);
@@ -117,23 +124,6 @@ describe('Domain dashboard — login counts across 2 domains', () => {
   it('domain2 should show 2 logins', async () => {
     const count = await getLoginCount(domain2.id);
     expect(count).toBe(2);
-  });
-
-  it('total logins across both domains should be 7', async () => {
-    const [count1, count2] = await Promise.all([getLoginCount(domain1.id), getLoginCount(domain2.id)]);
-    expect(count1 + count2).toBe(7);
-  });
-
-  it('domain1 logins should not appear in domain2 analytics', async () => {
-    const count = await getLoginCount(domain2.id);
-    expect(count).not.toBe(5);
-    expect(count).toBe(2);
-  });
-
-  it('domain2 logins should not appear in domain1 analytics', async () => {
-    const count = await getLoginCount(domain1.id);
-    expect(count).not.toBe(2);
-    expect(count).toBe(5);
   });
 });
 
