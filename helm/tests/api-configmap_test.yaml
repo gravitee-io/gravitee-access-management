@@ -27,6 +27,90 @@ tests:
           path: data["gravitee.yml"]
           pattern: "[ ]{4}entrypoint: /custom/path/mng"
 
+  - it: should not have automation when unset
+    set:
+      api:
+        http:
+          api:
+            entrypoint: /custom/path/mng
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{4}automation:"
+
+  - it: should enable automation without management entrypoint override
+    set:
+      api:
+        http:
+          api:
+            automation:
+              enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{4}automation:"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{6}enabled: true"
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{4}entrypoint:"
+
+  - it: should have custom automation entrypoint
+    set:
+      api:
+        http:
+          api:
+            automation:
+              enabled: true
+              entrypoint: /custom/automation
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{6}enabled: true"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{6}entrypoint: /custom/automation"
+
+  - it: should have custom API entrypoint and automation settings
+    set:
+      api:
+        http:
+          api:
+            entrypoint: /custom/path/mng
+            automation:
+              enabled: true
+              entrypoint: /custom/path/mng/automation
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{4}entrypoint: /custom/path/mng"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{4}automation:"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{6}enabled: true"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{6}entrypoint: /custom/path/mng/automation"
+
   - it: should have notifier with default settings
     asserts:
       - hasDocuments:
