@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
+import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.management.handlers.management.api.authentication.AccountAccessTokenAuthenticator;
+import io.gravitee.am.management.handlers.management.api.authentication.BearerTokenAuthenticator;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomRequestRejectedHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
@@ -30,6 +34,8 @@ import io.gravitee.am.management.handlers.management.api.spring.security.filter.
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -102,6 +108,24 @@ public class SecurityConfiguration {
         return new WebAuthenticationDetailsSource();
     }
 
+
+    @Bean
+    public AccountAccessTokenAuthenticator accountAccessTokenAuthenticator(
+            OrganizationUserService userService,
+            @Value("${http.blockingGet.timeoutMillis:120000}") long blockingGetTimeoutMillis
+    ) {
+        return new AccountAccessTokenAuthenticator(userService, blockingGetTimeoutMillis);
+    }
+
+    @Bean
+    public BearerTokenAuthenticator bearerTokenAuthenticator(
+            @Qualifier("managementJwtParser") JWTParser jwtParser,
+            OrganizationUserService userService,
+            AccountAccessTokenAuthenticator accountAccessTokenAuthenticator,
+            @Value("${http.blockingGet.timeoutMillis:120000}") long blockingGetTimeoutMillis
+    ) {
+        return new BearerTokenAuthenticator(jwtParser, userService, accountAccessTokenAuthenticator, blockingGetTimeoutMillis);
+    }
 
     @Bean
     public Filter jwtAuthenticationFilter() {

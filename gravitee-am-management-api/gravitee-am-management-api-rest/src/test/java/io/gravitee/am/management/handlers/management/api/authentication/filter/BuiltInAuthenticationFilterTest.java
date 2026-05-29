@@ -16,13 +16,8 @@
 
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.CustomClaims;
-import io.gravitee.am.jwt.JWTParser;
-import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
-import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.management.handlers.management.api.authentication.BearerTokenAuthenticator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,18 +29,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,10 +56,7 @@ public class BuiltInAuthenticationFilterTest {
     private static final String BEARER_PREFIX = "Bearer ";
 
     @Mock
-    private JWTParser jwtParser;
-
-    @Mock
-    private OrganizationUserService organizationUserService;
+    private BearerTokenAuthenticator bearerTokenAuthenticator;
 
     @InjectMocks
     private BearerAuthenticationFilter filter = new BearerAuthenticationFilter(new AntPathRequestMatcher("/**"));
@@ -137,21 +128,6 @@ public class BuiltInAuthenticationFilterTest {
     }
 
     @Test
-    public void must_throw_bad_credential_jwt_badly_parse_authorization() {
-        Assertions.assertThrows(BadCredentialsException.class, () -> {
-            var request = mock(HttpServletRequest.class);
-            final String aWrongBadlyMadeToken = "aWrongBadlyMadeToken";
-
-            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + aWrongBadlyMadeToken);
-
-            final HttpServletResponse response = mock(HttpServletResponse.class);
-            doNothing().when(response).addCookie(any());
-
-            filter.attemptAuthentication(request, response);
-        });
-    }
-
-    @Test
     public void must_throw_bad_credential_jwt_badly_parse_cookie_not_malformed_cookie_token() {
         Assertions.assertThrows(BadCredentialsException.class, () -> {
             var request = mock(HttpServletRequest.class);
@@ -162,7 +138,8 @@ public class BuiltInAuthenticationFilterTest {
             when(cookieMock.getValue()).thenReturn(BEARER_PREFIX + aWrongBadlyMadeToken);
             when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
 
-            when(jwtParser.parse(eq(aWrongBadlyMadeToken))).thenThrow(new IllegalArgumentException("Wrongly parsed token"));
+            when(bearerTokenAuthenticator.authenticate(any(String.class), any(BearerTokenAuthenticator.Context.class)))
+                    .thenThrow(new IllegalArgumentException("Wrongly parsed token"));
 
             final HttpServletResponse response = mock(HttpServletResponse.class);
             doNothing().when(response).addCookie(any());
@@ -172,34 +149,12 @@ public class BuiltInAuthenticationFilterTest {
     }
 
     @Test
-    public void must_throw_BadCredentialsException_jwt_org_user_not_present_authorization() {
+    public void must_throw_BadCredentialsException_when_authenticator_throws_for_authorization_header() {
         Assertions.assertThrows(BadCredentialsException.class, () -> {
             var request = mock(HttpServletRequest.class);
-            final String anActualGreatToken = "anActualGreatToken";
-
-            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-
-            final HttpServletResponse response = mock(HttpServletResponse.class);
-            doNothing().when(response).addCookie(any());
-
-            filter.attemptAuthentication(request, response);
-        });
-    }
-
-    @Test
-    public void must_throw_BadCredentialsException_last_logout() {
-        Assertions.assertThrows(BadCredentialsException.class, () -> {
-            var request = mock(HttpServletRequest.class);
-            final String anActualGreatToken = "anActualGreatToken";
-
-            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-            final JWT jwt = new JWT();
-            jwt.setIat(System.currentTimeMillis() / (2L * 1000L));
-            jwt.put("org", "10");
-            jwt.setSub(UUID.randomUUID().toString());
-            final User user = new User();
-            user.setId(jwt.getSub());
-            user.setLastLogoutAt(new Date());
+            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + "anActualGreatToken");
+            when(bearerTokenAuthenticator.authenticate(any(String.class), any(BearerTokenAuthenticator.Context.class)))
+                    .thenThrow(new RuntimeException("user not found"));
 
             final HttpServletResponse response = mock(HttpServletResponse.class);
             doNothing().when(response).addCookie(any());
@@ -209,69 +164,35 @@ public class BuiltInAuthenticationFilterTest {
     }
 
     @Test
-    public void must_throw_BadCredentialsException_username_reset() {
-        Assertions.assertThrows(BadCredentialsException.class, () -> {
-            var request = mock(HttpServletRequest.class);
-            final String anActualGreatToken = "anActualGreatToken";
-
-            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-            final JWT jwt = new JWT();
-            jwt.setIat(System.currentTimeMillis() / (2L * 1000L));
-            jwt.put("org", "10");
-            jwt.setSub(UUID.randomUUID().toString());
-            final User user = new User();
-            user.setId(jwt.getSub());
-            user.setLastUsernameReset(new Date());
-
-            final HttpServletResponse response = mock(HttpServletResponse.class);
-            doNothing().when(response).addCookie(any());
-
-            filter.attemptAuthentication(request, response);
-        });
-    }
-
-    @Test
-    public void must_return_UsernamePasswordAuthenticationToken_without_roles() {
+    public void must_return_authenticator_result_when_delegation_succeeds_without_roles() {
         var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "header.body.signature";
+        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + "header.body.signature");
 
-        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-        final JWT jwt = new JWT();
-        jwt.setIat(System.currentTimeMillis());
-        jwt.put("org", "10");
-        jwt.setSub(UUID.randomUUID().toString());
-        when(jwtParser.parse(eq(anActualGreatToken))).thenReturn(jwt);
-        final User user = new User();
-        user.setId(jwt.getSub());
-        when(organizationUserService.findById(eq(ReferenceType.ORGANIZATION), eq("10"), eq(jwt.getSub())))
-                .thenReturn(Single.just(user));
+        DefaultUser principal = new DefaultUser("u");
+        principal.setId("id");
+        var delegated = new UsernamePasswordAuthenticationToken(principal, null, List.of());
+        when(bearerTokenAuthenticator.authenticate(any(String.class), any(BearerTokenAuthenticator.Context.class)))
+                .thenReturn(delegated);
 
-        final HttpServletResponse response = mock(HttpServletResponse.class);
-
-        final Authentication authentication = filter.attemptAuthentication(request, response);
+        final Authentication authentication = filter.attemptAuthentication(request, mock(HttpServletResponse.class));
         assertNotNull(authentication);
         assertEquals(0, authentication.getAuthorities().size());
     }
 
     @Test
-    public void must_return_UsernamePasswordAuthenticationToken_with_roles() {
+    public void must_return_authenticator_result_when_delegation_succeeds_with_roles() {
         var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "header.body.signature";
+        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + "header.body.signature");
 
-        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-        final JWT jwt = new JWT();
-        jwt.setIat(System.currentTimeMillis());
-        jwt.put("org", "10");
-        jwt.setSub(UUID.randomUUID().toString());
-        jwt.put(CustomClaims.ROLES, List.of("ROLE_ADMIN", "ROLE_USER"));
-        when(jwtParser.parse(eq(anActualGreatToken))).thenReturn(jwt);
-        final User user = new User();
-        user.setId(jwt.getSub());
-        when(organizationUserService.findById(eq(ReferenceType.ORGANIZATION), eq("10"), eq(jwt.getSub())))
-                .thenReturn(Single.just(user));
-        final HttpServletResponse response = mock(HttpServletResponse.class);
+        DefaultUser principal = new DefaultUser("u");
+        principal.setId("id");
+        var delegated = new UsernamePasswordAuthenticationToken(
+                principal, null,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER")));
+        when(bearerTokenAuthenticator.authenticate(any(String.class), any(BearerTokenAuthenticator.Context.class)))
+                .thenReturn(delegated);
 
-        final Authentication authentication = filter.attemptAuthentication(request, response);
+        final Authentication authentication = filter.attemptAuthentication(request, mock(HttpServletResponse.class));
         assertNotNull(authentication);
         assertEquals(2, authentication.getAuthorities().size());
     }

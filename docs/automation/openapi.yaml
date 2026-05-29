@@ -1218,8 +1218,8 @@ components:
   securitySchemes:
     BearerAuth:
       type: http
+      description: "JWT bearer token, or an opaque user service-account access token."
       scheme: bearer
-      bearerFormat: JWT
     BasicAuth:
       type: http
       scheme: basic
