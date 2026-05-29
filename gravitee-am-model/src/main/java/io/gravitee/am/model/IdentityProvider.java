@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,9 +33,19 @@ import java.util.Objects;
 @Getter
 @Setter
 @NoArgsConstructor
-public class IdentityProvider {
+public class IdentityProvider implements Managed {
 
     private String id;
+
+    /**
+     * Stable, human-chosen identifier used to address this identity provider in
+     * declarative APIs (e.g. the Automation API). Set when the Automation API creates the
+     * resource; null for IdPs created via the management API. Read-only over the management
+     * API.
+     */
+    @JsonProperty("key")
+    @Schema(name = "key", accessMode = Schema.AccessMode.READ_ONLY)
+    private String automationKey;
 
     private String name;
 
@@ -70,8 +81,14 @@ public class IdentityProvider {
      */
     private String dataPlaneId;
 
+    /**
+     * Indicates the source of truth for this identity provider.
+     */
+    private ManagedBy managedBy;
+
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;
+        this.automationKey = other.automationKey;
         this.name = other.name;
         this.type = other.type;
         this.system = other.system;
@@ -87,6 +104,7 @@ public class IdentityProvider {
         this.updatedAt = other.updatedAt;
         this.passwordPolicy = other.passwordPolicy;
         this.dataPlaneId = other.dataPlaneId;
+        this.managedBy = other.managedBy;
     }
 
     @Override

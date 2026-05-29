@@ -182,6 +182,12 @@ export interface Domain {
   loginSettings?: LoginSettings;
   /**
    *
+   * @type {string}
+   * @memberof Domain
+   */
+  managedBy?: DomainManagedByEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof Domain
    */
@@ -335,6 +341,17 @@ export interface Domain {
 /**
  * @export
  */
+export const DomainManagedByEnum = {
+  None: 'NONE',
+  Terraform: 'TERRAFORM',
+  Gko: 'GKO',
+  AutomationApi: 'AUTOMATION_API',
+} as const;
+export type DomainManagedByEnum = typeof DomainManagedByEnum[keyof typeof DomainManagedByEnum];
+
+/**
+ * @export
+ */
 export const DomainReferenceTypeEnum = {
   Platform: 'PLATFORM',
   Domain: 'DOMAIN',
@@ -386,6 +403,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     id: json['id'] == null ? undefined : json['id'],
     identities: json['identities'] == null ? undefined : new Set(json['identities']),
     loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
+    managedBy: json['managedBy'] == null ? undefined : json['managedBy'],
     master: json['master'] == null ? undefined : json['master'],
     name: json['name'] == null ? undefined : json['name'],
     oidc: json['oidc'] == null ? undefined : OIDCSettingsFromJSON(json['oidc']),
@@ -445,6 +463,7 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     id: value['id'],
     identities: value['identities'] == null ? undefined : Array.from(value['identities'] as Set<any>),
     loginSettings: LoginSettingsToJSON(value['loginSettings']),
+    managedBy: value['managedBy'],
     master: value['master'],
     name: value['name'],
     oidc: OIDCSettingsToJSON(value['oidc']),

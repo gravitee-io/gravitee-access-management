@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -39,9 +40,19 @@ import java.util.stream.StreamSupport;
  */
 // todo: remove @Schema once this class is not directly used in any API responses
 @Data
-public class Certificate {
+public class Certificate implements Managed {
 
     private String id;
+
+    /**
+     * Stable, human-chosen identifier used to address this certificate in declarative APIs
+     * (e.g. the Automation API). Set when the Automation API creates the resource; null for
+     * certificates created via the management API. Distinct from the mutable {@link #name}.
+     * Read-only over the management API.
+     */
+    @JsonProperty("key")
+    @Schema(name = "key", accessMode = Schema.AccessMode.READ_ONLY)
+    private String automationKey;
 
     private String name;
 
@@ -64,6 +75,11 @@ public class Certificate {
 
     private boolean system;
 
+    /**
+     * Indicates the source of truth for this certificate.
+     */
+    private ManagedBy managedBy;
+
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     @ToString.Exclude
@@ -83,6 +99,7 @@ public class Certificate {
 
     public Certificate(Certificate other) {
         this.id = other.id;
+        this.automationKey = other.automationKey;
         this.name = other.name;
         this.type = other.type;
         this.configuration = other.configuration;
@@ -92,6 +109,7 @@ public class Certificate {
         this.updatedAt = other.updatedAt;
         this.expiresAt = other.expiresAt;
         this.system = other.system;
+        this.managedBy = other.managedBy;
     }
 
     /**

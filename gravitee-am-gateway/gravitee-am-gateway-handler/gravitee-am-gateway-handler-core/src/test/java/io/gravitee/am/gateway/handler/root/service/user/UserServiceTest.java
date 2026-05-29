@@ -87,6 +87,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -1388,10 +1389,6 @@ public class UserServiceTest {
                 Completable.defer(() -> Completable.error(new IllegalArgumentException("User is not valid")))
         );
 
-        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(
-                Maybe.empty()
-        );
-
         final User user = new User();
         user.setUsername("username");
         user.setPreRegistration(false);
@@ -1449,6 +1446,35 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserProviderNotFoundException.class);
 
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void must_not_register_user_and_must_not_fallback_when_configured_idp_missing() {
+        when(userValidator.validate(any())).thenReturn(Completable.complete());
+
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        // A specific (non-default) registration provider is configured...
+        user.setSource("configured-idp");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
+        // ...but that provider does not exist.
+        when(identityProviderManager.getUserProvider("configured-idp")).thenReturn(Maybe.empty());
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        var testObserver = userService.register(client, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        // The configured provider being absent must fail registration
+        testObserver.assertError(UserProviderNotFoundException.class);
+        testObserver.assertError(throwable -> throwable.getMessage().contains("configured-idp"));
+        verify(identityProviderManager, times(1)).getUserProvider("configured-idp");
+        verify(identityProviderManager, never()).getUserProvider(startsWith("default-idp-"));
         verify(auditService, times(1)).report(any());
     }
 

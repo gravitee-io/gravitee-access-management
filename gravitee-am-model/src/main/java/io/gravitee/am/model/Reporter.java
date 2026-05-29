@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,9 +30,19 @@ import java.util.Date;
 @Data
 @Builder(toBuilder = true)
 @AllArgsConstructor
-public class Reporter {
+public class Reporter implements Managed {
 
     private String id;
+
+    /**
+     * Stable, human-chosen identifier used to address this reporter in declarative APIs (e.g. the
+     * Automation API). Set when the Automation API creates the resource; null for reporters created
+     * via the management API. Read-only over the management API.
+     */
+    @JsonProperty("key")
+    @Schema(name = "key", accessMode = Schema.AccessMode.READ_ONLY)
+    private String automationKey;
+
     private Reference reference;
     private boolean enabled;
     private String type;
@@ -49,11 +60,17 @@ public class Reporter {
      */
     private boolean inherited;
 
+    /**
+     * Indicates the source of truth for this reporter.
+     */
+    private ManagedBy managedBy;
+
     public Reporter() {
     }
 
     public Reporter(Reporter other) {
         this.id = other.id;
+        this.automationKey = other.automationKey;
         this.reference = other.reference;
         this.enabled = other.enabled;
         this.type = other.type;
@@ -64,6 +81,7 @@ public class Reporter {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.inherited = other.inherited;
+        this.managedBy = other.managedBy;
     }
 
     /**

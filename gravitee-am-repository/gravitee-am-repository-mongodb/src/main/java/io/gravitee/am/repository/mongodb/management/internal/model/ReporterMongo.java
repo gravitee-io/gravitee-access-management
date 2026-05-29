@@ -33,6 +33,8 @@ public class ReporterMongo extends Auditable {
     @BsonId
     private String id;
 
+    private String automationKey;
+
     /**
      * @deprecated use referenceType & referenceId instead
      */
@@ -68,5 +70,7 @@ public class ReporterMongo extends Auditable {
     private String configuration;
 
     private boolean inherited;
+
+    private String managedBy;
 
 }

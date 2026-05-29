@@ -30,6 +30,8 @@ public class CertificateMongo extends Auditable {
     @BsonId
     private String id;
 
+    private String automationKey;
+
     private String name;
 
     private String type;
@@ -44,12 +46,22 @@ public class CertificateMongo extends Auditable {
 
     private boolean system;
 
+    private String managedBy;
+
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getAutomationKey() {
+        return automationKey;
+    }
+
+    public void setAutomationKey(String automationKey) {
+        this.automationKey = automationKey;
     }
 
     public String getName() {
@@ -106,6 +118,14 @@ public class CertificateMongo extends Auditable {
 
     public void setSystem(boolean system) {
         this.system = system;
+    }
+
+    public String getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(String managedBy) {
+        this.managedBy = managedBy;
     }
 
     @Override

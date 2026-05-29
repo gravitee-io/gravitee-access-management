@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -128,6 +129,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
 
         ReporterMongo reporterMongo = new ReporterMongo();
         reporterMongo.setId(reporter.getId());
+        reporterMongo.setAutomationKey(reporter.getAutomationKey());
         reporterMongo.setEnabled(reporter.isEnabled());
         reporterMongo.setReferenceType(reporter.getReference().type());
         reporterMongo.setReferenceId(reporter.getReference().id());
@@ -139,6 +141,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporterMongo.setCreatedAt(reporter.getCreatedAt());
         reporterMongo.setUpdatedAt(reporter.getUpdatedAt());
         reporterMongo.setInherited(reporter.isInherited());
+        reporterMongo.setManagedBy(reporter.getManagedBy() != null ? reporter.getManagedBy().name() : null);
         return reporterMongo;
     }
 
@@ -149,6 +152,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
 
         Reporter reporter = new Reporter();
         reporter.setId(reporterMongo.getId());
+        reporter.setAutomationKey(reporterMongo.getAutomationKey());
         reporter.setEnabled(reporterMongo.isEnabled());
         if (reporterMongo.getReferenceType() != null) {
             reporter.setReference(new Reference(reporterMongo.getReferenceType(), reporterMongo.getReferenceId()));
@@ -165,6 +169,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporter.setCreatedAt(reporterMongo.getCreatedAt());
         reporter.setUpdatedAt(reporterMongo.getUpdatedAt());
         reporter.setInherited(reporterMongo.isInherited());
+        reporter.setManagedBy(reporterMongo.getManagedBy() != null ? ManagedBy.valueOf(reporterMongo.getManagedBy()) : null);
         return reporter;
     }
 }

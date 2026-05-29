@@ -34,6 +34,8 @@ public class IdentityProviderMongo extends Auditable {
     @BsonId
     private String id;
 
+    private String automationKey;
+
     private String name;
 
     private String type;
@@ -68,6 +70,8 @@ public class IdentityProviderMongo extends Auditable {
     private String passwordPolicy;
 
     private String dataPlaneId;
+
+    private String managedBy;
 
     @Override
     public boolean equals(Object o) {

@@ -18,6 +18,7 @@ package io.gravitee.am.model.account;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Optional;
@@ -82,6 +83,16 @@ public class AccountSettings {
      * Default identity provider used for user registration
      */
     private String defaultIdentityProviderForRegistration;
+
+    /**
+     * Automation API key shadowing {@link #defaultIdentityProviderForRegistration}. Owned by the
+     * Automation API so it can losslessly echo the human-readable identity-provider key even when the
+     * referenced provider does not (yet) exist. Ignored by the management API and the gateway, which
+     * read only {@link #defaultIdentityProviderForRegistration}; hidden from the management OpenAPI (the
+     * Automation API surfaces it under {@code AutomationAccountSettings.defaultIdentityProviderForRegistration}).
+     */
+    @Schema(hidden = true)
+    private String defaultIdentityProviderForRegistrationKey;
 
     /**
      * Auto login user after reset password process
@@ -189,6 +200,7 @@ public class AccountSettings {
         this.useBotDetection = other.useBotDetection;
         this.botDetectionPlugin = other.botDetectionPlugin;
         this.defaultIdentityProviderForRegistration = other.defaultIdentityProviderForRegistration;
+        this.defaultIdentityProviderForRegistrationKey = other.defaultIdentityProviderForRegistrationKey;
         this.mfaChallengeAttemptsDetectionEnabled = other.mfaChallengeAttemptsDetectionEnabled;
         this.mfaChallengeMaxAttempts = other.mfaChallengeMaxAttempts;
         this.mfaChallengeAttemptsResetTime = other.mfaChallengeAttemptsResetTime;
@@ -282,6 +294,14 @@ public class AccountSettings {
 
     public void setDefaultIdentityProviderForRegistration(String defaultIdentityProviderForRegistration) {
         this.defaultIdentityProviderForRegistration = defaultIdentityProviderForRegistration;
+    }
+
+    public String getDefaultIdentityProviderForRegistrationKey() {
+        return defaultIdentityProviderForRegistrationKey;
+    }
+
+    public void setDefaultIdentityProviderForRegistrationKey(String defaultIdentityProviderForRegistrationKey) {
+        this.defaultIdentityProviderForRegistrationKey = defaultIdentityProviderForRegistrationKey;
     }
 
     public boolean isAutoLoginAfterResetPassword() {

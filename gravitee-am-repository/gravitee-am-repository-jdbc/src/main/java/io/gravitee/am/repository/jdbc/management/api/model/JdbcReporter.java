@@ -39,6 +39,9 @@ public class JdbcReporter  {
     @Id
     private String id;
 
+    @Column("automation_key")
+    private String automationKey;
+
     private ReferenceType referenceType;
     private String referenceId;
     private boolean enabled;
@@ -54,5 +57,7 @@ public class JdbcReporter  {
     @Column("system")
     private boolean system;
     private boolean inherited;
+    @Column("managed_by")
+    private String managedBy;
 
 }

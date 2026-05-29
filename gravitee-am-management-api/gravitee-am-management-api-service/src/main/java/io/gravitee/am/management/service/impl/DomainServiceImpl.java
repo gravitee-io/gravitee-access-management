@@ -37,6 +37,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -94,6 +95,7 @@ import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
+import io.gravitee.am.service.model.AutomationNewDomain;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -366,7 +368,7 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
         LOGGER.debug("Create a new domain: {}", newDomain);
-        // generate hrid
+        var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
         String hrid = IdGenerator.generate(newDomain.getName());
         if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
             return Single.error(new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
@@ -379,9 +381,11 @@ public class DomainServiceImpl implements DomainService {
                     } else {
                         Domain domain = new Domain();
                         domain.setVersion(DomainVersion.V2_0);
-                        domain.setId(RandomString.generate());
+                        domain.setId(automationDomain != null && automationDomain.getId() != null
+                                ? automationDomain.getId() : RandomString.generate());
                         domain.setHrid(hrid);
-                        domain.setPath(generateContextPath(newDomain.getName()));
+                        domain.setPath(automationDomain != null && automationDomain.getPath() != null
+                                ? automationDomain.getPath() : generateContextPath(newDomain.getName()));
                         domain.setName(newDomain.getName());
                         domain.setDescription(newDomain.getDescription());
                         domain.setEnabled(false);
@@ -392,6 +396,10 @@ public class DomainServiceImpl implements DomainService {
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
                         domain.setDataPlaneId(newDomain.getDataPlaneId());
+                        if (automationDomain != null) {
+                            domain.setManagedBy(ManagedBy.AUTOMATION_API);
+                            domain.setAutomationKey(automationDomain.getAutomationKey());
+                        }
 
                         return environmentService.findById(domain.getReferenceId())
                                 .doOnSuccess(environment -> setDeployMode(domain, environment))
@@ -401,8 +409,13 @@ public class DomainServiceImpl implements DomainService {
                 })
                 // create default system scopes
                 .flatMap(this::createSystemScopes)
-                // create default certificate
-                .flatMap(this::createDefaultCertificate)
+                // create default certificate (skipped for automation domains)
+                .flatMap(domain -> {
+                    if (automationDomain != null) {
+                        return Single.just(domain);
+                    }
+                    return createDefaultCertificate(domain);
+                })
                 // create owner
                 .flatMap(domain -> {
                     if (principal == null) {
@@ -422,16 +435,16 @@ public class DomainServiceImpl implements DomainService {
                                         .map(__ -> domain);
                             });
                 })
-                //create default IdP
+                // create default IdP (always skipped for automation domains)
                 .flatMap(domain -> {
-                    if (!createDefaultIdentityProvider) {
+                    if (!createDefaultIdentityProvider || automationDomain != null) {
                         return Single.just(domain);
                     }
                     return defaultIdentityProviderService.create(domain).map(__ -> domain);
                 })
-                // create default reporter
+                // create default reporter (always skipped for automation domains)
                 .flatMap(domain -> {
-                    if (!createDefaultReporters) {
+                    if (!createDefaultReporters || automationDomain != null) {
                         return Single.just(domain);
                     }
                     //default behaviour
@@ -465,7 +478,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Domain> update(String domainId, Domain domain) {
+    public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
         LOGGER.debug("Update an existing domain: {}", domain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
@@ -480,8 +493,13 @@ public class DomainServiceImpl implements DomainService {
                     domain.setReferenceType(existingDomain.getReferenceType());
                     domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
+                    // The Automation API references certificates / identity providers that may not exist yet
+                    // (eventual consistency), so reference validation is skipped for it.
+                    Completable referenceValidation = validateReferences
+                            ? validateCertificateSettings(domain)
+                            : Completable.complete();
                     return validateDomain(domain)
-                            .andThen(validateCertificateSettings(domain))
+                            .andThen(referenceValidation)
                             .andThen(Single.defer(() -> domainRepository.update(domain)));
                 })
                 // create event for sync process

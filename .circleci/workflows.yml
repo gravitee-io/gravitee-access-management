@@ -1074,8 +1074,14 @@ jobs:
           name: Check OAS staleness
           command: bash .circleci/scripts/oas-staleness-check.sh --also-make --maven-settings /tmp/.gravitee.settings.xml
       - run:
+          name: Check Automation OAS staleness
+          command: bash .circleci/scripts/oas-automation-staleness-check.sh --also-make --maven-settings /tmp/.gravitee.settings.xml
+      - run:
           name: Check OAS breaking changes
           command: bash .circleci/scripts/oas-compat-check.sh
+      - run:
+          name: Check Automation OAS breaking changes
+          command: bash .circleci/scripts/oas-automation-compat-check.sh
 
   ee-schema-compat-check:
     executor:
@@ -1309,6 +1315,7 @@ jobs:
             export CURRENT_GIT_BRANCH=$(git status | grep 'On branch' | awk '{print $3}')
 
             bash scripts/regen-oas.sh --maven-settings /tmp/.gravitee.settings.xml
+            bash scripts/regen-automation-oas.sh --maven-settings /tmp/.gravitee.settings.xml
             git add --update
             git commit -m "${MVN_PRJ_VERSION}"
             git tag ${MVN_PRJ_VERSION}
@@ -1333,6 +1340,7 @@ jobs:
               git checkout -b ${MAINTENANCE_GIT_BRANCH}
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
               bash scripts/regen-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
+              bash scripts/regen-automation-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
               git add --update
               git commit -m 'chore: prepare next version'
 
@@ -1392,6 +1400,7 @@ jobs:
             fi;
             
             bash scripts/regen-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
+            bash scripts/regen-automation-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
             git add --update
             git commit -m 'chore: prepare next version [skip ci]'
 

@@ -1,0 +1,1225 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+openapi: 3.0.1
+info:
+  title: Gravitee.io AM - Automation API
+  description: "Declarative, GitOps-style management of Access Management resources."
+  version: 4.12.0-alpha.5
+servers:
+- url: /management/automation
+security:
+- BearerAuth: []
+- BasicAuth: []
+tags:
+- name: Certificates
+- name: Domains
+- name: Identity Providers
+- name: Reporters
+paths:
+  /organizations/{orgId}/environments/{envId}/domains:
+    get:
+      tags:
+      - Domains
+      summary: List all domains
+      description: Returns all security domains within the specified environment.
+      operationId: automationListDomains
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of domains
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationDomain"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    put:
+      tags:
+      - Domains
+      summary: Create or update a domain
+      description: Idempotent create-or-update. Uses the key field in the body to
+        identify the domain.
+      operationId: automationCreateOrUpdateDomain
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationDomain"
+        required: true
+      responses:
+        "200":
+          description: The created or updated domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationDomain"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}:
+    get:
+      tags:
+      - Domains
+      summary: Get a domain
+      description: Retrieves a single security domain by its key.
+      operationId: automationGetDomain
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationDomain"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    delete:
+      tags:
+      - Domains
+      summary: Delete a domain
+      operationId: automationDeleteDomain
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Domain deleted
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates:
+    get:
+      tags:
+      - Certificates
+      - Domains
+      summary: List a domain's certificates
+      description: Returns all certificates managed by the Automation API under the
+        domain.
+      operationId: automationListCertificates
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of certificates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationCertificate"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    put:
+      tags:
+      - Certificates
+      - Domains
+      summary: Create or update a certificate
+      description: Idempotent create-or-update. Uses the key field in the body to
+        identify the certificate within the domain.
+      operationId: automationCreateOrUpdateCertificate
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationCertificate"
+        required: true
+      responses:
+        "200":
+          description: The created or updated certificate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationCertificate"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates/{certKey}:
+    get:
+      tags:
+      - Certificates
+      - Domains
+      summary: Get a certificate
+      description: Retrieves a single certificate by its key.
+      operationId: automationGetCertificate
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: certKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The certificate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationCertificate"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    delete:
+      tags:
+      - Certificates
+      - Domains
+      summary: Delete a certificate
+      operationId: automationDeleteCertificate
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: certKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Certificate deleted
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identity-providers:
+    get:
+      tags:
+      - Identity Providers
+      - Domains
+      summary: List a domain's identity providers
+      description: Returns all identity providers managed by the Automation API under
+        the domain.
+      operationId: automationListIdentityProviders
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of identity providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationIdentityProvider"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    put:
+      tags:
+      - Identity Providers
+      - Domains
+      summary: Create or update an identity provider
+      description: Idempotent create-or-update. Uses the key field in the body to
+        identify the identity provider within the domain.
+      operationId: automationCreateOrUpdateIdentityProvider
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationIdentityProvider"
+        required: true
+      responses:
+        "200":
+          description: The created or updated identity provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationIdentityProvider"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identity-providers/{idpKey}:
+    get:
+      tags:
+      - Identity Providers
+      - Domains
+      summary: Get an identity provider
+      description: Retrieves a single identity provider by its key.
+      operationId: automationGetIdentityProvider
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: idpKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The identity provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationIdentityProvider"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    delete:
+      tags:
+      - Identity Providers
+      - Domains
+      summary: Delete an identity provider
+      operationId: automationDeleteIdentityProvider
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: idpKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Identity provider deleted
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/reporters:
+    get:
+      tags:
+      - Reporters
+      - Domains
+      summary: List a domain's reporters
+      description: Returns all reporters managed by the Automation API under the domain.
+      operationId: automationListReporters
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of reporters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationReporter"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    put:
+      tags:
+      - Reporters
+      - Domains
+      summary: Create or update a reporter
+      description: Idempotent create-or-update. Uses the key field in the body to
+        identify the reporter within the domain.
+      operationId: automationCreateOrUpdateReporter
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationReporter"
+        required: true
+      responses:
+        "200":
+          description: The created or updated reporter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationReporter"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/reporters/{reporterKey}:
+    get:
+      tags:
+      - Reporters
+      - Domains
+      summary: Get a reporter
+      description: Retrieves a single reporter by its key.
+      operationId: automationGetReporter
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: reporterKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The reporter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationReporter"
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+    delete:
+      tags:
+      - Reporters
+      - Domains
+      summary: Delete a reporter
+      operationId: automationDeleteReporter
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainKey
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: reporterKey
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Reporter deleted
+        "403":
+          description: Permission denied
+        default:
+          description: Unexpected error
+components:
+  schemas:
+    AutomationAccountSettings:
+      type: object
+      properties:
+        accountBlockedDuration:
+          type: integer
+          format: int32
+        autoLoginAfterRegistration:
+          type: boolean
+        autoLoginAfterResetPassword:
+          type: boolean
+        completeRegistrationWhenResetPassword:
+          type: boolean
+        defaultIdentityProviderForRegistration:
+          type: string
+          description: key of an identity provider that exists under this domain
+        deletePasswordlessDevicesAfterResetPassword:
+          type: boolean
+        dynamicUserRegistration:
+          type: boolean
+        inherited:
+          type: boolean
+        loginAttemptsDetectionEnabled:
+          type: boolean
+        loginAttemptsResetTime:
+          type: integer
+          format: int32
+        maxLoginAttempts:
+          type: integer
+          format: int32
+        mfaChallengeAttemptsDetectionEnabled:
+          type: boolean
+        mfaChallengeAttemptsResetTime:
+          type: integer
+          format: int32
+        mfaChallengeMaxAttempts:
+          type: integer
+          format: int32
+        mfaChallengeSendVerifyAlertEmail:
+          type: boolean
+        redirectUriAfterRegistration:
+          type: string
+        redirectUriAfterResetPassword:
+          type: string
+        rememberMe:
+          type: boolean
+        rememberMeDuration:
+          type: integer
+          format: int32
+        resetPasswordConfirmIdentity:
+          type: boolean
+        resetPasswordCustomForm:
+          type: boolean
+        resetPasswordCustomFormFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormField"
+        resetPasswordInvalidateTokens:
+          type: boolean
+        sendRecoverAccountEmail:
+          type: boolean
+        sendVerifyRegistrationAccountEmail:
+          type: boolean
+    AutomationCIBASettings:
+      type: object
+      properties:
+        authReqExpiry:
+          type: integer
+          format: int32
+        bindingMessageLength:
+          type: integer
+          format: int32
+        enabled:
+          type: boolean
+        tokenReqInterval:
+          type: integer
+          format: int32
+    AutomationCertificate:
+      required:
+      - key
+      type: object
+      properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        expiresAt:
+          type: string
+          format: date-time
+          readOnly: true
+        key:
+          maxLength: 255
+          minLength: 1
+          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          type: string
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+        system:
+          type: boolean
+          description: "whether this is the domain's system certificate (immutable\
+            \ after creation; when true, only key is required and the certificate\
+            \ is built from domains.certificates.default.* system settings)"
+        type:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    AutomationCertificateSettings:
+      type: object
+      properties:
+        fallbackCertificate:
+          type: string
+    AutomationDomain:
+      required:
+      - dataPlaneId
+      - key
+      - name
+      - path
+      type: object
+      properties:
+        accountSettings:
+          $ref: "#/components/schemas/AutomationAccountSettings"
+        certificateSettings:
+          $ref: "#/components/schemas/AutomationCertificateSettings"
+        corsSettings:
+          $ref: "#/components/schemas/CorsSettings"
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        dataPlaneId:
+          maxLength: 255
+          minLength: 1
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        key:
+          maxLength: 255
+          minLength: 1
+          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          type: string
+        loginSettings:
+          $ref: "#/components/schemas/LoginSettings"
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+        oidc:
+          $ref: "#/components/schemas/AutomationOidcSettings"
+        passwordSettings:
+          $ref: "#/components/schemas/PasswordSettings"
+        path:
+          maxLength: 255
+          minLength: 1
+          type: string
+        saml:
+          $ref: "#/components/schemas/AutomationSamlSettings"
+        scim:
+          $ref: "#/components/schemas/SCIMSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
+        selfServiceAccountManagementSettings:
+          $ref: "#/components/schemas/SelfServiceAccountManagementSettings"
+        tags:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        tokenExchangeSettings:
+          $ref: "#/components/schemas/TokenExchangeSettings"
+        uma:
+          $ref: "#/components/schemas/UMASettings"
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+        vhosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/VirtualHost"
+        webAuthnSettings:
+          $ref: "#/components/schemas/WebAuthnSettings"
+    AutomationIdentityProvider:
+      required:
+      - key
+      type: object
+      properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        domainWhitelist:
+          type: array
+          items:
+            type: string
+        groupMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        key:
+          maxLength: 255
+          minLength: 1
+          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          type: string
+        mappers:
+          type: object
+          additionalProperties:
+            type: string
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+        roleMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        system:
+          type: boolean
+          description: "whether this is the domain's system identity provider (immutable\
+            \ after creation; when true, only key is required and the IDP is built\
+            \ from domains.identities.default.* system settings)"
+        type:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    AutomationOidcSettings:
+      type: object
+      properties:
+        cibaSettings:
+          $ref: "#/components/schemas/AutomationCIBASettings"
+        clientRegistrationSettings:
+          $ref: "#/components/schemas/ClientRegistrationSettings"
+        postLogoutRedirectUris:
+          type: array
+          items:
+            type: string
+        redirectUriStrictMatching:
+          type: boolean
+        requestUris:
+          type: array
+          items:
+            type: string
+        securityProfileSettings:
+          $ref: "#/components/schemas/SecurityProfileSettings"
+    AutomationReporter:
+      required:
+      - key
+      type: object
+      properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        dataType:
+          type: string
+          readOnly: true
+        enabled:
+          type: boolean
+        key:
+          maxLength: 255
+          minLength: 1
+          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          type: string
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+        system:
+          type: boolean
+          description: "whether this is the domain's system reporter (immutable after\
+            \ creation; when true, only key is required and the reporter is built\
+            \ from domains.reporters.default.* and repository system settings)"
+        type:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    AutomationSamlSettings:
+      type: object
+      properties:
+        certificate:
+          type: string
+        enabled:
+          type: boolean
+        entityId:
+          type: string
+    ClientRegistrationSettings:
+      type: object
+      properties:
+        allowHttpSchemeRedirectUri:
+          type: boolean
+        allowLocalhostRedirectUri:
+          type: boolean
+        allowRedirectUriParamsExpressionLanguage:
+          type: boolean
+        allowWildCardRedirectUri:
+          type: boolean
+        allowedScopes:
+          type: array
+          items:
+            type: string
+        allowedScopesEnabled:
+          type: boolean
+        clientTemplateEnabled:
+          type: boolean
+        defaultScopes:
+          type: array
+          items:
+            type: string
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+    CorsSettings:
+      type: object
+      properties:
+        allowCredentials:
+          type: boolean
+        allowedHeaders:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        allowedMethods:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        allowedOrigins:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        maxAge:
+          type: integer
+          format: int32
+    FormField:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+    LoginSettings:
+      type: object
+      properties:
+        certificateBasedAuthEnabled:
+          type: boolean
+        certificateBasedAuthUrl:
+          type: string
+        enforcePasswordPolicyEnabled:
+          type: boolean
+        forgotPasswordEnabled:
+          type: boolean
+        hideForm:
+          type: boolean
+        identifierFirstEnabled:
+          type: boolean
+        inherited:
+          type: boolean
+        magicLinkAuthEnabled:
+          type: boolean
+        passwordlessDeviceNamingEnabled:
+          type: boolean
+        passwordlessEnabled:
+          type: boolean
+        passwordlessEnforcePasswordEnabled:
+          type: boolean
+        passwordlessEnforcePasswordMaxAge:
+          type: integer
+          format: int32
+        passwordlessRememberDeviceEnabled:
+          type: boolean
+        registerEnabled:
+          type: boolean
+        rememberMeEnabled:
+          type: boolean
+        resetPasswordOnExpiration:
+          type: boolean
+    PasswordSettings:
+      type: object
+      properties:
+        excludePasswordsInDictionary:
+          type: boolean
+        excludeUserProfileInfoInPassword:
+          type: boolean
+        expiryDuration:
+          type: integer
+          format: int32
+        includeNumbers:
+          type: boolean
+        includeSpecialCharacters:
+          type: boolean
+        inherited:
+          type: boolean
+        lettersInMixedCase:
+          type: boolean
+        maxConsecutiveLetters:
+          type: integer
+          format: int32
+        maxLength:
+          type: integer
+          format: int32
+        minLength:
+          type: integer
+          format: int32
+        oldPasswords:
+          type: integer
+          format: int32
+        passwordHistoryEnabled:
+          type: boolean
+    ResetPasswordSettings:
+      type: object
+      properties:
+        oldPasswordRequired:
+          type: boolean
+        tokenAge:
+          type: integer
+          format: int32
+    SCIMSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        idpSelectionEnabled:
+          type: boolean
+        idpSelectionRule:
+          type: string
+    SecretExpirationSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        expiryTimeSeconds:
+          type: integer
+          format: int64
+    SecurityProfileSettings:
+      type: object
+      properties:
+        enableFapiBrazil:
+          type: boolean
+        enablePlainFapi:
+          type: boolean
+    SelfServiceAccountManagementSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        resetPassword:
+          $ref: "#/components/schemas/ResetPasswordSettings"
+    TokenExchangeOAuthSettings:
+      type: object
+      properties:
+        inherited:
+          type: boolean
+        scopeHandling:
+          type: string
+          enum:
+          - DOWNSCOPING
+          - PERMISSIVE
+    TokenExchangeSettings:
+      type: object
+      properties:
+        allowDelegation:
+          type: boolean
+        allowImpersonation:
+          type: boolean
+        allowedActorTokenTypes:
+          type: array
+          items:
+            type: string
+        allowedRequestedTokenTypes:
+          type: array
+          items:
+            type: string
+        allowedSubjectTokenTypes:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        maxDelegationDepth:
+          type: integer
+          format: int32
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
+        trustedIssuers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustedIssuer"
+    TrustedIssuer:
+      type: object
+      properties:
+        certificate:
+          type: string
+        issuer:
+          type: string
+        jwksUri:
+          type: string
+        keyResolutionMethod:
+          type: string
+          enum:
+          - JWKS_URL
+          - PEM
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+    UMASettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+    UserBindingCriterion:
+      type: object
+      properties:
+        attribute:
+          type: string
+        expression:
+          type: string
+    VirtualHost:
+      type: object
+      properties:
+        host:
+          type: string
+        overrideEntrypoint:
+          type: boolean
+        path:
+          type: string
+    WebAuthnSettings:
+      type: object
+      properties:
+        attestationConveyancePreference:
+          type: string
+          enum:
+          - NONE
+          - INDIRECT
+          - DIRECT
+        authenticatorAttachment:
+          type: string
+          enum:
+          - CROSS_PLATFORM
+          - PLATFORM
+        certificates:
+          type: object
+          additionalProperties:
+            type: object
+        enforceAuthenticatorIntegrity:
+          type: boolean
+        enforceAuthenticatorIntegrityMaxAge:
+          type: integer
+          format: int32
+        forceRegistration:
+          type: boolean
+        origin:
+          type: string
+        relyingPartyId:
+          type: string
+        relyingPartyName:
+          type: string
+        requireResidentKey:
+          type: boolean
+        userVerification:
+          type: string
+          enum:
+          - REQUIRED
+          - PREFERRED
+          - DISCOURAGED
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    BasicAuth:
+      type: http
+      scheme: basic

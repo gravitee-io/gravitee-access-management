@@ -19,6 +19,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.CertificateMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -121,6 +122,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
 
         Certificate certificate = new Certificate();
         certificate.setId(certificateMongo.getId());
+        certificate.setAutomationKey(certificateMongo.getAutomationKey());
         certificate.setName(certificateMongo.getName());
         certificate.setType(certificateMongo.getType());
         certificate.setConfiguration(certificateMongo.getConfiguration());
@@ -136,6 +138,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificate.setUpdatedAt(certificateMongo.getUpdatedAt());
         certificate.setExpiresAt(certificateMongo.getExpiresAt());
         certificate.setSystem(certificateMongo.isSystem());
+        certificate.setManagedBy(certificateMongo.getManagedBy() != null ? ManagedBy.valueOf(certificateMongo.getManagedBy()) : null);
         return certificate;
     }
 
@@ -146,6 +149,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
 
         CertificateMongo certificateMongo = new CertificateMongo();
         certificateMongo.setId(certificate.getId());
+        certificateMongo.setAutomationKey(certificate.getAutomationKey());
         certificateMongo.setName(certificate.getName());
         certificateMongo.setType(certificate.getType());
         certificateMongo.setConfiguration(certificate.getConfiguration());
@@ -155,6 +159,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setUpdatedAt(certificate.getUpdatedAt());
         certificateMongo.setExpiresAt(certificate.getExpiresAt());
         certificateMongo.setSystem(certificate.isSystem());
+        certificateMongo.setManagedBy(certificate.getManagedBy() != null ? certificate.getManagedBy().name() : null);
         return certificateMongo;
     }
 }

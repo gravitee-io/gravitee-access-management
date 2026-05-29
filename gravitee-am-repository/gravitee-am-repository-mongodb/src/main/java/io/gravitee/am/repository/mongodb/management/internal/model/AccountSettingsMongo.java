@@ -39,6 +39,7 @@ public class AccountSettingsMongo {
     private String redirectUriAfterRegistration;
     private boolean dynamicUserRegistration;
     private String defaultIdentityProviderForRegistration;
+    private String defaultIdentityProviderForRegistrationKey;
     private boolean autoLoginAfterResetPassword;
     private String redirectUriAfterResetPassword;
     private boolean deletePasswordlessDevicesAfterResetPassword;
@@ -142,6 +143,14 @@ public class AccountSettingsMongo {
 
     public void setDefaultIdentityProviderForRegistration(String defaultIdentityProviderForRegistration) {
         this.defaultIdentityProviderForRegistration = defaultIdentityProviderForRegistration;
+    }
+
+    public String getDefaultIdentityProviderForRegistrationKey() {
+        return defaultIdentityProviderForRegistrationKey;
+    }
+
+    public void setDefaultIdentityProviderForRegistrationKey(String defaultIdentityProviderForRegistrationKey) {
+        this.defaultIdentityProviderForRegistrationKey = defaultIdentityProviderForRegistrationKey;
     }
 
     public boolean isAutoLoginAfterResetPassword() {
@@ -284,6 +293,7 @@ public class AccountSettingsMongo {
         accountSettings.setRedirectUriAfterRegistration(getRedirectUriAfterRegistration());
         accountSettings.setDynamicUserRegistration(isDynamicUserRegistration());
         accountSettings.setDefaultIdentityProviderForRegistration(getDefaultIdentityProviderForRegistration());
+        accountSettings.setDefaultIdentityProviderForRegistrationKey(getDefaultIdentityProviderForRegistrationKey());
         accountSettings.setAutoLoginAfterResetPassword(isAutoLoginAfterResetPassword());
         accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
         accountSettings.setSendRecoverAccountEmail(isSendRecoverAccountEmail());
@@ -321,6 +331,7 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setRedirectUriAfterRegistration(accountSettings.getRedirectUriAfterRegistration());
         accountSettingsMongo.setDynamicUserRegistration(accountSettings.isDynamicUserRegistration());
         accountSettingsMongo.setDefaultIdentityProviderForRegistration(accountSettings.getDefaultIdentityProviderForRegistration());
+        accountSettingsMongo.setDefaultIdentityProviderForRegistrationKey(accountSettings.getDefaultIdentityProviderForRegistrationKey());
         accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
         accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());

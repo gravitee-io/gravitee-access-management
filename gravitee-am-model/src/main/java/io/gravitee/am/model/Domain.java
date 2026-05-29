@@ -22,6 +22,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 @Builder
 @AllArgsConstructor
-public class Domain implements Resource {
+public class Domain implements Resource, Managed {
 
     /**
      * Domain identifier.
@@ -48,6 +49,16 @@ public class Domain implements Resource {
      * Domain human readable identifier.
      */
     private String hrid;
+
+    /**
+     * Stable, human-chosen identifier used to address this domain in declarative APIs
+     * (e.g. the Automation API). Set when the Automation API creates the resource; null for
+     * domains created via the management API. Distinct from {@link #hrid}, which is derived
+     * from the name. Read-only over the management API.
+     */
+    @JsonProperty("key")
+    @Schema(name = "key", accessMode = Schema.AccessMode.READ_ONLY)
+    private String automationKey;
 
     /**
      * Domain name.
@@ -202,6 +213,11 @@ public class Domain implements Resource {
      */
     private CertificateSettings certificateSettings;
 
+    /**
+     * Indicates the source of truth for this domain.
+     */
+    private ManagedBy managedBy;
+
     public Domain() {
     }
 
@@ -216,6 +232,7 @@ public class Domain implements Resource {
     public Domain(Domain other) {
         this.id = other.id;
         this.hrid = other.hrid;
+        this.automationKey = other.automationKey;
         this.name = other.name;
         this.version = other.version;
         this.description = other.description;
@@ -245,6 +262,7 @@ public class Domain implements Resource {
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
         this.tokenExchangeSettings = other.tokenExchangeSettings;
         this.certificateSettings = other.certificateSettings != null ? new CertificateSettings(other.certificateSettings) : null;
+        this.managedBy = other.managedBy;
     }
 
     @Override
@@ -262,6 +280,14 @@ public class Domain implements Resource {
 
     public void setHrid(String hrid) {
         this.hrid = hrid;
+    }
+
+    public String getAutomationKey() {
+        return automationKey;
+    }
+
+    public void setAutomationKey(String automationKey) {
+        this.automationKey = automationKey;
     }
 
     public String getName() {
@@ -570,6 +596,14 @@ public class Domain implements Resource {
         return this.getOidc() != null &&
                 this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowRedirectUriParamsExpressionLanguage();
+    }
+
+    public ManagedBy getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(ManagedBy managedBy) {
+        this.managedBy = managedBy;
     }
 
     @Override

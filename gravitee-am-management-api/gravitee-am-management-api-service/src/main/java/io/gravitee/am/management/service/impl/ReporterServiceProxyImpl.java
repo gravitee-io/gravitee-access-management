@@ -95,6 +95,14 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
+    public Single<Reporter> createSystem(Reference reference, String id, String automationKey, User principal) {
+        return reporterService.createSystem(reference, id, automationKey, principal)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reference(reference).throwable(throwable)));
+    }
+
+    @Override
     public Single<Reporter> update(Reference domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
 
         Supplier<ReporterAuditBuilder> baseAudit = () ->

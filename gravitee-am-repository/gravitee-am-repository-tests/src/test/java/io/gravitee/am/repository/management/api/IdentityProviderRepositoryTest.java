@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -211,6 +212,32 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoValues();
         testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void testManagedByRoundTrips() {
+        IdentityProvider identityProvider = buildIdentityProvider();
+        identityProvider.setManagedBy(ManagedBy.AUTOMATION_API);
+        IdentityProvider created = identityProviderRepository.create(identityProvider).blockingGet();
+
+        TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idp -> idp.getManagedBy() == ManagedBy.AUTOMATION_API);
+    }
+
+    @Test
+    public void testKeyRoundTrips() {
+        IdentityProvider identityProvider = buildIdentityProvider();
+        identityProvider.setAutomationKey("customer-users");
+        IdentityProvider created = identityProviderRepository.create(identityProvider).blockingGet();
+
+        TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idp -> "customer-users".equals(idp.getAutomationKey()));
     }
 
     @Test

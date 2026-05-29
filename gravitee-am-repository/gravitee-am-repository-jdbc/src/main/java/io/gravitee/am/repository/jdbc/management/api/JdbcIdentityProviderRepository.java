@@ -50,6 +50,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 public class JdbcIdentityProviderRepository extends AbstractJdbcRepository implements IdentityProviderRepository, InitializingBean {
 
     public static final String COL_ID = "id";
+    public static final String COL_AUTOMATION_KEY = "automation_key";
     public static final String COL_TYPE = "type";
     public static final String COL_NAME = "name";
     public static final String COL_SYSTEM = "system";
@@ -65,9 +66,11 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public static final String COL_GROUP_MAPPER = "group_mapper";
     public static final String COL_PASSWORD_POLICY = "password_policy";
     public static final String COL_DATA_PLANE_ID = "data_plane_id";
+    public static final String COL_MANAGED_BY = "managed_by";
 
     private static final List<String> columns = List.of(
             COL_ID,
+            COL_AUTOMATION_KEY,
             COL_TYPE,
             COL_NAME,
             COL_SYSTEM,
@@ -82,7 +85,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_ROLE_MAPPER,
             COL_GROUP_MAPPER,
             COL_PASSWORD_POLICY,
-            COL_DATA_PLANE_ID
+            COL_DATA_PLANE_ID,
+            COL_MANAGED_BY
     );
 
     private String insertStatement;
@@ -168,6 +172,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_DATA_PLANE_ID, item.getDataPlaneId(), String.class);
@@ -184,6 +189,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_GROUP_MAPPER, item.getGroupMapper());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy());
         insertSpec = addQuotedField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
@@ -198,6 +204,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
         update = addQuotedField(update, COL_TYPE, item.getType(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
         update = addQuotedField(update, COL_DATA_PLANE_ID, item.getDataPlaneId(), String.class);
@@ -213,6 +220,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_ROLE_MAPPER, item.getRoleMapper());
         update = databaseDialectHelper.addJsonField(update, COL_GROUP_MAPPER, item.getGroupMapper());
         update = addQuotedField(update, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
+        update = addQuotedField(update, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 

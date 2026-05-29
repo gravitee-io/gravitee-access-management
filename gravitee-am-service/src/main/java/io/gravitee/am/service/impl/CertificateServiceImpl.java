@@ -28,6 +28,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -56,6 +57,7 @@ import io.gravitee.am.service.exception.CertificateWithIdpException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.AutomationNewCertificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -276,7 +278,6 @@ public class CertificateServiceImpl implements CertificateService {
 
     private Certificate createCertificate(String domain, NewCertificate newCertificate, boolean isSystem, byte[] content) {
         var certificate = new Certificate();
-        certificate.setId(RandomString.generate());
         certificate.setDomain(domain);
         certificate.setName(newCertificate.getName());
         certificate.setType(newCertificate.getType());
@@ -285,6 +286,14 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setConfiguration(newCertificate.getConfiguration());
         certificate.setCreatedAt(new Date());
         certificate.setUpdatedAt(certificate.getCreatedAt());
+        if (newCertificate instanceof AutomationNewCertificate auto) {
+            // the Automation API supplies a deterministic id derived from the domain + key
+            certificate.setId(auto.getId() == null ? RandomString.generate() : auto.getId());
+            certificate.setAutomationKey(auto.getAutomationKey());
+            certificate.setManagedBy(ManagedBy.AUTOMATION_API);
+        } else {
+            certificate.setId(RandomString.generate());
+        }
         return certificate;
     }
 
@@ -359,7 +368,9 @@ public class CertificateServiceImpl implements CertificateService {
         var certificateToUpdate = new Certificate(oldCertificate.certificate());
         certificateToUpdate.setName(updateCertificate.getName());
         certificateToUpdate.setUpdatedAt(new Date());
-        if (!certificateToUpdate.isSystem()) { // system certificate can't be updated
+        // System certificate config is normally immutable through the API, but the Automation API owns the
+        // lifecycle of the resources it manages, so it may update their configuration.
+        if (!certificateToUpdate.isSystem() || certificateToUpdate.getManagedBy() == ManagedBy.AUTOMATION_API) {
             oldCertificate.schema.getFileKey().ifPresent(fileKey -> updateEmbeddedKeys(updateCertificate, certificateToUpdate, oldCertificate, fileKey));
             certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
         }
@@ -467,6 +478,30 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Single<Certificate> create(Domain domain) {
+        return buildDefaultCertificate(domain)
+                .flatMap(certificate -> create(domain, certificate, true));
+    }
+
+    @Override
+    public Single<Certificate> createSystem(Domain domain, String id, String automationKey, User principal) {
+        return buildDefaultCertificate(domain)
+                .flatMap(base -> {
+                    AutomationNewCertificate auto = new AutomationNewCertificate();
+                    auto.setId(id);
+                    auto.setAutomationKey(automationKey);
+                    auto.setName(base.getName());
+                    auto.setType(base.getType());
+                    auto.setConfiguration(base.getConfiguration());
+                    return create(domain, auto, principal, true);
+                });
+    }
+
+    /**
+     * Build the default PKCS12 {@link NewCertificate} for the given domain from the
+     * {@code domains.certificates.default.*} settings in {@code gravitee.yaml}. The returned model carries
+     * the name, type and configuration but no id and no automation key — those are assigned by the caller.
+     */
+    private Single<NewCertificate> buildDefaultCertificate(Domain domain) {
         // Define the default certificate
         // Create a default PKCS12 certificate: io.gravitee.am.certificate.pkcs12.PKCS12Configuration
         NewCertificate certificate = new NewCertificate();
@@ -502,9 +537,10 @@ public class CertificateServiceImpl implements CertificateService {
                     certificateNode.put(KEY_PASS, keyPass);
 
                     return objectMapper.writeValueAsString(certificateNode);
-                }).flatMap(configuration -> {
+                })
+                .map(configuration -> {
                     certificate.setConfiguration(configuration);
-                    return create(domain, certificate, true);
+                    return certificate;
                 });
     }
 

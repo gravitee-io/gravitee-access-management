@@ -19,6 +19,7 @@ import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
@@ -118,7 +119,10 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setTags(new HashSet<>(Arrays.asList("tag1", "tag2")));
         domain.setIdentities(new HashSet<>(Arrays.asList("id1", "id2")));
 
-        domain.setAccountSettings(new AccountSettings());
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setDefaultIdentityProviderForRegistration("default-idp-id");
+        accountSettings.setDefaultIdentityProviderForRegistrationKey("default-idp-key");
+        domain.setAccountSettings(accountSettings);
         domain.setLoginSettings(new LoginSettings());
         domain.getLoginSettings().setResetPasswordOnExpiration(true);
         final OIDCSettings oidc = new OIDCSettings();
@@ -136,7 +140,15 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setSelfServiceAccountManagementSettings(new SelfServiceAccountManagementSettings());
         CertificateSettings certificateSettings = new CertificateSettings();
         certificateSettings.setFallbackCertificate("fallback-cert-id");
+        certificateSettings.setFallbackCertificateKey("fallback-cert-key");
         domain.setCertificateSettings(certificateSettings);
+
+        SAMLSettings saml = new SAMLSettings();
+        saml.setEnabled(true);
+        saml.setEntityId("https://idp.example.com");
+        saml.setCertificate("saml-cert-id");
+        saml.setCertificateKey("saml-cert-key");
+        domain.setSaml(saml);
 
         return domain;
     }
@@ -223,6 +235,11 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);
         testObserver.assertValue(d -> d.getCertificateSettings() != null);
         testObserver.assertValue(d -> "fallback-cert-id".equals(d.getCertificateSettings().getFallbackCertificate()));
+        // Automation API parallel-key references must survive the persistence round-trip in every store
+        // (regression guard: hand-mapped Mongo subtypes silently drop new model fields).
+        testObserver.assertValue(d -> "fallback-cert-key".equals(d.getCertificateSettings().getFallbackCertificateKey()));
+        testObserver.assertValue(d -> "default-idp-key".equals(d.getAccountSettings().getDefaultIdentityProviderForRegistrationKey()));
+        testObserver.assertValue(d -> d.getSaml() != null && "saml-cert-key".equals(d.getSaml().getCertificateKey()));
     }
 
     @Test

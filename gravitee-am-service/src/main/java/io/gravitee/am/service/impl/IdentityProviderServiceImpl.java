@@ -38,6 +38,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -53,6 +54,7 @@ import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
+import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -193,6 +195,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private static IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
         var identityProvider = new IdentityProvider();
         identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
+        if (newIdentityProvider instanceof AutomationNewIdentityProvider auto) {
+            identityProvider.setAutomationKey(auto.getAutomationKey());
+            identityProvider.setManagedBy(ManagedBy.AUTOMATION_API);
+        }
         identityProvider.setReferenceType(domain);
         identityProvider.setReferenceId(domain1);
         identityProvider.setName(newIdentityProvider.getName());
@@ -215,7 +221,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .flatMap(oldIdentity -> {
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
                     identityToUpdate.setName(updateIdentityProvider.getName());
-                    if (!identityToUpdate.isSystem() || isUpgrader) {
+                    // System idp config is normally immutable through the API, but the Automation API owns
+                    // the lifecycle of the resources it manages, so it may update their configuration.
+                    if (!identityToUpdate.isSystem() || isUpgrader || identityToUpdate.isManagedBy(ManagedBy.AUTOMATION_API)) {
                         identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
                     }
                     identityToUpdate.setMappers(updateIdentityProvider.getMappers());
