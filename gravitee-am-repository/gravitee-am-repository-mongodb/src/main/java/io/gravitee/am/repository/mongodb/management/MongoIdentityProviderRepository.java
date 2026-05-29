@@ -19,6 +19,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
@@ -150,6 +151,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
 
         var identityProvider = new IdentityProvider();
         identityProvider.setId(identityProviderMongo.getId());
+        identityProvider.setAutomationKey(identityProviderMongo.getAutomationKey());
         identityProvider.setName(identityProviderMongo.getName());
         identityProvider.setDataPlaneId(identityProviderMongo.getDataPlaneId());
         identityProvider.setType(identityProviderMongo.getType());
@@ -189,6 +191,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
         identityProvider.setPasswordPolicy(identityProviderMongo.getPasswordPolicy());
+        identityProvider.setManagedBy(identityProviderMongo.getManagedBy() != null ? ManagedBy.valueOf(identityProviderMongo.getManagedBy()) : null);
         return identityProvider;
     }
 
@@ -196,6 +199,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         return ofNullable(identityProvider).map(Objects::nonNull).map(idp -> {
             var identityProviderMongo = new IdentityProviderMongo();
             identityProviderMongo.setId(identityProvider.getId());
+            identityProviderMongo.setAutomationKey(identityProvider.getAutomationKey());
             identityProviderMongo.setName(identityProvider.getName());
             identityProviderMongo.setType(identityProvider.getType());
             identityProviderMongo.setDataPlaneId(identityProvider.getDataPlaneId());
@@ -217,6 +221,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
                             .map(BsonString::new)
                             .collect(toCollection(BsonArray::new)));
             identityProviderMongo.setPasswordPolicy(identityProvider.getPasswordPolicy());
+            identityProviderMongo.setManagedBy(identityProvider.getManagedBy() != null ? identityProvider.getManagedBy().name() : null);
             return identityProviderMongo;
         });
     }

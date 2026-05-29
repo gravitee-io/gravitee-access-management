@@ -13512,8 +13512,13 @@ components:
           type: array
           items:
             type: string
+        key:
+          type: string
+          readOnly: true
         loginSettings:
           $ref: "#/components/schemas/LoginSettings"
+        managedBy:
+          $ref: "#/components/schemas/ManagedBy"
         master:
           type: boolean
         name:
@@ -14157,6 +14162,11 @@ components:
               type: string
         id:
           type: string
+        key:
+          type: string
+          readOnly: true
+        managedBy:
+          $ref: "#/components/schemas/ManagedBy"
         mappers:
           type: object
           additionalProperties:
@@ -14295,6 +14305,13 @@ components:
           $ref: "#/components/schemas/StepUpAuthenticationSettings"
         stepUpAuthenticationRule:
           type: string
+    ManagedBy:
+      type: string
+      enum:
+      - NONE
+      - TERRAFORM
+      - GKO
+      - AUTOMATION_API
     McpTool:
       type: object
       allOf:
@@ -16584,6 +16601,11 @@ components:
           type: string
         inherited:
           type: boolean
+        key:
+          type: string
+          readOnly: true
+        managedBy:
+          $ref: "#/components/schemas/ManagedBy"
         name:
           type: string
         reference:

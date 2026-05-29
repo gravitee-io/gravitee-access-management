@@ -34,6 +34,8 @@ public class JdbcDomain {
     @Id
     private String id;
     private String hrid;
+    @Column("automation_key")
+    private String automationKey;
     private String name;
     private String version;
     private String description;
@@ -69,6 +71,8 @@ public class JdbcDomain {
     private String corsSettings;
     @Column("data_plane_id")
     private String dataPlaneId;
+    @Column("managed_by")
+    private String managedBy;
     @Column("secret_expiration_settings")
     private String secretExpirationSettings;
     @Column("token_exchange_settings")

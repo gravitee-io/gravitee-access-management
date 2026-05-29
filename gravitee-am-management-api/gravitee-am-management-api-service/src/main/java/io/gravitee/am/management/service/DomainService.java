@@ -56,7 +56,15 @@ public interface DomainService extends DomainReadService {
 
     Single<Domain> create(String organizationId, String environmentId, NewDomain domain, User principal);
 
-    Single<Domain> update(String domainId, Domain domain);
+    Single<Domain> update(String domainId, Domain domain, boolean validateReferences);
+
+    /**
+     * Update a domain, validating that the certificate/identity-provider references it carries point to
+     * existing resources.
+     */
+    default Single<Domain> update(String domainId, Domain domain) {
+        return update(domainId, domain, true);
+    }
 
     Single<Domain> patch(GraviteeContext graviteeContext, String domainId, PatchDomain domain, User principal);
 

@@ -44,6 +44,12 @@ public interface ReporterService {
 
     Single<Reporter> createDefault(Reference reference);
 
+    /**
+     * Create the domain's system reporter from {@code gravitee.yaml} repository settings on behalf of
+     * the Automation API.
+     */
+    Single<Reporter> createSystem(Reference reference, String id, String automationKey, User principal);
+
     NewReporter createInternal(Reference reference);
 
     Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system);

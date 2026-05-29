@@ -76,6 +76,12 @@ export interface IdentityProvider {
   id?: string;
   /**
    *
+   * @type {string}
+   * @memberof IdentityProvider
+   */
+  managedBy?: IdentityProviderManagedByEnum;
+  /**
+   *
    * @type {{ [key: string]: string; }}
    * @memberof IdentityProvider
    */
@@ -133,6 +139,17 @@ export interface IdentityProvider {
 /**
  * @export
  */
+export const IdentityProviderManagedByEnum = {
+  None: 'NONE',
+  Terraform: 'TERRAFORM',
+  Gko: 'GKO',
+  AutomationApi: 'AUTOMATION_API',
+} as const;
+export type IdentityProviderManagedByEnum = typeof IdentityProviderManagedByEnum[keyof typeof IdentityProviderManagedByEnum];
+
+/**
+ * @export
+ */
 export const IdentityProviderReferenceTypeEnum = {
   Platform: 'PLATFORM',
   Domain: 'DOMAIN',
@@ -166,6 +183,7 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
     external: json['external'] == null ? undefined : json['external'],
     groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
     id: json['id'] == null ? undefined : json['id'],
+    managedBy: json['managedBy'] == null ? undefined : json['managedBy'],
     mappers: json['mappers'] == null ? undefined : json['mappers'],
     name: json['name'] == null ? undefined : json['name'],
     passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
@@ -195,6 +213,7 @@ export function IdentityProviderToJSONTyped(value?: IdentityProvider | null, ign
     external: value['external'],
     groupMapper: value['groupMapper'],
     id: value['id'],
+    managedBy: value['managedBy'],
     mappers: value['mappers'],
     name: value['name'],
     passwordPolicy: value['passwordPolicy'],

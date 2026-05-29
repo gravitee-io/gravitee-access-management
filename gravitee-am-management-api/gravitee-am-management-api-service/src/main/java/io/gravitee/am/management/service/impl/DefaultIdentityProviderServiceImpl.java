@@ -19,12 +19,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
+import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
@@ -76,18 +78,33 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     @Override
     public Single<IdentityProvider> create(Domain domain) {
         NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
-        newIdentityProvider.setId(DEFAULT_IDP_PREFIX + domain.getId().toLowerCase());
-        newIdentityProvider.setName(DEFAULT_IDP_NAME);
+        return populateDefault(domain, newIdentityProvider)
+                .flatMap(populated -> identityProviderService.create(domain, populated, null, true));
+    }
+
+    @Override
+    public Single<IdentityProvider> create(Domain domain, String automationKey, User principal) {
+        AutomationNewIdentityProvider auto = new AutomationNewIdentityProvider();
+        auto.setAutomationKey(automationKey);
+        return populateDefault(domain, auto)
+                .flatMap(populated -> identityProviderService.create(domain, populated, principal, true));
+    }
+
+    private <T extends NewIdentityProvider> Single<T> populateDefault(Domain domain, T target) {
+        target.setId(DEFAULT_IDP_PREFIX + domain.getId().toLowerCase());
+        target.setName(DEFAULT_IDP_NAME);
         if (useMongoRepositories()) {
-            newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
-            newIdentityProvider.setConfiguration(createProviderConfig(domain.getId(), null));
+            target.setType(DEFAULT_MONGO_IDP_TYPE);
+            target.setConfiguration(createProviderConfig(domain.getId(), null));
         } else if (useJdbcRepositories()) {
-            newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
-            newIdentityProvider.setConfiguration(createProviderConfig(domain.getId(), newIdentityProvider));
+            target.setType(DEFAULT_JDBC_IDP_TYPE);
+            // createProviderConfig may rewrite the id when the JDBC table name would exceed the platform
+            // limit; the passed instance is mutated in place.
+            target.setConfiguration(createProviderConfig(domain.getId(), target));
         } else {
             return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend() + " backend"));
         }
-        return identityProviderService.create(domain, newIdentityProvider, null, true);
+        return Single.just(target);
     }
 
 

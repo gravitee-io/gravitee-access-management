@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -55,6 +56,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     protected Reporter toEntity(JdbcReporter entity) {
         return Reporter.builder()
                 .id(entity.getId())
+                .automationKey(entity.getAutomationKey())
                 .reference(new Reference(entity.getReferenceType(), entity.getReferenceId()))
                 .name(entity.getName())
                 .configuration(entity.getConfiguration())
@@ -65,12 +67,14 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .updatedAt(toDate(entity.getUpdatedAt()))
                 .type(entity.getType())
                 .inherited(entity.isInherited())
+                .managedBy(entity.getManagedBy() != null ? ManagedBy.valueOf(entity.getManagedBy()) : null)
                 .build();
     }
 
     protected JdbcReporter toJdbcEntity(Reporter entity) {
         return JdbcReporter.builder()
                 .id(entity.getId())
+                .automationKey(entity.getAutomationKey())
                 .referenceType(entity.getReference().type())
                 .referenceId(entity.getReference().id())
                 .name(entity.getName())
@@ -82,12 +86,14 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
                 .type(entity.getType())
                 .inherited(entity.isInherited())
+                .managedBy(entity.getManagedBy() != null ? entity.getManagedBy().name() : null)
                 .build();
 
     }
 
     private static final List<FieldSpec<JdbcReporter, ?>> fields = List.of(
             new FieldSpec<>(COL_ID, JdbcReporter::getId, String.class),
+            new FieldSpec<>("automation_key", JdbcReporter::getAutomationKey, String.class),
             new FieldSpec<>("reference_type", r-> r.getReferenceType().name(), String.class),
             new FieldSpec<>("reference_id", JdbcReporter::getReferenceId, String.class),
             new FieldSpec<>("enabled", JdbcReporter::isEnabled, boolean.class),
@@ -97,6 +103,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
             new FieldSpec<>("configuration", JdbcReporter::getConfiguration, String.class),
             new FieldSpec<>("system", JdbcReporter::isSystem, boolean.class),
             new FieldSpec<>("inherited", JdbcReporter::isInherited, boolean.class),
+            new FieldSpec<>("managed_by", JdbcReporter::getManagedBy, String.class),
             new FieldSpec<>("created_at", JdbcReporter::getCreatedAt, LocalDateTime.class),
             new FieldSpec<>("updated_at", JdbcReporter::getUpdatedAt, LocalDateTime.class)
 

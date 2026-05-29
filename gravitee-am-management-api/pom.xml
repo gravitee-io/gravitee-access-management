@@ -36,6 +36,7 @@
         <module>gravitee-am-management-api-service</module>
         <module>gravitee-am-management-api-services</module>
         <module>gravitee-am-management-api-rest</module>
+        <module>gravitee-am-management-api-automation</module>
         <module>gravitee-am-management-api-standalone</module>
     </modules>
 </project>

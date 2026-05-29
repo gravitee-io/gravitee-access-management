@@ -1,0 +1,145 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-managed-by-to-domains
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: domains
+              columnName: managed_by
+      changes:
+        - addColumn:
+            tableName: domains
+            columns:
+              - column:
+                  name: managed_by
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-automation-key-to-domains
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: domains
+              columnName: automation_key
+      changes:
+        - addColumn:
+            tableName: domains
+            columns:
+              - column:
+                  name: automation_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-managed-by-to-identities
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: identities
+              columnName: managed_by
+      changes:
+        - addColumn:
+            tableName: identities
+            columns:
+              - column:
+                  name: managed_by
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-automation-key-to-identities
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: identities
+              columnName: automation_key
+      changes:
+        - addColumn:
+            tableName: identities
+            columns:
+              - column:
+                  name: automation_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-managed-by-to-certificates
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: certificates
+              columnName: managed_by
+      changes:
+        - addColumn:
+            tableName: certificates
+            columns:
+              - column:
+                  name: managed_by
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-automation-key-to-certificates
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: certificates
+              columnName: automation_key
+      changes:
+        - addColumn:
+            tableName: certificates
+            columns:
+              - column:
+                  name: automation_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-managed-by-to-reporters
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: reporters
+              columnName: managed_by
+      changes:
+        - addColumn:
+            tableName: reporters
+            columns:
+              - column:
+                  name: managed_by
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: 4.12.0-add-automation-key-to-reporters
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: reporters
+              columnName: automation_key
+      changes:
+        - addColumn:
+            tableName: reporters
+            columns:
+              - column:
+                  name: automation_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true

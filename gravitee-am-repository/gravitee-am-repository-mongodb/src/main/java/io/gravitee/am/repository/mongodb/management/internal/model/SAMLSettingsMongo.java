@@ -26,6 +26,7 @@ public class SAMLSettingsMongo {
     private boolean enabled;
     private String entityId;
     private String certificate;
+    private String certificateKey;
 
     public boolean isEnabled() {
         return enabled;
@@ -51,11 +52,20 @@ public class SAMLSettingsMongo {
         this.certificate = certificate;
     }
 
+    public String getCertificateKey() {
+        return certificateKey;
+    }
+
+    public void setCertificateKey(String certificateKey) {
+        this.certificateKey = certificateKey;
+    }
+
     public SAMLSettings convert() {
         SAMLSettings samlSettings = new SAMLSettings();
         samlSettings.setEnabled(isEnabled());
         samlSettings.setEntityId(getEntityId());
         samlSettings.setCertificate(getCertificate());
+        samlSettings.setCertificateKey(getCertificateKey());
         return samlSettings;
     }
 
@@ -67,6 +77,7 @@ public class SAMLSettingsMongo {
         samlSettings.setEnabled(other.isEnabled());
         samlSettings.setEntityId(other.getEntityId());
         samlSettings.setCertificate(other.getCertificate());
+        samlSettings.setCertificateKey(other.getCertificateKey());
         return samlSettings;
     }
 }

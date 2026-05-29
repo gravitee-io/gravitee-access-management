@@ -33,6 +33,8 @@ import java.time.LocalDateTime;
 public class JdbcIdentityProvider {
     @Id
     private String id;
+    @Column("automation_key")
+    private String automationKey;
     private String name;
     private String type;
     private boolean system;
@@ -57,4 +59,6 @@ public class JdbcIdentityProvider {
     private String passwordPolicy;
     @Column("data_plane_id")
     private String dataPlaneId;
+    @Column("managed_by")
+    private String managedBy;
 }

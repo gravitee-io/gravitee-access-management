@@ -48,6 +48,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 public class JdbcCertificateRepository extends AbstractJdbcRepository implements CertificateRepository, InitializingBean {
 
     public static final String COL_ID = "id";
+    public static final String COL_AUTOMATION_KEY = "automation_key";
     public static final String COL_TYPE = "type";
     public static final String COL_CONFIGURATION = "configuration";
     public static final String COL_DOMAIN = "domain";
@@ -57,9 +58,11 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public static final String COL_UPDATED_AT = "updated_at";
     public static final String COL_EXPIRES_AT = "expires_at";
     public static final String COL_SYSTEM = "system";
+    public static final String COL_MANAGED_BY = "managed_by";
 
     private static final List<String> columns = List.of(
             COL_ID,
+            COL_AUTOMATION_KEY,
             COL_TYPE,
             COL_CONFIGURATION,
             COL_DOMAIN,
@@ -68,7 +71,8 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
             COL_CREATED_AT,
             COL_UPDATED_AT,
             COL_EXPIRES_AT,
-            COL_SYSTEM
+            COL_SYSTEM,
+            COL_MANAGED_BY
     );
 
     private String insertStatement;
@@ -132,6 +136,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec,COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec,COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
         insertSpec = addQuotedField(insertSpec,COL_TYPE, item.getType(), String.class);
         insertSpec = addQuotedField(insertSpec,COL_CONFIGURATION, item.getConfiguration(), String.class);
         insertSpec = addQuotedField(insertSpec,COL_DOMAIN, item.getDomain(), String.class);
@@ -141,6 +146,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         insertSpec = addQuotedField(insertSpec,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_SYSTEM, item.isSystem(), boolean.class);
+        insertSpec = addQuotedField(insertSpec,COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
@@ -154,6 +160,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update,COL_ID, item.getId(), String.class);
+        update = addQuotedField(update,COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
         update = addQuotedField(update,COL_TYPE, item.getType(), String.class);
         update = addQuotedField(update,COL_CONFIGURATION, item.getConfiguration(), String.class);
         update = addQuotedField(update,COL_DOMAIN, item.getDomain(), String.class);
@@ -163,6 +170,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         update = addQuotedField(update,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
         update = addQuotedField(update,COL_SYSTEM, item.isSystem(), boolean.class);
+        update = addQuotedField(update,COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
 
         Mono<Long> updateAction = update.fetch().rowsUpdated();
 

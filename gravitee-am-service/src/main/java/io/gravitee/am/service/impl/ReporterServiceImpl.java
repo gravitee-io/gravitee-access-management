@@ -23,6 +23,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -40,6 +41,7 @@ import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.AutomationNewReporter;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -148,6 +150,23 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     @Override
+    public Single<Reporter> createSystem(Reference reference, String id, String automationKey, User principal) {
+        LOGGER.debug("Create system (Automation API) reporter for {} with key {}", reference, automationKey);
+        NewReporter base = createInternal(reference);
+        if (base == null) {
+            return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty(MANAGEMENT_TYPE) + " not found"));
+        }
+        AutomationNewReporter auto = new AutomationNewReporter();
+        auto.setId(id);
+        auto.setAutomationKey(automationKey);
+        auto.setEnabled(base.isEnabled());
+        auto.setName(base.getName());
+        auto.setType(base.getType());
+        auto.setConfiguration(base.getConfiguration());
+        return create(reference, auto, principal, true);
+    }
+
+    @Override
     public NewReporter createInternal(Reference reference) {
         NewReporter newReporter = null;
         if (useMongoReporter()) {
@@ -180,6 +199,11 @@ public class ReporterServiceImpl implements ReporterService {
                 .updatedAt(now)
                 .build();
 
+        if (newReporter instanceof AutomationNewReporter auto) {
+            reporter.setAutomationKey(auto.getAutomationKey());
+            reporter.setManagedBy(ManagedBy.AUTOMATION_API);
+        }
+
 
         return checkReporterConfiguration(reporter)
                 .flatMap(ignore -> reporterRepository.create(reporter))
@@ -210,7 +234,9 @@ public class ReporterServiceImpl implements ReporterService {
                     reporterToUpdate.setEnabled(updateReporter.isEnabled());
 
                     reporterToUpdate.setName(updateReporter.getName());
-                    if (!oldReporter.isSystem() || isUpgrader) {
+                    // System reporter config is normally immutable through the API, but the Automation API
+                    // owns the lifecycle of the resources it manages, so it may update their configuration.
+                    if (!oldReporter.isSystem() || isUpgrader || oldReporter.isManagedBy(ManagedBy.AUTOMATION_API)) {
                         reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
                     }
                     if (updateReporter.isInherited() && (oldReporter.getReference().type() != ReferenceType.ORGANIZATION || oldReporter.isSystem())) {

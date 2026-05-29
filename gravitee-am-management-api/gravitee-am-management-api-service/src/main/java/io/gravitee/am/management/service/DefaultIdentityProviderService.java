@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import java.util.Map;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -24,6 +25,12 @@ import io.reactivex.rxjava3.core.Single;
 
 public interface DefaultIdentityProviderService {
     Single<IdentityProvider> create(Domain domain);
+
+    /**
+     * Create the domain's system identity provider from {@code gravitee.yaml} repository settings on
+     * behalf of the Automation API.
+     */
+    Single<IdentityProvider> create(Domain domain, String automationKey, User principal);
 
     Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * See <a href="https://www.oasis-open.org/committees/download.php/56786/sstc-saml-metadata-errata-2.0-wd-05-diff.pdf">2.4.3 Element <IDPSSODescriptor></a>
  *
@@ -35,6 +37,14 @@ public class SAMLSettings {
      * X.509 Public Key Certificate — the IdP's base-64 encoded public key certificate, which is used by the SP to verify SAML authorization responses
      */
     private String certificate;
+    /**
+     * Automation API key shadowing {@link #certificate}. Owned by the Automation API so it can losslessly
+     * echo the human-readable certificate key even when the referenced certificate does not (yet) exist.
+     * Ignored by the management API and the gateway, which read only {@link #certificate}; hidden from the
+     * management OpenAPI (the Automation API surfaces it under {@code AutomationSamlSettings.certificate}).
+     */
+    @Schema(hidden = true)
+    private String certificateKey;
 
     public SAMLSettings() {}
 
@@ -42,6 +52,7 @@ public class SAMLSettings {
         this.enabled = other.enabled;
         this.entityId = other.entityId;
         this.certificate = other.certificate;
+        this.certificateKey = other.certificateKey;
     }
 
     public boolean isEnabled() {
@@ -66,5 +77,13 @@ public class SAMLSettings {
 
     public void setCertificate(String certificate) {
         this.certificate = certificate;
+    }
+
+    public String getCertificateKey() {
+        return certificateKey;
+    }
+
+    public void setCertificateKey(String certificateKey) {
+        this.certificateKey = certificateKey;
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,7 +37,18 @@ public class CertificateSettings {
      */
     private String fallbackCertificate;
 
+    /**
+     * Automation API key shadowing {@link #fallbackCertificate}. Owned by the Automation API so it can
+     * losslessly echo the human-readable certificate key even when the referenced certificate does not
+     * (yet) exist. Ignored by the management API and the gateway, which read only {@link #fallbackCertificate};
+     * hidden from the management OpenAPI (the Automation API surfaces it under
+     * {@code AutomationCertificateSettings.fallbackCertificate}).
+     */
+    @Schema(hidden = true)
+    private String fallbackCertificateKey;
+
     public CertificateSettings(CertificateSettings other) {
         this.fallbackCertificate = other.fallbackCertificate;
+        this.fallbackCertificateKey = other.fallbackCertificateKey;
     }
 }

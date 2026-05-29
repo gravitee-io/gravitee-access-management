@@ -46,6 +46,12 @@ public interface CertificateService {
     Single<Certificate> create(Domain domain);
 
     /**
+     * Create the domain's system certificate from {@code gravitee.yaml} settings on behalf of the
+     * Automation API.
+     */
+    Single<Certificate> createSystem(Domain domain, String id, String automationKey, User principal);
+
+    /**
      * Request the generation of a new system certificate for the given domain
      * @param domain
      * @return the new Certificate

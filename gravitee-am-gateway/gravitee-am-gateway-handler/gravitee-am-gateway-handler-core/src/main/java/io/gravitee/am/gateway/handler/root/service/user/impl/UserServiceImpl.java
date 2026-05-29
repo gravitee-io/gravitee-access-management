@@ -238,7 +238,7 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
         // validate user and then check user uniqueness
         return userValidator.validate(user)
-                .andThen(userService.findByUsernameAndSource(user.getUsername(), source).isEmpty()
+                .andThen(Single.defer(() -> userService.findByUsernameAndSource(user.getUsername(), source).isEmpty()
                         .flatMapMaybe(checkUserPresence(user, source))
                         .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
@@ -258,7 +258,7 @@ public class UserServiceImpl implements UserService {
                                 .client(user.getClient())
                                 .principal(principal)
                                 .type(EventType.USER_REGISTERED)
-                                .throwable(throwable))));
+                                .throwable(throwable)))));
     }
 
     private static RegistrationResponse buildRegistrationResponse(Optional<AccountSettings> accountSettings, User user) {

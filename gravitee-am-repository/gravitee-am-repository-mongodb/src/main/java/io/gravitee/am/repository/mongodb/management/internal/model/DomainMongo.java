@@ -43,6 +43,8 @@ public class DomainMongo extends Auditable {
 
     private String hrid;
 
+    private String automationKey;
+
     private String name;
 
     private DomainVersion version;
@@ -90,6 +92,8 @@ public class DomainMongo extends Auditable {
     private boolean master;
 
     private String dataPlaneId;
+
+    private String managedBy;
 
     private SecretSettingsMongo secretSettings;
 

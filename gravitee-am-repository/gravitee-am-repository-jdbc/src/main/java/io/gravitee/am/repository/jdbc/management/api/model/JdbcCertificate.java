@@ -29,6 +29,8 @@ import java.time.LocalDateTime;
 public class JdbcCertificate {
     @Id
     private String id;
+    @Column("automation_key")
+    private String automationKey;
     private String name;
     private String type;
     private String configuration;
@@ -43,12 +45,23 @@ public class JdbcCertificate {
 
     private boolean system;
 
+    @Column("managed_by")
+    private String managedBy;
+
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getAutomationKey() {
+        return automationKey;
+    }
+
+    public void setAutomationKey(String automationKey) {
+        this.automationKey = automationKey;
     }
 
     public String getName() {
@@ -121,5 +134,13 @@ public class JdbcCertificate {
 
     public void setSystem(boolean system) {
         this.system = system;
+    }
+
+    public String getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(String managedBy) {
+        this.managedBy = managedBy;
     }
 }

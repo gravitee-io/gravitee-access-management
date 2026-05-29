@@ -103,6 +103,7 @@ import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
+import io.gravitee.am.service.model.AutomationNewDomain;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -544,6 +545,44 @@ public class DomainServiceTest {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
         }));
+    }
+
+    @Test
+    public void shouldCreate_automationDomain_withoutDefaultEntities() {
+        AutomationNewDomain newDomain = new AutomationNewDomain();
+        newDomain.setName("automation-domain");
+        newDomain.setAutomationKey("automation-domain");
+        newDomain.setId("domain-id");
+        newDomain.setPath("/automation-domain");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setId("domain-id");
+        domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "automation-domain")).thenReturn(Maybe.empty());
+        when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
+        when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain, new DefaultUser("username"))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(certificateService, never()).create(any());
+        verify(reporterService, never()).createDefault(any());
+        verify(defaultIdentityProviderService, never()).create(any());
     }
 
     @Test
