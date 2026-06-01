@@ -54,7 +54,6 @@ import java.util.TreeMap;
 public class AutomationApiDefinition implements ReaderListener {
 
     public static final String BEARER_AUTH_SCHEME = "BearerAuth";
-    public static final String BASIC_AUTH_SCHEME = "BasicAuth";
 
     /**
      * Default servlet path the Automation API is mounted at, shared with the runtime server
@@ -153,13 +152,9 @@ public class AutomationApiDefinition implements ReaderListener {
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .description("JWT bearer token, or an opaque user service-account access token."));
-        securitySchemes.put(BASIC_AUTH_SCHEME, new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("basic"));
         components.setSecuritySchemes(securitySchemes);
         openAPI.components(components);
-        openAPI.security(List.of(
-                new SecurityRequirement().addList(BEARER_AUTH_SCHEME),
-                new SecurityRequirement().addList(BASIC_AUTH_SCHEME)
-        ));
+        openAPI.security(List.of(new SecurityRequirement().addList(BEARER_AUTH_SCHEME)));
     }
 
     private static void addDefaultErrorResponse(Operation operation) {
