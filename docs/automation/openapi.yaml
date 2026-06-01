@@ -23,7 +23,6 @@ servers:
 - url: /management/automation
 security:
 - BearerAuth: []
-- BasicAuth: []
 tags:
 - name: Certificates
 - name: Domains

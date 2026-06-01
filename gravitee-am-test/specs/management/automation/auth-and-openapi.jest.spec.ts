@@ -81,7 +81,7 @@ describe('Automation API - OpenAPI specification', () => {
 
     // automation-specific security schemes only (no inherited gravitee-auth)
     const schemes = Object.keys(spec.components?.securitySchemes || {});
-    expect(schemes).toEqual(expect.arrayContaining(['BearerAuth', 'BasicAuth']));
+    expect(schemes).toEqual(['BearerAuth']);
     expect(schemes).not.toContain('gravitee-auth');
   });
 
