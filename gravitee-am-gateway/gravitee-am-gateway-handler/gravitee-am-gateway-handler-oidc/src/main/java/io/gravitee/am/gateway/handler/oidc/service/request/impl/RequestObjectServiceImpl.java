@@ -53,6 +53,7 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isKeyEncCompliantWithFapiBrazil;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
@@ -179,15 +180,15 @@ public class RequestObjectServiceImpl implements RequestObjectService {
     }
 
     private Single<JWT> validateSignature(SignedJWT jwt, Client client) {
-        var clientKeys = client.getJwks().getKeys().stream().map(JWK::getKid).toList();
-        var jwkSigningKey = jwt.getHeader().getKeyID();
-        // If the request was signed by a key not supported by the current client, then that's an invalid request
-        final boolean isValidKey = clientKeys.contains(jwkSigningKey);
-        if (!isValidKey) {
-            throw new InvalidRequestException();
-        }
-
-        return jwkService.getKeys(client)
+        return jwkService.getKeys(client).map(clientKeys -> {
+                    var jwkSigningKey = jwt.getHeader().getKeyID();
+                    // If the request was signed by a key not supported by the current client, then that's an invalid request
+                    final boolean isValidKey = Optional.ofNullable(clientKeys.getKeys()).map(keys -> keys.stream().map(JWK::getKid).toList().contains(jwkSigningKey)).orElse(false);
+                    if (!isValidKey) {
+                        throw new InvalidRequestException();
+                    }
+                    return clientKeys;
+                })
                 .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
                 .flatMap((Function<JWKSet, Single<JWK>>) jwkSet -> jwkService.getKey(jwkSet, jwt.getHeader().getKeyID())
                         .switchIfEmpty(Single.error(new InvalidClientException("Invalid key ID"))))
