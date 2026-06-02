@@ -60,7 +60,7 @@ import java.util.Set;
 @Setter
 public class AutomationDomain {
 
-    @NotNull
+    @NotNull(message = "field key is required")
     @Size(min = 1, max = 255)
     @JsonProperty("key")
     @Schema(name = "key")
