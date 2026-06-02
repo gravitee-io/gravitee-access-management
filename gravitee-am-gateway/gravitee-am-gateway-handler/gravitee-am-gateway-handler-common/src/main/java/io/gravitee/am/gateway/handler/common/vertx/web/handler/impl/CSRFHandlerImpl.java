@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorParamsUpdater;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.Cookie;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.prng.VertxContextPRNG;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
@@ -51,6 +54,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 public class CSRFHandlerImpl implements CSRFHandler {
 
     private static final Base64.Encoder BASE64 = Base64.getMimeEncoder();
+    private static final String ERROR_MESSAGE = "session_expired";
+    private static final String ERROR_DESCRIPTION = "Your session expired, please try again.";
 
     private final VertxContextPRNG RAND;
     private final Mac mac;
@@ -167,22 +172,28 @@ public class CSRFHandlerImpl implements CSRFHandler {
     }
 
     protected void redirect(RoutingContext ctx) {
-        final int statusCode = 302;
-
         final HttpServerRequest httpServerRequest = new HttpServerRequest(ctx.request());
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(httpServerRequest);
 
-        String hash = ErrorParamsUpdater.addErrorParams(queryParams, "session_expired", "Your session expired, please try again.");
+        String hash = ErrorParamsUpdater.addErrorParams(queryParams, ERROR_MESSAGE, ERROR_DESCRIPTION);
         if (ctx.session() != null) {
             ctx.session().put(ERROR_HASH, hash);
         }
 
-        final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams, true);
-
-        ctx.response()
-                .putHeader(HttpHeaders.LOCATION, uri)
-                .setStatusCode(statusCode)
-                .end();
+        if (MediaType.APPLICATION_JSON.equals(ctx.request().getHeader(HttpHeaders.ACCEPT))) {
+            ctx.response()
+                    .setStatusCode(401)
+                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    .end(new JsonObject()
+                            .put(ConstantKeys.ERROR_PARAM_KEY, ERROR_MESSAGE)
+                            .put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, ERROR_DESCRIPTION).encode());
+        } else {
+            final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams, true);
+            ctx.response()
+                    .putHeader(HttpHeaders.LOCATION, uri)
+                    .setStatusCode(302)
+                    .end();
+        }
     }
 
     @Override
