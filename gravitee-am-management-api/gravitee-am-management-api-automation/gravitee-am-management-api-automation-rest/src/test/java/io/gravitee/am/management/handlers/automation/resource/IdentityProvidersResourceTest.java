@@ -21,11 +21,13 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.account.AccountSettings;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -157,6 +159,56 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertTrue(readEntity(response, AutomationIdentityProvider.class).isSystem());
         // The payload path must never run for a system create.
         verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(true));
+    }
+
+    @Test
+    void put_creates_system_repairs_invalid_domain_reference() {
+        // The domain was applied before its system IDP existed, so its registration reference holds the
+        // deterministic key-based id; creating the system IDP must rewrite it to the real default-idp id.
+        String systemIdpId = AutomationIds.systemIdentityProviderId(domainId);
+        String staleId = AutomationIds.identityProviderId(domainId, "sys-idp");
+        Domain domain = domain();
+        AccountSettings account = new AccountSettings();
+        account.setDefaultIdentityProviderForRegistrationKey("sys-idp");
+        account.setDefaultIdentityProviderForRegistration(staleId);
+        domain.setAccountSettings(account);
+
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(defaultIdentityProviderService.create(any(Domain.class), eq("sys-idp"), any()))
+                .thenReturn(Single.just(idp(systemIdpId, "sys-idp", ManagedBy.AUTOMATION_API, true)));
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false)))
+                .thenAnswer(invocation -> Single.just(invocation.getArgument(1)));
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), systemDefinition("sys-idp"));
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<Domain> captor = ArgumentCaptor.forClass(Domain.class);
+        verify(domainService).update(eq(domainId), captor.capture(), eq(false));
+        assertEquals(systemIdpId,
+                captor.getValue().getAccountSettings().getDefaultIdentityProviderForRegistration());
+    }
+
+    @Test
+    void put_creates_system_leaves_unrelated_domain_reference_untouched() {
+        String systemIdpId = AutomationIds.systemIdentityProviderId(domainId);
+        Domain domain = domain();
+        AccountSettings account = new AccountSettings();
+        account.setDefaultIdentityProviderForRegistrationKey("other-idp");
+        account.setDefaultIdentityProviderForRegistration(AutomationIds.identityProviderId(domainId, "other-idp"));
+        domain.setAccountSettings(account);
+
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(defaultIdentityProviderService.create(any(Domain.class), eq("sys-idp"), any()))
+                .thenReturn(Single.just(idp(systemIdpId, "sys-idp", ManagedBy.AUTOMATION_API, true)));
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), systemDefinition("sys-idp"));
+
+        assertEquals(200, response.getStatus());
+        verify(domainService, never()).update(anyString(), any(Domain.class), anyBoolean());
     }
 
     @Test
