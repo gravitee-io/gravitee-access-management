@@ -25,11 +25,13 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -166,6 +168,8 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                         }
                         if (definition.isSystem()) {
                             return defaultIdentityProviderService.create(domain, key, principal)
+                                    .flatMap(created -> reconcileDomainReference(domain, key, created.getId())
+                                            .andThen(Single.just(created)))
                                     .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
                         }
                         Single<AutomationIdentityProvider> rejection = rejectIfMissingIdentityProviderFields(definition, key);
@@ -191,6 +195,23 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                     "Field 'type' is required for a non-system identity provider '" + key + "'"));
         }
         return null;
+    }
+
+    /**
+     * Repair a {@code accountSettings.defaultIdentityProviderForRegistration} id after a system
+     * identity provider has been created. A system provider adopts the conventional
+     * {@code default-idp-<domainId>} id rather than the deterministic key-based id the domain mapper
+     * computes for a not-yet-existing reference.
+     */
+    private Completable reconcileDomainReference(Domain domain, String idpKey, String realIdpId) {
+        AccountSettings account = domain.getAccountSettings();
+        if (account == null
+                || !idpKey.equals(account.getDefaultIdentityProviderForRegistrationKey())
+                || realIdpId.equals(account.getDefaultIdentityProviderForRegistration())) {
+            return Completable.complete();
+        }
+        account.setDefaultIdentityProviderForRegistration(realIdpId);
+        return domainService.update(domain.getId(), domain, false).ignoreElement();
     }
 
     @Path("/{idpKey}")
