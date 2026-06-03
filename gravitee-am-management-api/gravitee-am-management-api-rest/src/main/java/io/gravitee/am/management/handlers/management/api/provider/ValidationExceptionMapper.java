@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.provider;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.core.MediaType;
@@ -25,6 +27,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import org.hibernate.validator.internal.engine.path.PathImpl;
 
+import java.lang.reflect.Field;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +46,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
                                     .getConstraintViolations()
                                     .stream()
                                     .map(constraint -> {
-                                        Object value = constraint.getInvalidValue() == null ? ((PathImpl) constraint.getPropertyPath()).getLeafNode().asString() : constraint.getInvalidValue();
+                                        Object value = constraint.getInvalidValue() == null ? resolveFieldName(constraint) : constraint.getInvalidValue();
                                         return value + ": " + constraint.getMessage();
                                     })
                                     .collect(Collectors.joining(","))
@@ -52,6 +55,31 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
         } else {
             return buildResponse(e.getMessage());
         }
+    }
+
+    private String resolveFieldName(ConstraintViolation<?> constraint) {
+        String leafName = ((PathImpl) constraint.getPropertyPath()).getLeafNode().asString();
+        try {
+            Object leafBean = constraint.getLeafBean();
+            if (leafBean == null) return leafName;
+            Field field = findField(leafBean.getClass(), leafName);
+            if (field == null) return leafName;
+            JsonProperty jp = field.getAnnotation(JsonProperty.class);
+            if (jp != null && !jp.value().isEmpty()) return jp.value();
+        } catch (Exception ignored) {
+        }
+        return leafName;
+    }
+
+    private static Field findField(Class<?> clazz, String name) {
+        while (clazz != null) {
+            try {
+                return clazz.getDeclaredField(name);
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return null;
     }
 
     private Response buildResponse(String message) {
