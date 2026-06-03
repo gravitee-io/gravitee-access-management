@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
+import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
@@ -79,13 +80,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         // First, restore the initial query parameters (those provided when accessing /oauth/authorize on AM side).
-        String error = context.get(ConstantKeys.ERROR_PARAM_KEY);
-        if (error != null) {
-            context.fail(new LoginCallbackFailedException(error));
-            return;
-        }
         restoreInitialQueryParams(context, next -> {
-
             if (next.failed()) {
                 context.fail(next.cause());
                 return;
@@ -111,6 +106,14 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                 // set client in the execution context
                 Client client = clientHandler.result();
                 context.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                final var error = Optional.ofNullable((String) context.get(ConstantKeys.ERROR_PARAM_KEY))
+                        .orElseGet(() -> context.request().getParam(ConstantKeys.ERROR_PARAM_KEY));
+
+                if (error != null) {
+                    context.fail(new LoginCallbackFailedException(error));
+                    return;
+                }
 
                 // fetch social provider
                 parseSocialProvider(context, socialProviderHandler -> {
