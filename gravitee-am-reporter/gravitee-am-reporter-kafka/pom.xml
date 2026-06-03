@@ -33,6 +33,7 @@
         <commons-validator.version>1.7</commons-validator.version>
         <confluent-kafka.version>7.6.9</confluent-kafka.version>
         <avro.version>1.11.4</avro.version>
+        <jose4j.version>0.9.6</jose4j.version>
     </properties>
 
     <dependencies>
@@ -174,6 +175,13 @@
             <groupId>io.confluent</groupId>
             <artifactId>kafka-json-schema-serializer</artifactId>
             <version>${confluent-kafka.version}</version>
+        </dependency>
+
+        <!-- org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler need org.jose4j.keys.resolvers.VerificationKeyResolver-->
+        <dependency>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
+            <version>${jose4j.version}</version>
         </dependency>
 
         <dependency>

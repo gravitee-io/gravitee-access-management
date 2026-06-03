@@ -56,10 +56,6 @@ import java.util.Properties;
 @Slf4j
 public class KafkaAuditReporter extends AbstractService<Reporter> implements AuditReporter {
 
-    private static final String SCHEMA_REGISTRY_URL_KEY = "schema.registry.url";
-
-    private static final String SASL_JAAS_CONFIG_PLACEHOLDER = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";";
-
     private final Vertx vertx;
 
     private final KafkaReporterConfiguration config;
@@ -125,7 +121,7 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-            return KafkaProducer.create(vertx, getProperties());
+            return KafkaProducer.create(vertx, new KafkaClientPropertiesBuilder().getProperties(this.config));
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
@@ -171,34 +167,5 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
         throw new IllegalStateException("FindById method not implemented for Kafka reporter");
     }
 
-    private Properties getProperties() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.config.getBootstrapServers());
-        properties.put(ProducerConfig.ACKS_CONFIG, this.config.getAcks());
-        if (StringUtils.hasText(this.config.getSchemaRegistryUrl())) {
-            properties.put(SCHEMA_REGISTRY_URL_KEY, this.config.getSchemaRegistryUrl());
-            properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
-        } else {
-            properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonSerializer.class);
-        }
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
-        if (StringUtils.hasText(config.getUsername()) && StringUtils.hasText(config.getPassword())) {
-            properties.put(SaslConfigs.SASL_JAAS_CONFIG, String.format(SASL_JAAS_CONFIG_PLACEHOLDER, config.getUsername(), config.getPassword()));
-        }
-
-        List<Map<String, String>> additionalProperties = this.config.getAdditionalProperties();
-        if (additionalProperties != null && !additionalProperties.isEmpty()) {
-            additionalProperties.forEach(property -> {
-                String option = property.get("option");
-                String value = property.get("value");
-                properties.put(option, value);
-            });
-        }
-
-        Properties props = new Properties();
-        props.putAll(properties);
-
-        return props;
-    }
 }
