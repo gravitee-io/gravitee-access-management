@@ -17,7 +17,7 @@ import { expect } from '@playwright/test';
 import { test as consoleTest } from '../../../fixtures/base.fixture';
 import { test as gatewayTest } from '../../../fixtures/login-flows-gateway.fixture';
 import { linkJira } from '../../../utils/jira';
-import { buildAuthorizeUrl, submitLogin, handleConsentIfPresent } from '../../../utils/mfa-helpers';
+import { buildAuthorizeUrl, submitLogin, awaitOAuthCallback } from '../../../utils/mfa-helpers';
 import { ADMIN_PASSWORD, AUTH_CODE_FORMAT } from '../../../utils/test-constants';
 
 consoleTest.describe('Console admin login (AM-2230)', () => {
@@ -78,8 +78,7 @@ gatewayTest.describe('Gateway identifier-first login (AM-2170)', () => {
     await page.locator('#password').fill(password);
     await page.locator('#submitBtn').click();
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/callback\?code=/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 });
@@ -96,8 +95,7 @@ gatewayTest.describe('Gateway IdP selection rules (AM-2819)', () => {
     await page.goto(buildAuthorizeUrl(loginFlowsBundle.gatewayUrl, clientId));
     await page.waitForURL(/login/i);
     await submitLogin(page, username, password);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/callback\?code=/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 
@@ -110,8 +108,7 @@ gatewayTest.describe('Gateway IdP selection rules (AM-2819)', () => {
     await page.goto(buildAuthorizeUrl(loginFlowsBundle.gatewayUrl, clientId));
     await page.waitForURL(/login/i);
     await submitLogin(page, username, password);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/callback\?code=/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 });

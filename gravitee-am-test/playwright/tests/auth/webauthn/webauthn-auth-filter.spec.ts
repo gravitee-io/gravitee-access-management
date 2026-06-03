@@ -16,7 +16,7 @@
 import {
   test,
   expect,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   loginAndRegisterWebAuthn,
   passwordlessLogin,
   removeVirtualAuthenticator,
@@ -69,8 +69,7 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     const skipLink = page.locator('a[href*="skipAction"], a:has-text("skip"), a:has(span.icons:text("arrow_forward"))');
     await skipLink.click();
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
 
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);

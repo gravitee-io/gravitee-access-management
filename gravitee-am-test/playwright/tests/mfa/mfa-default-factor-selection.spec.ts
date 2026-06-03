@@ -20,7 +20,7 @@ import {
   submitLogin,
   enrollMockFactor,
   completeMfaChallenge,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   DEFAULT_SELECTION_MOCK_CODE,
 } from '../../fixtures/mfa-default-factor-selection.fixture';
 import { linkJira } from '../../utils/jira';
@@ -54,8 +54,7 @@ test.describe('MFA default factor when selection rules miss (AM-2820)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, DEFAULT_SELECTION_MOCK_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 });

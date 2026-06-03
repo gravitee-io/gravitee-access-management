@@ -20,7 +20,7 @@ import {
   submitLogin,
   enrollMockFactor,
   completeMfaChallenge,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   MOCK_MFA_CODE,
 } from '../../../fixtures/login-flows-password-mfa-remember.fixture';
 import { clearSessionOnly } from '../../../utils/webauthn-helpers';
@@ -50,8 +50,7 @@ test.describe('Gateway MFA + Remember Device — password login (AM-2218)', () =
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE, { rememberDevice: true });
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 
     await clearSessionOnly(page);
@@ -60,8 +59,7 @@ test.describe('Gateway MFA + Remember Device — password login (AM-2218)', () =
     await page.waitForURL(/.*login.*/i);
     await submitLogin(page, rememberUser.username, API_USER_PASSWORD);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     expect(page.url()).not.toMatch(/mfa\/challenge/i);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });

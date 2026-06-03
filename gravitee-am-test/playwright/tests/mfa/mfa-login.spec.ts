@@ -20,7 +20,7 @@ import {
   submitLogin,
   enrollMockFactor,
   completeMfaChallenge,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   fullMfaLogin,
   MOCK_MFA_CODE,
 } from '../../fixtures/mfa-login.fixture';
@@ -64,8 +64,7 @@ test.describe('Single MFA login (AM-2197)', () => {
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
     // Handle consent if present, then verify callback with auth code
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -101,8 +100,7 @@ test.describe('Multiple MFA login (AM-2191)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -137,8 +135,7 @@ test.describe('Force MFA enrollment (AM-2221)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });

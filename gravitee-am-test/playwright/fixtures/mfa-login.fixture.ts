@@ -184,5 +184,6 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  awaitOAuthCallback,
   fullMfaLogin,
 } from '../utils/mfa-helpers';

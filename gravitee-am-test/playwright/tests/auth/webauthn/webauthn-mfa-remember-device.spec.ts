@@ -17,7 +17,7 @@ import { test, expect, MOCK_MFA_CODE } from '../../../fixtures/webauthn-mfa.fixt
 import {
   fullLoginWithMfaAndWebAuthn,
   simulateWebAuthnGesture,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   removeVirtualAuthenticator,
   clearSessionOnly,
   navigateToWebAuthnLogin,
@@ -70,8 +70,7 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
     });
 
     // Should go straight to consent/callback — no MFA challenge
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
 
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
@@ -116,8 +115,7 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
     await page.locator('#verify').click();
 
     // Now should proceed to consent/callback
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
 
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);

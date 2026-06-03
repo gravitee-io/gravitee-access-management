@@ -172,6 +172,7 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  awaitOAuthCallback,
   readFirstRecoveryCodeFromPage,
   submitRecoveryCodesContinue,
   openMfaChallengeAlternatives,

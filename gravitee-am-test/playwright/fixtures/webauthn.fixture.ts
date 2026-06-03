@@ -49,6 +49,7 @@ export {
   getCredentials,
   removeVirtualAuthenticator,
   handleConsentIfPresent,
+  awaitOAuthCallback,
   buildAuthorizeUrl,
   navigateToWebAuthnLogin,
   loginAndRegisterWebAuthn,
