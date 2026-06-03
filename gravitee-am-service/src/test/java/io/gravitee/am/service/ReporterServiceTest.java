@@ -109,6 +109,51 @@ class ReporterServiceTest {
     }
 
     @Test
+    void shouldReject_manualMongoReporter() {
+        final var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType("mongodb");
+        reporter.setConfiguration("{}");
+
+        reporterService.create(Reference.domain("domain"), reporter, null, false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ReporterConfigurationException.class);
+    }
+
+    @Test
+    void shouldReject_manualJdbcReporter() {
+        final var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType("reporter-am-jdbc");
+        reporter.setConfiguration("{}");
+
+        reporterService.create(Reference.domain("domain"), reporter, null, false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ReporterConfigurationException.class);
+    }
+
+    @Test
+    void shouldAccept_systemMongoReporter() {
+        final var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType("mongodb");
+        reporter.setConfiguration("{}");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        // system reporters (system=true) are the legitimate path for database reporter types
+        reporterService.create(Reference.domain("domain"), reporter, null, true)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+    }
+
+    @Test
     void should_validate_config_with_schema() throws Exception{
         final var reporter = new NewReporter();
         reporter.setEnabled(true);

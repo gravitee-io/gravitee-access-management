@@ -66,6 +66,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -86,6 +87,7 @@ public class ReporterServiceImpl implements ReporterService {
     private static final String REPORTER_CONFIG_FILENAME = "filename";
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String MONGODB = "mongodb";
+    private static final Set<String> SYSTEM_ONLY_TYPES = Set.of(MONGODB, REPORTER_AM_JDBC);
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
@@ -184,6 +186,11 @@ public class ReporterServiceImpl implements ReporterService {
         var now = new Date();
         if (reference.type() != ReferenceType.ORGANIZATION && newReporter.isInherited()) {
             return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
+        }
+        if (!system && newReporter.getType() != null
+                && SYSTEM_ONLY_TYPES.stream().anyMatch(newReporter.getType()::equalsIgnoreCase)) {
+            return Single.error(new ReporterConfigurationException(
+                    "Reporter type '" + newReporter.getType() + "' cannot be created manually"));
         }
         Reporter reporter = Reporter.builder()
                 .id(Objects.requireNonNullElseGet(newReporter.getId(), RandomString::generate))
