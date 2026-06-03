@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -171,6 +172,22 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(400, response.getStatus());
         verify(reporterService, never()).create(eq(reference), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_rejects_non_system_database_reporter_type() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+                .thenReturn(Single.error(new ReporterConfigurationException(
+                        "Reporter type 'mongodb' cannot be created manually")));
+
+        AutomationReporter def = definition("audit-mongo", false);
+        def.setType("mongodb");
+
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
     }
 
     @Test
