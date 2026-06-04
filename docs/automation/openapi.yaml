@@ -703,10 +703,13 @@ components:
           type: string
         createdAt:
           type: string
+          description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
         expiresAt:
           type: string
+          description: "Expiry timestamp (ISO-8601 / RFC 3339, UTC), when known for\
+            \ the certificate type. Read-only."
           format: date-time
           readOnly: true
         key:
@@ -729,6 +732,7 @@ components:
           type: string
         updatedAt:
           type: string
+          description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
     AutomationCertificateSettings:
@@ -752,6 +756,7 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         createdAt:
           type: string
+          description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
         dataPlaneId:
@@ -800,6 +805,7 @@ components:
           $ref: "#/components/schemas/UMASettings"
         updatedAt:
           type: string
+          description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
         vhosts:
@@ -817,6 +823,7 @@ components:
           type: string
         createdAt:
           type: string
+          description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
         domainWhitelist:
@@ -857,6 +864,7 @@ components:
           type: string
         updatedAt:
           type: string
+          description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
     AutomationOidcSettings:
@@ -887,6 +895,7 @@ components:
           type: string
         createdAt:
           type: string
+          description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
         dataType:
@@ -912,6 +921,7 @@ components:
           type: string
         updatedAt:
           type: string
+          description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           format: date-time
           readOnly: true
     AutomationSamlSettings:

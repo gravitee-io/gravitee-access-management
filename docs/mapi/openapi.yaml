@@ -12307,8 +12307,9 @@ components:
         condition:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         domain:
@@ -12329,14 +12330,16 @@ components:
           enum:
           - GROOVY
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     AccessPolicyListItem:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         id:
@@ -12344,14 +12347,16 @@ components:
         name:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     AccountAccessToken:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         issuerId:
           type: string
         issuerUsername:
@@ -12374,8 +12379,9 @@ components:
         tokenId:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userId:
           type: string
     AccountSettings:
@@ -12468,8 +12474,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         enabled:
           type: boolean
         id:
@@ -12490,8 +12497,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     AlertServiceStatusEntity:
       type: object
       properties:
@@ -12505,8 +12513,9 @@ components:
           items:
             type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         enabled:
           type: boolean
         id:
@@ -12528,8 +12537,9 @@ components:
           - TOO_MANY_LOGIN_FAILURES
           - RISK_ASSESSMENT
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     AnalyticsTypeParam:
       type: object
       properties:
@@ -12549,8 +12559,9 @@ components:
         certificate:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         domain:
@@ -12605,8 +12616,9 @@ components:
           - RESOURCE_SERVER
           - AGENT
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     ApplicationAdvancedSettings:
       type: object
       properties:
@@ -12667,15 +12679,17 @@ components:
         clientId:
           type: string
         clientIdIssuedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         clientName:
           type: string
         clientSecret:
           type: string
         clientSecretExpiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         clientType:
           type: string
         clientUri:
@@ -12970,8 +12984,9 @@ components:
         target:
           $ref: "#/components/schemas/AuditEntity"
         timestamp:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
           writeOnly: true
         transactionId:
           type: string
@@ -13032,8 +13047,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         name:
@@ -13052,16 +13068,18 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     AuthorizationEngine:
       type: object
       properties:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         name:
@@ -13080,8 +13098,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     BaseJsonNode:
       type: object
     BotDetection:
@@ -13090,8 +13109,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         detectionType:
           type: string
         id:
@@ -13112,8 +13132,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     BulkCreateOrganizationUser:
       required:
       - action
@@ -13281,11 +13302,13 @@ components:
       type: object
       properties:
         accessedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         certificateExpiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         certificateIssuerDN:
           type: string
         certificatePem:
@@ -13297,8 +13320,9 @@ components:
         certificateThumbprint:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         ipAddress:
@@ -13319,8 +13343,9 @@ components:
           - ENVIRONMENT
           - PROTECTED_RESOURCE
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userAgent:
           type: string
         userId:
@@ -13335,11 +13360,13 @@ components:
           items:
             $ref: "#/components/schemas/Application"
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         expiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         identityProviders:
@@ -13525,11 +13552,13 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         expiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         name:
@@ -13576,8 +13605,9 @@ components:
         aaguid:
           type: string
         accessedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         attestationStatement:
           type: string
         attestationStatementFormat:
@@ -13586,8 +13616,9 @@ components:
           type: integer
           format: int64
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialId:
           type: string
         deviceName:
@@ -13597,8 +13628,9 @@ components:
         ipAddress:
           type: string
         lastCheckedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         publicKey:
           type: string
         referenceId:
@@ -13613,8 +13645,9 @@ components:
           - ENVIRONMENT
           - PROTECTED_RESOURCE
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userAgent:
           type: string
         userId:
@@ -13641,8 +13674,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         name:
@@ -13661,8 +13695,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     Domain:
       type: object
       properties:
@@ -13675,8 +13710,9 @@ components:
         corsSettings:
           $ref: "#/components/schemas/CorsSettings"
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         dataPlaneId:
           type: string
         description:
@@ -13754,8 +13790,9 @@ components:
         uma:
           $ref: "#/components/schemas/UMASettings"
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         version:
           type: string
           enum:
@@ -13820,8 +13857,9 @@ components:
         content:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         defaultTemplate:
           type: boolean
         enabled:
@@ -13851,8 +13889,9 @@ components:
         template:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     EnrollSettings:
       type: object
       properties:
@@ -13883,8 +13922,9 @@ components:
         channel:
           $ref: "#/components/schemas/EnrolledFactorChannel"
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         factorId:
           type: string
         primary:
@@ -13899,8 +13939,9 @@ components:
           - REVOKED
           - "NULL"
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     EnrolledFactorChannel:
       type: object
       properties:
@@ -13921,8 +13962,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         name:
@@ -13930,8 +13972,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     EnrolledFactorSecurity:
       type: object
       properties:
@@ -13955,8 +13998,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         defaultEntrypoint:
           type: boolean
         description:
@@ -13972,16 +14016,18 @@ components:
           items:
             type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         url:
           type: string
     Environment:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         domainRestrictions:
@@ -13999,8 +14045,9 @@ components:
         organizationId:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     ErrorEntity:
       type: object
       properties:
@@ -14017,8 +14064,9 @@ components:
         createUser:
           type: boolean
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         domain:
           type: string
         grantType:
@@ -14032,8 +14080,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userExists:
           type: boolean
     Factor:
@@ -14042,8 +14091,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         domain:
           type: string
         factorType:
@@ -14064,8 +14114,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     FactorSettings:
       type: object
       properties:
@@ -14106,8 +14157,9 @@ components:
           - RESOURCE_SERVER
           - AGENT
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     FilteredIdentityProviderInfo:
       type: object
       properties:
@@ -14166,8 +14218,9 @@ components:
         condition:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         enabled:
           type: boolean
         icon:
@@ -14200,8 +14253,9 @@ components:
           - MFA_CHALLENGE
           - MFA_ENROLLMENT
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     Form:
       type: object
       properties:
@@ -14212,8 +14266,9 @@ components:
         content:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         enabled:
           type: boolean
         id:
@@ -14232,8 +14287,9 @@ components:
         template:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     FormField:
       type: object
       properties:
@@ -14247,8 +14303,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         id:
@@ -14275,8 +14332,9 @@ components:
           items:
             type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     GroupPage:
       type: object
       properties:
@@ -14294,8 +14352,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         entries:
           type: object
           additionalProperties:
@@ -14320,16 +14379,18 @@ components:
           - ENVIRONMENT
           - PROTECTED_RESOURCE
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     IdentityProvider:
       type: object
       properties:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         dataPlaneId:
           type: string
         domainWhitelist:
@@ -14381,8 +14442,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     InstallationEntity:
       type: object
       properties:
@@ -14391,13 +14453,15 @@ components:
           additionalProperties:
             type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     JWK:
       type: object
       properties:
@@ -14510,8 +14574,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         domain:
           type: string
         fromRoleMapper:
@@ -14539,8 +14604,9 @@ components:
         roleId:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     MembershipListItem:
       type: object
       properties:
@@ -14567,13 +14633,15 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         domain:
           type: string
         expiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         metadata:
@@ -14587,8 +14655,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     NewAccountAccessToken:
       required:
       - name
@@ -15040,8 +15109,9 @@ components:
         client:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialsNonExpired:
           type: boolean
         domain:
@@ -15061,11 +15131,13 @@ components:
         lastName:
           type: string
         lastPasswordReset:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loggedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loginsCount:
           type: integer
           format: int64
@@ -15082,8 +15154,9 @@ components:
         source:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         username:
           minLength: 1
           type: string
@@ -15315,8 +15388,9 @@ components:
         client:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialsNonExpired:
           type: boolean
         domain:
@@ -15336,11 +15410,13 @@ components:
         lastName:
           type: string
         lastPasswordReset:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loggedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loginsCount:
           type: integer
           format: int64
@@ -15355,8 +15431,9 @@ components:
         source:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         username:
           minLength: 1
           type: string
@@ -15456,8 +15533,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         defaultPolicy:
           type: boolean
         excludePasswordsInDictionary:
@@ -15505,8 +15583,9 @@ components:
         regex:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     PasswordPolicyEntity:
       type: object
       properties:
@@ -15733,13 +15812,15 @@ components:
         authorizationSignedResponseAlg:
           type: string
         clientIdIssuedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         clientName:
           type: string
         clientSecretExpiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         clientUri:
           type: string
         contacts:
@@ -16666,8 +16747,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         key:
@@ -16677,8 +16759,9 @@ components:
           enum:
           - MCP_TOOL
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
       discriminator:
         propertyName: type
         mapping:
@@ -16728,8 +16811,9 @@ components:
           enum:
           - MCP_SERVER
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     ProtectedResourceSecret:
       type: object
       properties:
@@ -16775,8 +16859,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         dataType:
           type: string
         enabled:
@@ -16799,8 +16884,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     ResetPasswordSettings:
       type: object
       properties:
@@ -16815,8 +16901,9 @@ components:
         clientId:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         domain:
@@ -16834,8 +16921,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userId:
           type: string
     ResourceEntity:
@@ -16844,8 +16932,9 @@ components:
         clientId:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         domain:
@@ -16866,8 +16955,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userDisplayName:
           type: string
         userId:
@@ -16909,8 +16999,9 @@ components:
           - ENVIRONMENT
           - PROTECTED_RESOURCE
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         defaultRole:
           type: boolean
         description:
@@ -16952,8 +17043,9 @@ components:
         system:
           type: boolean
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     RoleEntity:
       type: object
       properties:
@@ -16964,8 +17056,9 @@ components:
           items:
             type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         defaultRole:
           type: boolean
         description:
@@ -16992,8 +17085,9 @@ components:
         system:
           type: boolean
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     RolePage:
       type: object
       properties:
@@ -17043,8 +17137,9 @@ components:
           items:
             type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         discovery:
@@ -17067,8 +17162,9 @@ components:
         system:
           type: boolean
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     ScopeApprovalEntity:
       type: object
       properties:
@@ -17077,13 +17173,15 @@ components:
         clientId:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         domain:
           type: string
         expiresAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         scope:
@@ -17098,8 +17196,9 @@ components:
         transactionId:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         userId:
           $ref: "#/components/schemas/UserId"
     ScopeEntity:
@@ -17154,8 +17253,9 @@ components:
         configuration:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         name:
@@ -17174,8 +17274,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     SessionSettings:
       type: object
       properties:
@@ -17262,8 +17363,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         id:
@@ -17273,14 +17375,16 @@ components:
         organizationId:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     Theme:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         css:
           type: string
         faviconUrl:
@@ -17312,14 +17416,16 @@ components:
         secondaryTextColorHex:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     ThemeEntity:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         css:
           type: string
         faviconUrl:
@@ -17351,8 +17457,9 @@ components:
         secondaryTextColorHex:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     TokenClaim:
       type: object
       properties:
@@ -17419,8 +17526,9 @@ components:
           - JWKS_URL
           - STATIC_JWKS
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         description:
           type: string
         id:
@@ -17446,8 +17554,9 @@ components:
         staticJwks:
           $ref: "#/components/schemas/JWKSet"
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     TrustedIssuer:
       type: object
       properties:
@@ -17910,8 +18019,9 @@ components:
         client:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialsNonExpired:
           type: boolean
         displayName:
@@ -17931,8 +18041,9 @@ components:
         lastName:
           type: string
         loggedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loginsCount:
           type: integer
           format: int64
@@ -17945,8 +18056,9 @@ components:
         source:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     UpdateUserWithId:
       type: object
       properties:
@@ -17961,8 +18073,9 @@ components:
         client:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialsNonExpired:
           type: boolean
         displayName:
@@ -17984,8 +18097,9 @@ components:
         lastName:
           type: string
         loggedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loginsCount:
           type: integer
           format: int64
@@ -17998,17 +18112,20 @@ components:
         source:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
     User:
       type: object
       properties:
         accountLockedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         accountLockedUntil:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         accountNonExpired:
           type: boolean
         accountNonLocked:
@@ -18030,8 +18147,9 @@ components:
         client:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialsNonExpired:
           type: boolean
         disabled:
@@ -18101,30 +18219,36 @@ components:
         lastIdentityUsed:
           type: string
         lastLoginWithCredentials:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         lastLogoutAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         lastName:
           type: string
         lastPasswordReset:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         lastUsernameReset:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         locale:
           type: string
         loggedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loginsCount:
           type: integer
           format: int64
         mfaEnrollmentSkippedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         middleName:
           type: string
         newsletter:
@@ -18188,8 +18312,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         username:
           type: string
         website:
@@ -18211,11 +18336,13 @@ components:
       type: object
       properties:
         accountLockedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         accountLockedUntil:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         accountNonExpired:
           type: boolean
         accountNonLocked:
@@ -18239,8 +18366,9 @@ components:
         client:
           type: string
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         credentialsNonExpired:
           type: boolean
         disabled:
@@ -18310,30 +18438,36 @@ components:
         lastIdentityUsed:
           type: string
         lastLoginWithCredentials:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         lastLogoutAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         lastName:
           type: string
         lastPasswordReset:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         lastUsernameReset:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         locale:
           type: string
         loggedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         loginsCount:
           type: integer
           format: int64
         mfaEnrollmentSkippedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         middleName:
           type: string
         newsletter:
@@ -18399,8 +18533,9 @@ components:
         type:
           type: string
         updatedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         username:
           type: string
         website:
@@ -18428,8 +18563,9 @@ components:
           additionalProperties:
             type: object
         linkedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         providerId:
           type: string
         userId:
@@ -18444,8 +18580,9 @@ components:
           additionalProperties:
             type: object
         linkedAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         providerId:
           type: string
         providerName:
@@ -18465,8 +18602,9 @@ components:
       type: object
       properties:
         createdAt:
-          type: string
-          format: date-time
+          type: integer
+          description: Epoch timestamp in milliseconds.
+          format: int64
         id:
           type: string
         message:

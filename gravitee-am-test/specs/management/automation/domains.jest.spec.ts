@@ -79,6 +79,10 @@ describe('Automation API - Domain - PUT on collection (Idempotent Create/Update)
     expect(response.body.key).toEqual(domainKey);
     // createdAt is stable across an update; a duplicate create would reset it
     expect(response.body.createdAt).toEqual(first.body.createdAt);
+    const ISO_8601_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+    expect(typeof response.body.createdAt).toBe('string');
+    expect(response.body.createdAt).toMatch(ISO_8601_UTC);
+    expect(response.body.updatedAt).toMatch(ISO_8601_UTC);
   });
 
   it('should retrieve the created domain by key via path', async () => {

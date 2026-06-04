@@ -25,6 +25,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.model.PasswordSettings;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -93,10 +94,12 @@ public class AutomationDomain {
     @Size(min = 1, max = 255)
     private String dataPlaneId;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, type = "java.lang.Long")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only.")
     private Date createdAt;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, type = "java.lang.Long")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only.")
     private Date updatedAt;
 
     // --- Shared settings reused by reference (full request/response symmetry) ---
