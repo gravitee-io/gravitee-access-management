@@ -16,6 +16,8 @@
 package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
@@ -24,6 +26,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -46,12 +49,18 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Base64;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -289,6 +298,59 @@ class CertificateServiceImplTest {
 
         // then
         observer.assertComplete();
+    }
+
+    @Test
+    void update_normalizes_embedded_file_to_filename_in_stored_config() throws Exception {
+        // Use a real ObjectMapper so the embedded-file normalization is exercised faithfully.
+        ReflectionTestUtils.setField(service, "objectMapper", new ObjectMapper());
+        ObjectMapper realMapper = new ObjectMapper();
+
+        String certId = "cert-id";
+        String type = "javakeystore-am-certificate";
+        String fileName = "keystore.p12";
+        String base64 = Base64.getEncoder().encodeToString("dummy-keystore-bytes".getBytes());
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        // The stored certificate already holds the normalized (filename-form) configuration.
+        Certificate existing = new Certificate();
+        existing.setId(certId);
+        existing.setDomain("domainId");
+        existing.setType(type);
+        existing.setConfiguration("{\"content\":\"" + fileName + "\"}");
+
+        String schema = "{\"properties\":{\"content\":{\"widget\":\"file\"}}}";
+
+        Mockito.when(certificateRepository.findById(certId)).thenReturn(Maybe.just(existing));
+        Mockito.when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(schema));
+        Mockito.when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
+        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        Mockito.when(certificateRepository.update(any()))
+                .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        // The update payload carries the full embedded file blob ({name, content:<base64>}).
+        String embeddedFile = "{\"name\":\"" + fileName + "\",\"content\":\"" + base64 + "\"}";
+        ObjectNode cfg = realMapper.createObjectNode();
+        cfg.put("content", embeddedFile);
+        UpdateCertificate update = new UpdateCertificate();
+        update.setName("My cert");
+        update.setConfiguration(realMapper.writeValueAsString(cfg));
+
+        TestObserver<Certificate> observer =
+                service.update(domain, certId, update, new DefaultUser()).test();
+        observer.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        ArgumentCaptor<Certificate> captor = ArgumentCaptor.forClass(Certificate.class);
+        Mockito.verify(certificateRepository).update(captor.capture());
+        String storedConfig = captor.getValue().getConfiguration();
+
+        // The persisted configuration keeps only the file name; the raw base64 content must not leak into it.
+        assertEquals(fileName, realMapper.readTree(storedConfig).get("content").asText());
+        assertFalse(storedConfig.contains(base64),
+                "stored configuration must not contain the raw base64 keystore content");
     }
 
 }

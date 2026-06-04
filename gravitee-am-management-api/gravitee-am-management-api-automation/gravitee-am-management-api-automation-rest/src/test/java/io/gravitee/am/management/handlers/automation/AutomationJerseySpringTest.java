@@ -24,12 +24,16 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.PermissionService;
+import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.client.Entity;
@@ -57,8 +61,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 /**
@@ -99,6 +105,15 @@ public abstract class AutomationJerseySpringTest {
     @Autowired
     protected ReporterService reporterService;
 
+    @Autowired
+    protected ReporterPluginService reporterPluginService;
+
+    @Autowired
+    protected IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    protected PluginConfigurationValidationService validationService;
+
     @BeforeEach
     public void init() {
         // The service mocks are Spring singletons shared across the cached context, so clear any
@@ -106,8 +121,14 @@ public abstract class AutomationJerseySpringTest {
         // (e.g. "delete was never called") scoped to the test at hand.
         clearInvocations(permissionService, domainService, certificateService, identityProviderService,
                 defaultIdentityProviderService, reporterService);
+        // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
+        // to exercise rejection paths, and those would otherwise leak across the shared singleton context.
+        reset(reporterPluginService, identityProviderManager, validationService);
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class)))
                 .thenReturn(Single.just(true));
+        // Plugin type checks pass by default; individual tests override to exercise the rejection paths.
+        when(reporterPluginService.checkPluginDeployment(anyString())).thenReturn(Completable.complete());
+        when(identityProviderManager.checkPluginDeployment(anyString())).thenReturn(Completable.complete());
     }
 
     /**
@@ -150,6 +171,21 @@ public abstract class AutomationJerseySpringTest {
         @Bean
         public ReporterService reporterService() {
             return mock(ReporterService.class);
+        }
+
+        @Bean
+        public ReporterPluginService reporterPluginService() {
+            return mock(ReporterPluginService.class);
+        }
+
+        @Bean
+        public IdentityProviderManager identityProviderManager() {
+            return mock(IdentityProviderManager.class);
+        }
+
+        @Bean
+        public PluginConfigurationValidationService validationService() {
+            return mock(PluginConfigurationValidationService.class);
         }
     }
 

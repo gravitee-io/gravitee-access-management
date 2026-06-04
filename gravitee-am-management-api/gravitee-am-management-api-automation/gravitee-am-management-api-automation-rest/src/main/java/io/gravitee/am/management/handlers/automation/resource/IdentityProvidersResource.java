@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.automation.mapper.AutomationIdentityPr
 import io.gravitee.am.management.handlers.automation.model.AutomationIdentityProvider;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -28,6 +29,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
@@ -75,6 +77,12 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
 
     @Autowired
     private DefaultIdentityProviderService defaultIdentityProviderService;
+
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private PluginConfigurationValidationService validationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -145,8 +153,9 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                                 // re-PUT is an idempotent no-op
                                 return Single.just(AutomationIdentityProviderMapper.toAutomationIdentityProvider(existing));
                             }
-                            return identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
-                                            AutomationIdentityProviderMapper.toUpdateIdentityProvider(definition), principal, false)
+                            return identityProviderManager.checkPluginDeployment(definition.getType())
+                                    .andThen(identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
+                                            AutomationIdentityProviderMapper.toUpdateIdentityProvider(definition), principal, false))
                                     .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
                         }
 
@@ -178,7 +187,13 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                         }
                         AutomationNewIdentityProvider newIdp = AutomationIdentityProviderMapper.toNewIdentityProvider(definition);
                         newIdp.setId(idpId);
-                        return identityProviderService.create(domain, newIdp, principal, false)
+                        return identityProviderManager.checkPluginDeployment(definition.getType())
+                                .andThen(Completable.fromAction(() -> {
+                                    if (!isBlank(definition.getConfiguration())) {
+                                        validationService.validate(definition.getType(), definition.getConfiguration());
+                                    }
+                                }))
+                                .andThen(Single.defer(() -> identityProviderService.create(domain, newIdp, principal, false)))
                                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
                     });
         })

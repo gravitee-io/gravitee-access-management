@@ -22,6 +22,9 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -36,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -188,6 +192,55 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    void put_rejects_unknown_type() {
+        // An undeployed/unknown plugin type must be rejected before the reporter is persisted.
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        when(reporterPluginService.checkPluginDeployment(eq("reporter-am-unknown")))
+                .thenReturn(Completable.error(PluginNotDeployedException.forType("reporter-am-unknown")));
+
+        AutomationReporter def = definition("audit-log", false);
+        def.setType("reporter-am-unknown");
+
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(reporterService, never()).create(eq(reference), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_rejects_configuration_not_matching_schema() {
+        // A configuration that fails schema validation (e.g. malformed / non-conforming) is rejected.
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(eq("reporter-am-file"), anyString());
+
+        AutomationReporter def = definition("audit-log", false);
+        def.setConfiguration("not-json");
+
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(reporterService, never()).create(eq(reference), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_validates_type_and_configuration_before_create() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+                .thenReturn(Single.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
+
+        assertEquals(200, response.getStatus());
+        verify(reporterPluginService).checkPluginDeployment(eq("reporter-am-file"));
+        verify(validationService).validate(eq("reporter-am-file"), eq("{}"));
     }
 
     @Test

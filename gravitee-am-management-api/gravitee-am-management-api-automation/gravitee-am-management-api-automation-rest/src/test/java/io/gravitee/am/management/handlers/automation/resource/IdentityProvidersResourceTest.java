@@ -22,6 +22,9 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -37,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -127,6 +131,40 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals("dev-users", readEntity(response, AutomationIdentityProvider.class).getAutomationKey());
+    }
+
+    @Test
+    void put_rejects_unknown_type() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(identityProviderManager.checkPluginDeployment(eq("unknown-am-idp")))
+                .thenReturn(Completable.error(PluginNotDeployedException.forType("unknown-am-idp")));
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setType("unknown-am-idp");
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_rejects_configuration_not_matching_schema() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(eq("inline-am-idp"), anyString());
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setConfiguration("{\"bad\":true}");
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
     }
 
     @Test

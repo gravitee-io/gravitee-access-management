@@ -393,6 +393,7 @@ public class CertificateServiceImpl implements CertificateService {
             // update configuration to set the file path
             ((ObjectNode) updateCertJson).put(fileKey, file.get(NAME).asText());
         }
+        updateCertificate.setConfiguration(objectMapper.writeValueAsString(updateCertJson));
     }
 
     private Single<Certificate> checkIdentityProviderUsage(Certificate certificate) {

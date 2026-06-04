@@ -110,6 +110,33 @@ describe('Automation API - Reporters (resource under a domain)', () => {
   });
 });
 
+describe('Automation API - Reporters - payload validation', () => {
+  it('should reject an unknown reporter type (400)', async () => {
+    const response = await fixture.client.putReporter(fixture.domainKey, {
+      ...buildAutomationReporterDef({ key: uniqueName('autobadtype', true).toLowerCase() }),
+      type: 'reporter-am-does-not-exist',
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('should reject a configuration that is not valid JSON (400)', async () => {
+    const response = await fixture.client.putReporter(fixture.domainKey, {
+      ...buildAutomationReporterDef({ key: uniqueName('autobadcfg', true).toLowerCase() }),
+      configuration: 'not-json',
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('should tolerate an unknown extra property in the configuration (200)', async () => {
+    const base = buildAutomationReporterDef({ key: uniqueName('autoextracfg', true).toLowerCase() }) as {
+      configuration: string;
+    };
+    const configuration = JSON.stringify({ ...JSON.parse(base.configuration), extraUnknownField: 'tolerated' });
+    const response = await fixture.client.putReporter(fixture.domainKey, { ...base, configuration });
+    expect(response.status).toBe(200);
+  });
+});
+
 describe('Automation API - System reporter', () => {
   const systemKey = uniqueName('autosysrep', true).toLowerCase();
   const secondSystemKey = uniqueName('autosysrep2', true).toLowerCase();
