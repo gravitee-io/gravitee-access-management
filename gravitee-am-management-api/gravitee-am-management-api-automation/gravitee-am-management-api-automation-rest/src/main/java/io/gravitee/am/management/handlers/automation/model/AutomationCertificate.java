@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -60,12 +61,15 @@ public class AutomationCertificate {
     @Schema(name = "system", description = "whether this is the domain's system certificate (immutable after creation; when true, only key is required and the certificate is built from domains.certificates.default.* system settings)")
     private boolean system;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, type = "java.lang.Long")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only.")
     private Date createdAt;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, type = "java.lang.Long")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only.")
     private Date updatedAt;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, type = "java.lang.Long")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Expiry timestamp (ISO-8601 / RFC 3339, UTC), when known for the certificate type. Read-only.")
     private Date expiresAt;
 }

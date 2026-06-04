@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, getDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { getDomainApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../test-fixture';
@@ -30,7 +31,7 @@ describe('Domain Create', () => {
     accessToken = await requestAdminAccessToken();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     if (domainId && accessToken) {
       await safeDeleteDomain(domainId, accessToken);
     }
@@ -52,5 +53,28 @@ describe('Domain Create', () => {
     expect(fetched.id).toEqual(domain.id);
     expect(fetched.name).toEqual(name);
     expect(fetched.description).toEqual(description);
+  });
+
+  it('should return createdAt and updatedAt as epoch-millisecond numbers', async () => {
+    const name = uniqueName('domain-create-test', true);
+    const description = 'Test domain created by regression test AM-2217';
+
+    const now = Date.now();
+    const domain = await createDomain(accessToken, name, description);
+    domainId = domain.id;
+
+    const raw = await getDomainApi(accessToken).findDomainRaw({
+      organizationId: process.env.AM_DEF_ORG_ID,
+      environmentId: process.env.AM_DEF_ENV_ID,
+      domain: domainId,
+    });
+    expect(raw.raw.status).toBe(200);
+    const { createdAt, updatedAt } = await raw.raw.json();
+    expect(typeof createdAt).toBe('number');
+    expect(typeof updatedAt).toBe('number');
+    expect(createdAt).toBeGreaterThan(now - 60_000);
+    expect(createdAt).toBeLessThan(now + 5_000);
+    expect(updatedAt).toBeGreaterThan(now - 60_000);
+    expect(updatedAt).toBeLessThan(now + 5_000);
   });
 });

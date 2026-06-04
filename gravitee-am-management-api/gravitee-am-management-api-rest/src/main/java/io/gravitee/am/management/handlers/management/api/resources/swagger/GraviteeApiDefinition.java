@@ -60,6 +60,43 @@ public class GraviteeApiDefinition implements ReaderListener {
         }
     }
 
+    /**
+     * Rewrites every {@code string}/{@code date-time} schema to {@code integer}/{@code int64}.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void rewriteEpochMillisTimestamps(Schema schema) {
+        if (schema == null) {
+            return;
+        }
+        if ("string".equals(schema.getType()) && "date-time".equals(schema.getFormat())) {
+            schema.setType("integer");
+            schema.setFormat("int64");
+            if (schema.getDescription() == null) {
+                schema.setDescription("Epoch timestamp in milliseconds.");
+            }
+            return;
+        }
+        if (schema.getProperties() != null) {
+            ((Map<String, Schema>) schema.getProperties()).values()
+                    .forEach(GraviteeApiDefinition::rewriteEpochMillisTimestamps);
+        }
+        if (schema.getItems() != null) {
+            rewriteEpochMillisTimestamps(schema.getItems());
+        }
+        if (schema.getAdditionalProperties() instanceof Schema) {
+            rewriteEpochMillisTimestamps((Schema) schema.getAdditionalProperties());
+        }
+        if (schema.getAllOf() != null) {
+            ((List<Schema>) schema.getAllOf()).forEach(GraviteeApiDefinition::rewriteEpochMillisTimestamps);
+        }
+        if (schema.getAnyOf() != null) {
+            ((List<Schema>) schema.getAnyOf()).forEach(GraviteeApiDefinition::rewriteEpochMillisTimestamps);
+        }
+        if (schema.getOneOf() != null) {
+            ((List<Schema>) schema.getOneOf()).forEach(GraviteeApiDefinition::rewriteEpochMillisTimestamps);
+        }
+    }
+
     @Override
     public void afterScan(OpenApiReader openApiReader, OpenAPI openAPI){
 
@@ -96,6 +133,8 @@ public class GraviteeApiDefinition implements ReaderListener {
         Map<String, Schema> sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
         // sort properties within each schema for deterministic SDK generation
         sortedSchemas.values().forEach(GraviteeApiDefinition::sortSchemaProperties);
+        // normalize timestamp schemas to match the real wire format (epoch millis)
+        sortedSchemas.values().forEach(GraviteeApiDefinition::rewriteEpochMillisTimestamps);
         Components components = new Components();
         components.schemas(sortedSchemas);
         components.addSecuritySchemes(TOKEN_AUTH_SCHEME, new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("Bearer"));
