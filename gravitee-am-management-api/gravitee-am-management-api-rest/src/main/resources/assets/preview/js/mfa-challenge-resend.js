@@ -17,12 +17,12 @@
         messageElement.textContent = text;
         messageElement.classList.remove('error-text', 'resend-success');
         messageElement.classList.add(isError ? 'error-text' : 'resend-success');
-        messageElement.style.display = 'block';
+        messageElement.style.visibility = 'visible';
     };
 
     const hideMessage = () => {
         if (messageElement) {
-            messageElement.style.display = 'none';
+            messageElement.style.visibility = 'hidden';
         }
     };
 

@@ -79,10 +79,8 @@
         </form>
 
         <div th:if="${mfaChallengeResendEnabled}" id="mfa-resend-container" class="form">
-            <div id="mfa-resend-message" class="item" style="display: none"></div>
-            <div>
-                <button type="button" id="resend" class="button secondary" th:text="#{mfa_challenge.button.resend}"></button>
-            </div>
+            <button type="button" id="resend" class="button secondary" th:text="#{mfa_challenge.button.resend}"></button>
+            <div id="mfa-resend-message" class="item" style="display: block; visibility: hidden"></div>
         </div>
 
         <div th:if="${mfaAlternativesEnabled}" class="section">
