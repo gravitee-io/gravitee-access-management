@@ -438,8 +438,8 @@ jobs:
       - run:
           name: Maven Package & deploy on artifactory
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean deploy -pl \!gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,\!gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
-            mvn -s /tmp/.gravitee.settings.xml -P full-bundle package -DskipTests -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean deploy -pl \!gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,\!gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
+            mvn -s /tmp/.gravitee.settings.xml -P ee-bundle,addons-bundle package -DskipTests -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
@@ -1106,7 +1106,7 @@ jobs:
           command: |
             mvn -B -V -ntp -s /tmp/.gravitee.settings.xml install \
               -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution \
-              -P full-bundle -am -DskipTests -Dlicense.skip=true
+              -P ee-bundle,addons-bundle -am -DskipTests -Dlicense.skip=true
       - run:
           name: Check EE plugin schema backward compatibility
           command: bash .circleci/scripts/ee-schema-compat-check.sh
@@ -1170,7 +1170,7 @@ jobs:
       - run:
           name: "Maven Package Install (no tests)"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean install -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean install -DskipTests
       - save-maven-job-cache:
           jobName: pull_requests
       - run:

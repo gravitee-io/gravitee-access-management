@@ -190,7 +190,7 @@
         <gravitee-am-authenticator-cba.version>2.0.0-alpha.1</gravitee-am-authenticator-cba.version>
         <gravitee-am-authenticator-magiclink.version>2.0.0-alpha.2</gravitee-am-authenticator-magiclink.version>
 
-        <!-- Plugins included to full-bundle -->
+        <!-- Plugins included to addons-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>
         <gravitee-am-gateway-handler-saml2-idp.version>5.0.0-alpha.4</gravitee-am-gateway-handler-saml2-idp.version>
         <gravitee-am-resource-sfr.version>2.0.0-alpha.1</gravitee-am-resource-sfr.version>
