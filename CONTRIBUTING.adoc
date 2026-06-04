@@ -40,7 +40,7 @@ git checkout -b issue/#<issue-id>-my-fix-branch master
 * Build your changes locally to **ensure all the tests pass**:
 
 ```shell
-mvn clean install
+mvn clean install -P oss-bundle
 ```
 
 * Push your branch to GitHub:

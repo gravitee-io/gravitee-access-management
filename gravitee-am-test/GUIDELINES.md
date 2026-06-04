@@ -1100,7 +1100,7 @@ The integration tests run against a local Docker stack. After code changes (or o
 
 ```bash
 # 1. Build distribution ZIPs (includes mock plugins from Artifactory)
-mvn install -DskipTests -P full-bundle
+mvn install -DskipTests -P ee-bundle,addons-bundle
 
 # 2. Copy ZIPs into Docker build context
 npm --prefix docker/local-stack run stack:init:copy-am
@@ -1112,7 +1112,7 @@ npm --prefix docker/local-stack run stack:init:build
 npm --prefix docker/local-stack run stack:down && npm --prefix docker/local-stack run stack:dev:setup:mongo
 ```
 
-> **Important:** The `-P full-bundle` profile is required to include mock test plugins (`gravitee-am-factor-mock`, `gravitee-am-resource-mfa-mock`). Without it, tests that use MFA mocks will fail with `Plugin type mock-am-factor not deployed`.
+> **Important:** The `-P ee-bundle,addons-bundle` profile is required to include mock test plugins (`gravitee-am-factor-mock`, `gravitee-am-resource-mfa-mock`). Without it, tests that use MFA mocks will fail with `Plugin type mock-am-factor not deployed`.
 
 ### Running Tests
 
