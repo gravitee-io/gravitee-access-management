@@ -161,6 +161,33 @@ describe('Automation API - Domain - defaultIdentityProviderForRegistration refer
   });
 });
 
+describe('Automation API - Identity providers - payload validation', () => {
+  const users = [{ username: 'val', password: 'P@ssword1' }];
+
+  it('should reject an unknown identity provider type (400)', async () => {
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
+      ...buildInlineIdpDef({ key: uniqueName('autobadtype', true).toLowerCase(), users }),
+      type: 'unknown-am-idp',
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('should reject a configuration that is not valid JSON (400)', async () => {
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
+      ...buildInlineIdpDef({ key: uniqueName('autobadcfg', true).toLowerCase(), users }),
+      configuration: 'not-json',
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('should tolerate an unknown extra property in the configuration (200)', async () => {
+    const base = buildInlineIdpDef({ key: uniqueName('autoextracfg', true).toLowerCase(), users });
+    const configuration = JSON.stringify({ ...JSON.parse(base.configuration), extraUnknownField: 'tolerated' });
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, { ...base, configuration });
+    expect(response.status).toBe(200);
+  });
+});
+
 describe('Automation API - System identity provider', () => {
   const systemIdpKey = uniqueName('autosysidp', true).toLowerCase();
   const secondSystemKey = uniqueName('autosysidp2', true).toLowerCase();

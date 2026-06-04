@@ -18,16 +18,19 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationReporterMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewReporter;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -68,6 +71,12 @@ public class ReportersResource extends AbstractAutomationResource {
 
     @Autowired
     private ReporterService reporterService;
+
+    @Autowired
+    private ReporterPluginService reporterPluginService;
+
+    @Autowired
+    private PluginConfigurationValidationService validationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -137,8 +146,9 @@ public class ReportersResource extends AbstractAutomationResource {
                                 // re-PUT is an idempotent no-op
                                 return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
                             }
-                            return reporterService.update(reference, existing.getId(),
-                                            AutomationReporterMapper.toUpdateReporter(definition), principal, false)
+                            return reporterPluginService.checkPluginDeployment(definition.getType())
+                                    .andThen(reporterService.update(reference, existing.getId(),
+                                            AutomationReporterMapper.toUpdateReporter(definition), principal, false))
                                     .map(AutomationReporterMapper::toAutomationReporter);
                         }
 
@@ -165,7 +175,10 @@ public class ReportersResource extends AbstractAutomationResource {
                         }
                         AutomationNewReporter newReporter = AutomationReporterMapper.toNewReporter(definition);
                         newReporter.setId(reporterId);
-                        return reporterService.create(reference, newReporter, principal, false)
+                        return reporterPluginService.checkPluginDeployment(definition.getType())
+                                .andThen(Completable.fromAction(() ->
+                                        validationService.validate(definition.getType(), definition.getConfiguration())))
+                                .andThen(Single.defer(() -> reporterService.create(reference, newReporter, principal, false)))
                                 .map(AutomationReporterMapper::toAutomationReporter);
                     });
         })
