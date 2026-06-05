@@ -16,6 +16,11 @@
 package io.gravitee.am.gateway.handler.common.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
@@ -46,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -420,6 +426,77 @@ public class JWTServiceTest {
         verify(mockParser).parse(jwtToken);
     }
 
+    @Test
+    public void decodeAndVerify_supplier_malformedJwt_fallsThroughToSupplier() throws Exception {
+        var fallback = providerWithKey("fallback-key", "domainD", "fallback-decoded");
+        when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
+
+        // not a parseable signed JWT
+        TestObserver<JWT> test = jwtService.decodeAndVerify("not-a-jwt", Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("fallback-decoded", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_nullDefaultCertificateId_errors() {
+        Maybe<String> nullMaybe = null;
+        jwtService.decodeAndVerify("token", nullMaybe, JWTService.TokenType.ACCESS_TOKEN)
+                .test()
+                .assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void decodeAndVerify_masterDomain_acceptFromDifferentDomain() throws Exception {
+        var matched = providerWithKey("keyA", "domainD", "matched-A");
+        var alsoInDomain = providerWithKey("keyB", "domainD", "matched-B");
+
+        when(certificateManager.providers()).thenReturn(List.of(matched, alsoInDomain));
+
+        String signed = signedJwt("keyA", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("matched-A", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_duplicateKid_firstFails_secondSucceeds() throws Exception {
+        var wrongKeyProvider = providerWithKeyAndFailingParser("default", "domainD");
+        var correctKeyProvider = providerWithKey("default", "domainD", "correct-decoded");
+
+        when(certificateManager.providers()).thenReturn(List.of(wrongKeyProvider, correctKeyProvider));
+
+        String signed = signedJwt("default", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("correct-decoded", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_duplicateKid_allFail_rejectsToken() throws Exception {
+        var failing1 = providerWithKeyAndFailingParser("default", "domainD");
+        var failing2 = providerWithKeyAndFailingParser("default", "domainD");
+
+        when(certificateManager.providers()).thenReturn(List.of(failing1, failing2));
+
+        String signed = signedJwt("default", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(io.gravitee.am.common.exception.oauth2.InvalidTokenException.class);
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider providerWithKeyAndFailingParser(String keyId, String domain) {
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        var actualProvider = mock(CertificateProvider.class);
+        when(theProvider.getKeyId()).thenReturn(keyId);
+        when(theProvider.getDomain()).thenReturn(domain);
+        when(theProvider.getProvider()).thenReturn(actualProvider);
+        when(theProvider.getJwtParser()).thenReturn(token -> { throw new io.gravitee.am.common.exception.oauth2.InvalidTokenException("wrong key"); });
+        return theProvider;
+    }
+
     private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithParser(JWTParser jwtParser) {
         var actualProvider = mock(CertificateProvider.class);
 
@@ -429,4 +506,34 @@ public class JWTServiceTest {
         return theProvider;
     }
 
+    private io.gravitee.am.gateway.certificate.CertificateProvider providerWithKey(String keyId, String domain, String marker) {
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        var actualProvider = mock(CertificateProvider.class);
+
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(any())).thenReturn(new JWT(Map.of("marker", marker)));
+
+        when(theProvider.getKeyId()).thenReturn(keyId);
+        when(theProvider.getDomain()).thenReturn(domain);
+        when(theProvider.getJwtParser()).thenReturn(mockParser);
+        when(theProvider.getProvider()).thenReturn(actualProvider);
+        return theProvider;
+    }
+
+    @SneakyThrows
+    private String signedJwt(String kid, String domain) {
+        var headerBuilder = new JWSHeader.Builder(JWSAlgorithm.HS256);
+        if (kid != null) {
+            headerBuilder.keyID(kid);
+        }
+        var claimsBuilder = new JWTClaimsSet.Builder();
+        if (domain != null) {
+            claimsBuilder.claim("domain", domain);
+        }
+        SignedJWT signedJWT = new SignedJWT(headerBuilder.build(), claimsBuilder.build());
+        // sign with an arbitrary 32-byte HMAC key — signature is not verified by the test mocks
+        byte[] secret = "0123456789012345678901234567890123456789".getBytes();
+        signedJWT.sign(new MACSigner(secret));
+        return signedJWT.serialize();
+    }
 }
