@@ -59,30 +59,48 @@ import java.util.Set;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationDomain", title = "Domain",
+        description = "A security domain managed by the Automation API. The key field is the stable, " +
+                "immutable identity used for idempotent create-or-update. Certificates, identity providers, " +
+                "and reporters are not embedded; they are managed via the domain's sub-resource endpoints and " +
+                "referenced here by key.")
 public class AutomationDomain {
 
     @NotNull
     @Size(min = 1, max = 255)
     @JsonProperty("key")
-    @Schema(name = "key")
+    @Schema(name = "key", title = "Key",
+            description = "Stable, immutable identifier for the domain within its environment. Lowercase " +
+                    "alphanumeric and hyphens, starting and ending with an alphanumeric character. Used to " +
+                    "identify the domain on create-or-update.",
+            example = "example-domain")
     @Pattern(regexp = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
             message = "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character")
     private String automationKey;
 
     @NotNull
     @Size(min = 1, max = 255)
+    @Schema(description = "Human-readable name of the domain.", example = "Example domain")
     private String name;
 
+    @Schema(description = "Human-readable description of the domain.", example = "An example authentication domain")
     private String description;
 
+    @Schema(description = "Whether the domain handles incoming authentication and authorization requests.",
+            defaultValue = "true")
     private boolean enabled = true;
 
     @NotNull
     @Size(min = 1, max = 255)
+    @Schema(description = "Context path the domain is served under, relative to the gateway. Must start with a slash.",
+            example = "/example-domain")
     private String path;
 
+    @Schema(description = "Sharding tags that control which gateways deploy this domain.",
+            example = "[\"eu\",\"production\"]")
     private Set<String> tags;
 
+    @Schema(description = "Virtual hosts the domain is exposed on, overriding the default context path.")
     private List<VirtualHost> vhosts;
 
     /**
@@ -92,6 +110,9 @@ public class AutomationDomain {
      */
     @NotNull
     @Size(min = 1, max = 255)
+    @Schema(description = "Identifier of the data plane this domain is connected to. Required at creation and " +
+            "immutable afterwards; included in the desired-state document but never re-applied on update.",
+            example = "default")
     private String dataPlaneId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
@@ -120,6 +141,7 @@ public class AutomationDomain {
      * OIDC settings. Wrapped (rather than reused by reference) because {@code cimdSettings}
      * is intentionally not surfaced — see {@link AutomationOidcSettings}.
      */
+    @Schema(description = "OpenID Connect settings for the domain.")
     @Valid
     private AutomationOidcSettings oidc;
 
@@ -128,6 +150,7 @@ public class AutomationDomain {
      * cross-resource reference that must be expressed in the key-only contract — see
      * {@link AutomationAccountSettings}.
      */
+    @Schema(description = "User account settings for the domain.")
     @Valid
     private AutomationAccountSettings accountSettings;
 
@@ -135,6 +158,7 @@ public class AutomationDomain {
      * Domain SAML 2.0 IdP settings. {@code saml.certificate} references a certificate of this domain by
      * its {@code key} (managed via the certificates endpoints).
      */
+    @Schema(description = "SAML 2.0 IdP settings for the domain.")
     @Valid
     private AutomationSamlSettings saml;
 
@@ -142,6 +166,7 @@ public class AutomationDomain {
      * Domain certificate settings. {@code certificateSettings.fallbackCertificate} references a
      * certificate of this domain by its {@code key} (managed via the certificates endpoints).
      */
+    @Schema(description = "Domain-level certificate settings.")
     @Valid
     private AutomationCertificateSettings certificateSettings;
 }

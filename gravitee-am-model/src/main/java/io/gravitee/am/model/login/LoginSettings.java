@@ -17,6 +17,7 @@ package io.gravitee.am.model.login;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,68 +27,47 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Schema(title = "Login settings", description = "Configuration of the domain's login flow and the features " +
+        "offered on the sign-in page.")
 public class LoginSettings {
 
-    /**
-     * Login settings configuration inherited ?
-     */
+    @Schema(description = "Whether these login settings are inherited from a parent scope rather than defined " +
+            "here. When true, the other fields are ignored.", defaultValue = "true")
     private boolean inherited = true;
-    /**
-     * Enable/Disable forgot password feature
-     */
+    @Schema(description = "Whether users can initiate a forgot-password flow from the login page.",
+            defaultValue = "false")
     private boolean forgotPasswordEnabled;
-    /**
-     * Enable/Disable user registration feature
-     */
+    @Schema(description = "Whether users can self-register from the login page.", defaultValue = "false")
     private boolean registerEnabled;
-    /**
-     * Enable/Disable remember me feature (not activate)
-     */
+    @Schema(description = "Whether the login page offers a remember-me option.", defaultValue = "false")
     private boolean rememberMeEnabled;
-    /**
-     * Enable/Disable passwordless (WebAuthn) feature
-     */
+    @Schema(description = "Whether passwordless (WebAuthn) authentication is offered.", defaultValue = "false")
     private boolean passwordlessEnabled;
-    /**
-     * Enable/Disable passwordless (WebAuthn) remember device feature
-     */
+    @Schema(description = "Whether a passwordless device can be remembered to skip future challenges.",
+            defaultValue = "false")
     private boolean passwordlessRememberDeviceEnabled;
-    /**
-     * Enable/Disable enforce password usage for passwordless (WebAuthn) feature
-     */
+    @Schema(description = "Whether a password is still required alongside passwordless authentication.",
+            defaultValue = "false")
     private boolean passwordlessEnforcePasswordEnabled;
-    /**
-     * Period of time (in seconds) after which the user credentials (password or external IdP) is required to unlock passwordless feature
-     */
+    @Schema(description = "Period, in seconds, after which the user's credentials must be re-entered to keep " +
+            "using passwordless authentication.")
     private Integer passwordlessEnforcePasswordMaxAge;
-    /**
-     * Enable/Disable passwordless (WebAuthn) device naming feature
-     */
+    @Schema(description = "Whether users can name their passwordless devices.", defaultValue = "false")
     private boolean passwordlessDeviceNamingEnabled;
-    /**
-     * Enable/Disable Certificate Based Authentication feature
-     */
+    @Schema(description = "Whether certificate-based authentication is offered.", defaultValue = "false")
     private boolean certificateBasedAuthEnabled;
-    /**
-     * Certificate Based Authentication URL
-     */
+    @Schema(description = "URL used for certificate-based authentication.")
     private String certificateBasedAuthUrl;
-    /**
-     * Enable/Disable Magic Link Authentication feature
-     */
+    @Schema(description = "Whether magic-link authentication is offered.", defaultValue = "false")
     private boolean magicLinkAuthEnabled;
-    /**
-     * Enable/Disable hide login form
-     */
+    @Schema(description = "Whether the login form is hidden (for example when only social or identifier-first " +
+            "login is offered).", defaultValue = "false")
     private boolean hideForm;
-    /**
-     * Enable/Disable Identifier-first Login
-     */
+    @Schema(description = "Whether identifier-first login is enabled, prompting for the username before the " +
+            "password.", defaultValue = "false")
     private boolean identifierFirstEnabled;
 
-    /**
-     * Force reset password when it expires
-     */
+    @Schema(description = "Whether the user is forced to reset their password once it expires.")
     private Boolean resetPasswordOnExpiration;
 
     public LoginSettings() {

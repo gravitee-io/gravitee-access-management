@@ -60,10 +60,11 @@ public class CertificateResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetCertificate", summary = "Get a certificate",
-            description = "Retrieves a single certificate by its key.")
+            description = "Retrieves a single Automation-managed certificate by its key.")
     @ApiResponse(responseCode = "200", description = "The certificate",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationCertificate.class)))
+    @ApiResponse(responseCode = "404", description = "Domain or certificate not found, or not managed by the Automation API")
     public void get(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -80,8 +81,10 @@ public class CertificateResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "automationDeleteCertificate", summary = "Delete a certificate")
-    @ApiResponse(responseCode = "204", description = "Certificate deleted")
+    @Operation(operationId = "automationDeleteCertificate", summary = "Delete a certificate",
+            description = "Deletes an Automation-managed certificate by its key. Deleting a certificate that " +
+                    "does not exist also returns 204.")
+    @ApiResponse(responseCode = "204", description = "Certificate successfully deleted")
     public void delete(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,

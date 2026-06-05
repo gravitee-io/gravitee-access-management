@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oidc;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,56 +24,43 @@ import java.util.List;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Schema(title = "Client registration settings", description = "OpenID Connect Dynamic Client Registration " +
+        "configuration for the domain.")
 public class ClientRegistrationSettings {
 
-    /**
-     * Allow localhost host as redirect_uri
-     */
+    @Schema(description = "Whether localhost is permitted as a redirect URI host.", defaultValue = "false")
     private boolean allowLocalhostRedirectUri;
 
-    /**
-     * Allow unsecured http scheme into redirect_uri
-     */
+    @Schema(description = "Whether the unsecured http scheme is permitted in redirect URIs.",
+            defaultValue = "false")
     private boolean allowHttpSchemeRedirectUri;
 
-    /**
-     * Allow wildcard redirect uri
-     */
+    @Schema(description = "Whether wildcards are permitted in redirect URIs.", defaultValue = "false")
     private boolean allowWildCardRedirectUri;
 
-    /**
-     * Domain Dynamic Client Registration enabled
-     */
+    @Schema(description = "Whether Dynamic Client Registration is enabled for the domain.", defaultValue = "false")
     private boolean isDynamicClientRegistrationEnabled;
 
-    /**
-     * Domain open Dynamic Client Registration enabled
-     */
+    @Schema(description = "Whether open (unauthenticated) Dynamic Client Registration is enabled for the domain.",
+            defaultValue = "false")
     private boolean isOpenDynamicClientRegistrationEnabled;
 
-    /**
-     * Allow expression language on redirect uri params
-     */
+    @Schema(description = "Whether expression language is permitted in redirect URI parameters.",
+            defaultValue = "false")
     private boolean allowRedirectUriParamsExpressionLanguage;
 
-    /**
-     * Define some default scopes to add on each client registration request
-     */
+    @Schema(description = "Default scopes added to every client registration request.")
     private List<String> defaultScopes;
 
-    /**
-     * Filter scopes on Client Registration through an allowed list of scopes enabled.
-     */
+    @Schema(description = "Whether registered client scopes are restricted to an allowed list.",
+            defaultValue = "false")
     private boolean isAllowedScopesEnabled;
 
-    /**
-     * Define allowed scopes for each client registration request
-     */
+    @Schema(description = "Scopes permitted on client registration requests when the allowed list is enabled.")
     private List<String> allowedScopes;
 
-    /**
-     * Enable client to be used as template for dynamic client registration
-     */
+    @Schema(description = "Whether a client may be used as a template for dynamic client registration.",
+            defaultValue = "false")
     private boolean isClientTemplateEnabled;
 
     public ClientRegistrationSettings() {

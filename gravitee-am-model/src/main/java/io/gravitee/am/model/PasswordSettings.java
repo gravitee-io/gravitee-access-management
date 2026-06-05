@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "Password settings", description = "Password policy applied to users of the domain: complexity " +
+        "requirements, expiry, and history.")
 public class PasswordSettings {
 
     /**
@@ -28,64 +32,42 @@ public class PasswordSettings {
     public static final int PASSWORD_MAX_LENGTH = 128;
     public static final int PASSWORD_MIN_LENGTH = 8;
 
-    /**
-     * Account settings configuration inherited ?
-     */
+    @Schema(description = "Whether these password settings are inherited from a parent scope rather than defined " +
+            "here. When true, the other fields are ignored.", defaultValue = "true")
     private boolean inherited = true;
 
-    /**
-     * Password min length
-     */
+    @Schema(description = "Minimum number of characters a password must contain.", defaultValue = "8")
     private Integer minLength = PASSWORD_MIN_LENGTH;
 
-    /**
-     * Password max length
-     */
+    @Schema(description = "Maximum number of characters a password may contain.", defaultValue = "128")
     private Integer maxLength = PASSWORD_MAX_LENGTH;
 
-    /**
-     * Must include numbers
-     */
+    @Schema(description = "Whether a password must contain at least one number.")
     private Boolean includeNumbers;
 
-    /**
-     * Must include special characters
-     */
+    @Schema(description = "Whether a password must contain at least one special character.")
     private Boolean includeSpecialCharacters;
 
-    /**
-     * letters in mixed case
-     */
+    @Schema(description = "Whether a password must contain both uppercase and lowercase letters.")
     private Boolean lettersInMixedCase;
 
-    /**
-     * Max consecutive letters
-     */
+    @Schema(description = "Maximum number of identical consecutive characters allowed in a password.")
     private Integer maxConsecutiveLetters;
 
-    /**
-     * Excludes passwords contained within password dictionary
-     */
+    @Schema(description = "Whether passwords found in a common-password dictionary are rejected.")
     private Boolean excludePasswordsInDictionary;
 
-    /**
-     * Excludes user profile information from password
-     */
+    @Schema(description = "Whether passwords containing the user's profile information are rejected.")
     private Boolean excludeUserProfileInfoInPassword;
 
-    /**
-     * The Expiration duration (in days) of a password
-     */
+    @Schema(description = "Number of days after which a password expires and must be changed.")
     private Integer expiryDuration;
 
-    /**
-     * Does the password history is enabled to prevent the usage of old password
-     */
+    @Schema(description = "Whether password history is enforced to prevent reuse of recent passwords.",
+            defaultValue = "false")
     private boolean passwordHistoryEnabled;
 
-    /**
-     * How many passwords are preserved into the history
-     */
+    @Schema(description = "Number of previous passwords retained in history and barred from reuse.")
     private Short oldPasswords;
 
     public PasswordSettings() {

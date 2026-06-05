@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.model;
 
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,20 +38,28 @@ import java.util.List;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationOidcSettings", title = "OpenID Connect settings",
+        description = "OpenID Connect settings for the domain. CIMD (client identity metadata document) " +
+                "settings are not exposed by the Automation API and are reset on update.")
 public class AutomationOidcSettings {
 
+    @Schema(description = "Dynamic Client Registration (DCR) settings for the domain.")
     private ClientRegistrationSettings clientRegistrationSettings;
 
+    @Schema(description = "Financial-grade API (FAPI) security profile settings for the domain.")
     private SecurityProfileSettings securityProfileSettings;
 
-    /** Enable redirect_uri strict matching during OIDC flow. */
+    @Schema(description = "Whether redirect_uri and post_logout_redirect_uri values are matched strictly " +
+            "during OpenID Connect flows.", defaultValue = "false")
     private boolean redirectUriStrictMatching;
 
+    @Schema(description = "URLs the user may be redirected to after sign-out (post_logout_redirect_uri).")
     private List<String> postLogoutRedirectUris;
 
+    @Schema(description = "Allowed request_uri values for passing OpenID Connect request objects by reference.")
     private List<String> requestUris;
 
-    /** CIBA settings. */
+    @Schema(description = "Client-Initiated Backchannel Authentication (CIBA) settings for the domain.")
     @Valid
     private AutomationCIBASettings cibaSettings;
 }

@@ -15,13 +15,19 @@
  */
 package io.gravitee.am.model.account;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "Form field", description = "A single field shown on a user-facing form, such as registration.")
 public class FormField {
+    @Schema(description = "Identifier of the field, mapped to a user attribute.", example = "email")
     private String key;
+    @Schema(description = "Label displayed for the field.", example = "Email")
     private String label;
+    @Schema(description = "Input type of the field.", example = "email")
     private String type;
 
     public String getKey() {

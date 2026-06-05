@@ -66,19 +66,23 @@ alphanumeric character (`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`).
 > reporters) folded with its `key`. The same inputs always produce the same id, which
 > gives idempotent create-or-update without exposing internal ids.
 
-### The `default` flag
+### The `system` flag
 
-A Certificate, Identity Provider or Reporter may be declared the domain's **default** of
-its type with `"default": true`. This maps to the internal *system* flag the platform uses
-for special handling — the default certificate signs tokens for applications that don't
-pin one, the default identity provider backs user registration, the default reporter
-captures audit logs. A default identity provider additionally adopts the conventional
-`default-idp-<domainId>` id so the gateway's registration fallback resolves to it. There can
-be at most one default per type per domain. Unlike via the Management API, the Automation
-API can freely GET and DELETE its default resources — no system guard restricts it.
+A Certificate, Identity Provider or Reporter may be declared the domain's **system**
+(built-in default) resource of its type with `"system": true`. The system certificate
+signs tokens for applications that don't pin one, the system identity provider backs user
+registration, the system reporter captures audit logs. A system identity provider
+additionally adopts the conventional `default-idp-<domainId>` id so the gateway's
+registration fallback resolves to it. There can be at most one system resource per type
+per domain. Unlike via the Management API, the Automation API can freely GET and DELETE
+its system resources — no system guard restricts it.
 
-> **`default` is immutable** — like `key`, it is an identity attribute fixed at creation
-> (for an identity provider it co-determines the internal id). A PUT that flips `default`
+When `system` is `true`, only `key` is required; the resource is built from the
+corresponding `domains.*.default.*` settings in `gravitee.yml` and the `name`, `type`,
+and `configuration` fields in the payload are ignored.
+
+> **`system` is immutable** — like `key`, it is an identity attribute fixed at creation
+> (for an identity provider it co-determines the internal id). A PUT that flips `system`
 > on an existing resource is **rejected with `400`**, not silently ignored; delete and
 > recreate the resource to change it. A `GET → PUT` round-trip of an unmodified document is
 > therefore still lossless.
@@ -94,9 +98,9 @@ Automation API only sees, mutates, or deletes its own resources:
   rejected.
 
 > **Automation domains start empty.** Unlike domains created via the UI, an
-> automation-managed domain is **not** seeded with a default identity provider, a default
-> reporter, or a default certificate. Declare what you need explicitly — including, if you
-> want them, the defaults themselves via the `default` flag (see above).
+> automation-managed domain is **not** seeded with a system identity provider, a system
+> reporter, or a system certificate. Declare what you need explicitly — including, if you
+> want them, the built-in defaults themselves via the `system` flag (see above).
 
 This makes adoption safe in environments that already host UI-created resources.
 
@@ -210,6 +214,20 @@ curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/internal-admi
   }' | jq '{key, name}'
 ```
 
+### System identity provider
+
+When `system` is `true`, only `key` is required; the IDP is built from `domains.identities.default.*` in `gravitee.yml`:
+
+```bash
+curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "default",
+    "system": true
+  }' | jq '{key, system}'
+```
+
 List / read / delete identity providers under a domain:
 ```bash
 curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers" \
@@ -228,7 +246,7 @@ curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/customer-a
 by its `key`. The reference is **eventually consistent**: it may be `null`, or it may name
 an IdP that does not exist yet — the request succeeds either way and the key round-trips on
 `GET`. The reference simply resolves once the IdP exists. (Equally, you can leave it unset
-and rely on a `default: true` identity provider, which the gateway uses for registration
+and rely on a `system: true` identity provider, which the gateway uses for registration
 automatically.)
 
 ```bash
@@ -265,19 +283,16 @@ curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth
     "name": "SAML signing certificate",
     "type": "javakeystore-am-certificate",
     "configuration": "{...}"
-  }' | jq '{key, name, default}'
+  }' | jq '{key, name}'
 
-# mark a certificate the domain default (signs application tokens)
+# mark a certificate as the domain system certificate (signs application tokens)
 curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/certificates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "key": "default-signing",
-    "name": "Default signing certificate",
-    "type": "javakeystore-am-certificate",
-    "configuration": "{...}",
-    "default": true
-  }' | jq '{key, default}'
+    "key": "default",
+    "system": true
+  }' | jq '{key, system}'
 ```
 
 Reference a certificate from the domain's SAML / fallback settings by `key`. The reference
@@ -314,10 +329,12 @@ curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/customer-a
 ## 4. Reporters — a resource under the domain
 
 Reporters are managed as their own resource under a domain, at
-`/domains/{domainKey}/reporters`, identified by `key`. Mark one `default: true` to make it
-the domain's audit reporter.
+`/domains/{domainKey}/reporters`, identified by `key`. Mark one `system: true` to make it
+the domain's system audit reporter (only `key` is required; config comes from
+`gravitee.yml`).
 
 ```bash
+# custom reporter
 curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/reporters" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
@@ -325,9 +342,17 @@ curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth
     "key": "audit-kafka",
     "name": "Audit Kafka reporter",
     "type": "reporter-am-kafka",
-    "configuration": "{\"bootstrapServers\":\"kafka:9092\",\"topic\":\"am-audit\",\"acks\":\"1\"}",
-    "default": true
-  }' | jq '{key, name, default}'
+    "configuration": "{\"bootstrapServers\":\"kafka:9092\",\"topic\":\"am-audit\",\"acks\":\"1\"}"
+  }' | jq '{key, name}'
+
+# system reporter (built from gravitee.yaml)
+curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/reporters" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "default",
+    "system": true
+  }' | jq '{key, system}'
 
 curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/reporters" \
   -H "Authorization: Bearer $TOKEN" | jq '.[].key'

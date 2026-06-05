@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oidc;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,26 +25,25 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "OpenID Connect settings", description = "OpenID Connect configuration for the domain, including " +
+        "dynamic client registration, security profile, and logout settings.")
 public class OIDCSettings {
 
+    @Schema(description = "Dynamic Client Registration settings for the domain.")
     private ClientRegistrationSettings clientRegistrationSettings;
 
+    @Schema(description = "Security profile settings (for example, FAPI) for the domain.")
     private SecurityProfileSettings securityProfileSettings;
 
-    /**
-     * Enable redirect_uri strict matching during OIDC flow (check for redirect_uri_mismatch exception)
-     */
+    @Schema(description = "Whether redirect_uri values are matched strictly during OIDC flows.",
+            defaultValue = "false")
     private boolean redirectUriStrictMatching;
 
-    /**
-     * Array of URLs supplied by the RP to which it MAY request that the End-User's User Agent be redirected using the post_logout_redirect_uri parameter after a logout has been performed.
-     */
+    @Schema(description = "URLs to which a relying party may request the user be redirected after logout, via " +
+            "the post_logout_redirect_uri parameter.")
     private List<String> postLogoutRedirectUris;
 
-    /**
-     * Array of URLs supplied by the RP to restrict the possible values of the request_uri parameter.
-     * https://openid.net/specs/openid-connect-core-1_0.html#RequestUriParameter
-     */
+    @Schema(description = "URLs that restrict the permitted values of the request_uri parameter.")
     private List<String> requestUris;
 
     private CIBASettings cibaSettings;

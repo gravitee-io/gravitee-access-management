@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,14 +30,19 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationSamlSettings", title = "SAML 2.0 settings",
+        description = "Settings for the domain acting as a SAML 2.0 identity provider (IdP).")
 public class AutomationSamlSettings {
 
+    @Schema(description = "Whether the domain exposes the SAML 2.0 IdP protocol.", defaultValue = "false")
     private boolean enabled;
 
+    @Schema(description = "URL or URN that uniquely identifies this IdP (the SAML entity ID).",
+            example = "https://auth.example.com/saml2/idp/entity")
     private String entityId;
 
-    /**
-     * The {@code key} of one of the certificates declared in the same Domain request.
-     */
+    @Schema(description = "Key of a certificate managed under this domain, used to sign SAML responses. " +
+            "Must reference a certificate created via the domain's certificate endpoints.",
+            example = "signing-cert")
     private String certificate;
 }

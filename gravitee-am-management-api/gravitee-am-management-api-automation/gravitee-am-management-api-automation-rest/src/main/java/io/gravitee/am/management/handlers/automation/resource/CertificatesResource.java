@@ -31,6 +31,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -71,10 +72,12 @@ public class CertificatesResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationListCertificates", summary = "List a domain's certificates",
-            description = "Returns all certificates managed by the Automation API under the domain.")
+            description = "Returns all certificates managed by the Automation API under the domain. Certificates " +
+                    "created outside the Automation API are not returned.")
     @ApiResponse(responseCode = "200", description = "List of certificates",
             content = @Content(mediaType = "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = AutomationCertificate.class))))
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void list(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -98,14 +101,34 @@ public class CertificatesResource extends AbstractAutomationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationCreateOrUpdateCertificate",
             summary = "Create or update a certificate",
-            description = "Idempotent create-or-update. Uses the key field in the body to identify the certificate within the domain.")
+            description = "Idempotent create-or-update. Uses the key field in the body to identify the " +
+                    "certificate within the domain. Re-applying an unchanged definition is a no-op. The system " +
+                    "flag is immutable; changing it requires deleting and recreating the certificate.")
     @ApiResponse(responseCode = "200", description = "The created or updated certificate",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationCertificate.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request: a key conflict, a missing required " +
+            "field for a non-system certificate, an attempt to change the immutable system flag, or a second " +
+            "system certificate for the domain")
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void createOrUpdate(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
             @PathParam("domainKey") String domainKey,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Desired state of the certificate. For a system certificate, supply only " +
+                            "system: true and key.",
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AutomationCertificate.class),
+                            examples = {
+                                    @ExampleObject(name = "Certificate", description = "A fully specified certificate",
+                                            value = "{\"key\":\"signing-cert\",\"name\":\"Signing certificate\"," +
+                                                    "\"type\":\"javakeystore-am-certificate\"," +
+                                                    "\"configuration\":\"{\\\"jks\\\":{\\\"content\\\":\\\"...\\\",\\\"name\\\":\\\"keystore.jks\\\"},\\\"storepass\\\":\\\"secret\\\",\\\"alias\\\":\\\"mykey\\\",\\\"keypass\\\":\\\"secret\\\"}\"}"),
+                                    @ExampleObject(name = "System certificate", description = "The domain's system certificate; only system and key are needed",
+                                            value = "{\"key\":\"default\",\"system\":true}")
+                            }))
             @Valid @NotNull AutomationCertificate definition,
             @Suspended final AsyncResponse response) {
 

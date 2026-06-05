@@ -35,6 +35,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -81,10 +82,12 @@ public class ReportersResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationListReporters", summary = "List a domain's reporters",
-            description = "Returns all reporters managed by the Automation API under the domain.")
+            description = "Returns all reporters managed by the Automation API under the domain. Reporters created " +
+                    "outside the Automation API are not returned.")
     @ApiResponse(responseCode = "200", description = "List of reporters",
             content = @Content(mediaType = "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = AutomationReporter.class))))
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void list(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -108,14 +111,34 @@ public class ReportersResource extends AbstractAutomationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationCreateOrUpdateReporter",
             summary = "Create or update a reporter",
-            description = "Idempotent create-or-update. Uses the key field in the body to identify the reporter within the domain.")
+            description = "Idempotent create-or-update. Uses the key field in the body to identify the reporter " +
+                    "within the domain. On first apply the reporter is created; subsequent applies update it. The " +
+                    "system flag is immutable; changing it requires deleting and recreating the reporter.")
     @ApiResponse(responseCode = "200", description = "The created or updated reporter",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationReporter.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request: a key conflict, a missing required field " +
+            "(name, type, or configuration) for a non-system reporter, an attempt to change the immutable system " +
+            "flag, or a second system reporter for the domain")
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void createOrUpdate(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
             @PathParam("domainKey") String domainKey,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Desired state of the reporter. For a system reporter, supply only system: true " +
+                            "and key.",
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AutomationReporter.class),
+                            examples = {
+                                    @ExampleObject(name = "Reporter", description = "A fully specified reporter",
+                                            value = "{\"key\":\"audit-kafka\",\"name\":\"Audit events to Kafka\"," +
+                                                    "\"type\":\"reporter-am-kafka\",\"enabled\":true," +
+                                                    "\"configuration\":\"{\\\"bootstrapServers\\\":\\\"kafka:9092\\\",\\\"topic\\\":\\\"audit\\\"}\"}"),
+                                    @ExampleObject(name = "System reporter", description = "The domain's system reporter; only system and key are needed",
+                                            value = "{\"key\":\"default\",\"system\":true}")
+                            }))
             @Valid @NotNull AutomationReporter definition,
             @Suspended final AsyncResponse response) {
 

@@ -24,8 +24,16 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.examples.Example;
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -35,6 +43,7 @@ import io.swagger.v3.oas.models.tags.Tag;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,6 +72,31 @@ public class AutomationApiDefinition implements ReaderListener {
     public static final String DEFAULT_AUTOMATION_ENTRYPOINT = "/management/automation";
 
     private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters");
+
+    private static final String ERROR_SCHEMA = "Error";
+
+    /**
+     * Human-readable descriptions for each tag, keyed by tag name.
+     */
+    private static final Map<String, String> TAG_DESCRIPTIONS = Map.of(
+            "Domains", "Security domains: the top-level container for an authentication and authorization " +
+                    "configuration. Create, read, update, and delete domains, and reach their sub-resources.",
+            "Identity Providers", "Identity providers configured under a domain to authenticate users.",
+            "Certificates", "Certificates configured under a domain to sign and verify tokens.",
+            "Reporters", "Reporters configured under a domain to persist audit events to a backend.");
+
+    /**
+     * Descriptions and examples for the shared path parameters, keyed by parameter name. Injected onto every
+     * operation so the repetitive parameters are documented once and consistently.
+     */
+    private static final Map<String, String[]> PATH_PARAM_DOCS = Map.of(
+            "orgId", new String[]{"Identifier of the organization that owns the environment.", "DEFAULT"},
+            "envId", new String[]{"Identifier of the environment the domain belongs to.", "DEFAULT"},
+            "domainKey", new String[]{"Key of the domain: its stable, immutable Automation identifier within the " +
+                    "environment.", "example-domain"},
+            "certKey", new String[]{"Key of the certificate within the domain.", "signing-cert"},
+            "idpKey", new String[]{"Key of the identity provider within the domain.", "corporate-ldap"},
+            "reporterKey", new String[]{"Key of the reporter within the domain.", "audit-kafka"});
 
     @Override
     public void beforeScan(OpenApiReader openApiReader, OpenAPI openAPI) {
@@ -96,6 +130,29 @@ public class AutomationApiDefinition implements ReaderListener {
                 .flatMap(Collection::stream)
                 .forEach(AutomationApiDefinition::addForbiddenResponse);
 
+        // Document the repetitive path parameters once, consistently, on every operation.
+        filteredPaths.values().stream()
+                .map(PathItem::readOperations)
+                .flatMap(Collection::stream)
+                .forEach(AutomationApiDefinition::documentPathParameters);
+
+        // Attach the shared Error body to every error response that lacks one (default, 4XX, 5XX), so error
+        // payloads are documented and consistent across operations.
+        filteredPaths.values().stream()
+                .map(PathItem::readOperations)
+                .flatMap(Collection::stream)
+                .forEach(AutomationApiDefinition::attachErrorBodies);
+
+        // Mirror the request-body examples (authored once as @ExampleObject on each PUT) onto the matching
+        // success responses, so SDK and Terraform generators get response examples without hand-maintaining a
+        // second copy. A response that returns the same entity reuses the example verbatim; a list response
+        // wraps the example values in an array.
+        Map<String, Map<String, Example>> entityExamples = collectRequestBodyExamples(filteredPaths);
+        filteredPaths.values().stream()
+                .map(PathItem::readOperations)
+                .flatMap(Collection::stream)
+                .forEach(op -> propagateExamplesToResponses(op, entityExamples));
+
         // Collect schema names referenced by the filtered paths
         Set<String> referencedSchemas = new HashSet<>();
         filteredPaths.values().stream()
@@ -128,34 +185,65 @@ public class AutomationApiDefinition implements ReaderListener {
             openAPI.getComponents().setSchemas(filteredSchemas);
         }
 
-        // Filter tags to only automation ones
+        // Filter tags to only automation ones, each with a description.
         openAPI.tags(AUTOMATION_TAGS.stream()
                 .sorted()
-                .map(name -> new Tag().name(name))
+                .map(name -> new Tag().name(name).description(TAG_DESCRIPTIONS.get(name)))
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll));
 
         // The Automation API is mounted at the configurable http.api.automation.entrypoint
         // (defaults to /management/automation), mirroring how the management API declares its
         // /management server in GraviteeApiDefinition. The spec is static, so it always reflects the default.
-        openAPI.servers(List.of(new Server().url(DEFAULT_AUTOMATION_ENTRYPOINT)));
+        openAPI.servers(List.of(new Server().url("http://localhost:8093" + DEFAULT_AUTOMATION_ENTRYPOINT)));
         openAPI.info(new Info()
                 .version(Version.RUNTIME_VERSION.toString())
                 .title("Gravitee.io AM - Automation API")
-                .description("Declarative, GitOps-style management of Access Management resources.")
+                .description(API_DESCRIPTION)
+                .contact(new Contact()
+                        .name("DevX team")
+                        .url("https://www.gravitee.io/")
+                        .email("team-gko@graviteesource.com"))
+                .license(new License()
+                        .name("Apache 2.0")
+                        .url("https://www.apache.org/licenses/LICENSE-2.0.html"))
         );
 
         Components components = openAPI.getComponents() != null ? openAPI.getComponents() : new Components();
+        // Register the shared Error schema referenced by the error responses.
+        if (components.getSchemas() == null) {
+            components.setSchemas(new TreeMap<>());
+        }
+        components.getSchemas().put(ERROR_SCHEMA, errorSchema());
         // Replace all security schemes — remove inherited ones (e.g. gravitee-auth from management API).
         // Use an ordered map so the generated spec is deterministic.
         Map<String, SecurityScheme> securitySchemes = new LinkedHashMap<>();
         securitySchemes.put(BEARER_AUTH_SCHEME, new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
-                .description("JWT bearer token, or an opaque user service-account access token."));
+                .description("Authentication uses a bearer token: a JWT, or an opaque user service-account " +
+                        "access token. Every operation is additionally permission-gated against the target " +
+                        "organization, environment, and resource; a caller lacking the required permission " +
+                        "receives a 403 response."));
         components.setSecuritySchemes(securitySchemes);
         openAPI.components(components);
         openAPI.security(List.of(new SecurityRequirement().addList(BEARER_AUTH_SCHEME)));
     }
+
+    private static final String API_DESCRIPTION =
+            "Declarative, idempotent management of Gravitee Access Management resources.\n\n" +
+            "Each resource is identified by a stable, immutable `key` that you choose. Applying a resource with " +
+            "`PUT` creates it on first use and updates it on subsequent applies, so the same request can be " +
+            "replayed safely to converge on a desired state.\n\n" +
+            "The API only sees and manages resources it owns (those marked as managed by the Automation API). " +
+            "Resources created through the Management API or console are invisible to these endpoints and cannot " +
+            "be read, updated, or deleted here; conversely, resources created here are fully owned by the " +
+            "Automation API.\n\n" +
+            "Domains are the top-level resource; certificates, identity providers, and reporters are managed as " +
+            "sub-resources of a domain. Deleting a domain cascades to its Automation-managed sub-resources. Some " +
+            "sub-resources support a `system` flag identifying the domain's built-in default; the flag is " +
+            "immutable once set.\n\n" +
+            "This API complements the Management API, which remains the interactive, full-featured management " +
+            "surface.";
 
     private static void addDefaultErrorResponse(Operation operation) {
         ApiResponses responses = operation.getResponses();
@@ -181,6 +269,160 @@ public class AutomationApiDefinition implements ReaderListener {
         ApiResponses sorted = new ApiResponses();
         new TreeMap<>(responses).forEach(sorted::addApiResponse);
         operation.setResponses(sorted);
+    }
+
+    /**
+     * Sets a description and example on each shared path parameter, using {@link #PATH_PARAM_DOCS}, so the
+     * repetitive parameters are documented once and consistently across every operation.
+     */
+    private static void documentPathParameters(Operation operation) {
+        if (operation.getParameters() == null) {
+            return;
+        }
+        for (Parameter parameter : operation.getParameters()) {
+            String[] docs = PATH_PARAM_DOCS.get(parameter.getName());
+            if (docs != null) {
+                if (parameter.getDescription() == null) {
+                    parameter.setDescription(docs[0]);
+                }
+                if (parameter.getExample() == null) {
+                    parameter.setExample(docs[1]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Attaches the shared {@code Error} body to every error response (default, 4XX, 5XX) that has no content, so
+     * error payloads are documented and consistent. The example's {@code http_status} matches the response code
+     * where it is numeric.
+     */
+    @SuppressWarnings("rawtypes")
+    private static void attachErrorBodies(Operation operation) {
+        ApiResponses responses = operation.getResponses();
+        if (responses == null) {
+            return;
+        }
+        responses.forEach((code, response) -> {
+            boolean isError = "default".equals(code) || code.startsWith("4") || code.startsWith("5");
+            if (isError && response.getContent() == null) {
+                Schema ref = new Schema().$ref("#/components/schemas/" + ERROR_SCHEMA);
+                // Use an ordered map: Map.of has a randomized, per-JVM iteration order, which would make the
+                // serialized example fields reorder between regenerations and flake the staleness check.
+                Map<String, Object> exampleValue = new LinkedHashMap<>();
+                exampleValue.put("message", "A human-readable description of the error");
+                exampleValue.put("http_status", errorStatusForExample(code));
+                Example example = new Example().value(exampleValue);
+                response.setContent(new Content().addMediaType("application/json",
+                        new MediaType().schema(ref).addExamples("error", example)));
+            }
+        });
+    }
+
+    private static int errorStatusForExample(String code) {
+        try {
+            return Integer.parseInt(code);
+        } catch (NumberFormatException e) {
+            return 500;
+        }
+    }
+
+    /**
+     * Builds a map of entity schema name to the examples authored on the request body that targets it. The
+     * Automation API authors comprehensive {@code @ExampleObject}s once on each {@code PUT}; this lets those
+     * examples be reused on the corresponding responses.
+     */
+    @SuppressWarnings("rawtypes")
+    private static Map<String, Map<String, Example>> collectRequestBodyExamples(Paths paths) {
+        Map<String, Map<String, Example>> byEntity = new HashMap<>();
+        paths.values().stream()
+                .map(PathItem::readOperations)
+                .flatMap(Collection::stream)
+                .forEach(op -> {
+                    if (op.getRequestBody() == null || op.getRequestBody().getContent() == null) {
+                        return;
+                    }
+                    op.getRequestBody().getContent().values().forEach(media -> {
+                        String entity = entityNameOf(media.getSchema());
+                        if (entity != null && media.getExamples() != null && !media.getExamples().isEmpty()) {
+                            byEntity.put(entity, media.getExamples());
+                        }
+                    });
+                });
+        return byEntity;
+    }
+
+    /**
+     * Copies the request-body examples onto each success ({@code 2XX}) response that returns the same entity (or
+     * an array of it) and has no examples of its own. Direct-entity responses reuse the examples verbatim; list
+     * responses wrap the example values in a single array example. Existing response examples are never replaced.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void propagateExamplesToResponses(Operation operation, Map<String, Map<String, Example>> entityExamples) {
+        ApiResponses responses = operation.getResponses();
+        if (responses == null) {
+            return;
+        }
+        responses.forEach((code, response) -> {
+            if (!code.startsWith("2") || response.getContent() == null) {
+                return;
+            }
+            response.getContent().values().forEach(media -> {
+                if (media.getSchema() == null || (media.getExamples() != null && !media.getExamples().isEmpty())) {
+                    return;
+                }
+                Schema schema = media.getSchema();
+                String direct = entityNameOf(schema);
+                if (direct != null && entityExamples.containsKey(direct)) {
+                    entityExamples.get(direct).forEach((name, ex) -> media.addExamples(name, copyExample(ex)));
+                    return;
+                }
+                if ("array".equals(schema.getType()) && schema.getItems() != null) {
+                    String itemEntity = entityNameOf(schema.getItems());
+                    if (itemEntity != null && entityExamples.containsKey(itemEntity)) {
+                        List<Object> values = new ArrayList<>();
+                        entityExamples.get(itemEntity).values().forEach(ex -> values.add(ex.getValue()));
+                        media.addExamples(itemEntity + "List", new Example().value(values));
+                    }
+                }
+            });
+        });
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static String entityNameOf(Schema schema) {
+        if (schema == null || schema.get$ref() == null) {
+            return null;
+        }
+        return schema.get$ref().replace("#/components/schemas/", "");
+    }
+
+    /**
+     * Creates a fresh {@link Example} carrying the same content, so request and response specs do not share a
+     * single instance (which a YAML serializer could otherwise emit as an anchor/alias).
+     */
+    private static Example copyExample(Example src) {
+        return new Example()
+                .summary(src.getSummary())
+                .description(src.getDescription())
+                .value(src.getValue());
+    }
+
+    /**
+     * The shared error body returned by the management exception mappers ({@code ErrorEntity}): a human-readable
+     * message and the HTTP status code.
+     */
+    @SuppressWarnings("rawtypes")
+    private static Schema errorSchema() {
+        Schema schema = new Schema()
+                .type("object")
+                .description("Error response body returned for failed requests.");
+        schema.addProperty("message", new StringSchema()
+                .description("Human-readable description of the error."));
+        schema.addProperty("http_status", new IntegerSchema()
+                .description("HTTP status code of the error response.")
+                .example(400));
+        return schema;
     }
 
     @SuppressWarnings("rawtypes")

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Set;
 
 /**
@@ -22,12 +24,25 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 
+@Schema(title = "CORS settings", description = "Cross-Origin Resource Sharing configuration controlling which " +
+        "web origins may call the domain's endpoints from a browser.")
 public class CorsSettings {
+    @Schema(description = "Whether CORS handling is enabled for the domain.", defaultValue = "false")
     private boolean enabled;
+    @Schema(description = "Origins permitted to make cross-origin requests. Use \"*\" to allow any origin.",
+            example = "[\"https://app.example.com\"]")
     private Set<String> allowedOrigins;
+    @Schema(description = "HTTP methods permitted on cross-origin requests.",
+            example = "[\"GET\",\"POST\",\"PUT\",\"DELETE\"]")
     private Set<String> allowedMethods;
+    @Schema(description = "Request headers permitted on cross-origin requests.",
+            example = "[\"Authorization\",\"Content-Type\"]")
     private Set<String> allowedHeaders;
+    @Schema(description = "How long, in seconds, a browser may cache the result of a preflight request.",
+            defaultValue = "86400")
     private int maxAge = 86400;
+    @Schema(description = "Whether the browser may send credentials (cookies, authorization headers) with " +
+            "cross-origin requests.", defaultValue = "false")
     private boolean allowCredentials;
 
     public boolean isEnabled() {

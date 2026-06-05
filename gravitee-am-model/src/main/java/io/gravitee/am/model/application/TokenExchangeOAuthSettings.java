@@ -17,13 +17,21 @@ package io.gravitee.am.model.application;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Token exchange OAuth settings, with optional inheritance from domain defaults.
  */
+@Schema(title = "Token exchange OAuth settings", description = "OAuth-specific token-exchange behavior, such as " +
+        "how scopes are handled, with optional inheritance from domain defaults.")
 public class TokenExchangeOAuthSettings {
 
+    @Schema(description = "Whether these settings are inherited from the domain defaults rather than defined here.",
+            defaultValue = "true")
     private boolean inherited = true;
+    @Schema(description = "How scopes are handled when issuing the exchanged token. DOWNSCOPING restricts the " +
+            "issued token to a subset of the original scopes.",
+            defaultValue = "DOWNSCOPING")
     private TokenExchangeScopeHandling scopeHandling = TokenExchangeScopeHandling.DOWNSCOPING;
 
     public TokenExchangeOAuthSettings() {}

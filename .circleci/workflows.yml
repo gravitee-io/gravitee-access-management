@@ -1044,6 +1044,7 @@ jobs:
       name: openjdk
       class: medium
       version: "25.0.1"
+      with_node: true
     steps:
       - attach_workspace:
           at: /tmp
@@ -1082,6 +1083,9 @@ jobs:
       - run:
           name: Check Automation OAS breaking changes
           command: bash .circleci/scripts/oas-automation-compat-check.sh
+      - run:
+          name: Lint Automation OAS
+          command: bash .circleci/scripts/oas-lint.sh
 
   ee-schema-compat-check:
     executor:

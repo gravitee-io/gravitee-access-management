@@ -15,20 +15,22 @@
  */
 package io.gravitee.am.model.oidc;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "Security profile settings", description = "Financial-grade API (FAPI) security profile " +
+        "configuration for the domain.")
 public class SecurityProfileSettings {
 
-    /**
-     * Apply the standard Financial-grade API security profile (version 1.0).
-     */
+    @Schema(description = "Whether the standard Financial-grade API security profile (version 1.0) is applied.",
+            defaultValue = "false")
     private boolean enablePlainFapi;
 
-    /**
-     * Apply the standard Open Banking Brasil Financial-grade API Security Profile 1.0 (version 1.0).
-     */
+    @Schema(description = "Whether the Open Banking Brasil Financial-grade API security profile (version 1.0) is " +
+            "applied.", defaultValue = "false")
     private boolean enableFapiBrazil;
 
     public SecurityProfileSettings() {

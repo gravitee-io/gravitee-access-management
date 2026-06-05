@@ -61,10 +61,11 @@ public class IdentityProviderResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetIdentityProvider", summary = "Get an identity provider",
-            description = "Retrieves a single identity provider by its key.")
+            description = "Retrieves a single Automation-managed identity provider by its key.")
     @ApiResponse(responseCode = "200", description = "The identity provider",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationIdentityProvider.class)))
+    @ApiResponse(responseCode = "404", description = "Domain or identity provider not found, or not managed by the Automation API")
     public void get(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -81,8 +82,10 @@ public class IdentityProviderResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "automationDeleteIdentityProvider", summary = "Delete an identity provider")
-    @ApiResponse(responseCode = "204", description = "Identity provider deleted")
+    @Operation(operationId = "automationDeleteIdentityProvider", summary = "Delete an identity provider",
+            description = "Deletes an Automation-managed identity provider by its key. Deleting an identity " +
+                    "provider that does not exist also returns 204.")
+    @ApiResponse(responseCode = "204", description = "Identity provider successfully deleted")
     public void delete(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
