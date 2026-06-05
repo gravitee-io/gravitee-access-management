@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.model.uma;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Schema(title = "UMA settings", description = "Configuration of the domain's User-Managed Access (UMA 2.0) " +
+        "authorization features.")
 public class UMASettings {
 
+    @Schema(description = "Whether User-Managed Access is enabled for the domain.", defaultValue = "false")
     private boolean enabled;
 
     public boolean isEnabled() {

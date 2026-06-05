@@ -15,13 +15,18 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(title = "Secret expiration settings", description = "Controls whether client secrets in the domain expire " +
+        "and after how long.")
 public class SecretExpirationSettings {
+    @Schema(description = "Whether client-secret expiration is enabled.")
     private Boolean enabled;
+    @Schema(description = "Lifetime, in seconds, of a client secret before it expires.", example = "7776000")
     private Long expiryTimeSeconds;
 
     public SecretExpirationSettings() {

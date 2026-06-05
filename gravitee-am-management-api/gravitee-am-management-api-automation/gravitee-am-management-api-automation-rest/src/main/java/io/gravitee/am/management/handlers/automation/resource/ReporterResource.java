@@ -61,10 +61,11 @@ public class ReporterResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetReporter", summary = "Get a reporter",
-            description = "Retrieves a single reporter by its key.")
+            description = "Retrieves a single Automation-managed reporter by its key.")
     @ApiResponse(responseCode = "200", description = "The reporter",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationReporter.class)))
+    @ApiResponse(responseCode = "404", description = "Domain or reporter not found, or not managed by the Automation API")
     public void get(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -81,8 +82,10 @@ public class ReporterResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "automationDeleteReporter", summary = "Delete a reporter")
-    @ApiResponse(responseCode = "204", description = "Reporter deleted")
+    @Operation(operationId = "automationDeleteReporter", summary = "Delete a reporter",
+            description = "Deletes an Automation-managed reporter by its key. Deleting a reporter that does " +
+                    "not exist also returns 204.")
+    @ApiResponse(responseCode = "204", description = "Reporter successfully deleted")
     public void delete(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,

@@ -58,10 +58,11 @@ public class DomainResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetDomain", summary = "Get a domain",
-            description = "Retrieves a single security domain by its key.")
+            description = "Retrieves a single Automation-managed security domain by its key.")
     @ApiResponse(responseCode = "200", description = "The domain",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationDomain.class)))
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void get(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -80,8 +81,11 @@ public class DomainResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "automationDeleteDomain", summary = "Delete a domain")
-    @ApiResponse(responseCode = "204", description = "Domain deleted")
+    @Operation(operationId = "automationDeleteDomain", summary = "Delete a domain",
+            description = "Deletes an Automation-managed domain. Deletion cascades to the domain's " +
+                    "sub-resources (certificates, identity providers, and reporters). Deleting a domain that " +
+                    "does not exist also returns 204.")
+    @ApiResponse(responseCode = "204", description = "Domain successfully deleted")
     public void delete(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,

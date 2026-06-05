@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,44 +33,35 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@Schema(title = "Trusted issuer", description = "An external token issuer whose JWTs are accepted as subject or " +
+        "actor tokens during token exchange, validated with the configured key material.")
 public class TrustedIssuer {
 
-    /**
-     * The expected "iss" claim value in the external JWT.
-     */
+    @Schema(description = "Expected value of the \"iss\" claim in the external JWT.",
+            example = "https://issuer.example.com")
     private String issuer;
 
-    /**
-     * Key resolution method: {@link KeyResolutionMethod#JWKS_URL} or {@link KeyResolutionMethod#PEM}.
-     */
+    @Schema(description = "How the issuer's signing key is resolved. JWKS_URL fetches keys from a JWKS endpoint; " +
+            "PEM uses an inline X.509 certificate.")
     private KeyResolutionMethod keyResolutionMethod;
 
-    /**
-     * JWKS endpoint URL. Required when keyResolutionMethod is "JWKS_URL".
-     */
+    @Schema(description = "JWKS endpoint URL. Required when keyResolutionMethod is JWKS_URL.",
+            example = "https://issuer.example.com/.well-known/jwks.json")
     private String jwksUri;
 
-    /**
-     * PEM-encoded X.509 certificate. Required when keyResolutionMethod is "PEM".
-     */
+    @Schema(description = "PEM-encoded X.509 certificate. Required when keyResolutionMethod is PEM.")
     private String certificate;
 
-    /**
-     * Optional 1-to-1 scope mapping: external scope → domain scope.
-     * Unmapped issuer scopes are dropped (fail-closed).
-     */
+    @Schema(description = "One-to-one mapping from external scope to domain scope. Unmapped issuer scopes are " +
+            "dropped (fail-closed).")
     private Map<String, String> scopeMappings;
 
-    /**
-     * When true, resolve the external JWT subject to exactly one domain user using
-     * {@link #userBindingCriteria}. When false, a virtual user is built from token claims only.
-     */
+    @Schema(description = "Whether the external JWT subject is resolved to a single domain user using the user " +
+            "binding criteria. When false, a virtual user is built from the token claims only.",
+            defaultValue = "false")
     private boolean userBindingEnabled = false;
 
-    /**
-     * List of (attribute, EL expression) pairs used to search for a domain user when
-     * {@link #userBindingEnabled} is true. Required when user binding is enabled; all criteria
-     * are ANDed. Attribute names must match repository search (e.g. {@code userName}, {@code emails.value}).
-     */
+    @Schema(description = "Criteria used to locate a domain user when user binding is enabled. All criteria are " +
+            "combined with AND.")
     private List<UserBindingCriterion> userBindingCriteria;
 }

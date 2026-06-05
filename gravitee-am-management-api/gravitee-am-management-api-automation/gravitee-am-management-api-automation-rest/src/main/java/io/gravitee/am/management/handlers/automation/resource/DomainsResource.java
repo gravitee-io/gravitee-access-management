@@ -33,6 +33,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -96,13 +97,31 @@ public class DomainsResource extends AbstractAutomationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationCreateOrUpdateDomain",
             summary = "Create or update a domain",
-            description = "Idempotent create-or-update. Uses the key field in the body to identify the domain.")
+            description = "Idempotent create-or-update. Uses the key field in the body to identify the domain. " +
+                    "On first apply the domain is created; subsequent applies update it. dataPlaneId is required " +
+                    "at creation and immutable afterwards.")
     @ApiResponse(responseCode = "200", description = "The created or updated domain",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationDomain.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request: validation failure, an immutable field " +
+            "change, a key that already exists for a domain not managed by the Automation API, or an unknown " +
+            "defaultIdentityProviderForRegistration reference")
     public void createOrUpdate(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Desired state of the domain.",
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AutomationDomain.class),
+                            examples = @ExampleObject(name = "Domain",
+                                    description = "A domain with common settings",
+                                    value = "{\"key\":\"example-domain\",\"name\":\"Example domain\"," +
+                                            "\"description\":\"An example authentication domain\"," +
+                                            "\"enabled\":true,\"path\":\"/example-domain\",\"dataPlaneId\":\"default\"," +
+                                            "\"tags\":[\"eu\",\"production\"]," +
+                                            "\"accountSettings\":{\"inherited\":false,\"loginAttemptsDetectionEnabled\":true,\"maxLoginAttempts\":10,\"accountBlockedDuration\":7200}," +
+                                            "\"oidc\":{\"redirectUriStrictMatching\":true}}")))
             @Valid @NotNull AutomationDomain definition,
             @Suspended final AsyncResponse response) {
 

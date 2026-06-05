@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,10 +29,13 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationCertificateSettings", title = "Certificate settings",
+        description = "Domain-level certificate settings.")
 public class AutomationCertificateSettings {
 
-    /**
-     * The {@code key} of one of the certificates declared on the domain.
-     */
+    @Schema(description = "Key of a certificate managed under this domain, used as the fallback certificate " +
+            "when a client does not specify one. Must reference a certificate created via the domain's " +
+            "certificate endpoints.",
+            example = "default")
     private String fallbackCertificate;
 }

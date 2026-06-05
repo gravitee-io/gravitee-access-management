@@ -38,6 +38,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -87,10 +88,12 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationListIdentityProviders", summary = "List a domain's identity providers",
-            description = "Returns all identity providers managed by the Automation API under the domain.")
+            description = "Returns all identity providers managed by the Automation API under the domain. Identity " +
+                    "providers created outside the Automation API are not returned.")
     @ApiResponse(responseCode = "200", description = "List of identity providers",
             content = @Content(mediaType = "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = AutomationIdentityProvider.class))))
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void list(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -114,14 +117,39 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationCreateOrUpdateIdentityProvider",
             summary = "Create or update an identity provider",
-            description = "Idempotent create-or-update. Uses the key field in the body to identify the identity provider within the domain.")
+            description = "Idempotent create-or-update. Uses the key field in the body to identify the identity " +
+                    "provider within the domain. On first apply the identity provider is created; subsequent " +
+                    "applies update it. The system flag is immutable; changing it requires deleting and recreating " +
+                    "the identity provider.")
     @ApiResponse(responseCode = "200", description = "The created or updated identity provider",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationIdentityProvider.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request: a key conflict, a missing required field " +
+            "(name or type) for a non-system identity provider, an attempt to change the immutable system flag, " +
+            "or a second system identity provider for the domain")
+    @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API")
     public void createOrUpdate(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
             @PathParam("domainKey") String domainKey,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Desired state of the identity provider. For a system identity provider, supply " +
+                            "only system: true and key.",
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AutomationIdentityProvider.class),
+                            examples = {
+                                    @ExampleObject(name = "Identity provider", description = "A fully specified identity provider",
+                                            value = "{\"key\":\"corporate-ldap\",\"name\":\"Corporate LDAP\"," +
+                                                    "\"type\":\"inline-am-idp\"," +
+                                                    "\"configuration\":\"{\\\"users\\\":[{\\\"username\\\":\\\"admin\\\",\\\"password\\\":\\\"...\\\"}]}\"," +
+                                                    "\"mappers\":{\"sub\":\"username\",\"email\":\"email\"}," +
+                                                    "\"roleMapper\":{\"role-id\":[\"username=admin\"]}," +
+                                                    "\"groupMapper\":{\"group-id\":[\"username=admin\"]}," +
+                                                    "\"domainWhitelist\":[\"example.com\"]}"),
+                                    @ExampleObject(name = "System identity provider", description = "The domain's system identity provider; only system and key are needed",
+                                            value = "{\"key\":\"default\",\"system\":true}")
+                            }))
             @Valid @NotNull AutomationIdentityProvider definition,
             @Suspended final AsyncResponse response) {
 

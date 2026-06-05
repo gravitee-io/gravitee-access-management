@@ -35,19 +35,29 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationIdentityProvider", title = "Identity provider",
+        description = "An identity provider managed under a domain by the Automation API. The key field is " +
+                "the stable, immutable identity used for idempotent create-or-update.")
 public class AutomationIdentityProvider {
 
     @NotNull
     @Size(min = 1, max = 255)
     @JsonProperty("key")
-    @Schema(name = "key")
+    @Schema(name = "key", title = "Key",
+            description = "Stable, immutable identifier for the identity provider within its domain. Lowercase " +
+                    "alphanumeric and hyphens, starting and ending with an alphanumeric character. Used to " +
+                    "identify the identity provider on create-or-update.",
+            example = "corporate-ldap")
     @Pattern(regexp = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
             message = "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character")
     private String automationKey;
 
     @Size(min = 1, max = 255)
+    @Schema(description = "Human-readable name of the identity provider.", example = "Corporate LDAP")
     private String name;
 
+    @Schema(description = "Identity provider plugin type identifier. Immutable after creation.",
+            example = "inline-am-idp")
     private String type;
 
     /**
@@ -58,17 +68,34 @@ public class AutomationIdentityProvider {
      * {@code type} and {@code configuration} fields of this payload are ignored.
      */
     @JsonProperty("system")
-    @Schema(name = "system", description = "whether this is the domain's system identity provider (immutable after creation; when true, only key is required and the IDP is built from domains.identities.default.* system settings)")
+    @Schema(name = "system",
+            description = "Whether this is the domain's system identity provider. Immutable after creation. " +
+                    "When true, only key is required; the identity provider is built from the " +
+                    "domains.identities.default.* system settings and the name, type, and configuration fields " +
+                    "are ignored.",
+            defaultValue = "false")
     private boolean system;
 
+    @Schema(description = "Plugin-specific configuration as a JSON-encoded string. Its shape is defined by " +
+            "the selected identity provider type.",
+            example = "{\"users\":[{\"username\":\"admin\",\"password\":\"...\"}]}")
     private String configuration;
 
+    @Schema(description = "Attribute mappers: maps provider claims to AM user profile attributes.",
+            example = "{\"sub\":\"username\",\"email\":\"email\"}")
     private Map<String, String> mappers;
 
+    @Schema(description = "Role mapper: assigns AM roles based on provider attribute values. Each entry maps " +
+            "a role to the user attribute expressions that grant it.")
     private Map<String, String[]> roleMapper;
 
+    @Schema(description = "Group mapper: assigns AM groups based on provider attribute values. Each entry maps " +
+            "a group to the user attribute expressions that grant it.")
     private Map<String, String[]> groupMapper;
 
+    @Schema(description = "Email domains allowed to authenticate through this identity provider. When set, " +
+            "users whose email domain is not listed are rejected.",
+            example = "[\"example.com\"]")
     private List<String> domainWhitelist;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")

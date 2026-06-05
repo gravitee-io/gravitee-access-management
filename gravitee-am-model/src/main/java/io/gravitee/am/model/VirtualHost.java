@@ -16,28 +16,24 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.utils.PathUtils;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "Virtual host", description = "A host and path the domain is exposed on. The host and path " +
+        "combination must be unique across all domains.")
 public class VirtualHost {
 
-    /**
-     * The host.
-     * Note: host + path need to be unique across all domains.
-     */
+    @Schema(description = "Hostname the domain is served on.", example = "auth.example.com")
     private String host;
 
-    /**
-     * Optional path.
-     * Note: host + path need to be unique across all domains.
-     */
+    @Schema(description = "Context path the domain is served under on this host.", example = "/customers")
     private String path;
 
-    /**
-     * Flag indicating if organization entry point is overridden or not.
-     */
+    @Schema(description = "Whether this virtual host overrides the organization entry point.",
+            defaultValue = "false")
     private boolean overrideEntrypoint;
 
     @Override

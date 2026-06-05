@@ -13522,32 +13522,50 @@ components:
       description: OAuth 2.0 client metadata as defined in the IANA OAuth Parameters
         registry (https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml#client-metadata).
     ClientRegistrationSettings:
+      title: Client registration settings
       type: object
       properties:
         allowHttpSchemeRedirectUri:
           type: boolean
+          description: Whether the unsecured http scheme is permitted in redirect
+            URIs.
+          default: false
         allowLocalhostRedirectUri:
           type: boolean
+          description: Whether localhost is permitted as a redirect URI host.
+          default: false
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
+          description: Whether expression language is permitted in redirect URI parameters.
+          default: false
         allowWildCardRedirectUri:
           type: boolean
+          description: Whether wildcards are permitted in redirect URIs.
+          default: false
         allowedScopes:
           type: array
+          description: Scopes permitted on client registration requests when the allowed
+            list is enabled.
           items:
             type: string
+            description: Scopes permitted on client registration requests when the
+              allowed list is enabled.
         allowedScopesEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
         defaultScopes:
           type: array
+          description: Default scopes added to every client registration request.
           items:
             type: string
+            description: Default scopes added to every client registration request.
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
+      description: OpenID Connect Dynamic Client Registration configuration for the
+        domain.
     ClientSecret:
       type: object
       properties:
@@ -13575,30 +13593,62 @@ components:
         session:
           $ref: "#/components/schemas/SessionSettings"
     CorsSettings:
+      title: CORS settings
       type: object
       properties:
         allowCredentials:
           type: boolean
+          description: "Whether the browser may send credentials (cookies, authorization\
+            \ headers) with cross-origin requests."
+          default: false
         allowedHeaders:
           uniqueItems: true
           type: array
+          description: Request headers permitted on cross-origin requests.
+          example:
+          - Authorization
+          - Content-Type
           items:
             type: string
+            description: Request headers permitted on cross-origin requests.
+            example: "[\"Authorization\",\"Content-Type\"]"
         allowedMethods:
           uniqueItems: true
           type: array
+          description: HTTP methods permitted on cross-origin requests.
+          example:
+          - GET
+          - POST
+          - PUT
+          - DELETE
           items:
             type: string
+            description: HTTP methods permitted on cross-origin requests.
+            example: "[\"GET\",\"POST\",\"PUT\",\"DELETE\"]"
         allowedOrigins:
           uniqueItems: true
           type: array
+          description: Origins permitted to make cross-origin requests. Use "*" to
+            allow any origin.
+          example:
+          - https://app.example.com
           items:
             type: string
+            description: Origins permitted to make cross-origin requests. Use "*"
+              to allow any origin.
+            example: "[\"https://app.example.com\"]"
         enabled:
           type: boolean
+          description: Whether CORS handling is enabled for the domain.
+          default: false
         maxAge:
           type: integer
+          description: "How long, in seconds, a browser may cache the result of a\
+            \ preflight request."
           format: int32
+          default: 86400
+      description: Cross-Origin Resource Sharing configuration controlling which web
+        origins may call the domain's endpoints from a browser.
     Credential:
       type: object
       properties:
@@ -14291,14 +14341,22 @@ components:
           description: Epoch timestamp in milliseconds.
           format: int64
     FormField:
+      title: Form field
       type: object
       properties:
         key:
           type: string
+          description: "Identifier of the field, mapped to a user attribute."
+          example: email
         label:
           type: string
+          description: Label displayed for the field.
+          example: Email
         type:
           type: string
+          description: Input type of the field.
+          example: email
+      description: "A single field shown on a user-facing form, such as registration."
     Group:
       type: object
       properties:
@@ -14497,41 +14555,79 @@ components:
           items:
             $ref: "#/components/schemas/JWK"
     LoginSettings:
+      title: Login settings
       type: object
       properties:
         certificateBasedAuthEnabled:
           type: boolean
+          description: Whether certificate-based authentication is offered.
+          default: false
         certificateBasedAuthUrl:
           type: string
+          description: URL used for certificate-based authentication.
         enforcePasswordPolicyEnabled:
           type: boolean
         forgotPasswordEnabled:
           type: boolean
+          description: Whether users can initiate a forgot-password flow from the
+            login page.
+          default: false
         hideForm:
           type: boolean
+          description: Whether the login form is hidden (for example when only social
+            or identifier-first login is offered).
+          default: false
         identifierFirstEnabled:
           type: boolean
+          description: "Whether identifier-first login is enabled, prompting for the\
+            \ username before the password."
+          default: false
         inherited:
           type: boolean
+          description: "Whether these login settings are inherited from a parent scope\
+            \ rather than defined here. When true, the other fields are ignored."
+          default: true
         magicLinkAuthEnabled:
           type: boolean
+          description: Whether magic-link authentication is offered.
+          default: false
         passwordlessDeviceNamingEnabled:
           type: boolean
+          description: Whether users can name their passwordless devices.
+          default: false
         passwordlessEnabled:
           type: boolean
+          description: Whether passwordless (WebAuthn) authentication is offered.
+          default: false
         passwordlessEnforcePasswordEnabled:
           type: boolean
+          description: Whether a password is still required alongside passwordless
+            authentication.
+          default: false
         passwordlessEnforcePasswordMaxAge:
           type: integer
+          description: "Period, in seconds, after which the user's credentials must\
+            \ be re-entered to keep using passwordless authentication."
           format: int32
         passwordlessRememberDeviceEnabled:
           type: boolean
+          description: Whether a passwordless device can be remembered to skip future
+            challenges.
+          default: false
         registerEnabled:
           type: boolean
+          description: Whether users can self-register from the login page.
+          default: false
         rememberMeEnabled:
           type: boolean
+          description: Whether the login page offers a remember-me option.
+          default: false
         resetPasswordOnExpiration:
           type: boolean
+          description: Whether the user is forced to reset their password once it
+            expires.
+      description: Configuration of the domain's login flow and the features offered
+        on the sign-in page.
     MFASettings:
       type: object
       properties:
@@ -15457,6 +15553,7 @@ components:
         version:
           type: string
     OIDCSettings:
+      title: OpenID Connect settings
       type: object
       properties:
         cibaSettings:
@@ -15467,18 +15564,31 @@ components:
           $ref: "#/components/schemas/ClientRegistrationSettings"
         postLogoutRedirectUris:
           type: array
+          description: "URLs to which a relying party may request the user be redirected\
+            \ after logout, via the post_logout_redirect_uri parameter."
           items:
             type: string
+            description: "URLs to which a relying party may request the user be redirected\
+              \ after logout, via the post_logout_redirect_uri parameter."
         redirectUriStrictMatching:
           type: boolean
+          description: Whether redirect_uri values are matched strictly during OIDC
+            flows.
+          default: false
         requestUris:
           type: array
+          description: URLs that restrict the permitted values of the request_uri
+            parameter.
           items:
             type: string
+            description: URLs that restrict the permitted values of the request_uri
+              parameter.
         securityProfileSettings:
           $ref: "#/components/schemas/SecurityProfileSettings"
         workloadIdentitySettings:
           $ref: "#/components/schemas/SpiffeDomainSettings"
+      description: "OpenID Connect configuration for the domain, including dynamic\
+        \ client registration, security profile, and logout settings."
     OrganizationUserBulkRequest:
       required:
       - action
@@ -15600,37 +15710,63 @@ components:
         name:
           type: string
     PasswordSettings:
+      title: Password settings
       type: object
       properties:
         excludePasswordsInDictionary:
           type: boolean
+          description: Whether passwords found in a common-password dictionary are
+            rejected.
         excludeUserProfileInfoInPassword:
           type: boolean
+          description: Whether passwords containing the user's profile information
+            are rejected.
         expiryDuration:
           type: integer
+          description: Number of days after which a password expires and must be changed.
           format: int32
         includeNumbers:
           type: boolean
+          description: Whether a password must contain at least one number.
         includeSpecialCharacters:
           type: boolean
+          description: Whether a password must contain at least one special character.
         inherited:
           type: boolean
+          description: "Whether these password settings are inherited from a parent\
+            \ scope rather than defined here. When true, the other fields are ignored."
+          default: true
         lettersInMixedCase:
           type: boolean
+          description: Whether a password must contain both uppercase and lowercase
+            letters.
         maxConsecutiveLetters:
           type: integer
+          description: Maximum number of identical consecutive characters allowed
+            in a password.
           format: int32
         maxLength:
           type: integer
+          description: Maximum number of characters a password may contain.
           format: int32
+          default: 128
         minLength:
           type: integer
+          description: Minimum number of characters a password must contain.
           format: int32
+          default: 8
         oldPasswords:
           type: integer
+          description: Number of previous passwords retained in history and barred
+            from reuse.
           format: int32
         passwordHistoryEnabled:
           type: boolean
+          description: Whether password history is enforced to prevent reuse of recent
+            passwords.
+          default: false
+      description: "Password policy applied to users of the domain: complexity requirements,\
+        \ expiry, and history."
     PasswordValue:
       required:
       - password
@@ -16888,13 +17024,19 @@ components:
           description: Epoch timestamp in milliseconds.
           format: int64
     ResetPasswordSettings:
+      title: Reset-password settings
       type: object
       properties:
         oldPasswordRequired:
           type: boolean
+          description: Whether the user must supply their current password to set
+            a new one.
+          default: false
         tokenAge:
           type: integer
+          description: "Lifetime, in seconds, of the password-reset token."
           format: int32
+      description: Rules applied to a self-service password reset.
     Resource:
       type: object
       properties:
@@ -17121,14 +17263,23 @@ components:
         entityId:
           type: string
     SCIMSettings:
+      title: SCIM settings
       type: object
       properties:
         enabled:
           type: boolean
+          description: Whether the SCIM provisioning API is enabled for the domain.
+          default: false
         idpSelectionEnabled:
           type: boolean
+          description: Whether an identity provider is selected for SCIM-provisioned
+            users using a selection rule.
+          default: false
         idpSelectionRule:
           type: string
+          description: Expression that selects the identity provider for a SCIM-provisioned
+            user.
+      description: Configuration of the domain's SCIM 2.0 provisioning endpoints.
     Scope:
       type: object
       properties:
@@ -17226,27 +17377,48 @@ components:
           type: integer
           format: int64
     SecretExpirationSettings:
+      title: Secret expiration settings
       type: object
       properties:
         enabled:
           type: boolean
+          description: Whether client-secret expiration is enabled.
         expiryTimeSeconds:
           type: integer
+          description: "Lifetime, in seconds, of a client secret before it expires."
           format: int64
+          example: 7776000
+      description: Controls whether client secrets in the domain expire and after
+        how long.
     SecurityProfileSettings:
+      title: Security profile settings
       type: object
       properties:
         enableFapiBrazil:
           type: boolean
+          description: Whether the Open Banking Brasil Financial-grade API security
+            profile (version 1.0) is applied.
+          default: false
         enablePlainFapi:
           type: boolean
+          description: Whether the standard Financial-grade API security profile (version
+            1.0) is applied.
+          default: false
+      description: Financial-grade API (FAPI) security profile configuration for the
+        domain.
     SelfServiceAccountManagementSettings:
+      title: Self-service account management settings
       type: object
       properties:
         enabled:
           type: boolean
+          description: Whether self-service account management is enabled for end
+            users.
+          default: false
         resetPassword:
           $ref: "#/components/schemas/ResetPasswordSettings"
+      description: "Controls whether end users can manage their own account (for example,\
+        \ reset their password) and the rules that apply."
     ServiceResource:
       type: object
       properties:
@@ -17474,45 +17646,93 @@ components:
           - REFRESH_TOKEN
           - ID_TOKEN
     TokenExchangeOAuthSettings:
+      title: Token exchange OAuth settings
       type: object
       properties:
         inherited:
           type: boolean
+          description: Whether these settings are inherited from the domain defaults
+            rather than defined here.
+          default: true
         scopeHandling:
           type: string
+          description: How scopes are handled when issuing the exchanged token. DOWNSCOPING
+            restricts the issued token to a subset of the original scopes.
           enum:
           - DOWNSCOPING
           - PERMISSIVE
+          default: DOWNSCOPING
+      description: "OAuth-specific token-exchange behavior, such as how scopes are\
+        \ handled, with optional inheritance from domain defaults."
     TokenExchangeSettings:
+      title: Token exchange settings
       type: object
       properties:
         allowDelegation:
           type: boolean
+          description: "Whether delegation is allowed, where an actor acts on behalf\
+            \ of the subject and an \"act\" claim is added to the issued token. At\
+            \ least one of allowImpersonation or allowDelegation must be enabled."
+          default: false
         allowImpersonation:
           type: boolean
+          description: "Whether impersonation is allowed, where the issued token represents\
+            \ the subject directly. At least one of allowImpersonation or allowDelegation\
+            \ must be enabled."
+          default: true
         allowedActorTokenTypes:
           type: array
+          description: Token types accepted as the actor token when delegating.
+          example:
+          - urn:ietf:params:oauth:token-type:access_token
+          - urn:ietf:params:oauth:token-type:id_token
           items:
             type: string
+            description: Token types accepted as the actor token when delegating.
+            example: "[\"urn:ietf:params:oauth:token-type:access_token\",\"urn:ietf:params:oauth:token-type:id_token\"\
+              ]"
         allowedRequestedTokenTypes:
           type: array
+          description: Token types that may be requested as the result of an exchange.
+          example:
+          - urn:ietf:params:oauth:token-type:access_token
+          - urn:ietf:params:oauth:token-type:id_token
           items:
             type: string
+            description: Token types that may be requested as the result of an exchange.
+            example: "[\"urn:ietf:params:oauth:token-type:access_token\",\"urn:ietf:params:oauth:token-type:id_token\"\
+              ]"
         allowedSubjectTokenTypes:
           type: array
+          description: Token types accepted as the subject token in an exchange.
+          example:
+          - urn:ietf:params:oauth:token-type:access_token
+          - urn:ietf:params:oauth:token-type:id_token
           items:
             type: string
+            description: Token types accepted as the subject token in an exchange.
+            example: "[\"urn:ietf:params:oauth:token-type:access_token\",\"urn:ietf:params:oauth:token-type:id_token\"\
+              ]"
         enabled:
           type: boolean
+          description: Whether token exchange is enabled for the domain.
+          default: false
         maxDelegationDepth:
           type: integer
+          description: Maximum depth of the delegation chain (nested "act" claims).
+            Clamped to the range 1–100.
           format: int32
+          default: 25
         tokenExchangeOAuthSettings:
           $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         trustedIssuers:
           type: array
+          description: "External issuers whose JWTs may be accepted as subject or\
+            \ actor tokens. When unset, only domain-issued tokens are accepted."
           items:
             $ref: "#/components/schemas/TrustedIssuer"
+      description: "OAuth 2.0 Token Exchange (RFC 8693) configuration for the domain,\
+        \ covering impersonation and delegation."
     TrustDomain:
       type: object
       properties:
@@ -17558,16 +17778,25 @@ components:
           description: Epoch timestamp in milliseconds.
           format: int64
     TrustedIssuer:
+      title: Trusted issuer
       type: object
       properties:
         certificate:
           type: string
+          description: PEM-encoded X.509 certificate. Required when keyResolutionMethod
+            is PEM.
         issuer:
           type: string
+          description: Expected value of the "iss" claim in the external JWT.
+          example: https://issuer.example.com
         jwksUri:
           type: string
+          description: JWKS endpoint URL. Required when keyResolutionMethod is JWKS_URL.
+          example: https://issuer.example.com/.well-known/jwks.json
         keyResolutionMethod:
           type: string
+          description: How the issuer's signing key is resolved. JWKS_URL fetches
+            keys from a JWKS endpoint; PEM uses an inline X.509 certificate.
           enum:
           - JWKS_URL
           - PEM
@@ -17575,17 +17804,34 @@ components:
           type: object
           additionalProperties:
             type: string
+            description: One-to-one mapping from external scope to domain scope. Unmapped
+              issuer scopes are dropped (fail-closed).
+          description: One-to-one mapping from external scope to domain scope. Unmapped
+            issuer scopes are dropped (fail-closed).
         userBindingCriteria:
           type: array
+          description: Criteria used to locate a domain user when user binding is
+            enabled. All criteria are combined with AND.
           items:
             $ref: "#/components/schemas/UserBindingCriterion"
         userBindingEnabled:
           type: boolean
+          description: "Whether the external JWT subject is resolved to a single domain\
+            \ user using the user binding criteria. When false, a virtual user is\
+            \ built from the token claims only."
+          default: false
+      description: "An external token issuer whose JWTs are accepted as subject or\
+        \ actor tokens during token exchange, validated with the configured key material."
     UMASettings:
+      title: UMA settings
       type: object
       properties:
         enabled:
           type: boolean
+          description: Whether User-Managed Access is enabled for the domain.
+          default: false
+      description: Configuration of the domain's User-Managed Access (UMA 2.0) authorization
+        features.
     UpdateAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -18326,12 +18572,21 @@ components:
         zoneInfo:
           type: string
     UserBindingCriterion:
+      title: User binding criterion
       type: object
       properties:
         attribute:
           type: string
+          description: Domain user attribute used for the lookup. Must match a field
+            supported by the user repository search.
+          example: emails.value
         expression:
           type: string
+          description: Expression evaluated against the validated token claims (variable
+            "token") to produce the value to match.
+          example: "{#token['email']}"
+      description: A single rule that matches a domain user attribute against a value
+        derived from the external token claims.
     UserEntity:
       type: object
       properties:
@@ -18638,25 +18893,43 @@ components:
           minLength: 1
           type: string
     VirtualHost:
+      title: Virtual host
       type: object
       properties:
         host:
           type: string
+          description: Hostname the domain is served on.
+          example: auth.example.com
         overrideEntrypoint:
           type: boolean
+          description: Whether this virtual host overrides the organization entry
+            point.
+          default: false
         path:
           type: string
+          description: Context path the domain is served under on this host.
+          example: /customers
+      description: A host and path the domain is exposed on. The host and path combination
+        must be unique across all domains.
     WebAuthnSettings:
+      title: WebAuthn settings
       type: object
       properties:
         attestationConveyancePreference:
           type: string
+          description: "Relying-party preference for attestation conveyance during\
+            \ credential creation. NONE requests no attestation, INDIRECT allows anonymized\
+            \ attestation, and DIRECT requests the authenticator's attestation statement."
           enum:
           - NONE
           - INDIRECT
           - DIRECT
+          default: NONE
         authenticatorAttachment:
           type: string
+          description: Preferred authenticator attachment. PLATFORM selects authenticators
+            bound to the device (such as a fingerprint reader); CROSS_PLATFORM selects
+            roaming authenticators (such as a security key).
           enum:
           - CROSS_PLATFORM
           - PLATFORM
@@ -18664,27 +18937,56 @@ components:
           type: object
           additionalProperties:
             type: object
+            description: "Trusted device-attestation X.509 certificates, keyed by\
+              \ name."
+          description: "Trusted device-attestation X.509 certificates, keyed by name."
         enforceAuthenticatorIntegrity:
           type: boolean
+          description: Whether to periodically re-verify that registered authenticators
+            remain valid against the FIDO2 Metadata Service.
+          default: false
         enforceAuthenticatorIntegrityMaxAge:
           type: integer
+          description: "Maximum elapsed time, in seconds, since an authenticator was\
+            \ last verified before it is re-checked on the next passwordless login."
           format: int32
         forceRegistration:
           type: boolean
+          description: Whether to reject registration of a credential already registered
+            to a different user.
+          default: false
         origin:
           type: string
+          description: Relying-party origin; must match the browser's window.location.origin
+            during registration and authentication ceremonies.
+          example: https://auth.example.com
         relyingPartyId:
           type: string
+          description: "Relying-party identifier: a domain string that scopes credentials\
+            \ to this entity. A credential can only be used with the relying party\
+            \ it was registered against."
+          example: auth.example.com
         relyingPartyName:
           type: string
+          description: Human-readable relying-party name shown to users during ceremonies.
+          example: Example Inc.
         requireResidentKey:
           type: boolean
+          description: Whether the authenticator must create a client-side resident
+            (discoverable) credential.
+          default: false
         userVerification:
           type: string
+          description: "Relying-party requirement regarding user verification during\
+            \ a ceremony. REQUIRED enforces verification, PREFERRED requests it when\
+            \ available, and DISCOURAGED avoids it."
           enum:
           - REQUIRED
           - PREFERRED
           - DISCOURAGED
+          default: PREFERRED
+      description: WebAuthn (FIDO2) relying-party configuration governing passwordless
+        and multi-factor authentication for the domain.
   securitySchemes:
     gravitee-auth:
       type: http

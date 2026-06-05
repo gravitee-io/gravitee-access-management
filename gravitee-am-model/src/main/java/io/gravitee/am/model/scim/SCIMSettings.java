@@ -15,25 +15,23 @@
  */
 package io.gravitee.am.model.scim;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "SCIM settings", description = "Configuration of the domain's SCIM 2.0 provisioning endpoints.")
 public class SCIMSettings {
 
-    /**
-     * Enable/disable SCIM feature
-     */
+    @Schema(description = "Whether the SCIM provisioning API is enabled for the domain.", defaultValue = "false")
     private boolean enabled;
 
-    /**
-     * Enable/disable IdP selection feature
-     */
+    @Schema(description = "Whether an identity provider is selected for SCIM-provisioned users using a selection " +
+            "rule.", defaultValue = "false")
     private boolean idpSelectionEnabled;
 
-    /**
-     * Identity provider selection rule
-     */
+    @Schema(description = "Expression that selects the identity provider for a SCIM-provisioned user.")
     private String idpSelectionRule;
 
     public boolean isEnabled() {

@@ -15,14 +15,21 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(title = "Self-service account management settings", description = "Controls whether end users can manage " +
+        "their own account (for example, reset their password) and the rules that apply.")
 public class SelfServiceAccountManagementSettings {
 
+    @Schema(description = "Whether self-service account management is enabled for end users.",
+            defaultValue = "false")
     private boolean enabled;
 
+    @Schema(description = "Rules applied when a user resets their own password.")
     private ResetPasswordSettings resetPassword;
 
     public boolean isEnabled() {
@@ -41,11 +48,13 @@ public class SelfServiceAccountManagementSettings {
         this.resetPassword = resetPassword;
     }
 
+    @Schema(name = "ResetPasswordSettings", title = "Reset-password settings",
+            description = "Rules applied to a self-service password reset.")
     public static class ResetPasswordSettings {
+        @Schema(description = "Whether the user must supply their current password to set a new one.",
+                defaultValue = "false")
         private boolean oldPasswordRequired;
-        /**
-         * Token age in second
-         */
+        @Schema(description = "Lifetime, in seconds, of the password-reset token.")
         private int tokenAge;
 
         public boolean isOldPasswordRequired() {

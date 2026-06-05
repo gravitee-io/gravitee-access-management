@@ -33,22 +33,35 @@ import java.util.Date;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationCertificate", title = "Certificate",
+        description = "A certificate managed under a domain by the Automation API. The key field is the " +
+                "stable, immutable identity used for idempotent create-or-update.")
 public class AutomationCertificate {
 
     @NotNull
     @Size(min = 1, max = 255)
     @JsonProperty("key")
-    @Schema(name = "key")
+    @Schema(name = "key", title = "Key",
+            description = "Stable, immutable identifier for the certificate within its domain. Lowercase " +
+                    "alphanumeric and hyphens, starting and ending with an alphanumeric character. Used to " +
+                    "identify the certificate on create-or-update.",
+            example = "signing-cert")
     @Pattern(regexp = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
             message = "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character")
     private String automationKey;
 
     @Size(min = 1, max = 255)
+    @Schema(description = "Human-readable name of the certificate.", example = "Signing certificate")
     private String name;
 
     @Size(min = 1)
+    @Schema(description = "Certificate plugin type identifier. Immutable after creation.",
+            example = "javakeystore-am-certificate")
     private String type;
 
+    @Schema(description = "Plugin-specific configuration as a JSON-encoded string. Its shape is defined by " +
+            "the selected certificate type.",
+            example = "{\"jks\":{\"content\":\"...\",\"name\":\"keystore.jks\"},\"storepass\":\"secret\",\"alias\":\"mykey\",\"keypass\":\"secret\"}")
     private String configuration;
 
     /**
@@ -58,7 +71,11 @@ public class AutomationCertificate {
      * fields of this payload are ignored.
      */
     @JsonProperty("system")
-    @Schema(name = "system", description = "whether this is the domain's system certificate (immutable after creation; when true, only key is required and the certificate is built from domains.certificates.default.* system settings)")
+    @Schema(name = "system",
+            description = "Whether this is the domain's system certificate. Immutable after creation. When " +
+                    "true, only key is required; the certificate is built from the domains.certificates.default.* " +
+                    "system settings and the name, type, and configuration fields are ignored.",
+            defaultValue = "false")
     private boolean system;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")

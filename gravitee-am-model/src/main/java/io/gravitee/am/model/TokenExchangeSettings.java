@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,6 +39,8 @@ import static io.gravitee.am.common.oauth2.TokenType.REFRESH_TOKEN;
  */
 @Getter
 @Setter
+@Schema(title = "Token exchange settings", description = "OAuth 2.0 Token Exchange (RFC 8693) configuration for " +
+        "the domain, covering impersonation and delegation.")
 public class TokenExchangeSettings {
 
     private static final List<String> DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES = List.of(ACCESS_TOKEN, ID_TOKEN);
@@ -57,60 +60,41 @@ public class TokenExchangeSettings {
      */
     public static final int DEFAULT_MAX_DELEGATION_DEPTH = 25;
 
-    /**
-     * Enable or disable token exchange functionality.
-     */
+    @Schema(description = "Whether token exchange is enabled for the domain.", defaultValue = "false")
     private boolean enabled = false;
 
-    /**
-     * List of allowed subject token types that can be exchanged.
-     * Supports ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, and JWT.
-     */
+    @Schema(description = "Token types accepted as the subject token in an exchange.",
+            example = "[\"urn:ietf:params:oauth:token-type:access_token\",\"urn:ietf:params:oauth:token-type:id_token\"]")
     private List<String> allowedSubjectTokenTypes;
 
-    /**
-     * List of allowed requested token types that can be issued.
-     * Supports ACCESS_TOKEN and ID_TOKEN.
-     */
+    @Schema(description = "Token types that may be requested as the result of an exchange.",
+            example = "[\"urn:ietf:params:oauth:token-type:access_token\",\"urn:ietf:params:oauth:token-type:id_token\"]")
     private List<String> allowedRequestedTokenTypes;
 
-    /**
-     * Allow impersonation scenarios where the new token represents the subject directly.
-     * At least one of allowImpersonation or allowDelegation must be enabled.
-     */
+    @Schema(description = "Whether impersonation is allowed, where the issued token represents the subject " +
+            "directly. At least one of allowImpersonation or allowDelegation must be enabled.",
+            defaultValue = "true")
     private boolean allowImpersonation = true;
 
-    /**
-     * List of allowed actor token types that can be used for delegation.
-     * Supports ACCESS_TOKEN, ID_TOKEN, and JWT.
-     */
+    @Schema(description = "Token types accepted as the actor token when delegating.",
+            example = "[\"urn:ietf:params:oauth:token-type:access_token\",\"urn:ietf:params:oauth:token-type:id_token\"]")
     private List<String> allowedActorTokenTypes;
 
-    /**
-     * Allow delegation scenarios where the actor acts on behalf of the subject.
-     * When enabled, actor_token can be provided and "act" claim is added to issued token.
-     * At least one of allowImpersonation or allowDelegation must be enabled.
-     */
+    @Schema(description = "Whether delegation is allowed, where an actor acts on behalf of the subject and an " +
+            "\"act\" claim is added to the issued token. At least one of allowImpersonation or allowDelegation " +
+            "must be enabled.", defaultValue = "false")
     private boolean allowDelegation = false;
 
-    /**
-     * Maximum depth of delegation chain (nested "act" claims).
-     * Must be between {@link #MIN_MAX_DELEGATION_DEPTH} and {@link #MAX_MAX_DELEGATION_DEPTH}.
-     * Default is {@link #DEFAULT_MAX_DELEGATION_DEPTH}.
-     */
+    @Schema(description = "Maximum depth of the delegation chain (nested \"act\" claims). Clamped to the range " +
+            "1–100.", defaultValue = "25")
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
-    /**
-     * List of trusted external issuers whose JWTs can be accepted as subject/actor tokens.
-     * Null means no trusted issuers (only domain-issued tokens accepted).
-     */
+    @Schema(description = "External issuers whose JWTs may be accepted as subject or actor tokens. When unset, " +
+            "only domain-issued tokens are accepted.")
     private List<TrustedIssuer> trustedIssuers;
 
-    /**
-     * Domain-level default token exchange OAuth settings (e.g. scope handling).
-     * Applications can inherit these or override them per-application.
-     * Null means use system defaults (DOWNSCOPING).
-     */
+    @Schema(description = "Domain-level default token-exchange OAuth settings, such as scope handling. " +
+            "Applications can inherit or override these. When unset, system defaults apply.")
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     public TokenExchangeSettings() {

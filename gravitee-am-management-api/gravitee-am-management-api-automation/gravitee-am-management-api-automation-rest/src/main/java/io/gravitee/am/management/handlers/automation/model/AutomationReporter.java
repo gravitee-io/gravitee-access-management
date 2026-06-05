@@ -33,23 +33,38 @@ import java.util.Date;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationReporter", title = "Reporter",
+        description = "A reporter managed under a domain by the Automation API. Reporters persist audit " +
+                "events to a backend. The key field is the stable, immutable identity used for idempotent " +
+                "create-or-update.")
 public class AutomationReporter {
 
     @NotNull
     @Size(min = 1, max = 255)
     @JsonProperty("key")
-    @Schema(name = "key")
+    @Schema(name = "key", title = "Key",
+            description = "Stable, immutable identifier for the reporter within its domain. Lowercase " +
+                    "alphanumeric and hyphens, starting and ending with an alphanumeric character. Used to " +
+                    "identify the reporter on create-or-update.",
+            example = "audit-kafka")
     @Pattern(regexp = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
             message = "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character")
     private String automationKey;
 
     @Size(min = 1, max = 255)
+    @Schema(description = "Human-readable name of the reporter.", example = "Audit events to Kafka")
     private String name;
 
+    @Schema(description = "Reporter plugin type identifier. Immutable after creation.",
+            example = "reporter-am-kafka")
     private String type;
 
+    @Schema(description = "Plugin-specific configuration as a JSON-encoded string. Its shape is defined by " +
+            "the selected reporter type.",
+            example = "{\"bootstrapServers\":\"kafka:9092\",\"topic\":\"audit\"}")
     private String configuration;
 
+    @Schema(description = "Whether the reporter is enabled.", defaultValue = "true")
     private boolean enabled = true;
 
     /**
@@ -59,10 +74,15 @@ public class AutomationReporter {
      * and {@code configuration} fields of this payload are ignored.
      */
     @JsonProperty("system")
-    @Schema(name = "system", description = "whether this is the domain's system reporter (immutable after creation; when true, only key is required and the reporter is built from domains.reporters.default.* and repository system settings)")
+    @Schema(name = "system",
+            description = "Whether this is the domain's system reporter. Immutable after creation. When true, " +
+                    "only key is required; the reporter is built from the domains.reporters.default.* and " +
+                    "repository system settings and the name, type, and configuration fields are ignored.",
+            defaultValue = "false")
     private boolean system;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY,
+            description = "Category of data the reporter handles, derived from its type. Read-only.")
     private String dataType;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")

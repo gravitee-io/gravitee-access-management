@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,16 +27,24 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Schema(name = "AutomationCIBASettings", title = "CIBA settings",
+        description = "Client-Initiated Backchannel Authentication (CIBA) settings for the domain. " +
+                "CIBA lets a relying party initiate end-user authentication from a separate consumption " +
+                "device, without redirecting the user through the browser. Authentication device notifiers " +
+                "are not managed by the Automation API and are not exposed here.")
 public class AutomationCIBASettings {
 
+    @Schema(description = "Whether Client-Initiated Backchannel Authentication is enabled for the domain.",
+            defaultValue = "false")
     private boolean enabled;
 
-    /** Validity (in sec) of the {@code auth_req_id}. */
+    @Schema(description = "Default validity period, in seconds, of the issued auth_req_id.", example = "600")
     private int authReqExpiry = io.gravitee.am.model.oidc.CIBASettings.DEFAULT_EXPIRY_IN_SEC;
 
-    /** Delay between two calls on the token endpoint using the same {@code auth_req_id}. */
+    @Schema(description = "Minimum delay, in seconds, that a client must wait between two polls of the token " +
+            "endpoint for the same auth_req_id (POLL or PING delivery mode).", example = "5")
     private int tokenReqInterval = io.gravitee.am.model.oidc.CIBASettings.DEFAULT_INTERVAL_IN_SEC;
 
-    /** Max length of the {@code binding_message} parameter. */
+    @Schema(description = "Maximum number of characters accepted for the binding_message parameter.", example = "256")
     private int bindingMessageLength = io.gravitee.am.model.oidc.CIBASettings.DEFAULT_MSG_LENGTH;
 }
