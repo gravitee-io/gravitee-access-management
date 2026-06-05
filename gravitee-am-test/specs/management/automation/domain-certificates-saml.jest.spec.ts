@@ -19,7 +19,7 @@
  * /domains/{domainKey}/certificates endpoints — key-keyed, each PUT manages one certificate.
  * Domain SAML settings reference one of them by `key`, resolved with eventual consistency.
  */
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import { AutomationDomainFixture, setupAutomationDomainFixture } from './fixtures/automation-domain-fixture';
@@ -39,23 +39,41 @@ afterAll(async () => {
   }
 });
 
-describe('Automation API - Certificates (resource under a domain)', () => {
-  const certKey = uniqueName('autosign', true).toLowerCase();
+const createdCertKeys: string[] = [];
 
-  it('should expose no automation-managed certificates on a freshly-created domain', async () => {
+afterEach(async () => {
+  while (createdCertKeys.length) {
+    await fixture.client.deleteCertificate(fixture.domainKey, createdCertKeys.pop());
+  }
+});
+
+/** Create a certificate via PUT and track its key for cleanup. */
+async function createCertificate(overrides: { key?: string; name?: string } = {}) {
+  const key = overrides.key ?? uniqueName('autosign', true).toLowerCase();
+  createdCertKeys.push(key);
+  const response = await fixture.client.putCertificate(fixture.domainKey, buildAutomationCertificateDef({ ...overrides, key }));
+  return { key, response };
+}
+
+/** Create a system certificate via PUT and track its key for cleanup. */
+async function createSystemCertificate(key = uniqueName('autosyscert', true).toLowerCase()) {
+  createdCertKeys.push(key);
+  const response = await fixture.client.putCertificate(fixture.domainKey, buildSystemAutomationDef(key));
+  return { key, response };
+}
+
+describe('Automation API - Certificates (resource under a domain)', () => {
+  it('should list no certificates when none exist', async () => {
     const response = await fixture.client.listCertificates(fixture.domainKey);
     expect(response.status).toBe(200);
     expect(response.body).toEqual([]);
   });
 
   it('should create a certificate via PUT', async () => {
-    const response = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildAutomationCertificateDef({ key: certKey }),
-    );
+    const { key, response } = await createCertificate();
 
     expect(response.status).toBe(200);
-    expect(response.body.key).toEqual(certKey);
+    expect(response.body.key).toEqual(key);
     // internal id / operational flags are intentionally not surfaced
     expect(response.body.id).toBeUndefined();
     expect(response.body.managedBy).toBeUndefined();
@@ -64,18 +82,32 @@ describe('Automation API - Certificates (resource under a domain)', () => {
   });
 
   it('should round-trip the certificate on GET', async () => {
-    const response = await fixture.client.getCertificate(fixture.domainKey, certKey);
+    const { key } = await createCertificate();
+
+    const response = await fixture.client.getCertificate(fixture.domainKey, key);
     expect(response.status).toBe(200);
-    expect(response.body.key).toEqual(certKey);
+    expect(response.body.key).toEqual(key);
   });
 
   it('should update the certificate via a second PUT (idempotent)', async () => {
+    const { key } = await createCertificate();
+
     const response = await fixture.client.putCertificate(
       fixture.domainKey,
-      buildAutomationCertificateDef({ key: certKey, name: 'Renamed cert' }),
+      buildAutomationCertificateDef({ key, name: 'Renamed cert' }),
     );
     expect(response.status).toBe(200);
     expect(response.body.name).toEqual('Renamed cert');
+  });
+
+  it('should reject changing the type of an existing certificate (400)', async () => {
+    const { key } = await createCertificate();
+
+    const response = await fixture.client.putCertificate(fixture.domainKey, {
+      ...buildAutomationCertificateDef({ key }),
+      type: 'pkcs12-am-certificate',
+    });
+    expect(response.status).toBe(400);
   });
 
   it('should reject an invalid key pattern (400)', async () => {
@@ -97,68 +129,66 @@ describe('Automation API - Certificates (resource under a domain)', () => {
   });
 
   it('should delete the certificate', async () => {
-    // also frees its keystore alias, which is unique per domain among non-default certificates
-    const del = await fixture.client.deleteCertificate(fixture.domainKey, certKey);
+    const { key } = await createCertificate();
+
+    const del = await fixture.client.deleteCertificate(fixture.domainKey, key);
     expect(del.status).toBe(204);
 
-    const get = await fixture.client.getCertificate(fixture.domainKey, certKey);
+    const get = await fixture.client.getCertificate(fixture.domainKey, key);
     expect(get.status).toBe(404);
   });
 });
 
 describe('Automation API - System certificate', () => {
-  const systemKey = uniqueName('autosyscert', true).toLowerCase();
-  const secondSystemKey = uniqueName('autosyscert2', true).toLowerCase();
-
   it('should create a system certificate from a minimal {key, system:true} payload', async () => {
-    const response = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildSystemAutomationDef(systemKey),
-    );
+    const { key, response } = await createSystemCertificate();
     expect(response.status).toBe(200);
-    expect(response.body.key).toEqual(systemKey);
+    expect(response.body.key).toEqual(key);
     expect(response.body.system).toBe(true);
   });
 
   it('should be idempotent on re-PUT of a system certificate (200, no update)', async () => {
-    const response = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildSystemAutomationDef(systemKey),
-    );
+    const { key } = await createSystemCertificate();
+
+    const response = await fixture.client.putCertificate(fixture.domainKey, buildSystemAutomationDef(key));
     expect(response.status).toBe(200);
     expect(response.body.system).toBe(true);
-    expect(response.body.key).toEqual(systemKey);
+    expect(response.body.key).toEqual(key);
   });
 
   it('should reject a second system certificate (400)', async () => {
+    await createSystemCertificate();
+
     const response = await fixture.client.putCertificate(
       fixture.domainKey,
-      buildSystemAutomationDef(secondSystemKey),
+      buildSystemAutomationDef(uniqueName('autosyscert2', true).toLowerCase()),
     );
     expect(response.status).toBe(400);
   });
 
   it('should reject flipping system on an existing certificate (400)', async () => {
-    // the system cert was created with system:true; PUT it again as non-system -> rejected (immutable)
+    const { key } = await createSystemCertificate();
+
+    // the cert was created with system:true; PUT it again as non-system -> rejected (immutable)
     const response = await fixture.client.putCertificate(
       fixture.domainKey,
-      buildAutomationCertificateDef({ key: systemKey, system: false }),
+      buildAutomationCertificateDef({ key, system: false }),
     );
     expect(response.status).toBe(400);
   });
 
   it('should delete the system certificate without a system guard', async () => {
-    const del = await fixture.client.deleteCertificate(fixture.domainKey, systemKey);
+    const { key } = await createSystemCertificate();
+
+    const del = await fixture.client.deleteCertificate(fixture.domainKey, key);
     expect(del.status).toBe(204);
 
-    const get = await fixture.client.getCertificate(fixture.domainKey, systemKey);
+    const get = await fixture.client.getCertificate(fixture.domainKey, key);
     expect(get.status).toBe(404);
   });
 });
 
 describe('Automation API - Domain SAML certificate reference (by key)', () => {
-  const samlCertKey = uniqueName('autosaml', true).toLowerCase();
-
   const domainDefinition = (certificateKey: string | null) =>
     buildAutomationDomainDef({
       key: fixture.domainKey,
@@ -170,6 +200,7 @@ describe('Automation API - Domain SAML certificate reference (by key)', () => {
     });
 
   it('should accept a SAML reference to a not-yet-created certificate (eventual consistency)', async () => {
+    const samlCertKey = uniqueName('autosaml', true).toLowerCase();
     const response = await fixture.client.putDomain(domainDefinition(samlCertKey));
     expect(response.status).toBe(200);
     // the key round-trips even though the certificate does not exist yet
@@ -177,16 +208,13 @@ describe('Automation API - Domain SAML certificate reference (by key)', () => {
   });
 
   it('should keep the SAML reference once the certificate is created', async () => {
-    // self-contained (no dependency on the previous test): establish the reference, create the
-    // certificate, then confirm a fresh GET round-trips the key — i.e. it is re-read from the
-    // datastore, not just echoed from the in-memory PUT response.
+    // establish the reference, create the certificate, then confirm a fresh GET
+    // round-trips the key — i.e. it is re-read from the datastore, not just echoed from the PUT response.
+    const samlCertKey = uniqueName('autosaml', true).toLowerCase();
     const ref = await fixture.client.putDomain(domainDefinition(samlCertKey));
     expect(ref.status).toBe(200);
 
-    const created = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildAutomationCertificateDef({ key: samlCertKey }),
-    );
+    const { response: created } = await createCertificate({ key: samlCertKey });
     expect(created.status).toBe(200);
 
     const get = await fixture.client.getDomain(fixture.domainKey);

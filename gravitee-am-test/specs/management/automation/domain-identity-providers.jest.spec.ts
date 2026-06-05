@@ -18,7 +18,7 @@
  * Identity providers are managed individually under a domain via the
  * /domains/{domainKey}/identity-providers endpoints — key-keyed, each PUT manages one IdP.
  */
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import {
@@ -41,24 +41,48 @@ afterAll(async () => {
   }
 });
 
-describe('Automation API - Identity providers (resource under a domain)', () => {
-  const idpKey = uniqueName('autoinline', true).toLowerCase();
+const createdIdpKeys: string[] = [];
 
-  it('should expose no automation-managed identity providers on a freshly-created domain', async () => {
+afterEach(async () => {
+  while (createdIdpKeys.length) {
+    await fixture.client.deleteIdentityProvider(fixture.domainKey, createdIdpKeys.pop());
+  }
+});
+
+type InlineUser = { username: string; password: string };
+const defaultUsers: InlineUser[] = [{ username: 'testuser', password: 'Password1!' }];
+
+/** Create an inline IdP via PUT and track its key for cleanup. */
+async function createIdp(overrides: { key?: string; name?: string; users?: InlineUser[] } = {}) {
+  const key = overrides.key ?? uniqueName('autoinline', true).toLowerCase();
+  createdIdpKeys.push(key);
+  const response = await fixture.client.putIdentityProvider(
+    fixture.domainKey,
+    buildInlineIdpDef({ key, name: overrides.name, users: overrides.users ?? defaultUsers }),
+  );
+  return { key, response };
+}
+
+/** Create a system IdP via PUT and track its key for cleanup. */
+async function createSystemIdp(key = uniqueName('autosysidp', true).toLowerCase()) {
+  createdIdpKeys.push(key);
+  const response = await fixture.client.putIdentityProvider(fixture.domainKey, buildSystemAutomationDef(key));
+  return { key, response };
+}
+
+describe('Automation API - Identity providers (resource under a domain)', () => {
+  it('should list no identity providers when none exist', async () => {
     const response = await fixture.client.listIdentityProviders(fixture.domainKey);
     expect(response.status).toBe(200);
     expect(response.body).toEqual([]);
   });
 
   it('should create an inline identity provider via PUT', async () => {
-    const response = await fixture.client.putIdentityProvider(
-      fixture.domainKey,
-      buildInlineIdpDef({ key: idpKey, users: [{ username: 'testuser', password: 'Password1!' }] }),
-    );
+    const { key, response } = await createIdp();
 
     expect(response.status).toBe(200);
-    expect(response.body.key).toEqual(idpKey);
-    expect(response.body.name).toEqual(`Automation IDP ${idpKey}`);
+    expect(response.body.key).toEqual(key);
+    expect(response.body.name).toEqual(`Automation IDP ${key}`);
     expect(response.body.type).toEqual('inline-am-idp');
     // internal id / operational flags are intentionally not surfaced
     expect(response.body.id).toBeUndefined();
@@ -67,30 +91,57 @@ describe('Automation API - Identity providers (resource under a domain)', () => 
   });
 
   it('should round-trip the identity provider on GET', async () => {
-    const response = await fixture.client.getIdentityProvider(fixture.domainKey, idpKey);
+    const { key } = await createIdp();
+
+    const response = await fixture.client.getIdentityProvider(fixture.domainKey, key);
     expect(response.status).toBe(200);
-    expect(response.body.key).toEqual(idpKey);
-    expect(response.body.name).toEqual(`Automation IDP ${idpKey}`);
+    expect(response.body.key).toEqual(key);
+    expect(response.body.name).toEqual(`Automation IDP ${key}`);
   });
 
   it('should list the identity provider under the domain', async () => {
+    const { key } = await createIdp();
+
     const response = await fixture.client.listIdentityProviders(fixture.domainKey);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([expect.objectContaining({ key: idpKey })]);
+    expect(response.body).toEqual([expect.objectContaining({ key })]);
   });
 
   it('should update the identity provider via a second PUT (idempotent)', async () => {
+    const { key } = await createIdp();
+
     const response = await fixture.client.putIdentityProvider(
       fixture.domainKey,
       buildInlineIdpDef({
-        key: idpKey,
-        name: `Automation IDP ${idpKey} Updated`,
+        key,
+        name: `Automation IDP ${key} Updated`,
         users: [{ username: 'testuser2', password: 'Password2!' }],
       }),
     );
 
     expect(response.status).toBe(200);
-    expect(response.body.name).toEqual(`Automation IDP ${idpKey} Updated`);
+    expect(response.body.name).toEqual(`Automation IDP ${key} Updated`);
+  });
+
+  it('should reject changing the type of an existing identity provider (400)', async () => {
+    const { key } = await createIdp();
+
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
+      ...buildInlineIdpDef({ key, users: defaultUsers }),
+      type: 'ldap-am-idp',
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('should reject an update missing the required name (400)', async () => {
+    const { key } = await createIdp();
+
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
+      key,
+      type: 'inline-am-idp',
+      configuration: JSON.stringify({ users: defaultUsers }),
+    });
+    expect(response.status).toBe(400);
   });
 
   it('should reject an invalid key pattern (400)', async () => {
@@ -112,17 +163,17 @@ describe('Automation API - Identity providers (resource under a domain)', () => 
   });
 
   it('should delete the identity provider', async () => {
-    const del = await fixture.client.deleteIdentityProvider(fixture.domainKey, idpKey);
+    const { key } = await createIdp();
+
+    const del = await fixture.client.deleteIdentityProvider(fixture.domainKey, key);
     expect(del.status).toBe(204);
 
-    const get = await fixture.client.getIdentityProvider(fixture.domainKey, idpKey);
+    const get = await fixture.client.getIdentityProvider(fixture.domainKey, key);
     expect(get.status).toBe(404);
   });
 });
 
 describe('Automation API - Domain - defaultIdentityProviderForRegistration reference', () => {
-  const idpKey = uniqueName('autodefidp', true).toLowerCase();
-
   it('should accept a null reference on the initial domain PUT', async () => {
     const response = await fixture.client.putDomain(
       buildAutomationDomainDef({ key: fixture.domainKey, accountSettings: { inherited: false } }),
@@ -144,29 +195,23 @@ describe('Automation API - Domain - defaultIdentityProviderForRegistration refer
   });
 
   it('should resolve a reference to a pre-created identity provider', async () => {
-    const created = await fixture.client.putIdentityProvider(
-      fixture.domainKey,
-      buildInlineIdpDef({ key: idpKey, users: [{ username: 'reg', password: 'P@ssword1' }] }),
-    );
-    expect(created.status).toBe(200);
+    const { key } = await createIdp({ users: [{ username: 'reg', password: 'P@ssword1' }] });
 
     const response = await fixture.client.putDomain(
       buildAutomationDomainDef({
         key: fixture.domainKey,
-        accountSettings: { defaultIdentityProviderForRegistration: idpKey },
+        accountSettings: { defaultIdentityProviderForRegistration: key },
       }),
     );
     expect(response.status).toBe(200);
-    expect(response.body.accountSettings.defaultIdentityProviderForRegistration).toEqual(idpKey);
+    expect(response.body.accountSettings.defaultIdentityProviderForRegistration).toEqual(key);
   });
 });
 
 describe('Automation API - Identity providers - payload validation', () => {
-  const users = [{ username: 'val', password: 'P@ssword1' }];
-
   it('should reject an unknown identity provider type (400)', async () => {
     const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
-      ...buildInlineIdpDef({ key: uniqueName('autobadtype', true).toLowerCase(), users }),
+      ...buildInlineIdpDef({ key: uniqueName('autobadtype', true).toLowerCase(), users: defaultUsers }),
       type: 'unknown-am-idp',
     });
     expect(response.status).toBe(400);
@@ -174,14 +219,16 @@ describe('Automation API - Identity providers - payload validation', () => {
 
   it('should reject a configuration that is not valid JSON (400)', async () => {
     const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
-      ...buildInlineIdpDef({ key: uniqueName('autobadcfg', true).toLowerCase(), users }),
+      ...buildInlineIdpDef({ key: uniqueName('autobadcfg', true).toLowerCase(), users: defaultUsers }),
       configuration: 'not-json',
     });
     expect(response.status).toBe(400);
   });
 
   it('should tolerate an unknown extra property in the configuration (200)', async () => {
-    const base = buildInlineIdpDef({ key: uniqueName('autoextracfg', true).toLowerCase(), users });
+    const key = uniqueName('autoextracfg', true).toLowerCase();
+    createdIdpKeys.push(key);
+    const base = buildInlineIdpDef({ key, users: defaultUsers });
     const configuration = JSON.stringify({ ...JSON.parse(base.configuration), extraUnknownField: 'tolerated' });
     const response = await fixture.client.putIdentityProvider(fixture.domainKey, { ...base, configuration });
     expect(response.status).toBe(200);
@@ -189,48 +236,47 @@ describe('Automation API - Identity providers - payload validation', () => {
 });
 
 describe('Automation API - System identity provider', () => {
-  const systemIdpKey = uniqueName('autosysidp', true).toLowerCase();
-  const secondSystemKey = uniqueName('autosysidp2', true).toLowerCase();
-
   it('should create a system identity provider from a minimal {key, system:true} payload', async () => {
-    const response = await fixture.client.putIdentityProvider(
-      fixture.domainKey,
-      buildSystemAutomationDef(systemIdpKey),
-    );
+    const { key, response } = await createSystemIdp();
     expect(response.status).toBe(200);
-    expect(response.body.key).toEqual(systemIdpKey);
+    expect(response.body.key).toEqual(key);
     expect(response.body.system).toBe(true);
   });
 
   it('should be idempotent on re-PUT of a system identity provider (200, no update)', async () => {
-    const response = await fixture.client.putIdentityProvider(
-      fixture.domainKey,
-      buildSystemAutomationDef(systemIdpKey),
-    );
+    const { key } = await createSystemIdp();
+
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, buildSystemAutomationDef(key));
     expect(response.status).toBe(200);
     expect(response.body.system).toBe(true);
-    expect(response.body.key).toEqual(systemIdpKey);
+    expect(response.body.key).toEqual(key);
   });
 
   it('should reject a second system identity provider (400)', async () => {
+    await createSystemIdp();
+
     const response = await fixture.client.putIdentityProvider(
       fixture.domainKey,
-      buildSystemAutomationDef(secondSystemKey),
+      buildSystemAutomationDef(uniqueName('autosysidp2', true).toLowerCase()),
     );
     expect(response.status).toBe(400);
   });
 
   it('should reject flipping system on an existing identity provider (400)', async () => {
-    // systemIdpKey was created with system:true; PUT it again as non-system -> rejected (immutable)
+    const { key } = await createSystemIdp();
+
+    // the IdP was created with system:true; PUT it again as non-system -> rejected (immutable)
     const response = await fixture.client.putIdentityProvider(
       fixture.domainKey,
-      buildInlineIdpDef({ key: systemIdpKey, system: false, users: [{ username: 'def', password: 'P@ssword1' }] }),
+      buildInlineIdpDef({ key, system: false, users: [{ username: 'def', password: 'P@ssword1' }] }),
     );
     expect(response.status).toBe(400);
   });
 
   it('should delete the system identity provider without a system guard', async () => {
-    const del = await fixture.client.deleteIdentityProvider(fixture.domainKey, systemIdpKey);
+    const { key } = await createSystemIdp();
+
+    const del = await fixture.client.deleteIdentityProvider(fixture.domainKey, key);
     expect(del.status).toBe(204);
   });
 });

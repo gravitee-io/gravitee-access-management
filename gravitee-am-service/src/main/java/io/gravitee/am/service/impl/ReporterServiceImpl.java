@@ -37,6 +37,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
@@ -237,6 +238,11 @@ public class ReporterServiceImpl implements ReporterService {
         return reporterRepository.findById(reporterId)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(reporterId)))
                 .flatMap(oldReporter -> {
+                    // 'type' is immutable for an existing reporter
+                    if (updateReporter.getType() != null && !updateReporter.getType().isBlank()
+                            && !updateReporter.getType().equals(oldReporter.getType())) {
+                        return Single.error(new InvalidParameterException("Reporter type cannot be changed"));
+                    }
                     Reporter reporterToUpdate = new Reporter(oldReporter);
                     reporterToUpdate.setEnabled(updateReporter.isEnabled());
 

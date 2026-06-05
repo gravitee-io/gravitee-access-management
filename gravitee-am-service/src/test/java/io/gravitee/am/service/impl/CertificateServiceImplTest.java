@@ -42,6 +42,7 @@ import io.gravitee.am.service.exception.CertificateIsFallbackException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -351,6 +352,28 @@ class CertificateServiceImplTest {
         assertEquals(fileName, realMapper.readTree(storedConfig).get("content").asText());
         assertFalse(storedConfig.contains(base64),
                 "stored configuration must not contain the raw base64 keystore content");
+    }
+
+    @Test
+    void update_rejects_type_change() {
+        String certId = "cert-id";
+        Certificate existing = new Certificate();
+        existing.setId(certId);
+        existing.setDomain("domainId");
+        existing.setType("javakeystore-am-certificate");
+        Mockito.when(certificateRepository.findById(certId)).thenReturn(Maybe.just(existing));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+        UpdateCertificate update = new UpdateCertificate();
+        update.setName("My cert");
+        update.setType("pkcs12-am-certificate");
+        update.setConfiguration("{}");
+
+        TestObserver<Certificate> observer = service.update(domain, certId, update, new DefaultUser()).test();
+        observer.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        observer.assertError(InvalidParameterException.class);
+        Mockito.verify(certificateRepository, Mockito.never()).update(Mockito.any());
     }
 
 }
