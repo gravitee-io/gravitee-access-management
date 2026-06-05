@@ -183,6 +183,75 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void put_update_rejects_missing_required_fields() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        AutomationIdentityProvider def = new AutomationIdentityProvider();
+        def.setAutomationKey("dev-users");
+        // name and type intentionally omitted
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_configuration_not_matching_schema() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(eq("inline-am-idp"), anyString());
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), definition("dev-users"));
+
+        assertEquals(400, response.getStatus());
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_type_change_without_plugin_or_config_checks() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        AutomationIdentityProvider def = definition("dev-users"); // existing type is inline-am-idp
+        def.setType("ldap-am-idp");
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(identityProviderManager, never()).checkPluginDeployment(anyString());
+        verify(validationService, never()).validate(anyString(), anyString());
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_validates_type_and_configuration() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+        when(identityProviderService.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        verify(identityProviderManager).checkPluginDeployment(eq("inline-am-idp"));
+        verify(validationService).validate(eq("inline-am-idp"), eq("{}"));
+    }
+
+    @Test
     void put_creates_system_from_config() {
         String systemIdpId = AutomationIds.systemIdentityProviderId(domainId);
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));

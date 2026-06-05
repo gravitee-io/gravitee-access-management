@@ -305,9 +305,16 @@ public class CertificateServiceImpl implements CertificateService {
         log.debug("Update a certificate {} for domain {}", id, domain.getId());
         return certificateRepository.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
-                .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> certificatePluginService.getSchema(certificate.getType())
-                        .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(certificate.getType())))
-                        .map(schema -> new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class))))
+                .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> {
+                    // 'type' is immutable for an existing certificate
+                    if (updateCertificate.getType() != null && !updateCertificate.getType().isBlank()
+                            && !updateCertificate.getType().equals(certificate.getType())) {
+                        return Single.error(new InvalidParameterException("Certificate type cannot be changed"));
+                    }
+                    return certificatePluginService.getSchema(certificate.getType())
+                            .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(certificate.getType())))
+                            .map(schema -> new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)));
+                })
                 .flatMap(oldCertificate -> {
                     boolean oldWithMTls = usageContains(oldCertificate.certificate().getConfiguration(), "mtls");
                     boolean newWithMTls = usageContains(updateCertificate.getConfiguration(), "mtls");

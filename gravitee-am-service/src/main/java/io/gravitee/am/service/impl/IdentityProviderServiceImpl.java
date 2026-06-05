@@ -52,6 +52,7 @@ import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
@@ -219,6 +220,11 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return identityProviderRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
                 .flatMap(oldIdentity -> {
+                    // 'type' is immutable for an existing identity provider
+                    if (updateIdentityProvider.getType() != null && !updateIdentityProvider.getType().isBlank()
+                            && !updateIdentityProvider.getType().equals(oldIdentity.getType())) {
+                        return Single.error(new InvalidParameterException("Identity provider type cannot be changed"));
+                    }
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
                     identityToUpdate.setName(updateIdentityProvider.getName());
                     // System idp config is normally immutable through the API, but the Automation API owns

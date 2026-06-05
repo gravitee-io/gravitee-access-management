@@ -57,6 +57,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -167,65 +168,85 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
             return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, requiredAcl)
                     .andThen(resolveDomain(environmentId, domainKey))
-                    .flatMap(domain -> {
-                        if (match.isPresent()) {
-                            IdentityProvider existing = match.get();
-                            // 'system' is an immutable identity attribute (it co-determines the internal id and
-                            // the system flag); reject a change.
-                            if (definition.isSystem() != existing.isSystem()) {
-                                return Single.error(new InvalidParameterException(
-                                        "The 'system' flag is immutable for an existing identity provider '" + key
-                                                + "'; delete and recreate it to change it"));
-                            }
-                            if (existing.isSystem()) {
-                                // re-PUT is an idempotent no-op
-                                return Single.just(AutomationIdentityProviderMapper.toAutomationIdentityProvider(existing));
-                            }
-                            return identityProviderManager.checkPluginDeployment(definition.getType())
-                                    .andThen(identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
-                                            AutomationIdentityProviderMapper.toUpdateIdentityProvider(definition), principal, false))
-                                    .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
-                        }
-
-                        final String idpId = definition.isSystem()
-                                ? AutomationIds.systemIdentityProviderId(domain.getId())
-                                : AutomationIds.identityProviderId(domain.getId(), key);
-                        Optional<IdentityProvider> occupant = allExisting.stream()
-                                .filter(idp -> idpId.equals(idp.getId()))
-                                .findFirst();
-                        if (occupant.isPresent()) {
-                            return Single.error(new InvalidParameterException(
-                                    "Identity provider key '" + key + "' conflicts with an existing identity provider"
-                                            + (definition.isSystem() ? " (the domain already has a system identity provider)" : "")));
-                        }
-                        if (definition.isSystem() && allExisting.stream()
-                                .anyMatch(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && idp.isSystem())) {
-                            return Single.error(new InvalidParameterException(
-                                    "The domain already has a system identity provider"));
-                        }
-                        if (definition.isSystem()) {
-                            return defaultIdentityProviderService.create(domain, key, principal)
-                                    .flatMap(created -> reconcileDomainReference(domain, key, created.getId())
-                                            .andThen(Single.just(created)))
-                                    .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
-                        }
-                        Single<AutomationIdentityProvider> rejection = rejectIfMissingIdentityProviderFields(definition, key);
-                        if (rejection != null) {
-                            return rejection;
-                        }
-                        AutomationNewIdentityProvider newIdp = AutomationIdentityProviderMapper.toNewIdentityProvider(definition);
-                        newIdp.setId(idpId);
-                        return identityProviderManager.checkPluginDeployment(definition.getType())
-                                .andThen(Completable.fromAction(() -> {
-                                    if (!isBlank(definition.getConfiguration())) {
-                                        validationService.validate(definition.getType(), definition.getConfiguration());
-                                    }
-                                }))
-                                .andThen(Single.defer(() -> identityProviderService.create(domain, newIdp, principal, false)))
-                                .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
-                    });
+                    .flatMap(domain -> match.isPresent()
+                            ? updateExisting(domain, match.get(), definition, key, principal)
+                            : createNew(domain, allExisting, definition, key, principal));
         })
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<AutomationIdentityProvider> updateExisting(Domain domain, IdentityProvider existing,
+            AutomationIdentityProvider definition, String key, User principal) {
+        // 'system' is an immutable identity attribute (it co-determines the internal id and the system flag);
+        // reject a change.
+        if (definition.isSystem() != existing.isSystem()) {
+            return Single.error(new InvalidParameterException(
+                    "The 'system' flag is immutable for an existing identity provider '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        if (existing.isSystem()) {
+            // re-PUT is an idempotent no-op
+            return Single.just(AutomationIdentityProviderMapper.toAutomationIdentityProvider(existing));
+        }
+        // 'type' is an immutable identity attribute; reject a change early
+        if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+            return Single.error(new InvalidParameterException(
+                    "The 'type' is immutable for an existing identity provider '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        Single<AutomationIdentityProvider> rejection = rejectIfMissingIdentityProviderFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        return identityProviderManager.checkPluginDeployment(definition.getType())
+                .andThen(Completable.fromAction(() -> {
+                    if (!isBlank(definition.getConfiguration())) {
+                        validationService.validate(definition.getType(), definition.getConfiguration());
+                    }
+                }))
+                .andThen(Single.defer(() -> identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
+                        AutomationIdentityProviderMapper.toUpdateIdentityProvider(definition), principal, false)))
+                .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
+    }
+
+    private Single<AutomationIdentityProvider> createNew(Domain domain, List<IdentityProvider> allExisting,
+            AutomationIdentityProvider definition, String key, User principal) {
+        final String idpId = definition.isSystem()
+                ? AutomationIds.systemIdentityProviderId(domain.getId())
+                : AutomationIds.identityProviderId(domain.getId(), key);
+        Optional<IdentityProvider> occupant = allExisting.stream()
+                .filter(idp -> idpId.equals(idp.getId()))
+                .findFirst();
+        if (occupant.isPresent()) {
+            return Single.error(new InvalidParameterException(
+                    "Identity provider key '" + key + "' conflicts with an existing identity provider"
+                            + (definition.isSystem() ? " (the domain already has a system identity provider)" : "")));
+        }
+        if (definition.isSystem() && allExisting.stream()
+                .anyMatch(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && idp.isSystem())) {
+            return Single.error(new InvalidParameterException(
+                    "The domain already has a system identity provider"));
+        }
+        if (definition.isSystem()) {
+            return defaultIdentityProviderService.create(domain, key, principal)
+                    .flatMap(created -> reconcileDomainReference(domain, key, created.getId())
+                            .andThen(Single.just(created)))
+                    .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
+        }
+        Single<AutomationIdentityProvider> rejection = rejectIfMissingIdentityProviderFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        AutomationNewIdentityProvider newIdp = AutomationIdentityProviderMapper.toNewIdentityProvider(definition);
+        newIdp.setId(idpId);
+        return identityProviderManager.checkPluginDeployment(definition.getType())
+                .andThen(Completable.fromAction(() -> {
+                    if (!isBlank(definition.getConfiguration())) {
+                        validationService.validate(definition.getType(), definition.getConfiguration());
+                    }
+                }))
+                .andThen(Single.defer(() -> identityProviderService.create(domain, newIdp, principal, false)))
+                .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
     }
 
     private static Single<AutomationIdentityProvider> rejectIfMissingIdentityProviderFields(AutomationIdentityProvider definition, String key) {
