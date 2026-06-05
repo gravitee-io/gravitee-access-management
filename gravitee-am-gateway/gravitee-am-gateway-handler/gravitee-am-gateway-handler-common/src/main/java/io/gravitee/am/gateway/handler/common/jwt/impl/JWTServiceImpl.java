@@ -43,9 +43,11 @@ import java.security.Key;
 import java.security.KeyPair;
 import java.text.ParseException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -154,9 +156,13 @@ public class JWTServiceImpl implements JWTService {
         if (clientCertificateId == null) {
             return Single.error(new IllegalArgumentException("clientCertificateId is required"));
         }
-        return Maybe.fromOptional(parseSignedToken(jwt)
-                        .flatMap(this::findProviderByKid))
-                .switchIfEmpty(resolveClientCertificateProvider(clientCertificateId))
+        List<CertificateProvider> kidProviders = parseSignedToken(jwt)
+                .map(this::findProvidersByKid)
+                .orElse(List.of());
+        if (!kidProviders.isEmpty()) {
+            return verifyWithAnyProvider(jwt, kidProviders, tokenType);
+        }
+        return resolveClientCertificateProvider(clientCertificateId)
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
     }
 
@@ -169,10 +175,10 @@ public class JWTServiceImpl implements JWTService {
         }
     }
 
-    private Optional<CertificateProvider> findProviderByKid(SignedJWT signedJWT) {
+    private List<CertificateProvider> findProvidersByKid(SignedJWT signedJWT) {
         String kid = signedJWT.getHeader().getKeyID();
         if (kid == null) {
-            return Optional.empty();
+            return List.of();
         }
 
         String issuerDomain = extractDomain(signedJWT);
@@ -181,7 +187,14 @@ public class JWTServiceImpl implements JWTService {
                 .filter(Objects::nonNull)
                 .filter(provider -> kid.equals(provider.getKeyId()) || kid.equals(ofNullable(provider.getCertificateInfo()).map(CertificateInfo::certificateId).orElse(null)))
                 .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()))
-                .findFirst();
+                .collect(Collectors.toList());
+    }
+
+    private Single<JWT> verifyWithAnyProvider(String jwt, List<CertificateProvider> providers, TokenType tokenType) {
+        return providers.stream()
+                .map(provider -> decodeAndVerify(jwt, provider, tokenType))
+                .reduce((chain, next) -> chain.onErrorResumeNext(err -> next))
+                .get();
     }
 
     private static String extractDomain(SignedJWT jwt) {
