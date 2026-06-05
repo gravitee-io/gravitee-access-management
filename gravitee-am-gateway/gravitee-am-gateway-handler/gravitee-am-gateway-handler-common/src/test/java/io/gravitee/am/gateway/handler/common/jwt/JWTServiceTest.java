@@ -440,7 +440,86 @@ public class JWTServiceTest {
         verify(mockParser).parse(jwtToken);
     }
 
+<<<<<<< HEAD
     private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithParser(JWTParser jwtParser) {
+=======
+    @Test
+    public void decodeAndVerify_supplier_malformedJwt_fallsThroughToSupplier() throws Exception {
+        var fallback = providerWithKey("fallback-key", "domainD", "fallback-decoded");
+        when(certificateManager.get("fallback-id")).thenReturn(Maybe.just(fallback));
+
+        // not a parseable signed JWT
+        TestObserver<JWT> test = jwtService.decodeAndVerify("not-a-jwt", Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("fallback-decoded", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_nullDefaultCertificateId_errors() {
+        Maybe<String> nullMaybe = null;
+        jwtService.decodeAndVerify("token", nullMaybe, JWTService.TokenType.ACCESS_TOKEN)
+                .test()
+                .assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void decodeAndVerify_masterDomain_acceptFromDifferentDomain() throws Exception {
+        when(domain.isMaster()).thenReturn(true);
+        var matched = providerWithKey("keyA", "domainD", "matched-A");
+        var alsoInDomain = providerWithKey("keyB", "domainD", "matched-B");
+
+        when(certificateManager.allProviders()).thenReturn(List.of(matched, alsoInDomain));
+
+        String signed = signedJwt("keyA", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("matched-A", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_duplicateKid_firstFails_secondSucceeds() throws Exception {
+        var wrongKeyProvider = providerWithKeyAndFailingParser("default", "domainD");
+        var correctKeyProvider = providerWithKey("default", "domainD", "correct-decoded");
+
+        when(certificateManager.providers("domainD")).thenReturn(List.of(wrongKeyProvider, correctKeyProvider));
+        when(domain.getId()).thenReturn("domainD");
+
+        String signed = signedJwt("default", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        assertEquals("correct-decoded", test.values().get(0).get("marker"));
+    }
+
+    @Test
+    public void decodeAndVerify_supplier_duplicateKid_allFail_rejectsToken() throws Exception {
+        var failing1 = providerWithKeyAndFailingParser("default", "domainD");
+        var failing2 = providerWithKeyAndFailingParser("default", "domainD");
+
+        when(certificateManager.providers("domainD")).thenReturn(List.of(failing1, failing2));
+        when(domain.getId()).thenReturn("domainD");
+
+        String signed = signedJwt("default", "domainD");
+        TestObserver<JWT> test = jwtService.decodeAndVerify(signed, Maybe.just("fallback-id"), JWTService.TokenType.ACCESS_TOKEN).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(io.gravitee.am.common.exception.oauth2.InvalidTokenException.class);
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider providerWithKeyAndFailingParser(String keyId, String domain) {
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        var actualProvider = mock(CertificateProvider.class);
+        when(theProvider.getKeyId()).thenReturn(keyId);
+        when(theProvider.getDomain()).thenReturn(domain);
+        when(theProvider.getProvider()).thenReturn(actualProvider);
+        when(theProvider.getJwtParser()).thenReturn(token -> { throw new io.gravitee.am.common.exception.oauth2.InvalidTokenException("wrong key"); });
+        return theProvider;
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider providerWithKey(String keyId, String domain, String marker) {
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+>>>>>>> 519dadf15 (fix: try all providers sharing the same kid before rejecting token validation)
         var actualProvider = mock(CertificateProvider.class);
 
         var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
