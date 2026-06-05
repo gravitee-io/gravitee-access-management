@@ -131,21 +131,21 @@
                                       tofile="${project.build.directory}/openapi-patched.yaml"
                                       overwrite="true"/>
 
-                                <!-- Promote `type` to an enum on the two stale parent schemas.
-                                     Matches only where `type: string` immediately precedes
-                                     `discriminator:` with no existing `enum:` block. -->
+                                <!-- Promote `type` to an enum on New/UpdateProtectedResourceFeature.
+                                     Anchored on the unique `required: [key, type]` tail (sortOutput
+                                     places discriminator before properties, so we no longer match on
+                                     `type` immediately preceding `discriminator:`). -->
                                 <replaceregexp file="${project.build.directory}/openapi-patched.yaml"
-                                               match="(\n        type:\n          type: string\n)(      discriminator:)"
-                                               replace="\1          enum:${line.separator}          - MCP_TOOL${line.separator}\2"
+                                               match="(\n        type:\n          type: string)\n(      required:\n      - key\n      - type)"
+                                               replace="\1${line.separator}          enum:${line.separator}          - MCP_TOOL${line.separator}\2"
                                                flags="g"
                                                byline="false"/>
 
-                                <!-- Remove the redundant `type` redeclaration from subclass
-                                     allOf overrides (anchored by the 10-space indent unique
-                                     to that context, with the scopes sibling as tail anchor). -->
+                                <!-- Remove the redundant `type` redeclaration from New/UpdateMcpTool
+                                     allOf overrides (only two occurrences in the spec). -->
                                 <replaceregexp file="${project.build.directory}/openapi-patched.yaml"
-                                               match="\n          type:\n            type: string\n            enum:\n            - MCP_TOOL\n(          scopes:)"
-                                               replace="${line.separator}\1"
+                                               match="\n          type:\n            type: string\n            enum:\n            - MCP_TOOL(?=\n      required:\n      - key)"
+                                               replace=""
                                                flags="g"
                                                byline="false"/>
 
@@ -160,7 +160,7 @@
                                      wire either way; remove it from the spec before generation
                                      so the SDK never emits it. -->
                                 <replaceregexp file="${project.build.directory}/openapi-patched.yaml"
-                                               match="        requiredPermissions:\n          uniqueItems: true\n          type: array\n          items:\n            type: string\n            enum:\n(            - [A-Z0-9_]+\n)+"
+                                               match="        requiredPermissions:\n          type: array\n          items:\n            type: string\n            enum:\n(            - [A-Z0-9_]+\n)+"
                                                replace=""
                                                flags="g"
                                                byline="false"/>

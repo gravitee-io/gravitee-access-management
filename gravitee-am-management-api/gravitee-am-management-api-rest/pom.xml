@@ -199,6 +199,7 @@
                                 <resourcePackage>io.gravitee.am.management.handlers.management.api.resources</resourcePackage>
                             </resourcePackages>
                             <prettyPrint>TRUE</prettyPrint>
+                            <sortOutput>true</sortOutput>
                         </configuration>
                         <executions>
                             <execution>
