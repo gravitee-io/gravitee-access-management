@@ -217,6 +217,7 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  awaitOAuthCallback,
   skipMfaEnrollment,
   secondAuthorizeExpectCallbackWithoutMfa,
   waitAfterAuthorizeThenLoginIfNeeded,

@@ -159,6 +159,20 @@ export async function handleConsentIfPresent(page: Page, timeoutMs = BRIEF_TIMEO
 /*  URL helpers                                                        */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Wait for the browser to reach either the OAuth consent page or the callback with a code.
+ * If consent appears, accept it, then wait for the callback.
+ * Replaces the fragile `handleConsentIfPresent + waitForURL(callback)` pattern whose
+ * 5 s inner timeout is too short for multi-hop redirects in CI.
+ */
+export async function awaitOAuthCallback(page: Page): Promise<void> {
+  await page.waitForURL((u) => /oauth\/consent/i.test(u.pathname) || (/callback/i.test(u.href) && u.searchParams.has('code')));
+  if (/oauth\/consent/i.test(new URL(page.url()).pathname)) {
+    await page.locator('button:has-text("Accept"), input[value="Accept"], #submitBtn').click();
+    await page.waitForURL(/.*callback\?code=.*/i);
+  }
+}
+
 /** Build the OAuth authorize URL for a given domain + app. */
 export function buildAuthorizeUrl(gatewayUrl: string, clientId: string): string {
   const base = gatewayUrl.replace(/\/$/, '');
@@ -226,8 +240,7 @@ export async function loginAndRegisterWebAuthn(
     await page.locator('button.primary, button#register-button').click();
   });
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await awaitOAuthCallback(page);
 
   return auth;
 }
@@ -256,8 +269,7 @@ export async function passwordlessLogin(
     await page.locator('button.primary, button#login-button').click();
   });
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await awaitOAuthCallback(page);
 }
 
 /**
@@ -331,8 +343,7 @@ export async function fullLoginWithMfaAndWebAuthn(
 
   await page.locator('#verify').click();
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await awaitOAuthCallback(page);
 
   return auth;
 }

@@ -15,7 +15,7 @@
  */
 import { Page, expect } from '@playwright/test';
 import { AUTH_CODE_FORMAT, BRIEF_TIMEOUT, MOCK_MFA_CODE, MULTI_PHASE_TEST_TIMEOUT } from './test-constants';
-import { buildAuthorizeUrl } from './webauthn-helpers';
+import { buildAuthorizeUrl, awaitOAuthCallback } from './webauthn-helpers';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getUser } from '@management-commands/user-management-commands';
@@ -24,7 +24,7 @@ import { getUser } from '@management-commands/user-management-commands';
 /*  Re-exports from shared modules (avoid duplication)                  */
 /* ------------------------------------------------------------------ */
 
-export { REDIRECT_URI, buildAuthorizeUrl } from './webauthn-helpers';
+export { REDIRECT_URI, buildAuthorizeUrl, awaitOAuthCallback } from './webauthn-helpers';
 export { MOCK_MFA_CODE } from './test-constants';
 
 /* ------------------------------------------------------------------ */
@@ -325,8 +325,7 @@ export async function expectEnrollSkipThenCallback(
   await submitLogin(page, username, password);
   await page.waitForURL(/.*mfa\/enroll.*/i);
   await skipMfaEnrollment(page);
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await awaitOAuthCallback(page);
   const callbackUrl = new URL(page.url());
   expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 }
@@ -338,8 +337,7 @@ export async function expectEnrollBypassedThenCallback(
   await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
   await page.waitForURL(/.*login.*/i);
   await submitLogin(page, username, password);
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await awaitOAuthCallback(page);
   const callbackUrl = new URL(page.url());
   expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   expect(page.url()).not.toMatch(/mfa\/enroll/);
@@ -366,6 +364,5 @@ export async function fullMfaLogin(
   await page.waitForURL(/.*mfa\/challenge.*/i);
   await completeMfaChallenge(page, code);
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await awaitOAuthCallback(page);
 }

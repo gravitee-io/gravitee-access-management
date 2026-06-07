@@ -18,7 +18,7 @@ import {
   expect,
   loginAndRegisterWebAuthn,
   simulateWebAuthnGesture,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   removeVirtualAuthenticator,
   clearSessionOnly,
   VirtualAuthenticator,
@@ -110,8 +110,7 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       await page.locator('button.primary, button#login-button').click();
     });
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await awaitOAuthCallback(page);
 
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toBeTruthy();

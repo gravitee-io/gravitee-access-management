@@ -20,7 +20,7 @@ import {
   submitLogin,
   enrollMockFactor,
   completeMfaChallenge,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   readFirstRecoveryCodeFromPage,
   submitRecoveryCodesContinue,
   openMfaChallengeAlternatives,
@@ -62,8 +62,7 @@ test.describe('MFA recovery codes (AM-2216)', () => {
     const recoveryCode = await readFirstRecoveryCodeFromPage(page);
     await submitRecoveryCodesContinue(page);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 
     await page.context().clearCookies();
@@ -80,8 +79,7 @@ test.describe('MFA recovery codes (AM-2216)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, recoveryCode);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 });

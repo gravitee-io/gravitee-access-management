@@ -20,7 +20,7 @@ import {
   simulateWebAuthnGesture,
   getCredentials,
   removeVirtualAuthenticator,
-  handleConsentIfPresent,
+  awaitOAuthCallback,
   buildAuthorizeUrl,
   PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
@@ -75,8 +75,7 @@ test.describe('WebAuthn Passwordless Login', () => {
     expect(credentials).toHaveLength(1);
 
     // Handle consent page if present, then wait for callback
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
 
     // Clear cookies to simulate a new session
     await page.context().clearCookies();
@@ -101,8 +100,7 @@ test.describe('WebAuthn Passwordless Login', () => {
     });
 
     // Handle consent if present, then verify callback with authorization code
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await awaitOAuthCallback(page);
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
