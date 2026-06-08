@@ -276,7 +276,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         return domainService.update(domain.getId(), domain, false).ignoreElement();
     }
 
-    @Path("/{idpKey}")
+    @Path("/{identityKey}")
     public IdentityProviderResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderResource.class);
     }

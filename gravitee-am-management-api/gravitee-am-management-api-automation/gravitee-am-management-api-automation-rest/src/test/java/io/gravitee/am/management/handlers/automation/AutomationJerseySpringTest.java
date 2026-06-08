@@ -201,9 +201,9 @@ public abstract class AutomationJerseySpringTest {
         return orgTarget().path("environments").path(ENV_ID).path("domains");
     }
 
-    /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identity-providers}. */
-    protected final WebTarget identityProvidersTarget(String domainKey) {
-        return domainsTarget().path(domainKey).path("identity-providers");
+    /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identities}. */
+    protected final WebTarget identitiesTarget(String domainKey) {
+        return domainsTarget().path(domainKey).path("identities");
     }
 
     /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates}. */

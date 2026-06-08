@@ -70,13 +70,13 @@ public class IdentityProviderResource extends AbstractAutomationResource {
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
             @PathParam("domainKey") String domainKey,
-            @PathParam("idpKey") String idpKey,
+            @PathParam("identityKey") String identityKey,
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)
                 .andThen(resolveDomain(environmentId, domainKey))
-                .flatMap(domain -> resolveIdentityProvider(domain, idpKey)
+                .flatMap(domain -> resolveIdentityProvider(domain, identityKey)
                         .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider))
                 .subscribe(response::resume, response::resume);
     }
@@ -90,14 +90,14 @@ public class IdentityProviderResource extends AbstractAutomationResource {
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
             @PathParam("domainKey") String domainKey,
-            @PathParam("idpKey") String idpKey,
+            @PathParam("identityKey") String identityKey,
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE)
                 .andThen(resolveDomainMaybe(environmentId, domainKey))
                 .flatMapCompletable(domain -> identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId())
-                        .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && idpKey.equals(idp.getAutomationKey()))
+                        .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && identityKey.equals(idp.getAutomationKey()))
                         .firstElement()
                         .flatMapCompletable(idp -> identityProviderService.delete(ReferenceType.DOMAIN, domain.getId(), idp.getId(), principal)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
@@ -121,11 +121,11 @@ public class IdentityProviderResource extends AbstractAutomationResource {
      * system provider — which adopts the conventional {@code default-idp-<domainId>} id rather than the
      * deterministic key-based id — resolves like any other.
      */
-    private Single<IdentityProvider> resolveIdentityProvider(Domain domain, String idpKey) {
+    private Single<IdentityProvider> resolveIdentityProvider(Domain domain, String identityKey) {
         return identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId())
-                .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && idpKey.equals(idp.getAutomationKey()))
+                .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && identityKey.equals(idp.getAutomationKey()))
                 .firstElement()
-                .switchIfEmpty(Maybe.error(() -> new IdentityProviderNotFoundException(idpKey)))
+                .switchIfEmpty(Maybe.error(() -> new IdentityProviderNotFoundException(identityKey)))
                 .toSingle();
     }
 }

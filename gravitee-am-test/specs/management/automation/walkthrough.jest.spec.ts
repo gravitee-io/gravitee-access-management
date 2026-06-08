@@ -71,7 +71,7 @@ describe('Walkthrough - Step 1: Create Domain and its Identity Providers', () =>
   });
 
   it('should create the test-users and corporate identity providers under the domain', async () => {
-    const testUsers = await client.putIdentityProvider(
+    const testUsers = await client.putIdentity(
       DOMAIN_KEY,
       buildInlineIdpDef({
         key: TEST_USERS_IDP_KEY,
@@ -84,7 +84,7 @@ describe('Walkthrough - Step 1: Create Domain and its Identity Providers', () =>
     );
     expect(testUsers.status).toBe(200);
 
-    const corporate = await client.putIdentityProvider(
+    const corporate = await client.putIdentity(
       DOMAIN_KEY,
       buildInlineIdpDef({
         key: CORPORATE_IDP_KEY,
@@ -96,7 +96,7 @@ describe('Walkthrough - Step 1: Create Domain and its Identity Providers', () =>
   });
 
   it('should list both identity providers under the domain', async () => {
-    const res = await client.listIdentityProviders(DOMAIN_KEY);
+    const res = await client.listIdentities(DOMAIN_KEY);
     expect(res.status).toBe(200);
     const idpNames = res.body.map((idp: any) => idp.name);
     expect(idpNames).toContain('Test Users');
@@ -130,8 +130,8 @@ describe('Walkthrough - Step 3: Verify Idempotency', () => {
   });
 
   it('should re-PUT an identity provider and preserve its createdAt', async () => {
-    const first = await client.getIdentityProvider(DOMAIN_KEY, TEST_USERS_IDP_KEY);
-    const second = await client.putIdentityProvider(
+    const first = await client.getIdentity(DOMAIN_KEY, TEST_USERS_IDP_KEY);
+    const second = await client.putIdentity(
       DOMAIN_KEY,
       buildInlineIdpDef({
         key: TEST_USERS_IDP_KEY,

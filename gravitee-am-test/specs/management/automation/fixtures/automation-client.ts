@@ -58,22 +58,22 @@ export class AutomationClient {
     return performDelete(automationUrl(), `${envPath()}/domains/${key}`, this.headers());
   }
 
-  // ---- Identity providers (under a domain) ------------------------------
+  // ---- Identities (under a domain) --------------------------------------
 
-  listIdentityProviders(domainKey: string) {
-    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/identity-providers`, this.headers());
+  listIdentities(domainKey: string) {
+    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/identities`, this.headers());
   }
 
-  putIdentityProvider(domainKey: string, definition: object) {
-    return performPut(automationUrl(), `${envPath()}/domains/${domainKey}/identity-providers`, definition, this.headers());
+  putIdentity(domainKey: string, definition: object) {
+    return performPut(automationUrl(), `${envPath()}/domains/${domainKey}/identities`, definition, this.headers());
   }
 
-  getIdentityProvider(domainKey: string, idpKey: string) {
-    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/identity-providers/${idpKey}`, this.headers());
+  getIdentity(domainKey: string, identityKey: string) {
+    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/identities/${identityKey}`, this.headers());
   }
 
-  deleteIdentityProvider(domainKey: string, idpKey: string) {
-    return performDelete(automationUrl(), `${envPath()}/domains/${domainKey}/identity-providers/${idpKey}`, this.headers());
+  deleteIdentity(domainKey: string, identityKey: string) {
+    return performDelete(automationUrl(), `${envPath()}/domains/${domainKey}/identities/${identityKey}`, this.headers());
   }
 
   // ---- Certificates (under a domain) ------------------------------------

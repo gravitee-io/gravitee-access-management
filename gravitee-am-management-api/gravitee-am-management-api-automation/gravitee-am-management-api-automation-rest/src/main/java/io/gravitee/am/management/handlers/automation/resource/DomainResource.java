@@ -103,7 +103,7 @@ public class DomainResource extends AbstractAutomationResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
-    @Path("/identity-providers")
+    @Path("/identities")
     public IdentityProvidersResource getIdentityProvidersResource() {
         return resourceContext.getResource(IdentityProvidersResource.class);
     }
