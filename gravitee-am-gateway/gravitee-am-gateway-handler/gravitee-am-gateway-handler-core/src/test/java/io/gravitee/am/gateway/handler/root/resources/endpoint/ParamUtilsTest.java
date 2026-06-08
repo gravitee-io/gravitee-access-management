@@ -28,6 +28,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -122,6 +123,26 @@ public class ParamUtilsTest {
     @Test
     public void should_splitScopes_filter_blank_tokens_between_scopes() {
         assertEquals(Set.of("openid", "offline_access"), ParamUtils.splitScopes("openid  offline_access"));
+    }
+
+    @Test
+    public void should_splitScopes_return_empty_set_for_whitespace_only() {
+        assertEquals(Set.of(), ParamUtils.splitScopes("   "));
+    }
+
+    @Test
+    public void should_splitAcrValues_filter_blank_tokens_from_leading_whitespace() {
+        assertEquals(List.of("urn:mace:incommon:iap:silver"), ParamUtils.splitAcrValues(" urn:mace:incommon:iap:silver"));
+    }
+
+    @Test
+    public void should_splitAcrValues_filter_blank_tokens_between_values() {
+        assertEquals(List.of("level1", "level2"), ParamUtils.splitAcrValues("level1  level2"));
+    }
+
+    @Test
+    public void should_splitAcrValues_return_empty_list_for_whitespace_only() {
+        assertEquals(List.of(), ParamUtils.splitAcrValues("   "));
     }
 
     @Test
