@@ -23,7 +23,7 @@ import lombok.Data;
  * @author GraviteeSource Team
  */
 @Data
-public class NewReporter implements PluginConfigurationPayload {
+public class NewReporter {
 
     private String id;
 

@@ -19,7 +19,7 @@
  * notifiers are not managed by the Automation API and never surfaced, and
  * {@code oidc.cimdSettings} is not surfaced. The in-scope cross-reference
  * ({@code accountSettings.defaultIdentityProviderForRegistration}) is covered by
- * domain-identity-providers.jest.spec.ts.
+ * domain-identities.jest.spec.ts.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';

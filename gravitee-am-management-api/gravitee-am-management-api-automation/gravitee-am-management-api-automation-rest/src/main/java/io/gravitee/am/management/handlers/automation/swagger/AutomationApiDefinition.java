@@ -95,7 +95,7 @@ public class AutomationApiDefinition implements ReaderListener {
             "domainKey", new String[]{"Key of the domain: its stable, immutable Automation identifier within the " +
                     "environment.", "example-domain"},
             "certKey", new String[]{"Key of the certificate within the domain.", "signing-cert"},
-            "idpKey", new String[]{"Key of the identity provider within the domain.", "corporate-ldap"},
+            "identityKey", new String[]{"Key of the identity within the domain.", "corporate-ldap"},
             "reporterKey", new String[]{"Key of the reporter within the domain.", "audit-kafka"});
 
     @Override

@@ -17,6 +17,7 @@
 package io.gravitee.am.service.impl;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
@@ -30,10 +31,21 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PluginConfigurationValidationServiceImpl implements PluginConfigurationValidationService {
+
     private final PluginConfigurationValidatorsRegistry pluginValidatorsRegistry;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void validate(String pluginType, String configuration) {
+        if (configuration == null || configuration.isBlank()) {
+            throw InvalidPluginConfigurationException.fromValidationError("configuration is required");
+        }
+        try {
+            objectMapper.readTree(configuration);
+        } catch (Exception e) {
+            throw InvalidPluginConfigurationException.fromValidationError("configuration is not valid JSON");
+        }
+
         pluginValidatorsRegistry.get(pluginType)
                 .ifPresent(pluginValidator -> {
                     final var result = pluginValidator.validate(configuration);

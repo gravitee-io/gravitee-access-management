@@ -199,11 +199,8 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             return rejection;
         }
         return identityProviderManager.checkPluginDeployment(definition.getType())
-                .andThen(Completable.fromAction(() -> {
-                    if (!isBlank(definition.getConfiguration())) {
-                        validationService.validate(definition.getType(), definition.getConfiguration());
-                    }
-                }))
+                .andThen(Completable.fromAction(() ->
+                        validationService.validate(definition.getType(), definition.getConfiguration())))
                 .andThen(Single.defer(() -> identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
                         AutomationIdentityProviderMapper.toUpdateIdentityProvider(definition), principal, false)))
                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
@@ -240,11 +237,8 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         AutomationNewIdentityProvider newIdp = AutomationIdentityProviderMapper.toNewIdentityProvider(definition);
         newIdp.setId(idpId);
         return identityProviderManager.checkPluginDeployment(definition.getType())
-                .andThen(Completable.fromAction(() -> {
-                    if (!isBlank(definition.getConfiguration())) {
-                        validationService.validate(definition.getType(), definition.getConfiguration());
-                    }
-                }))
+                .andThen(Completable.fromAction(() ->
+                        validationService.validate(definition.getType(), definition.getConfiguration())))
                 .andThen(Single.defer(() -> identityProviderService.create(domain, newIdp, principal, false)))
                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
     }
@@ -257,6 +251,10 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         if (isBlank(definition.getType())) {
             return Single.error(new InvalidParameterException(
                     "Field 'type' is required for a non-system identity provider '" + key + "'"));
+        }
+        if (isBlank(definition.getConfiguration())) {
+            return Single.error(new InvalidParameterException(
+                    "Field 'configuration' is required for a non-system identity provider '" + key + "'"));
         }
         return null;
     }
@@ -278,7 +276,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         return domainService.update(domain.getId(), domain, false).ignoreElement();
     }
 
-    @Path("/{idpKey}")
+    @Path("/{identityKey}")
     public IdentityProviderResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderResource.class);
     }

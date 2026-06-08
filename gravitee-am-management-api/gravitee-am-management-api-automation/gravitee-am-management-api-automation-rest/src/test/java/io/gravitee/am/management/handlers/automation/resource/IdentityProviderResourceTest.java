@@ -67,7 +67,7 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
     }
 
     private Response getRequest() {
-        return identityProvidersTarget(DOMAIN_KEY).path(IDP_KEY).request().get();
+        return identitiesTarget(DOMAIN_KEY).path(IDP_KEY).request().get();
     }
 
     @Test
@@ -120,7 +120,7 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
         when(identityProviderService.delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any()))
                 .thenReturn(Completable.complete());
 
-        Response response = identityProvidersTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
+        Response response = identitiesTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
 
         assertEquals(204, response.getStatus());
     }
@@ -130,7 +130,7 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
 
-        Response response = identityProvidersTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
+        Response response = identitiesTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
 
         assertEquals(204, response.getStatus());
         verify(identityProviderService, never()).delete(any(), anyString(), anyString(), any());
@@ -140,7 +140,7 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
     void delete_returns_204_when_domain_absent() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
 
-        Response response = identityProvidersTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
+        Response response = identitiesTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
 
         assertEquals(204, response.getStatus());
         verify(identityProviderService, never()).delete(any(), anyString(), anyString(), any());
@@ -158,7 +158,7 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
     void delete_returns_403_when_not_permitted() {
         denyPermission();
 
-        Response response = identityProvidersTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
+        Response response = identitiesTarget(DOMAIN_KEY).path(IDP_KEY).request().delete();
 
         assertEquals(403, response.getStatus());
         verify(identityProviderService, never()).delete(any(), anyString(), anyString(), any());

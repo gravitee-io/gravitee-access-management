@@ -166,7 +166,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     @Override
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         LOGGER.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
-        return innerCreate(prepareIdp(newIdentityProvider, referenceType, referenceId, system));
+        var identityProvider = prepareIdp(newIdentityProvider, referenceType, referenceId, system);
+        return validateConfiguration(identityProvider, system).andThen(Single.defer(() -> innerCreate(identityProvider)));
     }
 
     @Override
@@ -176,7 +177,14 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         var identityProvider = prepareIdp(newIdentityProvider, ReferenceType.DOMAIN, domain.getId(), system);
         identityProvider.setDataPlaneId(domain.getDataPlaneId());
 
-        return innerCreate(identityProvider);
+        return validateConfiguration(identityProvider, system).andThen(Single.defer(() -> innerCreate(identityProvider)));
+    }
+
+    private Completable validateConfiguration(IdentityProvider identityProvider, boolean system) {
+        if (system) {
+            return Completable.complete();
+        }
+        return Completable.fromAction(() -> validationService.validate(identityProvider.getType(), identityProvider.getConfiguration()));
     }
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
@@ -188,6 +196,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
                 });
