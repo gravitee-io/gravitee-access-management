@@ -29,6 +29,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
@@ -106,6 +107,21 @@ public class ParamUtilsTest {
 
         final String requestRedirectUriParamQuery = "https://test.com/people?v=123";
         assertFalse(ParamUtils.redirectMatches(requestRedirectUriParamQuery, registeredRedirectUri, true));
+    }
+
+    @Test
+    public void should_splitScopes_filter_blank_tokens_from_leading_whitespace() {
+        assertEquals(Set.of("offline_access"), ParamUtils.splitScopes(" offline_access"));
+    }
+
+    @Test
+    public void should_splitScopes_filter_blank_tokens_from_trailing_whitespace() {
+        assertEquals(Set.of("offline_access"), ParamUtils.splitScopes("offline_access "));
+    }
+
+    @Test
+    public void should_splitScopes_filter_blank_tokens_between_scopes() {
+        assertEquals(Set.of("openid", "offline_access"), ParamUtils.splitScopes("openid  offline_access"));
     }
 
     @Test
