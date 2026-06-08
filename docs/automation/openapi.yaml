@@ -695,7 +695,7 @@ paths:
       tags:
       - Certificates
       - Domains
-  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identity-providers:
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identities:
     get:
       description: Returns all identity providers managed by the Automation API under
         the domain. Identity providers created outside the Automation API are not
@@ -916,7 +916,7 @@ paths:
       tags:
       - Identity Providers
       - Domains
-  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identity-providers/{idpKey}:
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identities/{identityKey}:
     delete:
       description: Deletes an Automation-managed identity provider by its key. Deleting
         an identity provider that does not exist also returns 204.
@@ -944,10 +944,10 @@ paths:
         required: true
         schema:
           type: string
-      - description: Key of the identity provider within the domain.
+      - description: Key of the identity within the domain.
         example: corporate-ldap
         in: path
-        name: idpKey
+        name: identityKey
         required: true
         schema:
           type: string
@@ -1007,10 +1007,10 @@ paths:
         required: true
         schema:
           type: string
-      - description: Key of the identity provider within the domain.
+      - description: Key of the identity within the domain.
         example: corporate-ldap
         in: path
-        name: idpKey
+        name: identityKey
         required: true
         schema:
           type: string

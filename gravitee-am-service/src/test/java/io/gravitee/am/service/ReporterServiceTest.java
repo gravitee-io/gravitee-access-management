@@ -22,6 +22,7 @@ import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.junit.management.MemoryReporterRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -46,6 +47,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -134,6 +136,24 @@ class ReporterServiceTest {
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(ReporterConfigurationException.class);
+    }
+
+    @Test
+    void shouldNotCreate_configValidation_fails() {
+        final var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType("reporter-am-file");
+        reporter.setConfiguration("");
+        doThrow(InvalidPluginConfigurationException.fromValidationError("configuration is required"))
+                .when(validationService).validate(any(), any());
+
+        reporterService.create(Reference.domain("domain"), reporter, null, false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidPluginConfigurationException.class);
+
+        verify(validationService).validate(any(), any());
     }
 
     @Test

@@ -41,9 +41,24 @@ public class PluginJsonFormValidator implements ConstraintValidator<PluginJsonFo
             return true;
         } else {
             ctx.disableDefaultConstraintViolation();
-            ctx.buildConstraintViolationWithTemplate(result.getMsg()).addConstraintViolation();
+            ctx.buildConstraintViolationWithTemplate(escapeTemplate(result.getMsg())).addConstraintViolation();
             return false;
         }
+    }
+
+    /**
+     * Validator messages may contain characters that Hibernate's message interpolation treats as
+     * EL/parameter markers ('{', '}', '$'); escaping them prevents the message from being interpreted
+     * as a template, which otherwise fails with "HV000149: An exception occurred during message interpolation".
+     */
+    private static String escapeTemplate(String message) {
+        if (message == null) {
+            return "";
+        }
+        return message.replace("\\", "\\\\")
+                .replace("{", "\\{")
+                .replace("}", "\\}")
+                .replace("$", "\\$");
     }
 
 }

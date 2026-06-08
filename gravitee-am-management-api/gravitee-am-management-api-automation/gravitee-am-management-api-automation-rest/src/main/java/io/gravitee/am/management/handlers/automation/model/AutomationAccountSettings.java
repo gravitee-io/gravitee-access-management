@@ -26,7 +26,7 @@ import java.util.List;
  * Automation API mirror of {@link io.gravitee.am.model.account.AccountSettings}, wrapped
  * because {@link #defaultIdentityProviderForRegistration} is a cross-resource reference
  * expressed in the key-only contract: the {@code key} of an identity provider that exists
- * under this domain (created via the identity-providers endpoints, resolved against the IdP
+ * under this domain (created via the identities endpoints, resolved against the IdP
  * rows at apply time). A reference to an IdP that does not exist is rejected with {@code 400}.
  *
  * @author GraviteeSource Team

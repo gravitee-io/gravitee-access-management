@@ -168,7 +168,7 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
         return reporterPluginService.getSchema(oldReporter.getType())
                 .switchIfEmpty(Single.error(new ReporterPluginSchemaNotFoundException(oldReporter.getType())))
                 .map(schema -> {
-                    var updateConfig = objectMapper.readTree(updateReporter.getConfiguration());
+                    var updateConfig = parseConfiguration(objectMapper, updateReporter.getConfiguration());
                     var oldConfig = objectMapper.readTree(oldReporter.getConfiguration());
                     var schemaConfig = objectMapper.readTree(schema);
                     super.updateSensitiveData(updateConfig, oldConfig, schemaConfig, updateReporter::setConfiguration);

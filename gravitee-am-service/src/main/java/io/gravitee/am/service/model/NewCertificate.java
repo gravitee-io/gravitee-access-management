@@ -22,7 +22,7 @@ import jakarta.validation.constraints.NotNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NewCertificate implements PluginConfigurationPayload {
+public class NewCertificate {
 
     @NotBlank
     private String type;

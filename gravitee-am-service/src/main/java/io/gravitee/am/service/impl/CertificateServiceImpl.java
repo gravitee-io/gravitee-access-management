@@ -219,7 +219,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal, boolean isSystem) {
         log.debug("Create a new certificate {} for domain {}", newCertificate, domain.getId());
-        return certificatePluginService
+        return validateConfiguration(newCertificate, isSystem).andThen(Single.defer(() -> certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
                 .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
@@ -259,7 +259,14 @@ public class CertificateServiceImpl implements CertificateService {
                         return Single.error(ex);
                     }
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
-                });
+                })));
+    }
+
+    private Completable validateConfiguration(NewCertificate newCertificate, boolean isSystem) {
+        if (isSystem) {
+            return Completable.complete();
+        }
+        return Completable.fromAction(() -> validationService.validate(newCertificate.getType(), newCertificate.getConfiguration()));
     }
 
     @SneakyThrows

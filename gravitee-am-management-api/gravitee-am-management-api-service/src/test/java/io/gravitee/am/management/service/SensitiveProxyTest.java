@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +26,29 @@ import org.junit.jupiter.api.Test;
  */
 public class SensitiveProxyTest {
     private static final String COMPLEX_PASSWORD = "KU!$~25;&vZUP,745lpeO";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private AbstractSensitiveProxy proxy = new AbstractSensitiveProxy(){};
+
+    @Test
+    public void parseConfiguration_should_return_node_for_valid_json() {
+        Assertions.assertEquals(1, AbstractSensitiveProxy.parseConfiguration(OBJECT_MAPPER, "{\"a\":1}").get("a").asInt());
+    }
+
+    @Test
+    public void parseConfiguration_should_reject_null_or_blank() {
+        for (String config : new String[]{null, "", "   "}) {
+            var ex = Assertions.assertThrows(InvalidPluginConfigurationException.class,
+                    () -> AbstractSensitiveProxy.parseConfiguration(OBJECT_MAPPER, config));
+            Assertions.assertEquals("configuration is required", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void parseConfiguration_should_reject_malformed_json() {
+        var ex = Assertions.assertThrows(InvalidPluginConfigurationException.class,
+                () -> AbstractSensitiveProxy.parseConfiguration(OBJECT_MAPPER, "not-json"));
+        Assertions.assertEquals("configuration is not valid JSON", ex.getMessage());
+    }
 
     @Test
     public void should_extract_userInfo_from_http_url() {

@@ -118,3 +118,68 @@ describe('after creating identity providers', () => {
     expect(idpSet.length).toEqual(10);
   });
 });
+
+describe('identity provider configuration validation', () => {
+  let validIdpId: string;
+
+  beforeAll(async () => {
+    const { newIdp } = buildIdp(100);
+    const created = await createIdp(fixture.domain.id, fixture.accessToken, newIdp);
+    validIdpId = created.id;
+  });
+
+  afterAll(async () => {
+    if (validIdpId) {
+      await deleteIdp(fixture.domain.id, fixture.accessToken, validIdpId);
+    }
+  });
+
+  it('rejects create with an omitted configuration (400)', async () => {
+    const { configuration, ...withoutConfiguration } = buildIdp(101).newIdp;
+    await expect(createIdp(fixture.domain.id, fixture.accessToken, withoutConfiguration)).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+  });
+
+  it('rejects create with an empty configuration (400)', async () => {
+    const { newIdp } = buildIdp(102);
+    await expect(
+      createIdp(fixture.domain.id, fixture.accessToken, { ...newIdp, configuration: '' }),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('rejects create with a malformed JSON configuration (400)', async () => {
+    const { newIdp } = buildIdp(103);
+    await expect(
+      createIdp(fixture.domain.id, fixture.accessToken, { ...newIdp, configuration: 'not-json' }),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('rejects update with an omitted configuration (400)', async () => {
+    await expect(
+      updateIdp(fixture.domain.id, fixture.accessToken, { name: 'inmemory', type: 'inline-am-idp' }, validIdpId),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('rejects update with an empty configuration (400)', async () => {
+    await expect(
+      updateIdp(
+        fixture.domain.id,
+        fixture.accessToken,
+        { name: 'inmemory', type: 'inline-am-idp', configuration: '' },
+        validIdpId,
+      ),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('rejects update with a malformed JSON configuration (400)', async () => {
+    await expect(
+      updateIdp(
+        fixture.domain.id,
+        fixture.accessToken,
+        { name: 'inmemory', type: 'inline-am-idp', configuration: 'not-json' },
+        validIdpId,
+      ),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+});

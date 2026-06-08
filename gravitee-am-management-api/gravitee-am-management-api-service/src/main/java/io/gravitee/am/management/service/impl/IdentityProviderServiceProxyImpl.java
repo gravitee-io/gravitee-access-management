@@ -211,7 +211,7 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderPluginService.getSchema(oldIdentityProvider.getType())
                 .switchIfEmpty(Single.error(new IdentityProviderPluginSchemaNotFoundException(oldIdentityProvider.getType())))
                 .map(schema -> {
-                    var updateConfig = objectMapper.readTree(updateIdentityProvider.getConfiguration());
+                    var updateConfig = parseConfiguration(objectMapper, updateIdentityProvider.getConfiguration());
                     validateConfiguration(updateConfig);
                     var oldConfig = objectMapper.readTree(oldIdentityProvider.getConfiguration());
                     var schemaConfig = objectMapper.readTree(schema);

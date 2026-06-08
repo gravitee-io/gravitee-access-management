@@ -19,6 +19,7 @@ import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.service.CertificateServiceTest;
 import io.gravitee.am.service.model.PluginConfigurationPayload;
+import io.gravitee.json.validation.JsonSchemaValidator;
 import io.gravitee.json.validation.JsonSchemaValidatorImpl;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintValidatorContext.ConstraintViolationBuilder;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.internal.util.io.IOUtil;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -120,6 +122,34 @@ class PluginJsonFormValidatorTest {
         // then
         Assertions.assertFalse(result);
         Mockito.verify(violation, times(1)).addConstraintViolation();
+    }
+
+    @Test
+    public void should_escape_braces_in_violation_message_to_avoid_HV000149() {
+        // given a validator whose failure message contains brace characters (as the JSON parser produces,
+        // e.g. "A JSONObject text must begin with '{' at 0"). Passed verbatim, Hibernate would treat the
+        // brace as a message parameter and fail interpolation with HV000149.
+        var jsonSchemaValidator = mock(JsonSchemaValidator.class);
+        when(jsonSchemaValidator.validate(anyString(), anyString()))
+                .thenThrow(new RuntimeException("A JSONObject text must begin with '{' at 0 [character 1 line 1]"));
+        registry.put(new PluginConfigurationValidator("id", "schema", jsonSchemaValidator));
+
+        var payload = new TestPayload("id", "");
+
+        var ctx = mock(ConstraintValidatorContext.class);
+        var violation = mock(ConstraintViolationBuilder.class);
+        var template = ArgumentCaptor.forClass(String.class);
+        when(ctx.buildConstraintViolationWithTemplate(template.capture())).thenReturn(violation);
+
+        // when
+        boolean result = jsonFormValidator.isValid(payload, ctx);
+
+        // then
+        Assertions.assertFalse(result);
+        String captured = template.getValue();
+        Assertions.assertTrue(captured.contains("\\{"), "brace should be escaped: " + captured);
+        Assertions.assertFalse(captured.replace("\\{", "").contains("{"), "unescaped '{' present: " + captured);
+        Assertions.assertFalse(captured.replace("\\}", "").contains("}"), "unescaped '}' present: " + captured);
     }
 
     @SneakyThrows
