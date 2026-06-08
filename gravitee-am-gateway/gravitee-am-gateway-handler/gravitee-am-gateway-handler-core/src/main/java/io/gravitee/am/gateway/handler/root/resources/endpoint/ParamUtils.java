@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_PARAMETERS_KEY;
@@ -58,11 +59,15 @@ public class ParamUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
 
     public static Set<String> splitScopes(String scope) {
-        return scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
+        return scope != null && !scope.isEmpty()
+                ? Arrays.stream(scope.split("\\s+")).filter(s -> !s.isBlank()).collect(Collectors.toCollection(HashSet::new))
+                : null;
     }
 
     public static List<String> splitAcrValues(String values) {
-        return values != null && !values.isEmpty() ? Arrays.asList(values.split("\\s+")) : null;
+        return values != null && !values.isEmpty()
+                ? Arrays.stream(values.split("\\s+")).filter(s -> !s.isBlank()).collect(Collectors.toList())
+                : null;
     }
 
     public static String getOAuthParameter(RoutingContext context, String paramName) {

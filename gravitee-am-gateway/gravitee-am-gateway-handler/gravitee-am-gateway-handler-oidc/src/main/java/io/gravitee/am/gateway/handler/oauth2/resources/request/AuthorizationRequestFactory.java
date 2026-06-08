@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitScopes;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -85,7 +86,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setResponseType(getOAuthParameter(context, Parameters.RESPONSE_TYPE));
         authorizationRequest.setRedirectUri(getOAuthParameter(context, Parameters.REDIRECT_URI));
         String scope = getOAuthParameter(context, Parameters.SCOPE);
-        authorizationRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
+        authorizationRequest.setScopes(splitScopes(scope));
         authorizationRequest.setState(getOAuthParameter(context, Parameters.STATE));
         authorizationRequest.setResponseMode(getOAuthParameter(context, Parameters.RESPONSE_MODE));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
