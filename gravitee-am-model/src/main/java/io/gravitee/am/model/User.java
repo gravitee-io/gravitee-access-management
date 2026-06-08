@@ -217,9 +217,11 @@ public class User implements IUser {
         this.entitlements = other.entitlements != null ? new ArrayList<>(other.entitlements) : null;
         this.addresses = other.addresses != null ? new ArrayList<>(other.addresses) : null;
         this.roles = other.roles != null ? new ArrayList<>(other.roles) : null;
+        this.groups = other.groups != null ? new ArrayList<>(other.groups) : null;
         this.dynamicRoles = other.dynamicRoles != null ? new ArrayList<>(other.dynamicRoles) : null;
         this.dynamicGroups = other.dynamicGroups != null ? new ArrayList<>(other.dynamicGroups) : null;
         this.rolesPermissions = other.rolesPermissions;
+        this.serviceAccount = other.serviceAccount;
         this.x509Certificates = other.x509Certificates != null ? new ArrayList<>(other.x509Certificates) : null;
         this.accountNonExpired = other.accountNonExpired;
         this.accountNonLocked = other.accountNonLocked;
