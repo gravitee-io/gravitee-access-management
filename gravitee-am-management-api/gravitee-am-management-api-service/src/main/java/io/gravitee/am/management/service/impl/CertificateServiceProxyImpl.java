@@ -217,7 +217,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
         return certificatePluginService.getSchema(oldCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(oldCertificate.getType())))
                 .map(schema -> {
-                    var updateConfig = objectMapper.readTree(updateCertificate.getConfiguration());
+                    var updateConfig = parseConfiguration(objectMapper, updateCertificate.getConfiguration());
                     var oldConfig = objectMapper.readTree(oldCertificate.getConfiguration());
                     var schemaConfig = objectMapper.readTree(schema);
                     super.updateSensitiveData(updateConfig, oldConfig, schemaConfig, updateCertificate::setConfiguration);

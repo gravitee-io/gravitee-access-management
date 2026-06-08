@@ -178,13 +178,13 @@ curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth" \
 ## 2. Identity Providers — a resource under the domain
 
 Identity providers are managed as their own resource under a domain, at
-`/domains/{domainKey}/identity-providers`. Each IdP is identified by its `key`. This
+`/domains/{domainKey}/identities`. Each IdP is identified by its `key`. This
 keeps payloads small: manage one IdP at a time without re-sending the whole domain.
 
 ### Inline IDP (test users)
 
 ```bash
-curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers" \
+curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identities" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -198,7 +198,7 @@ curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth
 ### LDAP IDP with mappers
 
 ```bash
-curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/internal-admin/identity-providers" \
+curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/internal-admin/identities" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -219,7 +219,7 @@ curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/internal-admi
 When `system` is `true`, only `key` is required; the IDP is built from `domains.identities.default.*` in `gravitee.yml`:
 
 ```bash
-curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers" \
+curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identities" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -230,13 +230,13 @@ curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth
 
 List / read / delete identity providers under a domain:
 ```bash
-curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers" \
+curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identities" \
   -H "Authorization: Bearer $TOKEN" | jq '.[].key'
 
-curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers/dev-test-users" \
+curl -s "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identities/dev-test-users" \
   -H "Authorization: Bearer $TOKEN" | jq '{key, name, type}'
 
-curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers/dev-test-users" \
+curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identities/dev-test-users" \
   -H "Authorization: Bearer $TOKEN" -w "\nHTTP %{http_code}\n"
 ```
 
@@ -396,7 +396,7 @@ certificates and reporters.
 
 ```bash
 # remove a single identity provider
-curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identity-providers/dev-test-users" \
+curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/customer-auth/identities/dev-test-users" \
   -H "Authorization: Bearer $TOKEN" -w "\nHTTP %{http_code}\n"
 
 # remove a whole domain
@@ -422,7 +422,7 @@ curl -s http://localhost:8093/management/automation/openapi.yaml | head -20
 | Resource | PUT (create/update) | GET one | GET list | DELETE |
 |----------|---------------------|---------|----------|--------|
 | Domain | `PUT .../domains` | `GET .../domains/{key}` | `GET .../domains` | `DELETE .../domains/{key}` |
-| Identity Provider | `PUT .../domains/{key}/identity-providers` | `GET .../domains/{key}/identity-providers/{key}` | `GET .../domains/{key}/identity-providers` | `DELETE .../domains/{key}/identity-providers/{key}` |
+| Identity Provider | `PUT .../domains/{key}/identities` | `GET .../domains/{key}/identities/{identityKey}` | `GET .../domains/{key}/identities` | `DELETE .../domains/{key}/identities/{identityKey}` |
 | Certificate | `PUT .../domains/{key}/certificates` | `GET .../domains/{key}/certificates/{key}` | `GET .../domains/{key}/certificates` | `DELETE .../domains/{key}/certificates/{key}` |
 | Reporter | `PUT .../domains/{key}/reporters` | `GET .../domains/{key}/reporters/{key}` | `GET .../domains/{key}/reporters` | `DELETE .../domains/{key}/reporters/{key}` |
 

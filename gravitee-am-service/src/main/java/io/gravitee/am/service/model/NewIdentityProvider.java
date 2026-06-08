@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class NewIdentityProvider implements PluginConfigurationPayload {
+public class NewIdentityProvider {
 
     private String id;
 

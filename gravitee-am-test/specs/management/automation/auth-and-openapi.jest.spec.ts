@@ -77,7 +77,7 @@ describe('Automation API - OpenAPI specification', () => {
     expect(paths.length).toBeGreaterThan(0);
     expect(paths.every((p) => p.startsWith('/organizations/{orgId}'))).toBe(true);
     // identity providers are a resource under a domain
-    expect(paths.some((p) => p.endsWith('/identity-providers'))).toBe(true);
+    expect(paths.some((p) => p.endsWith('/identities'))).toBe(true);
 
     // automation-specific security schemes only (no inherited gravitee-auth)
     const schemes = Object.keys(spec.components?.securitySchemes || {});

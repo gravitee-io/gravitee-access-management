@@ -16,6 +16,7 @@
 
 package io.gravitee.am.management.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Strings;
 import io.gravitee.am.model.PluginConfigurableEntity;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.model.PluginConfigurableUpdate;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -56,6 +58,22 @@ public abstract class AbstractSensitiveProxy {
 
     private static final String USERINFO_PATTERN_EXTRACTOR = "^(?:[^/]+://)?(?<userInfo>[^/@]+)@.*";
     private static final Pattern USER_INFO_PATTERN = Pattern.compile(USERINFO_PATTERN_EXTRACTOR);
+
+    /**
+     * Parse a user-supplied plugin configuration, surfacing a missing or malformed configuration as a
+     * {@link InvalidPluginConfigurationException}.
+     */
+    protected static JsonNode parseConfiguration(ObjectMapper objectMapper, String configuration) {
+        if (configuration == null || configuration.isBlank()) {
+            throw InvalidPluginConfigurationException.fromValidationError("configuration is required");
+        }
+        try {
+            return objectMapper.readTree(configuration);
+        } catch (JsonProcessingException e) {
+            throw InvalidPluginConfigurationException.fromValidationError("configuration is not valid JSON");
+        }
+    }
+
     protected void filterSensitiveData(
             JsonNode schemaNode,
             JsonNode configurationNode,
