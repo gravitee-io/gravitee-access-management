@@ -37,6 +37,7 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -126,8 +127,8 @@ public class ParamUtilsTest {
     }
 
     @Test
-    public void should_splitScopes_return_empty_set_for_whitespace_only() {
-        assertEquals(Set.of(), ParamUtils.splitScopes("   "));
+    public void should_splitScopes_return_null_for_whitespace_only() {
+        assertNull(ParamUtils.splitScopes("   "));
     }
 
     @Test
@@ -141,8 +142,8 @@ public class ParamUtilsTest {
     }
 
     @Test
-    public void should_splitAcrValues_return_empty_list_for_whitespace_only() {
-        assertEquals(List.of(), ParamUtils.splitAcrValues("   "));
+    public void should_splitAcrValues_return_null_for_whitespace_only() {
+        assertNull(ParamUtils.splitAcrValues("   "));
     }
 
     @Test
