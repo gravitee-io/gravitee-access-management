@@ -33,13 +33,12 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitScopes;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -76,7 +75,7 @@ public final class TokenRequestFactory {
         tokenRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
         tokenRequest.setGrantType(request.params().get(Parameters.GRANT_TYPE));
         String scope = request.params().get(Parameters.SCOPE);
-        tokenRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
+        tokenRequest.setScopes(splitScopes(scope));
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
 
         // set RFC 8707 resource indicators
