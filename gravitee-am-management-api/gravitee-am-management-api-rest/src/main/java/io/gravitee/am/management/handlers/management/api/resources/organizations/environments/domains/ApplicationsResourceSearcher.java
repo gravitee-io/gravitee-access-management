@@ -50,13 +50,10 @@ import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import static io.gravitee.am.service.model.ApplicationFilter.STATUS_DISABLED;
 import static io.gravitee.am.service.model.ApplicationFilter.STATUS_ENABLED;
 
 @Tag(name = "application")
@@ -72,15 +69,10 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
     private static final String PARAM_STATUS = "status";
     private static final String PARAM_OWNER_EMAIL = "owner.email";
     private static final String PARAM_TYPE = "type";
-    private static final String PARAM_LAST_SORT_VALUE = "lastSortValue";
-    private static final String PARAM_LAST_ID = "lastId";
     private static final String PARAM_CURSOR = "cursor";
 
     @Autowired
     private ApplicationSearcher applicationSearcher;
-
-    @Autowired
-    private Environment env;
 
     @RequiredArgsConstructor
     public static final class ApplicationCursorPage {
@@ -194,7 +186,10 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
                 .map(cursorPage ->
                         new ApplicationCursorPage(
                                 cursorPage.getData().stream().map(a -> FilteredApplication.of(a, expands)).toList(),
-                                nextCursorPath(cursorPage.getNextCursor(), uriInfo),
+                                nextCursorPath(
+                                        cursorPage.getNextCursor(),
+                                        uriInfo,
+                                        "/organizations/%s/environments/%s/domains/%s/applications/search/_cursor".formatted(organizationId, environmentId, domainId)),
                                 cursorPage.getTotalCount(),
                                 cursorRequest.getPage()))
                 .onErrorResumeNext(ex -> ex instanceof IllegalArgumentException
@@ -203,24 +198,17 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
     }
 
     private String nextCursorPath(ApplicationCursorRequest nextCursor,
-                                  UriInfo uriInfo) {
+                                  UriInfo uriInfo,
+                                  String baseUri) {
         if(nextCursor == null){
             return null;
         }
         UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
-        if(!uriInfo.getPath().endsWith("_cursor")){
-            requestUriBuilder.path("_cursor");
-        }
         var uri = requestUriBuilder
                 .replaceQueryParam(PARAM_CURSOR, new CursorApiRequest(nextCursor.getLastId(), nextCursor.getLastSortValue()).encode())
                 .replaceQueryParam(PARAM_PAGE, nextCursor.getPage())
                 .build();
-        String entryPoint = env.getProperty("http.api.entrypoint", "/management");
-        String path = uri.getPath();
-        if(path.startsWith(entryPoint)) {
-            path = path.replaceFirst(entryPoint, "");
-        }
-        return path + "?" + uri.getQuery();
+        return baseUri + "?" + uri.getQuery();
     }
 
 

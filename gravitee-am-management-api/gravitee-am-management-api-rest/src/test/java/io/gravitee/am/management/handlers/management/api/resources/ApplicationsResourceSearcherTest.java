@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.ApplicationsResourceSearcher;
 import io.gravitee.am.management.handlers.management.api.resources.model.CursorApiRequest;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
@@ -34,9 +35,12 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -44,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -52,7 +57,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ApplicationsResourceSearcherTest extends JerseySpringTest {
 
@@ -268,6 +275,52 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
         assertTrue("expected q=alpha* in nextCursor: " + path, path.contains("q=alpha*"));
         assertTrue("expected status=enabled in nextCursor: " + path, path.contains("status=enabled"));
         assertTrue("expected type=WEB in nextCursor: " + path, path.contains("type=WEB"));
+    }
+
+    @Test
+    public void shouldBuildNextCursorPath_withoutCustomEntrypointFromRequestUri() {
+        final ApplicationCursorRequest nextCursor = new ApplicationCursorRequest(
+                "value-50",
+                "app-50",
+                CursorRequest.SortDirection.DESC,
+                "updatedAt",
+                1,
+                "alpha",
+                Boolean.TRUE,
+                List.of(ApplicationType.WEB));
+        final UriInfo uriInfo = mock(UriInfo.class);
+        final String requestUri = "https://management-api.example.com/custom-management/organizations/" +
+                ORGANIZATION_ID +
+                "/environments/DEFAULT/domains/" + DOMAIN_ID + "/applications/search";
+        when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromUri(requestUri)
+                .queryParam("q", "alpha")
+                .queryParam("status", "enabled")
+                .queryParam("type", "WEB")
+                .queryParam("owner.email", "owner@example.com"));
+
+        final String baseUri = "/organizations/%s/environments/%s/domains/%s/applications/search/_cursor".formatted(
+                ORGANIZATION_ID,
+                "DEFAULT",
+                DOMAIN_ID);
+        final String path = ReflectionTestUtils.invokeMethod(
+                new ApplicationsResourceSearcher(),
+                "nextCursorPath",
+                nextCursor,
+                uriInfo,
+                baseUri);
+
+        assertNotNull("nextCursor should be present when paging is incomplete", path);
+        assertTrue(path.startsWith(baseUri + "?"));
+        assertFalse("custom entrypoint should not be present in nextCursor: " + path,
+                path.contains("/custom-management/"));
+        assertTrue("expected encoded cursor in nextCursor: " + path,
+                path.contains("cursor=" + new CursorApiRequest("app-50", "value-50").encode()));
+        assertTrue("expected page=1 in nextCursor: " + path, path.contains("page=1"));
+        assertTrue("expected q=alpha in nextCursor: " + path, path.contains("q=alpha"));
+        assertTrue("expected status=enabled in nextCursor: " + path, path.contains("status=enabled"));
+        assertTrue("expected type=WEB in nextCursor: " + path, path.contains("type=WEB"));
+        assertTrue("expected owner.email=owner@example.com in nextCursor: " + path,
+                path.contains("owner.email=owner@example.com"));
     }
 
     @Test
