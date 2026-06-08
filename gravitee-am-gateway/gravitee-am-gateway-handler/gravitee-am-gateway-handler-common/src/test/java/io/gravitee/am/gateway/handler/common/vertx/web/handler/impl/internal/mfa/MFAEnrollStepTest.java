@@ -608,6 +608,60 @@ class MFAEnrollStepTest {
         verify(session).put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
     }
 
+    @Test
+    void shouldStopMfaWhenChallengeConditionalAndUserBelongsToBypassGroup() {
+        String rule = "#context.attributes['user']['groups'] != null && #context.attributes['user']['groups'].contains('BYPASS_MFA_CHALLENGE')";
+
+        mfaEnrollStep = new MFAEnrollStep(handler, new SpELRuleEngine(), factorManager);
+        mockContextRequest();
+        mockAuthUserWithGroups(List.of("SOME_GROUP", "BYPASS_MFA_CHALLENGE"));
+        when(enroll.isActive()).thenReturn(false);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
+        when(challenge.getChallengeRule()).thenReturn(rule);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyStop();
+    }
+
+    @Test
+    void shouldEnrollWhenChallengeConditionalAndUserDoesNotBelongToBypassGroup() {
+        String rule = "#context.attributes['user']['groups'] != null && #context.attributes['user']['groups'].contains('BYPASS_MFA_CHALLENGE')";
+        mfaEnrollStep = new MFAEnrollStep(handler, new SpELRuleEngine(), factorManager);
+        mockContextRequest();
+        mockAuthUserWithGroups(List.of("SOME_GROUP"));
+        when(enroll.isActive()).thenReturn(false);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
+        when(challenge.getChallengeRule()).thenReturn(rule);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyEnrollment();
+    }
+
+    private void mockAuthUserWithGroups(List<String> groups) {
+        io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
+        when(routingContext.user()).thenReturn(authenticatedUser);
+        User delegateUser = mock(User.class);
+        given(authenticatedUser.getDelegate()).willReturn(delegateUser);
+        io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+        endUser.setGroups(groups);
+        given(delegateUser.getUser()).willReturn(endUser);
+    }
+
+
     private void mockEnrollmentCanSkipRuleSatisfied(boolean isSatisfied) {
         var rule = "enrollment-can-skip-rule";
         when(enroll.isEnrollmentSkipActive()).thenReturn(true);
