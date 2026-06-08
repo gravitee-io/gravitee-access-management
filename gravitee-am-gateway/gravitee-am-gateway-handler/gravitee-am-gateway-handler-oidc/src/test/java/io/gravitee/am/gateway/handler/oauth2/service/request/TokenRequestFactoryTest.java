@@ -77,6 +77,40 @@ public class TokenRequestFactoryTest {
         Assert.assertTrue(tokenRequest.getAdditionalParameters().size() == 1 && tokenRequest.getAdditionalParameters().containsKey("custom"));
     }
 
+    @Test
+    public void shouldCreateRequest_filterBlankScopeTokens() {
+        List<Map.Entry<String, String>> entries = new ArrayList<>();
+        entries.add(new Parameter<>(Parameters.CLIENT_ID, "client-id"));
+        entries.add(new Parameter<>(Parameters.SCOPE, " offline_access"));
+        entries.add(new Parameter<>(Parameters.GRANT_TYPE, "grant_type"));
+
+        MultiMap multiMap = mock(MultiMap.class);
+        when(multiMap.entries()).thenReturn(entries);
+
+        io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
+
+        HttpServerResponse httpServerResponse = mock(HttpServerResponse.class);
+
+        HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
+        when(rxHttpServerRequest.params()).thenReturn(multiMap);
+        when(rxHttpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
+        when(rxHttpServerRequest.params().get(Parameters.SCOPE)).thenReturn(" offline_access");
+        when(rxHttpServerRequest.params().get(Parameters.GRANT_TYPE)).thenReturn("grant_type");
+        when(rxHttpServerRequest.params().entries()).thenReturn(entries);
+        when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
+        when(rxHttpServerRequest.getDelegate().response()).thenReturn(httpServerResponse);
+
+        RoutingContext routingContext = mock(RoutingContext.class);
+        when(routingContext.request()).thenReturn(rxHttpServerRequest);
+        when(routingContext.get(CONTEXT_PATH)).thenReturn("/test");
+
+        TokenRequest tokenRequest = tokenRequestFactory.create(routingContext);
+
+        Assert.assertNotNull(tokenRequest);
+        Assert.assertEquals(java.util.Set.of("offline_access"), tokenRequest.getScopes());
+    }
+
     private class Parameter<K, V> implements Map.Entry<K, V> {
         private final K key;
         private V value;
