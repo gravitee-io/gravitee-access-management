@@ -168,6 +168,24 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void put_create_rejects_blank_configuration() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setConfiguration("");
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("Field 'configuration' is required for a non-system identity provider"));
+        verify(validationService, never()).validate(any(), any());
+        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+    }
+
+    @Test
     void put_updates_when_present() {
         String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
@@ -212,6 +230,28 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identityProvidersTarget(DOMAIN_KEY), definition("dev-users"));
 
         assertEquals(400, response.getStatus());
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_blank_configuration() {
+        // A blank configuration is a missing-required-field error and must read consistently with the
+        // other required fields (name/type) and with the reporter/certificate resources.
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setConfiguration("");
+
+        Response response = put(identityProvidersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("Field 'configuration' is required for a non-system identity provider"));
+        verify(validationService, never()).validate(any(), any());
         verify(identityProviderService, never())
                 .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
     }

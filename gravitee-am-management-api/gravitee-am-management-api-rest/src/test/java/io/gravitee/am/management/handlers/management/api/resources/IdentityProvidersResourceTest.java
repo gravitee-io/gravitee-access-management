@@ -18,6 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -106,6 +108,29 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
                 .path("identities")
                 .request().post(Entity.json(newIdentityProvider));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_nullConfiguration() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setName("idp-name");
+        newIdentityProvider.setType("idp-type");
+        // configuration intentionally omitted (null)
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("identities")
+                .request().post(Entity.json(newIdentityProvider));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        final String body = response.readEntity(String.class);
+        assertTrue("expected the message to mention the configuration field: " + body, body.contains("configuration"));
+        assertFalse("message interpolation must not leak: " + body, body.contains("HV000149"));
     }
 
     @Test

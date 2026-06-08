@@ -227,6 +227,40 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldNotCreate_configValidation_fails() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        doThrow(InvalidPluginConfigurationException.fromValidationError("configuration is required"))
+                .when(validationService).validate(any(), any());
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidPluginConfigurationException.class);
+
+        verify(identityProviderRepository, never()).create(any(IdentityProvider.class));
+        verify(eventService, never()).create(any());
+        verify(validationService).validate(any(), any());
+    }
+
+    @Test
+    public void shouldCreate_system_skipsConfigValidation() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null, true).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(validationService, never()).validate(any(), any());
+    }
+
+    @Test
     public void shouldNotUpdate_configValidation_fails() {
         UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
         IdentityProvider idp = new IdentityProvider();

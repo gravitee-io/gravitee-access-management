@@ -213,23 +213,30 @@ public class ReporterServiceImpl implements ReporterService {
         }
 
 
-        return checkReporterConfiguration(reporter)
-                .flatMap(ignore -> reporterRepository.create(reporter))
-                .flatMap(createdReporter -> {
-                    // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(createdReporter.getId(), createdReporter.getReference(), Action.CREATE));
-                    return eventService.create(event).flatMap(e -> Single.just(createdReporter));
-                })
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to create a reporter", ex);
-                    String message = "An error occurs while trying to create a reporter. ";
-                    if (ex instanceof ReporterConfigurationException) {
-                        message += ex.getMessage();
-                    }
-                    return Single.error(new TechnicalManagementException(message, ex));
-                });
+        return validateConfiguration(newReporter, system)
+                .andThen(Single.defer(() -> checkReporterConfiguration(reporter)
+                        .flatMap(ignore -> reporterRepository.create(reporter))
+                        .flatMap(createdReporter -> {
+                            // create event for sync process
+                            Event event = new Event(Type.REPORTER, new Payload(createdReporter.getId(), createdReporter.getReference(), Action.CREATE));
+                            return eventService.create(event).flatMap(e -> Single.just(createdReporter));
+                        })
+                        .onErrorResumeNext(ex -> {
+                            LOGGER.error("An error occurs while trying to create a reporter", ex);
+                            String message = "An error occurs while trying to create a reporter. ";
+                            if (ex instanceof ReporterConfigurationException) {
+                                message += ex.getMessage();
+                            }
+                            return Single.error(new TechnicalManagementException(message, ex));
+                        })));
     }
 
+    private Completable validateConfiguration(NewReporter newReporter, boolean system) {
+        if (system) {
+            return Completable.complete();
+        }
+        return Completable.fromAction(() -> validationService.validate(newReporter.getType(), newReporter.getConfiguration()));
+    }
 
     @Override
     public Single<Reporter> update(Reference reference, String reporterId, UpdateReporter updateReporter, User principal, boolean isUpgrader) {

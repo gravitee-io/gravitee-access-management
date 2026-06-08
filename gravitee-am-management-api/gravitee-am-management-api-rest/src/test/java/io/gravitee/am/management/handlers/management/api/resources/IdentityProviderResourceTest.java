@@ -19,12 +19,16 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -82,6 +86,24 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("identities").path(identityProviderId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotUpdate_nullConfiguration() {
+        final String domainId = "domain-id";
+        final String identityProviderId = "identityProvider-id";
+
+        UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
+        updateIdentityProvider.setName("idp-name");
+        updateIdentityProvider.setType("idp-type");
+        // configuration intentionally omitted (null)
+
+        final Response response = target("domains").path(domainId).path("identities").path(identityProviderId)
+                .request().put(Entity.json(updateIdentityProvider));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        final String body = response.readEntity(String.class);
+        assertTrue("expected the message to mention the configuration field: " + body, body.contains("configuration"));
+        assertFalse("message interpolation must not leak: " + body, body.contains("HV000149"));
     }
 
     @Test

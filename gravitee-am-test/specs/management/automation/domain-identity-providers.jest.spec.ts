@@ -225,6 +225,23 @@ describe('Automation API - Identity providers - payload validation', () => {
     expect(response.status).toBe(400);
   });
 
+  it('should reject an omitted configuration (400)', async () => {
+    const { configuration, ...withoutConfiguration } = buildInlineIdpDef({
+      key: uniqueName('autonocfg', true).toLowerCase(),
+      users: defaultUsers,
+    });
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, withoutConfiguration);
+    expect(response.status).toBe(400);
+  });
+
+  it('should reject an empty configuration (400)', async () => {
+    const response = await fixture.client.putIdentityProvider(fixture.domainKey, {
+      ...buildInlineIdpDef({ key: uniqueName('autoemptycfg', true).toLowerCase(), users: defaultUsers }),
+      configuration: '',
+    });
+    expect(response.status).toBe(400);
+  });
+
   it('should tolerate an unknown extra property in the configuration (200)', async () => {
     const key = uniqueName('autoextracfg', true).toLowerCase();
     createdIdpKeys.push(key);

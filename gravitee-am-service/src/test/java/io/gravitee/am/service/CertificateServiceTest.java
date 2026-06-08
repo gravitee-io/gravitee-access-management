@@ -34,6 +34,7 @@ import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.gravitee.am.service.model.NewCertificate;
@@ -81,6 +82,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 /**
@@ -312,6 +314,23 @@ public class CertificateServiceTest {
     public void shouldCreate_defaultCertificate_Ec() throws Exception {
         TestObserver<Certificate> testObserver = defaultCertificate(256, "SHA256withECDSA", true);
         testObserver.assertComplete();
+    }
+
+    @Test
+    public void shouldNotCreate_configValidation_fails() {
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("cert");
+        newCertificate.setType("aws-am-certificate");
+        newCertificate.setConfiguration("");
+        doThrow(InvalidPluginConfigurationException.fromValidationError("configuration is required"))
+                .when(validationService).validate(any(), any());
+
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(InvalidPluginConfigurationException.class);
+
+        verify(certificateRepository, never()).create(any());
+        verify(validationService).validate(any(), any());
     }
 
     @Test
