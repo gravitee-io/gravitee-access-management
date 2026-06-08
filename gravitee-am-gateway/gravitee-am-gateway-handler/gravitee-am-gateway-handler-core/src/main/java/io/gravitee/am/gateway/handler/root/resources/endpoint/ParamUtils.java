@@ -59,15 +59,17 @@ public class ParamUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
 
     public static Set<String> splitScopes(String scope) {
-        return scope != null && !scope.isEmpty()
-                ? Arrays.stream(scope.split("\\s+")).filter(s -> !s.isBlank()).collect(Collectors.toCollection(HashSet::new))
-                : null;
+        if (scope == null || scope.isBlank()) {
+            return null;
+        }
+        return Arrays.stream(scope.split("\\s+")).filter(s -> !s.isBlank()).collect(Collectors.toCollection(HashSet::new));
     }
 
     public static List<String> splitAcrValues(String values) {
-        return values != null && !values.isEmpty()
-                ? Arrays.stream(values.split("\\s+")).filter(s -> !s.isBlank()).collect(Collectors.toList())
-                : null;
+        if (values == null || values.isBlank()) {
+            return null;
+        }
+        return Arrays.stream(values.split("\\s+")).filter(s -> !s.isBlank()).collect(Collectors.toList());
     }
 
     public static String getOAuthParameter(RoutingContext context, String paramName) {
