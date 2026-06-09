@@ -144,6 +144,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.impl.Utils;
+import io.vertx.rxjava3.ext.web.Route;
 import io.vertx.rxjava3.ext.web.handler.LoggerFormatter;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
@@ -347,6 +348,9 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${handlers.request.logger.accesslog.enabled:false}")
     private boolean accessLogEnabled = false;
 
+    @Value("${legacy.handler.globalRootFlow.enabled:false}")
+    private boolean globalRootFlow = false;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -400,15 +404,20 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
 
         // Root policy chain handler
-        rootRouter.route()
+        Route globalRoute = rootRouter.route()
                 // client_id is useful at root level in order to handle properly the ROOT app flow
                 // but if the client_id is unknown or invalid (not only missing) the rootRouter will throw an error that will prevent to propagate the call to the right route
                 // for instance, the OAuthProvider will not execute the /oauth/authorize and there will have 500 ERROR instead of "missing client_id" OAuth 2.0 error
                 // See https://github.com/gravitee-io/issues/issues/5035
                 .handler(new ClientRequestParseHandler(clientSyncService).setContinueOnError(true))
                 .handler(dataConsentHandler)
-                .handler(geoIpHandler)
-                .handler(policyChainHandler.create(ExtensionPoint.ROOT));
+                .handler(geoIpHandler);
+
+        if (globalRootFlow) {
+            globalRoute.handler(policyChainHandler.create(ExtensionPoint.ROOT));
+        } else {
+            applyRootExtensionPoint(rootRouter);
+        }
 
         // Identifier First Login route
         rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
@@ -735,6 +744,54 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // mount root router
         router.mountSubRouter(path(), rootRouter);
+    }
+
+    private void applyRootExtensionPoint(Router rootRouter) {
+        final var rootExtensionPointHandler = policyChainHandler.create(ExtensionPoint.ROOT);
+        rootRouter.route(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGIN_CALLBACK)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGIN_SSO_POST)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGOUT)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGOUT_CALLBACK)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_REMEMBERED_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_CHALLENGE)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_ENROLL)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_RECOVERY_CODE)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_REGISTER)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_REGISTER_SUCCESS)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_RESPONSE)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_REGISTER)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_CONFIRM_REGISTRATION)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_FORGOT_PASSWORD)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_RESET_PASSWORD)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_ERROR)
+                .handler(rootExtensionPointHandler);
     }
 
     @Override
