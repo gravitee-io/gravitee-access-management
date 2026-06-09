@@ -56,6 +56,7 @@ import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.AutomationNewCertificate;
 import io.gravitee.am.service.model.NewCertificate;
@@ -239,6 +240,9 @@ public class CertificateServiceImpl implements CertificateService {
                     } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(ex);
+                    } catch (AbstractManagementException ex) {
+                        // a malformed configuration is a client error; preserve its 4xx status
+                        return Single.error(ex);
                     } catch (Exception ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
@@ -271,12 +275,46 @@ public class CertificateServiceImpl implements CertificateService {
 
     @SneakyThrows
     private Certificate createCertificateWithEmbeddedKeys(String domain, NewCertificate newCertificate, boolean isSystem, String fileKey) {
-        JsonNode configuration = objectMapper.readTree(newCertificate.getConfiguration());
-        var file = objectMapper.readTree(configuration.get(fileKey).asText());
+        ObjectNode configuration = (ObjectNode) objectMapper.readTree(newCertificate.getConfiguration());
+        EmbeddedFile file = parseEmbeddedFile(requireFileValue(configuration, fileKey), fileKey);
         // update configuration to set the file name
-        ((ObjectNode) configuration).put(fileKey, file.get(NAME).asText());
+        configuration.put(fileKey, file.name());
         newCertificate.setConfiguration(objectMapper.writeValueAsString(configuration));
-        return createCertificate(domain, newCertificate, isSystem, Base64.getDecoder().decode(file.get(CONTENT).asText()));
+        return createCertificate(domain, newCertificate, isSystem, file.content());
+    }
+
+    /**
+     * Read the value carried under {@code fileKey} in a certificate configuration.
+     */
+    private String requireFileValue(JsonNode configuration, String fileKey) {
+        JsonNode node = configuration.get(fileKey);
+        if (node == null || node.isNull() || !node.isTextual() || node.asText().isBlank()) {
+            throw InvalidPluginConfigurationException.fromValidationError("Field '" + fileKey + "' is required");
+        }
+        return node.asText();
+    }
+
+    /**
+     * Parse the embedded keystore file ({@code content} + {@code name}) carried as the value of a file field.
+     */
+    private EmbeddedFile parseEmbeddedFile(String fileValue, String fileKey) {
+        final JsonNode file;
+        try {
+            file = objectMapper.readTree(fileValue);
+        } catch (JsonProcessingException e) {
+            throw InvalidPluginConfigurationException.fromValidationError("Field '" + fileKey + "' must contain a valid certificate file");
+        }
+        JsonNode contentNode = file == null ? null : file.get(CONTENT);
+        JsonNode nameNode = file == null ? null : file.get(NAME);
+        if (contentNode == null || !contentNode.isTextual() || nameNode == null || !nameNode.isTextual()) {
+            throw InvalidPluginConfigurationException.fromValidationError(
+                    "Field '" + fileKey + "' must contain a certificate file with 'content' and 'name'");
+        }
+        try {
+            return new EmbeddedFile(Base64.getDecoder().decode(contentNode.asText()), nameNode.asText());
+        } catch (IllegalArgumentException e) {
+            throw InvalidPluginConfigurationException.fromValidationError("Field '" + fileKey + "' contains invalid Base64 file content");
+        }
     }
 
     private Certificate createCertificate(String domain, NewCertificate newCertificate, boolean isSystem) {
@@ -333,6 +371,10 @@ public class CertificateServiceImpl implements CertificateService {
                     }
                 })
                 .flatMap(oldCertificate -> {
+                    Certificate existing = oldCertificate.certificate();
+                    if (!existing.isSystem()) {
+                        ensureParseableConfiguration(updateCertificate.getConfiguration());
+                    }
                     var certificate = getCertificateToUpdate(updateCertificate, oldCertificate);
 
                     Optional<String> newAlias = extractAlias(certificate.getConfiguration());
@@ -378,13 +420,28 @@ public class CertificateServiceImpl implements CertificateService {
                 });
     }
 
+    /**
+     * Ensure a user-supplied configuration is present and well-formed JSON before it is parsed for key
+     * embedding.
+     */
+    private void ensureParseableConfiguration(String configuration) {
+        if (configuration == null || configuration.isBlank()) {
+            throw InvalidPluginConfigurationException.fromValidationError("configuration is required");
+        }
+        try {
+            objectMapper.readTree(configuration);
+        } catch (JsonProcessingException e) {
+            throw InvalidPluginConfigurationException.fromValidationError("configuration is not valid JSON");
+        }
+    }
+
     private Certificate getCertificateToUpdate(UpdateCertificate updateCertificate, CertificateWithSchema oldCertificate) throws JsonProcessingException, CertificateException {
         var certificateToUpdate = new Certificate(oldCertificate.certificate());
         certificateToUpdate.setName(updateCertificate.getName());
         certificateToUpdate.setUpdatedAt(new Date());
-        // System certificate config is normally immutable through the API, but the Automation API owns the
-        // lifecycle of the resources it manages, so it may update their configuration.
-        if (!certificateToUpdate.isSystem() || certificateToUpdate.getManagedBy() == ManagedBy.AUTOMATION_API) {
+        // A system certificate's configuration is immutable through the service layer (it is owned by
+        // gravitee.yaml); only a non-system certificate's configuration is updated.
+        if (!certificateToUpdate.isSystem()) {
             oldCertificate.schema.getFileKey().ifPresent(fileKey -> updateEmbeddedKeys(updateCertificate, certificateToUpdate, oldCertificate, fileKey));
             certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
         }
@@ -397,15 +454,16 @@ public class CertificateServiceImpl implements CertificateService {
                                     Certificate certificateToUpdate,
                                     CertificateWithSchema oldCertificate,
                                     String fileKey) {
-        JsonNode updateCertJson = objectMapper.readTree(updateCertificate.getConfiguration());
-        var oldFileInformation = objectMapper.readTree(oldCertificate.certificate().getConfiguration()).get(fileKey).asText();
-        var fileInformation = updateCertJson.get(fileKey).asText();
+        ObjectNode updateCertJson = (ObjectNode) objectMapper.readTree(updateCertificate.getConfiguration());
+        var fileInformation = requireFileValue(updateCertJson, fileKey);
+        JsonNode oldFileNode = objectMapper.readTree(oldCertificate.certificate().getConfiguration()).get(fileKey);
+        var oldFileInformation = oldFileNode == null ? null : oldFileNode.asText();
         // file has changed, let's update it
         if (!oldFileInformation.equals(fileInformation)) {
-            var file = objectMapper.readTree(fileInformation);
-            certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(FILE, Base64.getDecoder().decode(file.get(CONTENT).asText()))));
+            EmbeddedFile file = parseEmbeddedFile(fileInformation, fileKey);
+            certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(FILE, file.content())));
             // update configuration to set the file path
-            ((ObjectNode) updateCertJson).put(fileKey, file.get(NAME).asText());
+            updateCertJson.put(fileKey, file.name());
         }
         updateCertificate.setConfiguration(objectMapper.writeValueAsString(updateCertJson));
     }
@@ -720,5 +778,8 @@ public class CertificateServiceImpl implements CertificateService {
         validationResult.getAdditionalInformation("expDate", Date.class)
             .ifPresent(certificate::setExpiresAt);
         return certificate;
+    }
+
+    private record EmbeddedFile(byte[] content, String name) {
     }
 }

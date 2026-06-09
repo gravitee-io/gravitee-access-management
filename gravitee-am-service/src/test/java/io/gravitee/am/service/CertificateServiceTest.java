@@ -334,6 +334,38 @@ public class CertificateServiceTest {
     }
 
     @Test
+    public void shouldNotCreate_missingFileContent_returnsInvalidPluginConfigurationException() {
+        var type = DEFAULT_CERTIFICATE_PLUGIN;
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("cert");
+        newCertificate.setType(type);
+        newCertificate.setConfiguration("{\"storepass\":\"ca-secret\",\"alias\":\"test-cert\",\"keypass\":\"ca-secret\"}");
+
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(InvalidPluginConfigurationException.class);
+
+        verify(certificateRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotCreate_malformedFileContent_returnsInvalidPluginConfigurationException() {
+        var type = DEFAULT_CERTIFICATE_PLUGIN;
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("cert");
+        newCertificate.setType(type);
+        newCertificate.setConfiguration("{\"content\":\"not-a-file-object\",\"storepass\":\"ca-secret\",\"alias\":\"test-cert\",\"keypass\":\"ca-secret\"}");
+
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(InvalidPluginConfigurationException.class);
+
+        verify(certificateRepository, never()).create(any());
+    }
+
+    @Test
     public void shouldCreateAwsCertificate() {
         var type = "aws-am-certificate";
         when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateAwsSchemaDefinition));
@@ -381,6 +413,44 @@ public class CertificateServiceTest {
         verify(certificateRepository, times(1)).update(any());
         verify(eventService, times(1)).create(any(), any());
         verify(validationService).validate(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdate_malformedConfiguration_rejectedBeforeKeyEmbedding() {
+        var id = "123";
+        var type = DEFAULT_CERTIFICATE_PLUGIN; // has a file key, so a malformed config fails during key embedding
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var updateCertificate = new UpdateCertificate();
+        updateCertificate.setConfiguration("not-json");
+        var certificate = new Certificate(); // non-system
+        certificate.setType(type);
+        when(certificateRepository.findById(any())).thenReturn(Maybe.just(certificate));
+
+        certificateService.update(DOMAIN, id, updateCertificate, Mockito.mock(User.class))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidPluginConfigurationException.class);
+
+        verify(certificateRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotUpdate_missingFileContent_returnsInvalidPluginConfigurationException() {
+        var id = "123";
+        var type = DEFAULT_CERTIFICATE_PLUGIN;
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var updateCertificate = new UpdateCertificate();
+        updateCertificate.setConfiguration("{\"storepass\":\"ca-secret\",\"alias\":\"test-cert\",\"keypass\":\"ca-secret\"}");
+        var certificate = new Certificate(); // non-system
+        certificate.setType(type);
+        when(certificateRepository.findById(any())).thenReturn(Maybe.just(certificate));
+
+        certificateService.update(DOMAIN, id, updateCertificate, Mockito.mock(User.class))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidPluginConfigurationException.class);
+
+        verify(certificateRepository, never()).update(any());
     }
 
     @Test

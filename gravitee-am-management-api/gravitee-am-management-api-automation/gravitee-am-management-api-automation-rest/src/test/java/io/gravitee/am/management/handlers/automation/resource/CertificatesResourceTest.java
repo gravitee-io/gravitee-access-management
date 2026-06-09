@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.automation.model.AutomationCertificate
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -182,6 +183,90 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Response response = put(certificatesTarget(DOMAIN_KEY), definition("my-cert", false));
 
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void put_create_propagates_invalid_configuration_as_400() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        when(certificateService.create(any(Domain.class), any(), any(), eq(false)))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
+
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration("not-json");
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(certificateService).create(any(Domain.class), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_missing_required_fields() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+
+        AutomationCertificate def = new AutomationCertificate();
+        def.setAutomationKey("my-cert");
+        // name and type intentionally omitted
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(certificateService, never()).update(any(Domain.class), eq(certId), any(), any());
+    }
+
+    @Test
+    void put_update_rejects_configuration_not_matching_schema() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+        when(certificateService.update(any(Domain.class), eq(certId), any(), any()))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), definition("my-cert", false));
+
+        assertEquals(400, response.getStatus());
+        verify(certificateService).update(any(Domain.class), eq(certId), any(), any());
+    }
+
+    @Test
+    void put_update_rejects_blank_configuration() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration("");
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("Field 'configuration' is required for a non-system certificate"));
+        verify(certificateService, never()).update(any(Domain.class), eq(certId), any(), any());
+    }
+
+    @Test
+    void put_update_rejects_type_change_without_config_checks() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+
+        AutomationCertificate def = definition("my-cert", false); // existing type is javakeystore-am-certificate
+        def.setType("pkcs12-am-certificate");
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("The 'type' is immutable for an existing certificate"));
+        verify(certificateService, never()).update(any(Domain.class), eq(certId), any(), any());
     }
 
     @Test
