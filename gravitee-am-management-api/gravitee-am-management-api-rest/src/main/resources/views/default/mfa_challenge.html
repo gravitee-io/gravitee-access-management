@@ -79,7 +79,7 @@
         </form>
 
         <div th:if="${mfaChallengeResendEnabled}" id="mfa-resend-container" class="form">
-            <button type="button" id="resend" class="button secondary" th:text="#{mfa_challenge.button.resend}"></button>
+            <button type="button" id="mfa-resend-button" class="button secondary" th:text="#{mfa_challenge.button.resend}"></button>
             <div id="mfa-resend-message" class="item" style="display: block; visibility: hidden"></div>
         </div>
 
@@ -98,6 +98,7 @@
         messages: {
             success: /*[[#{mfa_challenge.resend.success}]]*/ 'A new code has been sent',
             rateLimit: /*[[#{mfa_challenge.rate.limit.error}]]*/ 'Too many codes requested, please try again later',
+            sending: /*[[#{mfa_challenge.resend.sending}]]*/ 'Sending...',
             error: /*[[#{mfa_challenge.resend.error}]]*/ 'Unable to send a new code, please try again later'
         }
     };

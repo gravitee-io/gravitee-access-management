@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.common.exception.mfa.SendChallengeException;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -26,6 +28,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpStatusCode;
@@ -33,7 +36,8 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
+import io.vertx.rxjava3.ext.web.handler.SessionHandler;
+import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,6 +51,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -74,6 +79,8 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
     private RateLimiterService rateLimiterService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private AuthenticationFlowContextService authenticationFlowContextService;
 
     private MFAChallengeSendEndpoint mfaChallengeSendEndpoint;
 
@@ -158,5 +165,47 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
         Assert.assertEquals(HttpStatusCode.BAD_REQUEST_400, spyRoutingContext.response().getStatusCode());
         Assert.assertEquals(MediaType.APPLICATION_JSON, spyRoutingContext.response().headers().get("Content-Type"));
         verify(factorProvider, times(0)).sendChallenge(any());
+    }
+
+    @Test
+    public void shouldReturnJsonError_whenSendChallengeFails_fallbackToServiceUnavailable() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.error(new TechnicalException("Email can't be sent")));
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+
+        router.route("/mfa/challenge/send")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(ctx -> {
+                    Client client = new Client();
+                    client.setFactors(Collections.singleton("factorId"));
+                    User user = new User();
+                    ctx.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+                    ctx.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    ctx.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+                    ctx.next();
+                })
+                .handler(mfaChallengeSendEndpoint)
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+
+        testRequest(
+                HttpMethod.POST,
+                "/mfa/challenge/send",
+                req -> req.putHeader("Accept", MediaType.APPLICATION_JSON),
+                resp -> {
+                    Assert.assertNull(resp.headers().get("Location"));
+                    Assert.assertEquals(MediaType.APPLICATION_JSON, resp.headers().get("Content-Type"));
+                },
+                HttpStatusCode.SERVICE_UNAVAILABLE_503,
+                "Service Unavailable",
+                "{\"error\":\"mfa_challenge_failed\",\"error_code\":\"send_challenge_failed\",\"error_description\":\"Unable to send a new code, please try again later\"}");
+
+        verify(factorProvider, times(1)).sendChallenge(any());
     }
 }

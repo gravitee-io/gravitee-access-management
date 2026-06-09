@@ -9,6 +9,43 @@
     if (!resendButton) {
         return;
     }
+    const cooldownSeconds = 5;
+    const resendButtonText = resendButton.textContent;
+    const sendingText = config.messages.sending;
+    let cooldownInterval = null;
+
+    const clearCooldown = () => {
+        if (cooldownInterval !== null) {
+            clearInterval(cooldownInterval);
+            cooldownInterval = null;
+        }
+    };
+
+    const disableButton = (text) => {
+        resendButton.disabled = true;
+        resendButton.classList.add('button-disabled');
+        resendButton.textContent = text;
+    };
+
+    const enableButton = () => {
+        clearCooldown();
+        resendButton.disabled = false;
+        resendButton.classList.remove('button-disabled');
+        resendButton.textContent = resendButtonText;
+    };
+
+    const startCooldown = () => {
+        let remainingSeconds = cooldownSeconds;
+        disableButton(resendButtonText + ' (' + remainingSeconds + ')');
+        cooldownInterval = setInterval(() => {
+            remainingSeconds -= 1;
+            if (remainingSeconds <= 0) {
+                enableButton();
+                return;
+            }
+            disableButton(resendButtonText + ' (' + remainingSeconds + ')');
+        }, 1000);
+    };
 
     const showMessage = (text, isError) => {
         if (!messageElement) {
@@ -32,7 +69,8 @@
         }
 
         hideMessage();
-        resendButton.disabled = true;
+        clearCooldown();
+        disableButton(sendingText);
 
         const formData = new FormData();
         if (config.csrfParameterName && config.csrfToken) {
@@ -68,7 +106,9 @@
                 showMessage(config.messages.error, true);
             })
             .finally(function () {
-                resendButton.disabled = false;
+                startCooldown();
             });
     });
+
+    startCooldown();
 })();
