@@ -97,6 +97,7 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageTokenHandler.PROPERTY_REQUEST_JSON_LOGGER_ENABLED;
@@ -108,6 +109,13 @@ import static io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageToken
 public class OAuth2Provider extends AbstractProtocolProvider {
 
 
+    public static final String PATH_AUTHORIZE = "/authorize";
+    public static final String PATH_CONSENT = "/consent";
+    public static final String PATH_TOKEN = "/token";
+    public static final String PATH_INTROSPECT = "/introspect";
+    public static final String PATH_REVOKE = "/revoke";
+    public static final String PATH_PAR = "/par";
+    public static final String PATH_ERROR = "/error";
     @Autowired
     private Domain domain;
 
@@ -237,6 +245,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     @Autowired
     private AuditService auditService;
 
+    @Value("${legacy.handler.globalRootFlow.enabled:false}")
+    private boolean globalRootFlow = false;
+
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -284,20 +296,22 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         xssHandler(oauth2Router);
 
-        AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
+        applyAuthenticationFlowHandler(oauth2Router);
+
+        applyRootExtensionPoint(oauth2Router);
+
         Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
         ReturnUrlValidationHandler returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
 
         // Authorization endpoint
-        oauth2Router.route(HttpMethod.OPTIONS, "/authorize")
+        oauth2Router.route(HttpMethod.OPTIONS, PATH_AUTHORIZE)
                 .handler(corsHandler);
-        oauth2Router.route(HttpMethod.GET, "/authorize")
+        oauth2Router.route(HttpMethod.GET, PATH_AUTHORIZE)
                 .handler(corsHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
-                .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
@@ -314,10 +328,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
-        oauth2Router.route(HttpMethod.GET, "/consent")
+        oauth2Router.route(HttpMethod.GET, PATH_CONSENT)
                 .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
-                .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
@@ -326,10 +339,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
                 .handler(localeHandler)
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
-        oauth2Router.route(HttpMethod.POST, "/consent")
+
+        oauth2Router.route(HttpMethod.POST, PATH_CONSENT)
                 .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
-                .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
@@ -338,13 +351,13 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new UserConsentProcessHandler(userConsentService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
                 .handler(new UserConsentPostEndpoint());
-        oauth2Router.route("/consent")
+        oauth2Router.route(PATH_CONSENT)
                 .failureHandler(new UserConsentFailureHandler());
 
         // Token endpoint
-        oauth2Router.route(HttpMethod.OPTIONS, "/token")
+        oauth2Router.route(HttpMethod.OPTIONS, PATH_TOKEN)
                 .handler(corsHandler);
-        oauth2Router.route(HttpMethod.POST, "/token")
+        oauth2Router.route(HttpMethod.POST, PATH_TOKEN)
                 .handler(corsHandler)
                 .handler(new TokenRequestParseHandler())
                 .handler(clientAuthHandler)
@@ -352,30 +365,30 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new TokenEndpoint(tokenGranter));
 
         // Introspection endpoint
-        oauth2Router.route(HttpMethod.POST, "/introspect")
+        oauth2Router.route(HttpMethod.POST, PATH_INTROSPECT)
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
                 .handler(new IntrospectionEndpoint(introspectionService));
 
         // Revocation endpoint
-        oauth2Router.route(HttpMethod.OPTIONS, "/revoke")
+        oauth2Router.route(HttpMethod.OPTIONS, PATH_REVOKE)
                 .handler(corsHandler);
-        oauth2Router.route(HttpMethod.POST, "/revoke")
+        oauth2Router.route(HttpMethod.POST, PATH_REVOKE)
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(corsHandler)
                 .handler(clientAuthHandler)
                 .handler(new RevocationTokenEndpoint(revocationTokenService));
 
         // Error endpoint
-        oauth2Router.route(HttpMethod.GET, "/error")
+        oauth2Router.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
 
         // Pushed Authorization Request
-        oauth2Router.route(HttpMethod.POST, "/par")
+        oauth2Router.route(HttpMethod.POST, PATH_PAR)
                 .handler(clientAuthHandler)
                 .handler(new PushedAuthorizationRequestEndpoint(parService));
 
-        oauth2Router.route("/par")
+        oauth2Router.route(PATH_PAR)
                 .handler(new PushedAuthorizationRequestEndpoint.MethodNotAllowedHandler());
 
         // error handler
@@ -383,6 +396,25 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // mount OAuth 2.0 router
         router.route(subRouterPath()).subRouter(oauth2Router);
+    }
+
+    private void applyRootExtensionPoint(Router oauth2Router) {
+        if (!globalRootFlow) {
+            final var rootExtensionPointHandler = policyChainHandler.create(ExtensionPoint.ROOT);
+            oauth2Router.route(PATH_AUTHORIZE).handler(rootExtensionPointHandler);
+            oauth2Router.route(PATH_CONSENT).handler(rootExtensionPointHandler);
+            oauth2Router.route(PATH_TOKEN).handler(rootExtensionPointHandler);
+            oauth2Router.route(PATH_INTROSPECT).handler(rootExtensionPointHandler);
+            oauth2Router.route(PATH_REVOKE).handler(rootExtensionPointHandler);
+            oauth2Router.route(PATH_PAR).handler(rootExtensionPointHandler);
+            oauth2Router.route(PATH_ERROR).handler(rootExtensionPointHandler);
+        }
+    }
+
+    private void applyAuthenticationFlowHandler(Router oauth2Router) {
+        AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
+        oauth2Router.route(PATH_AUTHORIZE).handler(authenticationFlowContextHandler);
+        oauth2Router.route(PATH_CONSENT).handler(authenticationFlowContextHandler);
     }
 
     @Override
@@ -397,29 +429,29 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private void sessionAndCookieHandler(Router router) {
         // OAuth 2.0 Authorization endpoint
         router
-                .route("/authorize")
+                .route(PATH_AUTHORIZE)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
 
         router
-                .route("/consent")
+                .route(PATH_CONSENT)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
     }
 
     private void csrfHandler(Router router) {
-        router.route("/consent").handler(csrfHandler);
+        router.route(PATH_CONSENT).handler(csrfHandler);
     }
 
     private void cspHandler(Router router) {
-        router.route("/consent").handler(cspHandler);
+        router.route(PATH_CONSENT).handler(cspHandler);
     }
 
     private void xFrameHandler(Router router) {
-        router.route("/consent").handler(xframeHandler);
+        router.route(PATH_CONSENT).handler(xframeHandler);
     }
     private void xssHandler(Router router) {
-        router.route("/consent").handler(xssHandler);
+        router.route(PATH_CONSENT).handler(xssHandler);
     }
 
     private void errorHandler(Router router) {

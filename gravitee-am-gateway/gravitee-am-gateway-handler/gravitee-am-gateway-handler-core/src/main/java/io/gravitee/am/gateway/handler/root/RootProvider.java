@@ -50,9 +50,6 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.handler.GraviteeLoggerHandler;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeGetEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeSendEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint;
@@ -64,7 +61,9 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallb
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeGetEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengePostEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeSendEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollPostEndpoint;
@@ -87,16 +86,29 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebauthnErrorEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackDeviceIdHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginPostWebAuthnHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginPageHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginRedirectToAuthorizeHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUserHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
@@ -121,13 +133,13 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebauthnClientErrorReportingContextHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnTelemetrySameOriginHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnEnforcePasswordHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRememberDeviceHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnTelemetrySameOriginHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebauthnClientErrorReportingContextHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -139,8 +151,9 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.Vertx;
 import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.Route;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -351,6 +364,9 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${handlers.webauthn.clientErrorReporting.enabled:false}")
     private boolean webauthnClientErrorReportingEnabled = false;
 
+    @Value("${legacy.handler.globalRootFlow.enabled:false}")
+    private boolean globalRootFlow = false;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -406,15 +422,20 @@ public class RootProvider extends AbstractProtocolProvider {
                 new WebauthnClientErrorReportingContextHandler(webauthnClientErrorReportingEnabled);
 
         // Root policy chain handler
-        rootRouter.route()
+        Route globalRoute = rootRouter.route()
                 // client_id is useful at root level in order to handle properly the ROOT app flow
                 // but if the client_id is unknown or invalid (not only missing) the rootRouter will throw an error that will prevent to propagate the call to the right route
                 // for instance, the OAuthProvider will not execute the /oauth/authorize and there will have 500 ERROR instead of "missing client_id" OAuth 2.0 error
                 // See https://github.com/gravitee-io/issues/issues/5035
                 .handler(new ClientRequestParseHandler(clientLookupService).setContinueOnError(true))
                 .handler(dataConsentHandler)
-                .handler(geoIpHandler)
-                .handler(policyChainHandler.create(ExtensionPoint.ROOT));
+                .handler(geoIpHandler);
+
+        if (globalRootFlow) {
+            globalRoute.handler(policyChainHandler.create(ExtensionPoint.ROOT));
+        } else {
+            applyRootExtensionPoint(rootRouter);
+        }
 
         // Identifier First Login route
         rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
@@ -762,6 +783,54 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // mount root router
         router.route(subRouterPath()).subRouter(rootRouter);
+    }
+
+    private void applyRootExtensionPoint(Router rootRouter) {
+        final var rootExtensionPointHandler = policyChainHandler.create(ExtensionPoint.ROOT);
+        rootRouter.route(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGIN_CALLBACK)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGIN_SSO_POST)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGOUT)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_LOGOUT_CALLBACK)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_REMEMBERED_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_CHALLENGE)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_ENROLL)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_MFA_RECOVERY_CODE)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_REGISTER)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_REGISTER_SUCCESS)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_LOGIN)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_WEBAUTHN_RESPONSE)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_REGISTER)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_CONFIRM_REGISTRATION)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_FORGOT_PASSWORD)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_RESET_PASSWORD)
+                .handler(rootExtensionPointHandler);
+        rootRouter.route(PATH_ERROR)
+                .handler(rootExtensionPointHandler);
     }
 
     @Override

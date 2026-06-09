@@ -110,7 +110,10 @@ public class EnrichAuthFlowPolicy {
 
         if(configuration.isIdempotent()) {
             return authContextRepository.replace(authContext)
-                    .doOnSuccess(ctx -> executionContext.setAttribute(ConstantKeys.AUTH_FLOW_CONTEXT_KEY, ctx));
+                    .doOnSuccess(ctx -> {
+                        executionContext.setAttribute(ConstantKeys.AUTH_FLOW_CONTEXT_KEY, ctx);
+                        executionContext.setAttribute(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
+                    });
         } else {
             return authContextRepository.create(authContext);
         }
