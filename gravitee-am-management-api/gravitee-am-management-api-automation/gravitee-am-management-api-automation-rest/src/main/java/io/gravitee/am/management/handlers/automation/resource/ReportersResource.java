@@ -25,12 +25,10 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewReporter;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -75,9 +73,6 @@ public class ReportersResource extends AbstractAutomationResource {
 
     @Autowired
     private ReporterPluginService reporterPluginService;
-
-    @Autowired
-    private PluginConfigurationValidationService validationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -169,6 +164,16 @@ public class ReportersResource extends AbstractAutomationResource {
                                 // re-PUT is an idempotent no-op
                                 return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
                             }
+                            // 'type' is an immutable identity attribute; reject a change early
+                            if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+                                return Single.error(new InvalidParameterException(
+                                        "The 'type' is immutable for an existing reporter '" + key
+                                                + "'; delete and recreate it to change it"));
+                            }
+                            Single<AutomationReporter> updateRejection = rejectIfMissingReporterFields(definition, key);
+                            if (updateRejection != null) {
+                                return updateRejection;
+                            }
                             return reporterPluginService.checkPluginDeployment(definition.getType())
                                     .andThen(reporterService.update(reference, existing.getId(),
                                             AutomationReporterMapper.toUpdateReporter(definition), principal, false))
@@ -199,8 +204,6 @@ public class ReportersResource extends AbstractAutomationResource {
                         AutomationNewReporter newReporter = AutomationReporterMapper.toNewReporter(definition);
                         newReporter.setId(reporterId);
                         return reporterPluginService.checkPluginDeployment(definition.getType())
-                                .andThen(Completable.fromAction(() ->
-                                        validationService.validate(definition.getType(), definition.getConfiguration())))
                                 .andThen(Single.defer(() -> reporterService.create(reference, newReporter, principal, false)))
                                 .map(AutomationReporterMapper::toAutomationReporter);
                     });
