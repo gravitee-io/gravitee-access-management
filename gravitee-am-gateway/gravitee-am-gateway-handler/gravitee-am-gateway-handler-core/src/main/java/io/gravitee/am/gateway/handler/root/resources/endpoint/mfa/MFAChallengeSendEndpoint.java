@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -47,6 +48,7 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeSendEndpoint.class);
     private static final String SEND_CHALLENGE_FAILED = "send_challenge_failed";
+    private static final String SEND_CHALLENGE_FAILED_DESCRIPTION = "Unable to send a new code, please try again later";
 
     public MFAChallengeSendEndpoint(FactorManager factorManager,
                                     TemplateEngine engine,
@@ -81,7 +83,7 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
             sendMfaChallenge(factorProvider, routingContext, factor, endUser, true, true, resChallenge -> {
                 if (resChallenge.failed()) {
                     logger.error("An error has occurred when resending MFA challenge", resChallenge.cause());
-                    routingContext.fail(resChallenge.cause());
+                    respondJsonChallengeFailure(routingContext, SEND_CHALLENGE_FAILED, SEND_CHALLENGE_FAILED_DESCRIPTION, HttpStatusCode.SERVICE_UNAVAILABLE_503);
                     return;
                 }
                 respondJsonChallengeSuccess(routingContext);
