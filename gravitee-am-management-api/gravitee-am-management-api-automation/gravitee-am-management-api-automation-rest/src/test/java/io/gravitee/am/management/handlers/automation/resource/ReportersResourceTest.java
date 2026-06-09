@@ -39,7 +39,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -212,12 +211,12 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
-    void put_rejects_configuration_not_matching_schema() {
-        // A configuration that fails schema validation (e.g. malformed / non-conforming) is rejected.
+    void put_create_propagates_invalid_configuration_as_400() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
-        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
-                .when(validationService).validate(eq("reporter-am-file"), anyString());
+        when(reporterPluginService.checkPluginDeployment(eq("reporter-am-file"))).thenReturn(Completable.complete());
+        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         AutomationReporter def = definition("audit-log", false);
         def.setConfiguration("not-json");
@@ -225,11 +224,12 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(reporterService, never()).create(eq(reference), any(), any(), eq(false));
+        verify(reporterPluginService).checkPluginDeployment(eq("reporter-am-file"));
+        verify(reporterService).create(eq(reference), any(), any(), eq(false));
     }
 
     @Test
-    void put_validates_type_and_configuration_before_create() {
+    void put_checks_plugin_deployment_before_create() {
         String reporterId = AutomationIds.reporterId(domainId, "audit-log");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
@@ -240,7 +240,6 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         verify(reporterPluginService).checkPluginDeployment(eq("reporter-am-file"));
-        verify(validationService).validate(eq("reporter-am-file"), eq("{}"));
     }
 
     @Test
@@ -255,6 +254,77 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
 
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void put_update_rejects_missing_required_fields() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        AutomationReporter def = new AutomationReporter();
+        def.setAutomationKey("audit-log");
+        // name and type intentionally omitted
+
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        verify(reporterService, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_configuration_not_matching_schema() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+        when(reporterPluginService.checkPluginDeployment(eq("reporter-am-file"))).thenReturn(Completable.complete());
+        when(reporterService.update(eq(reference), eq(reporterId), any(), any(), eq(false)))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
+
+        Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
+
+        assertEquals(400, response.getStatus());
+        verify(reporterPluginService).checkPluginDeployment(eq("reporter-am-file"));
+        verify(reporterService).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_blank_configuration() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        AutomationReporter def = definition("audit-log", false);
+        def.setConfiguration("");
+
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("Field 'configuration' is required for a non-system reporter"));
+        verify(reporterService, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_update_rejects_type_change() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        AutomationReporter def = definition("audit-log", false); // existing type is reporter-am-file
+        def.setType("reporter-am-kafka");
+
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("The 'type' is immutable for an existing reporter"));
+        verify(reporterPluginService, never()).checkPluginDeployment(anyString());
+        verify(reporterService, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
     }
 
     @Test

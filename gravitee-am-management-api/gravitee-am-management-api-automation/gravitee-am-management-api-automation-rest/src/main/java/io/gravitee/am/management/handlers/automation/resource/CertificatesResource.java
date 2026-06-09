@@ -158,6 +158,16 @@ public class CertificatesResource extends AbstractAutomationResource {
                                 // re-PUT is an idempotent no-op
                                 return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
                             }
+                            // 'type' is an immutable identity attribute; reject a change early
+                            if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+                                return Single.error(new InvalidParameterException(
+                                        "The 'type' is immutable for an existing certificate '" + key
+                                                + "'; delete and recreate it to change it"));
+                            }
+                            Single<AutomationCertificate> updateRejection = rejectIfMissingCertificateFields(definition, key);
+                            if (updateRejection != null) {
+                                return updateRejection;
+                            }
                             return certificateService.update(domain, existing.getId(),
                                             AutomationCertificateMapper.toUpdateCertificate(definition), principal)
                                     .map(AutomationCertificateMapper::toAutomationCertificate);
