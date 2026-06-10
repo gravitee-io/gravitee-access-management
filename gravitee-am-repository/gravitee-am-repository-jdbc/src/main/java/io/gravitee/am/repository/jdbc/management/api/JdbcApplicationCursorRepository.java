@@ -35,6 +35,7 @@ import java.util.List;
 import static io.gravitee.am.repository.jdbc.management.api.JdbcApplicationRepository.COL_DOMAIN;
 import static io.gravitee.am.repository.jdbc.management.api.JdbcApplicationRepository.COL_ID;
 import static io.gravitee.am.repository.jdbc.management.api.JdbcApplicationRepository.COL_NAME;
+import static io.gravitee.am.repository.jdbc.management.api.JdbcApplicationRepository.COL_TYPE;
 import static io.gravitee.am.repository.jdbc.management.api.JdbcApplicationRepository.COL_UPDATED_AT;
 
 @Component
@@ -68,6 +69,11 @@ public class JdbcApplicationCursorRepository
             where.append(" AND ").append(applicationColumn(COL_ID)).append(" IN (:applicationIds)");
         }
 
+        boolean hasTypes = cursor.getTypes() != null && !cursor.getTypes().isEmpty();
+        if (hasTypes) {
+            where.append(" AND ").append(applicationColumn(COL_TYPE)).append(" IN (:types)");
+        }
+
         String queryValue = null;
         if (StringUtils.hasText(cursor.getQuery())) {
             boolean wildcardMatch = cursor.getQuery().contains("*");
@@ -85,6 +91,7 @@ public class JdbcApplicationCursorRepository
         String countSql = "SELECT COUNT(DISTINCT " + applicationColumn(COL_ID) + ") FROM applications a WHERE " + filter;
         String selectSql = "SELECT * FROM applications a WHERE " + filter;
         String finalQueryValue = queryValue;
+        List<String> typeNames = hasTypes ? cursor.getTypes().stream().map(Enum::name).toList() : null;
 
         return new CursorQuerySpec(
                 selectSql,
@@ -93,6 +100,9 @@ public class JdbcApplicationCursorRepository
                     spec = spec.bind(COL_DOMAIN, domain);
                     if (applicationIds != null) {
                         spec = spec.bind("applicationIds", applicationIds);
+                    }
+                    if (typeNames != null) {
+                        spec = spec.bind("types", typeNames);
                     }
                     if (finalQueryValue != null) {
                         spec = spec.bind("value", finalQueryValue);

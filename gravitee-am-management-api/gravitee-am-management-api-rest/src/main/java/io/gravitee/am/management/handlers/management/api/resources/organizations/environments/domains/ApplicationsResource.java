@@ -55,7 +55,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -106,7 +105,9 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("type") List<ApplicationType> typeParams,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
-        Set<ApplicationType> types = (typeParams == null || typeParams.isEmpty()) ? null : new HashSet<>(typeParams);
+        // When no type is requested, default to every application type except AGENT so agents
+        // are not returned by the generic applications listing (they are listed explicitly via type=AGENT).
+        Set<ApplicationType> types = ApplicationType.defaultingToNonAgent(typeParams);
         ApplicationFilter filter = new ApplicationFilter(status, ownerEmail, types);
 
         // owner.email filter requires ORGANIZATION_USER[READ] — checked here, resolved in service

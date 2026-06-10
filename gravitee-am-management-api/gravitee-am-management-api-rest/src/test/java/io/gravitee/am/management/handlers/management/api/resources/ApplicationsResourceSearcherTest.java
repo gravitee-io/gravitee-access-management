@@ -210,6 +210,36 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldSearch_noType_defaultsToNonAgentTypes() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(page(List.of(), null, 0L)))
+                .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        target("domains").path(DOMAIN_ID).path("applications").path("search").request().get();
+
+        final ArgumentCaptor<ApplicationCursorRequest> captor = ArgumentCaptor.forClass(ApplicationCursorRequest.class);
+        verify(applicationSearcher, atLeastOnce()).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), captor.capture(), any(), anyInt());
+        final List<ApplicationType> types = captor.getValue().getTypes();
+        assertNotNull("no-type search should default to an explicit type set", types);
+        assertFalse("agents must be excluded by default", types.contains(ApplicationType.AGENT));
+        assertTrue("non-agent types should be present", types.contains(ApplicationType.WEB));
+    }
+
+    @Test
+    public void shouldSearch_agentType_forwardedVerbatim() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(page(List.of(), null, 0L)))
+                .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        target("domains").path(DOMAIN_ID).path("applications").path("search")
+                .queryParam("type", "AGENT").request().get();
+
+        final ArgumentCaptor<ApplicationCursorRequest> captor = ArgumentCaptor.forClass(ApplicationCursorRequest.class);
+        verify(applicationSearcher, atLeastOnce()).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), captor.capture(), any(), anyInt());
+        assertEquals(List.of(ApplicationType.AGENT), captor.getValue().getTypes());
+    }
+
+    @Test
     public void shouldSearch_queryAndOwnerEmailForwarded() {
         doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.just(page(List.of(), null, 0L)))

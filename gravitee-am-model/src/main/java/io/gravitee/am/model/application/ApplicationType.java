@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.model.application;
 
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -32,5 +37,17 @@ public enum ApplicationType {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /**
+     * Resolves the effective set of application types to filter on for the generic
+     * applications listing: when no type is explicitly requested, every type except
+     * {@link #AGENT} is returned so agents are excluded from the standard listing.
+     * Agents remain reachable by requesting {@code AGENT} explicitly.
+     */
+    public static Set<ApplicationType> defaultingToNonAgent(Collection<ApplicationType> requested) {
+        return (requested == null || requested.isEmpty())
+                ? EnumSet.complementOf(EnumSet.of(AGENT))
+                : new HashSet<>(requested);
     }
 }

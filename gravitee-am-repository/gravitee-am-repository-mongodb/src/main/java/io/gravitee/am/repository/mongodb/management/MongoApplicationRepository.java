@@ -127,7 +127,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
-    private static final String FIELD_TYPE = "type";
+    static final String FIELD_TYPE = "type";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct

@@ -122,7 +122,7 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
                 page,
                 query,
                 status == null ? null : STATUS_ENABLED.equalsIgnoreCase(status),
-                types
+                effectiveTypes(types)
         );
         processCursorRequest(organizationId, environmentId, domainId, cursorRequest, ownerEmail, limit, expands, uriInfo)
                 .subscribe(response::resume, response::resume);
@@ -159,7 +159,7 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
             @Context UriInfo uriInfo) {
         Set<ApplicationExpand> expands = ApplicationExpand.convertToApplicationExpands(expandsParam);
         Boolean enabled = status == null ? null : STATUS_ENABLED.equalsIgnoreCase(status);
-        ApplicationCursorRequest cursorRequest = ApplicationCursorRequest.initialCursor(sort, direction, page, query, enabled, types);
+        ApplicationCursorRequest cursorRequest = ApplicationCursorRequest.initialCursor(sort, direction, page, query, enabled, effectiveTypes(types));
         processCursorRequest(organizationId, environmentId, domainId, cursorRequest, ownerEmail, limit, expands, uriInfo)
                 .subscribe(response::resume, response::resume);
     }
@@ -195,6 +195,16 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
                 .onErrorResumeNext(ex -> ex instanceof IllegalArgumentException
                         ? Single.error(new BadRequestException(ex.getMessage()))
                         : Single.error(ex));
+    }
+
+    /**
+     * When no type is requested, default to every application type except AGENT so agents are
+     * excluded from the standard listing; an explicit type list is forwarded unchanged.
+     */
+    private static List<ApplicationType> effectiveTypes(List<ApplicationType> requested) {
+        return (requested == null || requested.isEmpty())
+                ? List.copyOf(ApplicationType.defaultingToNonAgent(null))
+                : requested;
     }
 
     private String nextCursorPath(ApplicationCursorRequest nextCursor,
