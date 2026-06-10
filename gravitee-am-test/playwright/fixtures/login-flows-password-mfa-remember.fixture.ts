@@ -59,9 +59,7 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
 
   rememberDomain: async ({ adminToken }, use) => {
     const name = uniqueTestName('pw-mfa-remember-pw');
-    const domain = await quietly(() =>
-      createDomain(adminToken, name, 'Phase 7 AM-2218 — password MFA + remember device'),
-    );
+    const domain = await quietly(() => createDomain(adminToken, name, 'Phase 7 AM-2218 — password MFA + remember device'));
     await use(domain);
     await quietly(() => safeDeleteDomain(domain.id, adminToken));
   },
@@ -107,31 +105,36 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
     );
 
     await quietly(() =>
-      patchApplication(rememberDomain.id, adminToken, {
-        settings: {
-          mfa: {
-            factor: {
-              defaultFactorId: rememberFactorId,
-              applicationFactors: [{ id: rememberFactorId, selectionRule: '' }],
+      patchApplication(
+        rememberDomain.id,
+        adminToken,
+        {
+          settings: {
+            mfa: {
+              factor: {
+                defaultFactorId: rememberFactorId,
+                applicationFactors: [{ id: rememberFactorId, selectionRule: '' }],
+              },
+              enroll: {
+                active: true,
+                forceEnrollment: true,
+                type: 'REQUIRED',
+              },
+              challenge: {
+                active: true,
+                type: 'REQUIRED',
+              },
+              rememberDevice: {
+                active: true,
+                deviceIdentifierId: rememberDeviceId,
+                expirationTimeSeconds: 600,
+              },
             },
-            enroll: {
-              active: true,
-              forceEnrollment: true,
-              type: 'REQUIRED',
-            },
-            challenge: {
-              active: true,
-              type: 'REQUIRED',
-            },
-            rememberDevice: {
-              active: true,
-              deviceIdentifierId: rememberDeviceId,
-              expirationTimeSeconds: 600,
-            },
+            advanced: { skipConsent: true },
           },
-          advanced: { skipConsent: true },
         },
-      }, app.id),
+        app.id,
+      ),
     );
 
     await use(app);
@@ -159,12 +162,10 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
     await quietly(() => startDomain(rememberDomain.id, adminToken));
     await quietly(() => waitForDomainSync(rememberDomain.id, { timeoutMillis: 90_000, intervalMillis: 500 }));
     await waitForOidcReady(rememberDomain.hrid, { timeoutMs: 45_000, intervalMs: 500 });
-    await waitForOAuthAuthorizeRedirectsToLogin(
-      rememberDomain.hrid,
-      rememberApp.settings.oauth.clientId,
-      REDIRECT_URI,
-      { timeoutMs: 90_000, intervalMs: 500 },
-    );
+    await waitForOAuthAuthorizeRedirectsToLogin(rememberDomain.hrid, rememberApp.settings.oauth.clientId, REDIRECT_URI, {
+      timeoutMs: 90_000,
+      intervalMs: 500,
+    });
     await use(`${getGatewayBaseUrl()}/${rememberDomain.hrid}`);
   },
 });
@@ -176,4 +177,5 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
 } from '../utils/mfa-helpers';

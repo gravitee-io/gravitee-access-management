@@ -59,9 +59,7 @@ export const test = base.extend<MfaDefaultFactorFixtures>({
 
   defDomain: async ({ adminToken }, use) => {
     const name = uniqueTestName('pw-mfa-def-factor');
-    const domain = await quietly(() =>
-      createDomain(adminToken, name, 'Phase 9 AM-2820 — default factor when rules miss'),
-    );
+    const domain = await quietly(() => createDomain(adminToken, name, 'Phase 9 AM-2820 — default factor when rules miss'));
     await use(domain);
     await quietly(() => safeDeleteDomain(domain.id, adminToken));
   },
@@ -108,32 +106,37 @@ export const test = base.extend<MfaDefaultFactorFixtures>({
     );
 
     await quietly(() =>
-      patchApplication(defDomain.id, adminToken, {
-        settings: {
-          mfa: {
-            factor: {
-              defaultFactorId,
-              applicationFactors: [
-                {
-                  id: mismatchFactorId,
-                  selectionRule: "{#request.params['username'] matches '^__impossible_username__$'}",
-                },
-                { id: defaultFactorId, selectionRule: '' },
-              ],
+      patchApplication(
+        defDomain.id,
+        adminToken,
+        {
+          settings: {
+            mfa: {
+              factor: {
+                defaultFactorId,
+                applicationFactors: [
+                  {
+                    id: mismatchFactorId,
+                    selectionRule: "{#request.params['username'] matches '^__impossible_username__$'}",
+                  },
+                  { id: defaultFactorId, selectionRule: '' },
+                ],
+              },
+              enroll: {
+                active: true,
+                forceEnrollment: true,
+                type: 'REQUIRED',
+              },
+              challenge: {
+                active: true,
+                type: 'REQUIRED',
+              },
             },
-            enroll: {
-              active: true,
-              forceEnrollment: true,
-              type: 'REQUIRED',
-            },
-            challenge: {
-              active: true,
-              type: 'REQUIRED',
-            },
+            advanced: { skipConsent: true },
           },
-          advanced: { skipConsent: true },
         },
-      }, app.id),
+        app.id,
+      ),
     );
 
     await use(app);
@@ -176,4 +179,5 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
 } from '../utils/mfa-helpers';

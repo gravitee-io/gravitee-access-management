@@ -57,12 +57,7 @@ test.describe('WebAuthn - Enforce Password Usage', () => {
       },
     });
 
-    test('AM-2376: passwordless login succeeds within enforce password max age', async ({
-      page,
-      waApp,
-      waUser,
-      gatewayUrl,
-    }, testInfo) => {
+    test('AM-2376: passwordless login succeeds within enforce password max age', async ({ page, waApp, waUser, gatewayUrl }, testInfo) => {
       linkJira(testInfo, 'AM-2376');
       const clientId = waApp.settings.oauth.clientId;
 

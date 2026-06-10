@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect, buildAuthorizeUrl, submitLogin, handleConsentIfPresent } from '../../../fixtures/login-flows-role-mapper.fixture';
+import { test, expect, buildAuthorizeUrl, submitLogin } from '../../../fixtures/login-flows-role-mapper.fixture';
 import { listUsers } from '@management-commands/user-management-commands';
 import { reachOAuthAuthorizationCallback } from '../../../utils/mfa-helpers';
 import { AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../../utils/test-constants';
@@ -24,10 +24,15 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.describe('IdP role mapper (AM-2219)', () => {
   test.setTimeout(MULTI_PHASE_TEST_TIMEOUT * 2);
 
-  test('AM-2219: user matching mapper rule receives mapped domain role', async (
-    { page, gatewayUrl, mapperApp, mapperDomain, adminToken, gatewayUser, mappedRoleName },
-    testInfo,
-  ) => {
+  test('AM-2219: user matching mapper rule receives mapped domain role', async ({
+    page,
+    gatewayUrl,
+    mapperApp,
+    mapperDomain,
+    adminToken,
+    gatewayUser,
+    mappedRoleName,
+  }, testInfo) => {
     linkJira(testInfo, 'AM-2219');
 
     const clientId = mapperApp.settings.oauth.clientId;
@@ -36,7 +41,6 @@ test.describe('IdP role mapper (AM-2219)', () => {
     await page.waitForURL(/.*login.*/i);
     await submitLogin(page, gatewayUser.username, gatewayUser.password);
 
-    await handleConsentIfPresent(page);
     await reachOAuthAuthorizationCallback(page, { iterations: 32, consentTimeoutMs: 10_000 });
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 
