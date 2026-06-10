@@ -521,15 +521,18 @@ await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
 await page.waitForURL(/.*login.*/i);
 ```
 
-### Consent handling
+### OAuth callback and consent handling
 
-Not all OAuth flows trigger a consent page. Use the shared `handleConsentIfPresent` helper:
+Not all OAuth flows trigger a consent page. To finish an OAuth leg and assert an authorisation code in the redirect URI, use `reachOAuthAuthorizationCallback` — it polls `page.url()` for `callback` + `code=` and clicks through consent when needed. **Do not** pair `handleConsentIfPresent` with `waitForURL(/callback?code=/)`: the test redirect URI (`https://gravitee.io/callback`) is an external marketing site that may never reach the `load` event in CI while the URL already contains a valid `code`.
 
 ```typescript
-import { handleConsentIfPresent } from '../../../utils/webauthn-helpers';
+import { reachOAuthAuthorizationCallback } from '../../../utils/oauth-callback-helpers';
+// or from the area fixture barrel (e.g. webauthn.fixture, mfa-enrollment-matrix.fixture)
 
-await handleConsentIfPresent(page);  // uses BRIEF_TIMEOUT (5s) by default
+await reachOAuthAuthorizationCallback(page);
 ```
+
+Use `handleConsentIfPresent` only when you need to click consent mid-flow without waiting for the callback (rare). Composite helpers (`loginAndRegisterWebAuthn`, `fullMfaLogin`, etc.) call `reachOAuthAuthorizationCallback` internally.
 
 ### Navigation helpers for non-deterministic routing
 
@@ -549,7 +552,7 @@ The conditional in the helper handles infrastructure non-determinism, not a feat
 
 ### Second authorisation in the same browser context
 
-If a test runs **two** OAuth round-trips on the same `page` / context, the gateway may still hold an **end-user session** after the first callback. A second `goto(authorizeUrl)` can then skip `/login` and sometimes **skip step-up MFA**, going straight to the client **callback with `code`**. Helpers that treat “callback + code” as a successful wait target return immediately while your test still expects `/mfa/challenge` or `/login` — leading to timeouts.
+If a test runs **two** OAuth round-trips on the same `page` / context, the gateway may still hold an **end-user session** after the first callback. A second `goto(authorizeUrl)` can then skip `/login` and sometimes **skip step-up MFA**, going straight to the client **callback with `code`**. Calling `reachOAuthAuthorizationCallback` when you still expect `/mfa/challenge` or `/login` will return immediately on the short-circuited callback — leading to timeouts on the next assertion.
 
 When the scenario requires a **fresh login** or **MFA challenge** on the second leg, call `await page.context().clearCookies()` before that authorisation (or use a new context). The Xray parity example under [§6](#6-xray-test-parity) uses the same pattern for a second login path.
 
@@ -604,9 +607,10 @@ Use the shared helpers for common multi-step flows:
 
 | Helper | Flow |
 |---|---|
-| `loginAndRegisterWebAuthn(page, gatewayUrl, clientId, username, password)` | Login → WebAuthn register → consent → callback |
-| `passwordlessLogin(page, auth, gatewayUrl, clientId, username)` | Authorize → login → passwordless link → WebAuthn login → consent → callback |
-| `fullLoginWithMfaAndWebAuthn(page, gatewayUrl, clientId, username, password, mfaCode, rememberDevice)` | Login → WebAuthn register → MFA enroll → MFA challenge → consent → callback |
+| `loginAndRegisterWebAuthn(page, gatewayUrl, clientId, username, password)` | Login → WebAuthn register → callback (`reachOAuthAuthorizationCallback`) |
+| `passwordlessLogin(page, auth, gatewayUrl, clientId, username)` | Authorize → login → passwordless link → WebAuthn login → callback |
+| `fullLoginWithMfaAndWebAuthn(page, gatewayUrl, clientId, username, password, mfaCode, rememberDevice)` | Login → WebAuthn register → MFA enroll → MFA challenge → callback |
+| `reachOAuthAuthorizationCallback(page)` | Poll URL for `callback?code=`; handle consent between hops (use instead of `waitForURL(/callback?code=/)`) |
 | `navigateToWebAuthnLogin(page, gatewayUrl, clientId)` | Navigate to WebAuthn login (handles non-deterministic routing) |
 | `clearSessionOnly(page)` | Clear session cookie only (preserve device recognition) |
 
@@ -699,6 +703,7 @@ From `playwright.config.ts`:
 | 400 errors, fields silently missing | Native fetch instead of cross-fetch | Ensure `base.fixture.ts` sets `globalThis.fetch = crossFetch` |
 | "Element detached from DOM" | `*ngIf` + `.clear()` removes element | Use triple-click + `pressSequentially()` |
 | `waitForURL(/mfa\/challenge/)` timeout on second OAuth | Prior leg left an AM session; second `/authorize` hits callback without step-up | `await page.context().clearCookies()` before the second authorisation (see [Gateway Page Tests §16](#16-gateway-page-tests)) |
+| `waitForURL(/callback?code=/)` timeout; page shows gravitee.io 404 | Redirect URI is external; `waitForURL` waits for `load` on marketing site | Use `reachOAuthAuthorizationCallback` (polls URL for `code=`) |
 | `Cannot find module '.../api/commands/...'` when loading spec | Wrong relative depth: `../../api` from `playwright/tests/<area>/` resolves under `playwright/`, not `gravitee-am-test/api` | **Prefer aliases** (`@management-commands/...`, `@utils-commands/...`, `@management-models/...`) — same as Jest; resolved at runtime via `playwright/utils/register-paths.ts`. If using relatives: from `playwright/tests/<one-level>/` use `../../../api/...`; from `playwright/fixtures/` use `../../api/...` |
 | Themed `img.logo` still shows `gravitee-logo.svg` | Theme updated only after the gateway loaded the domain context | Set logo and colour fields **before** `startDomain`, or wait for theme propagation and reload the login page |
 

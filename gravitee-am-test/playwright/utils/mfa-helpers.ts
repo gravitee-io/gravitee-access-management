@@ -15,7 +15,10 @@
  */
 import { Page, expect } from '@playwright/test';
 import { AUTH_CODE_FORMAT, BRIEF_TIMEOUT, MOCK_MFA_CODE, MULTI_PHASE_TEST_TIMEOUT } from './test-constants';
+import { reachOAuthAuthorizationCallback } from './oauth-callback-helpers';
 import { buildAuthorizeUrl } from './webauthn-helpers';
+
+export { handleConsentIfPresent, reachOAuthAuthorizationCallback } from './oauth-callback-helpers';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getUser } from '@management-commands/user-management-commands';
@@ -84,52 +87,6 @@ export async function completeMfaChallenge(
 }
 
 /**
- * Handle the OAuth consent page if present.
- */
-export async function handleConsentIfPresent(page: Page, timeoutMs = BRIEF_TIMEOUT): Promise<void> {
-  try {
-    await page.waitForURL(/.*oauth\/consent.*/i, { timeout: timeoutMs });
-    await page.locator('button:has-text("Accept"), input[value="Accept"], #submitBtn').click();
-  } catch {
-    // No consent page — that's fine
-  }
-}
-
-/**
- * Poll until the browser reaches the OAuth redirect_uri with an authorisation code, handling consent between hops.
- * Prefer this over a single {@code waitForURL} when redirects can be slow or interleaved with consent.
- */
-function assertNoFatalOAuthErrorOnPage(page: Page): void {
-  const href = page.url();
-  if (!/\/login/i.test(href)) {
-    return;
-  }
-  if (href.includes('error=login_failed') || href.includes('error_code=invalid_user')) {
-    throw new Error(`Gateway login error: ${href}`);
-  }
-}
-
-export async function reachOAuthAuthorizationCallback(
-  page: Page,
-  options?: { iterations?: number; consentTimeoutMs?: number },
-): Promise<void> {
-  const iterations = options?.iterations ?? 24;
-  const consentTimeoutMs = options?.consentTimeoutMs ?? 8000;
-  for (let i = 0; i < iterations; i++) {
-    assertNoFatalOAuthErrorOnPage(page);
-    const href = page.url();
-    if (href.includes('callback') && href.includes('code=')) {
-      const redirect = new URL(href);
-      if (redirect.searchParams.get('code')) {
-        return;
-      }
-    }
-    await handleConsentIfPresent(page, consentTimeoutMs);
-  }
-  throw new Error(`OAuth callback with code not reached, last URL: ${page.url()}`);
-}
-
-/**
  * Click the "Skip" button on the MFA enrollment page.
  * Only visible when enrollment is optional (forceEnrollment=false).
  *
@@ -163,8 +120,7 @@ export async function secondAuthorizeExpectCallbackWithoutMfa(
   await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
   await waitAfterAuthorizeThenLoginIfNeeded(page, username, password);
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
   expect(page.url()).not.toMatch(/mfa\/enroll/i);
   expect(page.url()).not.toMatch(/mfa\/challenge/i);
   const callbackUrl = new URL(page.url());
@@ -259,9 +215,7 @@ export async function waitUntilMfaEnrollmentSkipWindowExpired(
     await new Promise((r) => setTimeout(r, pollMs));
   }
 
-  throw new Error(
-    `Timed out waiting for MFA enrollment skip window (${skipTimeSeconds}s) to elapse for user ${userId}`,
-  );
+  throw new Error(`Timed out waiting for MFA enrollment skip window (${skipTimeSeconds}s) to elapse for user ${userId}`);
 }
 
 /**
@@ -309,7 +263,11 @@ export async function applyStandaloneChallengeMfaPatch(
 
 /** Login -> enroll -> challenge -> callback. Asserts auth code in callback URL. */
 export async function expectEnrollThenChallengeThenCallback(
-  page: Page, gatewayUrl: string, clientId: string, username: string, password: string,
+  page: Page,
+  gatewayUrl: string,
+  clientId: string,
+  username: string,
+  password: string,
 ): Promise<void> {
   await fullMfaLogin(page, gatewayUrl, clientId, username, password);
   const callbackUrl = new URL(page.url());
@@ -318,28 +276,34 @@ export async function expectEnrollThenChallengeThenCallback(
 
 /** Login -> enroll page shown -> skip -> callback. Asserts auth code in callback URL. */
 export async function expectEnrollSkipThenCallback(
-  page: Page, gatewayUrl: string, clientId: string, username: string, password: string,
+  page: Page,
+  gatewayUrl: string,
+  clientId: string,
+  username: string,
+  password: string,
 ): Promise<void> {
   await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
   await page.waitForURL(/.*login.*/i);
   await submitLogin(page, username, password);
   await page.waitForURL(/.*mfa\/enroll.*/i);
   await skipMfaEnrollment(page);
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
   const callbackUrl = new URL(page.url());
   expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 }
 
 /** Login -> enrollment bypassed (conditional=true) -> callback. Asserts no enroll page appeared. */
 export async function expectEnrollBypassedThenCallback(
-  page: Page, gatewayUrl: string, clientId: string, username: string, password: string,
+  page: Page,
+  gatewayUrl: string,
+  clientId: string,
+  username: string,
+  password: string,
 ): Promise<void> {
   await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
   await page.waitForURL(/.*login.*/i);
   await submitLogin(page, username, password);
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
   const callbackUrl = new URL(page.url());
   expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   expect(page.url()).not.toMatch(/mfa\/enroll/);
@@ -366,6 +330,5 @@ export async function fullMfaLogin(
   await page.waitForURL(/.*mfa\/challenge.*/i);
   await completeMfaChallenge(page, code);
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
 }

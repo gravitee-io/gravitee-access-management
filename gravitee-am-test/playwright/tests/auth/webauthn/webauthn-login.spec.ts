@@ -20,7 +20,7 @@ import {
   simulateWebAuthnGesture,
   getCredentials,
   removeVirtualAuthenticator,
-  handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   buildAuthorizeUrl,
   PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
@@ -40,12 +40,7 @@ test.describe('WebAuthn Passwordless Login', () => {
     }
   });
 
-  test('AM-2194: user can register then login with WebAuthn credential', async ({
-    page,
-    waApp,
-    waUser,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-2194: user can register then login with WebAuthn credential', async ({ page, waApp, waUser, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-2194');
     test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
@@ -75,8 +70,7 @@ test.describe('WebAuthn Passwordless Login', () => {
     expect(credentials).toHaveLength(1);
 
     // Handle consent page if present, then wait for callback
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
 
     // Clear cookies to simulate a new session
     await page.context().clearCookies();
@@ -101,17 +95,12 @@ test.describe('WebAuthn Passwordless Login', () => {
     });
 
     // Handle consent if present, then verify callback with authorization code
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 
-  test('AM-2194: passwordless login fails for unregistered user', async ({
-    page,
-    waApp,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-2194: passwordless login fails for unregistered user', async ({ page, waApp, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-2194');
     const clientId = waApp.settings.oauth.clientId;
 
@@ -136,11 +125,7 @@ test.describe('WebAuthn Passwordless Login', () => {
     await expect(errorVisible.first()).toBeVisible();
   });
 
-  test('AM-2194: back to sign in link returns to login page', async ({
-    page,
-    waApp,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-2194: back to sign in link returns to login page', async ({ page, waApp, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-2194');
     const clientId = waApp.settings.oauth.clientId;
 
