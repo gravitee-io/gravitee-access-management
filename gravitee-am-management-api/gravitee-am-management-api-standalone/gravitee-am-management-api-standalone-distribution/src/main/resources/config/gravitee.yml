@@ -71,7 +71,7 @@
 #    entrypoint: /management
 #    automation:
 #      enabled: false  # Enable the Automation API for declarative GitOps-style resource management
-#      entrypoint: /management/automation  # Listening path for the Automation API
+#      entrypoint: /automation  # Listening path for the Automation API
 #  cors:
 #      Allows to configure the header Access-Control-Allow-Origin (default value: *)
 #      '*' is a valid value but is considered as a security risk as it will be opened to cross origin requests from anywhere.
