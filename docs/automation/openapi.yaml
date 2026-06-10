@@ -36,7 +36,7 @@ info:
   title: Gravitee.io AM - Automation API
   version: 4.13.0
 servers:
-- url: http://localhost:8093/management/automation
+- url: http://localhost:8093/automation
 security:
 - BearerAuth: []
 tags:
