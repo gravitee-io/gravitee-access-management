@@ -111,7 +111,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetApplications_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(applicationService).findByDomain(domainId);
+        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(applicationService).findByDomain(eq(domainId), eq("DEFAULT"), any(ApplicationFilter.class), eq(0), eq(50));
 
         final Response response = target("domains").path(domainId).path("applications").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

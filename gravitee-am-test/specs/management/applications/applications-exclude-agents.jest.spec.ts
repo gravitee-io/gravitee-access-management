@@ -80,12 +80,13 @@ describe('GET /applications with multi-valued type filter', () => {
       expect(page.totalCount).toEqual(nonAgentIds.length);
     });
 
-    it('returns every application when no type filter is supplied', async () => {
+    it('excludes agents by default when no type filter is supplied', async () => {
       const page = await listApplications(fixture.primaryDomain.id!, fixture.accessToken, { size: 50 });
       const returnedIds = page.data.map((app) => app.id!);
 
-      expect(returnedIds.sort()).toEqual([...nonAgentIds, ...agentIds].sort());
-      expect(page.totalCount).toEqual(nonAgentIds.length + agentIds.length);
+      expect(returnedIds.sort()).toEqual([...nonAgentIds].sort());
+      expect(returnedIds.some((id) => agentIds.includes(id))).toBe(false);
+      expect(page.totalCount).toEqual(nonAgentIds.length);
     });
 
     it('returns only agents when called with the agent type set', async () => {
