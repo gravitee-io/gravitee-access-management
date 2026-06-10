@@ -15,7 +15,7 @@
  */
 import { performDelete, performGet, performPut } from '@gateway-commands/oauth-oidc-commands';
 
-export const automationUrl = (): string => `${process.env.AM_MANAGEMENT_URL}/management/automation`;
+export const automationUrl = (): string => `${process.env.AM_MANAGEMENT_URL}/automation`;
 
 export const envPath = (): string =>
   `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}`;

@@ -32,7 +32,7 @@ TOKEN=$(curl -s http://localhost:8093/management/auth/token \
 ## Base URL
 
 ```
-http://localhost:8093/management/automation
+http://localhost:8093/automation
 ```
 
 ## API Pattern
@@ -132,7 +132,7 @@ The `key` in the body is the unique identifier within the environment.
 ```bash
 ORG="DEFAULT"
 ENV="DEFAULT"
-BASE="http://localhost:8093/management/automation"
+BASE="http://localhost:8093/automation"
 
 # Customer-facing auth domain
 curl -s -X PUT "$BASE/organizations/$ORG/environments/$ENV/domains" \
@@ -411,8 +411,8 @@ curl -s -X DELETE "$BASE/organizations/$ORG/environments/$ENV/domains/internal-a
 Auto-generated from annotations, available without authentication:
 
 ```bash
-curl -s http://localhost:8093/management/automation/openapi.json | jq .info
-curl -s http://localhost:8093/management/automation/openapi.yaml | head -20
+curl -s http://localhost:8093/automation/openapi.json | jq .info
+curl -s http://localhost:8093/automation/openapi.yaml | head -20
 ```
 
 ---
@@ -427,7 +427,7 @@ curl -s http://localhost:8093/management/automation/openapi.yaml | head -20
 | Reporter | `PUT .../domains/{key}/reporters` | `GET .../domains/{key}/reporters/{key}` | `GET .../domains/{key}/reporters` | `DELETE .../domains/{key}/reporters/{key}` |
 
 All paths are prefixed with
-`http://{host}/management/automation/organizations/{orgId}/environments/{envId}`.
+`http://{host}/automation/organizations/{orgId}/environments/{envId}`.
 
 Domains, identity providers, certificates and reporters are all addressed by their `key`.
 Only resources whose `managedBy = AUTOMATION_API` are visible to this API — UI-created
