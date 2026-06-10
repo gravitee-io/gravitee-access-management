@@ -200,12 +200,10 @@ export const test = base.extend<MfaMatrixFixtures>({
     await quietly(() => startDomain(matrixDomain.id, adminToken));
     await quietly(() => waitForDomainSync(matrixDomain.id, { timeoutMillis: 90_000, intervalMillis: 500 }));
     await waitForOidcReady(matrixDomain.hrid, { timeoutMs: 45_000, intervalMs: 500 });
-    await waitForOAuthAuthorizeRedirectsToLogin(
-      matrixDomain.hrid,
-      matrixApp.settings.oauth.clientId,
-      REDIRECT_URI,
-      { timeoutMs: 90_000, intervalMs: 500 },
-    );
+    await waitForOAuthAuthorizeRedirectsToLogin(matrixDomain.hrid, matrixApp.settings.oauth.clientId, REDIRECT_URI, {
+      timeoutMs: 90_000,
+      intervalMs: 500,
+    });
     await use(`${getGatewayBaseUrl()}/${matrixDomain.hrid}`);
   },
 });
@@ -217,6 +215,7 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   skipMfaEnrollment,
   secondAuthorizeExpectCallbackWithoutMfa,
   waitAfterAuthorizeThenLoginIfNeeded,

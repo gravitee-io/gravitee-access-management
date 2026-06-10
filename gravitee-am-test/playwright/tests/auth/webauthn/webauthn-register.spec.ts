@@ -20,7 +20,7 @@ import {
   simulateWebAuthnGesture,
   getCredentials,
   removeVirtualAuthenticator,
-  handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   buildAuthorizeUrl,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
@@ -40,12 +40,7 @@ test.describe('WebAuthn Registration', () => {
     }
   });
 
-  test('AM-2194: user can register a WebAuthn credential after password login', async ({
-    page,
-    waApp,
-    waUser,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-2194: user can register a WebAuthn credential after password login', async ({ page, waApp, waUser, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-2194');
     const clientId = waApp.settings.oauth.clientId;
 
@@ -78,8 +73,7 @@ test.describe('WebAuthn Registration', () => {
     expect(after).toHaveLength(1);
 
     // 7. May redirect to consent, then to callback with authorization code
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
   });
 
   test('AM-2194: user can skip WebAuthn registration when not enrolling a FIDO2 factor', async ({
@@ -107,7 +101,6 @@ test.describe('WebAuthn Registration', () => {
     await skipLink.click();
 
     // 4. May redirect to consent, then to callback with authorization code
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
   });
 });

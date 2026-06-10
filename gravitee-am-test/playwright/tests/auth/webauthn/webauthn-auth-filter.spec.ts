@@ -16,7 +16,7 @@
 import {
   test,
   expect,
-  handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   loginAndRegisterWebAuthn,
   passwordlessLogin,
   removeVirtualAuthenticator,
@@ -47,12 +47,7 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     }
   });
 
-  test('AM-4550: non-registered user can login successfully with password', async ({
-    page,
-    waApp,
-    waUser,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-4550: non-registered user can login successfully with password', async ({ page, waApp, waUser, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-4550');
     const clientId = waApp.settings.oauth.clientId;
 
@@ -69,19 +64,13 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     const skipLink = page.locator('a[href*="skipAction"], a:has-text("skip"), a:has(span.icons:text("arrow_forward"))');
     await skipLink.click();
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
 
     const url = new URL(page.url());
     expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 
-  test('AM-4551: non-registered user fails login with wrong password', async ({
-    page,
-    waApp,
-    waUser,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-4551: non-registered user fails login with wrong password', async ({ page, waApp, waUser, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-4551');
     const clientId = waApp.settings.oauth.clientId;
 
@@ -101,12 +90,7 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     expect(page.url()).not.toContain('callback?code=');
   });
 
-  test('AM-4552: registered user succeeds with passwordless login', async ({
-    page,
-    waApp,
-    waUser,
-    gatewayUrl,
-  }, testInfo) => {
+  test('AM-4552: registered user succeeds with passwordless login', async ({ page, waApp, waUser, gatewayUrl }, testInfo) => {
     linkJira(testInfo, 'AM-4552');
     test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;

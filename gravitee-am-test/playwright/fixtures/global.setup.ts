@@ -29,9 +29,7 @@ export async function cleanupTestDomains(label: string): Promise<void> {
   try {
     const token = await requestAdminAccessToken();
     const page = await listDomains(token, { size: 200 });
-    const staleDomains = (page.data || []).filter((d) =>
-      TEST_DOMAIN_PREFIXES.some((prefix) => d.name?.startsWith(prefix)),
-    );
+    const staleDomains = (page.data || []).filter((d) => TEST_DOMAIN_PREFIXES.some((prefix) => d.name?.startsWith(prefix)));
 
     if (staleDomains.length === 0) return;
 

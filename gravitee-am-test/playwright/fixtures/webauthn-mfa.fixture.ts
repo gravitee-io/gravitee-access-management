@@ -141,30 +141,35 @@ export const test = base.extend<MfaWebAuthnFixtures>({
 
     // Enable MFA with mock factor + remember device
     await quietly(() =>
-      patchApplication(mfaDomain.id, mfaAdminToken, {
-        settings: {
-          mfa: {
-            factor: {
-              defaultFactorId: mfaFactorId,
-              applicationFactors: [{ id: mfaFactorId, selectionRule: '' }],
-            },
-            enroll: {
-              active: true,
-              forceEnrollment: true,
-              type: 'REQUIRED',
-            },
-            challenge: {
-              active: true,
-              type: 'REQUIRED',
-            },
-            rememberDevice: {
-              active: true,
-              deviceIdentifierId: mfaDeviceId,
-              expirationTimeSeconds: 180, // 3 minutes
+      patchApplication(
+        mfaDomain.id,
+        mfaAdminToken,
+        {
+          settings: {
+            mfa: {
+              factor: {
+                defaultFactorId: mfaFactorId,
+                applicationFactors: [{ id: mfaFactorId, selectionRule: '' }],
+              },
+              enroll: {
+                active: true,
+                forceEnrollment: true,
+                type: 'REQUIRED',
+              },
+              challenge: {
+                active: true,
+                type: 'REQUIRED',
+              },
+              rememberDevice: {
+                active: true,
+                deviceIdentifierId: mfaDeviceId,
+                expirationTimeSeconds: 180, // 3 minutes
+              },
             },
           },
         },
-      }, app.id),
+        app.id,
+      ),
     );
 
     await use(app);
@@ -205,6 +210,7 @@ export {
   getCredentials,
   removeVirtualAuthenticator,
   handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   buildAuthorizeUrl,
   loginAndRegisterWebAuthn,
   passwordlessLogin,

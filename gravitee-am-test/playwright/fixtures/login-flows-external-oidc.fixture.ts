@@ -60,9 +60,7 @@ export const test = base.extend<{ externalOidcBundle: ExternalOidcBundle; hideLo
     const adminToken = await requestAdminAccessToken();
     const gatewayBase = getGatewayBaseUrl();
 
-    const clientDomain = await quietly(() =>
-      createDomain(adminToken, uniqueTestName('pw-oidc-client'), 'Phase 7 AM-2207 client domain'),
-    );
+    const clientDomain = await quietly(() => createDomain(adminToken, uniqueTestName('pw-oidc-client'), 'Phase 7 AM-2207 client domain'));
 
     let providerDomain = await quietly(() =>
       createDomain(adminToken, uniqueTestName('pw-oidc-provider'), 'Phase 7 AM-2207 provider domain'),
