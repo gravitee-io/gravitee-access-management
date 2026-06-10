@@ -446,7 +446,7 @@ api:
 #      entrypoint: /management
 #      automation:
 #        enabled: false
-#        entrypoint: /management/automation
+#        entrypoint: /automation
     services:
       metrics:
         enabled: false

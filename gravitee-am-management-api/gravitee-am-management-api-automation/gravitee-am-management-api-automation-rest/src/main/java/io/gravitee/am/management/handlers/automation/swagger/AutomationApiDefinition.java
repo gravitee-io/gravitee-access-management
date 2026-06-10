@@ -69,7 +69,7 @@ public class AutomationApiDefinition implements ReaderListener {
      * configuration (see {@code http.api.automation.entrypoint}). The generated OAS is static, so the
      * declared server url always reflects this default even when the runtime path is overridden.
      */
-    public static final String DEFAULT_AUTOMATION_ENTRYPOINT = "/management/automation";
+    public static final String DEFAULT_AUTOMATION_ENTRYPOINT = "/automation";
 
     private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters");
 
@@ -192,7 +192,7 @@ public class AutomationApiDefinition implements ReaderListener {
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll));
 
         // The Automation API is mounted at the configurable http.api.automation.entrypoint
-        // (defaults to /management/automation), mirroring how the management API declares its
+        // (defaults to /automation), mirroring how the management API declares its
         // /management server in GraviteeApiDefinition. The spec is static, so it always reflects the default.
         openAPI.servers(List.of(new Server().url("http://localhost:8093" + DEFAULT_AUTOMATION_ENTRYPOINT)));
         openAPI.info(new Info()
