@@ -20,7 +20,7 @@ import {
   submitLogin,
   enrollMockFactor,
   completeMfaChallenge,
-  handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   skipMfaEnrollment,
   secondAuthorizeExpectCallbackWithoutMfa,
   waitAfterAuthorizeThenLoginIfNeeded,
@@ -69,8 +69,7 @@ test.describe('Enrollment Required (AM-2822)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -98,8 +97,7 @@ test.describe('Enrollment Optional — skip (AM-2821)', () => {
 
     await skipMfaEnrollment(page);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -150,17 +148,10 @@ test.describe('Enrollment optional — minimal skip window re-prompt (AM-2190)',
     await skipMfaEnrollment(page);
     const skipHandledAtMs = Date.now();
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 
-    await waitUntilMfaEnrollmentSkipWindowExpired(
-      matrixDomain.id,
-      adminToken,
-      matrixUser.id,
-      enrollSkipTimeSeconds,
-      skipHandledAtMs,
-    );
+    await waitUntilMfaEnrollmentSkipWindowExpired(matrixDomain.id, adminToken, matrixUser.id, enrollSkipTimeSeconds, skipHandledAtMs);
 
     await clearSessionOnly(page);
 
@@ -216,12 +207,7 @@ test.describe('Enrollment Optional with extended enrollment skip window (AM-2827
   });
   test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
-  test('user skips optional enrollment with 24h skip window configured', async ({
-    page,
-    gatewayUrl,
-    matrixApp,
-    matrixUser,
-  }, testInfo) => {
+  test('user skips optional enrollment with 24h skip window configured', async ({ page, gatewayUrl, matrixApp, matrixUser }, testInfo) => {
     linkJira(testInfo, 'AM-2827');
     await expectEnrollSkipThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
@@ -262,7 +248,12 @@ test.describe('Enrollment Conditional = false (AM-2824)', () => {
   });
   test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
-  test('enrollment page is shown when conditional rule evaluates to false', async ({ page, gatewayUrl, matrixApp, matrixUser }, testInfo) => {
+  test('enrollment page is shown when conditional rule evaluates to false', async ({
+    page,
+    gatewayUrl,
+    matrixApp,
+    matrixUser,
+  }, testInfo) => {
     linkJira(testInfo, 'AM-2824');
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
@@ -280,8 +271,7 @@ test.describe('Enrollment Conditional = false (AM-2824)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -310,7 +300,13 @@ test.describe('Enrollment Conditional false + skip disabled + REQUIRED challenge
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2826');
-    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
+    await expectEnrollThenChallengeThenCallback(
+      page,
+      gatewayUrl,
+      matrixApp.settings.oauth.clientId,
+      matrixUser.username,
+      API_USER_PASSWORD,
+    );
   });
 });
 
@@ -352,8 +348,7 @@ test.describe('Enrollment Conditional false + CONDITIONAL challenge (AM-2840)', 
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -384,7 +379,13 @@ test.describe('Enrollment Conditional false + skip policy + RISK_BASED challenge
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2841');
-    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
+    await expectEnrollThenChallengeThenCallback(
+      page,
+      gatewayUrl,
+      matrixApp.settings.oauth.clientId,
+      matrixUser.username,
+      API_USER_PASSWORD,
+    );
   });
 });
 
@@ -412,7 +413,13 @@ test.describe('Enrollment Conditional false + skip policy + REQUIRED challenge (
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2842');
-    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
+    await expectEnrollThenChallengeThenCallback(
+      page,
+      gatewayUrl,
+      matrixApp.settings.oauth.clientId,
+      matrixUser.username,
+      API_USER_PASSWORD,
+    );
   });
 });
 
@@ -441,7 +448,13 @@ test.describe('Enrollment Conditional false + skip policy + CONDITIONAL challeng
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2843');
-    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
+    await expectEnrollThenChallengeThenCallback(
+      page,
+      gatewayUrl,
+      matrixApp.settings.oauth.clientId,
+      matrixUser.username,
+      API_USER_PASSWORD,
+    );
   });
 });
 
@@ -461,7 +474,13 @@ test.describe('Required Enrollment + Required Challenge (AM-2836)', () => {
 
   test('user enrolls then completes MFA challenge', async ({ page, gatewayUrl, matrixApp, matrixUser }, testInfo) => {
     linkJira(testInfo, 'AM-2836');
-    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
+    await expectEnrollThenChallengeThenCallback(
+      page,
+      gatewayUrl,
+      matrixApp.settings.oauth.clientId,
+      matrixUser.username,
+      API_USER_PASSWORD,
+    );
   });
 });
 
@@ -505,8 +524,7 @@ test.describe('Optional Enrollment + Required Challenge (AM-2833)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -542,8 +560,7 @@ test.describe('Optional Enrollment + RISK_BASED challenge skips MFA when rule is
     await page.waitForURL(/.*mfa\/enroll.*/i);
     await skipMfaEnrollment(page);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     expect(page.url()).not.toMatch(/mfa\/challenge/i);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
@@ -580,8 +597,7 @@ test.describe('Optional Enrollment + CONDITIONAL challenge skips MFA when rule i
     await page.waitForURL(/.*mfa\/enroll.*/i);
     await skipMfaEnrollment(page);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     expect(page.url()).not.toMatch(/mfa\/challenge/i);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
@@ -616,8 +632,7 @@ test.describe('Conditional enrollment true + RISK_BASED challenge safe (AM-2838)
     await page.waitForURL(/.*login.*/i);
     await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     expect(page.url()).not.toMatch(/mfa\/enroll/i);
     expect(page.url()).not.toMatch(/mfa\/challenge/i);
     const callbackUrl = new URL(page.url());
@@ -652,8 +667,7 @@ test.describe('Conditional enrollment true + REQUIRED challenge active (AM-2839)
     await page.waitForURL(/.*login.*/i);
     await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     expect(page.url()).not.toMatch(/mfa\/enroll/i);
     expect(page.url()).not.toMatch(/mfa\/challenge/i);
     const callbackUrl = new URL(page.url());
@@ -693,8 +707,7 @@ test.describe('Required Enrollment + RISK_BASED challenge (AM-2835)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const firstCode = new URL(page.url()).searchParams.get('code');
     expect(firstCode).toMatch(AUTH_CODE_FORMAT);
 
@@ -740,8 +753,7 @@ test.describe('Required Enrollment + CONDITIONAL challenge (AM-2837)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const firstCode = new URL(page.url()).searchParams.get('code');
     expect(firstCode).toMatch(AUTH_CODE_FORMAT);
 
@@ -787,14 +799,20 @@ test.describe('Standalone challenge RISK_BASED rule safe (AM-2828)', () => {
     await enrollMockFactor(page);
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
 
-    await applyStandaloneChallengeMfaPatch(matrixDomain.id, adminToken, matrixApp.id, factorId, {
-      active: true,
-      type: 'RISK_BASED',
-      challengeRule: '{{ true }}',
-    }, matrixDomain.hrid);
+    await applyStandaloneChallengeMfaPatch(
+      matrixDomain.id,
+      adminToken,
+      matrixApp.id,
+      factorId,
+      {
+        active: true,
+        type: 'RISK_BASED',
+        challengeRule: '{{ true }}',
+      },
+      matrixDomain.hrid,
+    );
 
     await secondAuthorizeExpectCallbackWithoutMfa(
       page,
@@ -836,14 +854,20 @@ test.describe('Standalone challenge REQUIRED (AM-2829)', () => {
     await enrollMockFactor(page);
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
 
-    await applyStandaloneChallengeMfaPatch(matrixDomain.id, adminToken, matrixApp.id, factorId, {
-      active: true,
-      type: 'REQUIRED',
-      challengeRule: '',
-    }, matrixDomain.hrid);
+    await applyStandaloneChallengeMfaPatch(
+      matrixDomain.id,
+      adminToken,
+      matrixApp.id,
+      factorId,
+      {
+        active: true,
+        type: 'REQUIRED',
+        challengeRule: '',
+      },
+      matrixDomain.hrid,
+    );
 
     // Drop AM session so the second authorisation cannot short-circuit to callback without step-up MFA.
     await page.context().clearCookies();
@@ -852,8 +876,7 @@ test.describe('Standalone challenge REQUIRED (AM-2829)', () => {
     await waitAfterAuthorizeThenLoginIfNeeded(page, matrixUser.username, API_USER_PASSWORD, { allowMfa: true });
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
@@ -887,14 +910,20 @@ test.describe('Standalone challenge CONDITIONAL rule true skips challenge (AM-28
     await enrollMockFactor(page);
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
 
-    await applyStandaloneChallengeMfaPatch(matrixDomain.id, adminToken, matrixApp.id, factorId, {
-      active: true,
-      type: 'CONDITIONAL',
-      challengeRule: '{{ true }}',
-    }, matrixDomain.hrid);
+    await applyStandaloneChallengeMfaPatch(
+      matrixDomain.id,
+      adminToken,
+      matrixApp.id,
+      factorId,
+      {
+        active: true,
+        type: 'CONDITIONAL',
+        challengeRule: '{{ true }}',
+      },
+      matrixDomain.hrid,
+    );
 
     await secondAuthorizeExpectCallbackWithoutMfa(
       page,
@@ -936,14 +965,20 @@ test.describe('Standalone challenge CONDITIONAL rule false requires challenge (A
     await enrollMockFactor(page);
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
 
-    await applyStandaloneChallengeMfaPatch(matrixDomain.id, adminToken, matrixApp.id, factorId, {
-      active: true,
-      type: 'CONDITIONAL',
-      challengeRule: '{{ false }}',
-    }, matrixDomain.hrid);
+    await applyStandaloneChallengeMfaPatch(
+      matrixDomain.id,
+      adminToken,
+      matrixApp.id,
+      factorId,
+      {
+        active: true,
+        type: 'CONDITIONAL',
+        challengeRule: '{{ false }}',
+      },
+      matrixDomain.hrid,
+    );
 
     await page.context().clearCookies();
 
@@ -951,8 +986,7 @@ test.describe('Standalone challenge CONDITIONAL rule false requires challenge (A
     await waitAfterAuthorizeThenLoginIfNeeded(page, matrixUser.username, API_USER_PASSWORD, { allowMfa: true });
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     const callbackUrl = new URL(page.url());
     expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });

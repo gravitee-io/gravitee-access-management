@@ -64,9 +64,7 @@ export const test = base.extend<RoleMapperFlowFixtures>({
 
   mapperDomain: async ({ adminToken }, use) => {
     const name = uniqueTestName('pw-role-mapper');
-    const domain = await quietly(() =>
-      createDomain(adminToken, name, 'Phase 7 AM-2219 — IdP role mapper'),
-    );
+    const domain = await quietly(() => createDomain(adminToken, name, 'Phase 7 AM-2219 — IdP role mapper'));
     await use(domain);
     await quietly(() => safeDeleteDomain(domain.id, adminToken));
   },
@@ -113,14 +111,19 @@ export const test = base.extend<RoleMapperFlowFixtures>({
 
     // Role mapper before domain start (gateway not polling yet). Sync is applied when the domain starts below.
     await quietly(() =>
-      updateIdp(mapperDomain.id, adminToken, {
-        name: idp.name,
-        type: idp.type,
-        configuration: idp.configuration,
-        mappers: {},
-        roleMapper: { [mappedRoleName]: [`firstname=${MAPPED_FIRSTNAME}`] },
-        groupMapper: {},
-      }, idp.id),
+      updateIdp(
+        mapperDomain.id,
+        adminToken,
+        {
+          name: idp.name,
+          type: idp.type,
+          configuration: idp.configuration,
+          mappers: {},
+          roleMapper: { [mappedRoleName]: [`firstname=${MAPPED_FIRSTNAME}`] },
+          groupMapper: {},
+        },
+        idp.id,
+      ),
     );
 
     await use(idp);

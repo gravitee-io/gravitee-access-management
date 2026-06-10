@@ -56,9 +56,7 @@ export const test = base.extend<RecoveryFlowFixtures>({
 
   recoveryDomain: async ({ adminToken }, use) => {
     const name = uniqueTestName('pw-recovery-mfa');
-    const domain = await quietly(() =>
-      createDomain(adminToken, name, 'Phase 7 AM-2216 — MFA recovery codes'),
-    );
+    const domain = await quietly(() => createDomain(adminToken, name, 'Phase 7 AM-2216 — MFA recovery codes'));
     await use(domain);
     await quietly(() => safeDeleteDomain(domain.id, adminToken));
   },
@@ -105,29 +103,34 @@ export const test = base.extend<RecoveryFlowFixtures>({
     );
 
     await quietly(() =>
-      patchApplication(recoveryDomain.id, adminToken, {
-        settings: {
-          mfa: {
-            factor: {
-              defaultFactorId: mockFactorId,
-              applicationFactors: [
-                { id: mockFactorId, selectionRule: '' },
-                { id: recoveryFactorId, selectionRule: '' },
-              ],
+      patchApplication(
+        recoveryDomain.id,
+        adminToken,
+        {
+          settings: {
+            mfa: {
+              factor: {
+                defaultFactorId: mockFactorId,
+                applicationFactors: [
+                  { id: mockFactorId, selectionRule: '' },
+                  { id: recoveryFactorId, selectionRule: '' },
+                ],
+              },
+              enroll: {
+                active: true,
+                forceEnrollment: true,
+                type: 'REQUIRED',
+              },
+              challenge: {
+                active: true,
+                type: 'REQUIRED',
+              },
             },
-            enroll: {
-              active: true,
-              forceEnrollment: true,
-              type: 'REQUIRED',
-            },
-            challenge: {
-              active: true,
-              type: 'REQUIRED',
-            },
+            advanced: { skipConsent: true },
           },
-          advanced: { skipConsent: true },
         },
-      }, app.id),
+        app.id,
+      ),
     );
 
     await use(app);
@@ -155,12 +158,10 @@ export const test = base.extend<RecoveryFlowFixtures>({
     await quietly(() => startDomain(recoveryDomain.id, adminToken));
     await quietly(() => waitForDomainSync(recoveryDomain.id, { timeoutMillis: 90_000, intervalMillis: 500 }));
     await waitForOidcReady(recoveryDomain.hrid, { timeoutMs: 45_000, intervalMs: 500 });
-    await waitForOAuthAuthorizeRedirectsToLogin(
-      recoveryDomain.hrid,
-      recoveryApp.settings.oauth.clientId,
-      REDIRECT_URI,
-      { timeoutMs: 90_000, intervalMs: 500 },
-    );
+    await waitForOAuthAuthorizeRedirectsToLogin(recoveryDomain.hrid, recoveryApp.settings.oauth.clientId, REDIRECT_URI, {
+      timeoutMs: 90_000,
+      intervalMs: 500,
+    });
     await use(`${getGatewayBaseUrl()}/${recoveryDomain.hrid}`);
   },
 });
@@ -172,6 +173,7 @@ export {
   enrollMockFactor,
   completeMfaChallenge,
   handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   readFirstRecoveryCodeFromPage,
   submitRecoveryCodesContinue,
   openMfaChallengeAlternatives,

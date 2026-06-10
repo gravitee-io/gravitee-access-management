@@ -13,20 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Page } from '@playwright/test';
 import {
   test,
   expect,
   loginAndRegisterWebAuthn,
   simulateWebAuthnGesture,
-  handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   removeVirtualAuthenticator,
   clearSessionOnly,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT } from '../../../utils/test-constants';
 import { linkJira } from '../../../utils/jira';
 import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+
+/**
+ * Poll authorize until device recognition routes to /webauthn/login (gateway config propagation).
+ */
+async function waitUntilWebAuthnLoginAfterDeviceRecognition(page: Page, authorizeUrl: string): Promise<void> {
+  const deadline = Date.now() + 30000;
+  while (true) {
+    try {
+      await page.goto(authorizeUrl);
+      await page.waitForURL(/.*login.*/i, { timeout: 15000 });
+      if (page.url().includes('webauthn/login')) {
+        return;
+      }
+    } catch {
+      // Transient navigation/timeout — retry within the deadline
+    }
+    if (Date.now() > deadline) {
+      throw new Error('Device recognition did not redirect to webauthn/login within 30s');
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
 
 /**
  * AM-5292: WebAuthn & Passwordless Device Recognition
@@ -84,24 +107,12 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
       `&scope=openid`;
 
-    // Device recognition redirect depends on the patchDomain config being fully
-    // propagated to the gateway. Poll navigation until we land on webauthn/login
-    // rather than the normal login page.
-    const deadline = Date.now() + 30000;
-    while (true) {
-      await page.goto(authorizeUrl);
-      await page.waitForURL(/.*login.*/i, { timeout: 15000 });
-      if (page.url().includes('webauthn/login')) break;
-      if (Date.now() > deadline) {
-        throw new Error('Device recognition did not redirect to webauthn/login within 30s');
-      }
-      await new Promise((r) => setTimeout(r, 1000));
-    }
+    await waitUntilWebAuthnLoginAfterDeviceRecognition(page, authorizeUrl);
 
     // Verify we're on the WebAuthn login page with the username field
     await expect(page.locator('#username')).toBeVisible();
     // The password field should NOT be present
-    await expect(page.locator('#password')).not.toBeVisible();
+    await expect(page.locator('#password')).toBeHidden();
 
     // Complete the passwordless login
     await page.locator('#username').fill(waUser.username);
@@ -110,11 +121,10 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       await page.locator('button.primary, button#login-button').click();
     });
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await reachOAuthAuthorizationCallback(page);
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 
   test('disabling device recognition shows normal login page for returning user (AM-5292)', async ({

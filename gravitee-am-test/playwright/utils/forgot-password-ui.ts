@@ -16,7 +16,7 @@
 
 import { expect, Page } from '@playwright/test';
 
-import { buildAuthorizeUrl, handleConsentIfPresent, submitLogin } from './mfa-helpers';
+import { buildAuthorizeUrl, reachOAuthAuthorizationCallback, submitLogin } from './mfa-helpers';
 
 /** Gateway login → forgot-password link (href or visible text). */
 export async function openLoginThenForgotPasswordPage(page: Page, gatewayUrl: string, clientId: string): Promise<void> {
@@ -63,6 +63,5 @@ export async function loginOnGatewayWithPassword(
   await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
   await page.waitForURL(/.*login.*/i);
   await submitLogin(page, username, password);
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
 }

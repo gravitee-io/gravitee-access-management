@@ -19,7 +19,13 @@ import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  startDomain,
+  waitForDomainSync,
+  safeDeleteDomain,
+  waitForOidcReady,
+} from '@management-commands/domain-management-commands';
 import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
@@ -61,10 +67,7 @@ export const TOKEN_EXCHANGE_DEFAULTS = {
     'urn:ietf:params:oauth:token-type:id_token',
     'urn:ietf:params:oauth:token-type:jwt',
   ],
-  ALLOWED_REQUESTED_TOKEN_TYPES: [
-    'urn:ietf:params:oauth:token-type:access_token',
-    'urn:ietf:params:oauth:token-type:id_token',
-  ],
+  ALLOWED_REQUESTED_TOKEN_TYPES: ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:id_token'],
   ALLOWED_ACTOR_TOKEN_TYPES: [
     'urn:ietf:params:oauth:token-type:access_token',
     'urn:ietf:params:oauth:token-type:id_token',
@@ -158,15 +161,14 @@ export function createTokenExchangeFixture(config: TokenExchangeConfig = {}) {
     },
 
     tokenExchangeApp: async ({ teAdminToken, tokenExchangeDomain }, use) => {
-      const {
-        grantTypes = TOKEN_EXCHANGE_DEFAULTS.GRANT_TYPES,
-        scopes = TOKEN_EXCHANGE_DEFAULTS.SCOPES,
-      } = config;
+      const { grantTypes = TOKEN_EXCHANGE_DEFAULTS.GRANT_TYPES, scopes = TOKEN_EXCHANGE_DEFAULTS.SCOPES } = config;
 
       const idpSet = await getAllIdps(tokenExchangeDomain.id, teAdminToken);
       const defaultIdp = idpSet.values().next().value;
       if (!defaultIdp) {
-        throw new Error(`No identity providers found for domain "${tokenExchangeDomain.id}". Cannot create token exchange app without an IdP.`);
+        throw new Error(
+          `No identity providers found for domain "${tokenExchangeDomain.id}". Cannot create token exchange app without an IdP.`,
+        );
       }
 
       const app = await quietly(() =>

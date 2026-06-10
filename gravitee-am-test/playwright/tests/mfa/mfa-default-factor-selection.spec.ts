@@ -20,7 +20,7 @@ import {
   submitLogin,
   enrollMockFactor,
   completeMfaChallenge,
-  handleConsentIfPresent,
+  reachOAuthAuthorizationCallback,
   DEFAULT_SELECTION_MOCK_CODE,
 } from '../../fixtures/mfa-default-factor-selection.fixture';
 import { linkJira } from '../../utils/jira';
@@ -31,10 +31,12 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.describe('MFA default factor when selection rules miss (AM-2820)', () => {
   test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
-  test('AM-2820: enrollment lists only the default factor; challenge uses default mock code', async (
-    { page, gatewayUrl, defApp, defUser },
-    testInfo,
-  ) => {
+  test('AM-2820: enrollment lists only the default factor; challenge uses default mock code', async ({
+    page,
+    gatewayUrl,
+    defApp,
+    defUser,
+  }, testInfo) => {
     linkJira(testInfo, 'AM-2820');
 
     const clientId = defApp.settings.oauth.clientId;
@@ -54,8 +56,7 @@ test.describe('MFA default factor when selection rules miss (AM-2820)', () => {
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, DEFAULT_SELECTION_MOCK_CODE);
 
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
+    await reachOAuthAuthorizationCallback(page);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 });

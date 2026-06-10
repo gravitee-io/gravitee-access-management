@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 import { CDPSession, Page, expect } from '@playwright/test';
+import { reachOAuthAuthorizationCallback } from './oauth-callback-helpers';
 import { BRIEF_TIMEOUT } from './test-constants';
+
+export { handleConsentIfPresent, reachOAuthAuthorizationCallback } from './oauth-callback-helpers';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -23,8 +26,7 @@ import { BRIEF_TIMEOUT } from './test-constants';
 export const REDIRECT_URI = 'https://gravitee.io/callback';
 
 /** Locator string for the passwordless / "Sign in with fingerprint" link on the login page. */
-export const PASSWORDLESS_LINK_SELECTOR =
-  'a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]';
+export const PASSWORDLESS_LINK_SELECTOR = 'a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]';
 
 const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
 
@@ -135,26 +137,6 @@ export async function removeVirtualAuthenticator(auth: VirtualAuthenticator): Pr
   }
 }
 
-/**
- * Handle the OAuth consent page if present.
- * After WebAuthn registration/login the flow may land on /oauth/consent.
- * Clicks "Accept" and waits for redirect to the callback.
- */
-export async function handleConsentIfPresent(page: Page, timeoutMs = BRIEF_TIMEOUT): Promise<void> {
-  const currentUrl = page.url();
-  if (currentUrl.includes('/oauth/consent')) {
-    await page.locator('button:has-text("Accept"), input[value="Accept"], #submitBtn').click();
-    return;
-  }
-  // Maybe we haven't navigated there yet — wait briefly
-  try {
-    await page.waitForURL(/.*oauth\/consent.*/i, { timeout: timeoutMs });
-    await page.locator('button:has-text("Accept"), input[value="Accept"], #submitBtn').click();
-  } catch {
-    // No consent page appeared — that's fine
-  }
-}
-
 /* ------------------------------------------------------------------ */
 /*  URL helpers                                                        */
 /* ------------------------------------------------------------------ */
@@ -179,11 +161,7 @@ export function buildAuthorizeUrl(gatewayUrl: string, clientId: string): string 
  * Device recognition may route directly to /webauthn/login, or to the standard
  * login page where the passwordless link must be clicked.
  */
-export async function navigateToWebAuthnLogin(
-  page: Page,
-  gatewayUrl: string,
-  clientId: string,
-): Promise<void> {
+export async function navigateToWebAuthnLogin(page: Page, gatewayUrl: string, clientId: string): Promise<void> {
   await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
   await page.waitForURL(/.*(?:login|webauthn\/login).*/i);
   if (!page.url().includes('webauthn/login')) {
@@ -226,8 +204,7 @@ export async function loginAndRegisterWebAuthn(
     await page.locator('button.primary, button#register-button').click();
   });
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
 
   return auth;
 }
@@ -256,8 +233,7 @@ export async function passwordlessLogin(
     await page.locator('button.primary, button#login-button').click();
   });
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
 }
 
 /**
@@ -331,8 +307,7 @@ export async function fullLoginWithMfaAndWebAuthn(
 
   await page.locator('#verify').click();
 
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i);
+  await reachOAuthAuthorizationCallback(page);
 
   return auth;
 }
