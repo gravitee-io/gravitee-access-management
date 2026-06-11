@@ -11,6 +11,35 @@
   }
 }
 
+.agents-loading-wrapper {
+  position: relative;
+}
+
+.agents-table-overlay {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 65%);
+  inset: 0;
+}
+
+.agents-table-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgb(0 0 0 / 15%);
+  border-radius: 50%;
+  border-top-color: #1976d2;
+  animation: agents-spinner 0.8s linear infinite;
+}
+
+@keyframes agents-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .gv-page-content {
   ngx-datatable {
     .app-header {
