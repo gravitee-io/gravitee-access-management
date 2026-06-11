@@ -18,7 +18,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
 
-import { ApplicationService } from '../../services/application.service';
+import { ApplicationService, NON_AGENT_APPLICATION_TYPES } from '../../services/application.service';
 import { CursorResponse, NgxTablePageInfo } from '../../utils/cursor';
 
 @Component({
@@ -125,15 +125,15 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return this.applicationService.cursorNext(cursor);
     }
 
-    return this.searchValue
-      ? this.applicationService.cursorSearch(
-          this.domainId,
-          this.page.size,
-          this.page.pageNumber,
-          this.sorts[0],
-          '*' + this.searchValue + '*',
-        )
-      : this.applicationService.cursorSearch(this.domainId, this.page.size, this.page.pageNumber, this.sorts[0]);
+    const query = this.searchValue ? '*' + this.searchValue + '*' : undefined;
+    return this.applicationService.cursorSearch(
+      this.domainId,
+      this.page.size,
+      this.page.pageNumber,
+      this.sorts[0],
+      query,
+      NON_AGENT_APPLICATION_TYPES,
+    );
   }
 
   private applyPage(pagedApps: CursorResponse) {

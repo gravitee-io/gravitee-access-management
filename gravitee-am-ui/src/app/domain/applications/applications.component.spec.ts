@@ -18,7 +18,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
-import { ApplicationService } from '../../services/application.service';
+import { ApplicationService, NON_AGENT_APPLICATION_TYPES } from '../../services/application.service';
 
 import { ApplicationsComponent } from './applications.component';
 
@@ -94,6 +94,19 @@ describe('ApplicationsComponent', () => {
     initialRequest.complete();
     searchRequest.complete();
   }));
+
+  it('should request only non-agent application types', () => {
+    fixture.detectChanges();
+
+    expect(applicationService.cursorSearch).toHaveBeenCalledWith(
+      'domain-id',
+      expect.any(Number),
+      0,
+      expect.any(Object),
+      undefined,
+      NON_AGENT_APPLICATION_TYPES,
+    );
+  });
 
   it('should show an overlay spinner while the table request is pending', () => {
     const pendingRequest = new Subject<any>();
