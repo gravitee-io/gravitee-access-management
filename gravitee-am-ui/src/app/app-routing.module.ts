@@ -121,7 +121,6 @@ import { TagResolver } from './resolvers/tag.resolver';
 import { GroupMembersResolver } from './resolvers/group-members.resolver';
 import { ApplicationsComponent } from './domain/applications/applications.component';
 import { AgentsComponent } from './domain/agents/agents.component';
-import { AgentsResolver } from './resolvers/agents.resolver';
 import { AgentCreationComponent } from './domain/agents/creation/agent-creation.component';
 import { ApplicationCreationComponent } from './domain/applications/creation/application-creation.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
@@ -1483,9 +1482,6 @@ export const routes: Routes = [
                         path: '',
                         pathMatch: 'full',
                         component: AgentsComponent,
-                        resolve: {
-                          applications: AgentsResolver,
-                        },
                       },
                       {
                         path: 'new',
