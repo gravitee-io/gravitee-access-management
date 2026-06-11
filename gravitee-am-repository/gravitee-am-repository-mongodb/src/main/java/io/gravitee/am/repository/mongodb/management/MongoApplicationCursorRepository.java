@@ -40,6 +40,7 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.repository.mongodb.management.MongoApplicationRepository.FIELD_CLIENT_ID;
+import static io.gravitee.am.repository.mongodb.management.MongoApplicationRepository.FIELD_TYPE;
 
 @Component
 public class MongoApplicationCursorRepository extends AbstractMongoCursorRepository<ApplicationMongo, Application, ApplicationCursorRequest> implements ApplicationCursorRepository {
@@ -125,11 +126,12 @@ public class MongoApplicationCursorRepository extends AbstractMongoCursorReposit
     }
 
     private Bson cursorFilter(Bson baseFilter, ApplicationCursorRequest cursor) {
-        Bson filter;
+        Bson filter = baseFilter;
+        if (cursor.getTypes() != null && !cursor.getTypes().isEmpty()) {
+            filter = and(filter, in(FIELD_TYPE, cursor.getTypes().stream().map(Enum::name).toList()));
+        }
         if (StringUtils.isNotBlank(cursor.getQuery())) {
-            filter = withQuery(baseFilter, cursor.getQuery());
-        } else {
-            filter = baseFilter;
+            filter = withQuery(filter, cursor.getQuery());
         }
         return filter;
     }
