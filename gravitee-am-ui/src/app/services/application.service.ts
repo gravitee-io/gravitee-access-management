@@ -43,16 +43,17 @@ export class ApplicationService {
     page: number,
     sort: { prop: string; dir: string },
     query?: string,
+    types?: string[],
   ): Observable<CursorResponse> {
-    if (query) {
-      return this.http.get<any>(
-        this.appsURL + domainId + `/applications/search?page=${page}&limit=${size}&sort=${sort.prop}&dir=${sort.dir}&q=${query}`,
-      );
-    } else {
-      return this.http.get<any>(
-        this.appsURL + domainId + `/applications/search?page=${page}&limit=${size}&sort=${sort.prop}&dir=${sort.dir}`,
-      );
-    }
+    const queryParam = query ? `&q=${query}` : '';
+    const typeParam = this.buildTypeParam(types);
+    return this.http.get<any>(
+      this.appsURL +
+        domainId +
+        `/applications/search?page=${page}&limit=${size}&sort=${sort.prop}&dir=${sort.dir}` +
+        queryParam +
+        typeParam,
+    );
   }
 
   cursorNext(next: string): Observable<CursorResponse> {
