@@ -276,7 +276,6 @@ import { ApplicationCreationStep2Component } from './domain/applications/creatio
 import { ApplicationCreationStep3CimdConfirmComponent } from './domain/applications/creation/steps/step3-cimd-confirm/step3-cimd-confirm.component';
 import { CimdMetadataDialogComponent } from './domain/applications/creation/steps/step3-cimd-confirm/cimd-metadata-dialog.component';
 import { AgentsComponent } from './domain/agents/agents.component';
-import { AgentsResolver } from './resolvers/agents.resolver';
 import { AgentCreationComponent } from './domain/agents/creation/agent-creation.component';
 import { AgentCreationStep1Component } from './domain/agents/creation/steps/step1/step1.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
@@ -947,7 +946,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationService,
     ProtectedResourceService,
     McpServersService,
-    AgentsResolver,
     ApplicationResolver,
     MembershipsResolver,
     McpServerMembershipsResolver,

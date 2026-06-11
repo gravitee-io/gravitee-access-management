@@ -18,9 +18,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
-import { ApplicationService, NON_AGENT_APPLICATION_TYPES } from '../../services/application.service';
+import { AGENT_APPLICATION_TYPES, ApplicationService } from '../../services/application.service';
+import { SnackbarService } from '../../services/snackbar.service';
 
-import { ApplicationsComponent } from './applications.component';
+import { AgentsComponent } from './agents.component';
 
 @Pipe({
   name: 'humanDate',
@@ -32,9 +33,9 @@ class HumanDatePipeStub implements PipeTransform {
   }
 }
 
-describe('ApplicationsComponent', () => {
-  let component: ApplicationsComponent;
-  let fixture: ComponentFixture<ApplicationsComponent>;
+describe('AgentsComponent', () => {
+  let component: AgentsComponent;
+  let fixture: ComponentFixture<AgentsComponent>;
   let applicationService: {
     cursorSearch: jest.Mock;
     cursorNext: jest.Mock;
@@ -51,9 +52,10 @@ describe('ApplicationsComponent', () => {
     } as unknown as ActivatedRoute;
 
     TestBed.configureTestingModule({
-      declarations: [ApplicationsComponent, HumanDatePipeStub],
+      declarations: [AgentsComponent, HumanDatePipeStub],
       providers: [
         { provide: ApplicationService, useValue: applicationService },
+        { provide: SnackbarService, useValue: { open: jest.fn() } },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -62,7 +64,7 @@ describe('ApplicationsComponent', () => {
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ApplicationsComponent);
+    fixture = TestBed.createComponent(AgentsComponent);
     component = fixture.componentInstance;
   });
 
@@ -78,24 +80,24 @@ describe('ApplicationsComponent', () => {
 
     fixture.detectChanges();
 
-    component.onSearch({ target: { value: 'new-app' } });
+    component.onSearch({ target: { value: 'new-agent' } });
     tick(400);
 
-    searchRequest.next({ totalCount: 1, data: [{ id: 'new-id', name: 'new-app' }], nextCursor: 'new-cursor' });
+    searchRequest.next({ totalCount: 1, data: [{ id: 'new-id', name: 'new-agent' }], nextCursor: 'new-cursor' });
     fixture.detectChanges();
 
-    expect(component.applications).toEqual([{ id: 'new-id', name: 'new-app' }]);
+    expect(component.agents).toEqual([{ id: 'new-id', name: 'new-agent' }]);
 
-    initialRequest.next({ totalCount: 1, data: [{ id: 'old-id', name: 'old-app' }], nextCursor: 'old-cursor' });
+    initialRequest.next({ totalCount: 1, data: [{ id: 'old-id', name: 'old-agent' }], nextCursor: 'old-cursor' });
     fixture.detectChanges();
 
-    expect(component.applications).toEqual([{ id: 'new-id', name: 'new-app' }]);
+    expect(component.agents).toEqual([{ id: 'new-id', name: 'new-agent' }]);
 
     initialRequest.complete();
     searchRequest.complete();
   }));
 
-  it('should request only non-agent application types', () => {
+  it('should request only agent application types', () => {
     fixture.detectChanges();
 
     expect(applicationService.cursorSearch).toHaveBeenCalledWith(
@@ -104,7 +106,7 @@ describe('ApplicationsComponent', () => {
       0,
       expect.any(Object),
       undefined,
-      NON_AGENT_APPLICATION_TYPES,
+      AGENT_APPLICATION_TYPES,
     );
   });
 
@@ -114,12 +116,12 @@ describe('ApplicationsComponent', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.applications-table-overlay')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.agents-table-overlay')).not.toBeNull();
 
-    pendingRequest.next({ totalCount: 1, data: [{ id: 'app-id', name: 'app-name' }], nextCursor: undefined, page: 0 });
+    pendingRequest.next({ totalCount: 1, data: [{ id: 'agent-id', name: 'agent-name' }], nextCursor: undefined, page: 0 });
     pendingRequest.complete();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.applications-table-overlay')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.agents-table-overlay')).toBeNull();
   });
 });
