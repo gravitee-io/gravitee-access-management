@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationCursorRequest;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -144,6 +145,26 @@ public class ApplicationCursorRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void findByDomainCursor_typeFilter_restrictsToRequestedTypes() {
+        String domain = "cursor-type-domain-" + UUID.randomUUID();
+        createApp(domain, "app-web", null, ApplicationType.WEB);
+        createApp(domain, "app-agent", null, ApplicationType.AGENT);
+
+        // non-agent type list excludes the agent
+        ApplicationCursorRequest nonAgent = ApplicationCursorRequest.initialCursor("name", "ASC", 0, null, null,
+                List.of(ApplicationType.WEB, ApplicationType.NATIVE, ApplicationType.BROWSER, ApplicationType.SERVICE, ApplicationType.RESOURCE_SERVER));
+        CursorPage<Application, ApplicationCursorRequest> nonAgentPage = applicationCursorRepository.findByDomainCursor(domain, nonAgent, 10).blockingGet();
+        assertEquals(List.of("app-web"), nonAgentPage.getData().stream().map(Application::getName).toList());
+        assertEquals(Long.valueOf(1), nonAgentPage.getTotalCount());
+
+        // explicit AGENT type returns only the agent
+        ApplicationCursorRequest agentOnly = ApplicationCursorRequest.initialCursor("name", "ASC", 0, null, null, List.of(ApplicationType.AGENT));
+        CursorPage<Application, ApplicationCursorRequest> agentPage = applicationCursorRepository.findByDomainCursor(domain, agentOnly, 10).blockingGet();
+        assertEquals(List.of("app-agent"), agentPage.getData().stream().map(Application::getName).toList());
+        assertEquals(Long.valueOf(1), agentPage.getTotalCount());
+    }
+
+    @Test
     public void findByDomainCursor_invalidSortField_returnsError() {
         String domain = "cursor-invalid-sort-domain-" + UUID.randomUUID();
         createApp(domain, "app-a");
@@ -160,9 +181,14 @@ public class ApplicationCursorRepositoryTest extends AbstractManagementTest {
     }
 
     private Application createApp(String domain, String name, String clientId) {
+        return createApp(domain, name, clientId, null);
+    }
+
+    private Application createApp(String domain, String name, String clientId, ApplicationType type) {
         Application app = new Application();
         app.setDomain(domain);
         app.setName(name);
+        app.setType(type);
         if (clientId != null) {
             ApplicationSettings settings = new ApplicationSettings();
             ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
