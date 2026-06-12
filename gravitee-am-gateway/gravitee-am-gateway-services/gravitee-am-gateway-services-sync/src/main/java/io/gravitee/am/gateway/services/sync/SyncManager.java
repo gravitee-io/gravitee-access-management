@@ -33,6 +33,7 @@ import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
@@ -51,7 +52,6 @@ import java.text.Collator;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,62 +213,33 @@ public class SyncManager implements InitializingBean, DisposableBean {
 
         if (lastRefreshAt == -1) {
             logger.debug("Initial synchronization");
-            deployDomains()
-                    .doOnComplete(() -> {
-                        allSecurityDomainsSync = true;
-                        lastRefreshAt = nextLastRefreshAt;
-                        lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
-                    })
-                    .doFinally(() -> syncInProgress.set(false))
-                    .subscribe(
-                            () -> {},
-                            ex -> {
-                                if (logger.isDebugEnabled()) {
-                                    logger.error("Synchronization failed", ex);
-                                } else {
-                                    logger.error("Synchronization failed, ex={}", ex.toString());
-                                }
-                            });
+            executeSync(
+                    deployDomains().doOnComplete(() -> allSecurityDomainsSync = true),
+                    nextLastRefreshAt);
         } else {
-            // Event branch: still blocking (converted in T05).
-            try {
-                logger.debug("Events synchronization");
-
-                final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
-                final long to = nextLastRefreshAt + timeframeAfterDelay;
-                Single<List<Event>> findEvents = eventRepository.findByTimeFrameAndDataPlaneId(from, to, dataPlaneId).toList();
-                if (this.eventsTimeOut > 0) {
-                    findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
-                }
-                List<Event> events = findEvents.blockingGet();
-
-                if (!events.isEmpty()) {
-                    gatewayMetricProvider.updateSyncEvents(events.size());
-
-                    // Extract only the latest events by type and id
-                    Map<AbstractMap.SimpleEntry<Object, Object>, Event> sortedEvents = events
-                            .stream()
-                            .collect(
-                                    toMap(
-                                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
-                                            event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
-                    computeEvents(sortedEvents.values());
-                } else {
-                    gatewayMetricProvider.updateSyncEvents(0);
-                }
-
-                lastRefreshAt = nextLastRefreshAt;
-                lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
-            } catch (Exception ex) {
-                if (logger.isDebugEnabled()) {
-                    logger.error("Synchronization failed", ex);
-                } else {
-                    logger.error("Synchronization failed, ex={}", ex.toString());
-                }
-            } finally {
-                syncInProgress.set(false);
-            }
+            logger.debug("Events synchronization");
+            final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
+            final long to = nextLastRefreshAt + timeframeAfterDelay;
+            executeSync(processEvents(from, to), nextLastRefreshAt);
         }
+    }
+
+    private void executeSync(Completable pipeline, long nextLastRefreshAt) {
+        pipeline
+                .doOnComplete(() -> {
+                    lastRefreshAt = nextLastRefreshAt;
+                    lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
+                })
+                .doFinally(() -> syncInProgress.set(false))
+                .subscribe(
+                        () -> {},
+                        ex -> {
+                            if (logger.isDebugEnabled()) {
+                                logger.error("Synchronization failed", ex);
+                            } else {
+                                logger.error("Synchronization failed, ex={}", ex.toString());
+                            }
+                        });
     }
 
     private Completable deployDomains() {
@@ -293,73 +264,85 @@ public class SyncManager implements InitializingBean, DisposableBean {
         return securityDomainManager.deployReactive(domain);
     }
 
-    private void computeEvents(Collection<Event> events) {
-        events.forEach(event -> {
-            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            if (Objects.requireNonNull(event.getType()) == Type.DOMAIN) {
-                synchronizeDomain(event);
+    private Completable processEvents(long from, long to) {
+        Single<List<Event>> findEvents = eventRepository.findByTimeFrameAndDataPlaneId(from, to, dataPlaneId).toList();
+        if (this.eventsTimeOut > 0) {
+            findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
+        }
+        return findEvents.flatMapCompletable(events -> {
+            if (events.isEmpty()) {
+                gatewayMetricProvider.updateSyncEvents(0);
+                return Completable.complete();
+            }
+            gatewayMetricProvider.updateSyncEvents(events.size());
+            // Extract only the latest event per (type, id) pair
+            Map<AbstractMap.SimpleEntry<Object, Object>, Event> sortedEvents = events
+                    .stream()
+                    .collect(toMap(
+                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                            event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+            return Flowable.fromIterable(sortedEvents.values())
+                    .flatMapCompletable(this::computeEvent, false, deployParallelism);
+        });
+    }
+
+    private Completable computeEvent(Event event) {
+        logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+        if (Objects.requireNonNull(event.getType()) == Type.DOMAIN) {
+            return synchronizeDomain(event);
+        }
+        return Completable.fromRunnable(() -> {
+            String eventId = event.getId();
+            if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
+                publishEventTypeSafe(eventManager, io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
             } else {
-                String eventId = event.getId();
-                if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
-                    publishEventTypeSafe(eventManager, io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
-                } else {
-                    logger.debug("Event id {} already processed", eventId);
-                }
+                logger.debug("Event id {} already processed", eventId);
             }
         });
     }
 
-    private void synchronizeDomain(Event event) {
+    private Completable synchronizeDomain(Event event) {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
-        switch (action) {
+        return switch (action) {
             case CREATE, UPDATE -> {
-                domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING);
                 Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
                 if (this.eventsTimeOut > 0) {
                     maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
-                Domain domain = maybeDomain.blockingGet();
-                if (domain == null) {
-                    domainReadinessService.removeDomain(domainId);
-                    return;
-                }
-
-                // Get deployed domain
-                Domain deployedDomain = securityDomainManager.get(domain.getId());
-                // Can the security domain be deployed?
-                if (!canHandle(domain)) {
-                    // Check that the security domain was not previously deployed with other tags
-                    // In that case, we must undeploy it
-                    if (deployedDomain != null) {
-                        securityDomainManager.undeploy(domainId);
-                    }
-                    domainReadinessService.removeDomain(domainId);
-                    return;
-                }
-
-                // domain is not yet deployed, so let's do it !
-                if (deployedDomain == null) {
-                    securityDomainManager.deploy(domain);
-                } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
-                    securityDomainManager.update(domain);
-                }
-
-                if (domain.isEnabled()) {
-                    domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
-                } else {
-                    domainReadinessService.removeDomain(domain.getId());
-                }
+                final Maybe<Domain> resolvedMaybe = maybeDomain;
+                yield Completable.fromRunnable(() -> domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING))
+                        .andThen(resolvedMaybe
+                                // domain not found: update readiness and stop
+                                .switchIfEmpty(Completable.fromRunnable(() -> domainReadinessService.removeDomain(domainId)).toMaybe())
+                                .flatMapCompletable(domain -> {
+                                    Domain deployedDomain = securityDomainManager.get(domain.getId());
+                                    if (!canHandle(domain)) {
+                                        // Previously deployed under different tags: undeploy it
+                                        Completable undeploy = deployedDomain != null
+                                                ? securityDomainManager.undeployReactive(domainId)
+                                                : Completable.complete();
+                                        return undeploy.andThen(Completable.fromRunnable(() -> domainReadinessService.removeDomain(domainId)));
+                                    }
+                                    Completable deployOrUpdate;
+                                    if (deployedDomain == null) {
+                                        deployOrUpdate = securityDomainManager.deployReactive(domain);
+                                    } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
+                                        deployOrUpdate = securityDomainManager.updateReactive(domain);
+                                    } else {
+                                        deployOrUpdate = Completable.complete();
+                                    }
+                                    Completable updateReadiness = domain.isEnabled()
+                                            ? Completable.fromRunnable(() -> domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED))
+                                            : Completable.fromRunnable(() -> domainReadinessService.removeDomain(domain.getId()));
+                                    return deployOrUpdate.andThen(updateReadiness);
+                                }));
             }
-            case DELETE -> {
-                domainReadinessService.updateDomainStatus(domainId, DomainState.Status.REMOVING);
-                securityDomainManager.undeploy(domainId);
-                domainReadinessService.removeDomain(domainId);
-            }
-            default -> {
-                // No action needed for default case
-            }
-        }
+            case DELETE -> Completable.fromRunnable(() -> domainReadinessService.updateDomainStatus(domainId, DomainState.Status.REMOVING))
+                    .andThen(securityDomainManager.undeployReactive(domainId))
+                    .andThen(Completable.fromRunnable(() -> domainReadinessService.removeDomain(domainId)));
+            default -> Completable.complete();
+        };
     }
 
     private boolean canHandle(Domain domain) {
