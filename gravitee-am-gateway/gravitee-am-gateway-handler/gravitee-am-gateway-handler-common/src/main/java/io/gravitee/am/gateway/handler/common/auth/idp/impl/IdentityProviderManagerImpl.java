@@ -110,19 +110,16 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     public void afterPropertiesSet() {
         logger.info("Initializing identity providers for domain {}", domain.getName());
 
-        try {
-            identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
-                    .concatMapSingle(this::updateAuthenticationProvider)
-                    .map(provider -> {
-                        gatewayMetricProvider.incrementIdp();
-                        return provider;
-                    })
-                    .blockingLast();
-            logger.info("Identity providers loaded for domain {}", domain.getName());
-        } catch (Exception e) {
-            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
-            domainReadinessService.pluginInitFailed(domain.getId(), Type.IDENTITY_PROVIDER.name(), e.getMessage());
-        }
+        identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
+                .concatMapSingle(this::updateAuthenticationProvider)
+                .doOnComplete(() -> logger.info("Identity providers loaded for domain {}", domain.getName()))
+                .subscribe(
+                        provider -> gatewayMetricProvider.incrementIdp(),
+                        e -> {
+                            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.IDENTITY_PROVIDER.name(), e.getMessage());
+                        }
+                );
     }
 
     @Override
