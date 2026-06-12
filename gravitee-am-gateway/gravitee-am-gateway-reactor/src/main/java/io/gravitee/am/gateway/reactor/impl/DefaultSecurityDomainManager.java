@@ -19,13 +19,14 @@ import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Completable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,7 +39,7 @@ public class DefaultSecurityDomainManager implements SecurityDomainManager {
     @Autowired
     private EventManager eventManager;
 
-    private final Map<String, Domain> domains = new HashMap<>();
+    private final Map<String, Domain> domains = new ConcurrentHashMap<>();
 
 
     @Override
@@ -77,6 +78,21 @@ public class DefaultSecurityDomainManager implements SecurityDomainManager {
             eventManager.publishEvent(DomainEvent.UNDEPLOY, currentDomain);
             logger.info("{} has been undeployed", domainId);
         }
+    }
+
+    @Override
+    public Completable deployReactive(Domain domain) {
+        return Completable.fromRunnable(() -> deploy(domain));
+    }
+
+    @Override
+    public Completable updateReactive(Domain domain) {
+        return Completable.fromRunnable(() -> update(domain));
+    }
+
+    @Override
+    public Completable undeployReactive(String domainId) {
+        return Completable.fromRunnable(() -> undeploy(domainId));
     }
 
     @Override

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.reactor;
 
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Completable;
 
 import java.util.Collection;
 
@@ -45,6 +46,21 @@ public interface SecurityDomainManager {
      * @param domainId The ID of the security domain to undeploy.
      */
     void undeploy(String domainId);
+
+    /**
+     * Reactive variant of {@link #deploy(Domain)}.
+     */
+    Completable deployReactive(Domain domain);
+
+    /**
+     * Reactive variant of {@link #update(Domain)}.
+     */
+    Completable updateReactive(Domain domain);
+
+    /**
+     * Reactive variant of {@link #undeploy(String)}.
+     */
+    Completable undeployReactive(String domainId);
 
     /**
      * Returns a collection of deployed {@link Domain}s.
