@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.8.40-create-idx_domains_ref_name
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_domains_ref_name
+                tableName: domains
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: name
+            indexName: idx_domains_ref_name
+            tableName: domains
