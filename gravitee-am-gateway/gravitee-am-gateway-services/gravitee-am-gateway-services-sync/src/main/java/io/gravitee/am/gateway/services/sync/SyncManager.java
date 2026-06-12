@@ -140,6 +140,9 @@ public class SyncManager implements InitializingBean {
     @Value("${services.sync.timeframeAfterDelay:" + TIMEFRAME_AFTER_DELAY + "}")
     private int timeframeAfterDelay;
 
+    @Value("${services.sync.deploy.parallelism:0}")
+    private int deployParallelism;
+
     private Cache<String, String> processedEventIds;
 
     @Override
@@ -147,11 +150,15 @@ public class SyncManager implements InitializingBean {
         logger.info("Starting gateway tags initialization ...");
         this.initShardingTags();
         this.initEnvironments();
+        if (deployParallelism <= 0) {
+            deployParallelism = 2 * Runtime.getRuntime().availableProcessors();
+        }
         logger.info("Gateway has been loaded with the following information :");
         logger.info("\t\t - Sharding tags : {}", shardingTags.isPresent() ? shardingTags.get() : "[]");
         logger.info("\t\t - Organizations : {}", organizations.isPresent() ? organizations.get() : "[]");
         logger.info("\t\t - Environments : {}", environments.isPresent() ? environments.get() : "[]");
         logger.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
+        logger.info("\t\t - Domain deployment parallelism : {}", deployParallelism);
         this.processedEventIds = CacheBuilder.newBuilder()
                 .expireAfterWrite(timeframeBeforeDelay + timeframeAfterDelay, TimeUnit.MILLISECONDS)
                 .build();
