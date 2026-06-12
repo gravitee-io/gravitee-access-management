@@ -68,22 +68,24 @@ public class AlertEventProcessor extends AbstractService {
 
     private String environmentId;
 
-    private String organizationId;
+    private volatile String organizationId;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
-        try {
-            this.environmentId = domain.getReferenceId();
-            final io.gravitee.am.model.Environment domainEnv = environmentService.findById(environmentId).blockingGet();
-            this.organizationId = domainEnv.getOrganizationId();
-        } catch (Exception e) {
-            logger.warn("The domain [{}] seems not attached to any environment or organization. Alert events may not be accurate.", domain.getName());
-        }
-
-        logger.info("Register event listener for all events for domain {}", domain.getName());
-        eventManager.subscribeForEvents(authenticationEventListener, AuthenticationEvent.class, domain.getId());
+        this.environmentId = domain.getReferenceId();
+        environmentService.findById(environmentId).
+                map(domainEnv -> {
+                    this.organizationId = domainEnv.getOrganizationId();
+                    return domainEnv;
+                })
+                .doOnError(error -> logger.warn("The domain [{}] seems not attached to any environment or organization. Alert events may not be accurate.", domain.getName()))
+                .doFinally(() -> {
+                    logger.info("Register event listener for all events for domain {}", domain.getName());
+                    eventManager.subscribeForEvents(authenticationEventListener, AuthenticationEvent.class, domain.getId());
+                })
+                .subscribe();
     }
 
     @Override
