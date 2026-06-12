@@ -112,6 +112,8 @@ public class SyncManagerTest {
         syncManager.afterPropertiesSet();
         syncManager.setDeploymentScheduler(Schedulers.trampoline());
         lenient().when(securityDomainManager.deployReactive(any())).thenReturn(Completable.complete());
+        lenient().when(securityDomainManager.updateReactive(any())).thenReturn(Completable.complete());
+        lenient().when(securityDomainManager.undeployReactive(anyString())).thenReturn(Completable.complete());
         when(defaultReactor.isStarted()).thenReturn(true);
     }
 
@@ -250,8 +252,8 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         verify(securityDomainManager, times(1)).deployReactive(any());
-        verify(securityDomainManager, never()).update(any());
-        verify(securityDomainManager, times(1)).undeploy(domain.getId());
+        verify(securityDomainManager, never()).updateReactive(any());
+        verify(securityDomainManager, times(1)).undeployReactive(domain.getId());
         verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.REMOVING));
         verify(domainReadinessService).removeDomain(eq("domain-1"));
     }
@@ -286,8 +288,8 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         verify(securityDomainManager, times(1)).deployReactive(any());
-        verify(securityDomainManager, times(1)).update(any());
-        verify(securityDomainManager, never()).undeploy(domain.getId());
+        verify(securityDomainManager, times(1)).updateReactive(any());
+        verify(securityDomainManager, never()).undeployReactive(domain.getId());
         verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.INITIALIZING));
         verify(domainReadinessService, times(2)).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
     }
@@ -782,6 +784,26 @@ public class SyncManagerTest {
         verify(domainReadinessService, never()).updateDomainStatus(eq("domain-fail"), eq(DomainState.Status.DEPLOYED));
         // Overall sync still completes
         assertTrue(syncManager.isAllSecurityDomainsSync());
+    }
+
+    @Test
+    public void synchronizeDomain_event_for_unknown_domain_removes_readiness_entry() {
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        syncManager.refresh();
+
+        Event event = new Event();
+        event.setType(Type.DOMAIN);
+        event.setPayload(new Payload("unknown-domain", ReferenceType.DOMAIN, "unknown-domain", Action.UPDATE));
+
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.just(event));
+        when(domainRepository.findById("unknown-domain")).thenReturn(Maybe.empty());
+
+        syncManager.refresh();
+
+        verify(domainReadinessService).updateDomainStatus(eq("unknown-domain"), eq(DomainState.Status.INITIALIZING));
+        verify(domainReadinessService).removeDomain(eq("unknown-domain"));
+        verify(securityDomainManager, never()).deployReactive(any());
+        verify(securityDomainManager, never()).updateReactive(any());
     }
 
     @Test
