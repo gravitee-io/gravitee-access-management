@@ -139,6 +139,9 @@ services:
 #    # should we manage groups & roles in memory
 #    # by using sync process to update them
 #    permissions: false
+#    deploy:
+#      # number of concurrent domain deployments, 0 = 2 x CPU cores
+#      parallelism: 0
 
   core:
     http:

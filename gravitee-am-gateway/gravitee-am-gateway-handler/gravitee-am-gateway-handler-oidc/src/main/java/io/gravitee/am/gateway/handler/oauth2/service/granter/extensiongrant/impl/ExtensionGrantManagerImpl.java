@@ -46,6 +46,8 @@ import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -53,6 +55,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -116,17 +119,18 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         logger.info("Initializing extension grants for domain {}", domain.getName());
         this.tokenRequestResolver.setManagers(this.scopeManager, this.protectedResourceManager);
         extensionGrantRepository.findByDomain(domain.getId())
+                .concatMapCompletable(extensionGrant -> {
+                    // backward compatibility, get the oldest extension grant to set the good one for the old clients
+                    if (minDate == null) {
+                        minDate = extensionGrant.getCreatedAt();
+                    } else if (minDate.after(extensionGrant.getCreatedAt())) {
+                        minDate = extensionGrant.getCreatedAt();
+                    }
+                    return updateExtensionGrantProvider(extensionGrant);
+                })
+                .doOnComplete(() -> logger.info("Extension grants loaded for domain {}", domain.getName()))
                 .subscribe(
-                        extensionGrant -> {
-                            // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                            if (minDate == null) {
-                                minDate = extensionGrant.getCreatedAt();
-                            } else if (minDate.after(extensionGrant.getCreatedAt())) {
-                                minDate = extensionGrant.getCreatedAt();
-                            }
-                            updateExtensionGrantProvider(extensionGrant);
-                            logger.info("Extension grants loaded for domain {}", domain.getName());
-                        },
+                        () -> {},
                         error -> {
                             logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.EXTENSION_GRANT.name(), error.getMessage());
@@ -170,8 +174,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                             if (extensionGrants.isEmpty()) {
                                 minDate = extensionGrant.getCreatedAt();
                             }
-                            updateExtensionGrantProvider(extensionGrant);
-                            logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName());
+                            updateExtensionGrantProvider(extensionGrant)
+                                    .subscribe(() -> logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName()));
                         },
                         error -> logger.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
                         () -> logger.error("No extension grant found with id {}", extensionGrantId));
@@ -189,42 +193,47 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         }
     }
 
-    private void updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
+    private Completable updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
         domainReadinessService.initPluginSync(domain.getId(), extensionGrant.getId(), Type.EXTENSION_GRANT.name());
-        try {
-            if (needDeployment(extensionGrant)) {
-                AuthenticationProvider authenticationProvider = null;
-                if (extensionGrant.getIdentityProvider() != null) {
-                    logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
-                    authenticationProvider = identityProviderManager.get(extensionGrant.getIdentityProvider()).blockingGet();
-                    if (authenticationProvider != null) {
-                        logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
-                    }
-                }
-
-                var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, authenticationProvider);
-                var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
-                var extensionGrantStrategy = buildStrategy(extensionGrant, extensionGrantProvider);
-                // backward compatibility, set min date to the extension grant strategy to choose the good one for the old clients
-                extensionGrantStrategy.setMinDate(minDate);
-
-                // Wrap strategy with adapter to integrate with CompositeTokenGranter
-                var adapter = new StrategyGranterAdapter(extensionGrantStrategy, domain, tokenService, rulesEngine, tokenRequestResolver);
-
-                ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), adapter);
-                extensionGrants.put(extensionGrant.getId(), extensionGrant);
-                extensionGrantStrategies.put(extensionGrant.getId(), extensionGrantStrategy);
-                domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
-            } else {
-                logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
-                domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
-            }
-        } catch (Exception ex) {
-            // failed to load the plugin
-            logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
-            removeExtensionGrant(extensionGrant.getId());
-            domainReadinessService.pluginFailed(domain.getId(), extensionGrant.getId(), ex.getMessage());
+        if (!needDeployment(extensionGrant)) {
+            logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
+            domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
+            return Completable.complete();
         }
+
+        Single<Optional<AuthenticationProvider>> authProviderSingle;
+        if (extensionGrant.getIdentityProvider() != null) {
+            logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
+            authProviderSingle = identityProviderManager.get(extensionGrant.getIdentityProvider())
+                    .doOnSuccess(ap -> logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider()))
+                    .map(Optional::of)
+                    .switchIfEmpty(Single.just(Optional.empty()));
+        } else {
+            authProviderSingle = Single.just(Optional.empty());
+        }
+
+        return authProviderSingle
+                .flatMapCompletable(optProvider -> Completable.fromAction(() -> {
+                    var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, optProvider.orElse(null));
+                    var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
+                    var extensionGrantStrategy = buildStrategy(extensionGrant, extensionGrantProvider);
+                    // backward compatibility, set min date to the extension grant strategy to choose the good one for the old clients
+                    extensionGrantStrategy.setMinDate(minDate);
+
+                    // Wrap strategy with adapter to integrate with CompositeTokenGranter
+                    var adapter = new StrategyGranterAdapter(extensionGrantStrategy, domain, tokenService, rulesEngine, tokenRequestResolver);
+
+                    ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), adapter);
+                    extensionGrants.put(extensionGrant.getId(), extensionGrant);
+                    extensionGrantStrategies.put(extensionGrant.getId(), extensionGrantStrategy);
+                    domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
+                }))
+                .doOnError(ex -> {
+                    logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
+                    removeExtensionGrant(extensionGrant.getId());
+                    domainReadinessService.pluginFailed(domain.getId(), extensionGrant.getId(), ex.getMessage());
+                })
+                .onErrorComplete();
     }
 
     private ExtensionGrantStrategy buildStrategy(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
