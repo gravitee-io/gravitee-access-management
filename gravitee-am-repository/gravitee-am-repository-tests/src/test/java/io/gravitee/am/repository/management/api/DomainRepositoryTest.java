@@ -412,6 +412,43 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testSearch_on_name() {
+        // create domain with distinct name and hrid
+        Domain domain = initDomain();
+        domain.setHrid("some-other-hrid");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId("environment#search-name");
+        domainRepository.create(domain).blockingGet();
+
+        // search by name — hrid does not match, name does
+        TestSubscriber<Domain> testSubscriber = domainRepository.search("environment#search-name", domain.getName()).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+    }
+
+    @Test
+    public void testSearch_on_name_wildcard() {
+        // create domain with distinct name and hrid
+        Domain domain = initDomain();
+        domain.setHrid("some-other-hrid");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId("environment#search-name-wildcard");
+        domainRepository.create(domain).blockingGet();
+
+        // search with wildcard matching the name prefix
+        String wildcardQuery = domain.getName().substring(0, 4) + "*";
+        TestSubscriber<Domain> testSubscriber = domainRepository.search("environment#search-name-wildcard", wildcardQuery).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+    }
+
+    @Test
     public void createDomain_withDataPlaneId() {
         // create domain
         Domain domain = initDomain();
