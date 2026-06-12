@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 class DomainResourceTest extends AutomationJerseySpringTest {
 
     private static final String DOMAIN_KEY = "customer-auth";
+    private static final String BROWNFIELD_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
 
     private Domain domain() {
@@ -116,6 +117,44 @@ class DomainResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(204, response.getStatus());
         verify(domainService, never()).delete(any(), any(), any());
+    }
+
+    private Domain brownfieldDomain(String referenceId) {
+        Domain domain = domain();
+        domain.setId(BROWNFIELD_ID);
+        domain.setAutomationKey(null);
+        domain.setReferenceId(referenceId);
+        domain.setManagedBy(ManagedBy.NONE);
+        return domain;
+    }
+
+    @Test
+    void get_by_id_returns_brownfield_domain_bypassing_managed_by() {
+        when(domainService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldDomain(ENV_ID)));
+
+        Response response = domainsTarget().path("id:" + BROWNFIELD_ID).request().get();
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void get_by_id_returns_404_when_domain_in_other_environment() {
+        when(domainService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldDomain("other-env")));
+
+        Response response = domainsTarget().path("id:" + BROWNFIELD_ID).request().get();
+
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    void delete_by_id_returns_204_for_brownfield_domain() {
+        when(domainService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldDomain(ENV_ID)));
+        when(domainService.delete(any(), eq(BROWNFIELD_ID), any())).thenReturn(Completable.complete());
+
+        Response response = domainsTarget().path("id:" + BROWNFIELD_ID).request().delete();
+
+        assertEquals(204, response.getStatus());
+        verify(domainService).delete(any(), eq(BROWNFIELD_ID), any());
     }
 
     @Test

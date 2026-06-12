@@ -17,18 +17,10 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.mapper.AutomationReporterMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
-import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.ReporterNotFoundException;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,9 +45,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ReporterResource extends AbstractAutomationResource {
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private ReporterService reporterService;
 
     @GET
@@ -74,9 +63,11 @@ public class ReporterResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef reporterRef = AutomationRef.parse(reporterKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, Acl.READ)
-                .andThen(resolveDomain(environmentId, domainKey))
-                .flatMap(domain -> resolveReporter(domain, reporterKey)
+                .andThen(resolver.resolveDomain(environmentId, domainRef))
+                .flatMap(domain -> resolver.resolveReporter(domain, reporterRef)
                         .map(AutomationReporterMapper::toAutomationReporter))
                 .subscribe(response::resume, response::resume);
     }
@@ -94,35 +85,15 @@ public class ReporterResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef reporterRef = AutomationRef.parse(reporterKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, Acl.DELETE)
-                .andThen(resolveDomainMaybe(environmentId, domainKey))
-                .flatMap(domain -> reporterService.findByReference(Reference.domain(domain.getId()))
-                        .filter(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API) && reporterKey.equals(reporter.getAutomationKey()))
-                        .firstElement())
-                // removeSystemReporter=true: the Automation API owns the lifecycle of the resources
-                // it manages, including the default, so the system guard does not apply.
-                .flatMapCompletable(reporter -> reporterService.delete(reporter.getId(), principal, true))
+                .andThen(resolver.resolveDomainMaybe(environmentId, domainRef))
+                .flatMap(domain -> resolver.resolveReporterMaybe(domain, reporterRef))
+                // The "system reporter cannot be deleted" guard is only waived for reporters the
+                // Automation API owns (managedBy == AUTOMATION_API).
+                .flatMapCompletable(reporter ->
+                        reporterService.delete(reporter.getId(), principal, reporter.isManagedBy(ManagedBy.AUTOMATION_API)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
-    private Single<Domain> resolveDomain(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                        ? Single.just(domain)
-                        : Single.error(new DomainNotFoundException(domainKey)));
-    }
-
-    private Maybe<Domain> resolveDomainMaybe(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .filter(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API));
-    }
-
-    private Single<Reporter> resolveReporter(Domain domain, String reporterKey) {
-        return reporterService.findByReference(Reference.domain(domain.getId()))
-                .filter(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API) && reporterKey.equals(reporter.getAutomationKey()))
-                .firstElement()
-                .switchIfEmpty(Maybe.error(() -> new ReporterNotFoundException(reporterKey)))
-                .toSingle();
     }
 }

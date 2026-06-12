@@ -42,6 +42,7 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
 
     private static final String DOMAIN_KEY = "customer-auth";
     private static final String IDP_KEY = "dev-users";
+    private static final String BROWNFIELD_ID = "11111111-2222-3333-4444-555555555555";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
     private final String idpId = AutomationIds.identityProviderId(domainId, IDP_KEY);
 
@@ -144,6 +145,66 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(204, response.getStatus());
         verify(identityProviderService, never()).delete(any(), anyString(), anyString(), any());
+    }
+
+    private IdentityProvider brownfieldIdp(String referenceId) {
+        IdentityProvider idp = new IdentityProvider();
+        idp.setId(BROWNFIELD_ID);
+        idp.setName("Legacy LDAP");
+        idp.setType("ldap-am-idp");
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId(referenceId);
+        idp.setManagedBy(ManagedBy.NONE);
+        return idp;
+    }
+
+    @Test
+    void get_by_id_returns_brownfield_idp_bypassing_managed_by() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp(domainId)));
+
+        Response response = identitiesTarget(DOMAIN_KEY).path("id:" + BROWNFIELD_ID).request().get();
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void get_by_id_resolves_child_under_an_id_addressed_domain() {
+        // mixed addressing: both the domain and the identity provider are addressed by id:
+        String brownfieldDomainId = "dddddddd-eeee-ffff-0000-111111111111";
+        Domain brownfieldDomain = new Domain();
+        brownfieldDomain.setId(brownfieldDomainId);
+        brownfieldDomain.setReferenceId(ENV_ID);
+        brownfieldDomain.setManagedBy(ManagedBy.NONE);
+        when(domainService.findById(eq(brownfieldDomainId))).thenReturn(Maybe.just(brownfieldDomain));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp(brownfieldDomainId)));
+
+        Response response = identitiesTarget("id:" + brownfieldDomainId).path("id:" + BROWNFIELD_ID).request().get();
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void get_by_id_returns_404_when_idp_belongs_to_another_domain() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp("another-domain")));
+
+        Response response = identitiesTarget(DOMAIN_KEY).path("id:" + BROWNFIELD_ID).request().get();
+
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    void delete_by_id_returns_204_for_brownfield_idp() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp(domainId)));
+        when(identityProviderService.delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any()))
+                .thenReturn(Completable.complete());
+
+        Response response = identitiesTarget(DOMAIN_KEY).path("id:" + BROWNFIELD_ID).request().delete();
+
+        assertEquals(204, response.getStatus());
+        verify(identityProviderService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any());
     }
 
     @Test

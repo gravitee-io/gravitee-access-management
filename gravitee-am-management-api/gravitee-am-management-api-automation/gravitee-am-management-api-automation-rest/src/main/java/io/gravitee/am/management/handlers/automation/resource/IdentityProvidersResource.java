@@ -30,7 +30,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
@@ -103,7 +102,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST)
-                .andThen(resolveDomain(environmentId, domainKey))
+                .andThen(resolver.resolveDomain(environmentId, AutomationRef.parse(domainKey)))
                 .flatMap(domain -> identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId())
                         .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(
@@ -155,8 +154,21 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final String domainId = AutomationIds.domainId(environmentId, domainKey);
-        final String key = definition.getAutomationKey();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef idpRef = AutomationRef.parse(definition.getAutomationKey());
+        final String key = idpRef.raw();
+
+        // An 'id:' body addresses a preexisting identity provider directly (update-only)
+        if (idpRef instanceof AutomationRef.IdRef) {
+            checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> resolver.resolveIdentityProvider(domain, idpRef)
+                            .flatMap(existing -> updateExisting(domain, existing, definition, key, principal)))
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
+
+        final String domainId = AutomationIds.domainId(environmentId, domainRef);
         identityProviderService.findAll(ReferenceType.DOMAIN, domainId).toList().flatMap(allExisting -> {
             // A resource is addressed by its key; a system IDP adopts the conventional default-idp id.
             Optional<IdentityProvider> match = allExisting.stream()
@@ -167,7 +179,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             // existence is revealed (domain 404 / conflict 400).
             Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
             return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, requiredAcl)
-                    .andThen(resolveDomain(environmentId, domainKey))
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
                     .flatMap(domain -> match.isPresent()
                             ? updateExisting(domain, match.get(), definition, key, principal)
                             : createNew(domain, allExisting, definition, key, principal));
@@ -279,13 +291,5 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
     @Path("/{identityKey}")
     public IdentityProviderResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderResource.class);
-    }
-
-    private Single<Domain> resolveDomain(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                        ? Single.just(domain)
-                        : Single.error(new DomainNotFoundException(domainKey)));
     }
 }

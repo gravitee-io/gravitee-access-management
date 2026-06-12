@@ -20,10 +20,7 @@ import io.gravitee.am.management.handlers.automation.mapper.AutomationDomainMapp
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -70,13 +67,10 @@ public class DomainResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final String domainId = AutomationIds.domainId(environmentId, domainKey);
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.READ)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                        .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                                ? Single.fromCallable(() -> AutomationDomainMapper.toAutomationDomain(domain))
-                                : Single.error(new DomainNotFoundException(domainKey))))
+                .andThen(resolver.resolveDomain(environmentId, domainRef))
+                .map(AutomationDomainMapper::toAutomationDomain)
                 .subscribe(response::resume, response::resume);
     }
 
@@ -93,11 +87,10 @@ public class DomainResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final String domainId = AutomationIds.domainId(environmentId, domainKey);
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
 
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.DELETE)
-                .andThen(domainService.findById(domainId)
-                        .filter(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)))
+                .andThen(resolver.resolveDomainMaybe(environmentId, domainRef))
                 .flatMapCompletable(domain -> domainService.delete(
                         new GraviteeContext(organizationId, environmentId, domain.getId()), domain.getId(), principal))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);

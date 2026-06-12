@@ -47,6 +47,9 @@ public abstract class AbstractAutomationResource {
     @Autowired
     private PermissionService permissionService;
 
+    @Autowired
+    protected AutomationResourceResolver resolver;
+
     protected static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

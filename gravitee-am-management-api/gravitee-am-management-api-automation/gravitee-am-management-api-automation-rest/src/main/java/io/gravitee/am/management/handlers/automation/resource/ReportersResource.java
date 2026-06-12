@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.management.handlers.automation.resource;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationReporterMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -26,7 +26,6 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewReporter;
 import io.reactivex.rxjava3.core.Single;
@@ -66,9 +65,6 @@ public class ReportersResource extends AbstractAutomationResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private ReporterService reporterService;
 
     @Autowired
@@ -91,7 +87,7 @@ public class ReportersResource extends AbstractAutomationResource {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, Acl.LIST)
-                .andThen(resolveDomain(environmentId, domainKey))
+                .andThen(resolver.resolveDomain(environmentId, AutomationRef.parse(domainKey)))
                 .flatMap(domain -> reporterService.findByReference(Reference.domain(domain.getId()))
                         .filter(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(
@@ -138,8 +134,21 @@ public class ReportersResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final String domainId = AutomationIds.domainId(environmentId, domainKey);
-        final String key = definition.getAutomationKey();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef reporterRef = AutomationRef.parse(definition.getAutomationKey());
+        final String key = reporterRef.raw();
+
+        // An 'id:' body addresses a preexisting reporter directly (update-only)
+        if (reporterRef instanceof AutomationRef.IdRef) {
+            checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, Acl.UPDATE)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> resolver.resolveReporter(domain, reporterRef)
+                            .flatMap(existing -> updateExisting(domain, existing, definition, key, principal)))
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
+
+        final String domainId = AutomationIds.domainId(environmentId, domainRef);
         final Reference reference = Reference.domain(domainId);
         reporterService.findByReference(reference).toList().flatMap(allExisting -> {
             Optional<Reporter> match = allExisting.stream()
@@ -150,34 +159,10 @@ public class ReportersResource extends AbstractAutomationResource {
             // existence is revealed (domain 404 / conflict 400).
             Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
             return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, requiredAcl)
-                    .andThen(resolveDomain(environmentId, domainKey))
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
                     .flatMap(domain -> {
                         if (match.isPresent()) {
-                            Reporter existing = match.get();
-                            // 'system' is an immutable identity attribute; reject a change.
-                            if (definition.isSystem() != existing.isSystem()) {
-                                return Single.error(new InvalidParameterException(
-                                        "The 'system' flag is immutable for an existing reporter '" + key
-                                                + "'; delete and recreate it to change it"));
-                            }
-                            if (existing.isSystem()) {
-                                // re-PUT is an idempotent no-op
-                                return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
-                            }
-                            // 'type' is an immutable identity attribute; reject a change early
-                            if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
-                                return Single.error(new InvalidParameterException(
-                                        "The 'type' is immutable for an existing reporter '" + key
-                                                + "'; delete and recreate it to change it"));
-                            }
-                            Single<AutomationReporter> updateRejection = rejectIfMissingReporterFields(definition, key);
-                            if (updateRejection != null) {
-                                return updateRejection;
-                            }
-                            return reporterPluginService.checkPluginDeployment(definition.getType())
-                                    .andThen(reporterService.update(reference, existing.getId(),
-                                            AutomationReporterMapper.toUpdateReporter(definition), principal, false))
-                                    .map(AutomationReporterMapper::toAutomationReporter);
+                            return updateExisting(domain, match.get(), definition, key, principal);
                         }
 
                         final String reporterId = AutomationIds.reporterId(domain.getId(), key);
@@ -211,6 +196,34 @@ public class ReportersResource extends AbstractAutomationResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    private Single<AutomationReporter> updateExisting(Domain domain, Reporter existing,
+            AutomationReporter definition, String key, User principal) {
+        // 'system' is an immutable identity attribute; reject a change.
+        if (definition.isSystem() != existing.isSystem()) {
+            return Single.error(new InvalidParameterException(
+                    "The 'system' flag is immutable for an existing reporter '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        if (existing.isSystem()) {
+            // re-PUT is an idempotent no-op
+            return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
+        }
+        // 'type' is an immutable identity attribute; reject a change early
+        if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+            return Single.error(new InvalidParameterException(
+                    "The 'type' is immutable for an existing reporter '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        return reporterPluginService.checkPluginDeployment(definition.getType())
+                .andThen(reporterService.update(Reference.domain(domain.getId()), existing.getId(),
+                        AutomationReporterMapper.toUpdateReporter(definition), principal, false))
+                .map(AutomationReporterMapper::toAutomationReporter);
+    }
+
     private static Single<AutomationReporter> rejectIfMissingReporterFields(AutomationReporter definition, String key) {
         if (isBlank(definition.getName())) {
             return Single.error(new InvalidParameterException(
@@ -230,13 +243,5 @@ public class ReportersResource extends AbstractAutomationResource {
     @Path("/{reporterKey}")
     public ReporterResource getReporterResource() {
         return resourceContext.getResource(ReporterResource.class);
-    }
-
-    private Single<Domain> resolveDomain(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                        ? Single.just(domain)
-                        : Single.error(new DomainNotFoundException(domainKey)));
     }
 }

@@ -17,18 +17,10 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.mapper.AutomationIdentityProviderMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationIdentityProvider;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,9 +45,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class IdentityProviderResource extends AbstractAutomationResource {
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private IdentityProviderService identityProviderService;
 
     @GET
@@ -74,9 +63,11 @@ public class IdentityProviderResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef identityRef = AutomationRef.parse(identityKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)
-                .andThen(resolveDomain(environmentId, domainKey))
-                .flatMap(domain -> resolveIdentityProvider(domain, identityKey)
+                .andThen(resolver.resolveDomain(environmentId, domainRef))
+                .flatMap(domain -> resolver.resolveIdentityProvider(domain, identityRef)
                         .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider))
                 .subscribe(response::resume, response::resume);
     }
@@ -94,38 +85,12 @@ public class IdentityProviderResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef identityRef = AutomationRef.parse(identityKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE)
-                .andThen(resolveDomainMaybe(environmentId, domainKey))
-                .flatMapCompletable(domain -> identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId())
-                        .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && identityKey.equals(idp.getAutomationKey()))
-                        .firstElement()
+                .andThen(resolver.resolveDomainMaybe(environmentId, domainRef))
+                .flatMapCompletable(domain -> resolver.resolveIdentityProviderMaybe(domain, identityRef)
                         .flatMapCompletable(idp -> identityProviderService.delete(ReferenceType.DOMAIN, domain.getId(), idp.getId(), principal)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
-    private Single<Domain> resolveDomain(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                        ? Single.just(domain)
-                        : Single.error(new DomainNotFoundException(domainKey)));
-    }
-
-    private Maybe<Domain> resolveDomainMaybe(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .filter(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API));
-    }
-
-    /**
-     * Resolves an automation-managed identity provider by its {@code key} (not its internal id) so that a
-     * system provider — which adopts the conventional {@code default-idp-<domainId>} id rather than the
-     * deterministic key-based id — resolves like any other.
-     */
-    private Single<IdentityProvider> resolveIdentityProvider(Domain domain, String identityKey) {
-        return identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId())
-                .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API) && identityKey.equals(idp.getAutomationKey()))
-                .firstElement()
-                .switchIfEmpty(Maybe.error(() -> new IdentityProviderNotFoundException(identityKey)))
-                .toSingle();
     }
 }
