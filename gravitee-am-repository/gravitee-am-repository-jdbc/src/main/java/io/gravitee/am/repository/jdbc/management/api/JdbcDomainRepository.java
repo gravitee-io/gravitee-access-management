@@ -200,10 +200,9 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         String wildcardQuery = query.replaceAll("\\*+", "%");
 
         String search = new StringBuilder("SELECT * FROM domains d WHERE")
-
                 .append(" d.reference_type = :refType AND d.reference_id = :refId")
-                .append(" AND UPPER(d.hrid) " + (wildcardMatch ? "LIKE" : "="))
-                .append(" :value")
+                .append(" AND (UPPER(d.hrid) " + (wildcardMatch ? "LIKE" : "=") + " :value")
+                .append(" OR UPPER(d.name) " + (wildcardMatch ? "LIKE" : "=") + " :value)")
                 .toString();
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
