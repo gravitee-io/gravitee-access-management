@@ -78,6 +78,7 @@ import java.util.stream.Collectors;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -89,6 +90,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private MongoCollection<DomainMongo> domainsCollection;
     private static final String FIELD_HRID = "hrid";
+    private static final String FIELD_NAME = "name";
 
     private final Set<String> UNUSED_INDEXES = Set.of("ri1rt1");
 
@@ -99,6 +101,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1), new IndexOptions().name("ri1rt1h1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("ri1rt1n1"));
 
         super.createIndex(domainsCollection, indexes);
         if (ensureIndexOnStart) {
@@ -148,19 +151,23 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> search(String environmentId, String query) {
-        // currently search on hrid field
-        Bson searchQuery = eq(FIELD_HRID, query);
-        // if query contains wildcard, use the regex query
+        Bson hridQuery;
+        Bson nameQuery;
         if (query.contains("*")) {
             String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            searchQuery = new BasicDBObject(FIELD_HRID, pattern);
+            hridQuery = new BasicDBObject(FIELD_HRID, pattern);
+            nameQuery = new BasicDBObject(FIELD_NAME, pattern);
+        } else {
+            hridQuery = eq(FIELD_HRID, query);
+            nameQuery = eq(FIELD_NAME, query);
         }
 
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
-                eq(FIELD_REFERENCE_ID, environmentId), searchQuery);
+                eq(FIELD_REFERENCE_ID, environmentId),
+                or(hridQuery, nameQuery));
 
         return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert)
                 .observeOn(Schedulers.computation());
