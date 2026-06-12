@@ -110,8 +110,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         return router;
     }
 
+    // Root router is mutated only under this instance monitor; heavy per-domain work
+    // (Spring context refresh, component start) happens before, in parallel.
     @Override
-    public void mountDomain(VertxSecurityDomainHandler domainHandler) {
+    public synchronized void mountDomain(VertxSecurityDomainHandler domainHandler) {
 
         Domain domain = domainHandler.getDomain();
 
@@ -141,7 +143,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     }
 
     @Override
-    public void unMountDomain(VertxSecurityDomainHandler domainHandler) {
+    public synchronized void unMountDomain(VertxSecurityDomainHandler domainHandler) {
 
         domainHandler.router().clear();
     }
