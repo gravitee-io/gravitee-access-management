@@ -32,8 +32,10 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.node.api.Node;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +54,8 @@ import static io.gravitee.am.dataplane.api.DataPlaneDescription.DEFAULT_DATA_PLA
 import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
 import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -106,6 +110,8 @@ public class SyncManagerTest {
         lenient().when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(), META_ENVIRONMENTS, new HashSet<>()));
         lenient().when(environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id", String.class, DEFAULT_DATA_PLANE_ID)).thenReturn(DEFAULT_DATA_PLANE_ID);
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
+        lenient().when(securityDomainManager.deployReactive(any())).thenReturn(Completable.complete());
         when(defaultReactor.isStarted()).thenReturn(true);
     }
 
@@ -117,7 +123,7 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         verify(domainRepository, never()).findAll();
-        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
         verify(domainReadinessService, never()).updateDomainStatus(any(), any());
@@ -129,7 +135,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -145,7 +151,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, times(1)).deploy(any(Domain.class));
+        verify(securityDomainManager, times(1)).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
         verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
@@ -167,7 +173,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, times(2)).deploy(any(Domain.class));
+        verify(securityDomainManager, times(2)).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -193,7 +199,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, times(2)).deploy(any(Domain.class));
+        verify(securityDomainManager, times(2)).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -219,7 +225,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, times(2)).deploy(any(Domain.class));
+        verify(securityDomainManager, times(2)).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -243,7 +249,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, times(1)).deploy(any());
+        verify(securityDomainManager, times(1)).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, times(1)).undeploy(domain.getId());
         verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.REMOVING));
@@ -279,7 +285,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager, times(1)).deploy(any());
+        verify(securityDomainManager, times(1)).deployReactive(any());
         verify(securityDomainManager, times(1)).update(any());
         verify(securityDomainManager, never()).undeploy(domain.getId());
         verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.INITIALIZING));
@@ -302,7 +308,7 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         verify(eventManager, times(1)).publishEvent(any(), any());
-        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -324,7 +330,7 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         verify(eventManager, times(1)).publishEvent(any(), any());
-        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -339,7 +345,7 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         verify(eventManager, never()).publishEvent(any(), any());
-        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).deployReactive(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -400,9 +406,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -429,9 +436,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -460,9 +468,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager, times(2)).deploy(any());
+        verify(securityDomainManager, times(2)).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -491,9 +500,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -529,9 +539,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager, times(2)).deploy(any());
+        verify(securityDomainManager, times(2)).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -590,9 +601,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager, times(4)).deploy(any());
+        verify(securityDomainManager, times(4)).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -652,9 +664,10 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager, times(2)).deploy(any());
+        verify(securityDomainManager, times(2)).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }
@@ -716,16 +729,77 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
 
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
         syncManager.refresh();
 
-        verify(securityDomainManager, times(1)).deploy(any());
+        verify(securityDomainManager, times(1)).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void init_sync_sets_allSecurityDomainsSync_flag() {
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
+
+        assertFalse(syncManager.isAllSecurityDomainsSync());
+        syncManager.refresh();
+
+        assertTrue(syncManager.isAllSecurityDomainsSync());
+        verify(securityDomainManager, times(1)).deployReactive(any(Domain.class));
+        verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
+    }
+
+    @Test
+    public void init_failing_deploy_does_not_abort_other_domains() {
+        final Domain domain1 = new Domain();
+        domain1.setId("domain-ok");
+        domain1.setReferenceId("env-1");
+        domain1.setEnabled(true);
+        domain1.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-fail");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+
+        when(securityDomainManager.deployReactive(domain1)).thenReturn(Completable.complete());
+        when(securityDomainManager.deployReactive(domain2)).thenReturn(Completable.error(new RuntimeException("deploy failed")));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain1, domain2));
+
+        syncManager.refresh();
+
+        // Both were attempted; the failure is swallowed (onErrorComplete)
+        verify(securityDomainManager, times(1)).deployReactive(eq(domain1));
+        verify(securityDomainManager, times(1)).deployReactive(eq(domain2));
+        // The healthy domain's readiness was updated; the failed one was not
+        verify(domainReadinessService).updateDomainStatus(eq("domain-ok"), eq(DomainState.Status.DEPLOYED));
+        verify(domainReadinessService, never()).updateDomainStatus(eq("domain-fail"), eq(DomainState.Status.DEPLOYED));
+        // Overall sync still completes
+        assertTrue(syncManager.isAllSecurityDomainsSync());
+    }
+
+    @Test
+    public void refresh_is_noop_when_sync_already_in_progress() {
+        syncManager.syncInProgress.set(true);
+
+        syncManager.refresh();
+
+        verify(domainRepository, never()).findAll();
+        verify(securityDomainManager, never()).deployReactive(any());
+
+        syncManager.syncInProgress.set(false); // cleanup
     }
 
     private void shouldDeployDomainWithTags(final String tags, final String[] domainTags) throws Exception {
         when(environment.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY)).thenReturn(tags);
         syncManager.afterPropertiesSet();
+        syncManager.setDeploymentScheduler(Schedulers.trampoline());
 
         Domain domain = new Domain();
         domain.setId("domain-1");
@@ -738,7 +812,7 @@ public class SyncManagerTest {
 
         syncManager.refresh();
 
-        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager).deployReactive(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
     }

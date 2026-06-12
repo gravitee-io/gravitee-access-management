@@ -32,11 +32,15 @@ import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.node.api.Node;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +58,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -66,7 +74,7 @@ import static java.util.stream.Collectors.toMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SyncManager implements InitializingBean {
+public class SyncManager implements InitializingBean, DisposableBean {
 
     /**
      * Add 30s delay before and after to avoid problem with out of sync clocks.
@@ -121,12 +129,15 @@ public class SyncManager implements InitializingBean {
 
     private String dataPlaneId;
 
-    private long lastRefreshAt = -1;
+    private volatile long lastRefreshAt = -1;
 
-    private long lastDelay = 0;
+    private volatile long lastDelay = 0;
 
     @Getter
-    private boolean allSecurityDomainsSync = false;
+    private volatile boolean allSecurityDomainsSync = false;
+
+    // Package-private so tests can set it to false to simulate an in-progress sync.
+    final AtomicBoolean syncInProgress = new AtomicBoolean(false);
 
     @Value("${services.sync.initTimeOutMillis:-1}")
     private int initDomainTimeOut = -1;
@@ -142,6 +153,10 @@ public class SyncManager implements InitializingBean {
 
     @Value("${services.sync.deploy.parallelism:0}")
     private int deployParallelism;
+
+    private Scheduler deploymentScheduler;
+
+    private ExecutorService deploymentExecutor;
 
     private Cache<String, String> processedEventIds;
 
@@ -159,9 +174,28 @@ public class SyncManager implements InitializingBean {
         logger.info("\t\t - Environments : {}", environments.isPresent() ? environments.get() : "[]");
         logger.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
         logger.info("\t\t - Domain deployment parallelism : {}", deployParallelism);
+        AtomicInteger threadIndex = new AtomicInteger(0);
+        deploymentExecutor = Executors.newFixedThreadPool(deployParallelism, r -> {
+            Thread t = new Thread(r, "gio.sync-deployer-" + threadIndex.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        });
+        deploymentScheduler = Schedulers.from(deploymentExecutor);
         this.processedEventIds = CacheBuilder.newBuilder()
                 .expireAfterWrite(timeframeBeforeDelay + timeframeAfterDelay, TimeUnit.MILLISECONDS)
                 .build();
+    }
+
+    @Override
+    public void destroy() {
+        if (deploymentExecutor != null) {
+            deploymentExecutor.shutdown();
+        }
+    }
+
+    // Package-private to allow tests to inject a synchronous scheduler (e.g. Schedulers.trampoline()).
+    void setDeploymentScheduler(Scheduler scheduler) {
+        this.deploymentScheduler = scheduler;
     }
 
     public void refresh() {
@@ -169,17 +203,35 @@ public class SyncManager implements InitializingBean {
             logger.info("No domain listener, rescheduling initial synchronization process");
             return;
         }
+        if (!syncInProgress.compareAndSet(false, true)) {
+            logger.debug("Sync already in progress, skipping");
+            return;
+        }
 
         logger.debug("Refreshing sync state...");
-        long nextLastRefreshAt = System.currentTimeMillis();
+        final long nextLastRefreshAt = System.currentTimeMillis();
 
-        try {
-            if (lastRefreshAt == -1) {
-                logger.debug("Initial synchronization");
-                deployDomains();
-                allSecurityDomainsSync = true;
-            } else {
-                // search for events and compute them
+        if (lastRefreshAt == -1) {
+            logger.debug("Initial synchronization");
+            deployDomains()
+                    .doOnComplete(() -> {
+                        allSecurityDomainsSync = true;
+                        lastRefreshAt = nextLastRefreshAt;
+                        lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
+                    })
+                    .doFinally(() -> syncInProgress.set(false))
+                    .subscribe(
+                            () -> {},
+                            ex -> {
+                                if (logger.isDebugEnabled()) {
+                                    logger.error("Synchronization failed", ex);
+                                } else {
+                                    logger.error("Synchronization failed, ex={}", ex.toString());
+                                }
+                            });
+        } else {
+            // Event branch: still blocking (converted in T05).
+            try {
                 logger.debug("Events synchronization");
 
                 final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
@@ -205,37 +257,40 @@ public class SyncManager implements InitializingBean {
                     gatewayMetricProvider.updateSyncEvents(0);
                 }
 
-            }
-            lastRefreshAt = nextLastRefreshAt;
-            lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
-        } catch (Exception ex) {
-            if (logger.isDebugEnabled()) {
-                logger.error("Synchronization failed", ex);
-            } else {
-                logger.error("Synchronization failed, ex={}", ex.toString());
+                lastRefreshAt = nextLastRefreshAt;
+                lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
+            } catch (Exception ex) {
+                if (logger.isDebugEnabled()) {
+                    logger.error("Synchronization failed", ex);
+                } else {
+                    logger.error("Synchronization failed, ex={}", ex.toString());
+                }
+            } finally {
+                syncInProgress.set(false);
             }
         }
     }
 
-    private void deployDomains() {
+    private Completable deployDomains() {
         logger.info("Starting security domains initialization ...");
-        Single<List<Domain>> findDomains = domainRepository.findAll()
-                // remove disabled domains
+        Completable deployAll = domainRepository.findAll()
                 .filter(Domain::isEnabled)
-                // Can the security domain be deployed ?
                 .filter(this::canHandle)
-                .toList();
-        if (this.initDomainTimeOut > 0) {
-            findDomains = findDomains.timeout(this.initDomainTimeOut, TimeUnit.MILLISECONDS);
+                .flatMapCompletable(domain ->
+                        deployOne(domain)
+                                .subscribeOn(deploymentScheduler)
+                                .doOnComplete(() -> domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED))
+                                .doOnError(ex -> logger.error("Unable to deploy security domain {}", domain.getId(), ex))
+                                .onErrorComplete(),
+                        false, deployParallelism);
+        if (initDomainTimeOut > 0) {
+            deployAll = deployAll.timeout(initDomainTimeOut, TimeUnit.MILLISECONDS);
         }
-        List<Domain> domains = findDomains.blockingGet();
+        return deployAll.doOnComplete(() -> logger.info("Security domains initialization done"));
+    }
 
-        // deploy security domains
-        domains.forEach(domain -> {
-            securityDomainManager.deploy(domain);
-            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
-        });
-        logger.info("Security domains initialization done");
+    private Completable deployOne(Domain domain) {
+        return securityDomainManager.deployReactive(domain);
     }
 
     private void computeEvents(Collection<Event> events) {
