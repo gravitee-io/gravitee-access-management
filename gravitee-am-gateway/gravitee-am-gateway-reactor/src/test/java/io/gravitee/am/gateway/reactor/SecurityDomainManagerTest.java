@@ -19,12 +19,18 @@ import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -122,5 +128,47 @@ public class SecurityDomainManagerTest {
         securityDomainManager.undeploy(existingDomain.getId());
 
         verify(eventManager, times(1)).publishEvent(eq(DomainEvent.UNDEPLOY), any());
+    }
+
+    @Test
+    public void deployReactive_shouldRegisterDomain() {
+        final Domain domain = new Domain();
+        domain.setId("domain-reactive");
+        domain.setEnabled(true);
+
+        securityDomainManager.deployReactive(domain).blockingAwait();
+
+        Assert.assertNotNull(securityDomainManager.get(domain.getId()));
+        verify(eventManager, times(1)).publishEvent(eq(DomainEvent.DEPLOY), any());
+    }
+
+    @Test
+    public void undeployReactive_shouldRemoveDomain() {
+        final Domain domain = new Domain();
+        domain.setId("domain-reactive-undeploy");
+        domain.setEnabled(true);
+        securityDomainManager.deploy(domain);
+
+        securityDomainManager.undeployReactive(domain.getId()).blockingAwait();
+
+        Assert.assertNull(securityDomainManager.get(domain.getId()));
+        verify(eventManager, times(1)).publishEvent(eq(DomainEvent.UNDEPLOY), any());
+    }
+
+    @Test
+    public void deployReactive_concurrent_shouldRegisterAllDomains() throws InterruptedException {
+        int count = 50;
+        List<Completable> deployments = IntStream.range(0, count)
+                .mapToObj(i -> {
+                    Domain d = new Domain();
+                    d.setId("concurrent-domain-" + i);
+                    d.setEnabled(true);
+                    return securityDomainManager.deployReactive(d).subscribeOn(Schedulers.io());
+                })
+                .collect(Collectors.toList());
+
+        Completable.merge(deployments).blockingAwait();
+
+        Assert.assertEquals(count, securityDomainManager.domains().size());
     }
 }
