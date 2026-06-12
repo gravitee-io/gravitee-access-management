@@ -15,7 +15,13 @@
  */
 package io.gravitee.am.management.handlers.automation.spring;
 
+import io.gravitee.am.management.handlers.automation.resource.AutomationResourceResolver;
 import io.gravitee.am.management.handlers.automation.spring.security.AutomationSecurityConfiguration;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.ReporterService;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -37,4 +43,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @EnableWebSecurity
 @Import(AutomationSecurityConfiguration.class)
 public class AutomationConfiguration {
+
+    @Bean
+    public AutomationResourceResolver automationResourceResolver(DomainService domainService,
+            IdentityProviderService identityProviderService,
+            CertificateService certificateService,
+            ReporterService reporterService) {
+        return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService);
+    }
 }

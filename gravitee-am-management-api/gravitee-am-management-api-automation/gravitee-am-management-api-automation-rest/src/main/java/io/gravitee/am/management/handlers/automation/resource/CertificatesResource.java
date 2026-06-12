@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.management.handlers.automation.resource;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationCertificateMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewCertificate;
 import io.reactivex.rxjava3.core.Single;
@@ -64,9 +63,6 @@ public class CertificatesResource extends AbstractAutomationResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private CertificateService certificateService;
 
     @GET
@@ -86,7 +82,7 @@ public class CertificatesResource extends AbstractAutomationResource {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
-                .andThen(resolveDomain(environmentId, domainKey))
+                .andThen(resolver.resolveDomain(environmentId, AutomationRef.parse(domainKey)))
                 .flatMap(domain -> certificateService.findByDomain(domain.getId())
                         .filter(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(
@@ -133,8 +129,21 @@ public class CertificatesResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final String domainId = AutomationIds.domainId(environmentId, domainKey);
-        final String key = definition.getAutomationKey();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef certRef = AutomationRef.parse(definition.getAutomationKey());
+        final String key = certRef.raw();
+
+        // An 'id:' body addresses a preexisting certificate directly (update-only)
+        if (certRef instanceof AutomationRef.IdRef) {
+            checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> resolver.resolveCertificate(domain, certRef)
+                            .flatMap(existing -> updateExisting(domain, existing, definition, key, principal)))
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
+
+        final String domainId = AutomationIds.domainId(environmentId, domainRef);
         certificateService.findByDomain(domainId).toList().flatMap(allExisting -> {
             Optional<Certificate> match = allExisting.stream()
                     .filter(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API))
@@ -144,33 +153,10 @@ public class CertificatesResource extends AbstractAutomationResource {
             // existence is revealed (domain 404 / conflict 400).
             Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
             return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, requiredAcl)
-                    .andThen(resolveDomain(environmentId, domainKey))
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
                     .flatMap(domain -> {
                         if (match.isPresent()) {
-                            Certificate existing = match.get();
-                            // 'system' is an immutable identity attribute; reject a change.
-                            if (definition.isSystem() != existing.isSystem()) {
-                                return Single.error(new InvalidParameterException(
-                                        "The 'system' flag is immutable for an existing certificate '" + key
-                                                + "'; delete and recreate it to change it"));
-                            }
-                            if (existing.isSystem()) {
-                                // re-PUT is an idempotent no-op
-                                return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
-                            }
-                            // 'type' is an immutable identity attribute; reject a change early
-                            if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
-                                return Single.error(new InvalidParameterException(
-                                        "The 'type' is immutable for an existing certificate '" + key
-                                                + "'; delete and recreate it to change it"));
-                            }
-                            Single<AutomationCertificate> updateRejection = rejectIfMissingCertificateFields(definition, key);
-                            if (updateRejection != null) {
-                                return updateRejection;
-                            }
-                            return certificateService.update(domain, existing.getId(),
-                                            AutomationCertificateMapper.toUpdateCertificate(definition), principal)
-                                    .map(AutomationCertificateMapper::toAutomationCertificate);
+                            return updateExisting(domain, match.get(), definition, key, principal);
                         }
 
                         final String certId = AutomationIds.certificateId(domain.getId(), key);
@@ -203,6 +189,33 @@ public class CertificatesResource extends AbstractAutomationResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    private Single<AutomationCertificate> updateExisting(Domain domain, Certificate existing,
+            AutomationCertificate definition, String key, User principal) {
+        // 'system' is an immutable identity attribute; reject a change.
+        if (definition.isSystem() != existing.isSystem()) {
+            return Single.error(new InvalidParameterException(
+                    "The 'system' flag is immutable for an existing certificate '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        if (existing.isSystem()) {
+            // re-PUT is an idempotent no-op
+            return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
+        }
+        // 'type' is an immutable identity attribute; reject a change early
+        if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+            return Single.error(new InvalidParameterException(
+                    "The 'type' is immutable for an existing certificate '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        Single<AutomationCertificate> updateRejection = rejectIfMissingCertificateFields(definition, key);
+        if (updateRejection != null) {
+            return updateRejection;
+        }
+        return certificateService.update(domain, existing.getId(),
+                        AutomationCertificateMapper.toUpdateCertificate(definition), principal)
+                .map(AutomationCertificateMapper::toAutomationCertificate);
+    }
+
     private static Single<AutomationCertificate> rejectIfMissingCertificateFields(AutomationCertificate definition, String key) {
         if (isBlank(definition.getName())) {
             return Single.error(new InvalidParameterException(
@@ -222,13 +235,5 @@ public class CertificatesResource extends AbstractAutomationResource {
     @Path("/{certKey}")
     public CertificateResource getCertificateResource() {
         return resourceContext.getResource(CertificateResource.class);
-    }
-
-    private Single<Domain> resolveDomain(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                        ? Single.just(domain)
-                        : Single.error(new DomainNotFoundException(domainKey)));
     }
 }

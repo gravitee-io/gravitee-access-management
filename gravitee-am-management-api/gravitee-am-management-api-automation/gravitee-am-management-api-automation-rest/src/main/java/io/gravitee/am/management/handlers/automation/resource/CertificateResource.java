@@ -17,17 +17,9 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.mapper.AutomationCertificateMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.exception.CertificateNotFoundException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -52,9 +44,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class CertificateResource extends AbstractAutomationResource {
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private CertificateService certificateService;
 
     @GET
@@ -73,9 +62,11 @@ public class CertificateResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef certRef = AutomationRef.parse(certKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.READ)
-                .andThen(resolveDomain(environmentId, domainKey))
-                .flatMap(domain -> resolveCertificate(domain, certKey)
+                .andThen(resolver.resolveDomain(environmentId, domainRef))
+                .flatMap(domain -> resolver.resolveCertificate(domain, certRef)
                         .map(AutomationCertificateMapper::toAutomationCertificate))
                 .subscribe(response::resume, response::resume);
     }
@@ -93,33 +84,12 @@ public class CertificateResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
+        final AutomationRef domainRef = AutomationRef.parse(domainKey);
+        final AutomationRef certRef = AutomationRef.parse(certKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.DELETE)
-                .andThen(resolveDomainMaybe(environmentId, domainKey))
-                .flatMap(domain -> certificateService.findByDomain(domain.getId())
-                        .filter(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API) && certKey.equals(certificate.getAutomationKey()))
-                        .firstElement())
+                .andThen(resolver.resolveDomainMaybe(environmentId, domainRef))
+                .flatMap(domain -> resolver.resolveCertificateMaybe(domain, certRef))
                 .flatMapCompletable(certificate -> certificateService.delete(certificate.getId(), principal))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
-    private Single<Domain> resolveDomain(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainKey)))
-                .flatMap(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API)
-                        ? Single.just(domain)
-                        : Single.error(new DomainNotFoundException(domainKey)));
-    }
-
-    private Maybe<Domain> resolveDomainMaybe(String environmentId, String domainKey) {
-        return domainService.findById(AutomationIds.domainId(environmentId, domainKey))
-                .filter(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API));
-    }
-
-    private Single<Certificate> resolveCertificate(Domain domain, String certKey) {
-        return certificateService.findByDomain(domain.getId())
-                .filter(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API) && certKey.equals(certificate.getAutomationKey()))
-                .firstElement()
-                .switchIfEmpty(Maybe.error(() -> new CertificateNotFoundException(certKey)))
-                .toSingle();
     }
 }

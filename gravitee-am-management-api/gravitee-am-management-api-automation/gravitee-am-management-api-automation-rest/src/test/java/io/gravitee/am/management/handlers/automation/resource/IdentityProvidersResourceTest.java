@@ -51,6 +51,7 @@ import static org.mockito.Mockito.when;
 class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
 
     private static final String DOMAIN_KEY = "customer-auth";
+    private static final String BROWNFIELD_ID = "11111111-2222-3333-4444-555555555555";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
 
     private Domain domain() {
@@ -198,6 +199,45 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals("dev-users", readEntity(response, AutomationIdentityProvider.class).getAutomationKey());
+    }
+
+    private IdentityProvider brownfieldIdp() {
+        IdentityProvider idp = new IdentityProvider();
+        idp.setId(BROWNFIELD_ID);
+        idp.setName("legacy");
+        idp.setType("inline-am-idp");
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId(domainId);
+        idp.setManagedBy(ManagedBy.NONE);
+        return idp;
+    }
+
+    @Test
+    void put_by_id_updates_brownfield_idp_leaving_managed_by_and_key_untouched() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp()));
+        when(identityProviderService.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), any(), eq(false)))
+                .thenReturn(Single.just(brownfieldIdp()));
+
+        AutomationIdentityProvider def = definition("id:" + BROWNFIELD_ID);
+        Response response = put(identitiesTarget(DOMAIN_KEY), def);
+
+        assertEquals(200, response.getStatus());
+        // the update model carries no automation key / managedBy, so the brownfield resource keeps both
+        verify(identityProviderService).update(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), any(), eq(false));
+        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_by_id_returns_404_when_target_missing_and_never_creates() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.empty());
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), definition("id:" + BROWNFIELD_ID));
+
+        assertEquals(404, response.getStatus());
+        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderService, never()).update(any(), anyString(), anyString(), any(), any(), anyBoolean());
     }
 
     @Test

@@ -22,6 +22,7 @@ import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.handlers.automation.model.AutomationOidcSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationSamlSettings;
 import io.gravitee.am.management.handlers.automation.resource.AutomationIds;
+import io.gravitee.am.management.handlers.automation.resource.AutomationRef;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -280,25 +281,34 @@ public final class AutomationDomainMapper {
      * A certificate's internal id is always the deterministic key-based id (certificates have no
      * conventional id, even when default), so it can be computed without a lookup or existence check.
      */
-    private static String certificateKeyToId(String domainId, String key) {
-        return key == null ? null : AutomationIds.certificateId(domainId, key);
+    private static String certificateKeyToId(String domainId, String reference) {
+        if (reference == null) {
+            return null;
+        }
+        return switch (AutomationRef.parse(reference)) {
+            case AutomationRef.IdRef(String id) -> id;
+            case AutomationRef.KeyRef(String key) -> AutomationIds.certificateId(domainId, key);
+        };
     }
 
     /**
-     * Resolve an identity-provider key to its internal id. A default provider adopts the conventional
+     * Resolve an identity-provider ref to its internal id. A default provider adopts the conventional
      * {@code default-idp-<domainId>} id, so we resolve against the domain's existing automation-managed
      * providers when possible; if the provider does not exist yet (eventual consistency) we fall back to
      * the deterministic key-based id.
      */
-    private static String identityProviderKeyToId(String domainId, String key, List<IdentityProvider> idps) {
-        if (key == null) {
+    private static String identityProviderKeyToId(String domainId, String reference, List<IdentityProvider> idps) {
+        if (reference == null) {
             return null;
         }
-        return idps.stream()
-                .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API))
-                .filter(idp -> key.equals(idp.getAutomationKey()))
-                .map(IdentityProvider::getId)
-                .findFirst()
-                .orElseGet(() -> AutomationIds.identityProviderId(domainId, key));
+        return switch (AutomationRef.parse(reference)) {
+            case AutomationRef.IdRef(String id) -> id;
+            case AutomationRef.KeyRef(String key) -> idps.stream()
+                    .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API))
+                    .filter(idp -> key.equals(idp.getAutomationKey()))
+                    .map(IdentityProvider::getId)
+                    .findFirst()
+                    .orElseGet(() -> AutomationIds.identityProviderId(domainId, key));
+        };
     }
 }
