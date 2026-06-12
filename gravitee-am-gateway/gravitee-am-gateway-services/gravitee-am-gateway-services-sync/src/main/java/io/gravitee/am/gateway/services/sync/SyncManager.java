@@ -175,9 +175,18 @@ public class SyncManager implements InitializingBean, DisposableBean {
         logger.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
         logger.info("\t\t - Domain deployment parallelism : {}", deployParallelism);
         AtomicInteger threadIndex = new AtomicInteger(0);
+        // Domain deployment performs a Spring child context refresh which generates CGLIB proxies
+        // for gateway beans. That requires the gateway application classloader, NOT the context
+        // classloader of the thread initializing this bean: SyncManager runs in the sync-service
+        // plugin, whose classloader cannot define those proxies (ClassNotFoundException on
+        // *$$SpringCGLIB$$* / AopConfigException). SecurityDomainManager is a gateway-core class, so
+        // resolving its classloader (via parent-first delegation) yields the gateway application
+        // classloader, which is exactly the context under which deployment ran when synchronous.
+        final ClassLoader deploymentClassLoader = SecurityDomainManager.class.getClassLoader();
         deploymentExecutor = Executors.newFixedThreadPool(deployParallelism, r -> {
             Thread t = new Thread(r, "gio.sync-deployer-" + threadIndex.getAndIncrement());
             t.setDaemon(true);
+            t.setContextClassLoader(deploymentClassLoader);
             return t;
         });
         deploymentScheduler = Schedulers.from(deploymentExecutor);
@@ -281,8 +290,11 @@ public class SyncManager implements InitializingBean, DisposableBean {
                     .collect(toMap(
                             event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
                             event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+            // Subscribe on the deployment scheduler: domain deploy/update triggers a Spring child
+            // context refresh which must not run on a database driver or Vert.x event-loop thread.
             return Flowable.fromIterable(sortedEvents.values())
-                    .flatMapCompletable(this::computeEvent, false, deployParallelism);
+                    .flatMapCompletable(event -> computeEvent(event).subscribeOn(deploymentScheduler),
+                            false, deployParallelism);
         });
     }
 
@@ -313,6 +325,9 @@ public class SyncManager implements InitializingBean, DisposableBean {
                 final Maybe<Domain> resolvedMaybe = maybeDomain;
                 yield Completable.fromRunnable(() -> domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING))
                         .andThen(resolvedMaybe
+                                // findById emits on the database driver thread: hop back to the
+                                // deployment scheduler before the Spring child context refresh.
+                                .observeOn(deploymentScheduler)
                                 // domain not found: update readiness and stop
                                 .switchIfEmpty(Completable.fromRunnable(() -> domainReadinessService.removeDomain(domainId)).toMaybe())
                                 .flatMapCompletable(domain -> {
