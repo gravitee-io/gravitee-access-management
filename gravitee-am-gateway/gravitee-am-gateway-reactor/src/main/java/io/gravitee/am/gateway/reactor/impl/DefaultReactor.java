@@ -41,6 +41,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,6 +63,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     private Vertx vertx;
 
     private Router router;
+
+    // Root router is mutated only under this lock; heavy per-domain work
+    // (Spring context refresh, component start) happens before, in parallel.
+    private final ReentrantLock routerLock = new ReentrantLock();
 
     @Autowired
     private TransactionHandlerFactory transactionHandlerFactory;
@@ -110,26 +115,28 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         return router;
     }
 
-    // Root router is mutated only under this instance monitor; heavy per-domain work
-    // (Spring context refresh, component start) happens before, in parallel.
     @Override
-    public synchronized void mountDomain(VertxSecurityDomainHandler domainHandler) {
+    public void mountDomain(VertxSecurityDomainHandler domainHandler) {
+        routerLock.lock();
+        try {
+            Domain domain = domainHandler.getDomain();
 
-        Domain domain = domainHandler.getDomain();
+            if (domain.isVhostMode()) {
+                // Mount the same router for each virtual host / path.
+                // Sort vhosts to ensure proper routing order:
+                // - More specific paths (longer) are checked first
+                // - "/" (catch-all) is always checked last
+                List<VirtualHost> sortedVhosts = domain.getVhosts().stream()
+                        .sorted(Comparator.comparing((VirtualHost vhost) -> vhost.getPath().equals("/") ? 1 : 0)
+                                .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
+                        .toList();
 
-        if (domain.isVhostMode()) {
-            // Mount the same router for each virtual host / path.
-            // Sort vhosts to ensure proper routing order:
-            // - More specific paths (longer) are checked first
-            // - "/" (catch-all) is always checked last
-            List<VirtualHost> sortedVhosts = domain.getVhosts().stream()
-                    .sorted(Comparator.comparing((VirtualHost vhost) -> vhost.getPath().equals("/") ? 1 : 0)
-                            .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
-                    .toList();
-
-            sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(vertx, domain, virtualHost, domainHandler.router())));
-        } else {
-            this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(vertx, domain, domainHandler.router()));
+                sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(vertx, domain, virtualHost, domainHandler.router())));
+            } else {
+                this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(vertx, domain, domainHandler.router()));
+            }
+        } finally {
+            routerLock.unlock();
         }
     }
 
@@ -143,9 +150,13 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     }
 
     @Override
-    public synchronized void unMountDomain(VertxSecurityDomainHandler domainHandler) {
-
-        domainHandler.router().clear();
+    public void unMountDomain(VertxSecurityDomainHandler domainHandler) {
+        routerLock.lock();
+        try {
+            domainHandler.router().clear();
+        } finally {
+            routerLock.unlock();
+        }
     }
 
     @Override
