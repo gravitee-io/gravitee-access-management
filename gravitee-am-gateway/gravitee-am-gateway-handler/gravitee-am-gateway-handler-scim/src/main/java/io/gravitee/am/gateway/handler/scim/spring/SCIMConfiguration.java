@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingProcessor;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpointConfiguration;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
 import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
@@ -85,9 +86,16 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public BulkService bulkService(ProvisioningUserService userService, Domain domain,
+    public ScimErrorMapper scimErrorMapper(@Value("${handlers.scim.includeErrorDetails: false}") boolean includeUserDetails) {
+        return new ScimErrorMapper(includeUserDetails);
+    }
+
+    @Bean
+    public BulkService bulkService(ProvisioningUserService userService,
+                                   Domain domain,
+                                   ScimErrorMapper scimErrorMapper,
                                    @Value("${handlers.scim.bulk.maxConcurrency:1}") int bulkMaxConcurrency) {
-        return new BulkServiceImpl(userService, domain, bulkMaxConcurrency);
+        return new BulkServiceImpl(userService, domain, scimErrorMapper, bulkMaxConcurrency);
     }
 
     @Bean

@@ -34,6 +34,8 @@ afterAll(async () => {
   }
 });
 
+const GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA = 'urn:gravitee:params:scim:api:messages:1.0:ErrorDetails';
+
 const baseCreateUserRequest = {
   schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
   password: null,
@@ -285,7 +287,7 @@ describe('SCIM Users', () => {
       const email = `${uniqueName('user-409', true)}@example.com`;
       const body = createScimUserBody(email, 'Barbara', 'Jensen', uniqueName('ext', true));
 
-      await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
+      const createdUser = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
         Authorization: `Bearer ${fixture.scimAccessToken}`,
         'Content-Type': 'application/json',
       }).expect(201);
@@ -299,6 +301,11 @@ describe('SCIM Users', () => {
       const resBody = response.body;
       expect(resBody.status).toEqual('409');
       expect(resBody.scimType).toEqual('uniqueness');
+      expect(resBody.schemas).toContain('urn:ietf:params:scim:api:messages:2.0:Error');
+      expect(resBody.schemas).toContain('urn:gravitee:params:scim:api:messages:1.0:ErrorDetails');
+      expect(resBody[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA]).toBeDefined();
+      expect(resBody[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUserId).toBe(createdUser.body.id);
+      expect(resBody[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUsername).toBe(createdUser.body.userName);
     });
 
     it('should return 404 when updating unknown user', async () => {
@@ -570,5 +577,6 @@ describe('SCIM Users', () => {
       });
       expect(response.status).toEqual(404);
     });
+
   });
 });

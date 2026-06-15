@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.scim.business.CreateUserAction;
 import io.gravitee.am.gateway.handler.scim.business.PatchUserAction;
 import io.gravitee.am.gateway.handler.scim.business.UpdateUserAction;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.gateway.handler.scim.model.BulkOperation;
 import io.gravitee.am.gateway.handler.scim.model.BulkRequest;
 import io.gravitee.am.gateway.handler.scim.model.BulkResponse;
@@ -67,6 +68,7 @@ public class BulkServiceImpl implements BulkService {
 
     private final ProvisioningUserService userService;
     private final Domain domain;
+    private final ScimErrorMapper scimErrorMapper;
     private final int bulkMaxConcurrency;
 
     @Override
@@ -103,12 +105,12 @@ public class BulkServiceImpl implements BulkService {
     }
 
     private Single<BulkOperation> recoverOperation(BulkOperation operation, Throwable ex) {
-        final var knownError = Error.fromThrowable(ex);
+        final var knownError = scimErrorMapper.fromThrowable(ex);
         if (knownError.isPresent()) {
             operation.setResponse(knownError.get());
             operation.setStatus(knownError.get().getStatus());
         } else {
-            Error error = new Error();
+            Error error = Error.withDefaultSchemas();
             error.setStatus(valueOf(HttpStatusCode.INTERNAL_SERVER_ERROR_500));
             error.setDetail(ex.getMessage());
             operation.setResponse(error);
@@ -157,7 +159,7 @@ public class BulkServiceImpl implements BulkService {
                             return operation.asResponse();
                         }));
             default:
-                io.gravitee.am.gateway.handler.scim.model.Error error = new Error();
+                io.gravitee.am.gateway.handler.scim.model.Error error = Error.withDefaultSchemas();
                 error.setScimType("invalidSyntax"); // should not happen
                 operation.setResponse(error);
                 return Single.just(operation.asResponse());

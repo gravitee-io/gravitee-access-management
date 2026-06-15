@@ -26,6 +26,8 @@ import { retryUntil } from '@utils-commands/retry';
 import { ScimFixture, setupFixture } from './fixture/scim-fixture';
 import { setup } from '../../test-fixture';
 
+const GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA = 'urn:gravitee:params:scim:api:messages:1.0:ErrorDetails';
+
 setup(200000);
 
 let fixture: ScimFixture;
@@ -152,6 +154,58 @@ describe('SCIM Bulk endpoint', () => {
     expect(thirdOp.status).toEqual('201');
     expect(thirdOp.location).toBeDefined();
     expect(thirdOp.location).toMatch(fixture.scimEndpoint + '/Users/');
+  });
+
+  it('should include existing user details on duplicate username when option is enabled', async () => {
+    const userName = `bulk-duplicate-${random.word()}`;
+    const createOp: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName,
+      },
+    };
+    const duplicateOp: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName,
+      },
+    };
+
+    const request: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      Operations: [createOp, duplicateOp],
+    };
+
+    const scimResponse = await performPost(fixture.scimEndpoint, '/Bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${fixture.scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(2);
+
+    const createdOp = bulkResponse.Operations[0];
+    expect(createdOp.status).toEqual('201');
+    expect(createdOp.location).toBeDefined();
+    const createdUser = await readScimUserProfile(createdOp.location);
+
+    const failedOp = bulkResponse.Operations[1];
+    expect(failedOp.status).toEqual('409');
+    expect(failedOp.response).toBeDefined();
+    expect(failedOp.response.status).toEqual('409');
+
+    const errorResponse: any = failedOp.response;
+    expect(errorResponse.schemas).toContain('urn:ietf:params:scim:api:messages:2.0:Error');
+    expect(errorResponse.schemas).toContain(GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA);
+    expect(errorResponse[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA]).toBeDefined();
+    expect(errorResponse[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUserId).toEqual(createdUser.id);
+    expect(errorResponse[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUsername).toEqual(createdUser.userName);
   });
 
   it('should accept request with update user', async () => {

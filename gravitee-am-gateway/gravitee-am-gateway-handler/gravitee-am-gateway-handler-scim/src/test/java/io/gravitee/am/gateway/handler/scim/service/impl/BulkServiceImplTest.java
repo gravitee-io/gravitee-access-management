@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.service.impl;
 
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.gateway.handler.scim.model.BulkOperation;
 import io.gravitee.am.gateway.handler.scim.model.BulkRequest;
 import io.gravitee.am.gateway.handler.scim.model.BulkResponse;
@@ -36,7 +37,7 @@ import static java.util.List.of;
 
 public class BulkServiceImplTest {
 
-    BulkServiceImpl service = new BulkServiceImpl(Mockito.mock(), Mockito.mock(), 1);
+    BulkServiceImpl service = new BulkServiceImpl(Mockito.mock(), Mockito.mock(), new ScimErrorMapper(false), 1);
 
     @Test
     public void should_omit_further_operations_if_fail_on_error_counter_is_reached(){

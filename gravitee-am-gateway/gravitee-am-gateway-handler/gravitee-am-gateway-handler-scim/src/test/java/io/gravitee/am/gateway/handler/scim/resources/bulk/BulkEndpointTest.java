@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.scim.resources.bulk;
 
 
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
@@ -90,7 +91,7 @@ public class BulkEndpointTest extends RxWebTestBase {
         router.post("/Bulk")
             .handler(BodyHandler.create())
                 .handler(bulkEndpoint::execute)
-                .failureHandler(new ErrorHandler());
+                .failureHandler(new ErrorHandler(new ScimErrorMapper(false)));
     }
 
     @Test
