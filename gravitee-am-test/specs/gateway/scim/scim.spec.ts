@@ -22,8 +22,10 @@ import { createApplication, updateApplication } from '@management-commands/appli
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
-import { getUserPage } from '@management-commands/user-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { getUserPage } from '@management-commands/user-management-commands';
+
+const GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA = 'urn:gravitee:params:scim:api:messages:1.0:ErrorDetails';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
@@ -95,7 +97,6 @@ describe('SCIM with custom parameters', () => {
     // Generate unique identifiers to avoid conflicts in parallel execution
     testUserEmail = `${uniqueName('user', true)}@user.com`;
     testUserName = uniqueName('barbara', true);
-
     const request = {
       schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
       externalId: '70198412321242223922423',
@@ -197,7 +198,6 @@ describe('SCIM with custom parameters', () => {
     // Generate unique identifiers
     const userEmail = `${uniqueName('user-client', true)}@user.com`;
     const userName = uniqueName('john-client', true);
-
     const request = {
       schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
       externalId: '70198412321242223922424',
@@ -253,5 +253,40 @@ describe('SCIM with custom parameters', () => {
     expect(user.client).toBe(scimClient.id);
 
     await clearEmails(userEmail);
+  });
+
+  it('should include existing user details on duplicate username when option is enabled', async () => {
+    const userName = `duplicate-user-${Date.now()}`;
+    const request = {
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+      userName,
+      password: '#CoMpL3X-P@SsW0Rd',
+      emails: [
+        {
+          value: `${userName}@user.com`,
+          type: 'work',
+          primary: true,
+        },
+      ],
+      active: true,
+    };
+
+    const createdUser = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(201);
+
+    const duplicateResponse = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(409);
+
+    console.log(createdUser.body)
+
+    expect(duplicateResponse.body.schemas).toContain('urn:ietf:params:scim:api:messages:2.0:Error');
+    expect(duplicateResponse.body.schemas).toContain('urn:gravitee:params:scim:api:messages:1.0:ErrorDetails');
+    expect(duplicateResponse.body[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA]).toBeDefined();
+    expect(duplicateResponse.body[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUserId).toBe(createdUser.body.id);
+    expect(duplicateResponse.body[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUsername).toBe(createdUser.body.userName);
   });
 });

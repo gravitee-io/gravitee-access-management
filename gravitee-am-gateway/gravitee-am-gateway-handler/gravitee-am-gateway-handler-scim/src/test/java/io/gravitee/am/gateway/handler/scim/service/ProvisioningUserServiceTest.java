@@ -314,6 +314,8 @@ public class ProvisioningUserServiceTest {
     public void shouldNotCreateUserWhenUsernameAlreadyUsed() {
         var externalId = "external-id";
         var user = new io.gravitee.am.model.User();
+        user.setId("existing-user-id");
+        user.setUsername("username-1");
         user.setExternalId(externalId);
         var pwd = UUID.randomUUID().toString();
 
@@ -328,7 +330,9 @@ public class ProvisioningUserServiceTest {
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
-        testObserver.assertError(UniquenessException.class);
+        testObserver.assertError(throwable -> throwable instanceof UniquenessException uniquenessException
+                && "existing-user-id".equals(uniquenessException.getExistingUserId())
+                && "username-1".equals(uniquenessException.getExistingUsername()));
 
         verify(userRepository, never()).create(any());
     }
@@ -337,6 +341,8 @@ public class ProvisioningUserServiceTest {
     public void shouldNotCreateUserWhenExternalIdAlreadyUsed() {
         var externalId = "external-id-3";
         var user = new io.gravitee.am.model.User();
+        user.setId("existing-user-id");
+        user.setUsername("username-1");
         user.setExternalId(externalId);
         var pwd = UUID.randomUUID().toString();
 
@@ -352,7 +358,9 @@ public class ProvisioningUserServiceTest {
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
-        testObserver.assertError(UniquenessException.class);
+        testObserver.assertError(throwable -> throwable instanceof UniquenessException uniquenessException
+                && "existing-user-id".equals(uniquenessException.getExistingUserId())
+                && "username-1".equals(uniquenessException.getExistingUsername()));
 
         verify(userRepository, never()).create(any());
     }

@@ -350,6 +350,7 @@ handlers:
 #    introspect: # Enables the inclusion of the audience claim in the introspection response.
 #      allowAudience: true
   scim:
+    includeErrorDetails: false
     bulk:
       maxRequestLength: 1048576
       maxRequestOperations: 1000
