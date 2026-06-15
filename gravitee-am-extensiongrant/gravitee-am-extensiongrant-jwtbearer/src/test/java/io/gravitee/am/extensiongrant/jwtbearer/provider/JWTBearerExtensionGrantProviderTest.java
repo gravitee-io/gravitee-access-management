@@ -170,6 +170,37 @@ public class JWTBearerExtensionGrantProviderTest {
     private static final String HS512_JWT_TOKEN = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.jYDh79n0yn1eH1IshmiltPGZum4jcT1e348Fa2whoncS1ndPwjPNtQp-4SL3VC0KMG-V7rtkesDoSBwdlyzM0A";
     private static final String HMAC_512_SECRET = "xwtuBRqdYcvBgQ-5tlCqY8bP0Brfuz7nWpfUbDjWZTs6ke26K9Zo05bofnM1-2NsN6xlIxAb7v5DKqdDKTxarw";
 
+    // RSA key pair (RSA-2048) used for PSS (PS256/PS384/PS512) tests
+    // The same RSA public key can verify both PKCS#1 v1.5 (RS*) and PSS (PS*) signatures
+    private static final String PSS_RSA_SSH_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdtQzCSoFu5xYAGF/DblgaxJN/p00Z2dHSUlLcXeAuq868LwJXu/UgTsYbsWVtJ4Ce2aHz+XoYF3iP9DAQytXQjeHLRmlQ4WUNqlclKLUNoyn77TOSdLeMsjciwoFnMMC9UX6FL6OLcf02ybpQtYkdTsQszZK7fODHsNA1XqShea1sAetjf33k53zc/41iEp6tw8V2zhLC22UfOUAMjrZBQiDgogypE3ZmONs7/2H9vLrmuinrILI4ql4pQiD3/SYb3Wl//58HMsJNIfM5YCBqI4hF5yYS+jhxEC+zlxfLcd4fOwLkVk6ejlzTImBsAhKj59borXzrwzS7PUoA0JE/";
+
+    private static final String PSS_RSA_CERT = """
+            -----BEGIN CERTIFICATE-----
+            MIIDVzCCAj+gAwIBAgIUFDd3J4cZHAKZfH1zX8y6qbWdev0wDQYJKoZIhvcNAQEL
+            BQAwOzELMAkGA1UEBhMCUEwxETAPBgNVBAoMCFRlc3QgT3JnMRkwFwYDVQQDDBB0
+            ZXN0LmV4YW1wbGUuY29tMB4XDTI2MDYxNTA3MTc1NFoXDTM2MDYxMjA3MTc1NFow
+            OzELMAkGA1UEBhMCUEwxETAPBgNVBAoMCFRlc3QgT3JnMRkwFwYDVQQDDBB0ZXN0
+            LmV4YW1wbGUuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3bUM
+            wkqBbucWABhfw25YGsSTf6dNGdnR0lJS3F3gLqvOvC8CV7v1IE7GG7FlbSeAntmh
+            8/l6GBd4j/QwEMrV0I3hy0ZpUOFlDapXJSi1DaMp++0zknS3jLI3IsKBZzDAvVF+
+            hS+ji3H9Nsm6ULWJHU7ELM2Su3zgx7DQNV6koXmtbAHrY3995Od83P+NYhKercPF
+            ds4SwttlHzlADI62QUIg4KIMqRN2ZjjbO/9h/by65rop6yCyOKpeKUIg9/0mG91p
+            f/+fBzLCTSHzOWAgaiOIRecmEvo4cRAvs5cXy3HeHzsC5FZOno5c0yJgbAISo+fW
+            6K1868M0uz1KANCRPwIDAQABo1MwUTAdBgNVHQ4EFgQUa37Aq50goDjAM8A3HMC6
+            dv1hiaMwHwYDVR0jBBgwFoAUa37Aq50goDjAM8A3HMC6dv1hiaMwDwYDVR0TAQH/
+            BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAztBzp0pTrsWtCndP5SEH7mx4hbuC
+            AhdR8ZatEOt3Ob22EVSaCSlxIBtASh6OvHK0Yzi09zuprbDFx0Vi8H+tQpsWX56q
+            W52EFQKuXEP/EEz/8kgXMpO0mVmYpJ1jIJ5T3CSsE6HeDMazN2VsPUPXuX3rCN73
+            zpJPzW+QkJqZERrVLObij4IR9CZOlLaaTUqUWX1QKSth9rcOwrrzdEtfWAsLBjHI
+            lCrZsBb7iW0LC/uIbf+ZvXsGII0sCqZqZ4q+PSLp7qOo2KTpOaDtDGtDSeAiCkB/
+            ekPyeBRvcPTOTB+TIMmMp7Xe1t45/bME3HYAbZKO42SLI41klcMkuNm8Kw==
+            -----END CERTIFICATE-----""";
+
+    // PS256/PS384/PS512 JWTs signed with the PSS_RSA key pair above (RSASSA-PSS with SHA-256/384/512)
+    private static final String PS256_JWT_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJQUzI1NiJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYWRtaW4iOnRydWV9.kxk2N4GtKuTuQ6BNRQ6VGpxfN2KI-b0EvWMK7Ar6jSxkOZsTD4AfZIFzRNCQpUACxFJbFVKQ_t-P-75EZXJ9c7L3y1OtToS9TPobGmEgB8EYcm2sUUyBRYVq-a_vKvu88tFzUgAe27LAKOluM6HWYMY5j8eqIehm4tdLdA1bCrWcrGFhH6FZ2PvzDU8liMzxijE67ASSHmGGRBIIVxxz5pMSkx9OHOneZpT-LiyB3R7SeqLvchpCNzs3TMWYiM8eWaHmEp43e3-TZ8TigTece85GZvtnQtW5HCtQSvfkhXz5v1Fs42-XZPHVOk_gRc1xhLULUGoJNb4rY8rr5YtsCg";
+    private static final String PS384_JWT_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJQUzM4NCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYWRtaW4iOnRydWV9.VW8j4nbCFgKYL1nzBMzORzEZjIaYMrzqZW-b53vgevJfQkBXXYvYWHYNaJvv0hS8MIRYMDY06ebVdxFVw6RR_UPBsPI0vxk9ixLCXG3FyatkMBLq8fC4RxmXUJtYIxoBzqL4D5xNTrwMTbgtnCVlCNOS6jp8O_JnuW5WAuO4ek-MpO-qA0y9ISLnYZ7na7610xZST6NmIYFvCaQNSLuPGwVba71hlc6ai9PFDnKJbuLQB6eJpXRYni5SDh1sjct7z-pL1vHj_rXEGMjIE1oF1COKbit1ACNbsYY32MY2o-b-GBhputMERRX-CCEyMeM7Zsy3BOG9N53PCHyKVG2YwQ";
+    private static final String PS512_JWT_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJQUzUxMiJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYWRtaW4iOnRydWV9.PNylJbGxshS2wHCjEUhh8oTOQeyKI6h0R6cv6SyoeHYMPVJrbUcrSyjFXISEZVGL-pY9dmNTYqFjGRzVcKXWaCtknLCtXFpXaZwa_zMBftz585wJANdffa7QnZky2f_f_NH_sGsA2p3ecOB5n6OaFwjDUR-y6xzZY17L5L9GnGInZ27Yp-j3UxlNaFo-YLOqtEBzYuGaJgcYpNzPWVpINsqqGuRcGYm6D4_LOkK537yR35pPM3JSY5W8HR_z-9fgAGdc0gDEEEec4356yaNWcA-zy987u97-Wr-6c_Vbx30eYO5OrOef_vdYCUsjLjwkdSSn42nlgBUzycZ2HK_4Tw";
+
 
     @InjectMocks
     private JWTBearerExtensionGrantProvider jwtBearerExtensionGrantProvider = new JWTBearerExtensionGrantProvider();
@@ -735,5 +766,115 @@ public class JWTBearerExtensionGrantProviderTest {
         var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
+    }
+
+    /**
+     * Test RSA-PSS with SHA-256 (PS256) using SSH public key format.
+     * PS256 is FAPI-mandatory and must be accepted by the JWT-bearer extension grant.
+     */
+    @Test
+    public void must_grant_with_ps256_ssh_key() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_SSH_KEY);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", PS256_JWT_TOKEN));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(Objects::nonNull);
+    }
+
+    /**
+     * Test RSA-PSS with SHA-384 (PS384) using SSH public key format.
+     */
+    @Test
+    public void must_grant_with_ps384_ssh_key() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_SSH_KEY);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", PS384_JWT_TOKEN));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(Objects::nonNull);
+    }
+
+    /**
+     * Test RSA-PSS with SHA-512 (PS512) using SSH public key format.
+     */
+    @Test
+    public void must_grant_with_ps512_ssh_key() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_SSH_KEY);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", PS512_JWT_TOKEN));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(Objects::nonNull);
+    }
+
+    /**
+     * Test RSA-PSS with SHA-256 (PS256) using X.509 certificate format.
+     * PS256 is FAPI-mandatory and must be accepted by the JWT-bearer extension grant.
+     */
+    @Test
+    public void must_grant_with_ps256_certificate() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_CERT);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", PS256_JWT_TOKEN));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(Objects::nonNull);
+    }
+
+    /**
+     * Test RSA-PSS with SHA-384 (PS384) using X.509 certificate format.
+     */
+    @Test
+    public void must_grant_with_ps384_certificate() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_CERT);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", PS384_JWT_TOKEN));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(Objects::nonNull);
+    }
+
+    /**
+     * Test RSA-PSS with SHA-512 (PS512) using X.509 certificate format.
+     */
+    @Test
+    public void must_grant_with_ps512_certificate() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_CERT);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", PS512_JWT_TOKEN));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(Objects::nonNull);
     }
 }
