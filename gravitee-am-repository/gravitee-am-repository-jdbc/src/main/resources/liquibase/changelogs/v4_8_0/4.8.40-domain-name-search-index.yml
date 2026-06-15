@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 4.11.0-create-idx_domains_ref_name
+      id: 4.8.40-create-idx_domains_ref_name
       author: GraviteeSource Team
       preConditions:
         - onFail: MARK_RAN

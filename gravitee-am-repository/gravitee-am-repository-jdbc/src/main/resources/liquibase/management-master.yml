@@ -176,6 +176,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-application-client-secrets-table.yml
   - include:
+      - file: liquibase/changelogs/v4_8_0/4.8.40-domain-name-search-index.yml
+  - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-factors.yml
   - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-org-users.yml
@@ -209,5 +211,3 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_11_0/4.11.0-update-domains-certificate-settings.yml
   - include:
       - file: liquibase/changelogs/v4_11_0/4.11.0-action-lease-table.yml
-  - include:
-      - file: liquibase/changelogs/v4_11_0/4.11.0-domain-name-search-index.yml
