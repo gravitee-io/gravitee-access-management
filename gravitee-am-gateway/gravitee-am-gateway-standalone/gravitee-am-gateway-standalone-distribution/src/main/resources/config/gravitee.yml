@@ -140,7 +140,8 @@ services:
 #    # by using sync process to update them
 #    permissions: false
 #    deploy:
-#      # number of concurrent domain deployments, 0 = 2 x CPU cores
+#      # number of concurrent domain deployments (0 is default)
+#      # The default concurrency is twice the number of cores on the machine
 #      parallelism: 0
 
   core:
