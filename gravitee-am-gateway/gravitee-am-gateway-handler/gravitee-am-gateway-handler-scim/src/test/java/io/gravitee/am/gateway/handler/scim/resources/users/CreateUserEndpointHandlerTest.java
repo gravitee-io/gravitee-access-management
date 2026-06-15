@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.common.jwt.JWT;
@@ -92,7 +93,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                     rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
                     rc.next();
                 })
-                .failureHandler(new ErrorHandler());
+                .failureHandler(new ErrorHandler(new ScimErrorMapper(false)));
     }
 
     @Test
