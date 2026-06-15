@@ -106,7 +106,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.lang.Boolean.FALSE;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
@@ -283,14 +282,20 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
         // check if user is unique
         return Single.zip(
-                        userRepository.findByUsernameAndSource(domain.asReference(), user.getUserName(), source).isEmpty(),
-                        userRepository.findByExternalIdAndSource(domain.asReference(), user.getExternalId(), source).isEmpty(),
-                        (isNoUsername, isNoExternalId) -> {
-                            if (FALSE.equals(isNoUsername)) {
-                                throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()));
+                        userRepository.findByUsernameAndSource(domain.asReference(), user.getUserName(), source)
+                                .map(Optional::of)
+                                .defaultIfEmpty(Optional.empty()),
+                        userRepository.findByExternalIdAndSource(domain.asReference(), user.getExternalId(), source)
+                                .map(Optional::of)
+                                .defaultIfEmpty(Optional.empty()),
+                        (existingUsername, existingExternalId) -> {
+                            if (existingUsername.isPresent()) {
+                                var existingUser = existingUsername.get();
+                                throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()), existingUser.getId(), existingUser.getUsername());
                             }
-                            if (FALSE.equals(isNoExternalId)) {
-                                throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "externalId", user.getExternalId()));
+                            if (existingExternalId.isPresent()) {
+                                var existingUser = existingExternalId.get();
+                                throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "externalId", user.getExternalId()), existingUser.getId(), existingUser.getUsername());
                             }
                             return true;
                         })
