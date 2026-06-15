@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,9 +37,6 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultSecurityDomainHandlerRegistry.class);
     private final ConcurrentMap<String, VertxSecurityDomainHandler> handlers = new ConcurrentHashMap<>();
-    // Per-domain locks ensure concurrent update() calls for the same domain don't interleave
-    // (remove+create must be atomic per domain). Different domains are independent.
-    private final ConcurrentMap<String, ReentrantLock> domainLocks = new ConcurrentHashMap<>();
 
     @Autowired
     private SecurityDomainRouterFactory securityDomainRouterFactory;
@@ -71,18 +67,15 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     @Override
     public void update(Domain domain) {
-        ReentrantLock lock = domainLocks.computeIfAbsent(domain.getId(), k -> new ReentrantLock());
-        lock.lock();
-        try {
-            VertxSecurityDomainHandler handler = handlers.get(domain.getId());
-            if (handler != null) {
-                remove(domain);
-                create(domain);
-            } else {
-                create(domain);
-            }
-        } finally {
-            lock.unlock();
+        // Synchronization per domain is guaranteed upstream: SyncManager deduplicates events by
+        // (type, id) within a cycle and serializes cycles, so update/create/remove for a given
+        // domain never run concurrently.
+        VertxSecurityDomainHandler handler = handlers.get(domain.getId());
+        if (handler != null) {
+            remove(domain);
+            create(domain);
+        } else {
+            create(domain);
         }
     }
 
@@ -95,7 +88,6 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 handler.stop();
                 handlers.remove(domain.getId());
                 reactor.unMountDomain(handler);
-                domainLocks.remove(domain.getId());
                 logger.info("Security Domain has been unregistered");
             } catch (Exception e) {
                 logger.error("Unable to un-register handler", e);
