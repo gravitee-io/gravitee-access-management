@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.resources.groups;
 
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -62,7 +63,7 @@ public class PatchGroupEndpointHandlerTest extends RxWebTestBase {
 
         router.route()
                 .handler(BodyHandler.create())
-                .failureHandler(new ErrorHandler());
+                .failureHandler(new ErrorHandler(new ScimErrorMapper(false)));
     }
 
     @Test
