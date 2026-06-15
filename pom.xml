@@ -79,7 +79,7 @@
     <properties>
         <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>9.0.0-alpha.6</gravitee-bom.version>
+        <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
         <gravitee-common.version>5.0.0-alpha.1</gravitee-common.version>
         <gravitee-plugin.version>5.0.0</gravitee-plugin.version>
         <gravitee-node.version>9.0.0-alpha.17</gravitee-node.version>
