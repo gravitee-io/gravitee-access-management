@@ -23,6 +23,9 @@ import io.gravitee.am.gateway.handler.scim.model.ScimType;
  */
 public class UniquenessException extends SCIMException {
 
+    private String existingUserId;
+    private String existingUsername;
+
     public UniquenessException() {
     }
 
@@ -32,6 +35,24 @@ public class UniquenessException extends SCIMException {
 
     public UniquenessException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public UniquenessException(String message, String existingUserId, String existingUsername) {
+        super(message);
+        this.existingUserId = existingUserId;
+        this.existingUsername = existingUsername;
+    }
+
+    public String getExistingUserId() {
+        return existingUserId;
+    }
+
+    public String getExistingUsername() {
+        return existingUsername;
+    }
+
+    public boolean hasExistingUserDetails() {
+        return existingUserId != null && existingUsername != null;
     }
 
     @Override

@@ -370,6 +370,7 @@ handlers:
 #      allowAudience: true
 #      offlineVerificationTimerSeconds: 10
   scim:
+    includeErrorDetails: false
     bulk:
       maxRequestLength: 1048576
       maxRequestOperations: 1000

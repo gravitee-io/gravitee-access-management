@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.resources;
 
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.gateway.handler.scim.model.Error;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -23,6 +24,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,15 +55,17 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RequiredArgsConstructor
 public class ErrorHandler implements Handler<RoutingContext> {
 
     private static Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
+    private final ScimErrorMapper scimErrorMapper;
 
     @Override
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             final Throwable throwable = routingContext.failure();
-            Optional<Error> knownError = Error.fromThrowable(throwable);
+            Optional<Error> knownError = scimErrorMapper.fromThrowable(throwable);
             knownError
                     .ifPresentOrElse(error -> handleScimError(routingContext, error),
                             () -> handleUnknownError(routingContext, throwable));

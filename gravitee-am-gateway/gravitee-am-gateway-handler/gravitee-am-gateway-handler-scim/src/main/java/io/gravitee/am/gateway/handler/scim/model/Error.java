@@ -15,18 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.scim.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
-import io.gravitee.am.gateway.handler.scim.exception.UnauthorizedException;
-import io.gravitee.am.gateway.policy.PolicyChainException;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.common.http.HttpStatusCode;
-import io.vertx.ext.web.handler.HttpException;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+
+import static io.gravitee.am.gateway.handler.scim.model.Error.ErrorDetails.ERROR_DETAILS_SCHEMA;
 
 /**
  * The SCIM protocol uses the HTTP response status codes defined in
@@ -56,13 +57,28 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Error {
 
-    private static final List<String> SCHEMAS = Arrays.asList("urn:ietf:params:scim:api:messages:2.0:Error");
+    private static final List<String> DEFAULT_SCHEMAS = Arrays.asList("urn:ietf:params:scim:api:messages:2.0:Error");
     private String status;
     private String scimType;
     private String detail;
+    private List<String> schemas = new ArrayList<>();
+
+    @JsonProperty(ERROR_DETAILS_SCHEMA)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private ErrorDetails errorDetails;
+
+    public static Error withDefaultSchemas() {
+        Error error = new Error();
+        error.schemas = new ArrayList<>(DEFAULT_SCHEMAS);
+        return error;
+    }
 
     public List<String> getSchemas() {
-        return SCHEMAS;
+        return schemas;
+    }
+
+    public ErrorDetails getErrorDetails() {
+        return errorDetails;
     }
 
     public String getStatus() {
@@ -89,35 +105,19 @@ public class Error {
         this.detail = detail;
     }
 
-    public static Optional<Error> fromThrowable(Throwable throwable) {
-        Optional<Error> result = Optional.empty();
-        if (throwable instanceof AbstractManagementException technicalManagementException) {
-            result = Optional.of(buildError(technicalManagementException.getHttpStatusCode(), technicalManagementException.getMessage(), null));
-        } else if (throwable instanceof OAuth2Exception oAuth2Exception) {
-            result = Optional.of(buildError(oAuth2Exception.getHttpStatusCode(), oAuth2Exception.getMessage(), null));
-        } else if (throwable instanceof SCIMException scimException) {
-            result = Optional.of(buildError(scimException.getHttpStatusCode(), scimException.getMessage(), scimException.getScimType()));
-        } else if (throwable instanceof HttpException httpException) {
-            if (401 == httpException.getStatusCode()) {
-                UnauthorizedException unauthorizedException = new UnauthorizedException();
-                result = Optional.of(buildError(unauthorizedException.getHttpStatusCode(), unauthorizedException.getMessage(), null));
-            }
-        } else if (throwable instanceof PolicyChainException) {
-            PolicyChainException policyChainException = (PolicyChainException) throwable;
-            result = Optional.of(buildError(policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage(), null));
-        }
-        return result;
+    public Error withErrorDetails(ErrorDetails errorDetails) {
+        schemas.add(ERROR_DETAILS_SCHEMA);
+        this.errorDetails = errorDetails;
+        return this;
     }
 
-    private static Error buildError(int httpStatusCode, String errorDetail, ScimType scimType) {
-        Error error = new Error();
-        error.setStatus(String.valueOf(httpStatusCode));
-        error.setDetail(errorDetail);
-        if (scimType != null) {
-            error.setScimType(scimType.value());
-        } else if(httpStatusCode == HttpStatusCode.BAD_REQUEST_400) {
-            error.setScimType(ScimType.INVALID_VALUE.value());
-        }
-        return error;
+    @Builder
+    @Getter
+    public static final class ErrorDetails {
+        public final static String ERROR_DETAILS_SCHEMA = "urn:gravitee:params:scim:api:messages:1.0:ErrorDetails";
+
+        public String existingUserId;
+        public String existingUsername;
     }
+
 }
