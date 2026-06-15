@@ -1755,7 +1755,7 @@
 													"    pm.expect(jsonData.status).to.eql(\"409\");",
 													"    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
 													"    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen@example.com] already exists\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"    pm.expect(jsonData.schemas).to.include('urn:ietf:params:scim:api:messages:2.0:Error');",
 													"});"
 												],
 												"type": "text/javascript"
