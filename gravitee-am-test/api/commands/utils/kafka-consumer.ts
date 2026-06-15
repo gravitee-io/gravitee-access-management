@@ -16,6 +16,7 @@
 
 import { Consumer, EachMessageHandler, Kafka, logLevel } from 'kafkajs';
 import { uniqueName } from '@utils-commands/misc';
+import fetch from 'cross-fetch';
 
 const DEFAULT_KAFKA_WAIT_TIMEOUT_MS = 20000;
 const DEFAULT_KAFKA_ASSERT_NO_WINDOW_MS = 5000;
@@ -39,12 +40,51 @@ export interface KafkaAssertNoOptions {
   predicate: (msg: KafkaAuditPayload) => boolean;
 }
 
-function createKafkaClient(clientId: string) {
-  return new Kafka({
-    clientId,
-    brokers: [(process.env.KAFKA_BOOTSTRAP_URL ?? 'localhost:9092')],
-    logLevel: logLevel.ERROR,
+export interface KafkaClientOptions {
+  bootstrapServers?: string;
+  oauthBearerTokenEndpoint?: string;
+}
+
+async function requestOAuthBearerToken(tokenEndpoint: string): Promise<string> {
+  const response = await fetch(tokenEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic dGVzdDp0ZXN0' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: 'test',
+      client_secret: 'test',
+    }).toString(),
   });
+
+  if (!response.ok) {
+    throw new Error(`Unable to get Kafka OAuth token from ${tokenEndpoint}: HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as { access_token?: string };
+  if (!payload.access_token) {
+    throw new Error(`Kafka OAuth token response from ${tokenEndpoint} does not contain access_token`);
+  }
+
+  return payload.access_token;
+}
+
+function createKafkaClient(clientId: string, options: KafkaClientOptions = {}) {
+  const kafkaOptions: any = {
+    clientId,
+    brokers: [options.bootstrapServers ?? process.env.KAFKA_BOOTSTRAP_URL ?? 'localhost:9092'],
+    logLevel: logLevel.ERROR,
+  };
+
+  if (options.oauthBearerTokenEndpoint) {
+    kafkaOptions.sasl = {
+      mechanism: 'oauthbearer',
+      oauthBearerProvider: async () => ({
+        value: await requestOAuthBearerToken(options.oauthBearerTokenEndpoint),
+      }),
+    };
+  }
+
+  return new Kafka(kafkaOptions);
 }
 
 /**
@@ -99,10 +139,11 @@ export async function waitForKafkaMessage(
   topic: string,
   options: KafkaWaitOptions,
   trigger: () => Promise<void>,
+  kafkaClientOptions: KafkaClientOptions = {},
 ): Promise<KafkaAuditPayload> {
   const { timeoutMs = DEFAULT_KAFKA_WAIT_TIMEOUT_MS, predicate } = options;
   const id = uniqueName('kafka-consumer', true);
-  const kafka = createKafkaClient(id);
+  const kafka = createKafkaClient(id, kafkaClientOptions);
 
   await ensureTopicExists(kafka, topic);
 
@@ -158,10 +199,11 @@ export async function assertNoKafkaMessage(
   topic: string,
   options: KafkaAssertNoOptions,
   trigger: () => Promise<void>,
+  kafkaClientOptions: KafkaClientOptions = {},
 ): Promise<void> {
   const { windowMs = DEFAULT_KAFKA_ASSERT_NO_WINDOW_MS, predicate } = options;
   const id = uniqueName('kafka-assert-no', true);
-  const kafka = createKafkaClient(id);
+  const kafka = createKafkaClient(id, kafkaClientOptions);
 
   await ensureTopicExists(kafka, topic);
 
@@ -186,8 +228,6 @@ export async function assertNoKafkaMessage(
   }
 
   if (matched !== null) {
-    throw new Error(
-      `Expected no Kafka message on topic "${topic}" matching predicate, but received one: ${JSON.stringify(matched)}`,
-    );
+    throw new Error(`Expected no Kafka message on topic "${topic}" matching predicate, but received one: ${JSON.stringify(matched)}`);
   }
 }

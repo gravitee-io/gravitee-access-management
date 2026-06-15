@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { afterAll, beforeAll, expect } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
 import { updateDomainReporter } from '@management-commands/reporter-management-commands';
@@ -43,9 +43,31 @@ describe('Kafka Reporter - Domain Level Gateway', () => {
       const topic = uniqueName('domain-all-events', true);
       await fixture.addReporter(topic, []);
 
+      const received: KafkaAuditPayload = await waitForKafkaMessage(topic, { predicate: (msg) => msg.type === 'USER_LOGIN' }, () =>
+        loginUserNameAndPassword(
+          fixture.application.settings.oauth.clientId,
+          fixture.user,
+          fixture.user.password,
+          false,
+          fixture.openIdConfiguration,
+          fixture.domain,
+        ).then(() => {}),
+      );
+
+      expect(received).toBeDefined();
+      expect(received.type).toEqual('USER_LOGIN');
+      expect(received.referenceType).toEqual('DOMAIN');
+      expect(received.referenceId).toEqual(fixture.domain.id);
+      expect(received.domainId).toEqual(fixture.domain.id);
+    });
+
+    it('should receive USER_LOGIN event in Kafka through OAuth listener', async () => {
+      const topic = uniqueName('domain-oauth-events', true);
+      await fixture.addOAuthReporter(topic, []);
+
       const received: KafkaAuditPayload = await waitForKafkaMessage(
         topic,
-        { predicate: (msg) => msg.type === 'USER_LOGIN' },
+        { predicate: (msg) => msg.type === 'USER_LOGIN', timeoutMs: 10000 },
         () =>
           loginUserNameAndPassword(
             fixture.application.settings.oauth.clientId,
@@ -55,6 +77,10 @@ describe('Kafka Reporter - Domain Level Gateway', () => {
             fixture.openIdConfiguration,
             fixture.domain,
           ).then(() => {}),
+        {
+          bootstrapServers: process.env.KAFKA_OAUTH_BOOTSTRAP_URL ?? 'localhost:9094',
+          oauthBearerTokenEndpoint: process.env.KAFKA_OAUTH_TOKEN_ENDPOINT_URL ?? 'http://localhost:8181/kafka/oauth/token',
+        },
       );
 
       expect(received).toBeDefined();
@@ -70,18 +96,15 @@ describe('Kafka Reporter - Domain Level Gateway', () => {
       const topic = uniqueName('domain-filtered-events', true);
       await fixture.addReporter(topic, ['USER_CREATED']);
 
-      await assertNoKafkaMessage(
-        topic,
-        { predicate: (msg) => msg.type === 'USER_LOGIN' },
-        () =>
-          loginUserNameAndPassword(
-            fixture.application.settings.oauth.clientId,
-            fixture.user,
-            fixture.user.password,
-            false,
-            fixture.openIdConfiguration,
-            fixture.domain,
-          ).then(() => {}),
+      await assertNoKafkaMessage(topic, { predicate: (msg) => msg.type === 'USER_LOGIN' }, () =>
+        loginUserNameAndPassword(
+          fixture.application.settings.oauth.clientId,
+          fixture.user,
+          fixture.user.password,
+          false,
+          fixture.openIdConfiguration,
+          fixture.domain,
+        ).then(() => {}),
       );
     });
   });
@@ -101,18 +124,15 @@ describe('Kafka Reporter - Domain Level Gateway', () => {
       // waitForSyncAfter does not work for disabled reporters, so we need to wait for the sync to complete manually
       await waitFor(5000);
 
-      await assertNoKafkaMessage(
-        topic,
-        { predicate: (msg) => msg.type === 'USER_LOGIN' },
-        () =>
-          loginUserNameAndPassword(
-            fixture.application.settings.oauth.clientId,
-            fixture.user,
-            fixture.user.password,
-            false,
-            fixture.openIdConfiguration,
-            fixture.domain,
-          ).then(() => {}),
+      await assertNoKafkaMessage(topic, { predicate: (msg) => msg.type === 'USER_LOGIN' }, () =>
+        loginUserNameAndPassword(
+          fixture.application.settings.oauth.clientId,
+          fixture.user,
+          fixture.user.password,
+          false,
+          fixture.openIdConfiguration,
+          fixture.domain,
+        ).then(() => {}),
       );
     });
   });

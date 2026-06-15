@@ -1,0 +1,52 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/kafka/oauth/token",
+        "basicAuthCredentials": {
+          "username": "test",
+          "password": "test"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImthZmthLW9hdXRoLXRlc3Qta2V5In0.eyJpc3MiOiJncmF2aXRlZS1rYWZrYS1vYXV0aCIsInN1YiI6ImthZmthLXJlcG9ydGVyLXRlc3QiLCJhdWQiOiJncmF2aXRlZS1rYWZrYSIsImlhdCI6MTc2MDAwMDAwMCwiZXhwIjo0MTAyNDQ0ODAwLCJzY29wZSI6ImthZmthIn0.Z7apFo8fo5zJPcH_c8GKLMwHxid9SejWBz_-bQig85L0pK2azeQAZJksoH8odG6sgR6UfHG2-1v2ljkOpCcZkom7N8B5I0hnOHzjCOpXkW9WevXPPUaP9lDvyF33D9PxRhGs1OvDGmCILNhpNTWmsJxfdQmlvnHeWlJMnrobQPthqr6DCEM3Ck3IVYaFuDuu9a4aRJo1qEOG5P_JAm-AS0kZASJvmk817a2i0eoVFkJh1VAjkRDS4TgKPTzcgB05jT1y6Xeez3WulqZGjxQOFfcVN-pk6MTNNBdmDbrMj3CIIF3WJ92JCmn2ZhgtjAp0lKyeQTX6fOssMNwMms03oQ",
+          "token_type": "Bearer"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/kafka/oauth/jwks"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "keys": [
+            {
+              "kty": "RSA",
+              "n": "nkXes0Stw0eCPaowYAbJ7xS92XilTw25slLW0RD9coouAFTLAgy6tiK2gTdXlaUrXlJHbKMRpw_UP_Di9KFPwtIYdqzNoZxXlIBD8yGPL2NIyCZ9wr3Ia8OHotRfRHqrUcaZFpyMt83F7hqWdf1UoMdQHzVAMF3GFkMOsucI41VY6g8B4potmjqjAyF8zn811dPh3QFdnF5t3FtAMlsi2qNmAL9bV6NgoXrtUvqrRsunJDCMTL9De7Hxkh8k_EsgzUUmCuA_8700qmm7fSw84T3-Kn2Jz4BZu-HIXugw0vgmkTAhfFb4Z4tcm-E2mmL8QdUoxd-EjHzT9dyujJkN5Q",
+              "e": "AQAB",
+              "use": "sig",
+              "kid": "kafka-oauth-test-key",
+              "alg": "RS256"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "importOptions": {
+    "duplicatePolicy": "OVERWRITE",
+    "deleteAllNotInImport": false
+  }
+}

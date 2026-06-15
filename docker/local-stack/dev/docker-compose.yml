@@ -116,6 +116,7 @@ services:
       - ./wiremock/request-sfr.json:/tmp/request-sfr.json
       - ./wiremock/request-cimd.json:/tmp/request-cimd.json
       - ./wiremock/request-jwks.json:/tmp/request-jwks.json
+      - ./wiremock/request-kafka-oauth.json:/tmp/request-kafka-oauth.json
     command:
       - sh
       - -ec
@@ -128,6 +129,9 @@ services:
           -H "Content-Type: application/json"
         curl -fsS -X POST http://wiremock:8080/__admin/mappings/import \
           -d @/tmp/request-jwks.json \
+          -H "Content-Type: application/json"
+        curl -fsS -X POST http://wiremock:8080/__admin/mappings/import \
+          -d @/tmp/request-kafka-oauth.json \
           -H "Content-Type: application/json"
 
   ciba:
@@ -144,17 +148,31 @@ services:
 
   kafka:
     image: apache/kafka:3.8.0
+    depends_on:
+      wiremock-init:
+        condition: service_completed_successfully
     ports:
       - "9092:9092"
+      - "127.0.0.1:9094:9094"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,OAUTH://0.0.0.0:29094,OAUTHHOST://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092,OAUTH://kafka:29094,OAUTHHOST://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,OAUTH:SASL_PLAINTEXT,OAUTHHOST:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+      KAFKA_LISTENER_NAME_OAUTH_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+      KAFKA_LISTENER_NAME_OAUTHHOST_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+      KAFKA_LISTENER_NAME_OAUTH_OAUTHBEARER_SASL_JAAS_CONFIG: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+      KAFKA_LISTENER_NAME_OAUTHHOST_OAUTHBEARER_SASL_JAAS_CONFIG: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+      KAFKA_LISTENER_NAME_OAUTH_OAUTHBEARER_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+      KAFKA_LISTENER_NAME_OAUTHHOST_OAUTHBEARER_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+      KAFKA_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: http://wiremock:8080/kafka/oauth/jwks
+      KAFKA_SASL_OAUTHBEARER_EXPECTED_ISSUER: gravitee-kafka-oauth
+      KAFKA_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: gravitee-kafka
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1

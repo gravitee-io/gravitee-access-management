@@ -33,8 +33,12 @@ export interface DomainReporterGatewayFixture extends Fixture {
   user: any & { password: string };
   openIdConfiguration: DomainOidcConfig;
   addReporter(topicName: string, auditTypes?: string[]): Promise<Reporter>;
+  addOAuthReporter(topicName: string, auditTypes?: string[]): Promise<Reporter>;
   cleanUp(): Promise<void>;
 }
+
+const OAUTH_CALLBACK_HANDLER_CLASS = 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler';
+const OAUTH_ENDPOINT_ALLOWED_LIST = 'org.apache.kafka.sasl.oauthbearer.allowed.urls';
 
 export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporterGatewayFixture> => {
   const accessToken = await requestAdminAccessToken();
@@ -101,6 +105,36 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
     return reporter;
   };
 
+  const addOAuthReporter = async (topicName: string, auditTypes: string[] = []): Promise<Reporter> => {
+    const tokenEndpoint = process.env.KAFKA_OAUTH_INTERNAL_TOKEN_ENDPOINT_URL ?? 'http://wiremock:8080/kafka/oauth/token';
+    const reporter = await waitForSyncAfter(domain.id, () =>
+      createDomainReporter(domain.id, accessToken, {
+        type: 'reporter-am-kafka',
+        name: uniqueName('gw-kafka-oauth-reporter', true),
+        enabled: true,
+        configuration: JSON.stringify({
+          bootstrapServers: process.env.KAFKA_OAUTH_INTERNAL_BOOTSTRAP_URL ?? 'kafka:29094',
+          topic: topicName,
+          acks: '1',
+          auditTypes,
+          additionalProperties: [
+            { option: 'security.protocol', value: 'SASL_PLAINTEXT' },
+            { option: 'sasl.mechanism', value: 'OAUTHBEARER' },
+            {
+              option: 'sasl.jaas.config',
+              value: 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="test" clientSecret="test";',
+            },
+            { option: 'sasl.login.callback.handler.class', value: OAUTH_CALLBACK_HANDLER_CLASS },
+            { option: 'sasl.oauthbearer.token.endpoint.url', value: tokenEndpoint },
+            { option: OAUTH_ENDPOINT_ALLOWED_LIST, value: tokenEndpoint },
+          ],
+        }),
+      }),
+    );
+    reporterIds.push(reporter.id);
+    return reporter;
+  };
+
   const cleanUp = async (): Promise<void> => {
     for (const id of reporterIds) {
       try {
@@ -119,6 +153,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
     user,
     openIdConfiguration: oidcConfig,
     addReporter,
+    addOAuthReporter,
     cleanUp,
   };
 };
