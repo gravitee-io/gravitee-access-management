@@ -175,13 +175,8 @@ public class SyncManager implements InitializingBean, DisposableBean {
         logger.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
         logger.info("\t\t - Domain deployment parallelism : {}", deployParallelism);
         AtomicInteger threadIndex = new AtomicInteger(0);
-        // Domain deployment performs a Spring child context refresh which generates CGLIB proxies
-        // for gateway beans. That requires the gateway application classloader, NOT the context
-        // classloader of the thread initializing this bean: SyncManager runs in the sync-service
-        // plugin, whose classloader cannot define those proxies (ClassNotFoundException on
-        // *$$SpringCGLIB$$* / AopConfigException). SecurityDomainManager is a gateway-core class, so
-        // resolving its classloader (via parent-first delegation) yields the gateway application
-        // classloader, which is exactly the context under which deployment ran when synchronous.
+        // Assign the GatewayClassloader to the scheduler to make sure that the thread
+        // executing the domain loading action has access to the class definitions.
         final ClassLoader deploymentClassLoader = SecurityDomainManager.class.getClassLoader();
         deploymentExecutor = Executors.newFixedThreadPool(deployParallelism, r -> {
             Thread t = new Thread(r, "gio.sync-deployer-" + threadIndex.getAndIncrement());
