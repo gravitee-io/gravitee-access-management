@@ -87,6 +87,9 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
             SignatureAlgorithm.RS256,
             SignatureAlgorithm.RS384,
             SignatureAlgorithm.RS512,
+            SignatureAlgorithm.PS256,
+            SignatureAlgorithm.PS384,
+            SignatureAlgorithm.PS512,
             SignatureAlgorithm.ES256,
             SignatureAlgorithm.ES384,
             SignatureAlgorithm.ES512,
@@ -179,7 +182,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
             // get the corresponding key processor
             final String publicKey = jwtBearerTokenGranterConfiguration.getPublicKey();
             switch (signatureAlgorithm) {
-                case RS256, RS384, RS512 -> {
+                case RS256, RS384, RS512, PS256, PS384, PS512 -> {
                     keyProcessor = new RSAKeyProcessor<>();
                     RSAJWKSourceResolver resolver;
                     if (publicKey.startsWith("ssh-rsa")) {
