@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpoint;
 import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpointConfiguration;
@@ -80,6 +81,9 @@ public class SCIMProvider extends AbstractProtocolProvider {
     @Autowired
     private BulkEndpointConfiguration bulkEndpointConfiguration;
 
+    @Autowired
+    private ScimErrorMapper scimErrorMapper;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -131,7 +135,7 @@ public class SCIMProvider extends AbstractProtocolProvider {
             scimRouter.post("/Bulk").handler(bulkEndpoint::execute);
 
             // error handler
-            scimRouter.route().failureHandler(new ErrorHandler());
+            scimRouter.route().failureHandler(new ErrorHandler(scimErrorMapper));
 
             // mount SCIM router
             router.mountSubRouter(path(), scimRouter);
