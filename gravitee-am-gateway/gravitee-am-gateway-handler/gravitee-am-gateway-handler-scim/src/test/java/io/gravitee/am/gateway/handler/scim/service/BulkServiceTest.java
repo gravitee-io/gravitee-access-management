@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.scim.service;
 
 
+import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.BulkOperation;
@@ -81,7 +82,7 @@ public class BulkServiceTest {
 
     @BeforeEach
     public void init() {
-        this.bulkService = new BulkServiceImpl(userService, domain, 1);
+        this.bulkService = new BulkServiceImpl(userService, domain, new ScimErrorMapper(false), 1);
         this.client = new Client();
         this.request = new DummyRequest();
         this.authenticationContext = new DummyAuthenticationContext(new HashMap<>(), request);

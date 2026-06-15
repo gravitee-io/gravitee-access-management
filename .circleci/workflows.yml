@@ -520,6 +520,9 @@ jobs:
             export gravitee_services_sync_timeframeBeforeDelay=5000
             export gravitee_services_sync_timeframeAfterDelay=5000
             export GIO_MAX_MEM=512m
+
+            # Enrich SCIM fail response body
+            export gravitee_handlers_scim_includeErrorDetails=true
             
             # Start AM Management
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
@@ -655,6 +658,9 @@ jobs:
             export gravitee_user_username_policy_pattern="^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;=,]{1,100}$"
             export gravitee_user_name_strict_policy_pattern="^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\/<>?:;=.,]{0,100}$"
             export gravitee_user_name_lax_policy_pattern="^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?=]{0,100}$"
+            
+            # Enrich SCIM fail response body
+            export gravitee_handlers_scim_includeErrorDetails=true
             
             # Start AM Management
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
