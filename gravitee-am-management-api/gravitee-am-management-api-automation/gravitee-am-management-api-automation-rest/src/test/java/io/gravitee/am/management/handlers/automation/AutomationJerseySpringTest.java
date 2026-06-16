@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.automation.resource.AutomationResourceResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
@@ -186,6 +187,14 @@ public abstract class AutomationJerseySpringTest {
         @Bean
         public PluginConfigurationValidationService validationService() {
             return mock(PluginConfigurationValidationService.class);
+        }
+
+        @Bean
+        public AutomationResourceResolver automationResourceResolver(DomainService domainService,
+                IdentityProviderService identityProviderService,
+                CertificateService certificateService,
+                ReporterService reporterService) {
+            return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService);
         }
     }
 
