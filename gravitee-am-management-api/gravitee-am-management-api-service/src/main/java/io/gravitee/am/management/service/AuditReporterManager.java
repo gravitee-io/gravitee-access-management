@@ -21,6 +21,8 @@ import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
 
+import java.util.Optional;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -32,4 +34,12 @@ public interface AuditReporterManager extends Service<AuditReporterManager> {
     }
 
     Maybe<Reporter> getReporter(Reference domain);
+
+    /**
+     * Returns the internal (platform) reporter. This reporter is created in memory at startup and is not persisted in
+     * the reporter repository, so it is not returned by {@link io.gravitee.am.service.ReporterService#findAll()}.
+     *
+     * @return the internal reporter, or an empty {@link Optional} if it has not been initialized yet
+     */
+    Optional<Reporter> getInternalReporter();
 }
