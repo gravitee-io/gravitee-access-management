@@ -172,6 +172,11 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         }
     }
 
+    @Override
+    public Optional<Reporter> getInternalReporter() {
+        return Optional.ofNullable(internalReporter);
+    }
+
     private Maybe<Reporter> doGetReporter(Reference reference) {
         Optional<Reporter> optionalReporter = auditReporters
                 .entrySet()
