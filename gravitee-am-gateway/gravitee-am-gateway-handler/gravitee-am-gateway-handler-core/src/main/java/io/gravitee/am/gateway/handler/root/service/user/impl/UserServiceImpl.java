@@ -491,6 +491,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Completable forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
 
+        if (!params.hasAnyLookupValue()) {
+            return Completable.error(new UserNotFoundException());
+        }
+
         final String email = params.getEmail();
         if (email != null && !emailValidator.validate(email)) {
             return error(new EmailFormatInvalidException(email));
@@ -542,8 +546,8 @@ public class UserServiceImpl implements UserService {
                     // if user has no email or email is unknown
                     // fallback to registered user providers if user has never been authenticated
 
-                    if (isNullOrEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
-                        // no user found using criteria. email & username are missing, unable to search the user through UserProvider
+                    if (!params.canFallbackToIdentityProvider()) {
+                        // no user found using criteria and no email/username to search through UserProvider
                         return Single.error(new UserNotFoundException(email));
                     }
 

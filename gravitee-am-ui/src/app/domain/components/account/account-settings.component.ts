@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { ActivatedRoute } from '@angular/router';
 import moment, { unitOfTime } from 'moment';
 
@@ -57,7 +58,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   mfaChallengeAttemptsResetTime: Duration = { time: null, unit: null };
   rememberMeDuration: Duration = { time: null, unit: null };
 
-  availableFields = [
+  availableFieldSuggestions = [
     { key: 'email', label: 'Email', type: 'email' },
     { key: 'username', label: 'Username', type: 'text' },
   ];
@@ -132,12 +133,29 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = false;
   }
 
-  onFieldSelected(event) {
-    this.newField = { ...this.availableFields.filter((f) => f.key === event.value)[0] };
+  onFieldKeySuggestionSelected(event: MatAutocompleteSelectedEvent) {
+    const suggestion = this.availableFieldSuggestions.find((field) => field.key === event.option.value);
+    if (suggestion) {
+      this.newField = { ...suggestion };
+    }
+  }
+
+  filterFieldKeySuggestions(value: string) {
+    const filter = (value || '').toLowerCase();
+    if (!filter) {
+      return this.availableFieldSuggestions;
+    }
+    return this.availableFieldSuggestions.filter(
+      (field) => field.key.toLowerCase().includes(filter) || field.label.toLowerCase().includes(filter),
+    );
   }
 
   addField() {
-    this.selectedFields.push({ ...this.newField });
+    const field = { ...this.newField };
+    if (!field.type) {
+      field.type = field.key === 'email' ? 'email' : 'text';
+    }
+    this.selectedFields.push(field);
     this.selectedFields = [...this.selectedFields];
     this.newField = {};
     this.formChanged = true;
@@ -150,6 +168,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       this.selectedFields = [...this.selectedFields];
       this.formChanged = true;
     }
+  }
+
+  isFieldKeyValid(): boolean {
+    return !!this.newField.key && /^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(this.newField.key);
   }
 
   isFieldSelected(key) {

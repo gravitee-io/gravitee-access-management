@@ -24,6 +24,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.account.ForgotPasswordLookupField;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
@@ -34,9 +35,10 @@ import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -91,12 +93,13 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
             // display Email form if ConfirmIdentity is enable & warning parameter is missing
             // otherwise display custom form (ConfirmIdentity is disabled or an identity confirmation is required)
             if (settings.isResetPasswordConfirmIdentity() && !FORGOT_PASSWORD_CONFIRM.equals(warning)) {
-                routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
+                routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, List.of(FormField.getEmailField()));
             } else {
-                routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, settings.getResetPasswordCustomFormFields());
+                routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY,
+                        withDefaultInputTypes(settings.getResetPasswordCustomFormFields()));
             }
         } else {
-            routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
+            routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, List.of(FormField.getEmailField()));
         }
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
@@ -108,5 +111,26 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
     @Override
     public String getTemplateSuffix() {
         return Template.FORGOT_PASSWORD.template();
+    }
+
+    private static List<FormField> withDefaultInputTypes(List<FormField> fields) {
+        if (fields == null) {
+            return List.of();
+        }
+        return fields.stream().map(ForgotPasswordEndpoint::withDefaultInputType).collect(Collectors.toList());
+    }
+
+    private static FormField withDefaultInputType(FormField field) {
+        if (field == null) {
+            return null;
+        }
+        if (field.getType() != null && !field.getType().isBlank()) {
+            return field;
+        }
+        FormField copy = new FormField();
+        copy.setKey(field.getKey());
+        copy.setLabel(field.getLabel());
+        copy.setType(ForgotPasswordLookupField.defaultInputType(field.getKey()));
+        return copy;
     }
 }

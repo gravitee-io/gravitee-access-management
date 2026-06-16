@@ -95,26 +95,34 @@ public class AccountSettingsValidatorTest {
     }
 
     @Test
-    public void invalidSettings_containsEmailAndPasswordAndSomethingElse() {
+    public void validSettings_containsCustomAttribute() {
+        final AccountSettings element = new AccountSettings();
+        element.setResetPasswordCustomForm(true);
+        final FormField employeeId = new FormField();
+        employeeId.setKey("employeeId");
+        element.setResetPasswordCustomFormFields(List.of(employeeId));
+        assertTrue(accountSettingsValidator.validate(element));
+    }
+
+    @Test
+    public void invalidSettings_invalidFieldKey() {
         final AccountSettings element = new AccountSettings();
         element.setResetPasswordCustomForm(true);
         final FormField email = new FormField();
         email.setKey("email");
-        final FormField username = new FormField();
-        username.setKey("username");
-        final FormField wrongField = new FormField();
-        wrongField.setKey("wrongField");
-        element.setResetPasswordCustomFormFields(List.of(email, wrongField, username));
+        final FormField invalidField = new FormField();
+        invalidField.setKey("invalid key");
+        element.setResetPasswordCustomFormFields(List.of(email, invalidField));
         assertFalse(accountSettingsValidator.validate(element));
     }
 
     @Test
-    public void invalidSettings_wrongFields() {
+    public void validSettings_customAttributeOnly() {
         final AccountSettings element = new AccountSettings();
         element.setResetPasswordCustomForm(true);
-        final FormField wrongField = new FormField();
-        wrongField.setKey("wrongField");
-        element.setResetPasswordCustomFormFields(List.of(wrongField, wrongField));
-        assertFalse(accountSettingsValidator.validate(element));
+        final FormField employeeId = new FormField();
+        employeeId.setKey("employeeId");
+        element.setResetPasswordCustomFormFields(List.of(employeeId));
+        assertTrue(accountSettingsValidator.validate(element));
     }
 }
