@@ -63,18 +63,37 @@ public class ReporterAuditSweeper implements ExpiredDataSweeper {
         log.info("Starting audit reporter data purge (retention: {} days)", retentionDays);
 
         return actionLeaseService.acquireLease(LEASE_ACTION_AUDIT_SWEEPER, Duration.of(leaseDuration, ChronoUnit.SECONDS))
-                .flatMapPublisher(lease -> reporterService.findAll())
-                .flatMapCompletable(reporter -> purgeReporter(reporter)
-                        .onErrorResumeNext(error -> {
-                            log.error("Failed to purge audits for reporter {}: {}",
-                                    reporter.getName(), error.getMessage(), error);
-                            return Completable.complete();
-                        }),
-                        NO_DELAY_ERRORS,
-                        MAX_CONCURRENCY
-                )
+                .flatMapCompletable(lease -> reporterService.findAll()
+                        .flatMapCompletable(reporter -> purgeReporter(reporter)
+                                .onErrorResumeNext(error -> {
+                                    log.error("Failed to purge audits for reporter {}: {}",
+                                            reporter.getName(), error.getMessage(), error);
+                                    return Completable.complete();
+                                }),
+                                NO_DELAY_ERRORS,
+                                MAX_CONCURRENCY
+                        )
+                        // the internal (platform) reporter is created in memory and is not returned by findAll(),
+                        // so it must be purged explicitly otherwise its 'reporter_audits_PLATFORM' collection grows unbounded
+                        .andThen(purgeInternalReporter()))
                 .doOnComplete(() -> log.info("Audit reporter data purge completed"))
                 .doOnError(error -> log.error("Audit reporter data purge failed", error));
+    }
+
+    private Completable purgeInternalReporter() {
+        return auditReporterManager.getInternalReporter()
+                .map(internalReporter -> {
+                    log.debug("Purging audits for internal (platform) reporter");
+                    return internalReporter.purgeExpiredData()
+                            .onErrorResumeNext(error -> {
+                                log.error("Failed to purge audits for internal (platform) reporter: {}", error.getMessage(), error);
+                                return Completable.complete();
+                            });
+                })
+                .orElseGet(() -> {
+                    log.debug("No internal (platform) reporter to purge");
+                    return Completable.complete();
+                });
     }
 
     private Completable purgeReporter(io.gravitee.am.model.Reporter reporterConfig) {

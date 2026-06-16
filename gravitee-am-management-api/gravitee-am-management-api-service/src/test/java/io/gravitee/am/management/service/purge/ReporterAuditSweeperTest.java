@@ -32,6 +32,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -218,6 +219,86 @@ public class ReporterAuditSweeperTest {
         verify(reporter1).purgeExpiredData();
         verify(reporter2).purgeExpiredData();
         verify(reporter3).purgeExpiredData();
+    }
+
+    @Test
+    public void should_purge_internal_platform_reporter() {
+        // Given
+        io.gravitee.am.reporter.api.provider.Reporter dbReporter = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+        io.gravitee.am.reporter.api.provider.Reporter internalReporter = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+
+        Reporter config = createReporterConfig("MongoDB Reporter", true);
+
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
+        when(reporterService.findAll()).thenReturn(Flowable.just(config));
+        when(auditReporterManager.getReporter(any(Reference.class))).thenReturn(Maybe.just(dbReporter));
+        when(dbReporter.purgeExpiredData()).thenReturn(Completable.complete());
+        when(auditReporterManager.getInternalReporter()).thenReturn(Optional.of(internalReporter));
+        when(internalReporter.purgeExpiredData()).thenReturn(Completable.complete());
+
+        // When
+        TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+
+        // Then
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(dbReporter).purgeExpiredData();
+        verify(internalReporter).purgeExpiredData();
+    }
+
+    @Test
+    public void should_handle_internal_platform_reporter_error_gracefully() {
+        // Given
+        io.gravitee.am.reporter.api.provider.Reporter internalReporter = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
+        when(reporterService.findAll()).thenReturn(Flowable.empty());
+        when(auditReporterManager.getInternalReporter()).thenReturn(Optional.of(internalReporter));
+        when(internalReporter.purgeExpiredData())
+                .thenReturn(Completable.error(new RuntimeException("Database connection error")));
+
+        // When
+        TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+
+        // Then
+        testObserver.assertComplete(); // Should complete despite error on internal reporter
+        testObserver.assertNoErrors();
+        verify(internalReporter).purgeExpiredData();
+    }
+
+    @Test
+    public void should_complete_when_internal_platform_reporter_not_initialized() {
+        // Given
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
+        when(reporterService.findAll()).thenReturn(Flowable.empty());
+        when(auditReporterManager.getInternalReporter()).thenReturn(Optional.empty());
+
+        // When
+        TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+
+        // Then
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void should_not_purge_internal_platform_reporter_when_lease_not_acquired() {
+        // Given
+        io.gravitee.am.reporter.api.provider.Reporter internalReporter = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.empty());
+
+        // When
+        TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+
+        // Then
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(auditReporterManager, never()).getInternalReporter();
+        verify(internalReporter, never()).purgeExpiredData();
     }
 
     private Reporter createReporterConfig(String name, boolean enabled) {
