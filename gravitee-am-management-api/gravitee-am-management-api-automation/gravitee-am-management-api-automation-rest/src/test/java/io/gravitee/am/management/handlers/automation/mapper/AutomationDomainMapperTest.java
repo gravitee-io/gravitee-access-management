@@ -372,6 +372,50 @@ class AutomationDomainMapperTest {
     }
 
     @Test
+    void certificateReferenceByIdUsesTheInternalIdVerbatim() {
+        // an id: reference addresses a preexisting (e.g. brownfield) certificate directly — the internal
+        // id is used as-is, no deterministic computation, and the id: token round-trips via the *Key field.
+        AutomationDomain in = new AutomationDomain();
+        in.setName("My Domain");
+        in.setPath("/app");
+        AutomationSamlSettings saml = new AutomationSamlSettings();
+        saml.setEnabled(true);
+        saml.setCertificate("id:11111111-2222-3333-4444-555555555555");
+        in.setSaml(saml);
+
+        Domain target = newDomain();
+        AutomationDomainMapper.applyTo(in, target, List.of());
+
+        assertEquals("11111111-2222-3333-4444-555555555555", target.getSaml().getCertificate());
+        assertEquals("id:11111111-2222-3333-4444-555555555555", target.getSaml().getCertificateKey());
+        // GET echoes the id: token back
+        assertEquals("id:11111111-2222-3333-4444-555555555555",
+                AutomationDomainMapper.toAutomationDomain(target).getSaml().getCertificate());
+    }
+
+    @Test
+    void defaultIdentityProviderForRegistrationByIdUsesTheInternalIdVerbatim() {
+        // a brownfield identity provider has no automation key, so it is referenced by id:; the internal
+        // id is used as-is (no key scan, no deterministic fallback) and the token round-trips.
+        AutomationAccountSettings account = new AutomationAccountSettings();
+        account.setDefaultIdentityProviderForRegistration("id:default-idp-94157683-f481-45a9-9576-83f48145a9a0");
+        AutomationDomain in = new AutomationDomain();
+        in.setName("My Domain");
+        in.setPath("/app");
+        in.setAccountSettings(account);
+
+        Domain target = newDomain();
+        AutomationDomainMapper.applyTo(in, target, List.of());
+
+        assertEquals("default-idp-94157683-f481-45a9-9576-83f48145a9a0",
+                target.getAccountSettings().getDefaultIdentityProviderForRegistration());
+        assertEquals("id:default-idp-94157683-f481-45a9-9576-83f48145a9a0",
+                target.getAccountSettings().getDefaultIdentityProviderForRegistrationKey());
+        assertEquals("id:default-idp-94157683-f481-45a9-9576-83f48145a9a0",
+                AutomationDomainMapper.toAutomationDomain(target).getAccountSettings().getDefaultIdentityProviderForRegistration());
+    }
+
+    @Test
     void defaultIdentityProviderForRegistrationToNotYetCreatedProviderFallsBackToDeterministicId() {
         AutomationAccountSettings account = new AutomationAccountSettings();
         account.setDefaultIdentityProviderForRegistration("not-created-yet");
