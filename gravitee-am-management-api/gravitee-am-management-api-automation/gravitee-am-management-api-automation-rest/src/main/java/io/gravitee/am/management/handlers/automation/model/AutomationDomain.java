@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -74,8 +73,6 @@ public class AutomationDomain {
                     "alphanumeric and hyphens, starting and ending with an alphanumeric character. Used to " +
                     "identify the domain on create-or-update.",
             example = "example-domain")
-    @Pattern(regexp = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
-            message = "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character")
     private String automationKey;
 
     @NotNull

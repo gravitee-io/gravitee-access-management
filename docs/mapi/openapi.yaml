@@ -14653,8 +14653,6 @@ components:
       type: string
       enum:
       - NONE
-      - TERRAFORM
-      - GKO
       - AUTOMATION_API
     McpTool:
       type: object

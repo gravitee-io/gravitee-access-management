@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,8 +46,6 @@ public class AutomationReporter {
                     "alphanumeric and hyphens, starting and ending with an alphanumeric character. Used to " +
                     "identify the reporter on create-or-update.",
             example = "audit-kafka")
-    @Pattern(regexp = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
-            message = "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character")
     private String automationKey;
 
     @Size(min = 1, max = 255)

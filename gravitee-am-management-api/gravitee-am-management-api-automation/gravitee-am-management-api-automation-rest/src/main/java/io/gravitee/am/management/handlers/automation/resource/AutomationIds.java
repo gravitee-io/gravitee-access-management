@@ -38,6 +38,13 @@ public final class AutomationIds {
         return deterministicId(environmentId, key);
     }
 
+    public static String domainId(String environmentId, AutomationRef ref) {
+        return switch (ref) {
+            case AutomationRef.IdRef(String id) -> id;
+            case AutomationRef.KeyRef(String key) -> deterministicId(environmentId, key);
+        };
+    }
+
     public static String identityProviderId(String domainId, String key) {
         return deterministicId(domainId, key);
     }

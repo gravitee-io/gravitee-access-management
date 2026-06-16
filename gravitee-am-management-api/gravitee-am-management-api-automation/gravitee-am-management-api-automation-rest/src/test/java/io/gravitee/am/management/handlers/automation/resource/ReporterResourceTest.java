@@ -44,6 +44,7 @@ class ReporterResourceTest extends AutomationJerseySpringTest {
 
     private static final String DOMAIN_KEY = "customer-auth";
     private static final String REPORTER_KEY = "audit-log";
+    private static final String BROWNFIELD_REPORTER_ID = "88888888-9999-aaaa-bbbb-cccccccccccc";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
     private final String reporterId = AutomationIds.reporterId(domainId, REPORTER_KEY);
 
@@ -66,6 +67,17 @@ class ReporterResourceTest extends AutomationJerseySpringTest {
                 .enabled(true)
                 .system(system)
                 .dataType("AUDIT")
+                .reference(Reference.domain(domainId))
+                .managedBy(managedBy)
+                .build();
+    }
+
+    private Reporter brownfieldReporter(boolean system, ManagedBy managedBy) {
+        return Reporter.builder()
+                .id(BROWNFIELD_REPORTER_ID)
+                .name("Legacy audit")
+                .type("reporter-am-file")
+                .system(system)
                 .reference(Reference.domain(domainId))
                 .managedBy(managedBy)
                 .build();
@@ -144,6 +156,35 @@ class ReporterResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(204, response.getStatus());
         verify(reporterService, never()).delete(anyString(), any(), anyBoolean());
+    }
+
+    @Test
+    void delete_by_id_keeps_system_guard_for_a_reporter_it_does_not_own() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findById(eq(BROWNFIELD_REPORTER_ID)))
+                .thenReturn(Maybe.just(brownfieldReporter(true, ManagedBy.NONE)));
+        when(reporterService.delete(eq(BROWNFIELD_REPORTER_ID), any(), eq(false))).thenReturn(Completable.complete());
+
+        Response response = reportersTarget(DOMAIN_KEY).path("id:" + BROWNFIELD_REPORTER_ID).request().delete();
+
+        assertEquals(204, response.getStatus());
+        // a reporter the Automation API does not manage keeps the system guard (removeSystemReporter=false)
+        verify(reporterService).delete(eq(BROWNFIELD_REPORTER_ID), any(), eq(false));
+        verify(reporterService, never()).delete(anyString(), any(), eq(true));
+    }
+
+    @Test
+    void delete_by_id_waives_system_guard_for_an_automation_managed_reporter() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findById(eq(BROWNFIELD_REPORTER_ID)))
+                .thenReturn(Maybe.just(brownfieldReporter(true, ManagedBy.AUTOMATION_API)));
+        when(reporterService.delete(eq(BROWNFIELD_REPORTER_ID), any(), eq(true))).thenReturn(Completable.complete());
+
+        Response response = reportersTarget(DOMAIN_KEY).path("id:" + BROWNFIELD_REPORTER_ID).request().delete();
+
+        assertEquals(204, response.getStatus());
+        // the Automation API owns this reporter, so it may remove it even if system (removeSystemReporter=true)
+        verify(reporterService).delete(eq(BROWNFIELD_REPORTER_ID), any(), eq(true));
     }
 
     @Test
