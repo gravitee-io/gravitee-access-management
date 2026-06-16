@@ -126,7 +126,18 @@ public class DomainsResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final String key = definition.getAutomationKey();
+        final AutomationRef domainRef = AutomationRef.parse(definition.getAutomationKey());
+
+        // An 'id:' body addresses a preexisting domain directly (update-only)
+        if (domainRef instanceof AutomationRef.IdRef(String id)) {
+            checkAnyPermission(principal, organizationId, environmentId, id, Permission.DOMAIN, Acl.UPDATE)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> applyAndRespond(domain, definition, principal))
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
+
+        final String key = domainRef.raw();
         final String domainId = AutomationIds.domainId(environmentId, key);
 
         Single.defer(() ->

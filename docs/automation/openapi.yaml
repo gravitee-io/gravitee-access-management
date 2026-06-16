@@ -1606,7 +1606,6 @@ components:
           example: signing-cert
           maxLength: 255
           minLength: 1
-          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
           title: Key
         name:
           type: string
@@ -1689,7 +1688,6 @@ components:
           example: example-domain
           maxLength: 255
           minLength: 1
-          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
           title: Key
         loginSettings:
           $ref: "#/components/schemas/LoginSettings"
@@ -1803,7 +1801,6 @@ components:
           example: corporate-ldap
           maxLength: 255
           minLength: 1
-          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
           title: Key
         mappers:
           type: object
@@ -1922,7 +1919,6 @@ components:
           example: audit-kafka
           maxLength: 255
           minLength: 1
-          pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
           title: Key
         name:
           type: string
