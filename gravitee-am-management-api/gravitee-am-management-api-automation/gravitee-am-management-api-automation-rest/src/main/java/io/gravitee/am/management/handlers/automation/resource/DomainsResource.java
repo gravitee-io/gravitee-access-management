@@ -130,9 +130,9 @@ public class DomainsResource extends AbstractAutomationResource {
 
         // An 'id:' body addresses a preexisting domain directly (update-only)
         if (domainRef instanceof AutomationRef.IdRef(String id)) {
-            checkAnyPermission(principal, organizationId, environmentId, id, Permission.DOMAIN, Acl.UPDATE)
-                    .andThen(resolver.resolveDomain(environmentId, domainRef))
-                    .flatMap(domain -> applyAndRespond(domain, definition, principal))
+            resolver.resolveDomain(environmentId, domainRef)
+                    .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.UPDATE)
+                            .andThen(applyAndRespond(domain, definition, principal)))
                     .subscribe(response::resume, response::resume);
             return;
         }

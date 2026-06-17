@@ -112,6 +112,30 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void put_with_id_ref_returns_404_when_domain_does_not_exist() {
+        String missingId = "missing-id";
+        AutomationDomain idRefDefinition = definition("id:" + missingId);
+        when(domainService.findById(eq(missingId))).thenReturn(Maybe.empty());
+
+        Response response = put(domainsTarget(), idRefDefinition);
+
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    void put_with_id_ref_returns_403_when_update_permission_is_denied() {
+        String domainId = "domain-id";
+        AutomationDomain idRefDefinition = definition("id:" + domainId);
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        denyPermission();
+
+        Response response = put(domainsTarget(), idRefDefinition);
+
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
     void put_is_rejected_when_required_fields_missing() {
         AutomationDomain invalid = new AutomationDomain();
         invalid.setAutomationKey("customer-auth"); // name, path, dataPlaneId missing
