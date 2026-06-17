@@ -121,7 +121,6 @@ import static java.util.stream.Collectors.toMap;
 public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
-    private static final int DELETE_BATCH_SIZE = 10000;
 
     @Autowired
     private ConnectionProvider connectionProvider;
@@ -149,6 +148,14 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Value("${services.purge.enabled:false}")
     private boolean purgeEnabled;
+
+    @Value("${services.purge.audits.batchDelay:500}")
+    private long batchDelayMs;
+
+    // introduce purgeBathSize even if batchSize exist to have a single configuration settings
+    // for Mongo and R2DBC about audits retention mechanism
+    @Value("${services.purge.audits.batchSize:" + PURGE_MAX_BATCH_SIZE + "}")
+    private int purgeBatchSize = PURGE_MAX_BATCH_SIZE;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -274,56 +281,96 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         }
     }
 
+    @Override
     public Completable purgeExpiredData() {
+        return purgeExpiredData(Instant.MAX);
+    }
+
+    @Override
+    public Completable purgeExpiredData(Instant deadline) {
         if (!purgeEnabled || retentionDays <= 0) {
-            logger.debug("MongoDB audit purge disabled (retention days: {})", retentionDays);
+            logger.debug("MongoDB audit purge disabled (retention days: {} - collection: {})", retentionDays, configuration.getReportableCollection());
             return Completable.complete();
         }
 
         LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
         Date thresholdDate = Date.from(threshold.toInstant(ZoneOffset.UTC));
 
-        logger.info("Starting MongoDB audit purge for records older than {} (retention: {} days)",
-                thresholdDate, retentionDays);
+        logger.info("Starting MongoDB audit purge for records older than {} (retention: {} days - collection: {})",
+                thresholdDate, retentionDays, configuration.getReportableCollection());
         final AtomicLong totalDeleted = new AtomicLong(0);
+        final int effectiveBatchSize = cappedBatchSize();
 
-        return deleteInBatches(thresholdDate, totalDeleted)
+        return deleteInBatches(thresholdDate, deadline, effectiveBatchSize, totalDeleted)
                 .doOnComplete(() ->
-                        logger.info("MongoDB audit purge completed. Deleted {} records older than {} days",
-                                totalDeleted.get(), retentionDays)
+                        logger.info("MongoDB audit purge completed. Deleted {} records older than {} days (collection: {})",
+                                totalDeleted.get(), retentionDays, configuration.getReportableCollection())
                 )
                 .doOnError(error ->
-                        logger.error("Error during MongoDB audit purge. Deleted {} records before error",
-                                totalDeleted.get(), error)
+                        logger.error("Error during MongoDB audit purge. Deleted {} records before error (collection: {})",
+                                totalDeleted.get(), configuration.getReportableCollection(), error)
                 );
     }
 
-    private Completable deleteInBatches(Date threshold, AtomicLong totalDeleted) {
+    private int cappedBatchSize() {
+        // the purge batch is capped independently of the (shared) cursor batchSize used for searches,
+        // to bound the number of ids loaded in memory and deleted per deleteMany whatever the configuration
+        if (purgeBatchSize > PURGE_MAX_BATCH_SIZE) {
+            logger.warn("Configured purge batch size {} exceeds the maximum allowed ({}), using {}",
+                    purgeBatchSize, PURGE_MAX_BATCH_SIZE, PURGE_MAX_BATCH_SIZE);
+            return PURGE_MAX_BATCH_SIZE;
+        }
+        return purgeBatchSize;
+    }
 
-        Flowable<Object> idStream = Flowable.fromPublisher(
-                reportableCollection
-                        .withDocumentClass(Document.class)
-                        .find(lte(FIELD_TIMESTAMP, threshold))
-                        .projection(Projections.include("_id"))
-                        .sort(Sorts.ascending(FIELD_TIMESTAMP, "_id"))
-                        .batchSize(DELETE_BATCH_SIZE)
-        ).map(doc -> doc.get("_id"));
+    private Completable deleteInBatches(Date threshold, Instant deadline, int batchSize, AtomicLong totalDeleted) {
+        // Each iteration fetches a limited (batchSize) set of ids and deletes them, then waits for
+        // a configurable period to let the backend sync its replication journal before the next batch.
+        // The loop stops when no record is left or when the global deadline is reached.
+        Single<Long> oneBatch = Single.defer(() -> {
+            if (Instant.now().isAfter(deadline)) {
+                logger.warn("Global purge timeout reached, stopping MongoDB audit purge until next execution. Deleted {} records so far",
+                        totalDeleted.get());
+                return Single.just(0L);
+            }
 
-        return idStream
-                .buffer(batchSize)
-                .concatMapSingle(ids -> {
-                    if (ids.isEmpty()) {
-                        return Single.just(0L);
-                    }
-                    return Single.fromPublisher(reportableCollection.deleteMany(in("_id", ids)))
-                            .map(DeleteResult::getDeletedCount)
-                            .doOnSuccess(deleted -> {
-                                long total = totalDeleted.addAndGet(deleted);
-                                logger.debug("Deleted {} audits (requested {}). Total deleted: {}",
-                                        deleted, ids.size(), total);
-                            });
-                })
+            return findAuditIdsToDelete(threshold, batchSize)
+                    .flatMap(ids -> {
+                        if (ids.isEmpty()) {
+                            return Single.just(0L);
+                        }
+                        return Single.fromPublisher(reportableCollection.deleteMany(in("_id", ids)))
+                                .map(DeleteResult::getDeletedCount)
+                                .doOnSuccess(deleted -> {
+                                    long total = totalDeleted.addAndGet(deleted);
+                                    logger.debug("Deleted {} audits (requested {} - collection: {}). Total deleted: {}",
+                                            deleted, ids.size(), configuration.getReportableCollection(), total);
+                                })
+                                .compose(this::waitBetweenBatches);
+                    });
+        });
+
+        return oneBatch
+                .repeat()
+                .takeUntil(deleted -> deleted == 0L)
                 .ignoreElements();
+    }
+
+    private Single<List<Object>> findAuditIdsToDelete(Date threshold, int limit) {
+        return Flowable.fromPublisher(
+                        reportableCollection
+                                .withReadPreference(ReadPreference.primary())
+                                .withDocumentClass(Document.class)
+                                .find(lte(FIELD_TIMESTAMP, threshold))
+                                .projection(Projections.include("_id"))
+                                .sort(Sorts.ascending(FIELD_TIMESTAMP, "_id"))
+                                .limit(limit)
+                ).map(doc -> doc.get("_id"))
+                .toList();
+    }
+
+    private Single<Long> waitBetweenBatches(Single<Long> source) {
+        return batchDelayMs > 0 ? source.delay(batchDelayMs, TimeUnit.MILLISECONDS) : source;
     }
 
     private void initIndexes() {
