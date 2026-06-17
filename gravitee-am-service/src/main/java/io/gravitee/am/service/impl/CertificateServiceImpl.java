@@ -422,21 +422,14 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Completable delete(String certificateId, User principal) {
+    public Completable delete(String certificateId, User principal, boolean force) {
         log.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
-                .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId).count()
-                        .flatMap(applications -> {
-                            if (applications > 0) {
-                                return Single.error(new CertificateWithApplicationsException());
-                            }
-                            return Single.just(certificate);
-                        })
-                )
-                .flatMapSingle(this::checkIdentityProviderUsage)
-                .flatMapSingle(this::checkProtectedResourceUsage)
-                .flatMapSingle(this::checkFallbackUsage)
+                .flatMapSingle(certificate -> force ? Single.just(certificate) : checkApplicationsUsage(certificate)
+                                .flatMap(this::checkIdentityProviderUsage)
+                                .flatMap(this::checkProtectedResourceUsage)
+                                .flatMap(this::checkFallbackUsage))
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));
@@ -453,6 +446,16 @@ public class CertificateServiceImpl implements CertificateService {
                         return Completable.error(new TechnicalManagementException(
                                 String.format("An error occurs while trying to delete certificate: %s", certificateId), ex));
                     }
+                });
+    }
+
+    private Single<Certificate> checkApplicationsUsage(Certificate certificate) {
+        return applicationService.findByCertificate(certificate.getId()).count()
+                .flatMap(applications -> {
+                    if (applications > 0) {
+                        return Single.error(new CertificateWithApplicationsException());
+                    }
+                    return Single.just(certificate);
                 });
     }
 

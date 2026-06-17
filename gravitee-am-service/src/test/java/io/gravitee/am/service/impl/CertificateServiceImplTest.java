@@ -291,4 +291,62 @@ class CertificateServiceImplTest {
         observer.assertComplete();
     }
 
+    @Test
+    void shouldForceDeleteCertificateWhenCertificateIsFallback() {
+        String certId = "fallback-cert-id";
+        Certificate cert = new Certificate();
+        cert.setId(certId);
+        cert.setDomain("domainId");
+
+        CertificateSettings certSettings = new CertificateSettings();
+        certSettings.setFallbackCertificate(certId);
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+        domain.setCertificateSettings(certSettings);
+
+        Mockito.when(certificateRepository.findById(certId))
+                .thenReturn(Maybe.just(cert));
+        Mockito.lenient().when(domainRepository.findById("domainId"))
+                .thenReturn(Maybe.just(domain));
+        Mockito.when(certificateRepository.delete(certId))
+                .thenReturn(Completable.complete());
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> observer = service.delete(certId, new DefaultUser(), true).test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        Mockito.verify(domainRepository, Mockito.never()).findById("domainId");
+        Mockito.verify(certificateRepository).delete(certId);
+    }
+
+    @Test
+    void shouldForceDeleteCertificateWhenApplicationAndIdpAreAssociated() {
+        String certId = "32d89a07-c7a9-48c4-989a-07c7a9b8c4ef";
+        Certificate cert = new Certificate();
+        cert.setId(certId);
+        cert.setDomain("domainId");
+        IdentityProvider idp = new IdentityProvider();
+        idp.setConfiguration("{\"clientAuthenticationCertificate\":\"32d89a07-c7a9-48c4-989a-07c7a9b8c4ef\"}");
+
+        Mockito.when(certificateRepository.findById(certId))
+                .thenReturn(Maybe.just(cert));
+        Mockito.lenient().when(applicationService.findByCertificate(certId))
+                .thenReturn(Flowable.just(new Application()));
+        Mockito.lenient().when(identityProviderService.findByDomain("domainId"))
+                .thenReturn(Flowable.just(idp));
+        Mockito.when(certificateRepository.delete(certId))
+                .thenReturn(Completable.complete());
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> observer = service.delete(certId, new DefaultUser(), true).test();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        Mockito.verify(applicationService, Mockito.never()).findByCertificate(certId);
+        Mockito.verify(identityProviderService, Mockito.never()).findByDomain("domainId");
+        Mockito.verify(certificateRepository).delete(certId);
+    }
+
 }

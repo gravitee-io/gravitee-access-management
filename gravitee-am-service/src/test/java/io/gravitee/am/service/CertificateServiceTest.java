@@ -266,7 +266,9 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldDelete_certificateWithClients() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(new Certificate()));
+        Certificate certificate = new Certificate();
+        certificate.setId("my-certificate");
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.just(new Application()));
 
         TestObserver<Void> testObserver = certificateService.delete("my-certificate").test();
