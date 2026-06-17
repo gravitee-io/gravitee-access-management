@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
-import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -44,10 +44,14 @@ import java.util.List;
 public class AutomationOidcSettings {
 
     @Schema(description = "Dynamic Client Registration (DCR) settings for the domain.")
-    private ClientRegistrationSettings clientRegistrationSettings;
+    @Valid
+    private AutomationClientRegistrationSettings clientRegistrationSettings;
 
     @Schema(description = "Financial-grade API (FAPI) security profile settings for the domain.")
     private SecurityProfileSettings securityProfileSettings;
+
+    @Schema(description = "Workload identity (SPIFFE) settings for the domain.")
+    private SpiffeDomainSettings workloadIdentitySettings;
 
     @Schema(description = "Whether redirect_uri and post_logout_redirect_uri values are matched strictly " +
             "during OpenID Connect flows.", defaultValue = "false")

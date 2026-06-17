@@ -249,8 +249,11 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         AutomationNewIdentityProvider newIdp = AutomationIdentityProviderMapper.toNewIdentityProvider(definition);
         newIdp.setId(idpId);
         return identityProviderManager.checkPluginDeployment(definition.getType())
-                .andThen(Completable.fromAction(() ->
-                        validationService.validate(definition.getType(), definition.getConfiguration())))
+                .andThen(Completable.fromAction(() -> {
+                    validationService.validate(definition.getType(), definition.getConfiguration());
+                    // 'external' is intrinsic to the plugin type; derive it from the plugin descriptor
+                    newIdp.setExternal(identityProviderManager.isExternalProvider(definition.getType()));
+                }))
                 .andThen(Single.defer(() -> identityProviderService.create(domain, newIdp, principal, false)))
                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
     }

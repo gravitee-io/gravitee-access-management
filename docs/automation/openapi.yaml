@@ -1645,6 +1645,62 @@ components:
             \ a certificate created via the domain's certificate endpoints."
           example: default
       title: Certificate settings
+    AutomationClientRegistrationSettings:
+      type: object
+      description: OpenID Connect Dynamic Client Registration configuration for the
+        domain.
+      properties:
+        allowHttpSchemeRedirectUri:
+          type: boolean
+          default: false
+          description: Whether the unsecured http scheme is permitted in redirect
+            URIs.
+        allowLocalhostRedirectUri:
+          type: boolean
+          default: false
+          description: Whether localhost is permitted as a redirect URI host.
+        allowRedirectUriParamsExpressionLanguage:
+          type: boolean
+          default: false
+          description: Whether expression language is permitted in redirect URI parameters.
+        allowWildCardRedirectUri:
+          type: boolean
+          default: false
+          description: Whether wildcards are permitted in redirect URIs.
+        allowedScopes:
+          type: array
+          description: Scopes permitted on client registration requests when the allowed
+            list is enabled.
+          items:
+            type: string
+            description: Scopes permitted on client registration requests when the
+              allowed list is enabled.
+        allowedScopesEnabled:
+          type: boolean
+          default: false
+          description: Whether registered client scopes are restricted to an allowed
+            list.
+        clientTemplateEnabled:
+          type: boolean
+          default: false
+          description: Whether a client may be used as a template for dynamic client
+            registration.
+        defaultScopes:
+          type: array
+          description: Default scopes added to every client registration request.
+          items:
+            type: string
+            description: Default scopes added to every client registration request.
+        dynamicClientRegistrationEnabled:
+          type: boolean
+          default: false
+          description: Whether Dynamic Client Registration is enabled for the domain.
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+          default: false
+          description: Whether open (unauthenticated) Dynamic Client Registration
+            is enabled for the domain.
+      title: Client registration settings
     AutomationDomain:
       type: object
       description: "A security domain managed by the Automation API. The key field\
@@ -1654,6 +1710,9 @@ components:
       properties:
         accountSettings:
           $ref: "#/components/schemas/AutomationAccountSettings"
+        alertEnabled:
+          type: boolean
+          description: Whether alerting is enabled for the domain.
         certificateSettings:
           $ref: "#/components/schemas/AutomationCertificateSettings"
         corsSettings:
@@ -1691,6 +1750,11 @@ components:
           title: Key
         loginSettings:
           $ref: "#/components/schemas/LoginSettings"
+        master:
+          type: boolean
+          default: false
+          description: Whether this is the master domain of its environment. A master
+            domain may perform cross-domain token introspection.
         name:
           type: string
           description: Human-readable name of the domain.
@@ -1736,6 +1800,11 @@ components:
           format: date-time
           description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           readOnly: true
+        vhostMode:
+          type: boolean
+          default: false
+          description: "Whether the domain is exposed through its virtual hosts rather\
+            \ than the default context path. When true, vhosts must be supplied."
         vhosts:
           type: array
           description: "Virtual hosts the domain is exposed on, overriding the default\
@@ -1863,7 +1932,7 @@ components:
         cibaSettings:
           $ref: "#/components/schemas/AutomationCIBASettings"
         clientRegistrationSettings:
-          $ref: "#/components/schemas/ClientRegistrationSettings"
+          $ref: "#/components/schemas/AutomationClientRegistrationSettings"
         postLogoutRedirectUris:
           type: array
           description: URLs the user may be redirected to after sign-out (post_logout_redirect_uri).
@@ -1885,6 +1954,8 @@ components:
               objects by reference.
         securityProfileSettings:
           $ref: "#/components/schemas/SecurityProfileSettings"
+        workloadIdentitySettings:
+          $ref: "#/components/schemas/SpiffeDomainSettings"
       title: OpenID Connect settings
     AutomationReporter:
       type: object
@@ -1966,51 +2037,6 @@ components:
             ID).
           example: https://auth.example.com/saml2/idp/entity
       title: SAML 2.0 settings
-    ClientRegistrationSettings:
-      type: object
-      description: OpenID Connect Dynamic Client Registration configuration for the
-        domain.
-      properties:
-        allowHttpSchemeRedirectUri:
-          type: boolean
-          default: false
-          description: Whether the unsecured http scheme is permitted in redirect
-            URIs.
-        allowLocalhostRedirectUri:
-          type: boolean
-          default: false
-          description: Whether localhost is permitted as a redirect URI host.
-        allowRedirectUriParamsExpressionLanguage:
-          type: boolean
-          default: false
-          description: Whether expression language is permitted in redirect URI parameters.
-        allowWildCardRedirectUri:
-          type: boolean
-          default: false
-          description: Whether wildcards are permitted in redirect URIs.
-        allowedScopes:
-          type: array
-          description: Scopes permitted on client registration requests when the allowed
-            list is enabled.
-          items:
-            type: string
-            description: Scopes permitted on client registration requests when the
-              allowed list is enabled.
-        allowedScopesEnabled:
-          type: boolean
-        clientTemplateEnabled:
-          type: boolean
-        defaultScopes:
-          type: array
-          description: Default scopes added to every client registration request.
-          items:
-            type: string
-            description: Default scopes added to every client registration request.
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-      title: Client registration settings
     CorsSettings:
       type: object
       description: Cross-Origin Resource Sharing configuration controlling which web
@@ -2109,8 +2135,6 @@ components:
         certificateBasedAuthUrl:
           type: string
           description: URL used for certificate-based authentication.
-        enforcePasswordPolicyEnabled:
-          type: boolean
         forgotPasswordEnabled:
           type: boolean
           default: false
@@ -2304,6 +2328,63 @@ components:
         resetPassword:
           $ref: "#/components/schemas/ResetPasswordSettings"
       title: Self-service account management settings
+    SpiffeDomainSettings:
+      type: object
+      description: Workload identity (SPIFFE) settings for the domain.
+      properties:
+        allowPrivateIpAddress:
+          type: boolean
+          default: false
+          description: Whether trust bundles can be fetched from private IP addresses.
+        allowUnsecuredHttpUri:
+          type: boolean
+          default: false
+          description: Whether trust bundles can be fetched over unsecured HTTP URIs.
+        cacheMaxEntries:
+          type: integer
+          format: int32
+          default: 50
+          description: Maximum number of trust bundle entries retained in the cache.
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+          default: 300
+          description: "Time-to-live, in seconds, for cached trust bundle entries."
+        clockSkewSeconds:
+          type: integer
+          format: int32
+          default: 30
+          description: "Allowed clock skew, in seconds, when validating JWT temporal\
+            \ claims."
+        defaultAllowedAlgorithms:
+          type: array
+          description: Default allowlist of signature algorithms accepted for SPIFFE
+            JWT validation.
+          items:
+            type: string
+            description: Default allowlist of signature algorithms accepted for SPIFFE
+              JWT validation.
+        enabled:
+          type: boolean
+          default: false
+          description: Whether SPIFFE workload identity support is enabled for the
+            domain.
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+          default: 5000
+          description: "Timeout, in milliseconds, for fetching trust bundles."
+        maxJwtLifetimeSeconds:
+          type: integer
+          format: int32
+          default: 300
+          description: "Maximum accepted JWT lifetime, in seconds, computed as exp\
+            \ minus iat."
+        maxResponseSizeKb:
+          type: integer
+          format: int32
+          default: 32
+          description: "Maximum trust bundle response size, in kilobytes."
     TokenExchangeOAuthSettings:
       type: object
       description: "OAuth-specific token-exchange behavior, such as how scopes are\
@@ -2316,12 +2397,12 @@ components:
             rather than defined here.
         scopeHandling:
           type: string
-          default: DOWNSCOPING
+          default: downscoping
           description: How scopes are handled when issuing the exchanged token. DOWNSCOPING
             restricts the issued token to a subset of the original scopes.
           enum:
-          - DOWNSCOPING
-          - PERMISSIVE
+          - downscoping
+          - permissive
       title: Token exchange OAuth settings
     TokenExchangeSettings:
       type: object
@@ -2414,8 +2495,8 @@ components:
           description: How the issuer's signing key is resolved. JWKS_URL fetches
             keys from a JWKS endpoint; PEM uses an inline X.509 certificate.
           enum:
-          - JWKS_URL
-          - PEM
+          - jwks_url
+          - pem
         scopeMappings:
           type: object
           additionalProperties:
@@ -2489,26 +2570,26 @@ components:
       properties:
         attestationConveyancePreference:
           type: string
-          default: NONE
+          default: none
           description: "Relying-party preference for attestation conveyance during\
             \ credential creation. NONE requests no attestation, INDIRECT allows anonymized\
             \ attestation, and DIRECT requests the authenticator's attestation statement."
           enum:
-          - NONE
-          - INDIRECT
-          - DIRECT
+          - none
+          - indirect
+          - direct
         authenticatorAttachment:
           type: string
           description: Preferred authenticator attachment. PLATFORM selects authenticators
             bound to the device (such as a fingerprint reader); CROSS_PLATFORM selects
             roaming authenticators (such as a security key).
           enum:
-          - CROSS_PLATFORM
-          - PLATFORM
+          - cross_platform
+          - platform
         certificates:
           type: object
           additionalProperties:
-            type: object
+            type: string
             description: "Trusted device-attestation X.509 certificates, keyed by\
               \ name."
           description: "Trusted device-attestation X.509 certificates, keyed by name."
@@ -2549,14 +2630,14 @@ components:
             (discoverable) credential.
         userVerification:
           type: string
-          default: PREFERRED
+          default: preferred
           description: "Relying-party requirement regarding user verification during\
             \ a ceremony. REQUIRED enforces verification, PREFERRED requests it when\
             \ available, and DISCOURAGED avoids it."
           enum:
-          - REQUIRED
-          - PREFERRED
-          - DISCOURAGED
+          - required
+          - preferred
+          - discouraged
       title: WebAuthn settings
   securitySchemes:
     BearerAuth:
