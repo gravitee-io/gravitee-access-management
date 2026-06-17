@@ -86,7 +86,7 @@ public abstract class AutomationJerseySpringTest {
 
     protected ObjectMapper objectMapper = new ObjectMapperResolver()
             .getContext(ObjectMapper.class)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
     @Autowired
     protected PermissionService permissionService;

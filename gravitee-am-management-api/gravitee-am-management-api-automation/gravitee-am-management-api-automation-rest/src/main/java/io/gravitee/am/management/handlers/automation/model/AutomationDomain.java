@@ -87,6 +87,13 @@ public class AutomationDomain {
             defaultValue = "true")
     private boolean enabled = true;
 
+    @Schema(description = "Whether this is the master domain of its environment. A master domain may perform " +
+            "cross-domain token introspection.", defaultValue = "false")
+    private boolean master;
+
+    @Schema(description = "Whether alerting is enabled for the domain.")
+    private Boolean alertEnabled;
+
     @NotNull
     @Size(min = 1, max = 255)
     @Schema(description = "Context path the domain is served under, relative to the gateway. Must start with a slash.",
@@ -96,6 +103,10 @@ public class AutomationDomain {
     @Schema(description = "Sharding tags that control which gateways deploy this domain.",
             example = "[\"eu\",\"production\"]")
     private Set<String> tags;
+
+    @Schema(description = "Whether the domain is exposed through its virtual hosts rather than the default " +
+            "context path. When true, vhosts must be supplied.", defaultValue = "false")
+    private boolean vhostMode;
 
     @Schema(description = "Virtual hosts the domain is exposed on, overriding the default context path.")
     private List<VirtualHost> vhosts;

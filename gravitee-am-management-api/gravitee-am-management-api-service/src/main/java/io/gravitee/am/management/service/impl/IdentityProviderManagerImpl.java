@@ -239,4 +239,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         }
         return Completable.complete();
     }
+
+    @Override
+    public boolean isExternalProvider(String type) {
+        return identityProviderPluginManager.findAll().stream()
+                .filter(plugin -> plugin.id().equals(type))
+                .map(plugin -> plugin.external())
+                .findFirst()
+                .orElse(false);
+    }
 }

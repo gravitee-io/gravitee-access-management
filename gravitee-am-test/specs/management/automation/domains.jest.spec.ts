@@ -56,7 +56,10 @@ const fullDef = (key: string) =>
     name: `Round-trip ${key}`,
     description: 'covers every settings block we surface',
     enabled: false, // diverges from the build* default; must survive the round-trip
+    master: true,
+    alertEnabled: true,
     tags: ['alpha', 'beta'],
+    vhostMode: true,
     vhosts: [{ host: 'auth.example.com', path: `/${key}`, overrideEntrypoint: true }],
     oidc: {
       redirectUriStrictMatching: true,
@@ -65,10 +68,17 @@ const fullDef = (key: string) =>
       clientRegistrationSettings: {
         allowLocalhostRedirectUri: true,
         allowHttpSchemeRedirectUri: true,
-        isDynamicClientRegistrationEnabled: true,
+        dynamicClientRegistrationEnabled: true,
+        openDynamicClientRegistrationEnabled: true,
+        clientTemplateEnabled: true,
+        allowedScopesEnabled: true,
       },
       securityProfileSettings: {
         enablePlainFapi: true,
+      },
+      workloadIdentitySettings: {
+        enabled: true,
+        allowUnsecuredHttpUri: true,
       },
     },
     loginSettings: {
@@ -227,7 +237,10 @@ describe('Automation API - Domain - Round-trip preserves all writable fields', (
     const body = response.body;
     expect(body.key).toEqual(key);
     expect(body.enabled).toBe(false);
+    expect(body.master).toBe(true);
+    expect(body.alertEnabled).toBe(true);
     expect(body.tags).toEqual(expect.arrayContaining(['alpha', 'beta']));
+    expect(body.vhostMode).toBe(true);
     expect(body.vhosts).toEqual([
       expect.objectContaining({
         host: 'auth.example.com',
@@ -243,10 +256,16 @@ describe('Automation API - Domain - Round-trip preserves all writable fields', (
       expect.objectContaining({
         allowLocalhostRedirectUri: true,
         allowHttpSchemeRedirectUri: true,
-        isDynamicClientRegistrationEnabled: true,
+        dynamicClientRegistrationEnabled: true,
+        openDynamicClientRegistrationEnabled: true,
+        clientTemplateEnabled: true,
+        allowedScopesEnabled: true,
       }),
     );
     expect(body.oidc.securityProfileSettings).toEqual(expect.objectContaining({ enablePlainFapi: true }));
+    expect(body.oidc.workloadIdentitySettings).toEqual(
+      expect.objectContaining({ enabled: true, allowUnsecuredHttpUri: true }),
+    );
 
     expect(body.loginSettings).toEqual(expect.objectContaining({
       registerEnabled: true,

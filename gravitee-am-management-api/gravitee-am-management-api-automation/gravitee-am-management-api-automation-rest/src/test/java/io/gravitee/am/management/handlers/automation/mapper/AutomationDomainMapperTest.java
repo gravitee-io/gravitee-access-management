@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.mapper;
 
 import io.gravitee.am.management.handlers.automation.model.AutomationAccountSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificateSettings;
+import io.gravitee.am.management.handlers.automation.model.AutomationClientRegistrationSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.handlers.automation.model.AutomationOidcSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationSamlSettings;
@@ -29,7 +30,6 @@ import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
-import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -73,10 +73,7 @@ class AutomationDomainMapperTest {
             "version",        // internal domain schema version, not declarative state
             "referenceType",  // internal; always ENVIRONMENT
             "referenceId",    // internal; the environment id is taken from the URL path
-            "alertEnabled",   // alerting is not exposed via the Automation API
             "identities",     // legacy field, DefaultOrganizationUpgrader use only
-            "master",         // cross-domain token introspection toggle, not exposed
-            "vhostMode",      // not independently exposed (driven by the vhosts list)
             "managedBy"       // set server-side to AUTOMATION_API; not a writable input
     );
 
@@ -226,11 +223,9 @@ class AutomationDomainMapperTest {
 
     @Test
     void oidcReusableSubBlocksAreReusedByReference() {
-        ClientRegistrationSettings clientReg = new ClientRegistrationSettings();
         SecurityProfileSettings security = new SecurityProfileSettings();
 
         AutomationOidcSettings oidc = new AutomationOidcSettings();
-        oidc.setClientRegistrationSettings(clientReg);
         oidc.setSecurityProfileSettings(security);
 
         AutomationDomain in = new AutomationDomain();
@@ -241,8 +236,42 @@ class AutomationDomainMapperTest {
         Domain target = newDomain();
         AutomationDomainMapper.applyTo(in, target, List.of());
 
-        assertSame(clientReg, target.getOidc().getClientRegistrationSettings());
         assertSame(security, target.getOidc().getSecurityProfileSettings());
+    }
+
+    @Test
+    void clientRegistrationSettingsAreMappedWithCleanWireNames() {
+        AutomationClientRegistrationSettings clientReg = new AutomationClientRegistrationSettings();
+        clientReg.setDynamicClientRegistrationEnabled(true);
+        clientReg.setOpenDynamicClientRegistrationEnabled(true);
+        clientReg.setClientTemplateEnabled(true);
+        clientReg.setAllowedScopesEnabled(true);
+
+        AutomationOidcSettings oidc = new AutomationOidcSettings();
+        oidc.setClientRegistrationSettings(clientReg);
+
+        AutomationDomain in = new AutomationDomain();
+        in.setName("My Domain");
+        in.setPath("/app");
+        in.setOidc(oidc);
+
+        Domain target = newDomain();
+        AutomationDomainMapper.applyTo(in, target, List.of());
+
+        // wrapped, not reused by reference: values map onto the shared model's is-prefixed fields
+        ClientRegistrationSettings mapped = target.getOidc().getClientRegistrationSettings();
+        assertTrue(mapped.isDynamicClientRegistrationEnabled());
+        assertTrue(mapped.isOpenDynamicClientRegistrationEnabled());
+        assertTrue(mapped.isClientTemplateEnabled());
+        assertTrue(mapped.isAllowedScopesEnabled());
+
+        // and back out with the same clean names
+        AutomationClientRegistrationSettings out =
+                AutomationDomainMapper.toAutomationDomain(target).getOidc().getClientRegistrationSettings();
+        assertTrue(out.isDynamicClientRegistrationEnabled());
+        assertTrue(out.isOpenDynamicClientRegistrationEnabled());
+        assertTrue(out.isClientTemplateEnabled());
+        assertTrue(out.isAllowedScopesEnabled());
     }
 
     @Test

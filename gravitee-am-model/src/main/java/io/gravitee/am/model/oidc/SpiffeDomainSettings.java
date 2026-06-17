@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oidc;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,22 +40,36 @@ public class SpiffeDomainSettings {
     /**
      * Whether the {@code spiffe_jwt} authentication method is permitted in this domain.
      */
+    @Schema(description = "Whether SPIFFE workload identity support is enabled for the domain.",
+            defaultValue = "false")
     private boolean enabled;
 
     // --- SSRF Protection ---
 
+    @Schema(description = "Whether trust bundles can be fetched over unsecured HTTP URIs.",
+            defaultValue = "false")
     private boolean allowUnsecuredHttpUri;
 
+    @Schema(description = "Whether trust bundles can be fetched from private IP addresses.",
+            defaultValue = "false")
     private boolean allowPrivateIpAddress;
 
+    @Schema(description = "Timeout, in milliseconds, for fetching trust bundles.",
+            defaultValue = "5000")
     private int fetchTimeoutMs = DEFAULT_FETCH_TIMEOUT_MS;
 
+    @Schema(description = "Maximum trust bundle response size, in kilobytes.",
+            defaultValue = "32")
     private int maxResponseSizeKb = DEFAULT_MAX_RESPONSE_SIZE_KB;
 
     // --- Bundle Caching ---
 
+    @Schema(description = "Time-to-live, in seconds, for cached trust bundle entries.",
+            defaultValue = "300")
     private int cacheTtlSeconds = DEFAULT_CACHE_TTL_SECONDS;
 
+    @Schema(description = "Maximum number of trust bundle entries retained in the cache.",
+            defaultValue = "50")
     private int cacheMaxEntries = DEFAULT_CACHE_MAX_ENTRIES;
 
     // --- JWT Validation Policy ---
@@ -61,13 +77,18 @@ public class SpiffeDomainSettings {
     /**
      * Maximum permitted {@code exp - iat} on an incoming SVID (SPIFFE guidance: ≤ 5 min).
      */
+    @Schema(description = "Maximum accepted JWT lifetime, in seconds, computed as exp minus iat.",
+            defaultValue = "300")
     private int maxJwtLifetimeSeconds = DEFAULT_MAX_JWT_LIFETIME_SECONDS;
 
+    @Schema(description = "Allowed clock skew, in seconds, when validating JWT temporal claims.",
+            defaultValue = "30")
     private int clockSkewSeconds = DEFAULT_CLOCK_SKEW_SECONDS;
 
     /**
      * Default algorithm allowlist; {@code none} and HMAC are always rejected.
      */
+    @Schema(description = "Default allowlist of signature algorithms accepted for SPIFFE JWT validation.")
     private List<String> defaultAllowedAlgorithms = DEFAULT_ALLOWED_ALGORITHMS;
 
     public SpiffeDomainSettings() {
