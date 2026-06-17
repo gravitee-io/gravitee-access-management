@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.automation.mapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationAccountSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCIBASettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificateSettings;
+import io.gravitee.am.management.handlers.automation.model.AutomationClientRegistrationSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.handlers.automation.model.AutomationOidcSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationSamlSettings;
@@ -30,6 +31,7 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 
 import java.util.List;
@@ -65,8 +67,11 @@ public final class AutomationDomainMapper {
         out.setName(domain.getName());
         out.setDescription(domain.getDescription());
         out.setEnabled(domain.isEnabled());
+        out.setMaster(domain.isMaster());
+        out.setAlertEnabled(domain.isAlertEnabled());
         out.setPath(domain.getPath());
         out.setTags(domain.getTags());
+        out.setVhostMode(domain.isVhostMode());
         out.setVhosts(domain.getVhosts());
         out.setDataPlaneId(domain.getDataPlaneId());
         out.setCreatedAt(domain.getCreatedAt());
@@ -107,8 +112,9 @@ public final class AutomationDomainMapper {
             return null;
         }
         AutomationOidcSettings out = new AutomationOidcSettings();
-        out.setClientRegistrationSettings(oidc.getClientRegistrationSettings());
+        out.setClientRegistrationSettings(toAutomationClientRegistration(oidc.getClientRegistrationSettings()));
         out.setSecurityProfileSettings(oidc.getSecurityProfileSettings());
+        out.setWorkloadIdentitySettings(oidc.getWorkloadIdentitySettings());
         out.setRedirectUriStrictMatching(oidc.isRedirectUriStrictMatching());
         out.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         out.setRequestUris(oidc.getRequestUris());
@@ -177,8 +183,11 @@ public final class AutomationDomainMapper {
         target.setName(in.getName());
         target.setDescription(in.getDescription());
         target.setEnabled(in.isEnabled());
+        target.setMaster(in.isMaster());
+        target.setAlertEnabled(in.getAlertEnabled() != null ? in.getAlertEnabled() : false);
         target.setPath(in.getPath());
         target.setTags(in.getTags());
+        target.setVhostMode(in.isVhostMode());
         target.setVhosts(in.getVhosts());
 
         // oidc must never be null — reset to the same default the domain is created with
@@ -219,8 +228,9 @@ public final class AutomationDomainMapper {
 
     private static OIDCSettings toModelOidc(AutomationOidcSettings in) {
         OIDCSettings out = new OIDCSettings();
-        out.setClientRegistrationSettings(in.getClientRegistrationSettings());
+        out.setClientRegistrationSettings(toModelClientRegistration(in.getClientRegistrationSettings()));
         out.setSecurityProfileSettings(in.getSecurityProfileSettings());
+        out.setWorkloadIdentitySettings(in.getWorkloadIdentitySettings());
         out.setRedirectUriStrictMatching(in.isRedirectUriStrictMatching());
         out.setPostLogoutRedirectUris(in.getPostLogoutRedirectUris());
         out.setRequestUris(in.getRequestUris());
@@ -272,6 +282,44 @@ public final class AutomationDomainMapper {
         out.setMfaChallengeMaxAttempts(in.getMfaChallengeMaxAttempts());
         out.setMfaChallengeAttemptsResetTime(in.getMfaChallengeAttemptsResetTime());
         out.setMfaChallengeSendVerifyAlertEmail(in.isMfaChallengeSendVerifyAlertEmail());
+        return out;
+    }
+
+    // --- client registration settings (wrapped to drop the shared model's "is"-prefixed wire names) ---
+
+    private static AutomationClientRegistrationSettings toAutomationClientRegistration(ClientRegistrationSettings in) {
+        if (in == null) {
+            return null;
+        }
+        AutomationClientRegistrationSettings out = new AutomationClientRegistrationSettings();
+        out.setAllowLocalhostRedirectUri(in.isAllowLocalhostRedirectUri());
+        out.setAllowHttpSchemeRedirectUri(in.isAllowHttpSchemeRedirectUri());
+        out.setAllowWildCardRedirectUri(in.isAllowWildCardRedirectUri());
+        out.setAllowRedirectUriParamsExpressionLanguage(in.isAllowRedirectUriParamsExpressionLanguage());
+        out.setDynamicClientRegistrationEnabled(in.isDynamicClientRegistrationEnabled());
+        out.setOpenDynamicClientRegistrationEnabled(in.isOpenDynamicClientRegistrationEnabled());
+        out.setDefaultScopes(in.getDefaultScopes());
+        out.setAllowedScopesEnabled(in.isAllowedScopesEnabled());
+        out.setAllowedScopes(in.getAllowedScopes());
+        out.setClientTemplateEnabled(in.isClientTemplateEnabled());
+        return out;
+    }
+
+    private static ClientRegistrationSettings toModelClientRegistration(AutomationClientRegistrationSettings in) {
+        if (in == null) {
+            return null;
+        }
+        ClientRegistrationSettings out = new ClientRegistrationSettings();
+        out.setAllowLocalhostRedirectUri(in.isAllowLocalhostRedirectUri());
+        out.setAllowHttpSchemeRedirectUri(in.isAllowHttpSchemeRedirectUri());
+        out.setAllowWildCardRedirectUri(in.isAllowWildCardRedirectUri());
+        out.setAllowRedirectUriParamsExpressionLanguage(in.isAllowRedirectUriParamsExpressionLanguage());
+        out.setDynamicClientRegistrationEnabled(in.isDynamicClientRegistrationEnabled());
+        out.setOpenDynamicClientRegistrationEnabled(in.isOpenDynamicClientRegistrationEnabled());
+        out.setDefaultScopes(in.getDefaultScopes());
+        out.setAllowedScopesEnabled(in.isAllowedScopesEnabled());
+        out.setAllowedScopes(in.getAllowedScopes());
+        out.setClientTemplateEnabled(in.isClientTemplateEnabled());
         return out;
     }
 

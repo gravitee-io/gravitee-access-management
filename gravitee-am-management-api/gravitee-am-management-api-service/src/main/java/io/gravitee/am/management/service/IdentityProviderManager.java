@@ -38,4 +38,12 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
     Completable loadIdentityProviders();
 
     Completable checkPluginDeployment(String type);
+
+    /**
+     * Whether the identity provider plugin of the given type is external (delegates authentication to a
+     * third party) rather than AM-managed. The value is intrinsic to the plugin descriptor and is the
+     * source of truth for the {@code external} flag set when an identity provider is created. Returns
+     * {@code false} for an unknown type.
+     */
+    boolean isExternalProvider(String type);
 }

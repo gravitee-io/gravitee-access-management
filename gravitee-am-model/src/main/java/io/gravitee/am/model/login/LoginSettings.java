@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.login;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,6 +92,7 @@ public class LoginSettings {
         this.resetPasswordOnExpiration = other.resetPasswordOnExpiration;
     }
 
+    @Schema(hidden = true)
     public boolean isEnforcePasswordPolicyEnabled() {
         return passwordlessEnforcePasswordEnabled
                 && passwordlessEnforcePasswordMaxAge != null;
