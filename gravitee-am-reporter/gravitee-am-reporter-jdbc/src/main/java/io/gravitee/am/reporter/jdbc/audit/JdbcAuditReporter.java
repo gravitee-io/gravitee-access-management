@@ -71,6 +71,7 @@ import reactor.core.publisher.Mono;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -110,7 +111,6 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public static final String AUDIT_FIELD_ACTOR = "actor";
     public static final String AUDIT_FIELD_TARGET = "target";
     public static final String NOT_BOOTSTRAPPED = "Reporter not yet bootstrapped";
-    public static final int DELETE_BATCH_SIZE = 2000;
 
     private final Pattern pattern = Pattern.compile("___");
 
@@ -204,6 +204,12 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     @Value("${services.purge.audits.retention.days:0}")
     private int retentionDays;
 
+    @Value("${services.purge.audits.batchDelay:500}")
+    private long batchDelayMs;
+
+    @Value("${services.purge.audits.batchSize:" + PURGE_MAX_BATCH_SIZE + "}")
+    private int batchSize = PURGE_MAX_BATCH_SIZE;
+
     private String INSERT_AUDIT_STATEMENT;
     private String INSERT_ENTITY_STATEMENT;
     private String INSERT_OUTCOMES_STATEMENT;
@@ -216,6 +222,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Override
     public Completable purgeExpiredData() {
+        return purgeExpiredData(Instant.MAX);
+    }
+
+    @Override
+    public Completable purgeExpiredData(Instant deadline) {
         if (!purgeEnabled || retentionDays <= 0 || !ready) {
             LOGGER.debug("JDBC audit purge disabled (enabled: {}, retention days: {}, ready: {})",
                     purgeEnabled, retentionDays, ready);
@@ -224,41 +235,61 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
         LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
 
-        LOGGER.info("Starting JDBC audit purge for records older than {} (retention: {} days)",
-                threshold, retentionDays);
+        LOGGER.info("Starting JDBC audit purge for records older than {} (retention: {} days - tableSuffix: {})",
+                threshold, retentionDays, configuration.getTableSuffix());
 
         final AtomicLong totalDeleted = new AtomicLong(0);
+        final int effectiveBatchSize = cappedBatchSize();
 
-        return deleteInBatches(threshold, totalDeleted)
-                .doOnComplete(() -> LOGGER.info("JDBC audit purge completed. Deleted {} records older than {} days",
-                        totalDeleted.get(), retentionDays))
-                .doOnError(error -> LOGGER.error("Error during JDBC audit purge. Deleted {} records before error",
-                        totalDeleted.get(), error));
+        return deleteInBatches(threshold, deadline, effectiveBatchSize, totalDeleted)
+                .doOnComplete(() -> LOGGER.info("JDBC audit purge completed. Deleted {} records older than {} days (tableSuffix: {})",
+                        totalDeleted.get(), retentionDays, configuration.getTableSuffix()))
+                .doOnError(error -> LOGGER.error("Error during JDBC audit purge. Deleted {} records before error (tableSuffix: {})",
+                        totalDeleted.get(), configuration.getTableSuffix(), error));
     }
 
-    private Completable deleteInBatches(LocalDateTime threshold, AtomicLong totalDeleted) {
+    private int cappedBatchSize() {
+        if (batchSize > PURGE_MAX_BATCH_SIZE) {
+            LOGGER.warn("Configured purge batch size {} exceeds the maximum allowed ({}), using {}",
+                    batchSize, PURGE_MAX_BATCH_SIZE, PURGE_MAX_BATCH_SIZE);
+            return PURGE_MAX_BATCH_SIZE;
+        }
+        return batchSize;
+    }
+
+    private Completable deleteInBatches(LocalDateTime threshold, Instant deadline, int batchSize, AtomicLong totalDeleted) {
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        Mono<Long> oneBatch = Mono.defer(() ->
-                findAuditIdsToDelete(threshold, DELETE_BATCH_SIZE)
-                        .flatMap(ids -> {
-                            if (ids.isEmpty()) {
-                                LOGGER.debug("No more audit records to purge");
-                                return Mono.just(0L);
-                            }
+        // Each iteration deletes a limited batch then waits for a configurable period
+        // to let the database sync its replication journal before the next batch. The loop stops when no
+        // record is left or when the global deadline is reached (purge resumes on the next execution).
+        Mono<Long> oneBatch = Mono.defer(() -> {
+            if (Instant.now().isAfter(deadline)) {
+                LOGGER.warn("Global purge timeout reached, stopping JDBC audit purge until next execution. Deleted {} records so far",
+                        totalDeleted.get());
+                return Mono.just(0L);
+            }
 
-                            LOGGER.debug("Deleting batch of {} audit records (CASCADE will delete child records)", ids.size());
+            return findAuditIdsToDelete(threshold, batchSize)
+                    .flatMap(ids -> {
+                        if (ids.isEmpty()) {
+                            LOGGER.debug("No more audit records to purge");
+                            return Mono.just(0L);
+                        }
 
-                            // DELETE parent audits - CASCADE will automatically delete child records
-                            // from auditEntitiesTable, auditOutcomesTable, and auditAccessPointsTable
-                            return trx.transactional(deleteAuditsByIds(ids))
-                                    .doOnSuccess(deleted -> {
-                                        long total = totalDeleted.addAndGet(deleted);
-                                        LOGGER.debug("Deleted {} audit records (requested {}). Total deleted: {}",
-                                                deleted, ids.size(), total);
-                                    });
-                        })
-        );
+                        LOGGER.debug("Deleting batch of {} audit records (CASCADE will delete child records - tableSuffix: {})", ids.size(), configuration.getTableSuffix());
+
+                        // DELETE parent audits - CASCADE will automatically delete child records
+                        // from auditEntitiesTable, auditOutcomesTable, and auditAccessPointsTable
+                        Mono<Long> deleteBatch = trx.transactional(deleteAuditsByIds(ids))
+                                .doOnSuccess(deleted -> {
+                                    long total = totalDeleted.addAndGet(deleted);
+                                    LOGGER.debug("Deleted {} audit records (requested {} - tableSuffix: {}). Total deleted: {}",
+                                            deleted, ids.size(), configuration.getTableSuffix(), total);
+                                });
+                        return batchDelayMs > 0 ? deleteBatch.delayElement(Duration.ofMillis(batchDelayMs)) : deleteBatch;
+                    });
+        });
 
         Mono<Void> execution = oneBatch
                 .repeat()
