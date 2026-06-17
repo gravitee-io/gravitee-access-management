@@ -75,7 +75,11 @@ public interface CertificateService {
 
     Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal);
 
-    Completable delete(String certificateId, User principal);
+    default Completable delete(String certificateId, User principal) {
+        return delete(certificateId, principal, false);
+    }
+
+    Completable delete(String certificateId, User principal, boolean force);
 
     Completable updateExpirationDate(String certificateId, Date expirationDate);
 
