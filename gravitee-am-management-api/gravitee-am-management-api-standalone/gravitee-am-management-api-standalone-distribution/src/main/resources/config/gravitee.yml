@@ -154,6 +154,10 @@ services:
 #    audits:                                     # audits retention period in days (0 means disabled)
 #      retention:
 #        days: 90
+#      batchSize: 2000                          # number of audits deleted per batch for each reporter (default and hard max: 2000)
+#      batchDelay: 500                           # wait time in ms between two batches to let the backend sync its replication journal (default: 500)
+#      globalTimeout: 3600                       # max duration in seconds of a single purge execution shared across all reporters; once reached no further reporter is started and the purge resumes on the next execution (default: 3600)
+#      leaseDuration: 3600                       # how much time the Management API currently processing the audits deletion owns the exclusive lock
 
   # platform notifier service
   notifier:

@@ -123,6 +123,12 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     }
 
     @Override
+    public Completable purgeExpiredData(java.time.Instant deadline) {
+        logger.debug("Delegating purge to underlying reporter: {}", reporter.getClass().getSimpleName());
+        return reporter.purgeExpiredData(deadline);
+    }
+
+    @Override
     public void report(io.gravitee.reporter.api.Reportable reportable) {
         // Done by the event bus handler
         // See handle method
