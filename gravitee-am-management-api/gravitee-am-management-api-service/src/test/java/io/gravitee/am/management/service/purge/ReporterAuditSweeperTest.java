@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,8 @@ public class ReporterAuditSweeperTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        // @Value defaults are not applied in unit tests; set a non-zero timeout so reporters are not skipped
+        ReflectionTestUtils.setField(sweeper, "globalTimeout", 3600);
     }
 
     @Test
@@ -74,8 +77,8 @@ public class ReporterAuditSweeperTest {
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.just(mockReporter1))
                 .thenReturn(Maybe.just(mockReporter2));
-        when(mockReporter1.purgeExpiredData()).thenReturn(Completable.complete());
-        when(mockReporter2.purgeExpiredData()).thenReturn(Completable.complete());
+        when(mockReporter1.purgeExpiredData(any())).thenReturn(Completable.complete());
+        when(mockReporter2.purgeExpiredData(any())).thenReturn(Completable.complete());
 
         // When
         TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
@@ -84,8 +87,8 @@ public class ReporterAuditSweeperTest {
         // Then
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(mockReporter1).purgeExpiredData();
-        verify(mockReporter2).purgeExpiredData();
+        verify(mockReporter1).purgeExpiredData(any());
+        verify(mockReporter2).purgeExpiredData(any());
     }
 
     @Test
@@ -104,8 +107,8 @@ public class ReporterAuditSweeperTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(reporterService, never()).findAll();
-        verify(mockReporter1, never()).purgeExpiredData();
-        verify(mockReporter2, never()).purgeExpiredData();
+        verify(mockReporter1, never()).purgeExpiredData(any());
+        verify(mockReporter2, never()).purgeExpiredData(any());
     }
 
     @Test
@@ -135,7 +138,7 @@ public class ReporterAuditSweeperTest {
         when(reporterService.findAll()).thenReturn(Flowable.just(config));
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.just(mockReporter));
-        when(mockReporter.purgeExpiredData())
+        when(mockReporter.purgeExpiredData(any()))
                 .thenReturn(Completable.error(new RuntimeException("Database connection error")));
 
         // When
@@ -145,7 +148,7 @@ public class ReporterAuditSweeperTest {
         // Then
         testObserver.assertComplete(); // Should complete despite error
         testObserver.assertNoErrors(); // Error handled gracefully
-        verify(mockReporter).purgeExpiredData();
+        verify(mockReporter).purgeExpiredData(any());
     }
 
     @Test
@@ -205,9 +208,9 @@ public class ReporterAuditSweeperTest {
                 .thenReturn(Maybe.just(reporter2))
                 .thenReturn(Maybe.just(reporter3));
 
-        when(reporter1.purgeExpiredData()).thenReturn(Completable.complete());
-        when(reporter2.purgeExpiredData()).thenReturn(Completable.error(new RuntimeException("Reporter 2 failed")));
-        when(reporter3.purgeExpiredData()).thenReturn(Completable.complete());
+        when(reporter1.purgeExpiredData(any())).thenReturn(Completable.complete());
+        when(reporter2.purgeExpiredData(any())).thenReturn(Completable.error(new RuntimeException("Reporter 2 failed")));
+        when(reporter3.purgeExpiredData(any())).thenReturn(Completable.complete());
 
         // When
         TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
@@ -216,9 +219,9 @@ public class ReporterAuditSweeperTest {
         // Then
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(reporter1).purgeExpiredData();
-        verify(reporter2).purgeExpiredData();
-        verify(reporter3).purgeExpiredData();
+        verify(reporter1).purgeExpiredData(any());
+        verify(reporter2).purgeExpiredData(any());
+        verify(reporter3).purgeExpiredData(any());
     }
 
     @Test
@@ -232,9 +235,9 @@ public class ReporterAuditSweeperTest {
         when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config));
         when(auditReporterManager.getReporter(any(Reference.class))).thenReturn(Maybe.just(dbReporter));
-        when(dbReporter.purgeExpiredData()).thenReturn(Completable.complete());
+        when(dbReporter.purgeExpiredData(any())).thenReturn(Completable.complete());
         when(auditReporterManager.getInternalReporter()).thenReturn(Optional.of(internalReporter));
-        when(internalReporter.purgeExpiredData()).thenReturn(Completable.complete());
+        when(internalReporter.purgeExpiredData(any())).thenReturn(Completable.complete());
 
         // When
         TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
@@ -243,8 +246,8 @@ public class ReporterAuditSweeperTest {
         // Then
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(dbReporter).purgeExpiredData();
-        verify(internalReporter).purgeExpiredData();
+        verify(dbReporter).purgeExpiredData(any());
+        verify(internalReporter).purgeExpiredData(any());
     }
 
     @Test
@@ -255,7 +258,7 @@ public class ReporterAuditSweeperTest {
         when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.empty());
         when(auditReporterManager.getInternalReporter()).thenReturn(Optional.of(internalReporter));
-        when(internalReporter.purgeExpiredData())
+        when(internalReporter.purgeExpiredData(any()))
                 .thenReturn(Completable.error(new RuntimeException("Database connection error")));
 
         // When
@@ -265,7 +268,7 @@ public class ReporterAuditSweeperTest {
         // Then
         testObserver.assertComplete(); // Should complete despite error on internal reporter
         testObserver.assertNoErrors();
-        verify(internalReporter).purgeExpiredData();
+        verify(internalReporter).purgeExpiredData(any());
     }
 
     @Test
@@ -298,7 +301,7 @@ public class ReporterAuditSweeperTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(auditReporterManager, never()).getInternalReporter();
-        verify(internalReporter, never()).purgeExpiredData();
+        verify(internalReporter, never()).purgeExpiredData(any());
     }
 
     private Reporter createReporterConfig(String name, boolean enabled) {
