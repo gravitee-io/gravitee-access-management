@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.model.Organization;
@@ -34,9 +36,13 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.mock.env.MockEnvironment;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
@@ -146,5 +152,33 @@ public class IdentityProviderManagerTest {
         observer.assertValueCount(1);
 
         verify(idpPluginManager, never()).findById(any());
+    }
+
+    @Test
+    public void isExternalProvider_readsFlagFromPluginDescriptor() {
+        // build the stub descriptors before the findAll() stubbing — constructing them itself records
+        // mock interactions, which Mockito would otherwise flag as nested/unfinished stubbing
+        Collection<IdentityProvider<?, AuthenticationProvider>> plugins =
+                List.of(idpPlugin("inline-am-idp", false), idpPlugin("oidc-am-idp", true));
+        when(idpPluginManager.findAll()).thenReturn(plugins);
+
+        assertTrue(cut.isExternalProvider("oidc-am-idp"));
+        assertFalse(cut.isExternalProvider("inline-am-idp"));
+    }
+
+    @Test
+    public void isExternalProvider_defaultsToFalseForUnknownType() {
+        Collection<IdentityProvider<?, AuthenticationProvider>> plugins = List.of(idpPlugin("inline-am-idp", false));
+        when(idpPluginManager.findAll()).thenReturn(plugins);
+
+        assertFalse(cut.isExternalProvider("unknown-am-idp"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static IdentityProvider<?, AuthenticationProvider> idpPlugin(String id, boolean external) {
+        var plugin = mock(IdentityProvider.class);
+        when(plugin.id()).thenReturn(id);
+        when(plugin.external()).thenReturn(external);
+        return plugin;
     }
 }

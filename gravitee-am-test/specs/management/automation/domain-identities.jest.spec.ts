@@ -87,6 +87,7 @@ describe('Automation API - Identity providers (resource under a domain)', () => 
     // internal id / operational flags are intentionally not surfaced
     expect(response.body.id).toBeUndefined();
     expect(response.body.managedBy).toBeUndefined();
+    expect(response.body.external).toBeUndefined();
     expect(response.body.system).toBe(false);
   });
 

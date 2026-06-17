@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -180,6 +181,8 @@ public class AutomationApiDefinition implements ReaderListener {
                     filteredSchemas.put(name, allSchemas.get(name));
                 }
             }
+            fixWebAuthnCertificatesValueType(filteredSchemas);
+            filteredSchemas.values().forEach(AutomationApiDefinition::lowercaseEnumsInSchema);
             // sort properties within each schema for deterministic output
             filteredSchemas.values().forEach(AutomationApiDefinition::sortSchemaProperties);
             openAPI.getComponents().setSchemas(filteredSchemas);
@@ -429,6 +432,50 @@ public class AutomationApiDefinition implements ReaderListener {
     private static void sortSchemaProperties(Schema schema) {
         if (schema.getProperties() != null) {
             schema.setProperties(new LinkedHashMap<>(new TreeMap<>(schema.getProperties())));
+        }
+    }
+
+    /**
+     * Retypes {@code WebAuthnSettings.certificates} map values to {@code string} as a spec-only correction.
+     */
+    @SuppressWarnings("rawtypes")
+    private static void fixWebAuthnCertificatesValueType(Map<String, Schema> schemas) {
+        Schema webAuthn = schemas.get("WebAuthnSettings");
+        if (webAuthn == null || webAuthn.getProperties() == null) {
+            return;
+        }
+        Object certificates = webAuthn.getProperties().get("certificates");
+        if (certificates instanceof Schema certificatesSchema
+                && certificatesSchema.getAdditionalProperties() instanceof Schema valueSchema) {
+            valueSchema.setType("string");
+        }
+    }
+
+    /**
+     * Lowercases the {@code enum} values (and an enum-typed {@code default}) of a schema and, recursively, of
+     * its properties, array items and map values to match the runtime wire format.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void lowercaseEnumsInSchema(Schema schema) {
+        if (schema == null) {
+            return;
+        }
+        List<Object> values = schema.getEnum();
+        if (values != null && !values.isEmpty()) {
+            values.replaceAll(value -> value instanceof String s ? s.toLowerCase(Locale.ROOT) : value);
+            if (schema.getDefault() instanceof String defaultValue) {
+                schema.setDefault(defaultValue.toLowerCase(Locale.ROOT));
+            }
+        }
+        if (schema.getProperties() != null) {
+            ((Map<String, Schema>) schema.getProperties()).values()
+                    .forEach(AutomationApiDefinition::lowercaseEnumsInSchema);
+        }
+        if (schema.getItems() != null) {
+            lowercaseEnumsInSchema(schema.getItems());
+        }
+        if (schema.getAdditionalProperties() instanceof Schema additionalProperties) {
+            lowercaseEnumsInSchema(additionalProperties);
         }
     }
 

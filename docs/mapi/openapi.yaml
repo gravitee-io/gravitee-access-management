@@ -14566,8 +14566,6 @@ components:
         certificateBasedAuthUrl:
           type: string
           description: URL used for certificate-based authentication.
-        enforcePasswordPolicyEnabled:
-          type: boolean
         forgotPasswordEnabled:
           type: boolean
           default: false
@@ -17476,32 +17474,57 @@ components:
       properties:
         allowPrivateIpAddress:
           type: boolean
+          default: false
+          description: Whether trust bundles can be fetched from private IP addresses.
         allowUnsecuredHttpUri:
           type: boolean
+          default: false
+          description: Whether trust bundles can be fetched over unsecured HTTP URIs.
         cacheMaxEntries:
           type: integer
           format: int32
+          default: 50
+          description: Maximum number of trust bundle entries retained in the cache.
         cacheTtlSeconds:
           type: integer
           format: int32
+          default: 300
+          description: "Time-to-live, in seconds, for cached trust bundle entries."
         clockSkewSeconds:
           type: integer
           format: int32
+          default: 30
+          description: "Allowed clock skew, in seconds, when validating JWT temporal\
+            \ claims."
         defaultAllowedAlgorithms:
           type: array
+          description: Default allowlist of signature algorithms accepted for SPIFFE
+            JWT validation.
           items:
             type: string
+            description: Default allowlist of signature algorithms accepted for SPIFFE
+              JWT validation.
         enabled:
           type: boolean
+          default: false
+          description: Whether SPIFFE workload identity support is enabled for the
+            domain.
         fetchTimeoutMs:
           type: integer
           format: int32
+          default: 5000
+          description: "Timeout, in milliseconds, for fetching trust bundles."
         maxJwtLifetimeSeconds:
           type: integer
           format: int32
+          default: 300
+          description: "Maximum accepted JWT lifetime, in seconds, computed as exp\
+            \ minus iat."
         maxResponseSizeKb:
           type: integer
           format: int32
+          default: 32
+          description: "Maximum trust bundle response size, in kilobytes."
     StatusEntity:
       type: object
       properties:

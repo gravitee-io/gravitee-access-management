@@ -24,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
+import io.gravitee.am.service.model.NewIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -35,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -309,10 +311,50 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("The 'type' is immutable for an existing identity provider 'dev-users'"));
         verify(identityProviderManager, never()).checkPluginDeployment(anyString());
         verify(validationService, never()).validate(anyString(), anyString());
         verify(identityProviderService, never())
                 .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_create_derives_external_flag_from_plugin_descriptor() {
+        // 'external' is internal and intrinsic to the plugin type: the AAPI ignores the client and stamps
+        // it from the plugin descriptor at creation. A plugin reported as external must persist external.
+        String idpId = AutomationIds.identityProviderId(domainId, "social-login");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(identityProviderManager.isExternalProvider(eq("inline-am-idp"))).thenReturn(true);
+        when(identityProviderService.create(any(Domain.class), any(), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "social-login", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), definition("social-login"));
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<NewIdentityProvider> captor = ArgumentCaptor.forClass(NewIdentityProvider.class);
+        verify(identityProviderService).create(any(Domain.class), captor.capture(), any(), eq(false));
+        assertTrue(captor.getValue().isExternal());
+    }
+
+    @Test
+    void put_create_marks_non_external_plugin_as_internal() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(identityProviderManager.isExternalProvider(eq("inline-am-idp"))).thenReturn(false);
+        when(identityProviderService.create(any(Domain.class), any(), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<NewIdentityProvider> captor = ArgumentCaptor.forClass(NewIdentityProvider.class);
+        verify(identityProviderService).create(any(Domain.class), captor.capture(), any(), eq(false));
+        assertFalse(captor.getValue().isExternal());
     }
 
     @Test
@@ -456,6 +498,29 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("The 'system' flag is immutable for an existing identity provider 'dev-users'"));
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
+    }
+
+    @Test
+    void put_rejects_clearing_system_on_existing() {
+        String systemIdpId = AutomationIds.systemIdentityProviderId(domainId);
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(systemIdpId, "sys-idp", ManagedBy.AUTOMATION_API, true)));
+
+        AutomationIdentityProvider def = definition("sys-idp");
+        def.setSystem(false);
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class)
+                .contains("The 'system' flag is immutable for an existing identity provider 'sys-idp'"));
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), anyString(), anyString(), any(), any(), anyBoolean());
     }
 
     @Test
