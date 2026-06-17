@@ -649,7 +649,7 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete certificates
                             .andThen(certificateService.findByDomain(domainId)
-                                    .flatMapCompletable(certificate -> certificateService.delete(certificate.getId()))
+                                    .flatMapCompletable(certificate -> certificateService.delete(certificate.getId(), principal, true))
                             )
                             // delete extension grants
                             .andThen(extensionGrantService.findByDomain(domainId)
