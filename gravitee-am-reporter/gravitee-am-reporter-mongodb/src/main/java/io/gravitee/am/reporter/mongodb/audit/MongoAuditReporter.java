@@ -149,7 +149,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     @Value("${services.purge.enabled:false}")
     private boolean purgeEnabled;
 
-    @Value("${services.purge.audits.batchDelay:500}")
+    @Value("${services.purge.audits.batchDelay:1000}")
     private long batchDelayMs;
 
     // introduce purgeBathSize even if batchSize exist to have a single configuration settings
