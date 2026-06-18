@@ -152,7 +152,7 @@
         <gravitee-policy-ipfiltering.version>3.0.0-alpha.1</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
-        <gravitee-cockpit-connectors.version>6.0.0-alpha.2</gravitee-cockpit-connectors.version>
+        <gravitee-cockpit-connectors.version>6.0.0</gravitee-cockpit-connectors.version>
         <gravitee-ae-connectors.version>3.0.0-beta.1</gravitee-ae-connectors.version>
         <gravitee-notifier-webhook.version>3.0.0-alpha.1</gravitee-notifier-webhook.version>
         <gravitee-notifier-email.version>4.0.0-alpha.1</gravitee-notifier-email.version>
