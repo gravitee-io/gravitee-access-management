@@ -204,7 +204,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     @Value("${services.purge.audits.retention.days:0}")
     private int retentionDays;
 
-    @Value("${services.purge.audits.batchDelay:500}")
+    @Value("${services.purge.audits.batchDelay:1000}")
     private long batchDelayMs;
 
     @Value("${services.purge.audits.batchSize:" + PURGE_MAX_BATCH_SIZE + "}")

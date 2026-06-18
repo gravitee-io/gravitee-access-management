@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Slf4j
@@ -42,6 +43,13 @@ public class ReporterAuditSweeper implements ExpiredDataSweeper {
     private final ReporterService reporterService;
 
     private final ActionLeaseService actionLeaseService;
+
+    /**
+     * In-process, non-reentrant guard preventing two purge executions from running concurrently on the
+     * same node. This is independent of the distributed lease (which stays re-entrant for crash recovery)
+     * and protects against overlapping runs whatever the configured cron frequency.
+     */
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
     public ReporterAuditSweeper(@Lazy AuditReporterManager auditReporterManager,
                                 @Lazy ReporterService reporterService,
@@ -68,25 +76,35 @@ public class ReporterAuditSweeper implements ExpiredDataSweeper {
 
     @Override
     public Completable purgeExpiredData() {
-        log.info("Starting audit reporter data purge (retention: {} days, global timeout: {}s)", retentionDays, globalTimeout);
+        // evaluated at subscription time so the guard reflects the state when the purge actually starts
+        return Completable.defer(() -> {
+            if (!running.compareAndSet(false, true)) {
+                log.warn("An audit reporter data purge is already running on this node, skipping this execution");
+                return Completable.complete();
+            }
 
-        // a single deadline is shared by every reporter so the whole execution cannot exceed the configured duration
-        final Instant deadline = Instant.now().plusSeconds(globalTimeout);
+            log.info("Starting audit reporter data purge (retention: {} days, global timeout: {}s)", retentionDays, globalTimeout);
 
-        return actionLeaseService.acquireLease(LEASE_ACTION_AUDIT_SWEEPER, Duration.of(leaseDuration, ChronoUnit.SECONDS))
-                // reporters are purged one at a time (concatMapCompletable) to limit the pressure on the backend
-                .flatMapCompletable(lease -> reporterService.findAll()
-                        .concatMapCompletable(reporter -> purgeReporter(reporter, deadline)
-                                .onErrorResumeNext(error -> {
-                                    log.error("Failed to purge audits for reporter {}/{}: {}",
-                                            reporter.getName(), reporter.getId(), error.getMessage(), error);
-                                    return Completable.complete();
-                                }))
-                        // the internal (platform) reporter is created in memory and is not returned by findAll(),
-                        // so it must be purged explicitly otherwise its 'reporter_audits_PLATFORM' collection grows unbounded
-                        .andThen(purgeInternalReporter(deadline)))
-                .doOnComplete(() -> log.info("Audit reporter data purge completed"))
-                .doOnError(error -> log.error("Audit reporter data purge failed", error));
+            // a single deadline is shared by every reporter so the whole execution cannot exceed the configured duration
+            final Instant deadline = Instant.now().plusSeconds(globalTimeout);
+
+            return actionLeaseService.acquireLease(LEASE_ACTION_AUDIT_SWEEPER, Duration.of(leaseDuration, ChronoUnit.SECONDS))
+                    // reporters are purged one at a time (concatMapCompletable) to limit the pressure on the backend
+                    .flatMapCompletable(lease -> reporterService.findAll()
+                            .concatMapCompletable(reporter -> purgeReporter(reporter, deadline)
+                                    .onErrorResumeNext(error -> {
+                                        log.error("Failed to purge audits for reporter {}/{}: {}",
+                                                reporter.getName(), reporter.getId(), error.getMessage(), error);
+                                        return Completable.complete();
+                                    }))
+                            // the internal (platform) reporter is created in memory and is not returned by findAll(),
+                            // so it must be purged explicitly otherwise its 'reporter_audits_PLATFORM' collection grows unbounded
+                            .andThen(purgeInternalReporter(deadline)))
+                    .doOnComplete(() -> log.info("Audit reporter data purge completed"))
+                    .doOnError(error -> log.error("Audit reporter data purge failed", error))
+                    // release the in-process guard whatever the outcome (complete, error or dispose)
+                    .doFinally(() -> running.set(false));
+        });
     }
 
     private Completable purgeInternalReporter(Instant deadline) {
