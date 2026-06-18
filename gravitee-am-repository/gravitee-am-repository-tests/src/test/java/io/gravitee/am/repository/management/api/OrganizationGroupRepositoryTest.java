@@ -46,11 +46,11 @@ import static org.junit.Assert.assertTrue;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GroupRepositoryTest extends AbstractManagementTest {
+public class OrganizationGroupRepositoryTest extends AbstractManagementTest {
 
     public static final String DOMAIN_ID = "DOMAIN_ID1";
     @Autowired
-    protected GroupRepository repository;
+    protected OrganizationGroupRepository repository;
 
     @Test
     public void shouldCreateGroup() {

@@ -15,8 +15,20 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.UserIdentity;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -24,6 +36,77 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class OrganizationUserMongo extends UserMongo {
+public class OrganizationUserMongo extends Auditable {
+    @BsonId
+    private String id;
+    private String externalId;
+    private String username;
+    private String email;
+    private String displayName;
+    private String nickName;
+    private String firstName;
+    private String lastName;
+    private String title;
+    private String type;
+    private String preferredLanguage;
+    private boolean accountNonExpired = true;
+    private Date accountLockedAt;
+    private Date accountLockedUntil;
+    private boolean accountNonLocked = true;
+    private boolean credentialsNonExpired = true;
+    private boolean enabled = true;
+    private boolean internal;
+    private boolean preRegistration;
+    private boolean registrationCompleted;
+    private Boolean newsletter;
+    private String registrationUserUri;
+    private String registrationAccessToken;
+    private String referenceType;
+    private String referenceId;
+    private String source;
+    private String client;
+    private long loginsCount;
+    private Date loggedAt;
+    private Date lastLoginWithCredentials;
+    private Date mfaEnrollmentSkippedAt;
+    private Date lastPasswordReset;
+    private Date lastLogoutAt;
+    private Date lastUsernameReset;
+    private List<AttributeMongo> emails;
+    private List<AttributeMongo> phoneNumbers;
+    private List<AttributeMongo> ims;
+    private List<AttributeMongo> photos;
+    private List<String> entitlements;
+    private List<AddressMongo> addresses;
+    private List<CertificateMongo> x509Certificates;
+    private List<EnrolledFactor> factors;
+    private List<String> roles;
+    private List<String> dynamicRoles;
+    private List<String> dynamicGroups;
+    private List<UserIdentity> identities;
+    private String lastIdentityUsed;
+    private Boolean forceResetPassword;
+    private Boolean serviceAccount;
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document additionalInformation;
+
     private String password;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OrganizationUserMongo userMongo = (OrganizationUserMongo) o;
+
+        return Objects.equals(id, userMongo.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
 }

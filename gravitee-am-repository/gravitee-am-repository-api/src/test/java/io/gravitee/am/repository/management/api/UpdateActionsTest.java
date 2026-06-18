@@ -24,7 +24,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
-import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
+import io.gravitee.am.repository.management.api.OrganizationUserRepository.UpdateActions;
 import org.junit.Test;
 
 import java.util.Arrays;
