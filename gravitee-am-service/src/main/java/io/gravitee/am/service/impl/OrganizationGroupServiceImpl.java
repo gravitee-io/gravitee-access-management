@@ -22,7 +22,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.OrganizationGroupRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationUserService;
@@ -61,7 +61,7 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
 
     @Lazy
     @Autowired
-    private GroupRepository groupRepository;
+    private OrganizationGroupRepository groupRepository;
 
     @Autowired
     private OrganizationUserService organizationUserService;

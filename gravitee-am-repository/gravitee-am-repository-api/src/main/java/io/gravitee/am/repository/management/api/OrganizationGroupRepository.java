@@ -30,7 +30,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface GroupRepository extends CrudRepository<Group, String> {
+public interface OrganizationGroupRepository extends CrudRepository<Group, String> {
 
     Flowable<Group> findByMember(String memberId);
 

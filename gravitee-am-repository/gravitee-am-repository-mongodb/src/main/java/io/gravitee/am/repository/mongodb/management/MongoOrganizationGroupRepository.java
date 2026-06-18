@@ -23,7 +23,7 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.OrganizationGroupRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -57,9 +57,8 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
  * @author GraviteeSource Team
  */
 @Component
-public class MongoGroupRepository extends AbstractManagementMongoRepository implements GroupRepository {
-    // TODO [DP] class to remove
-    private final static Logger LOGGER = LoggerFactory.getLogger(MongoGroupRepository.class);
+public class MongoOrganizationGroupRepository extends AbstractManagementMongoRepository implements OrganizationGroupRepository {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MongoOrganizationGroupRepository.class);
     private static final String FIELD_MEMBERS = "members";
     private static final String FIELD_NAME = "name";
     private static final String DISPLAY_NAME = "displayName";

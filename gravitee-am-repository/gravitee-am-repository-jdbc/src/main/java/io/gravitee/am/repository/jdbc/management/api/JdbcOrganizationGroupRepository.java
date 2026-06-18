@@ -25,7 +25,7 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcGroup;
 import io.gravitee.am.repository.jdbc.management.api.spring.group.SpringGroupMemberRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.group.SpringGroupRoleRepository;
-import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.OrganizationGroupRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -47,11 +47,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.gravitee.am.model.common.Page.pageFromOffset;
-import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.GROUPS;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.quoted;
-import static org.springframework.data.util.Streamable.of;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
@@ -62,7 +59,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcGroupRepository extends AbstractJdbcRepository implements GroupRepository, InitializingBean {
+public class JdbcOrganizationGroupRepository extends AbstractJdbcRepository implements OrganizationGroupRepository, InitializingBean {
 
     public static final String COL_ID = "id";
     public static final String COL_REFERENCE_ID = "reference_id";
@@ -95,12 +92,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Autowired
     private SpringGroupMemberRepository memberRepository;
 
-    protected Group toEntity(JdbcGroup entity) {
+    private Group toEntity(JdbcGroup entity) {
         return mapper.map(entity, Group.class);
-    }
-
-    protected JdbcGroup  toJdbcEntity(Group entity) {
-        return mapper.map(entity, JdbcGroup .class);
     }
 
     @Override

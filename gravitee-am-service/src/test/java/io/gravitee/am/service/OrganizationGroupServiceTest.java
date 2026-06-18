@@ -20,7 +20,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.OrganizationGroupRepository;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -65,7 +65,7 @@ public class OrganizationGroupServiceTest {
     private OrganizationGroupService groupService = new OrganizationGroupServiceImpl();
 
     @Mock
-    private GroupRepository groupRepository;
+    private OrganizationGroupRepository groupRepository;
 
     @Mock
     private OrganizationUserService organizationUserService;
