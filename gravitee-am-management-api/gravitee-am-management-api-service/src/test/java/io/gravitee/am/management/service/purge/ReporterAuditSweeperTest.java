@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -302,6 +303,33 @@ public class ReporterAuditSweeperTest {
         testObserver.assertNoErrors();
         verify(auditReporterManager, never()).getInternalReporter();
         verify(internalReporter, never()).purgeExpiredData(any());
+    }
+
+    @Test
+    public void should_skip_concurrent_purge_on_same_node() {
+        // Given a reporter whose purge never completes, so the first execution stays in-flight
+        io.gravitee.am.reporter.api.provider.Reporter blockingReporter = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+        Reporter config = createReporterConfig("MongoDB Reporter", true);
+
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
+        when(reporterService.findAll()).thenReturn(Flowable.just(config));
+        when(auditReporterManager.getReporter(any(Reference.class))).thenReturn(Maybe.just(blockingReporter));
+        when(blockingReporter.purgeExpiredData(any())).thenReturn(Completable.never());
+
+        // When a first execution starts (and stays running)
+        TestObserver<Void> firstRun = sweeper.purgeExpiredData().test();
+        firstRun.assertNotComplete();
+
+        // And a second execution is triggered on the same node while the first is still running
+        TestObserver<Void> secondRun = sweeper.purgeExpiredData().test();
+        secondRun.awaitDone(5, TimeUnit.SECONDS);
+
+        // Then the second execution is skipped (completes immediately without doing any work)
+        secondRun.assertComplete();
+        secondRun.assertNoErrors();
+        verify(actionLeaseService, times(1)).acquireLease(any(), any());
+        verify(reporterService, times(1)).findAll();
+        verify(blockingReporter, times(1)).purgeExpiredData(any());
     }
 
     private Reporter createReporterConfig(String name, boolean enabled) {
