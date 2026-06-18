@@ -117,17 +117,6 @@
     </mapping>
 
     <mapping map-null="false">
-        <class-a>io.gravitee.am.model.uma.PermissionTicket</class-a>
-        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcPermissionTicket</class-b>
-        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.PermissionRequestConverter">
-            <a>permissionRequest</a>
-            <b>permissionRequest</b>
-            <!-- hint required otherwise generic Collection interface can't be mapped -->
-            <a-hint>java.util.List</a-hint>
-        </field>
-    </mapping>
-
-    <mapping map-null="false">
         <class-a>io.gravitee.am.model.Role</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcRole</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.PermissionAclsConverter">
@@ -198,26 +187,6 @@
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.FlowTypeConverter">
             <a>type</a>
             <b>type</b>
-        </field>
-    </mapping>
-
-    <mapping map-null="false">
-        <class-a>io.gravitee.am.model.User</class-a>
-        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcUser</class-b>
-        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
-            <a>additionalInformation</a>
-            <b>additionalInformation</b>
-            <a-hint>java.util.Map</a-hint>
-        </field>
-        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter">
-            <a>x509Certificates</a>
-            <b>x509Certificates</b>
-            <a-hint>java.util.List</a-hint>
-        </field>
-        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter">
-            <a>factors</a>
-            <b>factors</b>
-            <a-hint>java.util.List</a-hint>
         </field>
     </mapping>
 
