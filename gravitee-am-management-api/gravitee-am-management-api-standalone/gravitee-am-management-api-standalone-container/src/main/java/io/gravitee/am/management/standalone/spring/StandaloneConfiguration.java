@@ -43,6 +43,7 @@ import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
+import io.gravitee.am.repository.ManagementRepositoryScopeProvider;
 import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.common.event.EventManager;
@@ -128,7 +129,7 @@ public class StandaloneConfiguration {
 
     @Bean
     public RepositoryScopeProvider repositoryScopeProvider() {
-        return new io.gravitee.am.repository.RepositoryScopeProvider();
+        return new ManagementRepositoryScopeProvider();
     }
 
     @Bean

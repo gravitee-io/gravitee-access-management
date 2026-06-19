@@ -84,7 +84,7 @@ data:
 
 {{ include "dataPlanes" . | indent 4 }}
 
-{{ include "repositories" . | indent 4 }}
+{{ include "repositories" (dict "context" . "scope" "management") | indent 4 }}
 
     gateway:
     {{- if .Values.api.gateway }}

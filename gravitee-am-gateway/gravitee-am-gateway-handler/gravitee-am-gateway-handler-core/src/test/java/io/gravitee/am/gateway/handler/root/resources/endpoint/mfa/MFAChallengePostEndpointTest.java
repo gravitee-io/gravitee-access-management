@@ -48,7 +48,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;

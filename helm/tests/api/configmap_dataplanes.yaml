@@ -18,6 +18,7 @@ tests:
             dataPlanes:
               - id: default
                 name: Legacy domains
+                type: jdbc
                 jdbc:
                   acquireRetry: 1
                   database: graviteeam
@@ -30,7 +31,6 @@ tests:
                   maxLifeTime: -1
                   maxSize: 50
                   port: 3306
-                type: jdbc
   - it: Test custom dataPlanes
     template: api/api-configmap.yaml
     set:

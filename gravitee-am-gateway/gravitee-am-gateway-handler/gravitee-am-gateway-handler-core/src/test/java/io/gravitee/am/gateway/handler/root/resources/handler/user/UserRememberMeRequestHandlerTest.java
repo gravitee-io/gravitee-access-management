@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureH
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.MultiMap;

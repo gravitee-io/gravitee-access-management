@@ -16,17 +16,17 @@
 package io.gravitee.am.repository;
 
 import io.gravitee.platform.repository.api.Scope;
-import org.springframework.stereotype.Component;
+import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 
 /**
+ * Repository scopes handled by the gateway.
+ *
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
-public class RepositoryScopeProvider implements io.gravitee.platform.repository.api.RepositoryScopeProvider {
+public class GatewayRepositoryScopeProvider implements RepositoryScopeProvider {
 
     public Scope[] getHandledScopes() {
-
         return new Scope[]{Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY};
     }
 }

@@ -34,51 +34,14 @@ tests:
                   maxLifeTime: -1
                   maxSize: 50
                   port: 3306
-              oauth2:
-                type: jdbc
-                jdbc:
-                  acquireRetry: 1
-                  database: graviteeam
-                  driver: mysql
-                  host: localhost
-                  initialSize: 1
-                  maxAcquireTime: 5000
-                  maxCreateConnectionTime: 3000
-                  maxIdleTime: 30000
-                  maxLifeTime: -1
-                  maxSize: 50
-                  port: 3306
-              gateway:
-                type: jdbc
-                jdbc:
-                  acquireRetry: 1
-                  database: graviteeam
-                  driver: mysql
-                  host: localhost
-                  initialSize: 1
-                  maxAcquireTime: 5000
-                  maxCreateConnectionTime: 3000
-                  maxIdleTime: 30000
-                  maxLifeTime: -1
-                  maxSize: 50
-                  port: 3306
-              ratelimit:
-                type: jdbc
-                jdbc:
-                  acquireRetry: 1
-                  database: graviteeam
-                  driver: mysql
-                  host: localhost
-                  initialSize: 1
-                  maxAcquireTime: 5000
-                  maxCreateConnectionTime: 3000
-                  maxIdleTime: 30000
-                  maxLifeTime: -1
-                  maxSize: 50
-                  port: 3306
             
             gateway:
               url: https://am.example.com/auth
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            repositories:
+              oauth2:
 
   - it: Test jdbc schema property
     template: api/api-configmap.yaml
@@ -101,51 +64,6 @@ tests:
           pattern: |
             repositories:
               management:
-                type: jdbc
-                jdbc:
-                  acquireRetry: 1
-                  database: graviteeam
-                  driver: mysql
-                  host: localhost
-                  initialSize: 1
-                  maxAcquireTime: 5000
-                  maxCreateConnectionTime: 3000
-                  maxIdleTime: 30000
-                  maxLifeTime: -1
-                  maxSize: 50
-                  port: 3306
-                  schema: haha
-              oauth2:
-                type: jdbc
-                jdbc:
-                  acquireRetry: 1
-                  database: graviteeam
-                  driver: mysql
-                  host: localhost
-                  initialSize: 1
-                  maxAcquireTime: 5000
-                  maxCreateConnectionTime: 3000
-                  maxIdleTime: 30000
-                  maxLifeTime: -1
-                  maxSize: 50
-                  port: 3306
-                  schema: haha
-              gateway:
-                type: jdbc
-                jdbc:
-                  acquireRetry: 1
-                  database: graviteeam
-                  driver: mysql
-                  host: localhost
-                  initialSize: 1
-                  maxAcquireTime: 5000
-                  maxCreateConnectionTime: 3000
-                  maxIdleTime: 30000
-                  maxLifeTime: -1
-                  maxSize: 50
-                  port: 3306
-                  schema: haha
-              ratelimit:
                 type: jdbc
                 jdbc:
                   acquireRetry: 1

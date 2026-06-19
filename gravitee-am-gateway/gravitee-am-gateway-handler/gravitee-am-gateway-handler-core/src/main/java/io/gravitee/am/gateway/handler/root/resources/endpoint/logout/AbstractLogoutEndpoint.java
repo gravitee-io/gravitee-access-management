@@ -29,7 +29,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Completable;

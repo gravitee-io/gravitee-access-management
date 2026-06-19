@@ -28,7 +28,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpStatusCode;

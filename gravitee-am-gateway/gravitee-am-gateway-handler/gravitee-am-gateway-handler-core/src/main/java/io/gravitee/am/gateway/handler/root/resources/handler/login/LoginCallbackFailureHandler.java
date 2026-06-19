@@ -40,7 +40,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;

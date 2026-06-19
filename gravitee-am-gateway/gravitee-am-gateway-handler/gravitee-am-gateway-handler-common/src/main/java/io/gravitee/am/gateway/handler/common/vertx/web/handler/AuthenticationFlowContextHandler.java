@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.AuthenticationFlowContext;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;

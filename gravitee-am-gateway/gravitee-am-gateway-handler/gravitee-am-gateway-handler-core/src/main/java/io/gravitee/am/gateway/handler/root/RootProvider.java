@@ -144,7 +144,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;

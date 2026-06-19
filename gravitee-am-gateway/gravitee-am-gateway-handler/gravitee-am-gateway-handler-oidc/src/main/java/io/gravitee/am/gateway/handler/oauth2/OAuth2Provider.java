@@ -82,7 +82,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriV
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.common.http.MediaType;

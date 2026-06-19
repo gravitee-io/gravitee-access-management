@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.gateway.handler.common.service.impl;
 
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
-import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
+import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,25 +38,15 @@ import java.util.concurrent.TimeUnit;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
+@RequiredArgsConstructor
 public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowContextService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFlowContextServiceImpl.class);
 
-    @Lazy
-    @Autowired
-    private AuthenticationFlowContextRepository authContextRepository;
-
-    @Value("${authenticationFlow.maxRetries:2}")
-    private int consistencyRetries;
-
-    @Value("${authenticationFlow.retryInterval:1000}")
-    private int retryDelay;
-
-    @Value("${authenticationFlow.expirationTimeOut:300}")
-    private int contextExpiration;
-
-    @Value("${authenticationFlow.idempotency:false}")
-    private boolean idempotency;
+    private final AuthenticationFlowContextRepository authContextRepository;
+    private final int consistencyRetries;
+    private final int retryDelay;
+    private final int contextExpiration;
+    private final boolean idempotency;
 
     @Override
     public Completable clearContext(final String transactionId) {

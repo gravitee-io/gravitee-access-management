@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.handler.common.service;
 
+import io.gravitee.am.gateway.handler.common.service.impl.AuthenticationFlowContextServiceImpl;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
-import io.gravitee.am.service.impl.AuthenticationFlowContextServiceImpl;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -47,11 +46,15 @@ import static org.mockito.Mockito.when;
 public class AuthenticationFlowContextServiceTest {
     private static final String SESSION_ID = "someid";
 
-    @InjectMocks
-    private AuthenticationFlowContextServiceImpl service;
+    private AuthenticationFlowContextService service;
 
     @Mock
     private AuthenticationFlowContextRepository authFlowContextRepository;
+
+    @Before
+    public void setUp() {
+        service = new AuthenticationFlowContextServiceImpl(authFlowContextRepository, 0, 0, 300, false);
+    }
 
     @Test
     public void testLoadContext_UnknownSessionId() {
@@ -116,7 +119,6 @@ public class AuthenticationFlowContextServiceTest {
 
     @Test
     public void testUpdateContext() {
-        ReflectionTestUtils.setField(this.service, "contextExpiration", 300);
         when(this.authFlowContextRepository.create(any())).thenReturn(Single.just(new AuthenticationFlowContext()));
         final AuthenticationFlowContext authContext = new AuthenticationFlowContext();
         authContext.setVersion(1);
