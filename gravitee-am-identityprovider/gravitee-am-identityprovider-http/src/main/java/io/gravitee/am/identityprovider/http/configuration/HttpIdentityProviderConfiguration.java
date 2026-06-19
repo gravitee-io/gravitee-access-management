@@ -39,7 +39,7 @@ public class HttpIdentityProviderConfiguration implements IdentityProviderConfig
 
     @Override
     public boolean userProvider() {
-        return usersResource.isEnabled();
+        return usersResource != null && usersResource.isEnabled();
     }
 
     public HttpResourceConfiguration getAuthenticationResource() {
