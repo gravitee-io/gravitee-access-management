@@ -79,6 +79,7 @@ import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManager;
 import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
@@ -94,6 +95,7 @@ import io.gravitee.am.gateway.handler.common.service.mfa.impl.VerifyAttemptServi
 import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.impl.AuthenticationFlowContextServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.CredentialGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.DeviceGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.LoginAttemptGatewayServiceImpl;
@@ -125,6 +127,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.ScopeService;
@@ -143,6 +146,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
@@ -538,6 +542,16 @@ public class CommonConfiguration {
     @Bean
     public LoginAttemptGatewayService loginAttemptGatewayService(DataPlaneRegistry dataPlaneRegistry) {
         return new LoginAttemptGatewayServiceImpl(dataPlaneRegistry);
+    }
+
+    @Bean
+    public AuthenticationFlowContextService authenticationFlowContextService(
+            @Lazy AuthenticationFlowContextRepository authenticationFlowContextRepository,
+            @Value("${authenticationFlow.maxRetries:2}") int consistencyRetries,
+            @Value("${authenticationFlow.retryInterval:1000}") int retryDelay,
+            @Value("${authenticationFlow.expirationTimeOut:300}") int contextExpiration,
+            @Value("${authenticationFlow.idempotency:false}") boolean idempotency) {
+        return new AuthenticationFlowContextServiceImpl(authenticationFlowContextRepository, consistencyRetries, retryDelay, contextExpiration, idempotency);
     }
 
     @Bean

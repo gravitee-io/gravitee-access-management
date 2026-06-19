@@ -32,7 +32,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandle
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.vertx.core.http.CookieSameSite;
 import org.springframework.beans.factory.annotation.Qualifier;

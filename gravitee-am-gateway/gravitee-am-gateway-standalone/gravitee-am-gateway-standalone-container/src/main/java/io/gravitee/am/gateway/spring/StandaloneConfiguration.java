@@ -55,6 +55,7 @@ import io.gravitee.am.plugins.authenticator.spring.AuthenticatorSpringConfigurat
 import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
+import io.gravitee.am.repository.GatewayRepositoryScopeProvider;
 import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -149,7 +150,7 @@ public class StandaloneConfiguration {
 
     @Bean
     public RepositoryScopeProvider repositoryScopeProvider() {
-        return new io.gravitee.am.repository.RepositoryScopeProvider();
+        return new GatewayRepositoryScopeProvider();
     }
 
     @Bean
