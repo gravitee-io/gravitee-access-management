@@ -2177,6 +2177,12 @@ components:
           format: int32
           description: "Period, in seconds, after which the user's credentials must\
             \ be re-entered to keep using passwordless authentication."
+        passwordlessRegistrationSkipTimeSeconds:
+          type: integer
+          format: int64
+          default: 2592000
+          description: "Period, in seconds, during which WebAuthn registration is\
+            \ not prompted again after the user skips enrollment."
         passwordlessRememberDeviceEnabled:
           type: boolean
           default: false

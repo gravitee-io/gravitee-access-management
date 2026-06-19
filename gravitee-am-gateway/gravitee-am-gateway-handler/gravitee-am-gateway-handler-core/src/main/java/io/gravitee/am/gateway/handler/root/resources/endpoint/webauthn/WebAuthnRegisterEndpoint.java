@@ -18,11 +18,14 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnRegistrationSkipUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.DomainDataPlane;
@@ -49,11 +52,16 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterEndpoint.class);
     private static final String SKIP_WEBAUTHN_PARAM_KEY = "skipWebAuthN";
 
+    private final UserService userService;
+
     public WebAuthnRegisterEndpoint(TemplateEngine templateEngine,
-                                    DomainDataPlane domainDataPlane, FactorManager factorManager) {
+                                    DomainDataPlane domainDataPlane,
+                                    FactorManager factorManager,
+                                    UserService userService) {
         super(templateEngine);
         setDomainDataplane(domainDataPlane);
         setFactorManager(factorManager);
+        this.userService = userService;
     }
 
     @Override
@@ -83,9 +91,16 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             if (Boolean.parseBoolean(request.getParam(SKIP_WEBAUTHN_PARAM_KEY))) {
                 queryParams.remove(SKIP_WEBAUTHN_PARAM_KEY);
                 final String returnURL = getReturnUrl(routingContext, queryParams);
-                routingContext.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
-                // Now redirect back to the original url
-                doRedirect(routingContext.response(), returnURL);
+                final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+                final User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+                final LoginSettings loginSettings = LoginSettings.getInstance(domainDataPlane.getDomain(), client);
+                userService.setWebAuthnRegistrationSkippedTime(loginSettings, user)
+                        .subscribe(
+                                () -> {
+                                    routingContext.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
+                                    doRedirect(routingContext.response(), returnURL);
+                                },
+                                routingContext::fail);
                 return;
             }
 
@@ -96,11 +111,16 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
 
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set(SKIP_WEBAUTHN_PARAM_KEY, "true"), true);
+            final LoginSettings loginSettings = LoginSettings.getInstance(domainDataPlane.getDomain(), client);
+            final WebAuthnRegistrationSkipUtils.SkipDurationDisplay skipDuration =
+                    WebAuthnRegistrationSkipUtils.toDisplay(WebAuthnRegistrationSkipUtils.getSkipTimeSeconds(loginSettings));
             if(isEnrollingFido2Factor(routingContext)){
                 routingContext.put(ConstantKeys.MFA_ENROLLING_FIDO2_FACTOR, "true");
             }
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
+            routingContext.put(ConstantKeys.WEBAUTHN_SKIP_DURATION_VALUE_KEY, skipDuration.value());
+            routingContext.put(ConstantKeys.WEBAUTHN_SKIP_DURATION_UNIT_KEY, skipDuration.unitKey());
             routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
             var params = new HashMap<>();
             params.put(Parameters.CLIENT_ID, client.getClientId());

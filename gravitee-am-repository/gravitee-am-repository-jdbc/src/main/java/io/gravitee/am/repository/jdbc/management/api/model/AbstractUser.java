@@ -82,6 +82,8 @@ public class AbstractUser {
     private LocalDateTime lastLoginWithCredentials;
     @Column("mfa_enrollment_skipped_at")
     private LocalDateTime mfaEnrollmentSkippedAt;
+    @Column("webauthn_registration_skipped_at")
+    private LocalDateTime webAuthnRegistrationSkippedAt;
     @Column("last_password_reset")
     private LocalDateTime lastPasswordReset;
     @Column("last_logout_at")

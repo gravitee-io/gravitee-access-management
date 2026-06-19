@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnRegistrationSkipUtils;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -81,6 +82,11 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
             }
             // check if user has skipped registration step
             if (Boolean.TRUE.equals(session.get(ConstantKeys.WEBAUTHN_SKIPPED_KEY))) {
+                flow.doNext(routingContext);
+                return;
+            }
+            final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            if (WebAuthnRegistrationSkipUtils.isRegistrationSkipped(endUser, loginSettings)) {
                 flow.doNext(routingContext);
                 return;
             }

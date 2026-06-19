@@ -33,6 +33,7 @@ import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnRegistrationSkipUtils;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
@@ -54,6 +55,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
@@ -692,6 +694,20 @@ public class UserServiceImpl implements UserService {
                     return removed ? userService.update(user) : Single.just(user);
                 })
                 .ignoreElement();
+    }
+
+    @Override
+    public Completable setWebAuthnRegistrationSkippedTime(LoginSettings loginSettings, User user) {
+        if (nonNull(user)) {
+            Date now = new Date();
+            long skipTime = WebAuthnRegistrationSkipUtils.getSkipTimeSeconds(loginSettings) * 1000L;
+            if (isNull(user.getWebAuthnRegistrationSkippedAt())
+                    || (user.getWebAuthnRegistrationSkippedAt().getTime() + skipTime) < now.getTime()) {
+                user.setWebAuthnRegistrationSkippedAt(now);
+                return userService.update(user).ignoreElement();
+            }
+        }
+        return complete();
     }
 
     @Override

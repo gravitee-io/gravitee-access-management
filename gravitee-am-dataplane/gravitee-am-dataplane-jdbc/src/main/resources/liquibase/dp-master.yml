@@ -39,3 +39,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_10_0/4.10.0-dataplane-cert-credentials-table.yml
   - include:
       - file: liquibase/changelogs/v4_12_0/4.12.0-dataplane-cimd-client-states.yml
+  - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-dataplane-add-webauthn-registration-skipped-at.yml

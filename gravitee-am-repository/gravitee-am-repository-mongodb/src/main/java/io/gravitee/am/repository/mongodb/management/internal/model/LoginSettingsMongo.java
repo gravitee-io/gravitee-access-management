@@ -31,6 +31,7 @@ public class LoginSettingsMongo {
     private boolean passwordlessRememberDeviceEnabled;
     private boolean passwordlessEnforcePasswordEnabled;
     private Integer passwordlessEnforcePasswordMaxAge;
+    private Long passwordlessRegistrationSkipTimeSeconds;
     private boolean passwordlessDeviceNamingEnabled;
     private boolean certificateBasedAuthEnabled;
     private String certificateBasedAuthUrl;
@@ -104,6 +105,14 @@ public class LoginSettingsMongo {
         this.passwordlessEnforcePasswordMaxAge = passwordlessEnforcePasswordMaxAge;
     }
 
+    public Long getPasswordlessRegistrationSkipTimeSeconds() {
+        return passwordlessRegistrationSkipTimeSeconds;
+    }
+
+    public void setPasswordlessRegistrationSkipTimeSeconds(Long passwordlessRegistrationSkipTimeSeconds) {
+        this.passwordlessRegistrationSkipTimeSeconds = passwordlessRegistrationSkipTimeSeconds;
+    }
+
     public boolean isPasswordlessDeviceNamingEnabled() {
         return passwordlessDeviceNamingEnabled;
     }
@@ -170,6 +179,7 @@ public class LoginSettingsMongo {
         loginSettings.setPasswordlessRememberDeviceEnabled(isPasswordlessRememberDeviceEnabled());
         loginSettings.setPasswordlessEnforcePasswordEnabled(isPasswordlessEnforcePasswordEnabled());
         loginSettings.setPasswordlessEnforcePasswordMaxAge(getPasswordlessEnforcePasswordMaxAge());
+        loginSettings.setPasswordlessRegistrationSkipTimeSeconds(getPasswordlessRegistrationSkipTimeSeconds());
         loginSettings.setPasswordlessDeviceNamingEnabled(isPasswordlessDeviceNamingEnabled());
         loginSettings.setCertificateBasedAuthEnabled(isCertificateBasedAuthEnabled());
         loginSettings.setCertificateBasedAuthUrl(getCertificateBasedAuthUrl());
@@ -195,6 +205,7 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setPasswordlessRememberDeviceEnabled(loginSettings.isPasswordlessRememberDeviceEnabled());
         loginSettingsMongo.setPasswordlessEnforcePasswordEnabled(loginSettings.isPasswordlessEnforcePasswordEnabled());
         loginSettingsMongo.setPasswordlessEnforcePasswordMaxAge(loginSettings.getPasswordlessEnforcePasswordMaxAge());
+        loginSettingsMongo.setPasswordlessRegistrationSkipTimeSeconds(loginSettings.getPasswordlessRegistrationSkipTimeSeconds());
         loginSettingsMongo.setPasswordlessDeviceNamingEnabled(loginSettings.isPasswordlessDeviceNamingEnabled());
         loginSettingsMongo.setCertificateBasedAuthEnabled(loginSettings.isCertificateBasedAuthEnabled());
         loginSettingsMongo.setCertificateBasedAuthUrl(loginSettings.getCertificateBasedAuthUrl());

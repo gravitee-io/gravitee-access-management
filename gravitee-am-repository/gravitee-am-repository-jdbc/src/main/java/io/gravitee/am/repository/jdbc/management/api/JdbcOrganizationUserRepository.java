@@ -125,6 +125,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private static final String USER_COL_LOGGED_AT = "logged_at";
     private static final String USER_COL_LAST_USERNAME_RESET = "last_username_reset";
     private static final String USER_COL_MFA_ENROLLMENT_SKIPPED_AT = "mfa_enrollment_skipped_at";
+    private static final String USER_COL_WEBAUTHN_REGISTRATION_SKIPPED_AT = "webauthn_registration_skipped_at";
     private static final String USER_COL_CREATED_AT = "created_at";
     private static final String USER_COL_UPDATED_AT = "updated_at";
     private static final String USER_COL_X_509_CERTIFICATES = "x509_certificates";
@@ -167,6 +168,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             USER_COL_LOGGED_AT,
             USER_COL_LAST_USERNAME_RESET,
             USER_COL_MFA_ENROLLMENT_SKIPPED_AT,
+            USER_COL_WEBAUTHN_REGISTRATION_SKIPPED_AT,
             USER_COL_CREATED_AT,
             USER_COL_UPDATED_AT,
             USER_COL_X_509_CERTIFICATES,
@@ -451,6 +453,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertSpec = addQuotedField(insertSpec, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_USERNAME_RESET, dateConverter.convertTo(item.getLastUsernameReset(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_WEBAUTHN_REGISTRATION_SKIPPED_AT, dateConverter.convertTo(item.getWebAuthnRegistrationSkippedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
@@ -512,6 +515,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         update = addQuotedField(update, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_LAST_USERNAME_RESET, dateConverter.convertTo(item.getLastUsernameReset(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_WEBAUTHN_REGISTRATION_SKIPPED_AT, dateConverter.convertTo(item.getWebAuthnRegistrationSkippedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());

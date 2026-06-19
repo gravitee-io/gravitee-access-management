@@ -118,6 +118,14 @@
         </mat-slide-toggle>
         <mat-hint style="font-size: 75%">Ask users to name their devices to later identify them.</mat-hint>
       </div>
+      <div fxLayout="column" style="margin-top: 10px" *ngIf="isPasswordlessEnabled()">
+        <time-period-picker
+          title="WebAuthn registration skip period"
+          [defaultTimeSec]="loginSettings.passwordlessRegistrationSkipTimeSeconds"
+          (settingsChange)="setPasswordlessRegistrationSkipTime($event)"
+        ></time-period-picker>
+        <mat-hint style="font-size: 75%">How long users can defer WebAuthn enrollment before being prompted again on login.</mat-hint>
+      </div>
       <div fxLayout="column" style="margin-top: 10px">
         <h5 style="margin-bottom: 8px">Certificate Based Authentication</h5>
         <mat-slide-toggle (change)="enableCertificateBasedAuth($event)" [checked]="isCertificateBasedAuthEnabled()" [disabled]="readonly">

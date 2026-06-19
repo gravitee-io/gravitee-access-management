@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordPara
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -72,6 +73,8 @@ public interface UserService {
     Completable removePendingEnrolledFactor(String userId, String factorId);
 
     Completable setMfaEnrollmentSkippedTime(Client client, User user);
+
+    Completable setWebAuthnRegistrationSkippedTime(LoginSettings loginSettings, User user);
 
     default Single<RegistrationResponse> register(Client client, User user) {
         return register(client, user, null, MultiMap.caseInsensitiveMultiMap());

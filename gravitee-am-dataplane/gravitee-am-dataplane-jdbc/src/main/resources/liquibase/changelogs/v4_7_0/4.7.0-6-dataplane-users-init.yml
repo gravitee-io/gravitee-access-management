@@ -126,6 +126,9 @@ databaseChangeLog:
                   name: mfa_enrollment_skipped_at
                   type: TIMESTAMP(6)
               - column:
+                  name: webauthn_registration_skipped_at
+                  type: TIMESTAMP(6)
+              - column:
                   name: last_username_reset
                   type: TIMESTAMP(6)
               - column:

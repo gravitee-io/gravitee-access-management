@@ -147,6 +147,11 @@ export class LoginSettingsComponent implements OnChanges {
     return this.loginSettings?.passwordlessDeviceNamingEnabled;
   }
 
+  setPasswordlessRegistrationSkipTime(value: number) {
+    this.loginSettings.passwordlessRegistrationSkipTimeSeconds = value;
+    this.formChanged = true;
+  }
+
   enableHideForm(event) {
     this.loginSettings.hideForm = event.checked;
     this.formChanged = true;

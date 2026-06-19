@@ -123,8 +123,11 @@ public interface ConstantKeys {
     String MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER = "extensionPhoneNumber";
     String MFA_ENROLLMENT_EMAIL = "email";
     long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10L * 60L * 60L; // ten hours
+    long DEFAULT_WEBAUTHN_REGISTRATION_SKIP_TIME_SECONDS = 30L * 24L * 60L * 60L; // thirty days
 
     // Passwordless keys.
+    String WEBAUTHN_SKIP_DURATION_VALUE_KEY = "webauthnSkipDurationValue";
+    String WEBAUTHN_SKIP_DURATION_UNIT_KEY = "webauthnSkipDurationUnit";
     String WEBAUTHN_CLIENT_ERROR_REPORTING_ENABLED_KEY = "webauthnClientErrorReportingEnabled";
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
     String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
