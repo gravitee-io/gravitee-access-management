@@ -79,7 +79,7 @@
         </form>
 
         <div th:if="${mfaChallengeResendEnabled}" id="mfa-resend-container" class="form">
-            <button id="mfa-resend-button" type="button" class="button secondary" th:text="#{mfa_challenge.button.resend}"></button>
+            <button id="mfa-resend-button" type="button" class="button secondary" th:text="${factor.factorType.type == 'CALL' ? #messages.msg('mfa_challenge.button.call.resend') : #messages.msg('mfa_challenge.button.resend')}"></button>
             <div id="mfa-resend-message" class="item" style="display: block; visibility: hidden"></div>
         </div>
 
@@ -96,10 +96,10 @@
         csrfParameterName: /*[[${_csrf.parameterName}]]*/ '',
         csrfToken: /*[[${_csrf.token}]]*/ '',
         messages: {
-            success: /*[[#{mfa_challenge.resend.success}]]*/ 'A new code has been sent',
-            rateLimit: /*[[#{mfa_challenge.rate.limit.error}]]*/ 'Too many codes requested, please try again later',
-            sending: /*[[#{mfa_challenge.resend.sending}]]*/ 'Sending...',
-            error: /*[[#{mfa_challenge.resend.error}]]*/ 'Unable to send a new code, please try again later'
+            success: /*[[${factor.factorType.type == 'CALL' ? #messages.msg('mfa_challenge.call.resend.success') : #messages.msg('mfa_challenge.resend.success')}]]*/ 'A new code has been sent',
+            rateLimit: /*[[${factor.factorType.type == 'CALL' ? #messages.msg('mfa_challenge.call.rate.limit.error') : #messages.msg('mfa_challenge.rate.limit.error')}]]*/ 'Too many codes requested, please try again later',
+            sending: /*[[${factor.factorType.type == 'CALL' ? #messages.msg('mfa_challenge.call.resend.sending') : #messages.msg('mfa_challenge.resend.sending')}]]*/ 'Sending...',
+            error: /*[[${factor.factorType.type == 'CALL' ? #messages.msg('mfa_challenge.call.resend.error') : #messages.msg('mfa_challenge.resend.error')}]]*/ 'Unable to send a new code, please try again later'
         }
     };
 </script>

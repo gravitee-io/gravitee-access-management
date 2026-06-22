@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
-import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -49,6 +49,7 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeSendEndpoint.class);
     private static final String SEND_CHALLENGE_FAILED = "send_challenge_failed";
     private static final String SEND_CHALLENGE_FAILED_DESCRIPTION = "Unable to send a new code, please try again later";
+    private static final String SEND_CALL_CHALLENGE_FAILED_DESCRIPTION = "Unable to make a call, please try again later";
 
     public MFAChallengeSendEndpoint(FactorManager factorManager,
                                     TemplateEngine engine,
@@ -83,7 +84,7 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
             sendMfaChallenge(factorProvider, routingContext, factor, endUser, true, true, resChallenge -> {
                 if (resChallenge.failed()) {
                     logger.error("An error has occurred when resending MFA challenge", resChallenge.cause());
-                    respondJsonChallengeFailure(routingContext, SEND_CHALLENGE_FAILED, SEND_CHALLENGE_FAILED_DESCRIPTION, HttpStatusCode.SERVICE_UNAVAILABLE_503);
+                    respondJsonChallengeFailure(routingContext, SEND_CHALLENGE_FAILED, sendChallengeFailedDescription(factor), HttpStatusCode.SERVICE_UNAVAILABLE_503);
                     return;
                 }
                 respondJsonChallengeSuccess(routingContext);
@@ -96,6 +97,10 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
 
     private void respondJsonChallengeSuccess(RoutingContext routingContext) {
         respondJson(routingContext, HttpStatusCode.OK_200, new JsonObject().put("success", true), null);
+    }
+
+    private String sendChallengeFailedDescription(Factor factor) {
+        return FactorType.CALL.equals(factor.getFactorType()) ? SEND_CALL_CHALLENGE_FAILED_DESCRIPTION : SEND_CHALLENGE_FAILED_DESCRIPTION;
     }
 
     private void respondJsonChallengeFailure(RoutingContext routingContext, String errorCode, String errorDescription, int statusCode) {
