@@ -22,6 +22,17 @@ After each logical step:
 - **Fix** linting issues
 - Keep repo **lint/test clean**
 
+## Local Stack for Integration/E2E Tests
+
+- Jest and playwright suites run against a local stack. Start it with one command from
+  `docker/local-stack/`:
+  - `./local-stack.sh up` — lean, built from the current code (management jest, manual work).
+  - `./local-stack.sh up --full` — adds the Console UI and the services the gateway-jest and
+    playwright suites need.
+  - `./local-stack.sh up --version <tag>` — pull a released/nightly version instead of building.
+- Tear down with `./local-stack.sh down`. See the `local-stack` skill and
+  `docker/local-stack/README.md`.
+
 ## Test Quality
 
 - No ambiguous assertions; make assertions **specific and meaningful**.

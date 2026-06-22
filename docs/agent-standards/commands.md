@@ -148,7 +148,36 @@ make postman
 
 ## Local development with Docker
 
-### Full local environment
+### Local stack (recommended) — `docker/local-stack/local-stack.sh`
+
+One command builds (or pulls) AM and its dependencies for jest/playwright tests and manual
+API/Console work. See `docker/local-stack/README.md` and the `local-stack` skill.
+
+```bash
+cd docker/local-stack
+
+# Build from the CURRENT code state and start (lean: gateway, management, mongo, smtp, wiremock)
+./local-stack.sh up
+
+# Everything the e2e/jest suites need + Console UI
+./local-stack.sh up --full
+
+# PostgreSQL backend + Console UI
+./local-stack.sh up --db psql --ui
+
+# Start a specific RELEASED/nightly version instead of building (no Maven)
+./local-stack.sh up --version 4.12.x-latest --ui
+
+# Status / logs / teardown
+./local-stack.sh status
+./local-stack.sh logs gateway
+./local-stack.sh down
+```
+
+URLs once up: Gateway `:8092`, Management API `:8093/management`, Console UI `:4200`
+(with `--ui`/`--full`), Mailbox `:5080`. Admin login `admin` / `adminadmin` (org/env `DEFAULT`).
+
+### Full local environment (Makefile alternative)
 ```bash
 # First time: install, build, and start
 make gravitee
