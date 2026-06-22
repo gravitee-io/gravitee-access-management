@@ -169,12 +169,21 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
 
     @Test
     public void shouldReturnJsonError_whenSendChallengeFails_fallbackToServiceUnavailable() throws Exception {
+        shouldReturnJsonError_whenSendChallengeFails_fallbackToServiceUnavailable(FactorType.EMAIL, "Unable to send a new code, please try again later");
+    }
+
+    @Test
+    public void shouldReturnJsonCallError_whenSendChallengeFails_fallbackToServiceUnavailable() throws Exception {
+        shouldReturnJsonError_whenSendChallengeFails_fallbackToServiceUnavailable(FactorType.CALL, "Unable to make a call, please try again later");
+    }
+
+    private void shouldReturnJsonError_whenSendChallengeFails_fallbackToServiceUnavailable(FactorType factorType, String errorDescription) throws Exception {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(factorProvider.sendChallenge(any())).thenReturn(Completable.error(new TechnicalException("Email can't be sent")));
         Factor factor = mock(Factor.class);
         when(factor.getId()).thenReturn("factorId");
-        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factor.getFactorType()).thenReturn(factorType);
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
 
@@ -204,7 +213,7 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.SERVICE_UNAVAILABLE_503,
                 "Service Unavailable",
-                "{\"error\":\"mfa_challenge_failed\",\"error_code\":\"send_challenge_failed\",\"error_description\":\"Unable to send a new code, please try again later\"}");
+                "{\"error\":\"mfa_challenge_failed\",\"error_code\":\"send_challenge_failed\",\"error_description\":\"" + errorDescription + "\"}");
 
         verify(factorProvider, times(1)).sendChallenge(any());
     }
