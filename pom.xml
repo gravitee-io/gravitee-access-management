@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>25.0.0-alpha.1</version>
+        <version>25.0.0</version>
         <relativePath/>
     </parent>
 
@@ -80,15 +80,15 @@
         <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
         <awaitility.version>4.2.2</awaitility.version>
         <gravitee-bom.version>9.0.1</gravitee-bom.version>
-        <gravitee-common.version>5.0.0-alpha.1</gravitee-common.version>
+        <gravitee-common.version>5.0.0</gravitee-common.version>
         <gravitee-plugin.version>5.0.0</gravitee-plugin.version>
-        <gravitee-node.version>9.0.0-alpha.17</gravitee-node.version>
+        <gravitee-node.version>9.0.0</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
-        <gravitee-gateway-api.version>6.0.0-alpha.8</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>6.0.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>4.3.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
-        <gravitee-cockpit-api.version>4.0.0-alpha.2</gravitee-cockpit-api.version>
-        <gravitee-kubernetes-client-version>4.0.0-beta.1</gravitee-kubernetes-client-version>
+        <gravitee-cockpit-api.version>3.12.0</gravitee-cockpit-api.version>
+        <gravitee-kubernetes-client-version>4.0.0</gravitee-kubernetes-client-version>
         <gravitee-plugin-validator.version>2.3.0</gravitee-plugin-validator.version>
         <prometheus-client.version>1.3.10</prometheus-client.version>
         <nimbus.version>10.4</nimbus.version>
@@ -147,58 +147,58 @@
         <testcontainer-lower-version-mssql>mssql-tc~2019-latest</testcontainer-lower-version-mssql>
 
         <!-- External plugins versions -->
-        <gravitee-policy-callout-http.version>6.0.0-beta.1</gravitee-policy-callout-http.version>
-        <gravitee-policy-groovy.version>5.0.0-alpha.1</gravitee-policy-groovy.version>
-        <gravitee-policy-ipfiltering.version>3.0.0-alpha.1</gravitee-policy-ipfiltering.version>
+        <gravitee-policy-callout-http.version>7.0.0</gravitee-policy-callout-http.version>
+        <gravitee-policy-groovy.version>5.0.1</gravitee-policy-groovy.version>
+        <gravitee-policy-ipfiltering.version>3.0.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
-        <gravitee-cockpit-connectors.version>6.0.0-alpha.2</gravitee-cockpit-connectors.version>
-        <gravitee-ae-connectors.version>3.0.0-beta.1</gravitee-ae-connectors.version>
-        <gravitee-notifier-webhook.version>3.0.0-alpha.1</gravitee-notifier-webhook.version>
-        <gravitee-notifier-email.version>4.0.0-alpha.1</gravitee-notifier-email.version>
-        <gravitee-notifier-slack.version>3.0.0-alpha.1</gravitee-notifier-slack.version>
+        <gravitee-cockpit-connectors.version>6.0.0</gravitee-cockpit-connectors.version>
+        <gravitee-ae-connectors.version>3.0.0</gravitee-ae-connectors.version>
+        <gravitee-notifier-webhook.version>3.0.0</gravitee-notifier-webhook.version>
+        <gravitee-notifier-email.version>4.0.1</gravitee-notifier-email.version>
+        <gravitee-notifier-slack.version>3.0.0</gravitee-notifier-slack.version>
         <gravitee-alert-api.version>2.0.0</gravitee-alert-api.version>
-        <gravitee-notifier-api.version>1.4.3</gravitee-notifier-api.version>
+        <gravitee-notifier-api.version>2.0.0</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
         <gravitee-secretprovider-kubernetes.version>2.0.0</gravitee-secretprovider-kubernetes.version>
         <gravitee-secretprovider-aws.version>2.0.0</gravitee-secretprovider-aws.version>
-        <gravitee-resource-mfa-mock.version>2.0.0-alpha.1</gravitee-resource-mfa-mock.version>
+        <gravitee-resource-mfa-mock.version>2.0.0</gravitee-resource-mfa-mock.version>
         <gravitee-factor-mock.version>1.0.0</gravitee-factor-mock.version>
         <gravitee-policy-ratelimit.version>2.1.3</gravitee-policy-ratelimit.version>
         <gravitee-gateway-services-ratelimit.version>2.1.3</gravitee-gateway-services-ratelimit.version>
-        <gravitee-exchange-api.version>3.0.0-alpha.2</gravitee-exchange-api.version>
+        <gravitee-exchange-api.version>3.0.0</gravitee-exchange-api.version>
         <gravitee-spec-gen-api.version>1.1.0</gravitee-spec-gen-api.version>
 
         <!-- EE plugin included in default bundle -->
-        <gravitee-am-idp-ldap.version>3.0.0-alpha.1</gravitee-am-idp-ldap.version>
-        <gravitee-am-idp-azure-ad.version>4.0.0-alpha.1</gravitee-am-idp-azure-ad.version>
-        <gravitee-am-idp-franceconnect.version>4.0.0-alpha.1</gravitee-am-idp-franceconnect.version>
-        <gravitee-am-idp-salesforce.version>3.0.0-alpha.1</gravitee-am-idp-salesforce.version>
+        <gravitee-am-idp-ldap.version>3.0.0</gravitee-am-idp-ldap.version>
+        <gravitee-am-idp-azure-ad.version>4.0.0</gravitee-am-idp-azure-ad.version>
+        <gravitee-am-idp-franceconnect.version>4.0.0</gravitee-am-idp-franceconnect.version>
+        <gravitee-am-idp-salesforce.version>3.0.0</gravitee-am-idp-salesforce.version>
         <gravitee-am-idp-saml2.version>5.0.0</gravitee-am-idp-saml2.version>
         <gravitee-am-factor-call.version>1.0.2</gravitee-am-factor-call.version>
         <gravitee-am-factor-sms.version>1.0.3</gravitee-am-factor-sms.version>
-        <gravitee-am-factor-fido2.version>4.0.0-alpha.1</gravitee-am-factor-fido2.version>
+        <gravitee-am-factor-fido2.version>4.0.0</gravitee-am-factor-fido2.version>
         <gravitee-am-factor-http.version>3.0.1</gravitee-am-factor-http.version>
         <gravitee-am-factor-recovery-code.version>1.0.1</gravitee-am-factor-recovery-code.version>
         <gravitee-am-factor-otp-sender.version>3.0.0</gravitee-am-factor-otp-sender.version>
         <gravitee-am-resource-twilio.version>1.2.0</gravitee-am-resource-twilio.version>
         <gravitee-am-policy-mfa-challenge.version>2.0.0</gravitee-am-policy-mfa-challenge.version>
         <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
-        <gravitee-am-certificate-aws.version>3.0.0</gravitee-am-certificate-aws.version>
+        <gravitee-am-certificate-aws.version>4.0.0</gravitee-am-certificate-aws.version>
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.6</gravitee-am-authorizationengine-openfga.version>
         <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.8</gravitee-am-gateway-handler-authzen.version>
-        <gravitee-am-authenticator-cba.version>2.0.0-alpha.1</gravitee-am-authenticator-cba.version>
-        <gravitee-am-authenticator-magiclink.version>2.0.0-alpha.2</gravitee-am-authenticator-magiclink.version>
+        <gravitee-am-authenticator-cba.version>2.0.0</gravitee-am-authenticator-cba.version>
+        <gravitee-am-authenticator-magiclink.version>2.0.0</gravitee-am-authenticator-magiclink.version>
 
         <!-- Plugins included to addons-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>
-        <gravitee-am-gateway-handler-saml2-idp.version>5.0.0-alpha.4</gravitee-am-gateway-handler-saml2-idp.version>
-        <gravitee-am-resource-sfr.version>2.0.0-alpha.1</gravitee-am-resource-sfr.version>
-        <gravitee-am-resource-http.version>2.0.0-alpha.1</gravitee-am-resource-http.version>
-        <gravitee-am-resource-orange-contact-everyone.version>2.0.0-alpha.1</gravitee-am-resource-orange-contact-everyone.version>
-        <gravitee-am-resource-http-factor.version>5.0.0-alpha.1</gravitee-am-resource-http-factor.version>
-        <gravitee-am-identityprovider-cas.version>5.0.0-alpha.1</gravitee-am-identityprovider-cas.version>
-        <gravitee-am-identityprovider-http-flow.version>5.0.0-alpha.1</gravitee-am-identityprovider-http-flow.version>
+        <gravitee-am-gateway-handler-saml2-idp.version>5.0.0</gravitee-am-gateway-handler-saml2-idp.version>
+        <gravitee-am-resource-sfr.version>2.0.0</gravitee-am-resource-sfr.version>
+        <gravitee-am-resource-http.version>2.0.0</gravitee-am-resource-http.version>
+        <gravitee-am-resource-orange-contact-everyone.version>2.0.0</gravitee-am-resource-orange-contact-everyone.version>
+        <gravitee-am-resource-http-factor.version>5.0.0</gravitee-am-resource-http-factor.version>
+        <gravitee-am-identityprovider-cas.version>5.0.0</gravitee-am-identityprovider-cas.version>
+        <gravitee-am-identityprovider-http-flow.version>5.0.0</gravitee-am-identityprovider-http-flow.version>
 
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
