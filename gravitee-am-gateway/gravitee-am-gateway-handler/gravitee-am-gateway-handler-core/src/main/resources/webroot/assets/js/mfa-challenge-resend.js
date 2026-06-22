@@ -100,7 +100,8 @@
                     return;
                 }
                 const description = result.body && result.body.error_description;
-                showMessage(description || config.messages.error, true);
+                const errorCode = result.body && result.body.error_code;
+                showMessage(errorCode === 'send_challenge_failed' ? config.messages.error : description || config.messages.error, true);
             })
             .catch(function () {
                 showMessage(config.messages.error, true);
