@@ -32,10 +32,11 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   private loadSubject = new Subject<{ cursor?: string }>();
   private searchSubscription: Subscription;
   private loadSubscription: Subscription;
-  applications: any[];
+  applications: any[] = [];
   private searchValue: string;
   domainId: string;
   loadingApplications = false;
+  private hasLoaded = false;
   page = {
     totalElements: 0,
     pageNumber: 0,
@@ -102,11 +103,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   get isEmpty() {
-    return !this.applications || (this.applications.length === 0 && !this.searchValue);
+    if (!this.hasLoaded || this.searchValue) {
+      return false;
+    }
+    return this.applications.length === 0;
   }
 
   get showTable() {
-    return !this.isEmpty || this.loadingApplications;
+    if (!this.hasLoaded) {
+      return false;
+    }
+    return this.applications.length > 0 || !!this.searchValue;
   }
 
   setSort($event: any) {
@@ -141,5 +148,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.applications = pagedApps.data;
     this.nextCursor = pagedApps.nextCursor;
     this.page.pageNumber = pagedApps.page;
+    this.hasLoaded = true;
   }
 }
