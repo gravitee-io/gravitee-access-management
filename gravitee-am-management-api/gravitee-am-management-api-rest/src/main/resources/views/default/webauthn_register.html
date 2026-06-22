@@ -44,7 +44,11 @@
     </div>
 
     <div th:if="${enrollingFido2Factor == null}" class="section">
-        <a th:href="${skipAction}"><span th:text="#{webauthn.register.skip}"/><span class="icons">arrow_forward</span></a>
+        <a th:href="${skipAction}">
+            <span th:with="skipMsgKey=${'webauthn.register.skip.' + webauthnSkipDurationUnit}"
+                  th:text="#{${skipMsgKey}(${webauthnSkipDurationValue})}"/>
+            <span class="icons">arrow_forward</span>
+        </a>
     </div>
 </div>
 <script th:if="${webauthnClientErrorReportingEnabled}" th:src="@{../assets/js/webauthn-telemetry-v4.js}"></script>

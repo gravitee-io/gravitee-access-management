@@ -43,6 +43,7 @@ import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -1093,6 +1094,33 @@ public class UserServiceTest {
         when(user.getMfaEnrollmentSkippedAt()).thenReturn(new Date());
 
         userService.setMfaEnrollmentSkippedTime(client, user);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void shouldSetWebAuthnRegistrationSkippedTime() {
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setPasswordlessRegistrationSkipTimeSeconds(86400L);
+        var user = mock(User.class);
+
+        when(user.getWebAuthnRegistrationSkippedAt()).thenReturn(null);
+        doReturn(Single.just(user)).when(commonUserService).update(user);
+
+        userService.setWebAuthnRegistrationSkippedTime(loginSettings, user);
+
+        verify(commonUserService, times(1)).update(user);
+    }
+
+    @Test
+    public void shouldNotSetWebAuthnRegistrationSkippedTime_whenStillActive() {
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setPasswordlessRegistrationSkipTimeSeconds(86400L);
+        var user = mock(User.class);
+
+        when(user.getWebAuthnRegistrationSkippedAt()).thenReturn(new Date());
+
+        userService.setWebAuthnRegistrationSkippedTime(loginSettings, user);
 
         verify(commonUserService, times(0)).update(any());
     }

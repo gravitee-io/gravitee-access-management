@@ -167,6 +167,9 @@ public class User implements IUser {
     private Date mfaEnrollmentSkippedAt;
 
     @Schema(type = "java.lang.Long")
+    private Date webAuthnRegistrationSkippedAt;
+
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
 
     @Schema(type = "java.lang.Long")
@@ -249,6 +252,7 @@ public class User implements IUser {
         this.lastPasswordReset = other.lastPasswordReset;
         this.lastLogoutAt = other.lastLogoutAt;
         this.mfaEnrollmentSkippedAt = other.mfaEnrollmentSkippedAt;
+        this.webAuthnRegistrationSkippedAt = other.webAuthnRegistrationSkippedAt;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.lastUsernameReset = other.lastUsernameReset;

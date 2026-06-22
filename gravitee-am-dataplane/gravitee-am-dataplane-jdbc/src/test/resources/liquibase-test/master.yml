@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       - file: liquibase-test/changelogs/v4_7_0/schema.yml
+  - include:
+      - file: liquibase-test/changelogs/v4_13_0/add-webauthn-registration-skipped-at.yml

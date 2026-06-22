@@ -70,6 +70,7 @@ public class UserMongo extends Auditable {
     private Date loggedAt;
     private Date lastLoginWithCredentials;
     private Date mfaEnrollmentSkippedAt;
+    private Date webAuthnRegistrationSkippedAt;
     private Date lastPasswordReset;
     private Date lastLogoutAt;
     private Date lastUsernameReset;

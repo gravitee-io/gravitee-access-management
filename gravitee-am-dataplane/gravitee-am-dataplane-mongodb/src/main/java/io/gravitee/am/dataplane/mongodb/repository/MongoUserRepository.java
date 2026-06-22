@@ -364,6 +364,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         updateFields.add(Updates.set("loggedAt", item.getLoggedAt()));
         updateFields.add(Updates.set("lastLoginWithCredentials", item.getLastLoginWithCredentials()));
         updateFields.add(Updates.set("mfaEnrollmentSkippedAt", item.getMfaEnrollmentSkippedAt()));
+        updateFields.add(Updates.set("webAuthnRegistrationSkippedAt", item.getWebAuthnRegistrationSkippedAt()));
         updateFields.add(Updates.set("lastPasswordReset", item.getLastPasswordReset()));
         updateFields.add(Updates.set("lastLogoutAt", item.getLastLogoutAt()));
         updateFields.add(Updates.set("lastUsernameReset", item.getLastUsernameReset()));
@@ -617,6 +618,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         user.setLoggedAt(userMongo.getLoggedAt());
         user.setLastLoginWithCredentials(userMongo.getLastLoginWithCredentials());
         user.setMfaEnrollmentSkippedAt(userMongo.getMfaEnrollmentSkippedAt());
+        user.setWebAuthnRegistrationSkippedAt(userMongo.getWebAuthnRegistrationSkippedAt());
         user.setLastPasswordReset(userMongo.getLastPasswordReset());
         user.setLastUsernameReset(userMongo.getLastUsernameReset());
         user.setLastLogoutAt(userMongo.getLastLogoutAt());
@@ -678,6 +680,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         userMongo.setLoggedAt(user.getLoggedAt());
         userMongo.setLastLoginWithCredentials(user.getLastLoginWithCredentials());
         userMongo.setMfaEnrollmentSkippedAt(user.getMfaEnrollmentSkippedAt());
+        userMongo.setWebAuthnRegistrationSkippedAt(user.getWebAuthnRegistrationSkippedAt());
         userMongo.setLastPasswordReset(user.getLastPasswordReset());
         userMongo.setLastLogoutAt(user.getLastLogoutAt());
         userMongo.setLastUsernameReset(user.getLastUsernameReset());

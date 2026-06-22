@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-add-webauthn-registration-skipped-at
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: webauthn_registration_skipped_at, type: timestamp(6), constraints: { nullable: true } }
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: webauthn_registration_skipped_at, type: timestamp(6), constraints: { nullable: true } }

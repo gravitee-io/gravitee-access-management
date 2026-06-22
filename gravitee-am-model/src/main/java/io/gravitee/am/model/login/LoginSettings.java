@@ -55,6 +55,9 @@ public class LoginSettings {
     private Integer passwordlessEnforcePasswordMaxAge;
     @Schema(description = "Whether users can name their passwordless devices.", defaultValue = "false")
     private boolean passwordlessDeviceNamingEnabled;
+    @Schema(description = "Period, in seconds, during which WebAuthn registration is not prompted again after " +
+            "the user skips enrollment.", defaultValue = "2592000")
+    private Long passwordlessRegistrationSkipTimeSeconds;
     @Schema(description = "Whether certificate-based authentication is offered.", defaultValue = "false")
     private boolean certificateBasedAuthEnabled;
     @Schema(description = "URL used for certificate-based authentication.")
@@ -84,6 +87,7 @@ public class LoginSettings {
         this.passwordlessEnforcePasswordEnabled = other.passwordlessEnforcePasswordEnabled;
         this.passwordlessEnforcePasswordMaxAge = other.passwordlessEnforcePasswordMaxAge;
         this.passwordlessDeviceNamingEnabled = other.passwordlessDeviceNamingEnabled;
+        this.passwordlessRegistrationSkipTimeSeconds = other.passwordlessRegistrationSkipTimeSeconds;
         this.certificateBasedAuthEnabled = other.certificateBasedAuthEnabled;
         this.certificateBasedAuthUrl = other.certificateBasedAuthUrl;
         this.magicLinkAuthEnabled = other.magicLinkAuthEnabled;
