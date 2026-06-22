@@ -39,6 +39,7 @@ export class DomainMcpServersComponent implements OnInit, OnDestroy {
   sort: Sort = { dir: 'desc', prop: 'updatedAt' };
 
   searchValue: string;
+  private hasLoaded = false;
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription;
 
@@ -76,9 +77,10 @@ export class DomainMcpServersComponent implements OnInit, OnDestroy {
   fetchData() {
     // Add wildcards around search value for partial matching, consistent with application search behavior
     const searchTerm = this.searchValue ? '*' + this.searchValue + '*' : undefined;
-    this.service
-      .findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort, searchTerm)
-      .subscribe((page) => (this.page = page));
+    this.service.findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort, searchTerm).subscribe((page) => {
+      this.page = page;
+      this.hasLoaded = true;
+    });
   }
 
   update(event: any) {
@@ -111,7 +113,17 @@ export class DomainMcpServersComponent implements OnInit, OnDestroy {
   }
 
   get isEmpty(): boolean {
-    return (!this.page.data || this.page.data.length === 0) && !this.searchValue;
+    if (!this.hasLoaded || this.searchValue) {
+      return false;
+    }
+    return !this.page.data || this.page.data.length === 0;
+  }
+
+  get showContent(): boolean {
+    if (!this.hasLoaded) {
+      return false;
+    }
+    return this.page.data.length > 0 || !!this.searchValue;
   }
 
   protected readonly SortType = SortType;

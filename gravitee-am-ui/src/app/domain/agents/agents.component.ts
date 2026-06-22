@@ -33,10 +33,11 @@ export class AgentsComponent implements OnInit, OnDestroy {
   private loadSubject = new Subject<{ cursor?: string }>();
   private searchSubscription: Subscription;
   private loadSubscription: Subscription;
-  agents: any[];
+  agents: any[] = [];
   private searchValue: string;
   domainId: string;
   loadingAgents = false;
+  private hasLoaded = false;
   page = {
     totalElements: 0,
     pageNumber: 0,
@@ -107,11 +108,17 @@ export class AgentsComponent implements OnInit, OnDestroy {
   }
 
   get isEmpty() {
-    return !this.agents || (this.agents.length === 0 && !this.searchValue);
+    if (!this.hasLoaded || this.searchValue) {
+      return false;
+    }
+    return this.agents.length === 0;
   }
 
   get showTable() {
-    return !this.isEmpty || this.loadingAgents;
+    if (!this.hasLoaded) {
+      return false;
+    }
+    return this.agents.length > 0 || !!this.searchValue;
   }
 
   setSort($event: any) {
@@ -146,5 +153,6 @@ export class AgentsComponent implements OnInit, OnDestroy {
     this.agents = pagedAgents.data;
     this.nextCursor = pagedAgents.nextCursor;
     this.page.pageNumber = pagedAgents.page;
+    this.hasLoaded = true;
   }
 }

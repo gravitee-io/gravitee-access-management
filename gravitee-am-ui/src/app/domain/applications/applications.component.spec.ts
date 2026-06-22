@@ -110,8 +110,13 @@ describe('ApplicationsComponent', () => {
 
   it('should show an overlay spinner while the table request is pending', () => {
     const pendingRequest = new Subject<any>();
-    applicationService.cursorSearch.mockReturnValueOnce(pendingRequest.asObservable());
+    applicationService.cursorSearch
+      .mockReturnValueOnce(of({ totalCount: 1, data: [{ id: 'app-id', name: 'app-name' }], nextCursor: undefined, page: 0 }))
+      .mockReturnValueOnce(pendingRequest.asObservable());
 
+    fixture.detectChanges();
+
+    component.loadApps();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.applications-table-overlay')).not.toBeNull();
@@ -121,5 +126,58 @@ describe('ApplicationsComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.applications-table-overlay')).toBeNull();
+  });
+
+  it('should show neither table nor empty state before the first response', () => {
+    const pendingRequest = new Subject<any>();
+    applicationService.cursorSearch.mockReturnValueOnce(pendingRequest.asObservable());
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('ngx-datatable')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-emptystate')).toBeNull();
+
+    pendingRequest.next({ totalCount: 0, data: [], nextCursor: undefined, page: 0 });
+    pendingRequest.complete();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('ngx-datatable')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-emptystate')).not.toBeNull();
+  });
+
+  it('should show the table after the first response when data exists', () => {
+    const pendingRequest = new Subject<any>();
+    applicationService.cursorSearch.mockReturnValueOnce(pendingRequest.asObservable());
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('ngx-datatable')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-emptystate')).toBeNull();
+
+    pendingRequest.next({ totalCount: 1, data: [{ id: 'app-id', name: 'app-name' }], nextCursor: undefined, page: 0 });
+    pendingRequest.complete();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('ngx-datatable')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-emptystate')).toBeNull();
+  });
+
+  it('should not show the empty state while reloading a populated list', () => {
+    const pendingRequest = new Subject<any>();
+    applicationService.cursorSearch
+      .mockReturnValueOnce(of({ totalCount: 1, data: [{ id: 'app-id', name: 'app-name' }], nextCursor: undefined, page: 0 }))
+      .mockReturnValueOnce(pendingRequest.asObservable());
+
+    fixture.detectChanges();
+
+    component.loadApps();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('ngx-datatable')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-emptystate')).toBeNull();
+
+    pendingRequest.next({ totalCount: 1, data: [{ id: 'app-id', name: 'app-name' }], nextCursor: undefined, page: 0 });
+    pendingRequest.complete();
+    fixture.detectChanges();
   });
 });
