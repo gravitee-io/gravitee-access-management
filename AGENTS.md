@@ -76,21 +76,23 @@ cd gravitee-am-test && npm run update:sdk:mapi -- <MANAGEMENT_API_URL>
 
 ### Build Local Stack
 
+One command builds (or pulls) AM and its dependencies. See `docker/local-stack/README.md`
+and the `local-stack` skill for the full reference.
+
 ```bash
-# Build AM
-mvn clean install
+cd docker/local-stack
 
-# Copy AM to local stack
-npm --prefix docker/local-stack run stack:init:copy-am
+# Build from the current code state and start (lean: gateway, management, mongo, smtp, wiremock)
+./local-stack.sh up
 
-# Build the docker images
-npm --prefix docker/local-stack run stack:init:build
+# Everything the jest/playwright suites need + Console UI on :4200
+./local-stack.sh up --full
 
-# Start local stack (MongoDB)
-npm --prefix docker/local-stack run stack:dev:setup:mongo
+# Start a specific released/nightly version instead of building (no Maven)
+./local-stack.sh up --version 4.12.x-latest --ui
 
-# Tear down local stack
-npm --prefix docker/local-stack run stack:down
+# Tear down
+./local-stack.sh down
 ```
 
 ### Running Tests
@@ -349,7 +351,9 @@ mvn install -pl \!gravitee-am-ui -Pcicd-redis -DskipTests
 
 #### Jest Integration Tests
 
-Require a running local stack (see section 1).
+Require a running local stack — start it with `docker/local-stack/local-stack.sh up`
+(use `--full` for the gateway protocol specs, `--db psql` for the JDBC backend). See
+section 1 and the `local-stack` skill.
 
 ```bash
 # All tests

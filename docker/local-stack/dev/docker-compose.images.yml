@@ -1,0 +1,40 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Pulled-mode overlay: run released/nightly AM images instead of building from
+# source. local-stack.sh adds this file for `up --version <tag>` and starts the
+# stack with `docker compose pull` + `up --no-build`, so these images win over
+# the `build:` blocks in the base/ui compose files.
+#
+# Ports and service names are intentionally identical to source mode, so the
+# jest (8092/8093) and playwright (4200) suites work unchanged in either mode.
+#
+# Registry resolution (AM_REGISTRY): defaults to the public Docker Hub namespace
+# `graviteeio`. Pre-release tags (e.g. 4.12.x-latest, master-latest) live in the
+# private Gravitee registry — set AM_REGISTRY (in dev/.env or --registry) and
+# `docker login` to that registry first. See dev/.env.example.
+#
+
+services:
+  gateway:
+    image: ${AM_REGISTRY:-graviteeio}/am-gateway:${GIO_AM_VERSION}
+
+  management:
+    image: ${AM_REGISTRY:-graviteeio}/am-management-api:${GIO_AM_VERSION}
+
+  webui:
+    image: ${AM_REGISTRY:-graviteeio}/am-management-ui:${GIO_AM_VERSION}
+    environment:
+      - MGMT_API_URL=http://localhost:8093
