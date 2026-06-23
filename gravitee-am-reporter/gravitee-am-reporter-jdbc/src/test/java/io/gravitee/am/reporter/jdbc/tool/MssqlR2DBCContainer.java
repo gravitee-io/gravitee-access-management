@@ -15,9 +15,14 @@
  */
 package io.gravitee.am.reporter.jdbc.tool;
 
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.r2dbc.mssql.MssqlConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.testcontainers.mssqlserver.MSSQLR2DBCDatabaseContainer;
 import org.testcontainers.mssqlserver.MSSQLServerContainer;
+
+import java.util.function.Function;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -42,6 +47,16 @@ public class MssqlR2DBCContainer implements R2dbcDatabaseContainer {
     }
 
     public ConnectionFactoryOptions getOptions() {
-        return MSSQLR2DBCDatabaseContainer.getOptions(dbContainer);
+        // The login packet is always TLS-encrypted by SQL Server. r2dbc-mssql creates the
+        // SSLEngine without a peer host, so under recent JDKs the default trust manager runs
+        // endpoint identification and fails with "Hostname or IP address is undefined".
+        // Tests connect to an ephemeral container, so install a trust-all manager (an
+        // X509ExtendedTrustManager) that the JDK does not wrap with hostname verification.
+        final Function<SslContextBuilder, SslContextBuilder> trustAll =
+                builder -> builder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+        return ConnectionFactoryOptions.builder()
+                .from(MSSQLR2DBCDatabaseContainer.getOptions(dbContainer))
+                .option(MssqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER, trustAll)
+                .build();
     }
 }
