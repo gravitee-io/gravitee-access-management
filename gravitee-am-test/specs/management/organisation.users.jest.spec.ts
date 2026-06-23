@@ -20,6 +20,7 @@ import {
   deleteOrganisationUser,
   getCurrentUser,
   getOrganisationUserPage,
+  searchOrganisationUsers,
   updateOrganisationUsername,
 } from '@management-commands/organisation-user-commands';
 
@@ -159,6 +160,36 @@ describe('when managing users at organisation level', () => {
 
     expect(newOrganisationUserToken).toBeDefined();
     expect(newOrganisationUserToken).not.toEqual(organisationUserToken);
+  });
+});
+
+describe('when searching organisation users', () => {
+  const searchEmail = 'user@host.tld';
+  let searchableUser: User;
+
+  beforeAll(async () => {
+    searchableUser = await createOrganisationUser(accessToken, {
+      firstName: 'search',
+      lastName: 'able',
+      email: searchEmail,
+      username: uniqueName('search').toLowerCase(),
+      password: password,
+      preRegistration: false,
+    });
+    expect(searchableUser.id).toBeDefined();
+  });
+
+  it('should find the user by SCIM filter email eq "user@host.tld"', async () => {
+    const page = await searchOrganisationUsers(accessToken, `email eq "${searchEmail}"`);
+    expect(page.totalCount).toBeGreaterThanOrEqual(1);
+    expect(page.data.map((u) => u.id)).toContain(searchableUser.id);
+    page.data.forEach((u) => expect(u.email).toEqual(searchEmail));
+  });
+
+  afterAll(async () => {
+    if (searchableUser?.id) {
+      await deleteOrganisationUser(accessToken, searchableUser.id);
+    }
   });
 });
 
