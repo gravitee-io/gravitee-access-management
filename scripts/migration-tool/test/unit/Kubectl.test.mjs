@@ -114,4 +114,53 @@ describe('Kubectl', () => {
             'Kubernetes cluster unreachable. Start a local cluster first (e.g. kind create cluster --name am-migration).'
         );
     });
+
+    test('logs returns pod stdout for a selector', async () => {
+        mockShell.mockImplementation(() => {
+            const session = Promise.resolve({ stdout: 'line1\nERROR boom' });
+            session.quiet = () => session;
+            session.nothrow = () => session;
+            return session;
+        });
+
+        const out = await kubectl.logs('app.kubernetes.io/component=gateway');
+
+        expect(out).toContain('ERROR boom');
+        const args = mockShell.mock.calls[0][1]; // first interpolated value = args array
+        expect(args).toEqual(expect.arrayContaining(['logs', '-l', 'app.kubernetes.io/component=gateway']));
+        expect(args).not.toContain('--previous');
+    });
+
+    test('logs appends previous-container logs when previous:true', async () => {
+        const responses = [
+            { stdout: 'current ERROR a' },
+            { stdout: 'previous ERROR b' }
+        ];
+        let call = 0;
+        mockShell.mockImplementation(() => {
+            const session = Promise.resolve(responses[call++] ?? { stdout: '' });
+            session.quiet = () => session;
+            session.nothrow = () => session;
+            return session;
+        });
+
+        const out = await kubectl.logs('app=gateway', { since: '120s', previous: true });
+
+        expect(out).toContain('current ERROR a');
+        expect(out).toContain('previous ERROR b');
+        const firstArgs = mockShell.mock.calls[0][1];
+        expect(firstArgs).toContain('--since=120s');
+        const secondArgs = mockShell.mock.calls[1][1];
+        expect(secondArgs).toContain('--previous');
+    });
+
+    test('logs returns empty string on failure (never throws)', async () => {
+        mockShell.mockImplementation(() => {
+            const session = Promise.reject(new Error('no such pod'));
+            session.quiet = () => session;
+            session.nothrow = () => session;
+            return session;
+        });
+        await expect(kubectl.logs('app=gateway')).resolves.toBe('');
+    });
 });

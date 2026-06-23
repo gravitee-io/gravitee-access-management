@@ -9,6 +9,7 @@ import { Kubectl } from '../infra/kubernetes/Kubectl.mjs';
 import { Helm } from '../infra/kubernetes/Helm.mjs';
 import { LicenseManager } from '../infra/kubernetes/LicenseManager.mjs';
 import { PortForwarder } from '../infra/kubernetes/PortForwarder.mjs';
+import { scanForErrors } from '../infra/LogScanner.mjs';
 
 /**
  * K8sProvider version 2.0 - Refactored for modularity and TDD.
@@ -38,6 +39,7 @@ export class K8sProvider extends BaseProvider {
         // Multi-dataplane: list of { name, valuesPath, component } (am-mapi, am-gateway-dp1, am-gateway-dp2)
         this.releases = options.releases || [];
         this.valuesPath = options.valuesPath || Config.k8s.valuesPath;
+        this.registry = options.registry;
 
         this.clusterName = options.clusterName || 'am-migration';
         this.pids = { mapi: null, gatewayDp1: null, gatewayDp2: null, ui: null };
@@ -138,13 +140,58 @@ export class K8sProvider extends BaseProvider {
      * Orchestrator merges this into process.env before running tests; test setup files use these or defaults.
      */
     getTestEnv() {
+        const env = typeof this.databaseStrategy?.getSeedEnv === 'function' ? { ...this.databaseStrategy.getSeedEnv() } : {};
         if (this.releases?.length > 0) {
-            return {
-                AM_GATEWAY_URL: 'http://localhost:8091',
-                AM_DOMAIN_DATA_PLANE_ID: 'dp1',
-            };
+            env.AM_GATEWAY_URL = 'http://localhost:8091';
+            env.AM_DOMAIN_DATA_PLANE_ID = 'dp1';
+            // Second data plane (dp2 gateway port-forwarded to 8092): drives the seed to create a
+            // duplicate domain on dp2 and lets the gateway tests target it.
+            if (this.releases.some((r) => r.name === 'am-gateway-dp2')) {
+                env.AM_GATEWAY_URL_DP2 = 'http://localhost:8092';
+                env.AM_DOMAIN_DATA_PLANE_ID_DP2 = 'dp2';
+            }
         }
-        return {};
+        return env;
+    }
+
+    /**
+     * Scan Gateway/MAPI pod logs for ERROR-level lines and print a non-fatal summary.
+     * Report-only: never throws on findings; the returned count is informational.
+     * @param {{ since?: string }} [opts] - since: time window passed to `kubectl logs --since`
+     * @returns {Promise<number>} total ERROR lines found across all components
+     */
+    async scanLogsForErrors({ since } = {}) {
+        // Map releases -> component label selectors. The gravitee/am chart labels pods with
+        // app.kubernetes.io/component = management-api | gateway, scoped to the release instance.
+        const targets = [];
+        if (this.releases.length > 0) {
+            for (const r of this.releases) {
+                const comp = r.component === 'mapi' ? 'management-api' : 'gateway';
+                targets.push({
+                    name: r.name,
+                    selector: `app.kubernetes.io/instance=${r.name},app.kubernetes.io/component=${comp}`
+                });
+            }
+        } else {
+            targets.push({ name: 'am-management-api', selector: 'app.kubernetes.io/component=management-api' });
+            targets.push({ name: 'am-gateway', selector: 'app.kubernetes.io/component=gateway' });
+        }
+
+        let total = 0;
+        for (const t of targets) {
+            const text = await this.kubectl.logs(t.selector, { since, previous: true });
+            const { count, lines } = scanForErrors(text, t.name);
+            if (count > 0) {
+                total += count;
+                console.warn(`⚠️  ${count} ERROR line(s) in ${t.name}:`);
+                for (const l of lines.slice(0, 50)) console.warn(`    ${l}`);
+                if (count > 50) console.warn(`    …(${count - 50} more)`);
+            }
+        }
+        if (total === 0) {
+            console.log('✅ No ERROR lines in Gateway/MAPI logs for this window.');
+        }
+        return total; // returned but NOT thrown on — report-only
     }
 
     async setup() {
@@ -217,7 +264,9 @@ export class K8sProvider extends BaseProvider {
 
     async deploy(version) {
         console.log(`🚀 Deploying AM version ${version}...`);
-        await validateAmImageTag(version);
+        if (!this.registry) {
+            await validateAmImageTag(version);
+        }
 
         const licenseBase64 = await this.licenseManager.getLicenseBase64();
 
@@ -232,8 +281,10 @@ export class K8sProvider extends BaseProvider {
                     set['api.image.tag'] = version;
                     set['gateway.image.tag'] = version;
                     set['ui.image.tag'] = version;
+                    Object.assign(set, this.getRegistrySet(['api', 'gateway', 'ui']));
                 } else {
                     set['gateway.image.tag'] = version;
+                    Object.assign(set, this.getRegistrySet(['gateway']));
                 }
                 const valuesOpt = Array.isArray(r.valuesPath) ? { valuesFiles: r.valuesPath } : { valuesFile: r.valuesPath };
                 await this.helm.installOrUpgrade(r.name, 'graviteeio/am', {
@@ -241,6 +292,7 @@ export class K8sProvider extends BaseProvider {
                     wait: true,
                     createNamespace: true,
                     version: Config.k8s.amChartVersion,
+                    timeout: '15m',
                     set
                 });
             }
@@ -251,12 +303,14 @@ export class K8sProvider extends BaseProvider {
                 wait: true,
                 createNamespace: true,
                 version: Config.k8s.amChartVersion,
+                timeout: '15m',
                 set: {
                     'api.image.tag': version,
                     'gateway.image.tag': version,
                     'ui.image.tag': version,
                     'license.key': licenseBase64,
-                    'license.name': 'am-license-v4'
+                    'license.name': 'am-license-v4',
+                    ...this.getRegistrySet(['api', 'gateway', 'ui'])
                 }
             });
         }
@@ -287,9 +341,17 @@ export class K8sProvider extends BaseProvider {
         }
     }
 
+    async prepareTests() {
+        if (!this.pids.mapi && !this.pids.gatewayDp1 && !this.pids.gatewayDp2 && !this.pids.ui) {
+            await this.startTunnels();
+        }
+    }
+
     async upgradeMapi(toTag) {
         console.log(`🆙 Updating Management API to ${toTag}...`);
-        await validateAmImageTag(toTag);
+        if (!this.registry) {
+            await validateAmImageTag(toTag);
+        }
         if (this.releases.length > 0) {
             const mapiRelease = this.releases.find(r => r.component === 'mapi');
             if (mapiRelease) {
@@ -297,7 +359,8 @@ export class K8sProvider extends BaseProvider {
                 await this.helm.installOrUpgrade(mapiRelease.name, 'graviteeio/am', {
                     ...valuesOpt,
                     version: Config.k8s.amChartVersion,
-                    set: { 'api.image.tag': toTag, 'ui.image.tag': toTag },
+                    timeout: '15m',
+                    set: { 'api.image.tag': toTag, 'ui.image.tag': toTag, ...this.getRegistrySet(['api', 'ui']) },
                     reuseValues: true,
                     wait: true
                 });
@@ -307,12 +370,13 @@ export class K8sProvider extends BaseProvider {
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
                 ...valuesOpt,
                 version: Config.k8s.amChartVersion,
-                set: { 'api.image.tag': toTag, 'ui.image.tag': toTag },
+                timeout: '15m',
+                set: { 'api.image.tag': toTag, 'ui.image.tag': toTag, ...this.getRegistrySet(['api', 'ui']) },
                 reuseValues: true,
                 wait: true
             });
         }
-        // Restart API/UI port-forwards so they target the new pod; otherwise verify-mapi gets "socket hang up"
+        // Restart API/UI port-forwards so they target the new pod; otherwise the post-mapi-upgrade verify stages get "socket hang up"
         await this.restartApiTunnels();
     }
 
@@ -369,7 +433,9 @@ export class K8sProvider extends BaseProvider {
 
     async upgradeGw(toTag) {
         console.log(`🆙 Updating Gateway to ${toTag}...`);
-        await validateAmImageTag(toTag);
+        if (!this.registry) {
+            await validateAmImageTag(toTag);
+        }
         if (this.releases.length > 0) {
             const gatewayReleases = this.releases.filter(r => r.component === 'gateway');
             for (const r of gatewayReleases) {
@@ -377,7 +443,8 @@ export class K8sProvider extends BaseProvider {
                 await this.helm.installOrUpgrade(r.name, 'graviteeio/am', {
                     ...valuesOpt,
                     version: Config.k8s.amChartVersion,
-                    set: { 'gateway.image.tag': toTag },
+                    timeout: '15m',
+                    set: { 'gateway.image.tag': toTag, ...this.getRegistrySet(['gateway']) },
                     reuseValues: true,
                     wait: true
                 });
@@ -387,12 +454,28 @@ export class K8sProvider extends BaseProvider {
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
                 ...valuesOpt,
                 version: Config.k8s.amChartVersion,
-                set: { 'gateway.image.tag': toTag },
+                timeout: '15m',
+                set: { 'gateway.image.tag': toTag, ...this.getRegistrySet(['gateway']) },
                 reuseValues: true,
                 wait: true
             });
         }
-        // Restart gateway port-forwards so they target the new pods; otherwise verify-all gets "socket hang up"
+        // Restart gateway port-forwards so they target the new pods; otherwise the post-gw-upgrade verify stages get "socket hang up"
         await this.restartGatewayTunnels();
+    }
+
+    getRegistrySet(components) {
+        if (!this.registry) {
+            return {};
+        }
+        const repositories = {
+            api: `${this.registry}/graviteeio/am-management-api`,
+            gateway: `${this.registry}/graviteeio/am-gateway`,
+            ui: `${this.registry}/graviteeio/am-management-ui`
+        };
+        return components.reduce((set, component) => ({
+            ...set,
+            [`${component}.image.repository`]: repositories[component]
+        }), {});
     }
 }

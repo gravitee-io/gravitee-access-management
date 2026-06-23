@@ -22,6 +22,7 @@ export class CircleCI {
                 migration_test_db_type: options.dbType,
                 migration_test_provider: options.provider,
                 ...(options.testFilter != null && options.testFilter !== '' ? { migration_test_filter: options.testFilter } : {}),
+                ...(options.registry != null && options.registry !== '' ? { migration_test_registry: options.registry } : {}),
                 ...(options.withDowngrade ? { migration_test_with_downgrade: 'true' } : {})
             }
         };

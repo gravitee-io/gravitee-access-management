@@ -36,7 +36,8 @@ describe('MongoK8sStrategy', () => {
             expect.objectContaining({
                 valuesFile: 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml',
                 createNamespace: true,
-                wait: true
+                wait: true,
+                timeout: '10m'
             })
         );
     });
@@ -44,6 +45,22 @@ describe('MongoK8sStrategy', () => {
     test('should clean mongo', async () => {
         await strategy.clean();
         expect(mockHelm.uninstall).toHaveBeenCalledWith('mongo');
+    });
+
+    test('deploy sets the chart namespaceOverride to the configured namespace (not hardcoded gravitee-am)', async () => {
+        strategy = new MongoK8sStrategy({
+            helm: mockHelm,
+            namespace: 'custom-ns',
+            config: mockConfig
+        });
+        await strategy.deploy();
+        expect(mockHelm.installOrUpgrade).toHaveBeenCalledWith(
+            'mongo',
+            'bitnami/mongodb',
+            expect.objectContaining({
+                set: expect.objectContaining({ namespaceOverride: 'custom-ns' })
+            })
+        );
     });
 
     test('when kubectl is provided, should ensure namespace and create auth secret before deploy', async () => {
@@ -64,7 +81,7 @@ describe('MongoK8sStrategy', () => {
             'mongo-mongodb-auth',
             expect.objectContaining({
                 'mongodb-root-password': expect.any(String),
-                'mongodb-passwords': 'gravitee-password,gravitee-password,gravitee-password'
+                'mongodb-passwords': 'gravitee-password'
             })
         );
         expect(mockHelm.installOrUpgrade).toHaveBeenCalled();
@@ -87,6 +104,25 @@ describe('MongoK8sStrategy', () => {
         expect(mockKubectl.deleteSecret).toHaveBeenCalledWith('mongo-mongodb-auth');
     });
 
+    test('getSeedEnv exposes in-cluster mongo uri and accessible database for the seed', () => {
+        const env = strategy.getSeedEnv();
+        expect(env.AM_INTERNAL_MONGODB_URI).toBe(
+            'mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000'
+        );
+        expect(env.AM_INTERNAL_MONGODB_DATABASE).toBe('gravitee');
+    });
+
+    test('getSeedEnv uses injected gravitee password in the uri', () => {
+        const prev = process.env.MONGODB_GRAVITEE_PASSWORD;
+        process.env.MONGODB_GRAVITEE_PASSWORD = 'injected-secret';
+        try {
+            expect(strategy.getSeedEnv().AM_INTERNAL_MONGODB_URI).toContain('gravitee:injected-secret@mongo-mongodb:27017');
+        } finally {
+            if (prev !== undefined) process.env.MONGODB_GRAVITEE_PASSWORD = prev;
+            else delete process.env.MONGODB_GRAVITEE_PASSWORD;
+        }
+    });
+
     test('when MONGODB_GRAVITEE_PASSWORD is set, secret uses injected password', async () => {
         const prev = process.env.MONGODB_GRAVITEE_PASSWORD;
         process.env.MONGODB_GRAVITEE_PASSWORD = 'injected-secret';
@@ -106,7 +142,7 @@ describe('MongoK8sStrategy', () => {
             expect(mockKubectl.createSecretGeneric).toHaveBeenCalledWith(
                 'mongo-mongodb-auth',
                 expect.objectContaining({
-                    'mongodb-passwords': 'injected-secret,injected-secret,injected-secret'
+                    'mongodb-passwords': 'injected-secret'
                 })
             );
         } finally {

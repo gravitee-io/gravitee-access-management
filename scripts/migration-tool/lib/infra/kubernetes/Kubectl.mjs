@@ -65,6 +65,31 @@ export class Kubectl {
     }
 
     /**
+     * Fetch logs for pods matching a label selector. Returns combined stdout as a string
+     * (empty string on failure — log fetching must never break a run).
+     * @param {string} selector - label selector, e.g. 'app.kubernetes.io/component=gateway'
+     * @param {{ since?: string, previous?: boolean }} [opts] - since: e.g. '120s' (passed as --since);
+     *        previous: also pull the crashed/restarted container's logs (--previous)
+     * @returns {Promise<string>}
+     */
+    async logs(selector, opts = {}) {
+        const args = ['logs', '-n', this.namespace, '-l', selector,
+            '--all-containers=true', '--prefix=true', '--tail=-1'];
+        if (opts.since) args.push(`--since=${opts.since}`);
+        try {
+            const cur = await this.shell`kubectl ${args}`.quiet().nothrow();
+            let out = cur.stdout ?? '';
+            if (opts.previous) {
+                const prev = await this.shell`kubectl ${[...args, '--previous']}`.quiet().nothrow();
+                if (prev.stdout) out += '\n' + prev.stdout;
+            }
+            return out;
+        } catch (e) {
+            return '';
+        }
+    }
+
+    /**
      * Wait for at least one pod matching the label selector to be ready.
      * @param {string} selector - e.g. 'app.kubernetes.io/name=mongodb'
      * @param {number} [timeoutSeconds=120]

@@ -40,7 +40,7 @@ mapiEnv: &mapiEnv
   - name: gravitee_dataPlanes_1_type
     value: mongodb
   - name: gravitee_dataPlanes_1_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000&authSource=gravitee"
   - name: gravitee_dataPlanes_1_mongodb_dbname
     value: "gravitee-dp1"
   - name: gravitee_dataPlanes_2_id
@@ -48,7 +48,7 @@ mapiEnv: &mapiEnv
   - name: gravitee_dataPlanes_2_type
     value: mongodb
   - name: gravitee_dataPlanes_2_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000&authSource=gravitee"
   - name: gravitee_dataPlanes_2_mongodb_dbname
     value: "gravitee-dp2"
 

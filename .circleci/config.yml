@@ -90,6 +90,9 @@ parameters:
   migration_test_filter:
     type: string
     default: ""
+  migration_test_registry:
+    type: string
+    default: ""
   migration_test_with_downgrade:
     type: string
     default: "true"

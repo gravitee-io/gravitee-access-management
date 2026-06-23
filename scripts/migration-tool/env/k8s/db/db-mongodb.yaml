@@ -2,7 +2,7 @@
 # Single source: db/db-mongodb.yaml (replaces root mongodb-values.yaml)
 # Credentials are provided via auth.existingSecret (no plain-text passwords in repo).
 # The migration tool creates the secret at deploy time from MONGODB_ROOT_PASSWORD env (or safe default for local).
-# databases: gravitee (CP), gravitee-dp1 and gravitee-dp2 for multi-dataplane gateways; user 'gravitee' gets access to all.
+# databases: gravitee (CP), gravitee-dp1 and gravitee-dp2 for multi-dataplane gateways; user 'gravitee' is granted access to all (see initdbScripts).
 
 architecture: standalone
 fullnameOverride: mongo-mongodb
@@ -11,9 +11,18 @@ auth:
   enabled: true
   # Bitnami chart key: K8s secret *name* only (no credentials in repo). Aqua false positive: not a password.
   existingSecret: "mongo-mongodb-auth"
-  # One user 'gravitee' with access to each dataplane DB (parallel arrays: usernames[i], passwords[i], databases[i])
-  usernames: ["gravitee", "gravitee", "gravitee"]
-  databases: ["gravitee", "gravitee-dp1", "gravitee-dp2"]
+  usernames: ["gravitee"]
+  databases: ["gravitee"]
+
+# Grant the gravitee user readWrite on the data-plane databases. Runs as root on first init,
+# after Bitnami creates the gravitee user. persistence is disabled, so every (re)deploy is a
+# fresh init and re-runs this script.
+initdbScripts:
+  grant-dataplane-roles.js: |
+    db.getSiblingDB('gravitee').grantRolesToUser('gravitee', [
+      { role: 'readWrite', db: 'gravitee-dp1' },
+      { role: 'readWrite', db: 'gravitee-dp2' },
+    ]);
 
 persistence:
   enabled: false
@@ -25,5 +34,3 @@ resources:
   requests:
     cpu: 200m
     memory: 512Mi
-
-namespaceOverride: "gravitee-am"

@@ -68,3 +68,6 @@ CLAUDE.local.md
 
 # Playwright MCP logs
 .playwright-mcp/
+
+# Git worktrees
+.worktrees/
