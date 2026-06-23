@@ -61,7 +61,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:18093/_node/health?probes=jetty-http-server", "-u", "admin:adminadmin"]
+      test: ["CMD", "curl", "-f", "http://localhost:18093/_node/health?probes=jetty-http-server,management-repository", "-u", "admin:adminadmin"]
       interval: 5s
       timeout: 2s
       retries: 10

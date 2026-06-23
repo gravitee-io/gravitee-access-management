@@ -237,7 +237,7 @@ ALL_FILES=(
 # etc.). Applied LAST so it wins, for source and pulled images alike. See
 # dev/docker-compose.local.yml.example.
 LOCAL_OVERRIDE="$DEV/docker-compose.local.yml"
-[ -f "$LOCAL_OVERRIDE" ] && ALL_FILES+=(-f "$LOCAL_OVERRIDE")
+if [ -f "$LOCAL_OVERRIDE" ]; then ALL_FILES+=(-f "$LOCAL_OVERRIDE"); fi
 
 build_compose_files() {
   COMPOSE_FILES=(-f "$DEV/docker-compose.yml" -f "$DEV/docker-compose-dev.yml")
@@ -246,7 +246,7 @@ build_compose_files() {
   if [ "$WANT_UI" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ui.yml"); fi
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$PULLED" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.images.yml"); fi
-  [ -f "$LOCAL_OVERRIDE" ] && COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE")   # per-dev overrides win
+  if [ -f "$LOCAL_OVERRIDE" ]; then COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE"); fi   # per-dev overrides win
 }
 
 # Service list for a targeted (non-full) `up`. For --full we start everything
