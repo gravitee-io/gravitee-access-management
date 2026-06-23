@@ -25,16 +25,32 @@ import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
-
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.DEFAULT_USER_FIELDS;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractMongoRepository {
+    protected static final String FIELD_ID = "_id";
+    protected static final String FIELD_DOMAIN = "domain";
+    protected static final String FIELD_CLIENT = "client";
+    protected static final String FIELD_UPDATED_AT = "updatedAt";
+    protected static final String FIELD_CREATED_AT = "createdAt";
+    protected static final String FIELD_REFERENCE_TYPE = "referenceType";
+    protected static final String FIELD_REFERENCE_ID = "referenceId";
+    protected static final String FIELD_ORGANIZATION_ID = "organizationId";
+    protected static final String FIELD_NAME = "name";
+    protected static final String FIELD_USER_ID = "userId";
+    protected static final String FIELD_USER_EXTERNAL_ID = "userExternalId";
+    protected static final String FIELD_USER_SOURCE = "userSource";
+
+    @Autowired
+    protected FilterCriteriaParser filterCriteriaParser;
+
+    protected static final UserIdFields DEFAULT_USER_FIELDS = new UserIdFields(FIELD_USER_ID, FIELD_USER_SOURCE, FIELD_USER_EXTERNAL_ID);
 
     protected void init(MongoCollection<?> collection) {
         MongoUtils.init(collection);
