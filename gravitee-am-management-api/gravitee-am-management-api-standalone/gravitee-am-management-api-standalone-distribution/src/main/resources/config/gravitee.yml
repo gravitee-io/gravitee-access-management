@@ -444,12 +444,6 @@ repositories:
   #      path:                      # Path to the truststore (when sslEnabled is true, default null)
   #      type:                      # Type of the truststore, supports jks, pem, pkcs12 (when sslEnabled is true, default null)
   #      password:                  # Truststore password (when sslEnabled is true, default null)
-#  ratelimit:
-#    type: redis
-#    redis:
-#      host: 'localhost'
-#      port: 6379
-#      password: 'mypassword'
 
 dataPlanes:
   - id: default
