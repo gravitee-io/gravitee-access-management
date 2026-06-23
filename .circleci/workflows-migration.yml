@@ -21,6 +21,9 @@ parameters:
   migration_test_filter:
     type: string
     default: ""
+  migration_test_registry:
+    type: string
+    default: ""
   migration_test_with_downgrade:
     type: string
     default: "true"
@@ -74,6 +77,9 @@ jobs:
             CMD="${MIGRATION_TEST_BASE}"
             if [ -n "<< pipeline.parameters.migration_test_filter >>" ]; then
               CMD="$CMD --test-filter << pipeline.parameters.migration_test_filter >>"
+            fi
+            if [ -n "<< pipeline.parameters.migration_test_registry >>" ]; then
+              CMD="$CMD --registry << pipeline.parameters.migration_test_registry >>"
             fi
             if [ "<< pipeline.parameters.migration_test_with_downgrade >>" = "true" ]; then
               CMD="$CMD --with-downgrade"

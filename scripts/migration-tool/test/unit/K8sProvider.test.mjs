@@ -5,6 +5,7 @@ jest.unstable_mockModule('../../lib/core/VersionValidator.mjs', () => ({
 }));
 
 const { K8sProvider } = await import('../../lib/providers/K8sProvider.mjs');
+const { validateAmImageTag } = await import('../../lib/core/VersionValidator.mjs');
 
 /**
  * TDD for Refactored K8sProvider
@@ -18,6 +19,7 @@ describe('K8sProvider', () => {
     let mockDatabaseStrategy;
 
     beforeEach(() => {
+        jest.clearAllMocks();
         mockHelm = {
             repoAdd: jest.fn(),
             repoUpdate: jest.fn(),
@@ -42,7 +44,11 @@ describe('K8sProvider', () => {
         mockDatabaseStrategy = {
             deploy: jest.fn(),
             clean: jest.fn(),
-            waitForReady: jest.fn()
+            waitForReady: jest.fn(),
+            getSeedEnv: jest.fn().mockReturnValue({
+                AM_INTERNAL_MONGODB_URI: 'mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee',
+                AM_INTERNAL_MONGODB_DATABASE: 'gravitee'
+            })
         };
 
         provider = new K8sProvider({
@@ -76,6 +82,12 @@ describe('K8sProvider', () => {
         await provider.cleanup();
         expect(mockPortForwarder.stop).toHaveBeenCalledWith(123);
         expect(mockPortForwarder.stop).toHaveBeenCalledWith(456);
+    });
+
+    test('getTestEnv exposes the database strategy seed env so the seed Mongo IDP gets a valid uri', () => {
+        const env = provider.getTestEnv();
+        expect(env.AM_INTERNAL_MONGODB_URI).toBe('mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee');
+        expect(env.AM_INTERNAL_MONGODB_DATABASE).toBe('gravitee');
     });
 
     test('ensureCluster returns when cluster is reachable (no kind create)', async () => {
@@ -163,12 +175,40 @@ describe('K8sProvider', () => {
             valuesFiles: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
             createNamespace: true,
             version: '4.7.0',
+            timeout: '15m',
             set: expect.objectContaining({
                 'api.image.tag': appVersion,
                 'gateway.image.tag': appVersion,
                 'ui.image.tag': appVersion,
                 'license.key': 'dGVzdC1saWNlbnNl',
                 'license.name': 'am-license-v4'
+            })
+        }));
+    });
+
+    test('should override image repositories and skip Docker Hub validation when registry is configured', async () => {
+        provider = new K8sProvider({
+            namespace: 'gravitee-am',
+            valuesPath: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: mockLicenseManager,
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            registry: 'graviteeio.azurecr.io'
+        });
+
+        await provider.deploy('master-latest');
+
+        expect(validateAmImageTag).not.toHaveBeenCalledWith('master-latest');
+        expect(mockHelm.installOrUpgrade).toHaveBeenCalledWith('am', 'graviteeio/am', expect.objectContaining({
+            set: expect.objectContaining({
+                'api.image.repository': 'graviteeio.azurecr.io/graviteeio/am-management-api',
+                'gateway.image.repository': 'graviteeio.azurecr.io/graviteeio/am-gateway',
+                'ui.image.repository': 'graviteeio.azurecr.io/graviteeio/am-management-ui',
+                'api.image.tag': 'master-latest',
+                'gateway.image.tag': 'master-latest',
+                'ui.image.tag': 'master-latest'
             })
         }));
     });
@@ -207,7 +247,11 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         mockDatabaseStrategy = {
             deploy: jest.fn(),
             clean: jest.fn(),
-            waitForReady: jest.fn()
+            waitForReady: jest.fn(),
+            getSeedEnv: jest.fn().mockReturnValue({
+                AM_INTERNAL_MONGODB_URI: 'mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee',
+                AM_INTERNAL_MONGODB_DATABASE: 'gravitee'
+            })
         };
 
         provider = new K8sProvider({
@@ -236,11 +280,20 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         expect(mockPortForwarder.forceKillPort).toHaveBeenCalledWith(8002);
     });
 
+    test('getTestEnv exposes both data planes (gateway URLs + ids) for seeding and gateway tests', () => {
+        const env = provider.getTestEnv();
+        expect(env.AM_GATEWAY_URL).toBe('http://localhost:8091');
+        expect(env.AM_DOMAIN_DATA_PLANE_ID).toBe('dp1');
+        expect(env.AM_GATEWAY_URL_DP2).toBe('http://localhost:8092');
+        expect(env.AM_DOMAIN_DATA_PLANE_ID_DP2).toBe('dp2');
+    });
+
     test('deploy should installOrUpgrade three releases with per-release license secret name', async () => {
         await provider.deploy('4.10.0');
         expect(mockHelm.installOrUpgrade).toHaveBeenCalledTimes(3);
         expect(mockHelm.installOrUpgrade).toHaveBeenNthCalledWith(1, 'am-mapi', 'graviteeio/am', expect.objectContaining({
             valuesFile: '/am/am-mapi.yaml',
+            timeout: '15m',
             set: expect.objectContaining({
                 'api.image.tag': '4.10.0',
                 'gateway.image.tag': '4.10.0',
@@ -250,6 +303,7 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         }));
         expect(mockHelm.installOrUpgrade).toHaveBeenNthCalledWith(2, 'am-gateway-dp1', 'graviteeio/am', expect.objectContaining({
             valuesFile: '/am/am-gw-dp1.yaml',
+            timeout: '15m',
             set: expect.objectContaining({
                 'gateway.image.tag': '4.10.0',
                 'license.name': 'am-gateway-dp1-license'
@@ -257,6 +311,7 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         }));
         expect(mockHelm.installOrUpgrade).toHaveBeenNthCalledWith(3, 'am-gateway-dp2', 'graviteeio/am', expect.objectContaining({
             valuesFile: '/am/am-gw-dp2.yaml',
+            timeout: '15m',
             set: expect.objectContaining({
                 'gateway.image.tag': '4.10.0',
                 'license.name': 'am-gateway-dp2-license'
@@ -271,5 +326,14 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp1-gateway', 8091, 82);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp2-gateway', 8092, 82);
         expect(mockPortForwarder.start).toHaveBeenCalledTimes(4);
+    });
+
+    test('prepareTests should start tunnels when running a verify stage in a new process', async () => {
+        await provider.prepareTests();
+
+        expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-mapi-management-api', 8093, 83);
+        expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-mapi-management-ui', 8002, 8002);
+        expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp1-gateway', 8091, 82);
+        expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp2-gateway', 8092, 82);
     });
 });

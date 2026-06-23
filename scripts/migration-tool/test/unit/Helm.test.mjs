@@ -69,6 +69,17 @@ describe('Helm', () => {
         expect(flags[fIndexes[1] + 1]).toBe('am-mongodb-mapi.yaml');
     });
 
+    test('should pass a custom wait timeout to Helm', async () => {
+        await helm.installOrUpgrade('mongo', 'bitnami/mongodb', {
+            wait: true,
+            timeout: '10m'
+        });
+
+        const flags = mockShell.mock.calls[0][1];
+        expect(flags).toContain('--timeout');
+        expect(flags).toContain('10m');
+    });
+
     test('should add a repository', async () => {
         await helm.repoAdd('bitnami', 'https://charts.bitnami.com/bitnami');
 
