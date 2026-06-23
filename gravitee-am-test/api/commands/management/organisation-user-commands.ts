@@ -31,6 +31,18 @@ export const getOrganisationUserPage = (accessToken, page: number = null, size: 
   return getUserApi(accessToken).listOrganisationUsers(params);
 };
 
+export const searchOrganisationUsers = (accessToken, filter: string, page: number = null, size: number = null) => {
+  const params: any = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+    filter: filter,
+  };
+  if (page != null && size != null) {
+    params.page = page;
+    params.size = size;
+  }
+  return getUserApi(accessToken).listOrganisationUsers(params);
+};
+
 export const updateOrganisationUsername = (accessToken, userId, username) =>
   getUserApi(accessToken).updateOrganisationUsername({
     organizationId: process.env.AM_DEF_ORG_ID,
