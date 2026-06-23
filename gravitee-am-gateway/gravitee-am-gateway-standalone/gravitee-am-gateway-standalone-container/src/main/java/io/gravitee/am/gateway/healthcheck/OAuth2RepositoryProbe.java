@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.healthcheck;
+package io.gravitee.am.gateway.healthcheck;
 
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
 import org.springframework.beans.factory.annotation.Autowired;
