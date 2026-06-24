@@ -192,7 +192,7 @@
 
         <!-- Plugins included to addons-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>
-        <gravitee-am-gateway-handler-saml2-idp.version>5.0.0-alpha.4</gravitee-am-gateway-handler-saml2-idp.version>
+        <gravitee-am-gateway-handler-saml2-idp.version>6.0.0-alpha.1</gravitee-am-gateway-handler-saml2-idp.version>
         <gravitee-am-resource-sfr.version>2.0.0-alpha.1</gravitee-am-resource-sfr.version>
         <gravitee-am-resource-http.version>2.0.0-alpha.1</gravitee-am-resource-http.version>
         <gravitee-am-resource-orange-contact-everyone.version>2.0.0-alpha.1</gravitee-am-resource-orange-contact-everyone.version>
