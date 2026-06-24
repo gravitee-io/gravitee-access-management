@@ -92,6 +92,7 @@ public class CorsHandlerFactoryTest {
     @Test
     public void shouldCreate_custom_cors_settings() {
         final CorsSettings corsSettings = new CorsSettings();
+        corsSettings.setInherited(false);
         corsSettings.setAllowedOrigins(Set.of("http.foo.com", "https.bar.com/*"));
         corsSettings.setAllowedHeaders(Set.of("Authorization", "custom-header"));
         corsSettings.setAllowedMethods(Set.of("DELETE", "PUT"));
@@ -104,6 +105,20 @@ public class CorsHandlerFactoryTest {
         final CorsHandlerImpl handlerObject = (CorsHandlerImpl) handler.getDelegate();
 
         assertTrue(validateCorsProperties(handlerObject, corsSettings));
+    }
+
+    @Test
+    public void shouldCreate_denied_cors_settings_when_explicitly_disabled() {
+        final CorsSettings settings = new CorsSettings();
+        settings.setInherited(false);
+        settings.setEnabled(false);
+        when(domain.getCorsSettings()).thenReturn(settings);
+
+        final CorsHandler handler = factory.getObject();
+        final CorsHandlerImpl handlerObject = (CorsHandlerImpl) handler.getDelegate();
+
+        final Set<Pattern> relativeOrigins = (Set<Pattern>) ReflectionTestUtils.getField(handlerObject, "regexOrigins");
+        assertEquals("[^$]", relativeOrigins.toString());
     }
 
     @Test

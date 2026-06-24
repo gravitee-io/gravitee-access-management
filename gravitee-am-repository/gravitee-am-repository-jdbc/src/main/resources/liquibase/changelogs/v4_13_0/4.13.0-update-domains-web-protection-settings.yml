@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-update-domain-web-protection-settings
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: domains
+              columnName: web_protection_settings
+      changes:
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: web_protection_settings, type: clob, constraints: { nullable: true } }

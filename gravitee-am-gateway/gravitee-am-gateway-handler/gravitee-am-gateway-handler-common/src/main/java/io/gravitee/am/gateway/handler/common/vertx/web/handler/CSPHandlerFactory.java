@@ -17,9 +17,13 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp.CspHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp.NoOpCspHandler;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.webprotection.CspSettings;
+import io.gravitee.am.model.webprotection.WebProtectionResolution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import java.io.BufferedReader;
@@ -43,54 +47,81 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
     private static final String HTTP_CSP_DIRECTIVES = "http.csp.directives[%d]";
     private static final String HTTP_CSP_SCRIPT_INLINE_NONCE = "http.csp.script-inline-nonce";
 
-    private final Environment environment;
+    @Autowired
+    private Environment environment;
 
-    private static CSPHandler INSTANCE;
-
-    public CSPHandlerFactory(Environment environment) {
-        this.environment = environment;
-    }
+    @Autowired
+    private Domain domain;
 
     @Override
     public CSPHandler getObject() {
-        if (isNull(INSTANCE)) {
-            var reportOnly = environment.getProperty(HTTP_CSP_REPORT_ONLY, Boolean.class);
-            var directives = getDirectives();
-            var scriptInlineNonce = environment.getProperty(HTTP_CSP_SCRIPT_INLINE_NONCE, Boolean.class, true);
-            final boolean notEnabled = !environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, true);
-            if ((isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) || notEnabled) {
-                INSTANCE = new NoOpCspHandler();
-            } else {
-                INSTANCE = new CspHandlerImpl(reportOnly, directives, scriptInlineNonce);
-            }
-        }
-        return INSTANCE;
+        return switch (WebProtectionDomainSettings.cspResolution(domain)) {
+            case DISABLED -> new NoOpCspHandler();
+            case ENABLED -> createFromDomainSettings(WebProtectionDomainSettings.csp(domain));
+            case INHERIT -> createFromEnvironment();
+        };
     }
 
-    private List<String> getDirectives() {
+    private CSPHandler createFromDomainSettings(CspSettings settings) {
+        final List<String> directives = resolveDirectives(settings.getDirectives());
+        if (directives == null || directives.isEmpty()) {
+            logger.warn("Domain CSP is enabled but no directives are available for domain: {}, falling back to gravitee.yml",
+                    domain.getName());
+            return createFromEnvironment();
+        }
+        return new CspHandlerImpl(settings.isReportOnly(), directives, settings.isScriptInlineNonce());
+    }
+
+    private CSPHandler createFromEnvironment() {
+        logger.debug("Using gravitee.yml CSP configuration for domain: {}", domain.getName());
+        var reportOnly = environment.getProperty(HTTP_CSP_REPORT_ONLY, Boolean.class);
+        var directives = getEnvironmentDirectives();
+        var scriptInlineNonce = environment.getProperty(HTTP_CSP_SCRIPT_INLINE_NONCE, Boolean.class, true);
+        final boolean notEnabled = !environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, true);
+        if ((isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) || notEnabled) {
+            return new NoOpCspHandler();
+        }
+        return new CspHandlerImpl(reportOnly, directives, scriptInlineNonce);
+    }
+
+    private List<String> resolveDirectives(List<String> domainDirectives) {
+        if (domainDirectives != null && !domainDirectives.isEmpty()) {
+            return domainDirectives;
+        }
+        final List<String> environmentDirectives = readEnvironmentDirectives();
+        if (environmentDirectives != null && !environmentDirectives.isEmpty()) {
+            return environmentDirectives;
+        }
+        return loadDefaultDirectives();
+    }
+
+    private List<String> getEnvironmentDirectives() {
+        return resolveDirectives(null);
+    }
+
+    private List<String> readEnvironmentDirectives() {
         List<String> directives = null;
         for (int i = 0; true; i++) {
             var propertyKey = String.format(HTTP_CSP_DIRECTIVES, i);
             var value = environment.getProperty(propertyKey, String.class);
             if (isNull(value)) {
                 break;
-            } else {
-                if (isNull(directives)) {
-                    directives = new ArrayList<>();
-                }
-                directives.add(value);
             }
-        }
-
-        if (isNull(directives) || directives.isEmpty()) {
-            // no directives defined by user, use default ones
-            try(var reader = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("default-csp-directives.properties")))) {
-                directives = reader.lines().collect(Collectors.toList());
-            } catch (IOException e) {
-                logger.warn("Unable to load default CSP directives from the classpath: {}", e.getMessage());
+            if (isNull(directives)) {
+                directives = new ArrayList<>();
             }
+            directives.add(value);
         }
         return directives;
+    }
+
+    private List<String> loadDefaultDirectives() {
+        try (var reader = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("default-csp-directives.properties")))) {
+            return reader.lines().collect(Collectors.toList());
+        } catch (IOException e) {
+            logger.warn("Unable to load default CSP directives from the classpath: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Override

@@ -20,6 +20,7 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.webprotection.WebProtectionSettings;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
@@ -80,6 +81,8 @@ public class DomainMongo extends Auditable {
     private SAMLSettingsMongo saml;
 
     private CorsSettings corsSettings;
+
+    private WebProtectionSettings webProtectionSettings;
 
     private Set<String> tags;
 

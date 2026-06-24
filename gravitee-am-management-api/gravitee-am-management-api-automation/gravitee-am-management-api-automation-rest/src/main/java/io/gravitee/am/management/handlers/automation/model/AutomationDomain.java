@@ -20,6 +20,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.webprotection.WebProtectionSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -140,6 +141,7 @@ public class AutomationDomain {
     private PasswordSettings passwordSettings;
     private SelfServiceAccountManagementSettings selfServiceAccountManagementSettings;
     private CorsSettings corsSettings;
+    private WebProtectionSettings webProtectionSettings;
     private SecretExpirationSettings secretExpirationSettings;
     private TokenExchangeSettings tokenExchangeSettings;
 

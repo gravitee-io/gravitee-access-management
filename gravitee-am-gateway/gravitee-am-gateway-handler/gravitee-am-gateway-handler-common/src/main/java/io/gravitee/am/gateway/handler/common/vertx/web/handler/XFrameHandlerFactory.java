@@ -17,13 +17,17 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xframe.NoXFrameHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xframe.XFrameHandlerImpl;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.webprotection.XFrameSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import java.util.Locale;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.util.Objects.isNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -31,26 +35,38 @@ import static java.util.Objects.isNull;
  */
 public class XFrameHandlerFactory implements FactoryBean<XFrameHandler> {
 
+    private static final Logger logger = LoggerFactory.getLogger(XFrameHandlerFactory.class);
     private static final String HTTP_XFRAME_ACTION = "http.xframe.action";
-    private final Environment environment;
 
-    private static XFrameHandler INSTANCE;
+    @Autowired
+    private Environment environment;
 
-    public XFrameHandlerFactory(Environment environment) {
-        this.environment = environment;
-    }
+    @Autowired
+    private Domain domain;
 
     @Override
     public XFrameHandler getObject() {
-        if (isNull(INSTANCE)) {
-            var action = environment.getProperty(HTTP_XFRAME_ACTION, String.class, "DENY");
-            if (isNullOrEmpty(action)) {
-                INSTANCE = new NoXFrameHandler();
-            } else {
-                INSTANCE = new XFrameHandlerImpl(action.trim().toUpperCase(Locale.ROOT));
-            }
+        return switch (WebProtectionDomainSettings.xframeResolution(domain)) {
+            case DISABLED -> new NoXFrameHandler();
+            case ENABLED -> createFromDomainSettings(WebProtectionDomainSettings.xframe(domain));
+            case INHERIT -> createFromEnvironment();
+        };
+    }
+
+    private XFrameHandler createFromDomainSettings(XFrameSettings settings) {
+        if (isNullOrEmpty(settings.getAction())) {
+            return new NoXFrameHandler();
         }
-        return INSTANCE;
+        return new XFrameHandlerImpl(settings.getAction().trim().toUpperCase(Locale.ROOT));
+    }
+
+    private XFrameHandler createFromEnvironment() {
+        logger.debug("Using gravitee.yml X-Frame-Options configuration for domain: {}", domain.getName());
+        var action = environment.getProperty(HTTP_XFRAME_ACTION, String.class, "DENY");
+        if (isNullOrEmpty(action)) {
+            return new NoXFrameHandler();
+        }
+        return new XFrameHandlerImpl(action.trim().toUpperCase(Locale.ROOT));
     }
 
     @Override
