@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.event;
 
-import com.google.common.collect.Lists;
 import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ReporterEvent;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -82,7 +82,9 @@ public class EventManagerImpl implements EventManager {
             }
         }
         List<EventListenerWrapper> listeners = getEventListeners(event.type().getClass(), domain);
-        List<EventListenerWrapper> safeConcurrentListeners = Lists.newArrayList(listeners.iterator());
+        // listeners is a CopyOnWriteArrayList: this snapshot is safe to iterate even while other
+        // threads concurrently subscribe (add) during parallel domain deployment.
+        List<EventListenerWrapper> safeConcurrentListeners = new ArrayList<>(listeners);
 
         if (isEmpty(safeConcurrentListeners)) {
             LOGGER.warn("Event received but no listeners available (Domain: {}, contentClass: {}, eventType: {})",
@@ -170,14 +172,7 @@ public class EventManagerImpl implements EventManager {
                 new ComparableEventType(eventType, null) :
                 new ComparableEventType(eventType, domain) ;
 
-        List<EventListenerWrapper> listeners = this.listenersMap.get(key);
-
-        if (listeners == null) {
-            listeners = Collections.synchronizedList(new ArrayList<>());
-            this.listenersMap.put(new ComparableEventType(eventType, domain), listeners);
-        }
-
-        return listeners;
+        return this.listenersMap.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>());
     }
 
     private class EventListenerWrapper<T extends Enum<T>> {

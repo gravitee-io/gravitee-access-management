@@ -251,13 +251,15 @@ public class SyncManager implements InitializingBean, DisposableBean {
         Completable deployAll = domainRepository.findAll()
                 .filter(Domain::isEnabled)
                 .filter(this::canHandle)
-                .flatMapCompletable(domain ->
-                        deployOne(domain)
-                                .subscribeOn(deploymentScheduler)
-                                .doOnComplete(() -> domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED))
-                                .doOnError(ex -> logger.error("Unable to deploy security domain {}", domain.getId(), ex))
-                                .onErrorComplete(),
-                        false, deployParallelism);
+                .toList()
+                .flatMapCompletable(domains ->
+                        Flowable.fromIterable(domains)
+                                .flatMapCompletable(domain -> deployOne(domain)
+                                                .subscribeOn(deploymentScheduler)
+                                                .doOnComplete(() -> domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED))
+                                                .doOnError(ex -> logger.error("Unable to deploy security domain {}", domain.getId(), ex))
+                                                .onErrorComplete(),
+                                        false, deployParallelism));
         if (initDomainTimeOut > 0) {
             deployAll = deployAll.timeout(initDomainTimeOut, TimeUnit.MILLISECONDS);
         }
