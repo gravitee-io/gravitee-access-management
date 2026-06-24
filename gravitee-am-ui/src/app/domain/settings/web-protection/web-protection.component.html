@@ -1,0 +1,330 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>Web protection</h1>
+  <div class="gv-page-content">
+    <div fxLayout="column" fxFlex="70">
+      <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
+        <div id="cors-settings" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Configure cross-origin resource sharing (CORS)</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div fxLayout="column" style="margin-bottom: 15px">
+            <mat-slide-toggle
+              (change)="enableInherit(domain.corsSettings, $event)"
+              [checked]="isInherited(domain.corsSettings)"
+              [disabled]="readonly"
+            >
+              Inherit platform settings
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%">Use the same cross-origin settings as the rest of the platform.</mat-hint>
+          </div>
+
+          <ng-container *ngIf="!isInherited(domain.corsSettings)">
+            <div fxLayout="column" style="margin-bottom: 15px">
+              <mat-slide-toggle (change)="enableCorsSettings($event)" [checked]="isCorsSettingsEnabled()" [disabled]="readonly">
+                Enable CORS
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%">
+                Disable this option to reject cross-origin requests for this security domain, even if CORS is enabled at platform level.
+              </mat-hint>
+            </div>
+
+            <ng-container *ngIf="isCorsSettingsEnabled()">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Allow-Origin</mat-label>
+                <mat-chip-grid #origins aria-label="allowedOrigin" [disabled]="readonly">
+                  <mat-chip-row
+                    *ngFor="let dwPattern of domain.corsSettings.allowedOrigins"
+                    [removable]="!readonly"
+                    (removed)="removeOrigin(dwPattern)"
+                  >
+                    {{ dwPattern }}
+                    <mat-icon matChipRemove>cancel</mat-icon>
+                  </mat-chip-row>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="*, https://mydomain.com, (http|https).*.mydomain.com, ..."
+                    name="allowedOrigin"
+                    [matChipInputFor]="origins"
+                    (keydown.enter)="addOrigin($event)"
+                    [value]="originValue || ''"
+                    (input)="originValue = $any($event.target).value"
+                    [disabled]="readonly"
+                  />
+                </mat-chip-grid>
+                <mat-hint
+                  >The origin parameter specifies a URI that may access the resource. If you want to allow all origins, you can enter *.
+                  Regular expressions are also supported.
+                </mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Allow-Methods</mat-label>
+                <mat-select
+                  multiple
+                  [(value)]="domain.corsSettings.allowedMethods"
+                  (selectionChange)="updateAllowedMethod($event)"
+                  placeholder="GET, POST, PUT, DELETE, ..."
+                  [disabled]="readonly"
+                >
+                  <mat-option *ngFor="let httpMethod of httpMethods" [value]="httpMethod">
+                    {{ httpMethod }}
+                  </mat-option>
+                </mat-select>
+                <mat-hint>Specifies the method or methods allowed to access the resource.</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Allow-Headers</mat-label>
+                <mat-chip-grid #headers aria-label="allowedHeaders" [disabled]="readonly">
+                  <mat-chip-row
+                    *ngFor="let dwPattern of domain.corsSettings.allowedHeaders"
+                    [removable]="!readonly"
+                    (removed)="removeHeader(dwPattern)"
+                  >
+                    {{ dwPattern }}
+                    <mat-icon matChipRemove>cancel</mat-icon>
+                  </mat-chip-row>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="Content-Type, ..."
+                    name="allowedHeaders"
+                    [matChipInputFor]="headers"
+                    (keydown.enter)="addHeader($event)"
+                    [value]="headerValue || ''"
+                    (input)="headerValue = $any($event.target).value"
+                    [disabled]="readonly"
+                  />
+                </mat-chip-grid>
+                <mat-hint>The headers allowed in your cross-origin requests.</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Max age (seconds)</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  placeholder="86400 (1 Day)"
+                  name="maxAge"
+                  [(ngModel)]="domain.corsSettings.maxAge"
+                  (ngModelChange)="updateFormState()"
+                  [disabled]="readonly"
+                />
+                <mat-hint>Indicates how long the results of a pre-flight request can be cached.</mat-hint>
+              </mat-form-field>
+
+              <div fxLayout="column" style="margin-bottom: 15px">
+                <mat-slide-toggle (change)="enableAllowCredentials($event)" [checked]="isAllowCredentialsEnabled()" [disabled]="readonly">
+                  Allow use of credentials
+                </mat-slide-toggle>
+                <mat-hint style="font-size: 75%">
+                  Allows the use of credentials (cookies, authorization headers, or TLS client certificates) when performing requests.
+                </mat-hint>
+              </div>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <div id="csp-settings" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Content Security Policy (CSP)</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div fxLayout="column" style="margin-bottom: 15px">
+            <mat-slide-toggle
+              (change)="enableInherit(domain.webProtectionSettings.csp, $event)"
+              [checked]="isInherited(domain.webProtectionSettings.csp)"
+              [disabled]="readonly"
+            >
+              Inherit platform settings
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%">Use the same Content Security Policy as the rest of the platform.</mat-hint>
+          </div>
+
+          <ng-container *ngIf="!isInherited(domain.webProtectionSettings.csp)">
+            <div fxLayout="column" style="margin-bottom: 15px">
+              <mat-slide-toggle (change)="enableCspSettings($event)" [checked]="isCspSettingsEnabled()" [disabled]="readonly">
+                Enable CSP
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%">
+                Disable this option to remove the Content-Security-Policy header for this security domain.
+              </mat-hint>
+            </div>
+
+            <ng-container *ngIf="isCspSettingsEnabled()">
+              <div fxLayout="column" style="margin-bottom: 15px">
+                <mat-slide-toggle
+                  [(ngModel)]="domain.webProtectionSettings.csp.reportOnly"
+                  name="cspReportOnly"
+                  (ngModelChange)="updateFormState()"
+                  [disabled]="readonly"
+                >
+                  Report only
+                </mat-slide-toggle>
+                <mat-hint style="font-size: 75%">Deliver the policy as Content-Security-Policy-Report-Only.</mat-hint>
+              </div>
+
+              <div fxLayout="column" style="margin-bottom: 15px">
+                <mat-slide-toggle
+                  [(ngModel)]="domain.webProtectionSettings.csp.scriptInlineNonce"
+                  name="cspScriptInlineNonce"
+                  (ngModelChange)="updateFormState()"
+                  [disabled]="readonly"
+                >
+                  Script inline nonce
+                </mat-slide-toggle>
+                <mat-hint style="font-size: 75%">Include a nonce in the script-src directive for inline scripts.</mat-hint>
+              </div>
+
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Directives</mat-label>
+                <mat-chip-grid #directives aria-label="cspDirectives" [disabled]="readonly">
+                  <mat-chip-row
+                    *ngFor="let directive of domain.webProtectionSettings.csp.directives"
+                    [removable]="!readonly"
+                    (removed)="removeDirective(directive)"
+                  >
+                    {{ directive }}
+                    <mat-icon matChipRemove>cancel</mat-icon>
+                  </mat-chip-row>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="default-src 'self';"
+                    name="cspDirective"
+                    [matChipInputFor]="directives"
+                    (keydown.enter)="addDirective($event)"
+                    [value]="directiveValue || ''"
+                    (input)="directiveValue = $any($event.target).value"
+                    [disabled]="readonly"
+                  />
+                </mat-chip-grid>
+                <mat-hint>Each directive must follow the format "directive-name value;". Press Enter to add.</mat-hint>
+              </mat-form-field>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <div id="xframe-settings" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>X-Frame-Options</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div fxLayout="column" style="margin-bottom: 15px">
+            <mat-slide-toggle
+              (change)="enableInherit(domain.webProtectionSettings.xframe, $event)"
+              [checked]="isInherited(domain.webProtectionSettings.xframe)"
+              [disabled]="readonly"
+            >
+              Inherit platform settings
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%">Use the same X-Frame-Options policy as the rest of the platform.</mat-hint>
+          </div>
+
+          <ng-container *ngIf="!isInherited(domain.webProtectionSettings.xframe)">
+            <div fxLayout="column" style="margin-bottom: 15px">
+              <mat-slide-toggle (change)="enableXFrameSettings($event)" [checked]="isXFrameSettingsEnabled()" [disabled]="readonly">
+                Enable X-Frame-Options
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%"> Disable this option to omit the X-Frame-Options header for this security domain. </mat-hint>
+            </div>
+
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="isXFrameSettingsEnabled()">
+              <mat-label>Action</mat-label>
+              <mat-select
+                [(value)]="domain.webProtectionSettings.xframe.action"
+                (selectionChange)="updateFormState()"
+                [disabled]="readonly"
+              >
+                <mat-option *ngFor="let action of xframeActions" [value]="action">
+                  {{ action }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Controls whether the page can be displayed in a frame on another site.</mat-hint>
+            </mat-form-field>
+          </ng-container>
+        </div>
+
+        <div id="xss-settings" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>X-XSS-Protection</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div fxLayout="column" style="margin-bottom: 15px">
+            <mat-slide-toggle
+              (change)="enableInherit(domain.webProtectionSettings.xss, $event)"
+              [checked]="isInherited(domain.webProtectionSettings.xss)"
+              [disabled]="readonly"
+            >
+              Inherit platform settings
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%">Use the same X-XSS-Protection policy as the rest of the platform.</mat-hint>
+          </div>
+
+          <ng-container *ngIf="!isInherited(domain.webProtectionSettings.xss)">
+            <div fxLayout="column" style="margin-bottom: 15px">
+              <mat-slide-toggle (change)="enableXssSettings($event)" [checked]="isXssSettingsEnabled()" [disabled]="readonly">
+                Enable X-XSS-Protection
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%">
+                Disable this option to omit the X-XSS-Protection header for this security domain.
+              </mat-hint>
+            </div>
+
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="isXssSettingsEnabled()">
+              <mat-label>Action</mat-label>
+              <input
+                matInput
+                type="text"
+                name="xssAction"
+                [(ngModel)]="domain.webProtectionSettings.xss.action"
+                (ngModelChange)="updateFormState()"
+                [disabled]="readonly"
+              />
+              <mat-hint>Value of the X-XSS-Protection response header.</mat-hint>
+            </mat-form-field>
+          </ng-container>
+        </div>
+
+        <div *hasPermission="['domain_settings_update']">
+          <button mat-raised-button color="primary" [disabled]="!domainForm.valid || !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>Web protection</h3>
+      <div class="gv-page-description-content">
+        <p>Configure HTTP security headers and CORS for your security domain.</p>
+        <p>Changes take effect without restarting the system.</p>
+        <p>
+          By default, each setting follows the platform configuration. Turn off inherit to customise or disable a protection for this
+          security domain only.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

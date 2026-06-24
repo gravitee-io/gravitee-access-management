@@ -69,6 +69,8 @@ public class JdbcDomain {
     private boolean master = false;
     @Column("cors_settings")
     private String corsSettings;
+    @Column("web_protection_settings")
+    private String webProtectionSettings;
     @Column("data_plane_id")
     private String dataPlaneId;
     @Column("managed_by")

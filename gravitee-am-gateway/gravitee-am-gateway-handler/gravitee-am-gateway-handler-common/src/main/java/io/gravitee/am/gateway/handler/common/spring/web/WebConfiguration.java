@@ -49,18 +49,18 @@ import org.springframework.core.env.Environment;
 public class WebConfiguration {
 
     @Bean
-    public CSPHandlerFactory cspHandlerFactory(Environment environment) {
-        return new CSPHandlerFactory(environment);
+    public CSPHandlerFactory cspHandlerFactory() {
+        return new CSPHandlerFactory();
     }
 
     @Bean
-    public XFrameHandlerFactory xframeHandlerFactory(Environment environment) {
-        return new XFrameHandlerFactory(environment);
+    public XFrameHandlerFactory xframeHandlerFactory() {
+        return new XFrameHandlerFactory();
     }
 
     @Bean
-    public XSSHandlerFactory xssHandlerFactory(Environment environment) {
-        return new XSSHandlerFactory(environment);
+    public XSSHandlerFactory xssHandlerFactory() {
+        return new XSSHandlerFactory();
     }
 
     @Bean

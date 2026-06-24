@@ -59,7 +59,7 @@ describe('DomainSettingsEntrypointsComponent', () => {
     } as Partial<AuthService> as AuthService;
 
     domainStoreStub = {
-      domain$: new BehaviorSubject({ id: 'test-domain', name: 'Test Domain', vhosts: [], corsSettings: {} }),
+      domain$: new BehaviorSubject({ id: 'test-domain', name: 'Test Domain', vhosts: [] }),
       set: jest.fn(),
       get current() {
         return { id: 'test-domain', name: 'Test Domain' };

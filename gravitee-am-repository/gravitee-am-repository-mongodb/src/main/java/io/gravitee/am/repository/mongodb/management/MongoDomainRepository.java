@@ -242,6 +242,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setIdentities(domainMongo.getIdentities());
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
+        domain.setWebProtectionSettings(domainMongo.getWebProtectionSettings());
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
         domain.setManagedBy(domainMongo.getManagedBy() != null ? ManagedBy.valueOf(domainMongo.getManagedBy()) : null);
         domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
@@ -285,6 +286,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
+        domainMongo.setWebProtectionSettings(domain.getWebProtectionSettings());
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
         domainMongo.setManagedBy(domain.getManagedBy() != null ? domain.getManagedBy().name() : null);
         domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
