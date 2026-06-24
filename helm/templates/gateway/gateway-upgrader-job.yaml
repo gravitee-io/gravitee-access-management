@@ -98,6 +98,12 @@ spec:
           env:
             - name: upgrade.mode
               value: "true"
+            {{- if eq .Values.management.type "jdbc" }}
+            - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_LIQUIBASE_ENABLED
+              value: "true"
+            - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_LIQUIBASE_ENABLED
+              value: "true"
+            {{- end }}
             {{- if $plugins }}
             - name: GRAVITEE_PLUGINS_PATH_0
               value: '${gravitee.home}/plugins'

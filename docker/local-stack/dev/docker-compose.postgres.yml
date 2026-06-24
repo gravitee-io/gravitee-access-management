@@ -31,7 +31,9 @@ services:
         condition: service_started
       management:
         condition: service_healthy
-    volumes:
+      gateway-migrator:
+        condition: service_completed_successfully
+    volumes: &gateway_jdbc_volumes
       - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc/postgresql-jdbc.jar
       - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc/r2dbc-postgresql.jar
       - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/dataplane-am-jdbc/postgresql-jdbc.jar
@@ -39,6 +41,56 @@ services:
       - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/reporter-am-jdbc/postgresql-jdbc.jar
       - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-gateway/plugins/ext/reporter-am-jdbc/r2dbc-postgresql.jar
     environment:
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432
+
+      - GRAVITEE_DATAPLANES_0_ID=default
+      - GRAVITEE_DATAPLANES_0_TYPE=jdbc
+      - GRAVITEE_DATAPLANES_0_JDBC_DRIVER=postgresql
+      - GRAVITEE_DATAPLANES_0_JDBC_DATABASE=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_USERNAME=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_PASSWORD=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_HOST=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_PORT=5432
+
+  # One-shot migrator for the scopes the gateway owns (oauth2, gateway).
+  gateway-migrator:
+    image: dev-gateway
+    restart: "no"
+    links:
+      - postgres
+    depends_on:
+      postgres:
+        condition: service_started
+      management:
+        condition: service_healthy
+    volumes: *gateway_jdbc_volumes
+    environment:
+      - upgrade.mode=true
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_LIQUIBASE_ENABLED=true
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_LIQUIBASE_ENABLED=true
+      
       - GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
       - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
       - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
@@ -102,3 +154,20 @@ services:
       - GRAVITEE_DATAPLANES_0_JDBC_PASSWORD=postgres
       - GRAVITEE_DATAPLANES_0_JDBC_HOST=postgres
       - GRAVITEE_DATAPLANES_0_JDBC_PORT=5432
+
+      # oauth2 and gateway scopes only required in management node in 4.12 and before
+      - GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432

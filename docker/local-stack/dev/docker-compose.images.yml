@@ -31,6 +31,9 @@ services:
   gateway:
     image: ${AM_REGISTRY:-graviteeio}/am-gateway:${GIO_AM_VERSION}
 
+  gateway-migrator:
+    image: ${AM_REGISTRY:-graviteeio}/am-gateway:${GIO_AM_VERSION}
+
   management:
     image: ${AM_REGISTRY:-graviteeio}/am-management-api:${GIO_AM_VERSION}
 
