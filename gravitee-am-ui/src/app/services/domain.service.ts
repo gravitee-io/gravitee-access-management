@@ -117,7 +117,13 @@ export class DomainService {
       path: domain.path,
       vhostMode: domain.vhostMode,
       vhosts: domain.vhosts,
+    });
+  }
+
+  patchWebProtectionSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       corsSettings: domain.corsSettings,
+      webProtectionSettings: domain.webProtectionSettings,
     });
   }
 

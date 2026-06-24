@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.cors;
 
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.WebProtectionDomainSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.http.HttpMethod;
@@ -32,7 +33,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
-import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,6 +50,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     protected static final String DEFAULT_HTTP_METHODS_VALUE = "GET, POST, PUT, PATCH, DELETE";
     protected static final int DEFAULT_MAX_AGE_VALUE = 86400;
     protected static final boolean DEFAULT_ALLOW_CREDENTIAL_VALUE = false;
+    private static final String DENY_ALL_ORIGIN_PATTERN = "^$";
 
     private static final Logger logger = LoggerFactory.getLogger(CorsHandlerFactory.class);
 
@@ -62,9 +63,14 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     @Override
     public CorsHandler getObject() {
         try {
-            final CorsSettings settings = getDomainCorsSettings();
-            logger.info("Creating CORS Handler for Domain: {} with CORS settings: {} ", domain.getName(), settings);
-            return createCorsHandler(settings);
+            return switch (WebProtectionDomainSettings.corsResolution(domain)) {
+                case DISABLED -> createDeniedCorsHandler();
+                case ENABLED -> createCorsHandler(resolveDomainCorsSettings());
+                case INHERIT -> {
+                    logger.debug("Using gravitee.yml CORS configuration for domain: {}", domain.getName());
+                    yield createCorsHandler(createDefaultCorsSettings());
+                }
+            };
         } catch (Exception ex) {
             logger.error("Could not create CORS handler with given settings", ex);
             final CorsSettings defaultSettings = createDefaultCorsSettings();
@@ -78,6 +84,15 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return CorsHandler.class;
     }
 
+    private CorsSettings resolveDomainCorsSettings() {
+        final CorsSettings corsSettings = domain.getCorsSettings();
+        if (corsSettings.getAllowedOrigins() == null || corsSettings.getAllowedOrigins().isEmpty()
+                || corsSettings.getAllowedOrigins().stream().anyMatch(origin -> origin.equals("*"))) {
+            corsSettings.setAllowedOrigins(Set.of(DEFAULT_ORIGIN_VALUE));
+        }
+        return corsSettings;
+    }
+
     private Set<String> getProperties(final String propertyKey, final String defaultValue) {
         final String property = Optional.ofNullable(environment.getProperty(propertyKey)).orElse(defaultValue);
         return new HashSet<>(asList(property.replaceAll("\\s+", "").split(",")));
@@ -85,18 +100,6 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
 
     private Set<HttpMethod> getHttpMethods(Set<String> httpMethods) {
         return httpMethods.stream().map(HttpMethod::valueOf).collect(Collectors.toSet());
-    }
-
-    private CorsSettings getDomainCorsSettings() {
-        return ofNullable(domain.getCorsSettings())
-                .filter(CorsSettings::isEnabled)
-                .map(corsSettings -> {
-                    if (corsSettings.getAllowedOrigins().isEmpty() || corsSettings.getAllowedOrigins().stream().anyMatch(origin -> origin.equals("*"))) {
-                        corsSettings.setAllowedOrigins(Set.of(DEFAULT_ORIGIN_VALUE));
-                    }
-                    return corsSettings;
-                })
-                .orElseGet(this::createDefaultCorsSettings);
     }
 
     private CorsSettings createDefaultCorsSettings() {
@@ -109,7 +112,18 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return settings;
     }
 
+    private CorsHandler createDeniedCorsHandler() {
+        final CorsSettings settings = new CorsSettings();
+        settings.setAllowedOrigins(Set.of(DENY_ALL_ORIGIN_PATTERN));
+        settings.setAllowedHeaders(Set.of());
+        settings.setAllowedMethods(Set.of());
+        settings.setMaxAge(0);
+        settings.setAllowCredentials(false);
+        return createCorsHandler(settings);
+    }
+
     private CorsHandler createCorsHandler(CorsSettings settings) {
+        logger.info("Creating CORS Handler for Domain: {} with CORS settings: {} ", domain.getName(), settings);
         return CorsHandler
                 .newInstance(io.vertx.ext.web.handler.CorsHandler
                         .create()

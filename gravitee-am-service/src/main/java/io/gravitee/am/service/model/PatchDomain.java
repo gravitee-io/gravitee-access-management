@@ -22,6 +22,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.webprotection.WebProtectionSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -67,6 +68,7 @@ public class PatchDomain {
     private Optional<Boolean> master;
     private Optional<PatchSAMLSettings> saml;
     private Optional<CorsSettings> corsSettings;
+    private Optional<WebProtectionSettings> webProtectionSettings;
     private Optional<String> dataPlaneId;
     private Optional<SecretExpirationSettings> secretSettings;
     private Optional<TokenExchangeSettings> tokenExchangeSettings;
@@ -94,6 +96,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
         SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
+        SetterUtils.safeSet(toPatch::setWebProtectionSettings, this.getWebProtectionSettings());
         SetterUtils.safeSet(toPatch::setDataPlaneId, this.getDataPlaneId());
         SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretSettings());
         SetterUtils.safeSet(toPatch::setTokenExchangeSettings, this.getTokenExchangeSettings());
@@ -150,6 +153,8 @@ public class PatchDomain {
                 || selfServiceAccountManagementSettings != null && selfServiceAccountManagementSettings.isPresent()
                 || tags != null && tags.isPresent()
                 || master != null && master.isPresent()
+                || corsSettings != null && corsSettings.isPresent()
+                || webProtectionSettings != null && webProtectionSettings.isPresent()
                 || secretSettings != null && secretSettings.isPresent()
                 || tokenExchangeSettings != null && tokenExchangeSettings.isPresent()
                 || certificateSettings != null && certificateSettings.isPresent()) {

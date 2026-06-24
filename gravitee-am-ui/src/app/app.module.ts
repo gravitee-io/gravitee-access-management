@@ -120,6 +120,7 @@ import { DomainDashboardComponent } from './domain/dashboard/dashboard.component
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
 import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoints/entrypoints.component';
+import { DomainSettingsWebProtectionComponent } from './domain/settings/web-protection/web-protection.component';
 import { DomainSettingsOpenidClientRegistrationComponent } from './domain/settings/openid/client-registration/client-registration.component';
 import { ClientRegistrationSettingsComponent } from './domain/settings/openid/client-registration/settings/settings.component';
 import { ClientRegistrationDefaultScopeComponent } from './domain/settings/openid/client-registration/default-scope/default-scope.component';
@@ -524,6 +525,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     DomainSettingsComponent,
     DomainSettingsGeneralComponent,
     DomainSettingsEntrypointsComponent,
+    DomainSettingsWebProtectionComponent,
     DomainSettingsOpenidClientRegistrationComponent,
     ClientRegistrationSettingsComponent,
     ClientRegistrationDefaultScopeComponent,

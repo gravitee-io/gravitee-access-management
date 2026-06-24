@@ -110,6 +110,7 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setTags(domain.getTags());
             filteredDomain.setCorsSettings(domain.getCorsSettings());
             filteredDomain.setCertificateSettings(domain.getCertificateSettings());
+            filteredDomain.setWebProtectionSettings(domain.getWebProtectionSettings());
         }
 
         return filteredDomain;

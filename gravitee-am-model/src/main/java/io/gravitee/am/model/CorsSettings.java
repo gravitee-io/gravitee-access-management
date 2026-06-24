@@ -27,7 +27,12 @@ import java.util.Set;
 @Schema(title = "CORS settings", description = "Cross-Origin Resource Sharing configuration controlling which " +
         "web origins may call the domain's endpoints from a browser.")
 public class CorsSettings {
-    @Schema(description = "Whether CORS handling is enabled for the domain.", defaultValue = "false")
+    @Schema(description = "Whether CORS settings are inherited from the gateway defaults (gravitee.yml). " +
+            "When null, legacy behaviour applies: enabled=true overrides and enabled=false inherits.",
+            defaultValue = "true")
+    private Boolean inherited;
+    @Schema(description = "Whether CORS handling is enabled for the domain when not inherited.",
+            defaultValue = "false")
     private boolean enabled;
     @Schema(description = "Origins permitted to make cross-origin requests. Use \"*\" to allow any origin.",
             example = "[\"https://app.example.com\"]")
@@ -44,6 +49,14 @@ public class CorsSettings {
     @Schema(description = "Whether the browser may send credentials (cookies, authorization headers) with " +
             "cross-origin requests.", defaultValue = "false")
     private boolean allowCredentials;
+
+    public Boolean getInherited() {
+        return inherited;
+    }
+
+    public void setInherited(Boolean inherited) {
+        this.inherited = inherited;
+    }
 
     public boolean isEnabled() {
         return enabled;
@@ -96,7 +109,8 @@ public class CorsSettings {
     @Override
     public String toString() {
         return "CorsSettings{" +
-                "enabled=" + enabled +
+                "inherited=" + inherited +
+                ", enabled=" + enabled +
                 ", allowedOrigins=" + allowedOrigins +
                 ", allowedMethods=" + allowedMethods +
                 ", allowedHeaders=" + allowedHeaders +

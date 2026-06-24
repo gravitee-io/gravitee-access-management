@@ -17,11 +17,15 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xss.NoXSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xss.XSSHandlerImpl;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.webprotection.XssProtectionSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.util.Objects.isNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -29,28 +33,40 @@ import static java.util.Objects.isNull;
  */
 public class XSSHandlerFactory implements FactoryBean<XSSHandler> {
 
+    private static final Logger logger = LoggerFactory.getLogger(XSSHandlerFactory.class);
     private static final String HTTP_XSS_ENABLED = "http.xss.enabled";
     private static final String HTTP_XSS_ACTION = "http.xss.action";
-    private final Environment environment;
 
-    private static XSSHandler INSTANCE;
+    @Autowired
+    private Environment environment;
 
-    public XSSHandlerFactory(Environment environment) {
-        this.environment = environment;
-    }
+    @Autowired
+    private Domain domain;
 
     @Override
     public XSSHandler getObject() {
-        if (isNull(INSTANCE)) {
-            var action = environment.getProperty(HTTP_XSS_ACTION, String.class, "1; mode=block");
-            final boolean notEnabled = !environment.getProperty(HTTP_XSS_ENABLED, Boolean.class, true);
-            if (isNullOrEmpty(action) || notEnabled) {
-                INSTANCE = new NoXSSHandler();
-            } else {
-                INSTANCE = new XSSHandlerImpl(action.trim());
-            }
+        return switch (WebProtectionDomainSettings.xssResolution(domain)) {
+            case DISABLED -> new NoXSSHandler();
+            case ENABLED -> createFromDomainSettings(WebProtectionDomainSettings.xss(domain));
+            case INHERIT -> createFromEnvironment();
+        };
+    }
+
+    private XSSHandler createFromDomainSettings(XssProtectionSettings settings) {
+        if (isNullOrEmpty(settings.getAction())) {
+            return new NoXSSHandler();
         }
-        return INSTANCE;
+        return new XSSHandlerImpl(settings.getAction().trim());
+    }
+
+    private XSSHandler createFromEnvironment() {
+        logger.debug("Using gravitee.yml X-XSS-Protection configuration for domain: {}", domain.getName());
+        var action = environment.getProperty(HTTP_XSS_ACTION, String.class, "1; mode=block");
+        final boolean notEnabled = !environment.getProperty(HTTP_XSS_ENABLED, Boolean.class, true);
+        if (isNullOrEmpty(action) || notEnabled) {
+            return new NoXSSHandler();
+        }
+        return new XSSHandlerImpl(action.trim());
     }
 
     @Override

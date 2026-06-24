@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatInput } from '@angular/material/input';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 import regexEscape from 'regex-escape';
@@ -31,7 +30,6 @@ import { DomainStoreService } from '../../../stores/domain.store';
   standalone: false,
 })
 export class DomainSettingsEntrypointsComponent implements OnInit {
-  @ViewChild('chipInput') chipInput: MatInput;
   formChanged = false;
   domain: any = {};
   entrypoint: any;
@@ -40,48 +38,6 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   domainRestrictions: string[];
   domainRegexList: RegExp[] = [];
   hostPattern: string;
-  httpMethods: string[] = [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'HEAD',
-    'OPTIONS',
-    'TRACE',
-    'CONNECT',
-    'PROPFIND',
-    'PROPPATCH',
-    'MKCOL',
-    'COPY',
-    'MOVE',
-    'LOCK',
-    'UNLOCK',
-    'MKCALENDAR',
-    'VERSION_CONTROL',
-    'REPORT',
-    'CHECKOUT',
-    'CHECKIN',
-    'UNCHECKOUT',
-    'MKWORKSPACE',
-    'UPDATE',
-    'LABEL',
-    'MERGE',
-    'BASELINE_CONTROL',
-    'MKACTIVITY',
-    'ORDERPATCH',
-    'ACL',
-    'SEARCH',
-  ];
-  headerValue: string;
-  originValue: string;
-  defaultCorsConfiguration = {
-    allowedOrigins: [],
-    allowedMethods: [],
-    allowedHeaders: [],
-    maxAge: Number,
-    allowCredentials: false,
-  };
 
   constructor(
     private domainService: DomainService,
@@ -94,10 +50,6 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   ngOnInit() {
     this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.entrypoint = this.route.snapshot.data['entrypoint'];
-    this.domain.corsSettings = this.domain.corsSettings || this.defaultCorsConfiguration;
-    if (this.domain.corsSettings.maxAge === 0) {
-      this.domain.corsSettings.maxAge = null;
-    }
     if (this.domain.vhosts === undefined) {
       this.domain.vhosts = [];
     }
@@ -132,9 +84,6 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     this.domainService.patchEntrypoints(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       this.domainStore.set(response);
-      if (this.domain.corsSettings.maxAge === 0) {
-        this.domain.corsSettings.maxAge = null;
-      }
       this.domainService.notify(this.domain);
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
@@ -200,73 +149,6 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   hostSelected(input: HTMLInputElement): void {
     input.blur();
     this.formChanged = true;
-  }
-
-  addHeader(event: Event): void {
-    event.preventDefault();
-    if (this.headerValue) {
-      if (!this.domain.corsSettings.allowedHeaders.some((el) => el === this.headerValue)) {
-        this.domain.corsSettings.allowedHeaders.push(this.headerValue);
-        this.domain.corsSettings.allowedHeaders = [...this.domain.corsSettings.allowedHeaders];
-        this.formChanged = true;
-        this.headerValue = '';
-      } else {
-        this.snackbarService.open(`Error : Header "${this.headerValue}" already exists`);
-      }
-    }
-  }
-
-  removeHeader(dwPattern: string): void {
-    const index = this.domain.corsSettings.allowedHeaders.indexOf(dwPattern);
-    if (index > -1) {
-      this.domain.corsSettings.allowedHeaders.splice(index, 1);
-      this.formChanged = true;
-    }
-  }
-
-  addOrigin(event: Event): void {
-    event.preventDefault();
-    if (this.originValue) {
-      if (!this.domain.corsSettings.allowedOrigins.some((el) => el === this.originValue)) {
-        this.domain.corsSettings.allowedOrigins.push(this.originValue);
-        this.domain.corsSettings.allowedOrigins = [...this.domain.corsSettings.allowedOrigins];
-        this.formChanged = true;
-        this.originValue = '';
-      } else {
-        this.snackbarService.open(`Error : Header "${this.originValue}" already exists`);
-      }
-    }
-  }
-
-  removeOrigin(dwPattern: string): void {
-    const index = this.domain.corsSettings.allowedOrigins.indexOf(dwPattern);
-    if (index > -1) {
-      this.domain.corsSettings.allowedOrigins.splice(index, 1);
-      this.formChanged = true;
-    }
-  }
-
-  updateAllowedMethod(event: any): void {
-    this.domain.corsSettings.allowedMethods = event.value;
-    this.formChanged = true;
-  }
-
-  enableCorsSettings(event: any): void {
-    this.domain.corsSettings.enabled = event.checked;
-    this.formChanged = true;
-  }
-
-  isCorsSettingsEnabled(): boolean {
-    return this.domain.corsSettings?.enabled;
-  }
-
-  enableAllowCredentials(event: any): void {
-    this.domain.corsSettings.allowCredentials = event.checked;
-    this.formChanged = true;
-  }
-
-  isAllowCredentialsEnabled(): boolean {
-    return this.domain.corsSettings?.allowCredentials;
   }
 
   updateFormState(): void {
