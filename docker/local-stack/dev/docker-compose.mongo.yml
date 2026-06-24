@@ -40,6 +40,9 @@ services:
         condition: service_started
     environment:
       - GRAVITEE_REPOSITORIES_MANAGEMENT_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      # oauth2 and gateway scopes only required in management node in 4.12 and before
+      - GRAVITEE_REPOSITORIES_OAUTH2_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - GRAVITEE_REPOSITORIES_GATEWAY_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
       - GRAVITEE_DATAPLANES_0_ID=default
       - GRAVITEE_DATAPLANES_0_TYPE=mongodb
       - GRAVITEE_DATAPLANES_0_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000

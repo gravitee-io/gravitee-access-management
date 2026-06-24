@@ -107,8 +107,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
     }
 
     protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, RepositoriesEnvironment environment, String prefix, String liquibaseFile) throws Exception {
-        Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
-        if (enabled) {
+        if (isLiquibaseEnabled(environment, prefix)) {
             final String jdbcPort = poolWrapper.getJdbcPort();
             var jdbcSchema = poolWrapper.getJdbcSchema();
             String jdbcUrl = new StringBuilder("jdbc:")
@@ -138,6 +137,16 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
                 runLiquibase(connection, liquibaseFile);
             }
         }
+    }
+
+    /**
+     * Liquibase migrations can be enabled globally ({@code liquibase.enabled}) or per repository scope
+     * (e.g. {@code repositories.oauth2.jdbc.liquibase.enabled}). The per-scope flag overrides the global
+     * default.
+     */
+    static boolean isLiquibaseEnabled(RepositoriesEnvironment environment, String prefix) {
+        boolean globalEnabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
+        return environment.getProperty(prefix + "liquibase.enabled", Boolean.class, globalEnabled);
     }
 
     private static String appendJdbcParam(String url, String key, String value) {

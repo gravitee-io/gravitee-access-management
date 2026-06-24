@@ -30,6 +30,39 @@ tests:
           # It should not contain init containers by default
           path: spec.template.spec.initContainers
 
+  - it: JDBC enables per-scope liquibase for the gateway-owned scopes
+    set:
+      management:
+        type: jdbc
+      gateway:
+        upgrader: true
+    template: gateway/gateway-upgrader-job.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_LIQUIBASE_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_LIQUIBASE_ENABLED
+            value: "true"
+
+  - it: Mongo does not set per-scope liquibase flags
+    set:
+      management:
+        type: mongodb
+      gateway:
+        upgrader: true
+    template: gateway/gateway-upgrader-job.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_LIQUIBASE_ENABLED
+            value: "true"
+
   - it: Check if the helm hook annotations are present
     set:
       gateway:
