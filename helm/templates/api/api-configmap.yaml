@@ -93,6 +93,20 @@ data:
       url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
     {{- end }}
 
+    console:
+      ui:
+        {{- if .Values.console.ui.url }}
+        url: {{ .Values.console.ui.url }}
+        {{- else }}
+        url: https://{{ index .Values.ui.ingress.hosts 0 }}{{ .Values.ui.ingress.path }}
+        {{- end }}
+      api:
+        {{- if .Values.console.api.url }}
+        url: {{ .Values.console.api.url }}
+        {{- else }}
+        url: https://{{ index .Values.api.ingress.hosts 0 }}{{ .Values.api.ingress.path }}
+        {{- end }}
+
 
     {{- if .Values.reporters }}
     reporters:

@@ -29,6 +29,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.handler.
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationFailureHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationSuccessHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomLogoutSuccessHandler;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.web.LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.handlers.management.api.authentication.web.XForwardedAwareRedirectStrategy;
@@ -107,7 +108,8 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
             OrganizationUserService userService,
             ReCaptchaService reCaptchaService,
             ObjectMapper objectMapper,
-            CookieCsrfSignedTokenRepository csrfTokenRepository
+            CookieCsrfSignedTokenRepository csrfTokenRepository,
+            RedirectCookieGenerator redirectCookieGenerator
     ) throws Exception {
 
         var pathRequestMatchers = Arrays.stream(MATCHER_ROUTES).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
@@ -135,7 +137,7 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(cockpitAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class)
                 .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
-                .addFilterBefore(new CheckRedirectionCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+                .addFilterBefore(new CheckRedirectionCookieFilter(redirectCookieGenerator.getDefaultRedirectUrl()), AbstractPreAuthenticatedProcessingFilter.class)
                 .addFilterBefore(checkLoginRedirectUriFilter(), AbstractPreAuthenticatedProcessingFilter.class)
                 .addFilterBefore(checkLogoutRedirectUriFilter(), LogoutFilter.class)
                 .addFilterBefore(builtInAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)

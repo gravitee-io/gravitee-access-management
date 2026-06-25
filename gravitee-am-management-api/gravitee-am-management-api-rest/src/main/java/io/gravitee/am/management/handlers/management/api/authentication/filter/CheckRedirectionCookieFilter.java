@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator.DEFAULT_REDIRECT_COOKIE_NAME;
-import static io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator.DEFAULT_REDIRECT_URL;
 
 /**
  * Extract the redirect cookie and add it to the current request attributes.
@@ -37,6 +36,12 @@ import static io.gravitee.am.management.handlers.management.api.authentication.p
  * @author GraviteeSource Team
  */
 public class CheckRedirectionCookieFilter extends GenericFilterBean {
+
+    private final String defaultRedirectUrl;
+
+    public CheckRedirectionCookieFilter(String defaultRedirectUrl) {
+        this.defaultRedirectUrl = defaultRedirectUrl;
+    }
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
@@ -50,7 +55,7 @@ public class CheckRedirectionCookieFilter extends GenericFilterBean {
             if (redirectionCookie.isPresent()) {
                 req.setAttribute(DEFAULT_REDIRECT_COOKIE_NAME, redirectionCookie.get().getValue());
             } else {
-                req.setAttribute(DEFAULT_REDIRECT_COOKIE_NAME, DEFAULT_REDIRECT_URL);
+                req.setAttribute(DEFAULT_REDIRECT_COOKIE_NAME, defaultRedirectUrl);
             }
         }
 
