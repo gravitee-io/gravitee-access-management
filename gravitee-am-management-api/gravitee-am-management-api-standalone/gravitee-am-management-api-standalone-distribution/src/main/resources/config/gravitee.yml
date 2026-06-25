@@ -543,7 +543,9 @@ gateway:
 #cockpit:
 #  url: https://cockpit.gravitee.io
 
-# Specify the URL of the Management API and UI of this instance, mandatory if you want to connect it to Cockpit
+# Specify the URL of the Management API and UI of this instance.
+# Mandatory if you want to connect it to Cockpit.
+# console.ui.url is also used as the post-login fallback redirect URL of the console (default http://localhost:4200).
 #console:
 #  ui:
 #    url: http://localhost:4200

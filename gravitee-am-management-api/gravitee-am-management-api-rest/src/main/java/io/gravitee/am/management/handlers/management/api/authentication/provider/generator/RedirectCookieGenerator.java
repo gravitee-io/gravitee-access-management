@@ -30,10 +30,26 @@ public class RedirectCookieGenerator {
     public static final String DEFAULT_REDIRECT_COOKIE_PATH = "/";
     public static final String DEFAULT_REDIRECT_COOKIE_DOMAIN = "";
     public static final int DEFAULT_REDIRECT_COOKIE_EXPIRES= 604800;
-    public static final String DEFAULT_REDIRECT_URL = "/auth/authorize?redirect_uri=http://localhost:4200/login/callback";
+    public static final String DEFAULT_UI_URL = "http://localhost:4200";
 
     @Autowired
     private Environment environment;
+
+    /**
+     * Returns the sanitized Console UI base URL (from the {@code console.ui.url} property).
+     * Falls back to {@link #DEFAULT_UI_URL} when the property is unset or blank.
+     */
+    public String getConsoleUiUrl() {
+        String uiUrl = environment.getProperty("console.ui.url", DEFAULT_UI_URL);
+        if (uiUrl == null || uiUrl.isEmpty()) {
+            return DEFAULT_UI_URL;
+        }
+        return uiUrl.endsWith("/") ? uiUrl.substring(0, uiUrl.length() - 1) : uiUrl;
+    }
+
+    public String getDefaultRedirectUrl() {
+        return "/auth/authorize?redirect_uri=" + getConsoleUiUrl() + "/login/callback";
+    }
 
     public Cookie generateCookie(String redirectUrl) {
 
