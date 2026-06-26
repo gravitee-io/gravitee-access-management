@@ -363,6 +363,7 @@ import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
+import { McpServerFlowsResolver } from './resolvers/mcp-server-flows.resolver';
 import { EnvironmentResolver } from './resolvers/environment-resolver.service';
 import { NavigationService } from './services/navigation.service';
 import { CockpitComponent } from './settings/cockpit/cockpit.component';
@@ -972,6 +973,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
     ApplicationFlowsResolver,
+    McpServerFlowsResolver,
     InstallationResolver,
     NotifiersResolver,
     AlertNotifiersResolver,

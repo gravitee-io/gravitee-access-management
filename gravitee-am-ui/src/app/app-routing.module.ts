@@ -264,6 +264,7 @@ import { DomainMcpServersComponent } from './domain/mcp-servers/mcp-servers.comp
 import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new/new-mcp-server.component';
 import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
+import { McpServerFlowsResolver } from './resolvers/mcp-server-flows.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
@@ -1586,6 +1587,28 @@ export const routes: Routes = [
                             },
                             resolve: {
                               entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+                          {
+                            path: 'flows',
+                            component: ApplicationFlowsComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              flows: McpServerFlowsResolver,
+                              policies: PluginPoliciesResolver,
+                              flowSettingsForm: PlatformFlowSchemaResolver,
+                              factors: FactorsResolver,
+                            },
+                            data: {
+                              menu: {
+                                label: 'Flows',
+                                section: 'Flows',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: ['protected_resource_flow_list', 'protected_resource_flow_read'],
+                              },
+                              flowsContext: 'mcp',
                             },
                           },
 

@@ -72,6 +72,14 @@ export class ProtectedResourceService {
     });
   }
 
+  flows(domainId: string, id: string): Observable<any> {
+    return this.http.get<any>(this.baseURL + `${domainId}/protected-resources/${id}/flows`);
+  }
+
+  updateFlows(domainId: string, id: string, flows: any): Observable<any> {
+    return this.http.put<any>(this.baseURL + `${domainId}/protected-resources/${id}/flows`, flows);
+  }
+
   getSecrets(domainId: string, id: string): Observable<ClientSecret[]> {
     return this.http.get<any>(this.baseURL + `${domainId}/protected-resources/${id}/secrets`).pipe(
       map((response) => {

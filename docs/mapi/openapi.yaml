@@ -6799,6 +6799,104 @@ paths:
       tags:
       - protected-resource
       - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/flows:
+    get:
+      description: "User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on\
+        \ the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the\
+        \ specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified\
+        \ environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified\
+        \ organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission\
+        \ on the domain, environment or organization, each returned flow is filtered\
+        \ and contains only basic information such as id and name and isEnabled."
+      operationId: listProtectedResourceFlows
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: protected-resource
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FlowEntity"
+          description: List registered flows for a protected resource
+        "500":
+          description: Internal server error
+      summary: List registered flows for a protected resource
+      tags:
+      - protected-resource
+      - domain
+    put:
+      description: "User must have the PROTECTED_RESOURCE_FLOW[UPDATE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_FLOW[UPDATE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_FLOW[UPDATE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_FLOW[UPDATE] permission\
+        \ on the specified organization. Only the TOKEN flow can be configured for\
+        \ a protected resource."
+      operationId: defineProtectedResourceFlows
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: protected-resource
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Flow"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FlowEntity"
+          description: Flows successfully updated
+        "500":
+          description: Internal server error
+      summary: Create or update list of flows
+      tags:
+      - protected-resource
+      - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members:
     get:
       description: "User must have PROTECTED_RESOURCE_MEMBER[LIST] permission on the\
@@ -15899,6 +15997,7 @@ components:
             - PROTECTED_RESOURCE_SETTINGS
             - PROTECTED_RESOURCE_OAUTH
             - PROTECTED_RESOURCE_CERTIFICATE
+            - PROTECTED_RESOURCE_FLOW
             - INSTALLATION
           uniqueItems: true
         settings:
@@ -16214,6 +16313,7 @@ components:
             - PROTECTED_RESOURCE_SETTINGS
             - PROTECTED_RESOURCE_OAUTH
             - PROTECTED_RESOURCE_CERTIFICATE
+            - PROTECTED_RESOURCE_FLOW
             - INSTALLATION
           uniqueItems: true
         riskAssessment:
@@ -16436,6 +16536,7 @@ components:
             - PROTECTED_RESOURCE_SETTINGS
             - PROTECTED_RESOURCE_OAUTH
             - PROTECTED_RESOURCE_CERTIFICATE
+            - PROTECTED_RESOURCE_FLOW
             - INSTALLATION
           uniqueItems: true
         saml:
@@ -16615,6 +16716,7 @@ components:
             - PROTECTED_RESOURCE_SETTINGS
             - PROTECTED_RESOURCE_OAUTH
             - PROTECTED_RESOURCE_CERTIFICATE
+            - PROTECTED_RESOURCE_FLOW
             - INSTALLATION
           uniqueItems: true
         securityProfileSettings:
@@ -16781,6 +16883,7 @@ components:
             - PROTECTED_RESOURCE_SETTINGS
             - PROTECTED_RESOURCE_OAUTH
             - PROTECTED_RESOURCE_CERTIFICATE
+            - PROTECTED_RESOURCE_FLOW
             - INSTALLATION
           uniqueItems: true
     PatchScope:

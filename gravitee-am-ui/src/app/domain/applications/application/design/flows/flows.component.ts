@@ -22,6 +22,7 @@ import { OrganizationService } from '../../../../../services/organization.servic
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { DialogService } from '../../../../../services/dialog.service';
+import { ProtectedResourceService } from '../../../../../services/protected-resource.service';
 
 @Component({
   selector: 'app-application-flows',
@@ -31,7 +32,8 @@ import { DialogService } from '../../../../../services/dialog.service';
 })
 export class ApplicationFlowsComponent implements OnInit {
   private domainId: string;
-  private application: any;
+  private entity: any;
+  private flowsContext: string;
   policies: any[];
   definition: any = {};
   flowSchema: string;
@@ -45,36 +47,50 @@ export class ApplicationFlowsComponent implements OnInit {
     private route: ActivatedRoute,
     private organizationService: OrganizationService,
     private applicationService: ApplicationService,
+    private protectedResourceService: ProtectedResourceService,
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
   ) {}
 
-  private static readonly SERVICE_APP_FLOW_TYPES = ['token'];
+  private static readonly TOKEN_FLOW_TYPES = ['token'];
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = this.route.snapshot.data['application'];
+    this.flowsContext = this.route.snapshot.data['flowsContext'];
+    this.entity = this.resolveEntity();
     this.flowSchema = this.filterFlowSchema(this.route.snapshot.data['flowSettingsForm']);
     const flows = this.route.snapshot.data['flows'] || [];
     this.definition.flows = this.filterAllowedFlows(flows);
     this.initPolicies();
   }
 
+  isMcpContext(): boolean {
+    return this.flowsContext === 'mcp';
+  }
+
+  private resolveEntity(): any {
+    return this.isMcpContext() ? this.route.snapshot.data['mcpServer'] : this.route.snapshot.data['application'];
+  }
+
   private isServiceApp(): boolean {
-    return this.application?.type?.toUpperCase() === 'SERVICE';
+    return this.entity?.type?.toUpperCase() === 'SERVICE';
+  }
+
+  private restrictToTokenFlow(): boolean {
+    return this.isMcpContext() || this.isServiceApp();
   }
 
   private filterAllowedFlows(flows: any[]): any[] {
-    return this.isServiceApp() ? flows.filter((f) => ApplicationFlowsComponent.SERVICE_APP_FLOW_TYPES.includes(f.type)) : flows;
+    return this.restrictToTokenFlow() ? flows.filter((f) => ApplicationFlowsComponent.TOKEN_FLOW_TYPES.includes(f.type)) : flows;
   }
 
   private filterFlowSchema(schema: any): any {
-    if (!this.isServiceApp() || !schema) {
+    if (!this.restrictToTokenFlow() || !schema) {
       return schema;
     }
     const isStringSchema = typeof schema === 'string';
     const parsed = isStringSchema ? JSON.parse(schema) : structuredClone(schema);
-    const allowedTypes = ApplicationFlowsComponent.SERVICE_APP_FLOW_TYPES;
+    const allowedTypes = ApplicationFlowsComponent.TOKEN_FLOW_TYPES;
     if (parsed.properties?.type) {
       if (Array.isArray(parsed.properties.type.enum)) {
         parsed.properties.type.enum = parsed.properties.type.enum.filter((t: string) => allowedTypes.includes(t));
@@ -131,7 +147,7 @@ export class ApplicationFlowsComponent implements OnInit {
 
   onReset() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = this.route.snapshot.data['application'];
+    this.entity = this.resolveEntity();
     this.flowSchema = this.filterFlowSchema(this.route.snapshot.data['flowSettingsForm']);
     const flows = structuredClone(this.route.snapshot.data['flows'] || []);
     this.definition = {
@@ -153,7 +169,11 @@ export class ApplicationFlowsComponent implements OnInit {
       return flow;
     });
 
-    this.applicationService.updateFlows(this.domainId, this.application.id, flows).subscribe((updatedFlows) => {
+    const updateFlows$ = this.isMcpContext()
+      ? this.protectedResourceService.updateFlows(this.domainId, this.entity.id, flows)
+      : this.applicationService.updateFlows(this.domainId, this.entity.id, flows);
+
+    updateFlows$.subscribe((updatedFlows) => {
       this.gvDesignComponent.nativeElement.saved();
       this.definition = { ...this.definition, flows: updatedFlows };
       this.snackbarService.open('Flows updated');
@@ -182,31 +202,42 @@ export class ApplicationFlowsComponent implements OnInit {
           }
           return res;
         }),
-        switchMap(() =>
-          this.applicationService.patch(this.domainId, this.application.id, {
-            settings: {
-              advanced: {
-                flowsInherited: event.checked,
-              },
-            },
-          }),
-        ),
+        switchMap(() => this.persistInheritMode(event.checked)),
         tap((data) => {
-          this.application = data;
-          this.route.snapshot.parent.parent.data['application'] = this.application;
-          this.snackbarService.open('Application updated');
+          this.entity = data;
+          if (this.isMcpContext()) {
+            this.route.snapshot.parent.data['mcpServer'] = this.entity;
+            this.snackbarService.open('MCP server updated');
+          } else {
+            this.route.snapshot.parent.parent.data['application'] = this.entity;
+            this.snackbarService.open('Application updated');
+          }
         }),
       )
       .subscribe();
   }
 
+  private persistInheritMode(flowsInherited: boolean) {
+    if (this.isMcpContext()) {
+      // The protected resource PATCH replaces settings wholesale (no deep-merge like applications).
+      const settings = { ...(this.entity.settings || {}) };
+      settings.advanced = { ...(settings.advanced || {}), flowsInherited };
+      return this.protectedResourceService.patch(this.domainId, this.entity.id, { settings });
+    }
+    return this.applicationService.patch(this.domainId, this.entity.id, {
+      settings: { advanced: { flowsInherited } },
+    });
+  }
+
   isInherited() {
-    return this.application?.settings?.advanced?.flowsInherited;
+    const flowsInherited = this.entity?.settings?.advanced?.flowsInherited;
+    // When unset, reflect the gateway/model default (inherit enabled) for MCP servers.
+    return flowsInherited ?? this.isMcpContext();
   }
 
   private initPolicies() {
     const factors = this.route.snapshot.data['factors'] || [];
-    const appFactorIds = this.application.factors || [];
+    const appFactorIds = this.entity.factors || [];
     const filteredFactors = factors
       .filter((f) => appFactorIds.includes(f.id))
       .filter((f) => f.factorType && f.factorType.toUpperCase() !== 'RECOVERY_CODE');
