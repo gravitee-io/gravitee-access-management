@@ -24,15 +24,6 @@ import {
 } from '@management-commands/protected-resources-management-commands';
 import { ProtectedResourcePrimaryData } from '@management-models/index';
 
-/**
- * Strips the read-only fields (icon/createdAt/updatedAt) the flows GET endpoint returns but the
- * write model rejects. Mirrors what the console does before submitting a flow.
- */
-export const toFlowPayload = (flow: any) => {
-  const { icon, createdAt, updatedAt, ...rest } = flow;
-  return rest;
-};
-
 export class ProtectedResourceFlowsFixture {
   domain: any;
   accessToken: string;

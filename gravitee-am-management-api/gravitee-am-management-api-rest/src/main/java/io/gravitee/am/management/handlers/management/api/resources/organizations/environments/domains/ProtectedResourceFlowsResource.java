@@ -145,14 +145,15 @@ public class ProtectedResourceFlowsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_FLOW, Acl.UPDATE)
-                .andThen(checkTokenFlowOnly(flows))
-                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
-                .andThen(flowValidator.validateAll(flows))
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMap(__ -> protectedResourceService.findById(protectedResourceId))
                         .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId)))
-                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domainId, protectedResourceId, convert(flows), authenticatedUser))
+                        .ignoreElement())
+                .andThen(checkTokenFlowOnly(flows))
+                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
+                .andThen(flowValidator.validateAll(flows))
+                .andThen(flowService.createOrUpdate(ReferenceType.DOMAIN, domainId, protectedResourceId, convert(flows), authenticatedUser)
                         .map(updatedFlows -> updatedFlows.stream().map(FlowEntity::new).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }

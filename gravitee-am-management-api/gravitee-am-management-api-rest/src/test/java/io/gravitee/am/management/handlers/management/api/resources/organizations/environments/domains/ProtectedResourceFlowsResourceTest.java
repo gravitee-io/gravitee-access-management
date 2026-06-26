@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
@@ -34,8 +35,10 @@ import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -92,8 +95,41 @@ public class ProtectedResourceFlowsResourceTest extends JerseySpringTest {
         io.gravitee.am.service.model.Flow loginFlow = newTokenFlow();
         loginFlow.setType(Type.LOGIN);
 
+        doReturn(Maybe.just(domain(DOMAIN_ID))).when(domainService).findById(DOMAIN_ID);
+        doReturn(Maybe.just(protectedResource())).when(protectedResourceService).findById(PROTECTED_RESOURCE_ID);
+
         final Response response = flowsTarget().request().put(Entity.json(List.of(loginFlow)));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetFlows_filteredWhenNoReadPermission() {
+        Flow tokenFlow = new Flow();
+        tokenFlow.setId("flow-1");
+        tokenFlow.setName("TOKEN");
+        tokenFlow.setType(Type.TOKEN);
+        tokenFlow.setEnabled(true);
+
+        doReturn(Maybe.just(domain(DOMAIN_ID))).when(domainService).findById(DOMAIN_ID);
+        doReturn(Maybe.just(protectedResource())).when(protectedResourceService).findById(PROTECTED_RESOURCE_ID);
+        doReturn(Flowable.just(tokenFlow)).when(flowService).findByApplication(ReferenceType.DOMAIN, DOMAIN_ID, PROTECTED_RESOURCE_ID);
+        // First call is the LIST permission check (granted), second is the READ check used to decide
+        // whether full flow details are returned (denied here).
+        doReturn(Single.just(true), Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = flowsTarget().request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final List<Map<String, Object>> flows = response.readEntity(new GenericType<List<Map<String, Object>>>() {});
+        assertEquals(1, flows.size());
+        final Map<String, Object> flow = flows.get(0);
+        assertEquals("flow-1", flow.get("id"));
+        assertEquals("TOKEN", flow.get("name"));
+        assertEquals(true, flow.get("enabled"));
+        // Details (type / pre / post) must be stripped when the user lacks the READ permission.
+        assertNull(flow.get("type"));
+        assertNull(flow.get("pre"));
+        assertNull(flow.get("post"));
     }
 
     @Test

@@ -164,7 +164,7 @@ export const deleteMcpClientSecret = (domainId: string, accessToken: string, res
   });
 
 // Protected resource flows (Policy Studio) — token flow only.
-// TODO remove once generated in the management SDK
+// TODO remove once generated in the management SDK (https://gravitee.atlassian.net/browse/AM-7189)
 export const getProtectedResourceFlows = (domainId: string, accessToken: string, resourceId: string) =>
   request(getDomainManagerUrl(domainId) + `/protected-resources/${resourceId}/flows`)
     .get('')
@@ -175,3 +175,12 @@ export const updateProtectedResourceFlows = (domainId: string, accessToken: stri
     .put('')
     .set('Authorization', 'Bearer ' + accessToken)
     .send(flows);
+
+/**
+ * Strips the read-only fields (icon/createdAt/updatedAt) the flows GET endpoint returns but the
+ * write model rejects. Mirrors what the console does before submitting a flow.
+ */
+export const toFlowPayload = (flow: any) => {
+  const { icon, createdAt, updatedAt, ...rest } = flow;
+  return rest;
+};

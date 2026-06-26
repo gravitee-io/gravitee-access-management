@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { toFlowPayload } from '@management-commands/protected-resources-management-commands';
 import { setup } from '../test-fixture';
-import {
-  ProtectedResourceFlowsFixture,
-  setupProtectedResourceFlowsFixture,
-  toFlowPayload,
-} from './fixtures/protected-resource-flows-fixture';
+import { ProtectedResourceFlowsFixture, setupProtectedResourceFlowsFixture } from './fixtures/protected-resource-flows-fixture';
 
 setup(120000);
 
@@ -70,10 +67,7 @@ describe('Protected resource (MCP server) flows management', () => {
   });
 
   it('should reject a non-token flow', async () => {
-    const flows = await fixture.getFlows().then((r) => r.body);
-    const loginFlow = flows.find((f) => f.type.toLowerCase() === 'login');
-    expect(loginFlow).toBeDefined();
-    loginFlow.pre = [tokenPolicy];
+    const loginFlow = { type: 'login', name: 'LOGIN', pre: [tokenPolicy], post: [], enabled: true };
 
     const response = await fixture.updateFlows([toFlowPayload(loginFlow)]).expect(400);
     expect(JSON.stringify(response.body)).toContain('TOKEN');

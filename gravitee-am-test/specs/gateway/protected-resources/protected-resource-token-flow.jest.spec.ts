@@ -17,7 +17,11 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { getProtectedResourceFlows, updateProtectedResourceFlows } from '@management-commands/protected-resources-management-commands';
+import {
+  getProtectedResourceFlows,
+  toFlowPayload,
+  updateProtectedResourceFlows,
+} from '@management-commands/protected-resources-management-commands';
 import { McpOAuth2ResourceFixture, setupMcpOAuth2ResourceFixture } from '../fixtures/mcp-oauth2-resource-fixture';
 import { setup } from '../../test-fixture';
 
@@ -60,10 +64,6 @@ describe('Protected resource (MCP server) token flow execution', () => {
   it('should execute the token flow policy during client_credentials', async () => {
     const flows = await getProtectedResourceFlows(fixture.domain.id, fixture.accessToken, fixture.mcpResource.id).then((r) => r.body);
     const tokenFlow = flows.find((f) => f.type.toLowerCase() === 'token');
-    // The flows endpoint returns read-only fields (icon/createdAt/updatedAt) the write model rejects.
-    delete tokenFlow.icon;
-    delete tokenFlow.createdAt;
-    delete tokenFlow.updatedAt;
     tokenFlow.pre = [
       {
         name: 'Rate Limit Policy',
@@ -88,7 +88,7 @@ describe('Protected resource (MCP server) token flow execution', () => {
 
     // Only the token flow may be submitted for a protected resource.
     await waitForSyncAfter(fixture.domain.id, () =>
-      updateProtectedResourceFlows(fixture.domain.id, fixture.accessToken, fixture.mcpResource.id, [tokenFlow]),
+      updateProtectedResourceFlows(fixture.domain.id, fixture.accessToken, fixture.mcpResource.id, [toFlowPayload(tokenFlow)]),
     );
 
     const response = await tokenRequest().expect(200);
