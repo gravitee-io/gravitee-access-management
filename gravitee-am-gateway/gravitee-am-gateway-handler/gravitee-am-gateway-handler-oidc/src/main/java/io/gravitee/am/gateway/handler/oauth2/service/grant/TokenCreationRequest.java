@@ -234,6 +234,7 @@ public record TokenCreationRequest(
             User user,
             String authReqId,
             List<String> acrValues,
+            List<Map<String, Object>> authorizationDetails,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(
@@ -241,7 +242,7 @@ public record TokenCreationRequest(
                 GrantType.CIBA_GRANT_TYPE,
                 original.getScopes(),
                 user,
-                new GrantData.CibaData(authReqId, acrValues),
+                new GrantData.CibaData(authReqId, acrValues, authorizationDetails),
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

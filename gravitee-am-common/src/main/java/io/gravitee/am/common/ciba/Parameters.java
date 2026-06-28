@@ -48,4 +48,8 @@ public interface Parameters {
      * The unique identifier to identify the authentication request (transaction) made by the Client.
      */
     String AUTH_REQ_ID = "auth_req_id";
+    /**
+     * RFC 9396 Rich Authorization Requests: a JSON array of objects specifying the authorizations requested.
+     */
+    String AUTHORIZATION_DETAILS = "authorization_details";
 }

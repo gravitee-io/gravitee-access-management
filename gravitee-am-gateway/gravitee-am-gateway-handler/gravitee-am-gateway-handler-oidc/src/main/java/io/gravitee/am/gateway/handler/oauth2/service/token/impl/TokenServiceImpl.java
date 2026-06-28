@@ -91,6 +91,7 @@ public class TokenServiceImpl implements TokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private static final String PERMISSIONS = "permissions";
+    private static final String AUTHORIZATION_DETAILS = "authorization_details";
 
     public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
@@ -394,6 +395,11 @@ public class TokenServiceImpl implements TokenService {
                     .filter(e -> !Token.getStandardParameters().contains(e.getKey()) && !e.getKey().equals(ID_TOKEN))
                     .forEach(e -> token.getAdditionalInformation().put(e.getKey(), e.getValue()));
         }
+        // set authorization_details as top-level token-response member (RFC 9396 RAR)
+        List<Map<String, Object>> authorizationDetails = oAuth2Request.getAuthorizationDetails();
+        if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
+            token.getAdditionalInformation().put(AUTHORIZATION_DETAILS, authorizationDetails);
+        }
         // set refresh token
         Optional.ofNullable(encodedRefreshToken).map(EncodedJWT::encodedToken).ifPresent(token::setRefreshToken);
         return new TokenWithCertificateInfo(token, encodedAccessToken.certificateInfo());
@@ -580,6 +586,12 @@ public class TokenServiceImpl implements TokenService {
         List<PermissionRequest> permissions = oAuth2Request.getPermissions();
         if (permissions != null && !permissions.isEmpty()) {
             jwt.put(PERMISSIONS, permissions);
+        }
+
+        // set authorization_details (RFC 9396 RAR)
+        List<Map<String, Object>> authorizationDetails = oAuth2Request.getAuthorizationDetails();
+        if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
+            jwt.put(AUTHORIZATION_DETAILS, authorizationDetails);
         }
 
         return jwt;

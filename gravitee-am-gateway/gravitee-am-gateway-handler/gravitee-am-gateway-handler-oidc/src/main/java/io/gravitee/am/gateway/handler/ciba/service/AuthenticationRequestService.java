@@ -39,6 +39,12 @@ public interface AuthenticationRequestService {
 
     Single<ADNotificationResponse> notify(ADNotificationRequest adRequest);
 
-    Completable validateUserResponse(ADCallbackContext context);
+    /**
+     * @param request the inbound callback request. Required (non-null): completion calls
+     *   UserAuthenticationManager.connect(...), which fires the PRE_CONNECT policy chain and
+     *   builds a ReactableExecutionContext that dereferences request.contextPath() — a null
+     *   request NPEs there. Carries no CIBA-layer semantics; it is forwarded to connect() only.
+     */
+    Completable validateUserResponse(ADCallbackContext context, io.gravitee.gateway.api.Request request);
 
 }
