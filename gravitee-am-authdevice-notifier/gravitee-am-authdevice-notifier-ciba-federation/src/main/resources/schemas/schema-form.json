@@ -1,0 +1,15 @@
+{
+    "type": "object",
+    "id": "urn:jsonschema:io:gravitee:am:authdevice:notifier:cibafederation:CibaFederationAuthenticationDeviceNotifierConfiguration",
+    "properties": {
+        "identityProviderId": { "type": "string", "title": "Identity provider", "widget": "graviteeIdentityProvider", "description": "Upstream OIDC provider this notifier federates to." },
+        "resourceAudience": { "type": "string", "title": "Resource audience", "description": "Downstream resource/audience indicator for the resource server hosting the consent authorization_details schema. Sent as the 'audience' parameter on bc-authorize whenever configured (the provider's resource-indicator name — not RFC 8707 'resource'). clientId/secret/endpoints/scope come from the linked OIDC identity provider." },
+        "callbackClientId": { "type": "string", "title": "Callback client id", "description": "AM client used to authenticate the callback POST" },
+        "callbackClientSecret": { "type": "string", "title": "Callback client secret", "sensitive": true },
+        "callbackClientAuthMethod": { "type": "string", "title": "Callback client auth method", "default": "client_secret_post", "enum": ["client_secret_post", "client_secret_basic"], "description": "How the notifier authenticates the completion callback to the gateway. Must match the callback application's token endpoint auth method." },
+        "recipientDisplayName": { "type": "string", "title": "Consumer display name", "default": "the requesting application" },
+        "consentRelayStrategy": { "type": "string", "title": "Consent relay strategy", "description": "Optional id of an installed consent-relay transform. Leave blank to relay authorization_details unchanged (the default). A non-blank value selects a transform contributed by a strategy module on the plugin classpath (e.g. 'acme-user-profile')." },
+        "maxLifetimeSeconds": { "type": "integer", "title": "Max auth lifetime (s)", "default": 120, "minimum": 1 }
+    },
+    "required": [ "identityProviderId", "callbackClientId", "callbackClientSecret" ]
+}

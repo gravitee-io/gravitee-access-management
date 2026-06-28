@@ -1,0 +1,2 @@
+io.gravitee.am.authdevice.notifier.cibafederation.provider.ConsentRelayStrategy=\
+io.gravitee.am.authdevice.notifier.cibafederation.provider.ConsentRelayStrategyRegistryTest$UpperTypeStrategy
