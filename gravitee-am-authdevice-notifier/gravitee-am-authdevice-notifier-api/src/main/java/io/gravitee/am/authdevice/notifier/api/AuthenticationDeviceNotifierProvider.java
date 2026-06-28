@@ -19,12 +19,14 @@ import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
 import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -50,5 +52,9 @@ public interface AuthenticationDeviceNotifierProvider extends Service<Authentica
     Single<ADNotificationResponse> notify(ADNotificationRequest request);
 
     Single<Optional<ADUserResponse>> extractUserResponse(ADCallbackContext callbackContext);
+
+    default Set<NotifierCapability> capabilities() {
+        return Set.of();
+    }
 
 }

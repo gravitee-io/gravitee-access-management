@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.manager.authdevice.notifier;
 
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
+import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.common.service.Service;
 
 import java.util.Collection;
@@ -29,5 +30,7 @@ public interface AuthenticationDeviceNotifierManager extends Service {
     AuthenticationDeviceNotifierProvider getAuthDeviceNotifierProvider(String notifierId);
 
     Collection<AuthenticationDeviceNotifierProvider> getAuthDeviceNotifierProviders();
+
+    AuthenticationDeviceNotifier getAuthDeviceNotifier(String notifierId);
 
 }

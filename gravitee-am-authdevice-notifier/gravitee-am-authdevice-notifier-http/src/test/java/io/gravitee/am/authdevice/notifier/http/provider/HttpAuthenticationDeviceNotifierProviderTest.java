@@ -32,17 +32,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.absent;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.CALLBACK_VALIDATE;
+import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.PARAM_AUTHORIZATION_DETAILS;
 import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.STATE;
 import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.TRANSACTION_ID;
 
@@ -211,6 +216,60 @@ public class HttpAuthenticationDeviceNotifierProviderTest {
         Mockito.when(callback.getParam(CALLBACK_VALIDATE)).thenReturn("true");
         new HttpAuthenticationDeviceNotifierProvider(webClient, config).extractUserResponse(callback)
                 .test().assertValue(Optional::isEmpty);
+    }
+
+    @Test
+    void notifier_should_include_authorization_details_in_form_when_present() throws Exception {
+        final var notificationRequest = new ADNotificationRequest();
+        notificationRequest.setDeviceNotifierId(UUID.randomUUID().toString());
+        notificationRequest.setScopes(new TreeSet<>(Set.of("openid")));
+        notificationRequest.setContext(Mockito.mock(RoutingContext.class));
+        notificationRequest.setSubject(UUID.randomUUID().toString());
+        notificationRequest.setTransactionId("transaction_id");
+        notificationRequest.setState("mystate");
+        notificationRequest.setAuthorizationDetails(List.of(
+                Map.of("type", "fdx_v1.0", "consentRequest", Map.of("durationType", "ONE_TIME"))
+        ));
+
+        wiremock.stubFor(post(NOTIFY_ENDPOINT)
+                .withFormParam(PARAM_AUTHORIZATION_DETAILS, containing("fdx_v1.0").and(containing("ONE_TIME")))
+                .willReturn(okJson("""
+{
+ "tid": "transaction_id",
+ "state": "mystate"
+}
+""")));
+
+        var observer = new HttpAuthenticationDeviceNotifierProvider(webClient, config).notify(notificationRequest).test();
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(r -> r.getTransactionId().equals("transaction_id"));
+    }
+
+    @Test
+    void notifier_should_omit_authorization_details_from_form_when_absent() throws Exception {
+        final var notificationRequest = new ADNotificationRequest();
+        notificationRequest.setDeviceNotifierId(UUID.randomUUID().toString());
+        notificationRequest.setScopes(new TreeSet<>(Set.of("openid")));
+        notificationRequest.setContext(Mockito.mock(RoutingContext.class));
+        notificationRequest.setSubject(UUID.randomUUID().toString());
+        notificationRequest.setTransactionId("transaction_id");
+        notificationRequest.setState("mystate");
+        // authorizationDetails deliberately not set (null)
+
+        wiremock.stubFor(post(NOTIFY_ENDPOINT)
+                .withFormParam(PARAM_AUTHORIZATION_DETAILS, absent())
+                .willReturn(okJson("""
+{
+ "tid": "transaction_id",
+ "state": "mystate"
+}
+""")));
+
+        var observer = new HttpAuthenticationDeviceNotifierProvider(webClient, config).notify(notificationRequest).test();
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(r -> r.getTransactionId().equals("transaction_id"));
     }
 
 }
