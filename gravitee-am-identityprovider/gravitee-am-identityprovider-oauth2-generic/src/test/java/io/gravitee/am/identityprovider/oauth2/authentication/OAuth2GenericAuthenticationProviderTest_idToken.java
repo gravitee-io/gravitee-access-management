@@ -32,10 +32,18 @@ import io.gravitee.am.identityprovider.api.social.ProviderResponseMode;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.impl.ClientPhase;
+import io.vertx.ext.web.client.impl.WebClientInternal;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.WebClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.text.ParseException;
@@ -43,8 +51,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,6 +72,29 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
 
   @Mock
   private JWTProcessor jwtProcessor;
+
+  @Spy
+  private WebClient client = WebClient.wrap(Vertx.vertx().createHttpClient());
+
+  @Mock
+  @SuppressWarnings({"rawtypes", "unchecked"}) // raw HttpResponse matches the interceptor's dispatchResponse(HttpResponse<?>)
+  private HttpResponse httpResponse;
+
+  // Captures the Authorization header seen by the (bypassed) userinfo request.
+  private final AtomicReference<String> capturedAuthorization = new AtomicReference<>();
+
+  @BeforeEach
+  void bypassHttp() {
+    // Intercept before the request leaves the client: record the Authorization header and
+    // dispatch the mocked HttpResponse instead of performing a real network call.
+    ((WebClientInternal) client.getDelegate()).addInterceptor(event -> {
+      if (event.phase() == ClientPhase.PREPARE_REQUEST) {
+        capturedAuthorization.set(event.request().headers().get("Authorization"));
+        event.dispatchResponse(httpResponse);
+      }
+      event.next();
+    });
+  }
 
   @Test
   void shouldLoadUserByUsername_authentication()
@@ -193,4 +227,87 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(BadCredentialsException.class);
     }
+
+  @Test
+  void retrieveUserFromTokenResponse_verifies_idToken_and_maps_user() throws Exception {
+      JWTClaimsSet claims = new JWTClaimsSet.Builder().subject("acme|9").claim("email", "a@b.com").build();
+      when(configuration.isUseIdTokenForUserInfo()).thenReturn(true);
+      when(jwtProcessor.process("the-id-token", null)).thenReturn(claims);
+      authenticationProvider.setJwtProcessor(jwtProcessor);
+
+      AuthenticationContext ctx = new DummyAuthenticationContext(new HashMap<>(), new DummyRequest());
+      TestObserver<User> obs = authenticationProvider
+              .retrieveUserFromTokenResponse("the-access-token", "the-id-token", ctx).test();
+
+      obs.awaitDone(10, TimeUnit.SECONDS);
+      obs.assertComplete();
+      obs.assertValue(u -> "acme|9".equals(u.getId()) && "a@b.com".equals(u.getAdditionalInformation().get("email")));
+  }
+
+  @Test
+  void retrieveUserFromTokenResponse_userinfoMode_nonOkResponse_failsClosed() throws Exception {
+      when(configuration.isUseIdTokenForUserInfo()).thenReturn(false);
+      when(configuration.getUserProfileUri()).thenReturn("https://op.example/userinfo");
+      when(httpResponse.statusCode()).thenReturn(500);
+      when(httpResponse.statusMessage()).thenReturn("Server Error");
+      AuthenticationContext ctx = new DummyAuthenticationContext(new HashMap<>(), new DummyRequest());
+
+      TestObserver<User> obs = authenticationProvider
+              .retrieveUserFromTokenResponse("the-access-token", "the-id-token", ctx).test();
+
+      obs.awaitDone(10, TimeUnit.SECONDS);
+      obs.assertError(BadCredentialsException.class);
+      // The userinfo endpoint was genuinely called with the Bearer access_token — the branch is
+      // exercised as a network call, not short-circuited by a null-client NPE.
+      verify(client).getAbs("https://op.example/userinfo");
+      assertEquals("Bearer the-access-token", capturedAuthorization.get());
+      // userinfo mode does NOT verify the id_token, so it must not be planted under the trusted key.
+      assertNull(ctx.get("id_token"));
+      verify(jwtProcessor, never()).process(anyString(), any());
+  }
+
+  @Test
+  void retrieveUserFromTokenResponse_userinfoMode_success_mapsUser() throws Exception {
+      when(configuration.isUseIdTokenForUserInfo()).thenReturn(false);
+      when(configuration.getUserProfileUri()).thenReturn("https://op.example/userinfo");
+      when(httpResponse.statusCode()).thenReturn(200);
+      when(httpResponse.getHeader("Content-Type")).thenReturn("application/json");
+      when(httpResponse.bodyAsJsonObject())
+              .thenReturn(new JsonObject().put("sub", "acme|42").put("email", "carol@acme.example"));
+      AuthenticationContext ctx = new DummyAuthenticationContext(new HashMap<>(), new DummyRequest());
+
+      TestObserver<User> obs = authenticationProvider
+              .retrieveUserFromTokenResponse("the-access-token", null, ctx).test();
+
+      obs.awaitDone(10, TimeUnit.SECONDS);
+      obs.assertComplete();
+      obs.assertValue(u -> "acme|42".equals(u.getId())
+              && "carol@acme.example".equals(u.getAdditionalInformation().get("email")));
+      verify(client).getAbs("https://op.example/userinfo");
+      verify(jwtProcessor, never()).process(anyString(), any());
+  }
+
+  @Test
+  void retrieveUserFromTokenResponse_idTokenMode_missingIdToken_failsClosed() throws Exception {
+      when(configuration.isUseIdTokenForUserInfo()).thenReturn(true);
+      AuthenticationContext ctx = new DummyAuthenticationContext(new HashMap<>(), new DummyRequest());
+
+      TestObserver<User> obs = authenticationProvider
+              .retrieveUserFromTokenResponse("the-access-token", null, ctx).test();
+
+      obs.awaitDone(10, TimeUnit.SECONDS);
+      obs.assertError(BadCredentialsException.class);
+  }
+
+  @Test
+  void retrieveUserFromTokenResponse_userinfoMode_missingAccessToken_failsClosed() throws Exception {
+      when(configuration.isUseIdTokenForUserInfo()).thenReturn(false);
+      AuthenticationContext ctx = new DummyAuthenticationContext(new HashMap<>(), new DummyRequest());
+
+      TestObserver<User> obs = authenticationProvider
+              .retrieveUserFromTokenResponse(null, "the-id-token", ctx).test();
+
+      obs.awaitDone(10, TimeUnit.SECONDS);
+      obs.assertError(BadCredentialsException.class);
+  }
 }
