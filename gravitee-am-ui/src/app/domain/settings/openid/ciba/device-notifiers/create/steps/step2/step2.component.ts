@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { OrganizationService } from '../../../../../../../../services/organization.service';
+import { ProviderService } from '../../../../../../../../services/provider.service';
+import { SnackbarService } from '../../../../../../../../services/snackbar.service';
+import { applyDynamicSources, applyPasswordInputToSensitiveFields } from '../../../dynamic-sources';
 
 @Component({
   selector: 'device-notifier-creation-step2',
@@ -25,17 +29,47 @@ import { OrganizationService } from '../../../../../../../../services/organizati
 })
 export class DeviceNotifierCreationStep2Component implements OnInit {
   @Input() deviceNotifier: any;
+  @Input() domainId: string;
   @Input() configurationIsValid: boolean;
   @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   formChanged = false;
   configuration: any;
   deviceNotifierSchema: any = {};
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private providerService: ProviderService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
-    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe((data) => {
-      this.deviceNotifierSchema = data;
+    forkJoin({
+      schema: this.organizationService.deviceNotifierSchema(this.deviceNotifier.type),
+      idps: this.providerService.findByDomain(this.domainId).pipe(
+        catchError((err: unknown) => {
+          // An IdP fetch failure is distinct from a domain that genuinely has no IdPs: surface it and
+          // log, then fall back so the rest of the form still renders (the picker becomes readonly).
+          console.error('Failed to load identity providers for the device-notifier form', err);
+          this.snackbarService.open('Unable to load identity providers');
+          return of([]);
+        }),
+      ),
+    }).subscribe({
+      next: ({ schema, idps }) => {
+        if (schema?.id) {
+          const cloned = JSON.parse(JSON.stringify(schema));
+          applyPasswordInputToSensitiveFields(cloned);
+          applyDynamicSources(cloned, { graviteeIdentityProvider: idps });
+          this.deviceNotifierSchema = cloned;
+        } else {
+          this.deviceNotifierSchema = schema;
+        }
+      },
+      error: (err: unknown) => {
+        // Schema load failed: without this the step would render blank with no specific feedback.
+        console.error('Failed to load the device-notifier configuration schema', err);
+        this.snackbarService.open('Unable to load the device notifier configuration');
+      },
     });
   }
 
