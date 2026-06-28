@@ -15,6 +15,8 @@
  */
 import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
+import { applyDynamicSources, applyPasswordInputToSensitiveFields, DynamicSourceMap } from '../../dynamic-sources';
+
 @Component({
   selector: 'device-notifier-form',
   templateUrl: './form.component.html',
@@ -25,14 +27,24 @@ export class DeviceNotifierFormComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('deviceNotifierConfiguration') configuration: any = {};
   @Input() deviceNotifierSchema: any;
+  /** Dynamic source map — populated by the parent component on init. */
+  @Input() dynamicSources: DynamicSourceMap = {};
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};
+  /** Pristine server-supplied schema — never mutated; always clone+transform from here. */
+  private _rawSchema: any;
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.deviceNotifierSchema) {
-      const _deviceNotifierSchema = changes.deviceNotifierSchema.currentValue;
-      if (_deviceNotifierSchema?.id) {
+    if (changes.deviceNotifierSchema || changes.dynamicSources) {
+      if (changes.deviceNotifierSchema) {
+        this._rawSchema = changes.deviceNotifierSchema.currentValue;
+      }
+      if (this._rawSchema?.id) {
+        const cloned = structuredClone(this._rawSchema);
+        applyPasswordInputToSensitiveFields(cloned);
+        applyDynamicSources(cloned, this.dynamicSources ?? {});
+        this.deviceNotifierSchema = cloned;
         this.displayForm = true;
       }
     }
@@ -43,6 +55,22 @@ export class DeviceNotifierFormComponent implements OnChanges {
         this.data = _deviceNotifierConfiguration;
       }
     }
+  }
+
+  /**
+   * Delegates to the shared util so that tests can call it via the component
+   * instance (consistent with the provider-form pattern).
+   */
+  applyDynamicSources(schema: any, sources: DynamicSourceMap): any {
+    return applyDynamicSources(schema, sources);
+  }
+
+  /**
+   * Delegates to the shared util so that tests can call it via the component
+   * instance (consistent with the provider-form pattern).
+   */
+  applyPasswordInputToSensitiveFields(schema: any): any {
+    return applyPasswordInputToSensitiveFields(schema);
   }
 
   onChanges(deviceNotifierConfiguration) {

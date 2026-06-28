@@ -39,6 +39,7 @@
               *ngIf="deviceNotifier"
               [deviceNotifierConfiguration]="deviceNotifierConfiguration"
               [deviceNotifierSchema]="deviceNotifierSchema"
+              [dynamicSources]="dynamicSources"
               (configurationCompleted)="enableDeviceNotifierUpdate($event)"
             ></device-notifier-form>
           </div>
