@@ -1,0 +1,14 @@
+{
+    "type": "object",
+    "id": "urn:jsonschema:io:gravitee:am:authdevice:notifier:cibafederation:CibaFederationAuthenticationDeviceNotifierConfiguration",
+    "properties": {
+        "identityProviderId": { "type": "string", "title": "Identity provider", "widget": "graviteeIdentityProvider", "description": "Upstream OIDC provider this notifier federates to." },
+        "resourceAudience": { "type": "string", "title": "Resource audience", "description": "Downstream resource/audience indicator for the resource server hosting the consent authorization_details schema. Sent as the 'audience' parameter on bc-authorize whenever configured (the provider's resource-indicator name, e.g. Auth0 — not RFC 8707 'resource'). clientId/secret/endpoints/scope come from the linked OIDC identity provider." },
+        "callbackClientId": { "type": "string", "title": "Callback client id", "description": "AM client used to authenticate the callback POST" },
+        "callbackClientSecret": { "type": "string", "title": "Callback client secret", "sensitive": true },
+        "recipientDisplayName": { "type": "string", "title": "Consumer display name", "default": "the requesting application" },
+        "consentRelayStrategy": { "type": "string", "title": "Consent relay strategy", "default": "auth0-user-profile", "enum": ["auth0-user-profile", "passthrough"], "description": "How the authorization_details is relayed to the IdP: transform to an Auth0 user-profile URN for display, or pass through unchanged." },
+        "maxLifetimeSeconds": { "type": "integer", "title": "Max auth lifetime (s)", "default": 120, "minimum": 1 }
+    },
+    "required": [ "identityProviderId", "callbackClientId", "callbackClientSecret" ]
+}
