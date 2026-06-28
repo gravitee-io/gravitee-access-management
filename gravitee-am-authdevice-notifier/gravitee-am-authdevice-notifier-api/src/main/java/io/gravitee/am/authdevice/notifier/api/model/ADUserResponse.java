@@ -26,11 +26,29 @@ public class ADUserResponse {
     private final String tid;
     private final String state;
     private final boolean validated;
+    private final String idToken;     // nullable; the downstream IdP id_token (JWT), when federated
+    private final String accessToken; // nullable; the downstream IdP access_token, when federated
+    private final String identityProviderId; // nullable; the AM IdP that establishes identity, when federated
 
     public ADUserResponse(String tid, String state, boolean validated) {
+        this(tid, state, validated, null, null, null);
+    }
+
+    public ADUserResponse(String tid, String state, boolean validated, String idToken) {
+        this(tid, state, validated, idToken, null, null);
+    }
+
+    public ADUserResponse(String tid, String state, boolean validated, String idToken, String accessToken) {
+        this(tid, state, validated, idToken, accessToken, null);
+    }
+
+    public ADUserResponse(String tid, String state, boolean validated, String idToken, String accessToken, String identityProviderId) {
         this.tid = tid;
         this.state = state;
         this.validated = validated;
+        this.idToken = idToken;
+        this.accessToken = accessToken;
+        this.identityProviderId = identityProviderId;
     }
 
 }
