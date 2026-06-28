@@ -23,8 +23,13 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -186,5 +191,54 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertNoErrors();
     }
 
+    @Test
+    public void shouldPersistAndReadAuthorizationDetails() {
+        CibaAuthRequest request = new CibaAuthRequest();
+        request.setId("ciba-rar-1");
+        request.setClientId("client-1");
+        request.setSubject("alice");
+        request.setStatus("ONGOING");
+        request.setScopes(Set.of("openid"));
+        request.setCreatedAt(new Date());
+        request.setLastAccessAt(new Date());
+        request.setExpireAt(new Date(System.currentTimeMillis() + 600_000));
+        request.setExternalTrxId("ciba-rar-trx-1");
+
+        Map<String, Object> detail = new HashMap<>();
+        detail.put("type", "fdx_v1.0");
+        detail.put("scope", List.of("ACCOUNT_DETAILED"));
+        request.setAuthorizationDetails(List.of(detail));
+
+        CibaAuthRequest created = repository.create(request).blockingGet();
+        assertNotNull(created.getAuthorizationDetails());
+
+        CibaAuthRequest found = repository.findById("ciba-rar-1").blockingGet();
+        assertNotNull(found.getAuthorizationDetails());
+        assertEquals(1, found.getAuthorizationDetails().size());
+        assertEquals("fdx_v1.0", found.getAuthorizationDetails().get(0).get("type"));
+        assertEquals(List.of("ACCOUNT_DETAILED"), found.getAuthorizationDetails().get(0).get("scope"));
+    }
+
+    @Test
+    public void shouldCreateWithNullSubject() {
+        // CIBA federation persists the request at bc-authorize, before the subject is
+        // resolved (identity is asserted downstream at device approval). The subject is
+        // therefore null during the ONGOING window and the store must accept it.
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setSubject(null);
+
+        TestObserver<CibaAuthRequest> createObserver = repository.create(authRequest).test();
+        createObserver.awaitDone(10, TimeUnit.SECONDS);
+        createObserver.assertComplete();
+        createObserver.assertNoErrors();
+
+        TestObserver<CibaAuthRequest> findObserver = repository.findById(id).test();
+        findObserver.awaitDone(10, TimeUnit.SECONDS);
+        findObserver.assertComplete();
+        findObserver.assertValueCount(1);
+        findObserver.assertNoErrors();
+        findObserver.assertValue(req -> req.getSubject() == null);
+    }
 
 }

@@ -270,7 +270,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             case GrantData.UmaData data -> oAuth2Request.setPermissions(data.permissions());
             case GrantData.ClientCredentialsData ignored -> { }
             case GrantData.PasswordData ignored -> { }
-            case GrantData.CibaData ignored -> { }
+            case GrantData.CibaData data -> oAuth2Request.setAuthorizationDetails(data.authorizationDetails());
             case GrantData.ExtensionGrantData ignored -> { }
         }
     }

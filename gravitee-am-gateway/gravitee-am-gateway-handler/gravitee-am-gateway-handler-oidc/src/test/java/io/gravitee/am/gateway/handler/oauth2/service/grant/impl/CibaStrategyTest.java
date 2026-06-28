@@ -39,6 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -256,5 +257,42 @@ class CibaStrategyTest {
         TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
 
         assertFalse(result.supportRefreshToken());
+    }
+
+    @Test
+    void shouldThreadAuthorizationDetailsThroughCibaData() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.AUTH_REQ_ID, "valid-auth-req-id");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+
+        User user = new User();
+        user.setId("user-id");
+
+        Map<String, Object> authDetail = new HashMap<>();
+        authDetail.put("type", "fdx_v1.0");
+
+        CibaAuthRequest cibaRequest = new CibaAuthRequest();
+        cibaRequest.setClientId("client-id");
+        cibaRequest.setSubject("user-id");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAuthorizationDetails(List.of(authDetail));
+
+        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client)))
+                .thenReturn(Single.just(cibaRequest));
+        when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
+                .thenReturn(Maybe.just(user));
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertNotNull(result);
+        assertInstanceOf(GrantData.CibaData.class, result.grantData());
+        GrantData.CibaData data = (GrantData.CibaData) result.grantData();
+        assertNotNull(data.authorizationDetails(), "authorizationDetails should be carried through to CibaData");
+        assertEquals(1, data.authorizationDetails().size());
+        assertEquals("fdx_v1.0", data.authorizationDetails().get(0).get("type"),
+                "authorization_details type should be threaded from CibaAuthRequest to CibaData");
     }
 }

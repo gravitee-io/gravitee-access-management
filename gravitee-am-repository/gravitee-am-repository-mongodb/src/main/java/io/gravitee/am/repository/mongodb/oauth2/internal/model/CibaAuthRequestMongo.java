@@ -20,6 +20,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -59,6 +60,9 @@ public class CibaAuthRequestMongo {
 
     @BsonProperty("device_notifier_id")
     private String deviceNotifierId;
+
+    @BsonProperty("authorization_details")
+    private List<Document> authorizationDetails;
 
     public String getId() {
         return id;
@@ -154,6 +158,14 @@ public class CibaAuthRequestMongo {
 
     public void setDeviceNotifierId(String deviceNotifierId) {
         this.deviceNotifierId = deviceNotifierId;
+    }
+
+    public List<Document> getAuthorizationDetails() {
+        return authorizationDetails;
+    }
+
+    public void setAuthorizationDetails(List<Document> authorizationDetails) {
+        this.authorizationDetails = authorizationDetails;
     }
 
     @Override

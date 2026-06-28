@@ -99,10 +99,13 @@ public sealed interface GrantData permits
 
     /**
      * CIBA (Client Initiated Backchannel Authentication) grant specific data.
+     * authorizationDetails (RFC 9396 RAR) is grant-specific data carried per the sealed-interface
+     * contract — like AuthorizationCodeData's auth-code map and UmaData's permissions.
      */
     record CibaData(
             String authReqId,
-            List<String> acrValues
+            List<String> acrValues,
+            List<Map<String, Object>> authorizationDetails
     ) implements GrantData {}
 
     /**
