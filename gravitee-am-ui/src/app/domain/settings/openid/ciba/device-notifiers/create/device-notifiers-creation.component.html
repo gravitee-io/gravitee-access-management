@@ -41,6 +41,7 @@
         <device-notifier-creation-step2
           *ngIf="stepper.selectedIndex === 1"
           [deviceNotifier]="deviceNotifier"
+          [domainId]="domainId"
           [(configurationIsValid)]="configurationIsValid"
         ></device-notifier-creation-step2>
         <div class="stepper-button-zone">
