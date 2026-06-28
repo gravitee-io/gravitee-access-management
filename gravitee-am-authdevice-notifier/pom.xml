@@ -34,6 +34,7 @@
     <modules>
         <module>gravitee-am-authdevice-notifier-api</module>
         <module>gravitee-am-authdevice-notifier-http</module>
+        <module>gravitee-am-authdevice-notifier-ciba-federation</module>
     </modules>
 
     <dependencies>
