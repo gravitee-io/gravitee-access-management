@@ -40,7 +40,9 @@ public class AuthenticationRequestCallbackHandler implements Handler<RoutingCont
     @Override
     public void handle(RoutingContext context) {
         final ADCallbackContext adCallbackContext = new ADCallbackContext(context.request().headers(), context.request().params());
-        authRequestService.validateUserResponse(adCallbackContext)
+        final io.gravitee.gateway.api.Request request =
+                new io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest(context.request().getDelegate());
+        authRequestService.validateUserResponse(adCallbackContext, request)
                 .subscribe(
                     () -> context.response().setStatusCode(HttpStatusCode.OK_200).end(),
                     error -> {

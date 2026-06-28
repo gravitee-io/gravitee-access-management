@@ -20,9 +20,14 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
+import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.AcrValues;
 import io.gravitee.am.common.oidc.idtoken.Claims;
@@ -32,6 +37,7 @@ import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationReq
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
@@ -40,6 +46,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -58,10 +65,18 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -86,6 +101,10 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     private SubjectManager subjectManager;
     @Mock
     private ProtectedResourceManager protectedResourceManager;
+    @Mock
+    private AuthenticationDeviceNotifierManager deviceNotifierManager;
+    @Mock
+    private AuthenticationDeviceNotifierProvider provider;
     private OpenIDProviderMetadata openIDProviderMetadata;
 
     private Client client;
@@ -98,7 +117,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         when(domain.getOidc()).thenReturn(OIDCSettings.defaultSettings());
 
-        handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager);
+        handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
         router.route(HttpMethod.POST, "/oidc/ciba/authenticate")
                 .handler(handlerUnderTest)
                 .handler(rc -> rc.response().end())
@@ -664,14 +683,403 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK", null);
     }
 
+    // ----------------------------------------------------------------
+    // authorization_details capability tests
+    // ----------------------------------------------------------------
+
+    @Test
+    public void authorization_details_enabled_when_active_notifier_declares_it() {
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier notifier = new CIBASettingNotifier();
+        notifier.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(notifier));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        AuthenticationRequestParametersHandlerMock h =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        when(provider.capabilities()).thenReturn(Set.of(NotifierCapability.AUTHORIZATION_DETAILS));
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(provider);
+
+        assertTrue(h.authorizationDetailsEnabled());
+    }
+
+    @Test
+    public void authorization_details_disabled_for_stock_notifier_without_capability() {
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier notifier = new CIBASettingNotifier();
+        notifier.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(notifier));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        AuthenticationRequestParametersHandlerMock h =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        when(provider.capabilities()).thenReturn(Set.of()); // HTTP notifier has no capabilities
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(provider);
+
+        assertFalse(h.authorizationDetailsEnabled());
+    }
+
+    // ----------------------------------------------------------------
+    // RAR / authorization_details flag-gated parse tests
+    // ----------------------------------------------------------------
+
+    @Test
+    public void shouldParseAuthorizationDetails_WhenFlagOn() throws Exception {
+        // Arrange: notifier declares AUTHORIZATION_DETAILS capability (replaces domain flag)
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier dn = new CIBASettingNotifier();
+        dn.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(dn));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+        when(provider.capabilities()).thenReturn(Set.of(NotifierCapability.AUTHORIZATION_DETAILS));
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider(anyString())).thenReturn(provider);
+
+        AuthenticationRequestParametersHandlerMock flagOnHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        AtomicReference<CibaAuthenticationRequest> capturedRef = new AtomicReference<>();
+
+        // The verification handler replaces the plain rc.response().end() so we can inspect context first
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-flag-on")
+                .handler(flagOnHandler)
+                .handler(rc -> {
+                    capturedRef.set(rc.get(ConstantKeys.CIBA_AUTH_REQUEST_KEY));
+                    rc.response().end();
+                })
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOnHandler.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        String encodedDetails = java.net.URLEncoder.encode("[{\"type\":\"fdx_v1.0\"}]", "UTF-8");
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-flag-on?request=fakejwt&authorization_details=" + encodedDetails,
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        CibaAuthenticationRequest parsed = capturedRef.get();
+        assertNotNull("authorizationDetails should be populated when flag is on", parsed.getAuthorizationDetails());
+        assertEquals(1, parsed.getAuthorizationDetails().size());
+        assertEquals("fdx_v1.0", parsed.getAuthorizationDetails().get(0).get("type"));
+    }
+
+    @Test
+    public void shouldParseAuthorizationDetails_FromRequestObject_WhenFlagOn() throws Exception {
+        // Arrange: notifier declares AUTHORIZATION_DETAILS capability, and authorization_details arrives
+        // ONLY inside a signed request object (the FAPI/CIBA-mandated shape) — not as a query parameter.
+        // Nimbus hands the claim back as a java.util.List, so the value must be read structurally rather
+        // than via List.toString(); otherwise this request 400s. Regression guard for RAR-1.
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier dn = new CIBASettingNotifier();
+        dn.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(dn));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+        when(provider.capabilities()).thenReturn(Set.of(NotifierCapability.AUTHORIZATION_DETAILS));
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider(anyString())).thenReturn(provider);
+
+        AuthenticationRequestParametersHandlerMock flagOnHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        AtomicReference<CibaAuthenticationRequest> capturedRef = new AtomicReference<>();
+
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-request-object")
+                .handler(flagOnHandler)
+                .handler(rc -> {
+                    capturedRef.set(rc.get(ConstantKeys.CIBA_AUTH_REQUEST_KEY));
+                    rc.response().end();
+                })
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOnHandler.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        // Build a signed request object carrying authorization_details, then re-parse it exactly as the
+        // gateway's request-object handler would, so getClaim(...) yields the same runtime type.
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .claim("authorization_details", List.of(Map.of("type", "payment_initiation", "actions", List.of("read"))))
+                .build();
+        SignedJWT signed = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
+        signed.sign(new MACSigner("0123456789abcdef0123456789abcdef".getBytes()));
+        SignedJWT requestObject = SignedJWT.parse(signed.serialize());
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.put(ConstantKeys.REQUEST_OBJECT_KEY, requestObject);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-request-object?request=fakejwt",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        CibaAuthenticationRequest parsed = capturedRef.get();
+        assertNotNull("authorizationDetails should be populated from the request object", parsed.getAuthorizationDetails());
+        assertEquals(1, parsed.getAuthorizationDetails().size());
+        assertEquals("payment_initiation", parsed.getAuthorizationDetails().get(0).get("type"));
+    }
+
+    @Test
+    public void shouldNotParseAuthorizationDetails_WhenFlagOff() throws Exception {
+        // Arrange: no notifier registered => capability absent (default from setUp)
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        AuthenticationRequestParametersHandlerMock flagOffHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        AtomicReference<CibaAuthenticationRequest> capturedRef = new AtomicReference<>();
+
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-flag-off")
+                .handler(flagOffHandler)
+                .handler(rc -> {
+                    capturedRef.set(rc.get(ConstantKeys.CIBA_AUTH_REQUEST_KEY));
+                    rc.response().end();
+                })
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOffHandler.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        String encodedDetails = java.net.URLEncoder.encode("[{\"type\":\"fdx_v1.0\"}]", "UTF-8");
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-flag-off?request=fakejwt&authorization_details=" + encodedDetails,
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        CibaAuthenticationRequest parsed = capturedRef.get();
+        assertNotNull("captured request must not be null", parsed);
+        assertNull("authorizationDetails should be null when flag is off (never parsed)", parsed.getAuthorizationDetails());
+    }
+
+    @Test
+    public void shouldRejectRequest_MalformedAuthorizationDetails_WhenFlagOn() throws Exception {
+        // Arrange: notifier declares AUTHORIZATION_DETAILS capability + malformed JSON => InvalidRequestException
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier dn = new CIBASettingNotifier();
+        dn.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(dn));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+        when(provider.capabilities()).thenReturn(Set.of(NotifierCapability.AUTHORIZATION_DETAILS));
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider(anyString())).thenReturn(provider);
+
+        AuthenticationRequestParametersHandlerMock flagOnHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-malformed-on")
+                .handler(flagOnHandler)
+                .handler(rc -> rc.response().end())
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOnHandler.setCibaRequest(cibaRequest);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-malformed-on?request=fakejwt&authorization_details=not-json",
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldRejectRequest_AuthorizationDetailsMissingType_WhenFlagOn() throws Exception {
+        // Arrange: notifier declares AUTHORIZATION_DETAILS capability; well-formed JSON array but an element
+        // has no string "type" => RFC 9396 §2 validation => InvalidRequestException (400).
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier dn = new CIBASettingNotifier();
+        dn.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(dn));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+        when(provider.capabilities()).thenReturn(Set.of(NotifierCapability.AUTHORIZATION_DETAILS));
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider(anyString())).thenReturn(provider);
+
+        AuthenticationRequestParametersHandlerMock flagOnHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-notype-on")
+                .handler(flagOnHandler)
+                .handler(rc -> rc.response().end())
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOnHandler.setCibaRequest(cibaRequest);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-notype-on?request=fakejwt&authorization_details=%5B%7B%7D%5D", // [{}]
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldNotParseAuthorizationDetails_WhenFlagOn_AndParamBlank() throws Exception {
+        // Arrange: notifier declares AUTHORIZATION_DETAILS capability + param is blank =>
+        // raw.isBlank() guard fires, no parse attempted, authorizationDetails stays null, request succeeds (HTTP 200).
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        CIBASettingNotifier dn = new CIBASettingNotifier();
+        dn.setId("n1");
+        oidcSettings.getCibaSettings().setDeviceNotifiers(List.of(dn));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+        when(provider.capabilities()).thenReturn(Set.of(NotifierCapability.AUTHORIZATION_DETAILS));
+        when(deviceNotifierManager.getAuthDeviceNotifierProvider(anyString())).thenReturn(provider);
+
+        AuthenticationRequestParametersHandlerMock flagOnHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        AtomicReference<CibaAuthenticationRequest> capturedRef = new AtomicReference<>();
+
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-blank-on")
+                .handler(flagOnHandler)
+                .handler(rc -> {
+                    capturedRef.set(rc.get(ConstantKeys.CIBA_AUTH_REQUEST_KEY));
+                    rc.response().end();
+                })
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOnHandler.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        // blank (whitespace) value for authorization_details
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-blank-on?request=fakejwt&authorization_details=%20",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        CibaAuthenticationRequest parsed = capturedRef.get();
+        assertNotNull("captured request must not be null", parsed);
+        assertNull("authorizationDetails must stay null when param is blank", parsed.getAuthorizationDetails());
+    }
+
+    @Test
+    public void shouldNotRejectRequest_MalformedAuthorizationDetails_WhenFlagOff() throws Exception {
+        // Arrange: no notifier registered => capability absent => stock behaviour, no error
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        AuthenticationRequestParametersHandlerMock flagOffHandler =
+                new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
+
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate/rar-malformed-off")
+                .handler(flagOffHandler)
+                .handler(rc -> rc.response().end())
+                .failureHandler(rc -> rc.response().setStatusCode(400).end());
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        client.setBackchannelUserCodeParameter(false);
+        flagOffHandler.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                "/oidc/ciba/authenticate/rar-malformed-off?request=fakejwt&authorization_details=not-json",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
     /**
      * Simple class to allow to simply provide CibaAuthenticationRequest for testing
      */
     private class AuthenticationRequestParametersHandlerMock extends AuthenticationRequestParametersHandler {
         private CibaAuthenticationRequest cibaRequest;
 
-        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager, ProtectedResourceManager protectedResourceManager) {
-            super(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager);
+        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager, ProtectedResourceManager protectedResourceManager, AuthenticationDeviceNotifierManager deviceNotifierManager) {
+            super(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager);
         }
 
         @Override

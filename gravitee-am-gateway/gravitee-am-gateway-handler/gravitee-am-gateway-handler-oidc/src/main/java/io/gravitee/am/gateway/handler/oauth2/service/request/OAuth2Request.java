@@ -139,6 +139,11 @@ public class OAuth2Request extends BaseRequest {
      */
     private List<PermissionRequest> permissions;
 
+    /**
+     * RFC 9396 Rich Authorization Requests — authorization_details array
+     */
+    private List<Map<String, Object>> authorizationDetails;
+
     private MultiValueMap<String, String> pathParameters = null;
 
     /**
@@ -203,6 +208,7 @@ public class OAuth2Request extends BaseRequest {
         this.contextVersion = other.contextVersion;
         this.executionContext = other.executionContext;
         this.permissions = other.permissions;
+        this.authorizationDetails = other.authorizationDetails;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
         this.issuedTokenType = other.issuedTokenType;
