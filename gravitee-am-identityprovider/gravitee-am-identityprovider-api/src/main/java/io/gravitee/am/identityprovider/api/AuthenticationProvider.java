@@ -33,6 +33,16 @@ public interface AuthenticationProvider extends Service<AuthenticationProvider>,
 
     Maybe<User> loadUserByUsername(String username);
 
+    /**
+     * Map an already-obtained downstream token response into a user, reusing this provider's own
+     * verification + claim/role/group mapping (id_token signature verification when the provider is
+     * configured for it, else /userinfo). Used by back-channel flows (e.g. CIBA federation) that obtain
+     * the token response outside an interactive authorization-code exchange. Default: unsupported.
+     */
+    default Maybe<User> retrieveUserFromTokenResponse(String accessToken, String idToken, AuthenticationContext context) {
+        return Maybe.error(new UnsupportedOperationException("retrieveUserFromTokenResponse not supported by this provider"));
+    }
+
     default Maybe<User> loadPreAuthenticatedUser(Authentication authentication) {
         io.gravitee.am.model.User user = (io.gravitee.am.model.User) authentication.getPrincipal();
         return loadUserByUsername(user.getUsername());

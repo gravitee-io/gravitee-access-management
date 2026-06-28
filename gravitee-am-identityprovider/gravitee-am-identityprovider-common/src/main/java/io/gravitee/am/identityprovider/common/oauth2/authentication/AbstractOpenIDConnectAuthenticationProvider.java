@@ -118,7 +118,13 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
         return Maybe.fromCallable(() -> this.jwtProcessor.process(idToken, null))
                 .subscribeOn(Schedulers.io())
-                .onErrorResumeNext(ex -> Maybe.error(new BadCredentialsException(ex.getMessage())))
+                .onErrorResumeNext(ex -> {
+                    // Chain the underlying cause (JWKS-unreachable, key-rotation, clock-skew, ...) so it
+                    // survives for logging/debugging instead of collapsing into one opaque message. Kept at
+                    // debug (see profile() below) to avoid leaking verification internals on the default path.
+                    LOGGER.debug("Unable to verify id_token", ex);
+                    return Maybe.error(new BadCredentialsException("Unable to verify id_token", ex));
+                })
                 .observeOn(Schedulers.computation())
                 .map(jwtClaimsSet -> createUser(authContext, jwtClaimsSet.getClaims()));
     }
@@ -374,6 +380,35 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         user.setRoles(applyRoleMapping(authContext, attributes));
         user.setGroups(applyGroupMapping(authContext, attributes));
         return user;
+    }
+
+    @Override
+    public Maybe<User> retrieveUserFromTokenResponse(String accessToken, String idToken, AuthenticationContext context) {
+        return Maybe.defer(() -> {
+            final boolean idTokenMode = getConfiguration().isUseIdTokenForUserInfo();
+            if (idTokenMode && idToken == null) {
+                return Maybe.error(new BadCredentialsException("CIBA federation: id_token required but missing"));
+            }
+            if (!idTokenMode && accessToken == null) {
+                return Maybe.error(new BadCredentialsException("CIBA federation: access_token required for userinfo but missing"));
+            }
+            // Only the id_token verification path (see profile()) consumes this context key.
+            // In userinfo mode the id_token is NOT verified here, so it must not be planted under
+            // the trusted id_token key where downstream SSO / token-storage logic could persist it.
+            if (idTokenMode) {
+                context.set(ID_TOKEN_PARAMETER, idToken);
+            }
+            // profile() routes on the type hint: in id_token mode it diverts to the id_token branch
+            // (reading the context set above) before ever dereferencing accessToken, so a null
+            // accessToken is safe there; in userinfo mode accessToken is non-null per the guard above.
+            final Token token = new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
+            final Authentication authentication = new Authentication() {
+                @Override public Object getPrincipal()  { return null; }
+                @Override public Object getCredentials() { return null; }
+                @Override public AuthenticationContext getContext() { return context; }
+            };
+            return profile(token, authentication);
+        });
     }
 
     protected void generateJWTProcessor() {
