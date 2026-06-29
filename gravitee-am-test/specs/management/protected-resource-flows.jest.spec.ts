@@ -43,24 +43,24 @@ describe('Protected resource (MCP server) flows management', () => {
   };
 
   it('should expose the token flow', async () => {
-    const response = await fixture.getFlows().expect(200);
-    const tokenFlow = response.body.find((f) => f.type.toLowerCase() === 'token');
+    const flows = await fixture.getFlows();
+    const tokenFlow = flows.find((f) => f.type.toLowerCase() === 'token');
     expect(tokenFlow).toBeDefined();
   });
 
   it('should persist a policy on the token flow', async () => {
-    const flows = await fixture.getFlows().then((r) => r.body);
+    const flows = await fixture.getFlows();
     const tokenFlow = flows.find((f) => f.type.toLowerCase() === 'token');
     tokenFlow.pre = [tokenPolicy];
 
     // Only the token flow may be submitted for a protected resource.
-    const updated = await fixture.updateFlows([toFlowPayload(tokenFlow)]).expect(200);
-    const persistedToken = updated.body.find((f) => f.type.toLowerCase() === 'token');
+    const updated = await fixture.updateFlows([toFlowPayload(tokenFlow)]);
+    const persistedToken = updated.find((f) => f.type.toLowerCase() === 'token');
     expect(persistedToken.pre).toHaveLength(1);
     expect(persistedToken.pre[0].policy).toEqual('groovy');
 
     // Re-read to confirm persistence
-    const reread = await fixture.getFlows().then((r) => r.body);
+    const reread = await fixture.getFlows();
     const rereadToken = reread.find((f) => f.type.toLowerCase() === 'token');
     expect(rereadToken.pre).toHaveLength(1);
     expect(rereadToken.id).toBeDefined();
@@ -69,7 +69,9 @@ describe('Protected resource (MCP server) flows management', () => {
   it('should reject a non-token flow', async () => {
     const loginFlow = { type: 'login', name: 'LOGIN', pre: [tokenPolicy], post: [], enabled: true };
 
-    const response = await fixture.updateFlows([toFlowPayload(loginFlow)]).expect(400);
-    expect(JSON.stringify(response.body)).toContain('TOKEN');
+    await expect(fixture.updateFlows([toFlowPayload(loginFlow)])).rejects.toMatchObject({
+      response: { status: 400 },
+      message: expect.stringContaining('TOKEN'),
+    });
   });
 });

@@ -35,7 +35,7 @@ MANAGEMENT_SDK_PATH=$(echo "MANAGEMENT_SDK_PATH" | sed -r 's#/*$##g')
 MANAGEMENT_SDK_PATH="$SCRIPT_DIR/../api/management"
 
 # Delete everything in MANAGEMENT_SDK_PATH
-rm -r "${MANAGEMENT_SDK_PATH:?}/*"
+rm -rf "${MANAGEMENT_SDK_PATH:?}"/*
 
 bash "$SCRIPT_DIR"/update-sdk.sh "$MANAGEMENT_API" "$MANAGEMENT_SDK_PATH"
 UPDATE_SDK_STATUS=$?

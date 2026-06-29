@@ -33,17 +33,17 @@ import { mapValues } from '../runtime';
  */
 export interface ClientSecret {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ClientSecret
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ClientSecret
    */
-  expiresAt?: Date;
+  expiresAt?: number;
   /**
    *
    * @type {string}
@@ -86,8 +86,8 @@ export function ClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
+    expiresAt: json['expiresAt'] == null ? undefined : json['expiresAt'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     secret: json['secret'] == null ? undefined : json['secret'],
@@ -105,8 +105,8 @@ export function ClientSecretToJSONTyped(value?: ClientSecret | null, ignoreDiscr
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    createdAt: value['createdAt'],
+    expiresAt: value['expiresAt'],
     id: value['id'],
     name: value['name'],
     secret: value['secret'],

@@ -27,37 +27,37 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * OpenID Connect Dynamic Client Registration configuration for the domain.
  * @export
  * @interface ClientRegistrationSettings
  */
 export interface ClientRegistrationSettings {
   /**
-   *
+   * Whether the unsecured http scheme is permitted in redirect URIs.
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
   allowHttpSchemeRedirectUri?: boolean;
   /**
-   *
+   * Whether localhost is permitted as a redirect URI host.
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
   allowLocalhostRedirectUri?: boolean;
   /**
-   *
+   * Whether expression language is permitted in redirect URI parameters.
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
   allowRedirectUriParamsExpressionLanguage?: boolean;
   /**
-   *
+   * Whether wildcards are permitted in redirect URIs.
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
   allowWildCardRedirectUri?: boolean;
   /**
-   *
+   * Scopes permitted on client registration requests when the allowed list is enabled.
    * @type {Array<string>}
    * @memberof ClientRegistrationSettings
    */
@@ -75,7 +75,7 @@ export interface ClientRegistrationSettings {
    */
   clientTemplateEnabled?: boolean;
   /**
-   *
+   * Default scopes added to every client registration request.
    * @type {Array<string>}
    * @memberof ClientRegistrationSettings
    */

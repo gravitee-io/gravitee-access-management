@@ -22,7 +22,7 @@ import {
   getProtectedResourceFlows,
   updateProtectedResourceFlows,
 } from '@management-commands/protected-resources-management-commands';
-import { ProtectedResourcePrimaryData } from '@management-models/index';
+import { Flow, ProtectedResourcePrimaryData } from '@management-models/index';
 
 export class ProtectedResourceFlowsFixture {
   domain: any;
@@ -57,7 +57,7 @@ export class ProtectedResourceFlowsFixture {
     return getProtectedResourceFlows(this.domain.id, this.accessToken, this.mcpResource.id);
   }
 
-  updateFlows(flows: any) {
+  updateFlows(flows: Flow[]) {
     return updateProtectedResourceFlows(this.domain.id, this.accessToken, this.mcpResource.id, flows);
   }
 }

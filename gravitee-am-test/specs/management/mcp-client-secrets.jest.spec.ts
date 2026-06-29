@@ -83,8 +83,8 @@ describe('MCP Client Secrets Management', () => {
       const now = Date.now();
       // 120 seconds = 120000 ms
       // Allow some delta
-      expect(clientSecret.expiresAt!.getTime()).toBeLessThan(now + 120000 + 5000);
-      expect(clientSecret.expiresAt!.getTime()).toBeGreaterThan(now + 120000 - 5000);
+      expect(clientSecret.expiresAt!).toBeLessThan(now + 120000 + 5000);
+      expect(clientSecret.expiresAt!).toBeGreaterThan(now + 120000 - 5000);
     });
   });
 });

@@ -45,11 +45,11 @@ export interface Email {
    */
   content?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Email
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -111,11 +111,11 @@ export interface Email {
    */
   template?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Email
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -149,7 +149,7 @@ export function EmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ema
   return {
     client: json['client'] == null ? undefined : json['client'],
     content: json['content'] == null ? undefined : json['content'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     defaultTemplate: json['defaultTemplate'] == null ? undefined : json['defaultTemplate'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     expiresAfter: json['expiresAfter'] == null ? undefined : json['expiresAfter'],
@@ -160,7 +160,7 @@ export function EmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ema
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     subject: json['subject'] == null ? undefined : json['subject'],
     template: json['template'] == null ? undefined : json['template'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -176,7 +176,7 @@ export function EmailToJSONTyped(value?: Email | null, ignoreDiscriminator: bool
   return {
     client: value['client'],
     content: value['content'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     defaultTemplate: value['defaultTemplate'],
     enabled: value['enabled'],
     expiresAfter: value['expiresAfter'],
@@ -187,6 +187,6 @@ export function EmailToJSONTyped(value?: Email | null, ignoreDiscriminator: bool
     referenceType: value['referenceType'],
     subject: value['subject'],
     template: value['template'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

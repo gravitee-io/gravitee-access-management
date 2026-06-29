@@ -21,7 +21,6 @@ apis/FlowApi.ts
 apis/FormApi.ts
 apis/GroupApi.ts
 apis/IdentityProviderApi.ts
-apis/NewsletterApi.ts
 apis/NotifierApi.ts
 apis/PasswordPolicyApi.ts
 apis/PlatformApi.ts
@@ -100,7 +99,6 @@ models/Domain.ts
 models/DomainPage.ts
 models/DomainUserBulkRequest.ts
 models/Email.ts
-models/EmailValue.ts
 models/EnrollSettings.ts
 models/EnrolledFactor.ts
 models/EnrolledFactorChannel.ts
@@ -128,6 +126,7 @@ models/JWK.ts
 models/JWKSet.ts
 models/LoginSettings.ts
 models/MFASettings.ts
+models/ManagedBy.ts
 models/McpTool.ts
 models/Membership.ts
 models/MembershipListItem.ts

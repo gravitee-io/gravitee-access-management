@@ -27,19 +27,19 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Financial-grade API (FAPI) security profile configuration for the domain.
  * @export
  * @interface SecurityProfileSettings
  */
 export interface SecurityProfileSettings {
   /**
-   *
+   * Whether the Open Banking Brasil Financial-grade API security profile (version 1.0) is applied.
    * @type {boolean}
    * @memberof SecurityProfileSettings
    */
   enableFapiBrazil?: boolean;
   /**
-   *
+   * Whether the standard Financial-grade API security profile (version 1.0) is applied.
    * @type {boolean}
    * @memberof SecurityProfileSettings
    */

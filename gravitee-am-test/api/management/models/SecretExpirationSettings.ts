@@ -27,19 +27,19 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Controls whether client secrets in the domain expire and after how long.
  * @export
  * @interface SecretExpirationSettings
  */
 export interface SecretExpirationSettings {
   /**
-   *
+   * Whether client-secret expiration is enabled.
    * @type {boolean}
    * @memberof SecretExpirationSettings
    */
   enabled?: boolean;
   /**
-   *
+   * Lifetime, in seconds, of a client secret before it expires.
    * @type {number}
    * @memberof SecretExpirationSettings
    */

@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface AccountAccessToken {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AccountAccessToken
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -81,11 +81,11 @@ export interface AccountAccessToken {
    */
   tokenId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AccountAccessToken
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -124,7 +124,7 @@ export function AccountAccessTokenFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     issuerId: json['issuerId'] == null ? undefined : json['issuerId'],
     issuerUsername: json['issuerUsername'] == null ? undefined : json['issuerUsername'],
     name: json['name'] == null ? undefined : json['name'],
@@ -132,7 +132,7 @@ export function AccountAccessTokenFromJSONTyped(json: any, ignoreDiscriminator: 
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     token: json['token'] == null ? undefined : json['token'],
     tokenId: json['tokenId'] == null ? undefined : json['tokenId'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userId: json['userId'] == null ? undefined : json['userId'],
   };
 }
@@ -147,7 +147,7 @@ export function AccountAccessTokenToJSONTyped(value?: AccountAccessToken | null,
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     issuerId: value['issuerId'],
     issuerUsername: value['issuerUsername'],
     name: value['name'],
@@ -155,7 +155,7 @@ export function AccountAccessTokenToJSONTyped(value?: AccountAccessToken | null,
     referenceType: value['referenceType'],
     token: value['token'],
     tokenId: value['tokenId'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userId: value['userId'],
   };
 }

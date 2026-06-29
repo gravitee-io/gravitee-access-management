@@ -39,11 +39,11 @@ export interface Credential {
    */
   aaguid?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Credential
    */
-  accessedAt?: Date;
+  accessedAt?: number;
   /**
    *
    * @type {string}
@@ -63,11 +63,11 @@ export interface Credential {
    */
   counter?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Credential
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -93,11 +93,11 @@ export interface Credential {
    */
   ipAddress?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Credential
    */
-  lastCheckedAt?: Date;
+  lastCheckedAt?: number;
   /**
    *
    * @type {string}
@@ -117,11 +117,11 @@ export interface Credential {
    */
   referenceType?: CredentialReferenceTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Credential
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -172,20 +172,20 @@ export function CredentialFromJSONTyped(json: any, ignoreDiscriminator: boolean)
   }
   return {
     aaguid: json['aaguid'] == null ? undefined : json['aaguid'],
-    accessedAt: json['accessedAt'] == null ? undefined : new Date(json['accessedAt']),
+    accessedAt: json['accessedAt'] == null ? undefined : json['accessedAt'],
     attestationStatement: json['attestationStatement'] == null ? undefined : json['attestationStatement'],
     attestationStatementFormat: json['attestationStatementFormat'] == null ? undefined : json['attestationStatementFormat'],
     counter: json['counter'] == null ? undefined : json['counter'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     credentialId: json['credentialId'] == null ? undefined : json['credentialId'],
     deviceName: json['deviceName'] == null ? undefined : json['deviceName'],
     id: json['id'] == null ? undefined : json['id'],
     ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
-    lastCheckedAt: json['lastCheckedAt'] == null ? undefined : new Date(json['lastCheckedAt']),
+    lastCheckedAt: json['lastCheckedAt'] == null ? undefined : json['lastCheckedAt'],
     publicKey: json['publicKey'] == null ? undefined : json['publicKey'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
     userId: json['userId'] == null ? undefined : json['userId'],
     username: json['username'] == null ? undefined : json['username'],
@@ -203,20 +203,20 @@ export function CredentialToJSONTyped(value?: Credential | null, ignoreDiscrimin
 
   return {
     aaguid: value['aaguid'],
-    accessedAt: value['accessedAt'] == null ? value['accessedAt'] : value['accessedAt'].toISOString(),
+    accessedAt: value['accessedAt'],
     attestationStatement: value['attestationStatement'],
     attestationStatementFormat: value['attestationStatementFormat'],
     counter: value['counter'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     credentialId: value['credentialId'],
     deviceName: value['deviceName'],
     id: value['id'],
     ipAddress: value['ipAddress'],
-    lastCheckedAt: value['lastCheckedAt'] == null ? value['lastCheckedAt'] : value['lastCheckedAt'].toISOString(),
+    lastCheckedAt: value['lastCheckedAt'],
     publicKey: value['publicKey'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userAgent: value['userAgent'],
     userId: value['userId'],
     username: value['username'],

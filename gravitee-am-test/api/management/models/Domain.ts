@@ -28,6 +28,8 @@
 import { mapValues } from '../runtime';
 import type { SCIMSettings } from './SCIMSettings';
 import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
+import type { ManagedBy } from './ManagedBy';
+import { ManagedByFromJSON, ManagedByFromJSONTyped, ManagedByToJSON, ManagedByToJSONTyped } from './ManagedBy';
 import type { CertificateSettings } from './CertificateSettings';
 import {
   CertificateSettingsFromJSON,
@@ -121,11 +123,11 @@ export interface Domain {
    */
   corsSettings?: CorsSettings;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Domain
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -176,16 +178,22 @@ export interface Domain {
   identities?: Set<string>;
   /**
    *
+   * @type {string}
+   * @memberof Domain
+   */
+  readonly key?: string;
+  /**
+   *
    * @type {LoginSettings}
    * @memberof Domain
    */
   loginSettings?: LoginSettings;
   /**
    *
-   * @type {string}
+   * @type {ManagedBy}
    * @memberof Domain
    */
-  managedBy?: DomainManagedByEnum;
+  managedBy?: ManagedBy;
   /**
    *
    * @type {boolean}
@@ -307,11 +315,11 @@ export interface Domain {
    */
   uma?: UMASettings;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Domain
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -337,17 +345,6 @@ export interface Domain {
    */
   webAuthnSettings?: WebAuthnSettings;
 }
-
-/**
- * @export
- */
-export const DomainManagedByEnum = {
-  None: 'NONE',
-  Terraform: 'TERRAFORM',
-  Gko: 'GKO',
-  AutomationApi: 'AUTOMATION_API',
-} as const;
-export type DomainManagedByEnum = typeof DomainManagedByEnum[keyof typeof DomainManagedByEnum];
 
 /**
  * @export
@@ -391,7 +388,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     alertEnabled: json['alertEnabled'] == null ? undefined : json['alertEnabled'],
     certificateSettings: json['certificateSettings'] == null ? undefined : CertificateSettingsFromJSON(json['certificateSettings']),
     corsSettings: json['corsSettings'] == null ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     description: json['description'] == null ? undefined : json['description'],
     dynamicClientRegistrationEnabled:
@@ -402,8 +399,9 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     hrid: json['hrid'] == null ? undefined : json['hrid'],
     id: json['id'] == null ? undefined : json['id'],
     identities: json['identities'] == null ? undefined : new Set(json['identities']),
+    key: json['key'] == null ? undefined : json['key'],
     loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
-    managedBy: json['managedBy'] == null ? undefined : json['managedBy'],
+    managedBy: json['managedBy'] == null ? undefined : ManagedByFromJSON(json['managedBy']),
     master: json['master'] == null ? undefined : json['master'],
     name: json['name'] == null ? undefined : json['name'],
     oidc: json['oidc'] == null ? undefined : OIDCSettingsFromJSON(json['oidc']),
@@ -431,7 +429,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     tags: json['tags'] == null ? undefined : new Set(json['tags']),
     tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
     uma: json['uma'] == null ? undefined : UMASettingsFromJSON(json['uma']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     version: json['version'] == null ? undefined : json['version'],
     vhostMode: json['vhostMode'] == null ? undefined : json['vhostMode'],
     vhosts: json['vhosts'] == null ? undefined : (json['vhosts'] as Array<any>).map(VirtualHostFromJSON),
@@ -443,7 +441,7 @@ export function DomainToJSON(json: any): Domain {
   return DomainToJSONTyped(json, false);
 }
 
-export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: boolean = false): any {
+export function DomainToJSONTyped(value?: Omit<Domain, 'key'> | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }
@@ -453,7 +451,7 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     alertEnabled: value['alertEnabled'],
     certificateSettings: CertificateSettingsToJSON(value['certificateSettings']),
     corsSettings: CorsSettingsToJSON(value['corsSettings']),
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     dataPlaneId: value['dataPlaneId'],
     description: value['description'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
@@ -463,7 +461,7 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     id: value['id'],
     identities: value['identities'] == null ? undefined : Array.from(value['identities'] as Set<any>),
     loginSettings: LoginSettingsToJSON(value['loginSettings']),
-    managedBy: value['managedBy'],
+    managedBy: ManagedByToJSON(value['managedBy']),
     master: value['master'],
     name: value['name'],
     oidc: OIDCSettingsToJSON(value['oidc']),
@@ -484,7 +482,7 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     tags: value['tags'] == null ? undefined : Array.from(value['tags'] as Set<any>),
     tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
     uma: UMASettingsToJSON(value['uma']),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     version: value['version'],
     vhostMode: value['vhostMode'],
     vhosts: value['vhosts'] == null ? undefined : (value['vhosts'] as Array<any>).map(VirtualHostToJSON),

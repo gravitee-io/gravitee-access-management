@@ -81,11 +81,11 @@ export interface FilteredApplication {
    */
   type?: FilteredApplicationTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof FilteredApplication
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -135,7 +135,7 @@ export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator:
     name: json['name'] == null ? undefined : json['name'],
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -157,6 +157,6 @@ export function FilteredApplicationToJSONTyped(value?: FilteredApplication | nul
     name: value['name'],
     template: value['template'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

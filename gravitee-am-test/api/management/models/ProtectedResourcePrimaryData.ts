@@ -115,11 +115,11 @@ export interface ProtectedResourcePrimaryData {
    */
   type?: ProtectedResourcePrimaryDataTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ProtectedResourcePrimaryData
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -158,7 +158,7 @@ export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscr
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -186,6 +186,6 @@ export function ProtectedResourcePrimaryDataToJSONTyped(
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     settings: ApplicationSettingsToJSON(value['settings']),
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

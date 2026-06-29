@@ -39,11 +39,11 @@ export interface AccessPolicy {
    */
   condition?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AccessPolicy
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -93,11 +93,11 @@ export interface AccessPolicy {
    */
   type?: AccessPolicyTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AccessPolicy
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -125,7 +125,7 @@ export function AccessPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolea
   }
   return {
     condition: json['condition'] == null ? undefined : json['condition'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     domain: json['domain'] == null ? undefined : json['domain'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
@@ -134,7 +134,7 @@ export function AccessPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolea
     order: json['order'] == null ? undefined : json['order'],
     resource: json['resource'] == null ? undefined : json['resource'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -149,7 +149,7 @@ export function AccessPolicyToJSONTyped(value?: AccessPolicy | null, ignoreDiscr
 
   return {
     condition: value['condition'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     domain: value['domain'],
     enabled: value['enabled'],
@@ -158,6 +158,6 @@ export function AccessPolicyToJSONTyped(value?: AccessPolicy | null, ignoreDiscr
     order: value['order'],
     resource: value['resource'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

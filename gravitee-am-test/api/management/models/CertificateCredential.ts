@@ -33,17 +33,17 @@ import { mapValues } from '../runtime';
  */
 export interface CertificateCredential {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof CertificateCredential
    */
-  accessedAt?: Date;
+  accessedAt?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof CertificateCredential
    */
-  certificateExpiresAt?: Date;
+  certificateExpiresAt?: number;
   /**
    *
    * @type {string}
@@ -75,11 +75,11 @@ export interface CertificateCredential {
    */
   certificateThumbprint?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof CertificateCredential
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -111,11 +111,11 @@ export interface CertificateCredential {
    */
   referenceType?: CertificateCredentialReferenceTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof CertificateCredential
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -166,20 +166,20 @@ export function CertificateCredentialFromJSONTyped(json: any, ignoreDiscriminato
     return json;
   }
   return {
-    accessedAt: json['accessedAt'] == null ? undefined : new Date(json['accessedAt']),
-    certificateExpiresAt: json['certificateExpiresAt'] == null ? undefined : new Date(json['certificateExpiresAt']),
+    accessedAt: json['accessedAt'] == null ? undefined : json['accessedAt'],
+    certificateExpiresAt: json['certificateExpiresAt'] == null ? undefined : json['certificateExpiresAt'],
     certificateIssuerDN: json['certificateIssuerDN'] == null ? undefined : json['certificateIssuerDN'],
     certificatePem: json['certificatePem'] == null ? undefined : json['certificatePem'],
     certificateSerialNumber: json['certificateSerialNumber'] == null ? undefined : json['certificateSerialNumber'],
     certificateSubjectDN: json['certificateSubjectDN'] == null ? undefined : json['certificateSubjectDN'],
     certificateThumbprint: json['certificateThumbprint'] == null ? undefined : json['certificateThumbprint'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     id: json['id'] == null ? undefined : json['id'],
     ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
     userId: json['userId'] == null ? undefined : json['userId'],
     username: json['username'] == null ? undefined : json['username'],
@@ -196,21 +196,20 @@ export function CertificateCredentialToJSONTyped(value?: CertificateCredential |
   }
 
   return {
-    accessedAt: value['accessedAt'] == null ? value['accessedAt'] : value['accessedAt'].toISOString(),
-    certificateExpiresAt:
-      value['certificateExpiresAt'] == null ? value['certificateExpiresAt'] : value['certificateExpiresAt'].toISOString(),
+    accessedAt: value['accessedAt'],
+    certificateExpiresAt: value['certificateExpiresAt'],
     certificateIssuerDN: value['certificateIssuerDN'],
     certificatePem: value['certificatePem'],
     certificateSerialNumber: value['certificateSerialNumber'],
     certificateSubjectDN: value['certificateSubjectDN'],
     certificateThumbprint: value['certificateThumbprint'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     id: value['id'],
     ipAddress: value['ipAddress'],
     metadata: value['metadata'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userAgent: value['userAgent'],
     userId: value['userId'],
     username: value['username'],

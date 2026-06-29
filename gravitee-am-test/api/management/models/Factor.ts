@@ -39,11 +39,11 @@ export interface Factor {
    */
   configuration?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Factor
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -75,11 +75,11 @@ export interface Factor {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Factor
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -114,13 +114,13 @@ export function FactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): Fa
   }
   return {
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     domain: json['domain'] == null ? undefined : json['domain'],
     factorType: json['factorType'] == null ? undefined : json['factorType'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -135,12 +135,12 @@ export function FactorToJSONTyped(value?: Factor | null, ignoreDiscriminator: bo
 
   return {
     configuration: value['configuration'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     domain: value['domain'],
     factorType: value['factorType'],
     id: value['id'],
     name: value['name'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

@@ -95,11 +95,11 @@ export interface Audit {
    */
   target?: AuditEntity;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Audit
    */
-  timestamp?: Date;
+  timestamp?: number;
   /**
    *
    * @type {string}
@@ -151,7 +151,7 @@ export function AuditFromJSONTyped(json: any, ignoreDiscriminator: boolean): Aud
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     target: json['target'] == null ? undefined : AuditEntityFromJSON(json['target']),
-    timestamp: json['timestamp'] == null ? undefined : new Date(json['timestamp']),
+    timestamp: json['timestamp'] == null ? undefined : json['timestamp'],
     transactionId: json['transactionId'] == null ? undefined : json['transactionId'],
     type: json['type'] == null ? undefined : json['type'],
   };
@@ -175,7 +175,7 @@ export function AuditToJSONTyped(value?: Audit | null, ignoreDiscriminator: bool
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     target: AuditEntityToJSON(value['target']),
-    timestamp: value['timestamp'] == null ? value['timestamp'] : value['timestamp'].toISOString(),
+    timestamp: value['timestamp'],
     transactionId: value['transactionId'],
     type: value['type'],
   };

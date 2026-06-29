@@ -39,11 +39,12 @@ export interface SpiffeApplicationSettings {
    */
   subject?: string;
   /**
-   * How `subject` is matched against the SVID `sub` claim. `EXACT` (default)
-   * requires equality. `PREFIX` is only allowed for HOSTED_DELEGATED or
-   * AUTONOMOUS agent applications; the SVID is accepted when its `sub` equals
-   * the configured subject or starts with `<subject>/`, and the full SVID
-   * SPIFFE ID becomes the per-instance `act.sub` in minted tokens.
+   * How the configured `subject` is matched against the SVID `sub` claim.
+   * `EXACT` (default) requires equality.
+   * `PREFIX` is only allowed for HOSTED_DELEGATED or AUTONOMOUS agent applications;
+   * the configured `subject` must end with `/` and the SVID `sub` is accepted when
+   * it starts with that subject. The full SVID SPIFFE ID then becomes the
+   * per-instance `act.sub` in minted tokens.
    * @type {string}
    * @memberof SpiffeApplicationSettings
    */
@@ -64,7 +65,7 @@ export const SpiffeApplicationSettingsSubjectMatchModeEnum = {
   Prefix: 'PREFIX',
 } as const;
 export type SpiffeApplicationSettingsSubjectMatchModeEnum =
-  (typeof SpiffeApplicationSettingsSubjectMatchModeEnum)[keyof typeof SpiffeApplicationSettingsSubjectMatchModeEnum];
+  typeof SpiffeApplicationSettingsSubjectMatchModeEnum[keyof typeof SpiffeApplicationSettingsSubjectMatchModeEnum];
 
 /**
  * Check if a given object implements the SpiffeApplicationSettings interface.

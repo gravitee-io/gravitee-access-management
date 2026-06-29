@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import request from 'supertest';
-
-import { getDomainManagerUrl, getProtectedResourcesApi } from './service/utils';
+import { getProtectedResourcesApi } from './service/utils';
 import { NewProtectedResource } from '@management-models/NewProtectedResource';
 import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
 import { ProtectedResourcePrimaryData, ProtectedResourceSecret } from '@management-models/index';
 import { ProtectedResourcePage } from '@management-models/ProtectedResourcePage';
 import { PatchProtectedResource } from '@management-models/PatchProtectedResource';
+import { Flow } from '@management-models/Flow';
+import { FlowEntity } from '@management-models/FlowEntity';
 import { retryUntil } from '@utils-commands/retry';
 
 export const createProtectedResource = (
@@ -163,24 +163,33 @@ export const deleteMcpClientSecret = (domainId: string, accessToken: string, res
     secretId: secretId,
   });
 
-// Protected resource flows (Policy Studio) — token flow only.
-// TODO remove once generated in the management SDK (https://gravitee.atlassian.net/browse/AM-7189)
-export const getProtectedResourceFlows = (domainId: string, accessToken: string, resourceId: string) =>
-  request(getDomainManagerUrl(domainId) + `/protected-resources/${resourceId}/flows`)
-    .get('')
-    .set('Authorization', 'Bearer ' + accessToken);
+export const getProtectedResourceFlows = (domainId: string, accessToken: string, resourceId: string): Promise<Array<FlowEntity>> =>
+  getProtectedResourcesApi(accessToken).listProtectedResourceFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+  });
 
-export const updateProtectedResourceFlows = (domainId: string, accessToken: string, resourceId: string, flows: any) =>
-  request(getDomainManagerUrl(domainId) + `/protected-resources/${resourceId}/flows`)
-    .put('')
-    .set('Authorization', 'Bearer ' + accessToken)
-    .send(flows);
+export const updateProtectedResourceFlows = (
+  domainId: string,
+  accessToken: string,
+  resourceId: string,
+  flows: Array<Flow>,
+): Promise<Array<FlowEntity>> =>
+  getProtectedResourcesApi(accessToken).defineProtectedResourceFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+    flow: flows,
+  });
 
 /**
  * Strips the read-only fields (icon/createdAt/updatedAt) the flows GET endpoint returns but the
  * write model rejects. Mirrors what the console does before submitting a flow.
  */
-export const toFlowPayload = (flow: any) => {
+export const toFlowPayload = (flow: any): Flow => {
   const { icon, createdAt, updatedAt, ...rest } = flow;
   return rest;
 };
