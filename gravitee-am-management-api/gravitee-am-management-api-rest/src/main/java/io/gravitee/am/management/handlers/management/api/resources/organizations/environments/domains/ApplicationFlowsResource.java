@@ -22,7 +22,6 @@ import io.gravitee.am.management.handlers.management.api.resources.utils.FlowUti
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.FlowService;
@@ -100,7 +99,7 @@ public class ApplicationFlowsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.LIST)
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
                         .flatMapPublisher(hasPermission ->
-                                flowService.findByApplication(ReferenceType.DOMAIN, domain, application).map(flow -> filterFlowInfos(hasPermission, flow)))
+                                flowService.findByApplication(ReferenceType.DOMAIN, domain, application).map(flow -> FlowUtils.filterFlowInfos(hasPermission, flow)))
                         .toList())
                         .subscribe(response::resume, response::resume);
     }
@@ -133,7 +132,7 @@ public class ApplicationFlowsResource extends AbstractResource {
                 .andThen(flowValidator.validateAll(flows))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, application, convert(flows), authenticatedUser))
+                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, application, FlowUtils.convert(flows), authenticatedUser))
                         .map(updatedFlows -> updatedFlows.stream().map(FlowEntity::new).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }
@@ -142,36 +141,5 @@ public class ApplicationFlowsResource extends AbstractResource {
 
     public ApplicationFlowResource getFlowResource() {
         return resourceContext.getResource(ApplicationFlowResource.class);
-    }
-
-    private FlowEntity filterFlowInfos(Boolean hasPermission, Flow flow) {
-        if (hasPermission) {
-            return new FlowEntity(flow);
-        }
-
-        FlowEntity filteredFlow = new FlowEntity();
-        filteredFlow.setId(flow.getId());
-        filteredFlow.setName(flow.getName());
-        filteredFlow.setEnabled(flow.isEnabled());
-
-        return filteredFlow;
-    }
-
-    private static List<Flow> convert(List<io.gravitee.am.service.model.Flow> flows) {
-        return flows.stream()
-                .map(ApplicationFlowsResource::convert)
-                .collect(Collectors.toList());
-    }
-
-    private static Flow convert(io.gravitee.am.service.model.Flow flow) {
-        Flow flowToUpsert = new Flow();
-        flowToUpsert.setId(flow.getId());
-        flowToUpsert.setType(flow.getType());
-        flowToUpsert.setName(flow.getName());
-        flowToUpsert.setEnabled(flow.isEnabled());
-        flowToUpsert.setCondition(flow.getCondition());
-        flowToUpsert.setPre(flow.getPre());
-        flowToUpsert.setPost(flow.getPost());
-        return flowToUpsert;
     }
 }

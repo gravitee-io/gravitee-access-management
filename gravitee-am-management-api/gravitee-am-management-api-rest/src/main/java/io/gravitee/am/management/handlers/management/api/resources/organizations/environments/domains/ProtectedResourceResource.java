@@ -67,6 +67,11 @@ public class ProtectedResourceResource extends AbstractDomainResource {
         return resourceContext.getResource(ProtectedResourceMembersResource.class);
     }
 
+    @Path("flows")
+    public ProtectedResourceFlowsResource getFlowsResource() {
+        return resourceContext.getResource(ProtectedResourceFlowsResource.class);
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(

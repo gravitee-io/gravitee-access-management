@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { getProtectedResourcesApi } from './service/utils';
+import request from 'supertest';
+
+import { getDomainManagerUrl, getProtectedResourcesApi } from './service/utils';
 import { NewProtectedResource } from '@management-models/NewProtectedResource';
 import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
 import { ProtectedResourcePrimaryData, ProtectedResourceSecret } from '@management-models/index';
@@ -62,7 +64,14 @@ export const patchProtectedResource = (
     patchProtectedResource: body,
   });
 
-export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string, query?: string): Promise<ProtectedResourcePage> =>
+export const getMcpServers = (
+  domainId: string,
+  accessToken: string,
+  size = 10,
+  page = 0,
+  sort?: string,
+  query?: string,
+): Promise<ProtectedResourcePage> =>
   getProtectedResourcesApi(accessToken).listProtectedResources({
     organizationId: 'DEFAULT',
     environmentId: 'DEFAULT',
@@ -153,3 +162,25 @@ export const deleteMcpClientSecret = (domainId: string, accessToken: string, res
     protectedResource: resourceId,
     secretId: secretId,
   });
+
+// Protected resource flows (Policy Studio) — token flow only.
+// TODO remove once generated in the management SDK (https://gravitee.atlassian.net/browse/AM-7189)
+export const getProtectedResourceFlows = (domainId: string, accessToken: string, resourceId: string) =>
+  request(getDomainManagerUrl(domainId) + `/protected-resources/${resourceId}/flows`)
+    .get('')
+    .set('Authorization', 'Bearer ' + accessToken);
+
+export const updateProtectedResourceFlows = (domainId: string, accessToken: string, resourceId: string, flows: any) =>
+  request(getDomainManagerUrl(domainId) + `/protected-resources/${resourceId}/flows`)
+    .put('')
+    .set('Authorization', 'Bearer ' + accessToken)
+    .send(flows);
+
+/**
+ * Strips the read-only fields (icon/createdAt/updatedAt) the flows GET endpoint returns but the
+ * write model rejects. Mirrors what the console does before submitting a flow.
+ */
+export const toFlowPayload = (flow: any) => {
+  const { icon, createdAt, updatedAt, ...rest } = flow;
+  return rest;
+};

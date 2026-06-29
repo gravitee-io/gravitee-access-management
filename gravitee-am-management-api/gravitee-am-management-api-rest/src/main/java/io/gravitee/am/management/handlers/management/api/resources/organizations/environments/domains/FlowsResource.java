@@ -22,7 +22,6 @@ import io.gravitee.am.management.handlers.management.api.resources.utils.FlowUti
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.FlowService;
@@ -101,7 +100,7 @@ public class FlowsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.LIST)
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.READ)
                         .flatMapPublisher(hasPermission -> flowService.findAll(ReferenceType.DOMAIN, domain, true)
-                                        .map(flow ->  filterFlowInfos(hasPermission, flow))).toList()
+                                        .map(flow ->  FlowUtils.filterFlowInfos(hasPermission, flow))).toList()
                 )
                 .subscribe(response::resume, response::resume);
     }
@@ -133,7 +132,7 @@ public class FlowsResource extends AbstractResource {
                 .andThen(flowValidator.validateAll(flows))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, convert(flows), authenticatedUser))
+                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, FlowUtils.convert(flows), authenticatedUser))
                         .map(updatedFlows -> updatedFlows.stream().map(FlowEntity::new).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }
@@ -141,36 +140,5 @@ public class FlowsResource extends AbstractResource {
     @Path("{flow}")
     public FlowResource getFlowResource() {
         return resourceContext.getResource(FlowResource.class);
-    }
-
-    private FlowEntity filterFlowInfos(Boolean hasPermission, Flow flow) {
-        if (hasPermission) {
-            return new FlowEntity(flow);
-        }
-
-        FlowEntity filteredFlow = new FlowEntity();
-        filteredFlow.setId(flow.getId());
-        filteredFlow.setName(flow.getName());
-        filteredFlow.setEnabled(flow.isEnabled());
-
-        return filteredFlow;
-    }
-
-    private static List<Flow> convert(List<io.gravitee.am.service.model.Flow> flows) {
-        return flows.stream()
-                .map(FlowsResource::convert)
-                .collect(Collectors.toList());
-    }
-
-    private static Flow convert(io.gravitee.am.service.model.Flow flow) {
-        Flow flowToUpsert = new Flow();
-        flowToUpsert.setId(flow.getId());
-        flowToUpsert.setType(flow.getType());
-        flowToUpsert.setName(flow.getName());
-        flowToUpsert.setEnabled(flow.isEnabled());
-        flowToUpsert.setCondition(flow.getCondition());
-        flowToUpsert.setPre(flow.getPre());
-        flowToUpsert.setPost(flow.getPost());
-        return flowToUpsert;
     }
 }

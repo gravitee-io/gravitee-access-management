@@ -337,6 +337,42 @@ public class FlowManagerTest {
     }
 
     @Test
+    public void shouldFindByExtensionPoint_protectedResourceTokenFlow_inherit_false() {
+        // A MCP server (protected resource) is exposed to the gateway as a Client whose id is the
+        // protected resource id. Its TOKEN flow is persisted with application = protectedResourceId,
+        // so it must be selected for that client at the PRE_TOKEN extension point.
+        Step appStep = mock(Step.class);
+        when(appStep.isEnabled()).thenReturn(true);
+        when(appStep.getPolicy()).thenReturn("step-policy");
+        when(appStep.getConfiguration()).thenReturn("pr-token-step-configuration");
+
+        Flow tokenFlow = mock(Flow.class);
+        when(tokenFlow.getId()).thenReturn("pr-token-flow-id");
+        when(tokenFlow.getType()).thenReturn(Type.TOKEN);
+        when(tokenFlow.isEnabled()).thenReturn(true);
+        when(tokenFlow.getPre()).thenReturn(Collections.singletonList(appStep));
+        when(tokenFlow.getApplication()).thenReturn("protected-resource-id");
+
+        Policy tokenPolicy = mock(Policy.class);
+        when(tokenPolicy.id()).thenReturn("pr-token-policy");
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("protected-resource-id");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(policyPluginManager.create(appStep.getPolicy(), appStep.getCondition(), appStep.getConfiguration())).thenReturn(tokenPolicy);
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(tokenFlow));
+        flowManager.afterPropertiesSet();
+        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_TOKEN, client, null).test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(policies -> {
+            Assert.assertTrue(policies.size() == 1);
+            Assert.assertTrue(policies.get(0).id().equals(tokenPolicy.id()));
+            return true;
+        });
+        verify(policyPluginManager, times(1)).create(anyString(), eq(null), anyString());
+    }
+
+    @Test
     public void shouldFindByExtensionPoint_twoFlows_inherit_true() {
         Step domainStep = mock(Step.class);
         when(domainStep.isEnabled()).thenReturn(true);

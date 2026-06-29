@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.utils;
 
+import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.service.model.Flow;
 import io.reactivex.rxjava3.core.Completable;
@@ -25,6 +26,7 @@ import lombok.NoArgsConstructor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -44,5 +46,36 @@ public class FlowUtils {
             return Flowable.fromStream(Stream.concat(pre.stream(), post.stream())).concatMapCompletable(step -> policyPluginService.checkPluginDeployment(step.getPolicy()));
         }
         return Completable.complete();
+    }
+
+    public static FlowEntity filterFlowInfos(Boolean hasPermission, io.gravitee.am.model.flow.Flow flow) {
+        if (hasPermission) {
+            return new FlowEntity(flow);
+        }
+
+        FlowEntity filteredFlow = new FlowEntity();
+        filteredFlow.setId(flow.getId());
+        filteredFlow.setName(flow.getName());
+        filteredFlow.setEnabled(flow.isEnabled());
+
+        return filteredFlow;
+    }
+
+    public static List<io.gravitee.am.model.flow.Flow> convert(List<Flow> flows) {
+        return flows.stream()
+                .map(FlowUtils::convert)
+                .collect(Collectors.toList());
+    }
+
+    private static io.gravitee.am.model.flow.Flow convert(Flow flow) {
+        io.gravitee.am.model.flow.Flow flowToUpsert = new io.gravitee.am.model.flow.Flow();
+        flowToUpsert.setId(flow.getId());
+        flowToUpsert.setType(flow.getType());
+        flowToUpsert.setName(flow.getName());
+        flowToUpsert.setEnabled(flow.isEnabled());
+        flowToUpsert.setCondition(flow.getCondition());
+        flowToUpsert.setPre(flow.getPre());
+        flowToUpsert.setPost(flow.getPost());
+        return flowToUpsert;
     }
 }
