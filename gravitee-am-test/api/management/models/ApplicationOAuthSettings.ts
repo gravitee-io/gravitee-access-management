@@ -114,11 +114,11 @@ export interface ApplicationOAuthSettings {
    */
   clientId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ApplicationOAuthSettings
    */
-  clientIdIssuedAt?: Date;
+  clientIdIssuedAt?: number;
   /**
    *
    * @type {string}
@@ -132,11 +132,11 @@ export interface ApplicationOAuthSettings {
    */
   clientSecret?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ApplicationOAuthSettings
    */
-  clientSecretExpiresAt?: Date;
+  clientSecretExpiresAt?: number;
   /**
    *
    * @type {string}
@@ -510,10 +510,10 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     backchannelTokenDeliveryMode: json['backchannelTokenDeliveryMode'] == null ? undefined : json['backchannelTokenDeliveryMode'],
     backchannelUserCodeParameter: json['backchannelUserCodeParameter'] == null ? undefined : json['backchannelUserCodeParameter'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
-    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : new Date(json['clientIdIssuedAt']),
+    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : json['clientIdIssuedAt'],
     clientName: json['clientName'] == null ? undefined : json['clientName'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
-    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : new Date(json['clientSecretExpiresAt']),
+    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : json['clientSecretExpiresAt'],
     clientType: json['clientType'] == null ? undefined : json['clientType'],
     clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
     contacts: json['contacts'] == null ? undefined : json['contacts'],
@@ -598,11 +598,10 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     backchannelTokenDeliveryMode: value['backchannelTokenDeliveryMode'],
     backchannelUserCodeParameter: value['backchannelUserCodeParameter'],
     clientId: value['clientId'],
-    clientIdIssuedAt: value['clientIdIssuedAt'] == null ? value['clientIdIssuedAt'] : value['clientIdIssuedAt'].toISOString(),
+    clientIdIssuedAt: value['clientIdIssuedAt'],
     clientName: value['clientName'],
     clientSecret: value['clientSecret'],
-    clientSecretExpiresAt:
-      value['clientSecretExpiresAt'] == null ? value['clientSecretExpiresAt'] : value['clientSecretExpiresAt'].toISOString(),
+    clientSecretExpiresAt: value['clientSecretExpiresAt'],
     clientType: value['clientType'],
     clientUri: value['clientUri'],
     contacts: value['contacts'],

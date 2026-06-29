@@ -39,11 +39,11 @@ export interface UserIdentityEntity {
    */
   additionalInformation?: { [key: string]: any };
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserIdentityEntity
    */
-  linkedAt?: Date;
+  linkedAt?: number;
   /**
    *
    * @type {string}
@@ -87,7 +87,7 @@ export function UserIdentityEntityFromJSONTyped(json: any, ignoreDiscriminator: 
   }
   return {
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
-    linkedAt: json['linkedAt'] == null ? undefined : new Date(json['linkedAt']),
+    linkedAt: json['linkedAt'] == null ? undefined : json['linkedAt'],
     providerId: json['providerId'] == null ? undefined : json['providerId'],
     providerName: json['providerName'] == null ? undefined : json['providerName'],
     userId: json['userId'] == null ? undefined : json['userId'],
@@ -106,7 +106,7 @@ export function UserIdentityEntityToJSONTyped(value?: UserIdentityEntity | null,
 
   return {
     additionalInformation: value['additionalInformation'],
-    linkedAt: value['linkedAt'] == null ? value['linkedAt'] : value['linkedAt'].toISOString(),
+    linkedAt: value['linkedAt'],
     providerId: value['providerId'],
     providerName: value['providerName'],
     userId: value['userId'],

@@ -35,11 +35,11 @@ import { type McpTool, McpToolFromJSONTyped, McpToolToJSON, McpToolToJSONTyped }
  */
 export interface ProtectedResourceFeature {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ProtectedResourceFeature
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -59,11 +59,11 @@ export interface ProtectedResourceFeature {
    */
   type?: ProtectedResourceFeatureTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ProtectedResourceFeature
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -95,11 +95,11 @@ export function ProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscrimin
     }
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     key: json['key'] == null ? undefined : json['key'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -123,10 +123,10 @@ export function ProtectedResourceFeatureToJSONTyped(value?: ProtectedResourceFea
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     key: value['key'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

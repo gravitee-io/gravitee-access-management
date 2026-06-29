@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface AccessPolicyListItem {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AccessPolicyListItem
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -57,11 +57,11 @@ export interface AccessPolicyListItem {
    */
   name?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AccessPolicyListItem
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -80,11 +80,11 @@ export function AccessPolicyListItemFromJSONTyped(json: any, ignoreDiscriminator
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -98,10 +98,10 @@ export function AccessPolicyListItemToJSONTyped(value?: AccessPolicyListItem | n
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     id: value['id'],
     name: value['name'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

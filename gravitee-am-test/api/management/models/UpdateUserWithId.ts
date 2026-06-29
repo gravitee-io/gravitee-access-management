@@ -57,11 +57,11 @@ export interface UpdateUserWithId {
    */
   client?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UpdateUserWithId
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -117,11 +117,11 @@ export interface UpdateUserWithId {
    */
   lastName?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UpdateUserWithId
    */
-  loggedAt?: Date;
+  loggedAt?: number;
   /**
    *
    * @type {number}
@@ -153,11 +153,11 @@ export interface UpdateUserWithId {
    */
   source?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UpdateUserWithId
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -180,7 +180,7 @@ export function UpdateUserWithIdFromJSONTyped(json: any, ignoreDiscriminator: bo
     accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
     client: json['client'] == null ? undefined : json['client'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
     displayName: json['displayName'] == null ? undefined : json['displayName'],
     email: json['email'] == null ? undefined : json['email'],
@@ -190,13 +190,13 @@ export function UpdateUserWithIdFromJSONTyped(json: any, ignoreDiscriminator: bo
     forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
     id: json['id'] == null ? undefined : json['id'],
     lastName: json['lastName'] == null ? undefined : json['lastName'],
-    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    loggedAt: json['loggedAt'] == null ? undefined : json['loggedAt'],
     loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
     preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
     preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
     registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
     source: json['source'] == null ? undefined : json['source'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -214,7 +214,7 @@ export function UpdateUserWithIdToJSONTyped(value?: UpdateUserWithId | null, ign
     accountNonLocked: value['accountNonLocked'],
     additionalInformation: value['additionalInformation'],
     client: value['client'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     credentialsNonExpired: value['credentialsNonExpired'],
     displayName: value['displayName'],
     email: value['email'],
@@ -224,12 +224,12 @@ export function UpdateUserWithIdToJSONTyped(value?: UpdateUserWithId | null, ign
     forceResetPassword: value['forceResetPassword'],
     id: value['id'],
     lastName: value['lastName'],
-    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    loggedAt: value['loggedAt'],
     loginsCount: value['loginsCount'],
     preRegistration: value['preRegistration'],
     preferredLanguage: value['preferredLanguage'],
     registrationCompleted: value['registrationCompleted'],
     source: value['source'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

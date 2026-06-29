@@ -49,17 +49,17 @@ export interface CertificateEntity {
    */
   applications?: Array<Application>;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof CertificateEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof CertificateEntity
    */
-  expiresAt?: Date;
+  expiresAt?: number;
   /**
    *
    * @type {string}
@@ -132,8 +132,8 @@ export function CertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: b
   }
   return {
     applications: json['applications'] == null ? undefined : (json['applications'] as Array<any>).map(ApplicationFromJSON),
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
+    expiresAt: json['expiresAt'] == null ? undefined : json['expiresAt'],
     id: json['id'] == null ? undefined : json['id'],
     identityProviders:
       json['identityProviders'] == null ? undefined : (json['identityProviders'] as Array<any>).map(IdentityProviderFromJSON),
@@ -156,8 +156,8 @@ export function CertificateEntityToJSONTyped(value?: CertificateEntity | null, i
 
   return {
     applications: value['applications'] == null ? undefined : (value['applications'] as Array<any>).map(ApplicationToJSON),
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    createdAt: value['createdAt'],
+    expiresAt: value['expiresAt'],
     id: value['id'],
     identityProviders:
       value['identityProviders'] == null ? undefined : (value['identityProviders'] as Array<any>).map(IdentityProviderToJSON),

@@ -39,11 +39,11 @@ export interface ModifiedCertificateEntity {
    */
   configuration?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ModifiedCertificateEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -51,11 +51,11 @@ export interface ModifiedCertificateEntity {
    */
   domain?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ModifiedCertificateEntity
    */
-  expiresAt?: Date;
+  expiresAt?: number;
   /**
    *
    * @type {string}
@@ -87,11 +87,11 @@ export interface ModifiedCertificateEntity {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ModifiedCertificateEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -111,15 +111,15 @@ export function ModifiedCertificateEntityFromJSONTyped(json: any, ignoreDiscrimi
   }
   return {
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     domain: json['domain'] == null ? undefined : json['domain'],
-    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    expiresAt: json['expiresAt'] == null ? undefined : json['expiresAt'],
     id: json['id'] == null ? undefined : json['id'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
     system: json['system'] == null ? undefined : json['system'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -134,14 +134,14 @@ export function ModifiedCertificateEntityToJSONTyped(value?: ModifiedCertificate
 
   return {
     configuration: value['configuration'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     domain: value['domain'],
-    expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    expiresAt: value['expiresAt'],
     id: value['id'],
     metadata: value['metadata'],
     name: value['name'],
     system: value['system'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

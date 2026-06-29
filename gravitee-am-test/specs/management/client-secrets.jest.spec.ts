@@ -203,8 +203,8 @@ describe('Expiration in client secrets', () => {
     const clientSecrets = await listClientSecrets(domain.id, accessToken, application.id);
     expect(clientSecrets.length).toBe(1);
     expect(clientSecrets[0].expiresAt).toBeDefined();
-    expect(clientSecrets[0].expiresAt.getTime()).toBeLessThan(Date.now() + 120000 + 5000);
-    expect(clientSecrets[0].expiresAt.getTime()).toBeGreaterThan(Date.now() + 120000 - 5000);
+    expect(clientSecrets[0].expiresAt).toBeLessThan(Date.now() + 120000 + 5000);
+    expect(clientSecrets[0].expiresAt).toBeGreaterThan(Date.now() + 120000 - 5000);
   });
 
   it('expiration on domain - renew secret', async () => {
@@ -219,7 +219,7 @@ describe('Expiration in client secrets', () => {
     const now = Date.now();
 
     expect(clientSecret.expiresAt).toBeDefined();
-    assetTime(now + 100000, clientSecret.expiresAt.getTime(), 5000);
+    assetTime(now + 100000, clientSecret.expiresAt, 5000);
   });
 
   it('expiration on domain - new secret', async () => {
@@ -235,7 +235,7 @@ describe('Expiration in client secrets', () => {
     });
     const now = Date.now();
     expect(clientSecret.expiresAt).toBeDefined();
-    assetTime(now + 800000, clientSecret.expiresAt.getTime(), 5000);
+    assetTime(now + 800000, clientSecret.expiresAt, 5000);
   });
   it('no expiration on domain/expiration on application - new secret', async () => {
     domain = await patchDomain(domain.id, accessToken, {
@@ -264,7 +264,7 @@ describe('Expiration in client secrets', () => {
     const now = Date.now();
 
     expect(clientSecret.expiresAt).toBeDefined();
-    assetTime(now + 60000, clientSecret.expiresAt.getTime(), 5000);
+    assetTime(now + 60000, clientSecret.expiresAt, 5000);
   });
   it('no expiration on domain/expiration on application - rotate secret', async () => {
     application = await patchApplication(
@@ -285,7 +285,7 @@ describe('Expiration in client secrets', () => {
     const now = Date.now();
 
     expect(clientSecret.expiresAt).toBeDefined();
-    assetTime(now + 50000, clientSecret.expiresAt.getTime(), 5000);
+    assetTime(now + 50000, clientSecret.expiresAt, 5000);
   });
 
   it('no expiration on domain/expiration on application set to NONE - new secret', async () => {
@@ -343,7 +343,7 @@ describe('Expiration in client secrets', () => {
     const now = Date.now();
 
     expect(clientSecret.expiresAt).toBeDefined();
-    assetTime(now + 70000, clientSecret.expiresAt.getTime(), 5000);
+    assetTime(now + 70000, clientSecret.expiresAt, 5000);
   });
   it('expiration on domain/expiration on application - rotate secret', async () => {
     application = await patchApplication(
@@ -364,7 +364,7 @@ describe('Expiration in client secrets', () => {
     const now = Date.now();
 
     expect(clientSecret.expiresAt).toBeDefined();
-    assetTime(now + 150000, clientSecret.expiresAt.getTime(), 5000);
+    assetTime(now + 150000, clientSecret.expiresAt, 5000);
   });
 
   it('expiration on domain/expiration on application set to NONE - new secret', async () => {
@@ -422,7 +422,7 @@ describe('Usage expired secrets', () => {
       name: 'test8',
     });
     const now = Date.now();
-    assetTime(now + 5000, clientSecret.expiresAt.getTime(), 1000);
+    assetTime(now + 5000, clientSecret.expiresAt, 1000);
     await delay(6000); //wait to expire
     useSecret(application, openIdConfiguration, clientSecret.secret, 400);
   });

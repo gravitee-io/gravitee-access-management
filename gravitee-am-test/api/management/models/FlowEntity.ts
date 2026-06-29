@@ -42,11 +42,11 @@ export interface FlowEntity {
    */
   condition?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof FlowEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -90,11 +90,11 @@ export interface FlowEntity {
    */
   type?: FlowEntityTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof FlowEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -133,7 +133,7 @@ export function FlowEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
   }
   return {
     condition: json['condition'] == null ? undefined : json['condition'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     icon: json['icon'] == null ? undefined : json['icon'],
     id: json['id'] == null ? undefined : json['id'],
@@ -141,7 +141,7 @@ export function FlowEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     post: json['post'] == null ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
     pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -156,7 +156,7 @@ export function FlowEntityToJSONTyped(value?: FlowEntity | null, ignoreDiscrimin
 
   return {
     condition: value['condition'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     enabled: value['enabled'],
     icon: value['icon'],
     id: value['id'],
@@ -164,6 +164,6 @@ export function FlowEntityToJSONTyped(value?: FlowEntity | null, ignoreDiscrimin
     post: value['post'] == null ? undefined : (value['post'] as Array<any>).map(StepToJSON),
     pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

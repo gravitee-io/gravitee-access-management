@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface Environment {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Environment
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -75,11 +75,11 @@ export interface Environment {
    */
   organizationId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Environment
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -98,14 +98,14 @@ export function EnvironmentFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     domainRestrictions: json['domainRestrictions'] == null ? undefined : json['domainRestrictions'],
     hrids: json['hrids'] == null ? undefined : json['hrids'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -119,13 +119,13 @@ export function EnvironmentToJSONTyped(value?: Environment | null, ignoreDiscrim
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     domainRestrictions: value['domainRestrictions'],
     hrids: value['hrids'],
     id: value['id'],
     name: value['name'],
     organizationId: value['organizationId'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

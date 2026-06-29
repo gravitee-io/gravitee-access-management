@@ -1742,6 +1742,37 @@ export interface RotateCertificateRequest {
   domain: string;
 }
 
+export interface SearchApplicationsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  expand?: Array<string>;
+  q?: string;
+  status?: string;
+  ownerEmail?: string;
+  type?: Array<SearchApplicationsTypeEnum>;
+}
+
+export interface SearchApplicationsCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  expand?: Array<string>;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  q?: string;
+  status?: string;
+  ownerEmail?: string;
+  type?: Array<SearchApplicationsCursorTypeEnum>;
+  cursor?: string;
+}
+
 export interface SendRegistrationConfirmationRequest {
   organizationId: string;
   environmentId: string;
@@ -16251,6 +16282,220 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplicationsRaw(
+    requestParameters: SearchApplicationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<any>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling searchApplications.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling searchApplications.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling searchApplications.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.expand) {
+      queryParameters['expand'] = requestParameters.expand;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.status !== undefined) {
+      queryParameters['status'] = requestParameters.status;
+    }
+
+    if (requestParameters.ownerEmail !== undefined) {
+      queryParameters['owner.email'] = requestParameters.ownerEmail;
+    }
+
+    if (requestParameters.type) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplications(
+    requestParameters: SearchApplicationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<any> {
+    const response = await this.searchApplicationsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplicationsCursorRaw(
+    requestParameters: SearchApplicationsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<any>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling searchApplicationsCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling searchApplicationsCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling searchApplicationsCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.expand) {
+      queryParameters['expand'] = requestParameters.expand;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.status !== undefined) {
+      queryParameters['status'] = requestParameters.status;
+    }
+
+    if (requestParameters.ownerEmail !== undefined) {
+      queryParameters['owner.email'] = requestParameters.ownerEmail;
+    }
+
+    if (requestParameters.type) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplicationsCursor(
+    requestParameters: SearchApplicationsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<any> {
+    const response = await this.searchApplicationsCursorRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Send registration confirmation email
    */
@@ -19442,3 +19687,27 @@ export const ListApplicationsTypeEnum = {
   Agent: 'AGENT',
 } as const;
 export type ListApplicationsTypeEnum = typeof ListApplicationsTypeEnum[keyof typeof ListApplicationsTypeEnum];
+/**
+ * @export
+ */
+export const SearchApplicationsTypeEnum = {
+  Web: 'WEB',
+  Native: 'NATIVE',
+  Browser: 'BROWSER',
+  Service: 'SERVICE',
+  ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
+} as const;
+export type SearchApplicationsTypeEnum = typeof SearchApplicationsTypeEnum[keyof typeof SearchApplicationsTypeEnum];
+/**
+ * @export
+ */
+export const SearchApplicationsCursorTypeEnum = {
+  Web: 'WEB',
+  Native: 'NATIVE',
+  Browser: 'BROWSER',
+  Service: 'SERVICE',
+  ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
+} as const;
+export type SearchApplicationsCursorTypeEnum = typeof SearchApplicationsCursorTypeEnum[keyof typeof SearchApplicationsCursorTypeEnum];

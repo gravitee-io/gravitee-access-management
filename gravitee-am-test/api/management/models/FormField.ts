@@ -27,25 +27,25 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * A single field shown on a user-facing form, such as registration.
  * @export
  * @interface FormField
  */
 export interface FormField {
   /**
-   *
+   * Identifier of the field, mapped to a user attribute.
    * @type {string}
    * @memberof FormField
    */
   key?: string;
   /**
-   *
+   * Label displayed for the field.
    * @type {string}
    * @memberof FormField
    */
   label?: string;
   /**
-   *
+   * Input type of the field.
    * @type {string}
    * @memberof FormField
    */

@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface Group {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Group
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -81,11 +81,11 @@ export interface Group {
    */
   roles?: Array<string>;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Group
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -117,7 +117,7 @@ export function GroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): Gro
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     members: json['members'] == null ? undefined : json['members'],
@@ -125,7 +125,7 @@ export function GroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): Gro
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     roles: json['roles'] == null ? undefined : json['roles'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -139,7 +139,7 @@ export function GroupToJSONTyped(value?: Group | null, ignoreDiscriminator: bool
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     id: value['id'],
     members: value['members'],
@@ -147,6 +147,6 @@ export function GroupToJSONTyped(value?: Group | null, ignoreDiscriminator: bool
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     roles: value['roles'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

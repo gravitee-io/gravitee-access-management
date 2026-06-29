@@ -27,19 +27,19 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Rules applied to a self-service password reset.
  * @export
  * @interface ResetPasswordSettings
  */
 export interface ResetPasswordSettings {
   /**
-   *
+   * Whether the user must supply their current password to set a new one.
    * @type {boolean}
    * @memberof ResetPasswordSettings
    */
   oldPasswordRequired?: boolean;
   /**
-   *
+   * Lifetime, in seconds, of the password-reset token.
    * @type {number}
    * @memberof ResetPasswordSettings
    */

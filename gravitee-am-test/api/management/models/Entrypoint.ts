@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface Entrypoint {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Entrypoint
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -75,11 +75,11 @@ export interface Entrypoint {
    */
   tags?: Array<string>;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Entrypoint
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -104,14 +104,14 @@ export function EntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     defaultEntrypoint: json['defaultEntrypoint'] == null ? undefined : json['defaultEntrypoint'],
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
     tags: json['tags'] == null ? undefined : json['tags'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     url: json['url'] == null ? undefined : json['url'],
   };
 }
@@ -126,14 +126,14 @@ export function EntrypointToJSONTyped(value?: Entrypoint | null, ignoreDiscrimin
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     defaultEntrypoint: value['defaultEntrypoint'],
     description: value['description'],
     id: value['id'],
     name: value['name'],
     organizationId: value['organizationId'],
     tags: value['tags'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     url: value['url'],
   };
 }

@@ -27,19 +27,19 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * A single rule that matches a domain user attribute against a value derived from the external token claims.
  * @export
  * @interface UserBindingCriterion
  */
 export interface UserBindingCriterion {
   /**
-   *
+   * Domain user attribute used for the lookup. Must match a field supported by the user repository search.
    * @type {string}
    * @memberof UserBindingCriterion
    */
   attribute?: string;
   /**
-   *
+   * Expression evaluated against the validated token claims (variable "token") to produce the value to match.
    * @type {string}
    * @memberof UserBindingCriterion
    */

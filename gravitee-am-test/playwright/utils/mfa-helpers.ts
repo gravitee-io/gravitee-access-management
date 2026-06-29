@@ -206,7 +206,7 @@ export async function waitUntilMfaEnrollmentSkipWindowExpired(
   while (Date.now() < deadline) {
     const user = await getUser(domainId, adminToken, userId);
     const skippedAt = user.mfaEnrollmentSkippedAt;
-    const anchorMs = skippedAt != null ? skippedAt.getTime() : skipHandledAtMs;
+    const anchorMs = skippedAt != null ? skippedAt : skipHandledAtMs;
     const windowEndMs = anchorMs + skipTimeSeconds * 1000;
 
     if (Date.now() >= windowEndMs + clockSkewMarginMs) {

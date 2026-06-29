@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface UserNotificationContent {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserNotificationContent
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -89,7 +89,7 @@ export function UserNotificationContentFromJSONTyped(json: any, ignoreDiscrimina
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     id: json['id'] == null ? undefined : json['id'],
     message: json['message'] == null ? undefined : json['message'],
     status: json['status'] == null ? undefined : json['status'],
@@ -107,7 +107,7 @@ export function UserNotificationContentToJSONTyped(value?: UserNotificationConte
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     id: value['id'],
     message: value['message'],
     status: value['status'],

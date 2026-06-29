@@ -39,11 +39,11 @@ export interface UserIdentity {
    */
   additionalInformation?: { [key: string]: any };
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserIdentity
    */
-  linkedAt?: Date;
+  linkedAt?: number;
   /**
    *
    * @type {string}
@@ -81,7 +81,7 @@ export function UserIdentityFromJSONTyped(json: any, ignoreDiscriminator: boolea
   }
   return {
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
-    linkedAt: json['linkedAt'] == null ? undefined : new Date(json['linkedAt']),
+    linkedAt: json['linkedAt'] == null ? undefined : json['linkedAt'],
     providerId: json['providerId'] == null ? undefined : json['providerId'],
     userId: json['userId'] == null ? undefined : json['userId'],
     username: json['username'] == null ? undefined : json['username'],
@@ -99,7 +99,7 @@ export function UserIdentityToJSONTyped(value?: UserIdentity | null, ignoreDiscr
 
   return {
     additionalInformation: value['additionalInformation'],
-    linkedAt: value['linkedAt'] == null ? value['linkedAt'] : value['linkedAt'].toISOString(),
+    linkedAt: value['linkedAt'],
     providerId: value['providerId'],
     userId: value['userId'],
     username: value['username'],

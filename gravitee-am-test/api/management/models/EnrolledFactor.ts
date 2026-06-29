@@ -60,11 +60,11 @@ export interface EnrolledFactor {
    */
   channel?: EnrolledFactorChannel;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof EnrolledFactor
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -90,11 +90,11 @@ export interface EnrolledFactor {
    */
   status?: EnrolledFactorStatusEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof EnrolledFactor
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -126,12 +126,12 @@ export function EnrolledFactorFromJSONTyped(json: any, ignoreDiscriminator: bool
   return {
     appId: json['appId'] == null ? undefined : json['appId'],
     channel: json['channel'] == null ? undefined : EnrolledFactorChannelFromJSON(json['channel']),
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     factorId: json['factorId'] == null ? undefined : json['factorId'],
     primary: json['primary'] == null ? undefined : json['primary'],
     security: json['security'] == null ? undefined : EnrolledFactorSecurityFromJSON(json['security']),
     status: json['status'] == null ? undefined : json['status'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -147,11 +147,11 @@ export function EnrolledFactorToJSONTyped(value?: EnrolledFactor | null, ignoreD
   return {
     appId: value['appId'],
     channel: EnrolledFactorChannelToJSON(value['channel']),
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     factorId: value['factorId'],
     primary: value['primary'],
     security: EnrolledFactorSecurityToJSON(value['security']),
     status: value['status'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }
