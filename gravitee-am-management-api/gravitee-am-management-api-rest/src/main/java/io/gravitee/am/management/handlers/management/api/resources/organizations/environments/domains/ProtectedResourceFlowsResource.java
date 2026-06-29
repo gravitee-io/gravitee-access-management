@@ -23,7 +23,6 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.FlowService;
@@ -114,7 +113,7 @@ public class ProtectedResourceFlowsResource extends AbstractResource {
                         .ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE_FLOW, Acl.READ)
                         .flatMapPublisher(hasPermission ->
-                                flowService.findByApplication(ReferenceType.DOMAIN, domainId, protectedResourceId).map(flow -> filterFlowInfos(hasPermission, flow)))
+                                flowService.findByApplication(ReferenceType.DOMAIN, domainId, protectedResourceId).map(flow -> FlowUtils.filterFlowInfos(hasPermission, flow)))
                         .toList())
                 .subscribe(response::resume, response::resume);
     }
@@ -153,7 +152,7 @@ public class ProtectedResourceFlowsResource extends AbstractResource {
                 .andThen(checkTokenFlowOnly(flows))
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
                 .andThen(flowValidator.validateAll(flows))
-                .andThen(flowService.createOrUpdate(ReferenceType.DOMAIN, domainId, protectedResourceId, convert(flows), authenticatedUser)
+                .andThen(flowService.createOrUpdate(ReferenceType.DOMAIN, domainId, protectedResourceId, FlowUtils.convert(flows), authenticatedUser)
                         .map(updatedFlows -> updatedFlows.stream().map(FlowEntity::new).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }
@@ -164,36 +163,5 @@ public class ProtectedResourceFlowsResource extends AbstractResource {
             return Completable.error(new InvalidParameterException("Only the TOKEN flow can be configured for a protected resource"));
         }
         return Completable.complete();
-    }
-
-    private FlowEntity filterFlowInfos(Boolean hasPermission, Flow flow) {
-        if (hasPermission) {
-            return new FlowEntity(flow);
-        }
-
-        FlowEntity filteredFlow = new FlowEntity();
-        filteredFlow.setId(flow.getId());
-        filteredFlow.setName(flow.getName());
-        filteredFlow.setEnabled(flow.isEnabled());
-
-        return filteredFlow;
-    }
-
-    private static List<Flow> convert(List<io.gravitee.am.service.model.Flow> flows) {
-        return flows.stream()
-                .map(ProtectedResourceFlowsResource::convert)
-                .collect(Collectors.toList());
-    }
-
-    private static Flow convert(io.gravitee.am.service.model.Flow flow) {
-        Flow flowToUpsert = new Flow();
-        flowToUpsert.setId(flow.getId());
-        flowToUpsert.setType(flow.getType());
-        flowToUpsert.setName(flow.getName());
-        flowToUpsert.setEnabled(flow.isEnabled());
-        flowToUpsert.setCondition(flow.getCondition());
-        flowToUpsert.setPre(flow.getPre());
-        flowToUpsert.setPost(flow.getPost());
-        return flowToUpsert;
     }
 }
