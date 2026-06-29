@@ -27,25 +27,25 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * A host and path the domain is exposed on. The host and path combination must be unique across all domains.
  * @export
  * @interface VirtualHost
  */
 export interface VirtualHost {
   /**
-   *
+   * Hostname the domain is served on.
    * @type {string}
    * @memberof VirtualHost
    */
   host?: string;
   /**
-   *
+   * Whether this virtual host overrides the organization entry point.
    * @type {boolean}
    * @memberof VirtualHost
    */
   overrideEntrypoint?: boolean;
   /**
-   *
+   * Context path the domain is served under on this host.
    * @type {string}
    * @memberof VirtualHost
    */

@@ -36,11 +36,11 @@ import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceTo
  */
 export interface I18nDictionary {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof I18nDictionary
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {{ [key: string]: string; }}
@@ -84,11 +84,11 @@ export interface I18nDictionary {
    */
   referenceType?: I18nDictionaryReferenceTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof I18nDictionary
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -120,7 +120,7 @@ export function I18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     entries: json['entries'] == null ? undefined : json['entries'],
     id: json['id'] == null ? undefined : json['id'],
     locale: json['locale'] == null ? undefined : json['locale'],
@@ -128,7 +128,7 @@ export function I18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -142,7 +142,7 @@ export function I18nDictionaryToJSONTyped(value?: I18nDictionary | null, ignoreD
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     entries: value['entries'],
     id: value['id'],
     locale: value['locale'],
@@ -150,6 +150,6 @@ export function I18nDictionaryToJSONTyped(value?: I18nDictionary | null, ignoreD
     reference: ReferenceToJSON(value['reference']),
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

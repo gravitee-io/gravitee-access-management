@@ -27,79 +27,79 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Password policy applied to users of the domain: complexity requirements, expiry, and history.
  * @export
  * @interface PasswordSettings
  */
 export interface PasswordSettings {
   /**
-   *
+   * Whether passwords found in a common-password dictionary are rejected.
    * @type {boolean}
    * @memberof PasswordSettings
    */
   excludePasswordsInDictionary?: boolean;
   /**
-   *
+   * Whether passwords containing the user's profile information are rejected.
    * @type {boolean}
    * @memberof PasswordSettings
    */
   excludeUserProfileInfoInPassword?: boolean;
   /**
-   *
+   * Number of days after which a password expires and must be changed.
    * @type {number}
    * @memberof PasswordSettings
    */
   expiryDuration?: number;
   /**
-   *
+   * Whether a password must contain at least one number.
    * @type {boolean}
    * @memberof PasswordSettings
    */
   includeNumbers?: boolean;
   /**
-   *
+   * Whether a password must contain at least one special character.
    * @type {boolean}
    * @memberof PasswordSettings
    */
   includeSpecialCharacters?: boolean;
   /**
-   *
+   * Whether these password settings are inherited from a parent scope rather than defined here. When true, the other fields are ignored.
    * @type {boolean}
    * @memberof PasswordSettings
    */
   inherited?: boolean;
   /**
-   *
+   * Whether a password must contain both uppercase and lowercase letters.
    * @type {boolean}
    * @memberof PasswordSettings
    */
   lettersInMixedCase?: boolean;
   /**
-   *
+   * Maximum number of identical consecutive characters allowed in a password.
    * @type {number}
    * @memberof PasswordSettings
    */
   maxConsecutiveLetters?: number;
   /**
-   *
+   * Maximum number of characters a password may contain.
    * @type {number}
    * @memberof PasswordSettings
    */
   maxLength?: number;
   /**
-   *
+   * Minimum number of characters a password must contain.
    * @type {number}
    * @memberof PasswordSettings
    */
   minLength?: number;
   /**
-   *
+   * Number of previous passwords retained in history and barred from reuse.
    * @type {number}
    * @memberof PasswordSettings
    */
   oldPasswords?: number;
   /**
-   *
+   * Whether password history is enforced to prevent reuse of recent passwords.
    * @type {boolean}
    * @memberof PasswordSettings
    */

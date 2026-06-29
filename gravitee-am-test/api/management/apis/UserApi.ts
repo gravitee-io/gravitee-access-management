@@ -46,9 +46,6 @@ import {
   DomainUserBulkRequest,
   DomainUserBulkRequestFromJSON,
   DomainUserBulkRequestToJSON,
-  EmailValue,
-  EmailValueFromJSON,
-  EmailValueToJSON,
   EnrolledFactorEntity,
   EnrolledFactorEntityFromJSON,
   EnrolledFactorEntityToJSON,
@@ -386,10 +383,6 @@ export interface SendRegistrationConfirmationRequest {
   environmentId: string;
   domain: string;
   user: string;
-}
-
-export interface SubscribeNewsletterRequest {
-  emailValue: EmailValue;
 }
 
 export interface UnlinkUserIdentityRequest {
@@ -1500,43 +1493,6 @@ export class UserApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<AccountAccessToken> {
     const response = await this.getOrganizationUserTokensRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Get taglines to display in the newsletter
-   */
-  async getTaglinesRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/user/newsletter/taglines`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.TextApiResponse(response) as any;
-  }
-
-  /**
-   * Get taglines to display in the newsletter
-   */
-  async getTaglines(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
-    const response = await this.getTaglinesRaw(initOverrides);
     return await response.value();
   }
 
@@ -3548,59 +3504,6 @@ export class UserApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.sendRegistrationConfirmationRaw(requestParameters, initOverrides);
-  }
-
-  /**
-   * Subscribe to the newsletter the authenticated user
-   */
-  async subscribeNewsletterRaw(
-    requestParameters: SubscribeNewsletterRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<UserEntity>> {
-    if (requestParameters.emailValue === null || requestParameters.emailValue === undefined) {
-      throw new runtime.RequiredError(
-        'emailValue',
-        'Required parameter requestParameters.emailValue was null or undefined when calling subscribeNewsletter.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/user/newsletter/_subscribe`,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: EmailValueToJSON(requestParameters.emailValue),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => UserEntityFromJSON(jsonValue));
-  }
-
-  /**
-   * Subscribe to the newsletter the authenticated user
-   */
-  async subscribeNewsletter(
-    requestParameters: SubscribeNewsletterRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<UserEntity> {
-    const response = await this.subscribeNewsletterRaw(requestParameters, initOverrides);
-    return await response.value();
   }
 
   /**

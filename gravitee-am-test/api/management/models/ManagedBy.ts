@@ -25,52 +25,40 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+
 /**
  *
  * @export
- * @interface EmailValue
  */
-export interface EmailValue {
-  /**
-   *
-   * @type {string}
-   * @memberof EmailValue
-   */
-  email: string;
-}
+export const ManagedBy = {
+  None: 'NONE',
+  AutomationApi: 'AUTOMATION_API',
+} as const;
+export type ManagedBy = typeof ManagedBy[keyof typeof ManagedBy];
 
-/**
- * Check if a given object implements the EmailValue interface.
- */
-export function instanceOfEmailValue(value: object): value is EmailValue {
-  if (!('email' in value) || value['email'] === undefined) return false;
-  return true;
-}
-
-export function EmailValueFromJSON(json: any): EmailValue {
-  return EmailValueFromJSONTyped(json, false);
-}
-
-export function EmailValueFromJSONTyped(json: any, ignoreDiscriminator: boolean): EmailValue {
-  if (json == null) {
-    return json;
+export function instanceOfManagedBy(value: any): boolean {
+  for (const key in ManagedBy) {
+    if (Object.prototype.hasOwnProperty.call(ManagedBy, key)) {
+      if (ManagedBy[key as keyof typeof ManagedBy] === value) {
+        return true;
+      }
+    }
   }
-  return {
-    email: json['email'],
-  };
+  return false;
 }
 
-export function EmailValueToJSON(json: any): EmailValue {
-  return EmailValueToJSONTyped(json, false);
+export function ManagedByFromJSON(json: any): ManagedBy {
+  return ManagedByFromJSONTyped(json, false);
 }
 
-export function EmailValueToJSONTyped(value?: EmailValue | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
-  }
+export function ManagedByFromJSONTyped(json: any, ignoreDiscriminator: boolean): ManagedBy {
+  return json as ManagedBy;
+}
 
-  return {
-    email: value['email'],
-  };
+export function ManagedByToJSON(value?: ManagedBy | null): any {
+  return value as any;
+}
+
+export function ManagedByToJSONTyped(value: any, ignoreDiscriminator: boolean): ManagedBy {
+  return value as ManagedBy;
 }

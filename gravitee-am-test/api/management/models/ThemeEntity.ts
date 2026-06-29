@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface ThemeEntity {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ThemeEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -105,11 +105,11 @@ export interface ThemeEntity {
    */
   secondaryTextColorHex?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ThemeEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -141,7 +141,7 @@ export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     css: json['css'] == null ? undefined : json['css'],
     faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
     id: json['id'] == null ? undefined : json['id'],
@@ -153,7 +153,7 @@ export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
     secondaryTextColorHex: json['secondaryTextColorHex'] == null ? undefined : json['secondaryTextColorHex'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -167,7 +167,7 @@ export function ThemeEntityToJSONTyped(value?: ThemeEntity | null, ignoreDiscrim
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     css: value['css'],
     faviconUrl: value['faviconUrl'],
     id: value['id'],
@@ -179,6 +179,6 @@ export function ThemeEntityToJSONTyped(value?: ThemeEntity | null, ignoreDiscrim
     referenceType: value['referenceType'],
     secondaryButtonColorHex: value['secondaryButtonColorHex'],
     secondaryTextColorHex: value['secondaryTextColorHex'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

@@ -44,12 +44,14 @@ case $SDK_OUTPUT_PATH in
   *) SDK_OUTPUT_PATH="$SCRIPT_DIR/$SDK_OUTPUT_PATH";;
 esac
 
+OPENAPI_GENERATOR_CLI="@openapitools/openapi-generator-cli@2.23.1"
+
 echo "[INFO] OpenAPI Generator Version:"
-npx @openapitools/openapi-generator-cli version
+npx "$OPENAPI_GENERATOR_CLI" version
 
 echo "[INFO] output path will be: $SDK_OUTPUT_PATH"
 
-npx @openapitools/openapi-generator-cli generate \
+npx "$OPENAPI_GENERATOR_CLI" generate \
   -t "$SCRIPT_DIR/templates" \
   -i "$HOST_URL/openapi.json" \
   -g typescript-fetch \
@@ -63,6 +65,11 @@ npx @openapitools/openapi-generator-cli generate \
   --type-mappings=DateTime=Date,object=any \
   --reserved-words-mappings=configuration=configuration \
   --skip-validate-spec
+
+if ! ls "$SDK_OUTPUT_PATH"/apis/*.ts >/dev/null 2>&1; then
+  echo "[ERROR] OpenAPI generation produced no files - aborting (check the generator output above)."
+  exit 1
+fi
 
 find "$SDK_OUTPUT_PATH" -name "*.ts" -exec sed -i.bak "/* The version of the OpenAPI document/d" {} \;
 

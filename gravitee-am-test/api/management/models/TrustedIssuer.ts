@@ -35,49 +35,49 @@ import {
 } from './UserBindingCriterion';
 
 /**
- *
+ * An external token issuer whose JWTs are accepted as subject or actor tokens during token exchange, validated with the configured key material.
  * @export
  * @interface TrustedIssuer
  */
 export interface TrustedIssuer {
   /**
-   *
+   * PEM-encoded X.509 certificate. Required when keyResolutionMethod is PEM.
    * @type {string}
    * @memberof TrustedIssuer
    */
   certificate?: string;
   /**
-   *
+   * Expected value of the "iss" claim in the external JWT.
    * @type {string}
    * @memberof TrustedIssuer
    */
   issuer?: string;
   /**
-   *
+   * JWKS endpoint URL. Required when keyResolutionMethod is JWKS_URL.
    * @type {string}
    * @memberof TrustedIssuer
    */
   jwksUri?: string;
   /**
-   *
+   * How the issuer's signing key is resolved. JWKS_URL fetches keys from a JWKS endpoint; PEM uses an inline X.509 certificate.
    * @type {string}
    * @memberof TrustedIssuer
    */
   keyResolutionMethod?: TrustedIssuerKeyResolutionMethodEnum;
   /**
-   *
+   * One-to-one mapping from external scope to domain scope. Unmapped issuer scopes are dropped (fail-closed).
    * @type {{ [key: string]: string; }}
    * @memberof TrustedIssuer
    */
   scopeMappings?: { [key: string]: string };
   /**
-   *
+   * Criteria used to locate a domain user when user binding is enabled. All criteria are combined with AND.
    * @type {Array<UserBindingCriterion>}
    * @memberof TrustedIssuer
    */
   userBindingCriteria?: Array<UserBindingCriterion>;
   /**
-   *
+   * Whether the external JWT subject is resolved to a single domain user using the user binding criteria. When false, a virtual user is built from the token claims only.
    * @type {boolean}
    * @memberof TrustedIssuer
    */

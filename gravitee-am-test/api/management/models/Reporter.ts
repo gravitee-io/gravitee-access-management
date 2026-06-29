@@ -26,6 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ManagedBy } from './ManagedBy';
+import { ManagedByFromJSON, ManagedByFromJSONTyped, ManagedByToJSON, ManagedByToJSONTyped } from './ManagedBy';
 import type { Reference } from './Reference';
 import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceToJSONTyped } from './Reference';
 
@@ -42,11 +44,11 @@ export interface Reporter {
    */
   configuration?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Reporter
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -76,6 +78,18 @@ export interface Reporter {
    * @type {string}
    * @memberof Reporter
    */
+  readonly key?: string;
+  /**
+   *
+   * @type {ManagedBy}
+   * @memberof Reporter
+   */
+  managedBy?: ManagedBy;
+  /**
+   *
+   * @type {string}
+   * @memberof Reporter
+   */
   name?: string;
   /**
    *
@@ -96,11 +110,11 @@ export interface Reporter {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Reporter
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -120,16 +134,18 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
   }
   return {
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     dataType: json['dataType'] == null ? undefined : json['dataType'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     inherited: json['inherited'] == null ? undefined : json['inherited'],
+    key: json['key'] == null ? undefined : json['key'],
+    managedBy: json['managedBy'] == null ? undefined : ManagedByFromJSON(json['managedBy']),
     name: json['name'] == null ? undefined : json['name'],
     reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
     system: json['system'] == null ? undefined : json['system'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -137,22 +153,23 @@ export function ReporterToJSON(json: any): Reporter {
   return ReporterToJSONTyped(json, false);
 }
 
-export function ReporterToJSONTyped(value?: Reporter | null, ignoreDiscriminator: boolean = false): any {
+export function ReporterToJSONTyped(value?: Omit<Reporter, 'key'> | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }
 
   return {
     configuration: value['configuration'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     dataType: value['dataType'],
     enabled: value['enabled'],
     id: value['id'],
     inherited: value['inherited'],
+    managedBy: ManagedByToJSON(value['managedBy']),
     name: value['name'],
     reference: ReferenceToJSON(value['reference']),
     system: value['system'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

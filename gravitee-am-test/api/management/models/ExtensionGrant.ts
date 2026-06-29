@@ -45,11 +45,11 @@ export interface ExtensionGrant {
    */
   createUser?: boolean;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ExtensionGrant
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -87,11 +87,11 @@ export interface ExtensionGrant {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ExtensionGrant
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {boolean}
@@ -118,14 +118,14 @@ export function ExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator: bool
   return {
     configuration: json['configuration'] == null ? undefined : json['configuration'],
     createUser: json['createUser'] == null ? undefined : json['createUser'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     domain: json['domain'] == null ? undefined : json['domain'],
     grantType: json['grantType'] == null ? undefined : json['grantType'],
     id: json['id'] == null ? undefined : json['id'],
     identityProvider: json['identityProvider'] == null ? undefined : json['identityProvider'],
     name: json['name'] == null ? undefined : json['name'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userExists: json['userExists'] == null ? undefined : json['userExists'],
   };
 }
@@ -142,14 +142,14 @@ export function ExtensionGrantToJSONTyped(value?: ExtensionGrant | null, ignoreD
   return {
     configuration: value['configuration'],
     createUser: value['createUser'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     domain: value['domain'],
     grantType: value['grantType'],
     id: value['id'],
     identityProvider: value['identityProvider'],
     name: value['name'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userExists: value['userExists'],
   };
 }

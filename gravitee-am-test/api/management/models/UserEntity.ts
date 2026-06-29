@@ -55,17 +55,17 @@ import { CertificateFromJSON, CertificateFromJSONTyped, CertificateToJSON, Certi
  */
 export interface UserEntity {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  accountLockedAt?: Date;
+  accountLockedAt?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  accountLockedUntil?: Date;
+  accountLockedUntil?: number;
   /**
    *
    * @type {boolean}
@@ -115,11 +115,11 @@ export interface UserEntity {
    */
   client?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -265,17 +265,17 @@ export interface UserEntity {
    */
   lastIdentityUsed?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  lastLoginWithCredentials?: Date;
+  lastLoginWithCredentials?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  lastLogoutAt?: Date;
+  lastLogoutAt?: number;
   /**
    *
    * @type {string}
@@ -283,17 +283,17 @@ export interface UserEntity {
    */
   lastName?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  lastPasswordReset?: Date;
+  lastPasswordReset?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  lastUsernameReset?: Date;
+  lastUsernameReset?: number;
   /**
    *
    * @type {string}
@@ -301,11 +301,11 @@ export interface UserEntity {
    */
   locale?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  loggedAt?: Date;
+  loggedAt?: number;
   /**
    *
    * @type {number}
@@ -313,11 +313,11 @@ export interface UserEntity {
    */
   loginsCount?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  mfaEnrollmentSkippedAt?: Date;
+  mfaEnrollmentSkippedAt?: number;
   /**
    *
    * @type {string}
@@ -463,11 +463,11 @@ export interface UserEntity {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof UserEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -523,8 +523,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    accountLockedAt: json['accountLockedAt'] == null ? undefined : new Date(json['accountLockedAt']),
-    accountLockedUntil: json['accountLockedUntil'] == null ? undefined : new Date(json['accountLockedUntil']),
+    accountLockedAt: json['accountLockedAt'] == null ? undefined : json['accountLockedAt'],
+    accountLockedUntil: json['accountLockedUntil'] == null ? undefined : json['accountLockedUntil'],
     accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
     accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
@@ -533,7 +533,7 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     applicationEntity: json['applicationEntity'] == null ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
     client: json['client'] == null ? undefined : json['client'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
     displayName: json['displayName'] == null ? undefined : json['displayName'],
@@ -558,15 +558,15 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     internal: json['internal'] == null ? undefined : json['internal'],
     lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
     lastIdentityUsed: json['lastIdentityUsed'] == null ? undefined : json['lastIdentityUsed'],
-    lastLoginWithCredentials: json['lastLoginWithCredentials'] == null ? undefined : new Date(json['lastLoginWithCredentials']),
-    lastLogoutAt: json['lastLogoutAt'] == null ? undefined : new Date(json['lastLogoutAt']),
+    lastLoginWithCredentials: json['lastLoginWithCredentials'] == null ? undefined : json['lastLoginWithCredentials'],
+    lastLogoutAt: json['lastLogoutAt'] == null ? undefined : json['lastLogoutAt'],
     lastName: json['lastName'] == null ? undefined : json['lastName'],
-    lastPasswordReset: json['lastPasswordReset'] == null ? undefined : new Date(json['lastPasswordReset']),
-    lastUsernameReset: json['lastUsernameReset'] == null ? undefined : new Date(json['lastUsernameReset']),
+    lastPasswordReset: json['lastPasswordReset'] == null ? undefined : json['lastPasswordReset'],
+    lastUsernameReset: json['lastUsernameReset'] == null ? undefined : json['lastUsernameReset'],
     locale: json['locale'] == null ? undefined : json['locale'],
-    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    loggedAt: json['loggedAt'] == null ? undefined : json['loggedAt'],
     loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
-    mfaEnrollmentSkippedAt: json['mfaEnrollmentSkippedAt'] == null ? undefined : new Date(json['mfaEnrollmentSkippedAt']),
+    mfaEnrollmentSkippedAt: json['mfaEnrollmentSkippedAt'] == null ? undefined : json['mfaEnrollmentSkippedAt'],
     middleName: json['middleName'] == null ? undefined : json['middleName'],
     newsletter: json['newsletter'] == null ? undefined : json['newsletter'],
     nickName: json['nickName'] == null ? undefined : json['nickName'],
@@ -591,7 +591,7 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
     title: json['title'] == null ? undefined : json['title'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     username: json['username'] == null ? undefined : json['username'],
     website: json['website'] == null ? undefined : json['website'],
     x509Certificates: json['x509Certificates'] == null ? undefined : (json['x509Certificates'] as Array<any>).map(CertificateFromJSON),
@@ -609,8 +609,8 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
   }
 
   return {
-    accountLockedAt: value['accountLockedAt'] == null ? value['accountLockedAt'] : value['accountLockedAt'].toISOString(),
-    accountLockedUntil: value['accountLockedUntil'] == null ? value['accountLockedUntil'] : value['accountLockedUntil'].toISOString(),
+    accountLockedAt: value['accountLockedAt'],
+    accountLockedUntil: value['accountLockedUntil'],
     accountNonExpired: value['accountNonExpired'],
     accountNonLocked: value['accountNonLocked'],
     additionalInformation: value['additionalInformation'],
@@ -619,7 +619,7 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     applicationEntity: ApplicationEntityToJSON(value['applicationEntity']),
     birthdate: value['birthdate'],
     client: value['client'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     credentialsNonExpired: value['credentialsNonExpired'],
     disabled: value['disabled'],
     displayName: value['displayName'],
@@ -644,17 +644,15 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     internal: value['internal'],
     lastIdentityInformation: value['lastIdentityInformation'],
     lastIdentityUsed: value['lastIdentityUsed'],
-    lastLoginWithCredentials:
-      value['lastLoginWithCredentials'] == null ? value['lastLoginWithCredentials'] : value['lastLoginWithCredentials'].toISOString(),
-    lastLogoutAt: value['lastLogoutAt'] == null ? value['lastLogoutAt'] : value['lastLogoutAt'].toISOString(),
+    lastLoginWithCredentials: value['lastLoginWithCredentials'],
+    lastLogoutAt: value['lastLogoutAt'],
     lastName: value['lastName'],
-    lastPasswordReset: value['lastPasswordReset'] == null ? value['lastPasswordReset'] : value['lastPasswordReset'].toISOString(),
-    lastUsernameReset: value['lastUsernameReset'] == null ? value['lastUsernameReset'] : value['lastUsernameReset'].toISOString(),
+    lastPasswordReset: value['lastPasswordReset'],
+    lastUsernameReset: value['lastUsernameReset'],
     locale: value['locale'],
-    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    loggedAt: value['loggedAt'],
     loginsCount: value['loginsCount'],
-    mfaEnrollmentSkippedAt:
-      value['mfaEnrollmentSkippedAt'] == null ? value['mfaEnrollmentSkippedAt'] : value['mfaEnrollmentSkippedAt'].toISOString(),
+    mfaEnrollmentSkippedAt: value['mfaEnrollmentSkippedAt'],
     middleName: value['middleName'],
     newsletter: value['newsletter'],
     nickName: value['nickName'],
@@ -679,7 +677,7 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     temporarilyLocked: value['temporarilyLocked'],
     title: value['title'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     username: value['username'],
     website: value['website'],
     x509Certificates: value['x509Certificates'] == null ? undefined : (value['x509Certificates'] as Array<any>).map(CertificateToJSON),

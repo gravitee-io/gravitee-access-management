@@ -57,11 +57,11 @@ export interface ScopeApprovalEntity {
    */
   clientId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ScopeApprovalEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -69,11 +69,11 @@ export interface ScopeApprovalEntity {
    */
   domain?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ScopeApprovalEntity
    */
-  expiresAt?: Date;
+  expiresAt?: number;
   /**
    *
    * @type {string}
@@ -105,11 +105,11 @@ export interface ScopeApprovalEntity {
    */
   transactionId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ScopeApprovalEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {UserId}
@@ -145,15 +145,15 @@ export function ScopeApprovalEntityFromJSONTyped(json: any, ignoreDiscriminator:
   return {
     clientEntity: json['clientEntity'] == null ? undefined : ApplicationEntityFromJSON(json['clientEntity']),
     clientId: json['clientId'] == null ? undefined : json['clientId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     domain: json['domain'] == null ? undefined : json['domain'],
-    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    expiresAt: json['expiresAt'] == null ? undefined : json['expiresAt'],
     id: json['id'] == null ? undefined : json['id'],
     scope: json['scope'] == null ? undefined : json['scope'],
     scopeEntity: json['scopeEntity'] == null ? undefined : ScopeEntityFromJSON(json['scopeEntity']),
     status: json['status'] == null ? undefined : json['status'],
     transactionId: json['transactionId'] == null ? undefined : json['transactionId'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userId: json['userId'] == null ? undefined : UserIdFromJSON(json['userId']),
   };
 }
@@ -170,15 +170,15 @@ export function ScopeApprovalEntityToJSONTyped(value?: ScopeApprovalEntity | nul
   return {
     clientEntity: ApplicationEntityToJSON(value['clientEntity']),
     clientId: value['clientId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     domain: value['domain'],
-    expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    expiresAt: value['expiresAt'],
     id: value['id'],
     scope: value['scope'],
     scopeEntity: ScopeEntityToJSON(value['scopeEntity']),
     status: value['status'],
     transactionId: value['transactionId'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userId: UserIdToJSON(value['userId']),
   };
 }

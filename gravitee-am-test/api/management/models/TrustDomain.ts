@@ -48,11 +48,11 @@ export interface TrustDomain {
    */
   bundleSource?: TrustDomainBundleSourceEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof TrustDomain
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -102,11 +102,11 @@ export interface TrustDomain {
    */
   staticJwks?: JWKSet;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof TrustDomain
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -149,7 +149,7 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
   return {
     allowedAlgorithms: json['allowedAlgorithms'] == null ? undefined : json['allowedAlgorithms'],
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
@@ -158,7 +158,7 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
     staticJwks: json['staticJwks'] == null ? undefined : JWKSetFromJSON(json['staticJwks']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -174,7 +174,7 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
   return {
     allowedAlgorithms: value['allowedAlgorithms'],
     bundleSource: value['bundleSource'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     id: value['id'],
     jwksUrl: value['jwksUrl'],
@@ -183,6 +183,6 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     referenceType: value['referenceType'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
     staticJwks: JWKSetToJSON(value['staticJwks']),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

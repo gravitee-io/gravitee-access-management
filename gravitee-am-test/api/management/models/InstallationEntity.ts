@@ -39,11 +39,11 @@ export interface InstallationEntity {
    */
   additionalInformation?: { [key: string]: string };
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof InstallationEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -51,11 +51,11 @@ export interface InstallationEntity {
    */
   id?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof InstallationEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -75,9 +75,9 @@ export function InstallationEntityFromJSONTyped(json: any, ignoreDiscriminator: 
   }
   return {
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     id: json['id'] == null ? undefined : json['id'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -92,8 +92,8 @@ export function InstallationEntityToJSONTyped(value?: InstallationEntity | null,
 
   return {
     additionalInformation: value['additionalInformation'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     id: value['id'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

@@ -57,11 +57,11 @@ export interface NewOrganizationUser {
    */
   client?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof NewOrganizationUser
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -117,17 +117,17 @@ export interface NewOrganizationUser {
    */
   lastName?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof NewOrganizationUser
    */
-  lastPasswordReset?: Date;
+  lastPasswordReset?: number;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof NewOrganizationUser
    */
-  loggedAt?: Date;
+  loggedAt?: number;
   /**
    *
    * @type {number}
@@ -171,11 +171,11 @@ export interface NewOrganizationUser {
    */
   source?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof NewOrganizationUser
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -205,7 +205,7 @@ export function NewOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator:
     accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
     client: json['client'] == null ? undefined : json['client'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
     domain: json['domain'] == null ? undefined : json['domain'],
     email: json['email'] == null ? undefined : json['email'],
@@ -215,8 +215,8 @@ export function NewOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator:
     forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
     internal: json['internal'] == null ? undefined : json['internal'],
     lastName: json['lastName'] == null ? undefined : json['lastName'],
-    lastPasswordReset: json['lastPasswordReset'] == null ? undefined : new Date(json['lastPasswordReset']),
-    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    lastPasswordReset: json['lastPasswordReset'] == null ? undefined : json['lastPasswordReset'],
+    loggedAt: json['loggedAt'] == null ? undefined : json['loggedAt'],
     loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
     password: json['password'] == null ? undefined : json['password'],
     preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
@@ -224,7 +224,7 @@ export function NewOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator:
     registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
     source: json['source'] == null ? undefined : json['source'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     username: json['username'],
   };
 }
@@ -243,7 +243,7 @@ export function NewOrganizationUserToJSONTyped(value?: NewOrganizationUser | nul
     accountNonLocked: value['accountNonLocked'],
     additionalInformation: value['additionalInformation'],
     client: value['client'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     credentialsNonExpired: value['credentialsNonExpired'],
     domain: value['domain'],
     email: value['email'],
@@ -253,8 +253,8 @@ export function NewOrganizationUserToJSONTyped(value?: NewOrganizationUser | nul
     forceResetPassword: value['forceResetPassword'],
     internal: value['internal'],
     lastName: value['lastName'],
-    lastPasswordReset: value['lastPasswordReset'] == null ? value['lastPasswordReset'] : value['lastPasswordReset'].toISOString(),
-    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    lastPasswordReset: value['lastPasswordReset'],
+    loggedAt: value['loggedAt'],
     loginsCount: value['loginsCount'],
     password: value['password'],
     preRegistration: value['preRegistration'],
@@ -262,7 +262,7 @@ export function NewOrganizationUserToJSONTyped(value?: NewOrganizationUser | nul
     registrationCompleted: value['registrationCompleted'],
     serviceAccount: value['serviceAccount'],
     source: value['source'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     username: value['username'],
   };
 }

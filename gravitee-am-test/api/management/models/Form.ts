@@ -51,11 +51,11 @@ export interface Form {
    */
   content?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Form
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -87,11 +87,11 @@ export interface Form {
    */
   template?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Form
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -126,13 +126,13 @@ export function FormFromJSONTyped(json: any, ignoreDiscriminator: boolean): Form
     assets: json['assets'] == null ? undefined : json['assets'],
     client: json['client'] == null ? undefined : json['client'],
     content: json['content'] == null ? undefined : json['content'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     template: json['template'] == null ? undefined : json['template'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -149,12 +149,12 @@ export function FormToJSONTyped(value?: Form | null, ignoreDiscriminator: boolea
     assets: value['assets'],
     client: value['client'],
     content: value['content'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     enabled: value['enabled'],
     id: value['id'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     template: value['template'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

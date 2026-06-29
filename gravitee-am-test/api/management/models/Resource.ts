@@ -39,11 +39,11 @@ export interface Resource {
    */
   clientId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Resource
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -87,11 +87,11 @@ export interface Resource {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Resource
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -117,7 +117,7 @@ export function ResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
   }
   return {
     clientId: json['clientId'] == null ? undefined : json['clientId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     domain: json['domain'] == null ? undefined : json['domain'],
     iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
@@ -125,7 +125,7 @@ export function ResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     name: json['name'] == null ? undefined : json['name'],
     resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userId: json['userId'] == null ? undefined : json['userId'],
   };
 }
@@ -141,7 +141,7 @@ export function ResourceToJSONTyped(value?: Resource | null, ignoreDiscriminator
 
   return {
     clientId: value['clientId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     domain: value['domain'],
     iconUri: value['iconUri'],
@@ -149,7 +149,7 @@ export function ResourceToJSONTyped(value?: Resource | null, ignoreDiscriminator
     name: value['name'],
     resourceScopes: value['resourceScopes'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userId: value['userId'],
   };
 }

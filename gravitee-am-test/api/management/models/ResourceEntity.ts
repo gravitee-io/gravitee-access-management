@@ -39,11 +39,11 @@ export interface ResourceEntity {
    */
   clientId?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ResourceEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -93,11 +93,11 @@ export interface ResourceEntity {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof ResourceEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
   /**
    *
    * @type {string}
@@ -129,7 +129,7 @@ export function ResourceEntityFromJSONTyped(json: any, ignoreDiscriminator: bool
   }
   return {
     clientId: json['clientId'] == null ? undefined : json['clientId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     domain: json['domain'] == null ? undefined : json['domain'],
     iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
@@ -138,7 +138,7 @@ export function ResourceEntityFromJSONTyped(json: any, ignoreDiscriminator: bool
     policies: json['policies'] == null ? undefined : json['policies'],
     resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userDisplayName: json['userDisplayName'] == null ? undefined : json['userDisplayName'],
     userId: json['userId'] == null ? undefined : json['userId'],
   };
@@ -155,7 +155,7 @@ export function ResourceEntityToJSONTyped(value?: ResourceEntity | null, ignoreD
 
   return {
     clientId: value['clientId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     domain: value['domain'],
     iconUri: value['iconUri'],
@@ -164,7 +164,7 @@ export function ResourceEntityToJSONTyped(value?: ResourceEntity | null, ignoreD
     policies: value['policies'],
     resourceScopes: value['resourceScopes'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
     userDisplayName: value['userDisplayName'],
     userId: value['userId'],
   };

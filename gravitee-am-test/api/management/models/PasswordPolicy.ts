@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface PasswordPolicy {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof PasswordPolicy
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -141,11 +141,11 @@ export interface PasswordPolicy {
    */
   regex?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof PasswordPolicy
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -177,7 +177,7 @@ export function PasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     defaultPolicy: json['defaultPolicy'] == null ? undefined : json['defaultPolicy'],
     excludePasswordsInDictionary: json['excludePasswordsInDictionary'] == null ? undefined : json['excludePasswordsInDictionary'],
     excludeUserProfileInfoInPassword:
@@ -196,7 +196,7 @@ export function PasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: bool
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     regex: json['regex'] == null ? undefined : json['regex'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -210,7 +210,7 @@ export function PasswordPolicyToJSONTyped(value?: PasswordPolicy | null, ignoreD
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     defaultPolicy: value['defaultPolicy'],
     excludePasswordsInDictionary: value['excludePasswordsInDictionary'],
     excludeUserProfileInfoInPassword: value['excludeUserProfileInfoInPassword'],
@@ -228,6 +228,6 @@ export function PasswordPolicyToJSONTyped(value?: PasswordPolicy | null, ignoreD
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     regex: value['regex'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

@@ -27,19 +27,19 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * OAuth-specific token-exchange behavior, such as how scopes are handled, with optional inheritance from domain defaults.
  * @export
  * @interface TokenExchangeOAuthSettings
  */
 export interface TokenExchangeOAuthSettings {
   /**
-   *
+   * Whether these settings are inherited from the domain defaults rather than defined here.
    * @type {boolean}
    * @memberof TokenExchangeOAuthSettings
    */
   inherited?: boolean;
   /**
-   *
+   * How scopes are handled when issuing the exchanged token. DOWNSCOPING restricts the issued token to a subset of the original scopes.
    * @type {string}
    * @memberof TokenExchangeOAuthSettings
    */
