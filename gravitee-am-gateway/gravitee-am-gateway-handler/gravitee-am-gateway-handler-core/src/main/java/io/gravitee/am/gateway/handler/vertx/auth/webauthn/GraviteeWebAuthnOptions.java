@@ -220,7 +220,11 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
         try {
             return super.putRootCertificate(key, value);
         } catch (IllegalArgumentException e) {
-            LOGGER.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage(), e);
+            if(LOGGER.isDebugEnabled()){
+                LOGGER.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage(), e);
+            } else {
+                LOGGER.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage());
+            }
             return this;
         }
     }
@@ -245,7 +249,11 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
             this.additionalRootCertificates.putIfAbsent(key, new ArrayList<>());
             this.additionalRootCertificates.get(key).add(cert);
         } catch (CertificateException e) {
-            LOGGER.warn("Invalid additional root certificate for {}", key, e);
+            if(LOGGER.isDebugEnabled()){
+                LOGGER.warn("Invalid additional root certificate for {}", key, e);
+            } else {
+                LOGGER.warn("Invalid additional root certificate for {}", key);
+            }
         }
         return this;
     }
