@@ -27,13 +27,13 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Configuration of the domain's User-Managed Access (UMA 2.0) authorization features.
  * @export
  * @interface UMASettings
  */
 export interface UMASettings {
   /**
-   *
+   * Whether User-Managed Access is enabled for the domain.
    * @type {boolean}
    * @memberof UMASettings
    */

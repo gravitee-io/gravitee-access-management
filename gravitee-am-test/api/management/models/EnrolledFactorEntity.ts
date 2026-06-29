@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface EnrolledFactorEntity {
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof EnrolledFactorEntity
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -57,11 +57,11 @@ export interface EnrolledFactorEntity {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof EnrolledFactorEntity
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -80,11 +80,11 @@ export function EnrolledFactorEntityFromJSONTyped(json: any, ignoreDiscriminator
     return json;
   }
   return {
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -98,10 +98,10 @@ export function EnrolledFactorEntityToJSONTyped(value?: EnrolledFactorEntity | n
   }
 
   return {
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     id: value['id'],
     name: value['name'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

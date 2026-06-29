@@ -934,8 +934,7 @@ describe('When updating protected resource', () => {
 
     expect(updated).toBeDefined();
     expect(updated.features[0].createdAt).toBeDefined();
-    // Compare timestamps since createdAt is a Date object - should be preserved when key matches
-    expect(updated.features[0].createdAt?.getTime()).toEqual(originalCreatedAt?.getTime());
+    expect(updated.features[0].createdAt).toEqual(originalCreatedAt);
     expect(updated.features[0].updatedAt).toBeDefined();
   });
 
@@ -968,7 +967,6 @@ describe('When updating protected resource', () => {
     const newTool = updated.features.find((f) => f.key === 'brand_new_tool');
     expect(newTool).toBeDefined();
     expect(newTool.createdAt).toBeDefined();
-    // updatedAt should always be present for features (same as createdAt)
     expect(newTool.updatedAt).toBeDefined();
   });
 
@@ -1310,8 +1308,8 @@ describe('When updating protected resource', () => {
       const remainingTool = updated.features.find((f) => f.key === 'timestamp_tool_1');
       expect(remainingTool).toBeDefined();
       expect(remainingTool.createdAt).toBeDefined();
-      // Compare timestamps since createdAt is a Date object - should be preserved when key matches
-      expect(remainingTool.createdAt?.getTime()).toEqual(tool1CreatedAt?.getTime());
+      // createdAt is an epoch-millis timestamp - should be preserved when key matches
+      expect(remainingTool.createdAt).toEqual(tool1CreatedAt);
     });
 
     it('Should delete tool with special scope configurations', async () => {
@@ -1671,11 +1669,11 @@ describe('When patching protected resource', () => {
     expect(updatedTool.description).toEqual('Updated tool description');
     expect(updatedTool.type).toMatch(/^mcp_tool$/i);
     expect(updatedTool.scopes).toEqual(['patch_scope_1', 'patch_scope_2']);
-    // Compare timestamps since createdAt is a Date object - should be preserved when key matches
-    expect(updatedTool.createdAt?.getTime()).toEqual(originalCreatedAt?.getTime()); // Preserved
+    // createdAt is an epoch-millis timestamp - should be preserved when key matches
+    expect(updatedTool.createdAt).toEqual(originalCreatedAt); // Preserved
     expect(updatedTool.updatedAt).toBeDefined();
     // updatedAt should change when tool is modified
-    expect(updatedTool.updatedAt?.getTime()).not.toEqual(originalTool.updatedAt?.getTime());
+    expect(updatedTool.updatedAt).not.toEqual(originalTool.updatedAt);
 
     createdResource = patched;
   });
@@ -1712,8 +1710,8 @@ describe('When patching protected resource', () => {
     const newTool = patched.features.find((f) => f.key === 'new_tool');
 
     expect(originalToolAfter).toBeDefined();
-    // Compare timestamps since createdAt is a Date object - should be preserved when key matches
-    expect(originalToolAfter?.createdAt?.getTime()).toEqual(existingToolCreatedAt?.getTime()); // Preserved
+    // createdAt is an epoch-millis timestamp - should be preserved when key matches
+    expect(originalToolAfter?.createdAt).toEqual(existingToolCreatedAt); // Preserved
 
     expect(newTool).toBeDefined();
     expect(newTool?.key).toEqual('new_tool');
@@ -1724,9 +1722,9 @@ describe('When patching protected resource', () => {
     expect(newToolFeature.scopes).toEqual(['patch_scope_2']);
     expect(newTool?.createdAt).toBeDefined();
     // New tool's createdAt should be recent (within last few seconds)
-    // createdAt is a Date object, get timestamp using getTime()
+    // createdAt is an epoch-millis timestamp
     const now = Date.now();
-    const newToolCreatedAt = newTool?.createdAt instanceof Date ? newTool.createdAt.getTime() : new Date(newTool?.createdAt || 0).getTime();
+    const newToolCreatedAt = newTool?.createdAt ?? 0;
     expect(now - newToolCreatedAt).toBeLessThan(5000); // Within 5 seconds
 
     createdResource = patched;

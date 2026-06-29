@@ -27,25 +27,25 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Configuration of the domain's SCIM 2.0 provisioning endpoints.
  * @export
  * @interface SCIMSettings
  */
 export interface SCIMSettings {
   /**
-   *
+   * Whether the SCIM provisioning API is enabled for the domain.
    * @type {boolean}
    * @memberof SCIMSettings
    */
   enabled?: boolean;
   /**
-   *
+   * Whether an identity provider is selected for SCIM-provisioned users using a selection rule.
    * @type {boolean}
    * @memberof SCIMSettings
    */
   idpSelectionEnabled?: boolean;
   /**
-   *
+   * Expression that selects the identity provider for a SCIM-provisioned user.
    * @type {string}
    * @memberof SCIMSettings
    */

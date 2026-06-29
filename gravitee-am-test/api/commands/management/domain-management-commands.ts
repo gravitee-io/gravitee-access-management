@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getDomainApi, getDomainManagerUrl } from './service/utils';
+import { getAuthenticationDeviceNotifierApi, getDomainApi } from './service/utils';
 import { Domain } from '../../management/models';
 import { DomainPage } from '../../management/models/DomainPage';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
@@ -22,8 +22,6 @@ import { waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { expect } from '@jest/globals';
 import faker from 'faker';
-
-import request from 'supertest';
 
 export type DomainOidcConfig = {
   authorization_endpoint: string;
@@ -151,16 +149,17 @@ export const listDomains = (accessToken: string, options?: DomainListOptions): P
   });
 
 export const createAcceptAllDeviceNotifier = (domainId, accessToken) =>
-  request(getDomainManagerUrl(null) + '/auth-device-notifiers')
-    .post('')
-    .set('Authorization', 'Bearer ' + accessToken)
-    .send({
+  getAuthenticationDeviceNotifierApi(accessToken).createAuthenticationDeviceNotifier({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    newAuthenticationDeviceNotifier: {
       type: 'http-am-authdevice-notifier',
       configuration:
         '{"endpoint":"http://localhost:8080/ciba/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}',
       name: 'Always OK notifier',
-    })
-    .expect(201);
+    },
+  });
 
 export const getDomainFlows = (domainId, accessToken) =>
   getDomainApi(accessToken).listDomainFlows({
@@ -301,9 +300,7 @@ export async function waitForOAuthAuthorizeRedirectsToLogin(
   }
 
   const statusHint = typeof lastStatus === 'number' ? ` Last HTTP status: ${lastStatus}.` : '';
-  throw new Error(
-    `Timed out waiting for authorize → login redirect for domain "${domainHrid}" (clientId=${clientId}).${statusHint}`,
-  );
+  throw new Error(`Timed out waiting for authorize → login redirect for domain "${domainHrid}" (clientId=${clientId}).${statusHint}`);
 }
 
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
@@ -319,7 +316,11 @@ export async function allowHttpLocalhostRedirects(domain: Domain, accessToken: s
   });
 }
 
-export const updateCertificateSettings = (domainId: string, accessToken: string, certificateSettings: { fallbackCertificate?: string | null }): Promise<Domain> =>
+export const updateCertificateSettings = (
+  domainId: string,
+  accessToken: string,
+  certificateSettings: { fallbackCertificate?: string | null },
+): Promise<Domain> =>
   getDomainApi(accessToken).updateDomainCertificateSettings({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,

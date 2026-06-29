@@ -39,11 +39,11 @@ export interface AuthorizationEngine {
    */
   configuration?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AuthorizationEngine
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -75,11 +75,11 @@ export interface AuthorizationEngine {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AuthorizationEngine
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -113,13 +113,13 @@ export function AuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminator:
   }
   return {
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -134,12 +134,12 @@ export function AuthorizationEngineToJSONTyped(value?: AuthorizationEngine | nul
 
   return {
     configuration: value['configuration'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     id: value['id'],
     name: value['name'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

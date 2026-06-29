@@ -39,11 +39,11 @@ export interface Scope {
    */
   claims?: Array<string>;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Scope
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -105,11 +105,11 @@ export interface Scope {
    */
   system?: boolean;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Scope
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -129,7 +129,7 @@ export function ScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Sco
   }
   return {
     claims: json['claims'] == null ? undefined : json['claims'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     discovery: json['discovery'] == null ? undefined : json['discovery'],
     domain: json['domain'] == null ? undefined : json['domain'],
@@ -140,7 +140,7 @@ export function ScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Sco
     name: json['name'] == null ? undefined : json['name'],
     parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
     system: json['system'] == null ? undefined : json['system'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -155,7 +155,7 @@ export function ScopeToJSONTyped(value?: Scope | null, ignoreDiscriminator: bool
 
   return {
     claims: value['claims'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     discovery: value['discovery'],
     domain: value['domain'],
@@ -166,6 +166,6 @@ export function ScopeToJSONTyped(value?: Scope | null, ignoreDiscriminator: bool
     name: value['name'],
     parameterized: value['parameterized'],
     system: value['system'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

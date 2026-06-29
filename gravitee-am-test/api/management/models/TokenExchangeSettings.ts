@@ -37,49 +37,49 @@ import {
 } from './TokenExchangeOAuthSettings';
 
 /**
- *
+ * OAuth 2.0 Token Exchange (RFC 8693) configuration for the domain, covering impersonation and delegation.
  * @export
  * @interface TokenExchangeSettings
  */
 export interface TokenExchangeSettings {
   /**
-   *
+   * Whether delegation is allowed, where an actor acts on behalf of the subject and an "act" claim is added to the issued token. At least one of allowImpersonation or allowDelegation must be enabled.
    * @type {boolean}
    * @memberof TokenExchangeSettings
    */
   allowDelegation?: boolean;
   /**
-   *
+   * Whether impersonation is allowed, where the issued token represents the subject directly. At least one of allowImpersonation or allowDelegation must be enabled.
    * @type {boolean}
    * @memberof TokenExchangeSettings
    */
   allowImpersonation?: boolean;
   /**
-   *
+   * Token types accepted as the actor token when delegating.
    * @type {Array<string>}
    * @memberof TokenExchangeSettings
    */
   allowedActorTokenTypes?: Array<string>;
   /**
-   *
+   * Token types that may be requested as the result of an exchange.
    * @type {Array<string>}
    * @memberof TokenExchangeSettings
    */
   allowedRequestedTokenTypes?: Array<string>;
   /**
-   *
+   * Token types accepted as the subject token in an exchange.
    * @type {Array<string>}
    * @memberof TokenExchangeSettings
    */
   allowedSubjectTokenTypes?: Array<string>;
   /**
-   *
+   * Whether token exchange is enabled for the domain.
    * @type {boolean}
    * @memberof TokenExchangeSettings
    */
   enabled?: boolean;
   /**
-   *
+   * Maximum depth of the delegation chain (nested "act" claims). Clamped to the range 1–100.
    * @type {number}
    * @memberof TokenExchangeSettings
    */
@@ -91,7 +91,7 @@ export interface TokenExchangeSettings {
    */
   tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
   /**
-   *
+   * External issuers whose JWTs may be accepted as subject or actor tokens. When unset, only domain-issued tokens are accepted.
    * @type {Array<TrustedIssuer>}
    * @memberof TokenExchangeSettings
    */

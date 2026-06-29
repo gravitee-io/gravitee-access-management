@@ -62,7 +62,7 @@ describe('Protected resource (MCP server) token flow execution', () => {
   });
 
   it('should execute the token flow policy during client_credentials', async () => {
-    const flows = await getProtectedResourceFlows(fixture.domain.id, fixture.accessToken, fixture.mcpResource.id).then((r) => r.body);
+    const flows = await getProtectedResourceFlows(fixture.domain.id, fixture.accessToken, fixture.mcpResource.id);
     const tokenFlow = flows.find((f) => f.type.toLowerCase() === 'token');
     tokenFlow.pre = [
       {

@@ -76,11 +76,11 @@ export interface Application {
    */
   certificate?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Application
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -172,11 +172,11 @@ export interface Application {
    */
   type?: ApplicationTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Application
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -220,7 +220,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
   return {
     agentApplication: json['agentApplication'] == null ? undefined : json['agentApplication'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     domain: json['domain'] == null ? undefined : json['domain'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
@@ -240,7 +240,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
     template: json['template'] == null ? undefined : json['template'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -256,7 +256,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
   return {
     agentApplication: value['agentApplication'],
     certificate: value['certificate'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     description: value['description'],
     domain: value['domain'],
     enabled: value['enabled'],
@@ -276,6 +276,6 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
     settings: ApplicationSettingsToJSON(value['settings']),
     template: value['template'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

@@ -26,6 +26,9 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ManagedBy } from './ManagedBy';
+import { ManagedByFromJSON, ManagedByFromJSONTyped, ManagedByToJSON, ManagedByToJSONTyped } from './ManagedBy';
+
 /**
  *
  * @export
@@ -39,11 +42,11 @@ export interface IdentityProvider {
    */
   configuration?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof IdentityProvider
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {string}
@@ -79,7 +82,13 @@ export interface IdentityProvider {
    * @type {string}
    * @memberof IdentityProvider
    */
-  managedBy?: IdentityProviderManagedByEnum;
+  readonly key?: string;
+  /**
+   *
+   * @type {ManagedBy}
+   * @memberof IdentityProvider
+   */
+  managedBy?: ManagedBy;
   /**
    *
    * @type {{ [key: string]: string; }}
@@ -129,23 +138,12 @@ export interface IdentityProvider {
    */
   type?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof IdentityProvider
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
-
-/**
- * @export
- */
-export const IdentityProviderManagedByEnum = {
-  None: 'NONE',
-  Terraform: 'TERRAFORM',
-  Gko: 'GKO',
-  AutomationApi: 'AUTOMATION_API',
-} as const;
-export type IdentityProviderManagedByEnum = typeof IdentityProviderManagedByEnum[keyof typeof IdentityProviderManagedByEnum];
 
 /**
  * @export
@@ -177,13 +175,14 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
   }
   return {
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
     external: json['external'] == null ? undefined : json['external'],
     groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
     id: json['id'] == null ? undefined : json['id'],
-    managedBy: json['managedBy'] == null ? undefined : json['managedBy'],
+    key: json['key'] == null ? undefined : json['key'],
+    managedBy: json['managedBy'] == null ? undefined : ManagedByFromJSON(json['managedBy']),
     mappers: json['mappers'] == null ? undefined : json['mappers'],
     name: json['name'] == null ? undefined : json['name'],
     passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
@@ -192,7 +191,7 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
     roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
     system: json['system'] == null ? undefined : json['system'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -200,20 +199,20 @@ export function IdentityProviderToJSON(json: any): IdentityProvider {
   return IdentityProviderToJSONTyped(json, false);
 }
 
-export function IdentityProviderToJSONTyped(value?: IdentityProvider | null, ignoreDiscriminator: boolean = false): any {
+export function IdentityProviderToJSONTyped(value?: Omit<IdentityProvider, 'key'> | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }
 
   return {
     configuration: value['configuration'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     dataPlaneId: value['dataPlaneId'],
     domainWhitelist: value['domainWhitelist'],
     external: value['external'],
     groupMapper: value['groupMapper'],
     id: value['id'],
-    managedBy: value['managedBy'],
+    managedBy: ManagedByToJSON(value['managedBy']),
     mappers: value['mappers'],
     name: value['name'],
     passwordPolicy: value['passwordPolicy'],
@@ -222,6 +221,6 @@ export function IdentityProviderToJSONTyped(value?: IdentityProvider | null, ign
     roleMapper: value['roleMapper'],
     system: value['system'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

@@ -38,6 +38,7 @@ import { DefaultApi } from '@management-apis/DefaultApi';
 import { AlertsApi } from '@management-apis/AlertsApi';
 import { NotifierApi } from '@management-apis/NotifierApi';
 import { ReporterApi } from '@management-apis/ReporterApi';
+import { AuthenticationDeviceNotifierApi } from '@management-apis/AuthenticationDeviceNotifierApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });
@@ -66,6 +67,10 @@ export function getApplicationApi(accessToken) {
 
 export function getProtectedResourcesApi(accessToken) {
   return new ProtectedResourceApi(createAccessTokenConfig(accessToken));
+}
+
+export function getAuthenticationDeviceNotifierApi(accessToken) {
+  return new AuthenticationDeviceNotifierApi(createAccessTokenConfig(accessToken));
 }
 
 export function getRoleApi(accessToken) {

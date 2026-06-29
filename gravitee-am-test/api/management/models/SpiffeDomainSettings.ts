@@ -33,61 +33,61 @@ import { mapValues } from '../runtime';
  */
 export interface SpiffeDomainSettings {
   /**
-   *
+   * Whether trust bundles can be fetched from private IP addresses.
    * @type {boolean}
    * @memberof SpiffeDomainSettings
    */
   allowPrivateIpAddress?: boolean;
   /**
-   *
+   * Whether trust bundles can be fetched over unsecured HTTP URIs.
    * @type {boolean}
    * @memberof SpiffeDomainSettings
    */
   allowUnsecuredHttpUri?: boolean;
   /**
-   *
+   * Maximum number of trust bundle entries retained in the cache.
    * @type {number}
    * @memberof SpiffeDomainSettings
    */
   cacheMaxEntries?: number;
   /**
-   *
+   * Time-to-live, in seconds, for cached trust bundle entries.
    * @type {number}
    * @memberof SpiffeDomainSettings
    */
   cacheTtlSeconds?: number;
   /**
-   *
+   * Allowed clock skew, in seconds, when validating JWT temporal claims.
    * @type {number}
    * @memberof SpiffeDomainSettings
    */
   clockSkewSeconds?: number;
   /**
-   *
+   * Default allowlist of signature algorithms accepted for SPIFFE JWT validation.
    * @type {Array<string>}
    * @memberof SpiffeDomainSettings
    */
   defaultAllowedAlgorithms?: Array<string>;
   /**
-   *
+   * Whether SPIFFE workload identity support is enabled for the domain.
    * @type {boolean}
    * @memberof SpiffeDomainSettings
    */
   enabled?: boolean;
   /**
-   *
+   * Timeout, in milliseconds, for fetching trust bundles.
    * @type {number}
    * @memberof SpiffeDomainSettings
    */
   fetchTimeoutMs?: number;
   /**
-   *
+   * Maximum accepted JWT lifetime, in seconds, computed as exp minus iat.
    * @type {number}
    * @memberof SpiffeDomainSettings
    */
   maxJwtLifetimeSeconds?: number;
   /**
-   *
+   * Maximum trust bundle response size, in kilobytes.
    * @type {number}
    * @memberof SpiffeDomainSettings
    */

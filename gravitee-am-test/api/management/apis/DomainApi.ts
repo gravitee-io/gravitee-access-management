@@ -684,6 +684,14 @@ export interface DefineDomainFlowsRequest {
   flow: Array<Flow>;
 }
 
+export interface DefineProtectedResourceFlowsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  flow: Array<Flow>;
+}
+
 export interface DeleteAlertNotifierRequest {
   organizationId: string;
   environmentId: string;
@@ -1445,6 +1453,13 @@ export interface ListPasswordPoliciesRequest {
   domain: string;
 }
 
+export interface ListProtectedResourceFlowsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+}
+
 export interface ListProtectedResourcesRequest {
   organizationId: string;
   environmentId: string;
@@ -1740,6 +1755,37 @@ export interface RotateCertificateRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+}
+
+export interface SearchApplicationsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  expand?: Array<string>;
+  q?: string;
+  status?: string;
+  ownerEmail?: string;
+  type?: Array<SearchApplicationsTypeEnum>;
+}
+
+export interface SearchApplicationsCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  expand?: Array<string>;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  q?: string;
+  status?: string;
+  ownerEmail?: string;
+  type?: Array<SearchApplicationsCursorTypeEnum>;
+  cursor?: string;
 }
 
 export interface SendRegistrationConfirmationRequest {
@@ -5211,6 +5257,93 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<FlowEntity>> {
     const response = await this.defineDomainFlowsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified resource or PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified domain or PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified environment or PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified organization. Only the TOKEN flow can be configured for a protected resource.
+   * Create or update list of flows
+   */
+  async defineProtectedResourceFlowsRaw(
+    requestParameters: DefineProtectedResourceFlowsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling defineProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling defineProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling defineProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling defineProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.flow === null || requestParameters.flow === undefined) {
+      throw new runtime.RequiredError(
+        'flow',
+        'Required parameter requestParameters.flow was null or undefined when calling defineProtectedResourceFlows.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/flows`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters.flow.map(FlowToJSON),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified resource or PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified domain or PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified environment or PROTECTED_RESOURCE_FLOW[UPDATE] permission on the specified organization. Only the TOKEN flow can be configured for a protected resource.
+   * Create or update list of flows
+   */
+  async defineProtectedResourceFlows(
+    requestParameters: DefineProtectedResourceFlowsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<FlowEntity>> {
+    const response = await this.defineProtectedResourceFlowsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -13198,6 +13331,83 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+   * List registered flows for a protected resource
+   */
+  async listProtectedResourceFlowsRaw(
+    requestParameters: ListProtectedResourceFlowsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listProtectedResourceFlows.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling listProtectedResourceFlows.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/flows`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+   * List registered flows for a protected resource
+   */
+  async listProtectedResourceFlows(
+    requestParameters: ListProtectedResourceFlowsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<FlowEntity>> {
+    const response = await this.listProtectedResourceFlowsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the PROTECTED_RESOURCE[LIST] permission on the specified domain, environment or organization AND either PROTECTED_RESOURCE[READ] permission on each domain\'s protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. Each returned protected resource is filtered and contains only basic information such as id, name, description and isEnabled.
    * List registered protected resources for a security domain
    */
@@ -16247,6 +16457,220 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<CertificateEntity> {
     const response = await this.rotateCertificateRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplicationsRaw(
+    requestParameters: SearchApplicationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<any>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling searchApplications.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling searchApplications.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling searchApplications.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.expand) {
+      queryParameters['expand'] = requestParameters.expand;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.status !== undefined) {
+      queryParameters['status'] = requestParameters.status;
+    }
+
+    if (requestParameters.ownerEmail !== undefined) {
+      queryParameters['owner.email'] = requestParameters.ownerEmail;
+    }
+
+    if (requestParameters.type) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplications(
+    requestParameters: SearchApplicationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<any> {
+    const response = await this.searchApplicationsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplicationsCursorRaw(
+    requestParameters: SearchApplicationsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<any>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling searchApplicationsCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling searchApplicationsCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling searchApplicationsCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.expand) {
+      queryParameters['expand'] = requestParameters.expand;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.status !== undefined) {
+      queryParameters['status'] = requestParameters.status;
+    }
+
+    if (requestParameters.ownerEmail !== undefined) {
+      queryParameters['owner.email'] = requestParameters.ownerEmail;
+    }
+
+    if (requestParameters.type) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async searchApplicationsCursor(
+    requestParameters: SearchApplicationsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<any> {
+    const response = await this.searchApplicationsCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -19442,3 +19866,27 @@ export const ListApplicationsTypeEnum = {
   Agent: 'AGENT',
 } as const;
 export type ListApplicationsTypeEnum = typeof ListApplicationsTypeEnum[keyof typeof ListApplicationsTypeEnum];
+/**
+ * @export
+ */
+export const SearchApplicationsTypeEnum = {
+  Web: 'WEB',
+  Native: 'NATIVE',
+  Browser: 'BROWSER',
+  Service: 'SERVICE',
+  ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
+} as const;
+export type SearchApplicationsTypeEnum = typeof SearchApplicationsTypeEnum[keyof typeof SearchApplicationsTypeEnum];
+/**
+ * @export
+ */
+export const SearchApplicationsCursorTypeEnum = {
+  Web: 'WEB',
+  Native: 'NATIVE',
+  Browser: 'BROWSER',
+  Service: 'SERVICE',
+  ResourceServer: 'RESOURCE_SERVER',
+  Agent: 'AGENT',
+} as const;
+export type SearchApplicationsCursorTypeEnum = typeof SearchApplicationsCursorTypeEnum[keyof typeof SearchApplicationsCursorTypeEnum];

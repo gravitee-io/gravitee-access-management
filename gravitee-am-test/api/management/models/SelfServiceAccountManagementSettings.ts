@@ -35,13 +35,13 @@ import {
 } from './ResetPasswordSettings';
 
 /**
- *
+ * Controls whether end users can manage their own account (for example, reset their password) and the rules that apply.
  * @export
  * @interface SelfServiceAccountManagementSettings
  */
 export interface SelfServiceAccountManagementSettings {
   /**
-   *
+   * Whether self-service account management is enabled for end users.
    * @type {boolean}
    * @memberof SelfServiceAccountManagementSettings
    */

@@ -53,7 +53,7 @@ import {
 } from './SpiffeDomainSettings';
 
 /**
- *
+ * OpenID Connect configuration for the domain, including dynamic client registration, security profile, and logout settings.
  * @export
  * @interface OIDCSettings
  */
@@ -77,19 +77,19 @@ export interface OIDCSettings {
    */
   clientRegistrationSettings?: ClientRegistrationSettings;
   /**
-   *
+   * URLs to which a relying party may request the user be redirected after logout, via the post_logout_redirect_uri parameter.
    * @type {Array<string>}
    * @memberof OIDCSettings
    */
   postLogoutRedirectUris?: Array<string>;
   /**
-   *
+   * Whether redirect_uri values are matched strictly during OIDC flows.
    * @type {boolean}
    * @memberof OIDCSettings
    */
   redirectUriStrictMatching?: boolean;
   /**
-   *
+   * URLs that restrict the permitted values of the request_uri parameter.
    * @type {Array<string>}
    * @memberof OIDCSettings
    */

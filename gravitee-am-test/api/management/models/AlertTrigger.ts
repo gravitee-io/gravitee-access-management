@@ -39,11 +39,11 @@ export interface AlertTrigger {
    */
   alertNotifiers?: Array<string>;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AlertTrigger
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -75,11 +75,11 @@ export interface AlertTrigger {
    */
   type?: AlertTriggerTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof AlertTrigger
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -121,13 +121,13 @@ export function AlertTriggerFromJSONTyped(json: any, ignoreDiscriminator: boolea
   }
   return {
     alertNotifiers: json['alertNotifiers'] == null ? undefined : json['alertNotifiers'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     type: json['type'] == null ? undefined : json['type'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -142,12 +142,12 @@ export function AlertTriggerToJSONTyped(value?: AlertTrigger | null, ignoreDiscr
 
   return {
     alertNotifiers: value['alertNotifiers'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     enabled: value['enabled'],
     id: value['id'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     type: value['type'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

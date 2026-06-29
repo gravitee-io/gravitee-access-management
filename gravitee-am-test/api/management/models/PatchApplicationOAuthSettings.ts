@@ -84,11 +84,11 @@ export interface PatchApplicationOAuthSettings {
    */
   authorizationSignedResponseAlg?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof PatchApplicationOAuthSettings
    */
-  clientIdIssuedAt?: Date;
+  clientIdIssuedAt?: number;
   /**
    *
    * @type {string}
@@ -96,11 +96,11 @@ export interface PatchApplicationOAuthSettings {
    */
   clientName?: string;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof PatchApplicationOAuthSettings
    */
-  clientSecretExpiresAt?: Date;
+  clientSecretExpiresAt?: number;
   /**
    *
    * @type {string}
@@ -438,9 +438,9 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     authorizationEncryptedResponseEnc:
       json['authorizationEncryptedResponseEnc'] == null ? undefined : json['authorizationEncryptedResponseEnc'],
     authorizationSignedResponseAlg: json['authorizationSignedResponseAlg'] == null ? undefined : json['authorizationSignedResponseAlg'],
-    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : new Date(json['clientIdIssuedAt']),
+    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : json['clientIdIssuedAt'],
     clientName: json['clientName'] == null ? undefined : json['clientName'],
-    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : new Date(json['clientSecretExpiresAt']),
+    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : json['clientSecretExpiresAt'],
     clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
     contacts: json['contacts'] == null ? undefined : json['contacts'],
     defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
@@ -518,10 +518,9 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     authorizationEncryptedResponseAlg: value['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc: value['authorizationEncryptedResponseEnc'],
     authorizationSignedResponseAlg: value['authorizationSignedResponseAlg'],
-    clientIdIssuedAt: value['clientIdIssuedAt'] == null ? value['clientIdIssuedAt'] : value['clientIdIssuedAt'].toISOString(),
+    clientIdIssuedAt: value['clientIdIssuedAt'],
     clientName: value['clientName'],
-    clientSecretExpiresAt:
-      value['clientSecretExpiresAt'] == null ? value['clientSecretExpiresAt'] : value['clientSecretExpiresAt'].toISOString(),
+    clientSecretExpiresAt: value['clientSecretExpiresAt'],
     clientUri: value['clientUri'],
     contacts: value['contacts'],
     defaultACRvalues: value['defaultACRvalues'],

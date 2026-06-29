@@ -39,11 +39,11 @@ export interface Role {
    */
   assignableType?: RoleAssignableTypeEnum;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Role
    */
-  createdAt?: Date;
+  createdAt?: number;
   /**
    *
    * @type {boolean}
@@ -105,11 +105,11 @@ export interface Role {
    */
   system?: boolean;
   /**
-   *
-   * @type {Date}
+   * Epoch timestamp in milliseconds.
+   * @type {number}
    * @memberof Role
    */
-  updatedAt?: Date;
+  updatedAt?: number;
 }
 
 /**
@@ -167,7 +167,7 @@ export function RoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Role
   }
   return {
     assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
@@ -178,7 +178,7 @@ export function RoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Role
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     system: json['system'] == null ? undefined : json['system'],
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
 
@@ -193,7 +193,7 @@ export function RoleToJSONTyped(value?: Role | null, ignoreDiscriminator: boolea
 
   return {
     assignableType: value['assignableType'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    createdAt: value['createdAt'],
     defaultRole: value['defaultRole'],
     description: value['description'],
     id: value['id'],
@@ -204,6 +204,6 @@ export function RoleToJSONTyped(value?: Role | null, ignoreDiscriminator: boolea
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     system: value['system'],
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    updatedAt: value['updatedAt'],
   };
 }

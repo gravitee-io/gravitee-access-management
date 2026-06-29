@@ -27,103 +27,97 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Configuration of the domain's login flow and the features offered on the sign-in page.
  * @export
  * @interface LoginSettings
  */
 export interface LoginSettings {
   /**
-   *
+   * Whether certificate-based authentication is offered.
    * @type {boolean}
    * @memberof LoginSettings
    */
   certificateBasedAuthEnabled?: boolean;
   /**
-   *
+   * URL used for certificate-based authentication.
    * @type {string}
    * @memberof LoginSettings
    */
   certificateBasedAuthUrl?: string;
   /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  enforcePasswordPolicyEnabled?: boolean;
-  /**
-   *
+   * Whether users can initiate a forgot-password flow from the login page.
    * @type {boolean}
    * @memberof LoginSettings
    */
   forgotPasswordEnabled?: boolean;
   /**
-   *
+   * Whether the login form is hidden (for example when only social or identifier-first login is offered).
    * @type {boolean}
    * @memberof LoginSettings
    */
   hideForm?: boolean;
   /**
-   *
+   * Whether identifier-first login is enabled, prompting for the username before the password.
    * @type {boolean}
    * @memberof LoginSettings
    */
   identifierFirstEnabled?: boolean;
   /**
-   *
+   * Whether these login settings are inherited from a parent scope rather than defined here. When true, the other fields are ignored.
    * @type {boolean}
    * @memberof LoginSettings
    */
   inherited?: boolean;
   /**
-   *
+   * Whether magic-link authentication is offered.
    * @type {boolean}
    * @memberof LoginSettings
    */
   magicLinkAuthEnabled?: boolean;
   /**
-   *
+   * Whether users can name their passwordless devices.
    * @type {boolean}
    * @memberof LoginSettings
    */
   passwordlessDeviceNamingEnabled?: boolean;
   /**
-   *
+   * Whether passwordless (WebAuthn) authentication is offered.
    * @type {boolean}
    * @memberof LoginSettings
    */
   passwordlessEnabled?: boolean;
   /**
-   *
+   * Whether a password is still required alongside passwordless authentication.
    * @type {boolean}
    * @memberof LoginSettings
    */
   passwordlessEnforcePasswordEnabled?: boolean;
   /**
-   *
+   * Period, in seconds, after which the user's credentials must be re-entered to keep using passwordless authentication.
    * @type {number}
    * @memberof LoginSettings
    */
   passwordlessEnforcePasswordMaxAge?: number;
   /**
-   *
+   * Whether a passwordless device can be remembered to skip future challenges.
    * @type {boolean}
    * @memberof LoginSettings
    */
   passwordlessRememberDeviceEnabled?: boolean;
   /**
-   *
+   * Whether users can self-register from the login page.
    * @type {boolean}
    * @memberof LoginSettings
    */
   registerEnabled?: boolean;
   /**
-   *
+   * Whether the login page offers a remember-me option.
    * @type {boolean}
    * @memberof LoginSettings
    */
   rememberMeEnabled?: boolean;
   /**
-   *
+   * Whether the user is forced to reset their password once it expires.
    * @type {boolean}
    * @memberof LoginSettings
    */
@@ -148,7 +142,6 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
   return {
     certificateBasedAuthEnabled: json['certificateBasedAuthEnabled'] == null ? undefined : json['certificateBasedAuthEnabled'],
     certificateBasedAuthUrl: json['certificateBasedAuthUrl'] == null ? undefined : json['certificateBasedAuthUrl'],
-    enforcePasswordPolicyEnabled: json['enforcePasswordPolicyEnabled'] == null ? undefined : json['enforcePasswordPolicyEnabled'],
     forgotPasswordEnabled: json['forgotPasswordEnabled'] == null ? undefined : json['forgotPasswordEnabled'],
     hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
     identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
@@ -180,7 +173,6 @@ export function LoginSettingsToJSONTyped(value?: LoginSettings | null, ignoreDis
   return {
     certificateBasedAuthEnabled: value['certificateBasedAuthEnabled'],
     certificateBasedAuthUrl: value['certificateBasedAuthUrl'],
-    enforcePasswordPolicyEnabled: value['enforcePasswordPolicyEnabled'],
     forgotPasswordEnabled: value['forgotPasswordEnabled'],
     hideForm: value['hideForm'],
     identifierFirstEnabled: value['identifierFirstEnabled'],

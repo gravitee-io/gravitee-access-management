@@ -324,6 +324,7 @@ export const PatchDomainRequiredPermissionsEnum = {
   ProtectedResourceSettings: 'PROTECTED_RESOURCE_SETTINGS',
   ProtectedResourceOauth: 'PROTECTED_RESOURCE_OAUTH',
   ProtectedResourceCertificate: 'PROTECTED_RESOURCE_CERTIFICATE',
+  ProtectedResourceFlow: 'PROTECTED_RESOURCE_FLOW',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchDomainRequiredPermissionsEnum = typeof PatchDomainRequiredPermissionsEnum[keyof typeof PatchDomainRequiredPermissionsEnum];

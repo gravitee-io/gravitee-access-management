@@ -27,43 +27,43 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- *
+ * Cross-Origin Resource Sharing configuration controlling which web origins may call the domain's endpoints from a browser.
  * @export
  * @interface CorsSettings
  */
 export interface CorsSettings {
   /**
-   *
+   * Whether the browser may send credentials (cookies, authorization headers) with cross-origin requests.
    * @type {boolean}
    * @memberof CorsSettings
    */
   allowCredentials?: boolean;
   /**
-   *
+   * Request headers permitted on cross-origin requests.
    * @type {Set<string>}
    * @memberof CorsSettings
    */
   allowedHeaders?: Set<string>;
   /**
-   *
+   * HTTP methods permitted on cross-origin requests.
    * @type {Set<string>}
    * @memberof CorsSettings
    */
   allowedMethods?: Set<string>;
   /**
-   *
+   * Origins permitted to make cross-origin requests. Use "*" to allow any origin.
    * @type {Set<string>}
    * @memberof CorsSettings
    */
   allowedOrigins?: Set<string>;
   /**
-   *
+   * Whether CORS handling is enabled for the domain.
    * @type {boolean}
    * @memberof CorsSettings
    */
   enabled?: boolean;
   /**
-   *
+   * How long, in seconds, a browser may cache the result of a preflight request.
    * @type {number}
    * @memberof CorsSettings
    */
