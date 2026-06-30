@@ -66,19 +66,21 @@ export class AuthGuard {
     if (needsDomain) {
       combineSources.push(
         this.domainService.getById(domainId).pipe(
-          mergeMap((domain) =>
-            this.domainService.permissions(domain.id).pipe(
-              mergeMap(() => {
-                if (needsApp) {
-                  return this.applicationService.permissions(domain.id, appId);
-                }
-                if (needsProtectedResource) {
-                  return this.protectedResourceService.permissions(domain.id, mcpServerId);
-                }
-                return of([]);
-              }),
-            ),
-          ),
+          mergeMap((domain) => this.domainService.permissions(domain.id)),
+        ),
+      );
+    }
+    if (needsApp) {
+      combineSources.push(
+        this.domainService.getById(domainId).pipe(
+          mergeMap((domain) => this.applicationService.permissions(domain.id, appId)),
+        ),
+      );
+    }
+    if (needsProtectedResource) {
+      combineSources.push(
+        this.domainService.getById(domainId).pipe(
+          mergeMap((domain) => this.protectedResourceService.permissions(domain.id, mcpServerId)),
         ),
       );
     }
