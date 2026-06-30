@@ -75,11 +75,30 @@ export class AuthGuard {
         );
       }
     } else if (requiredPerms[0].startsWith('protected_resource')) {
+      const environmentId = route.paramMap.get('envHrid');
       const domainId = route.paramMap.get('domainId');
       const mcpServerId = route.paramMap.get('mcpServerId');
 
-      if (domainId && mcpServerId && !this.authService.protectedResourcePermissionsLoaded()) {
-        combineSources.push(this.protectedResourceService.permissions(domainId, mcpServerId));
+      if (environmentId && !this.authService.environmentPermissionsLoaded()) {
+        combineSources.push(this.environmentService.permissions(environmentId));
+      }
+
+      if (domainId && !this.authService.domainPermissionsLoaded()) {
+        combineSources.push(
+          this.domainService.getById(domainId).pipe(
+            mergeMap((domain) =>
+              this.domainService.permissions(domain.id).pipe(
+                mergeMap((__) => {
+                  if (mcpServerId && !this.authService.protectedResourcePermissionsLoaded()) {
+                    return this.protectedResourceService.permissions(domain.id, mcpServerId);
+                  } else {
+                    return of([]);
+                  }
+                }),
+              ),
+            ),
+          ),
+        );
       }
     }
     // check permissions
