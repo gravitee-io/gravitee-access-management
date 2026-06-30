@@ -15,10 +15,19 @@
  */
 package io.gravitee.am.gateway.certificate.spring;
 
+import io.gravitee.am.certificate.api.CertificateProviders;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.security.InvalidKeyException;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_KID;
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,5 +39,19 @@ public class CertificateConfiguration {
     @Bean
     public CertificateProviderManager certificateProviderManager() {
         return new CertificateProviderManagerImpl();
+    }
+
+    @Bean
+    @Qualifier("defaultCertificate")
+    public CertificateProvider defaultCertificateProvider(CertificateProviderManager manager,
+                                                          @Value("${jwt.secret:" + DEFAULT_JWT_OR_CSRF_SECRET + "}") String defaultJwtSecret,
+                                                          @Value("${jwt.kid:" + DEFAULT_JWT_KID + "}") String defaultJwtKid) throws InvalidKeyException {
+        return manager.create(CertificateProviders.createShaCertificateProvider(defaultJwtKid, defaultJwtSecret), true);
+    }
+
+    @Bean
+    @Qualifier("noneCertificate")
+    public CertificateProvider noneCertificateProvider(CertificateProviderManager manager) {
+        return manager.create(CertificateProviders.createNoneCertificateProvider());
     }
 }
