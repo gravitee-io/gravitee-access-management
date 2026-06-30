@@ -116,13 +116,13 @@ abstract class BaseIntrospectionTokenService {
                             LOGGER.warn("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
                                     token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
                         } else {
-                            LOGGER.warn("An error occurs while checking JWT access token validity", invalidTokenException);
+                            LOGGER.warn("An error occurs while checking JWT access token validity, msg={}", invalidTokenException.getMessage());
                         }
                     } else {
                         if ( LOGGER.isDebugEnabled()) {
                             LOGGER.warn("An unexpected error occurred while introspecting JWT access token: {}", token, ex);
                         } else {
-                            LOGGER.warn("An unexpected error occurred while introspecting JWT access token", ex);
+                            LOGGER.warn("An unexpected error occurred while introspecting JWT access token, msg={}", ex.getMessage());
                         }
                     }
                     return Maybe.error(ex);
