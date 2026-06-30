@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.common.certificate.impl;
 
-import io.gravitee.am.certificate.api.CertificateProviders;
 import io.gravitee.am.common.event.CertificateEvent;
 import io.gravitee.am.common.event.DomainCertificateSettingsEvent;
 import io.gravitee.am.common.event.EventManager;
@@ -34,7 +33,6 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
@@ -42,8 +40,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
-import java.security.InvalidKeyException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -52,8 +50,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -61,9 +57,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRE
 public class CertificateManagerImpl extends AbstractService implements CertificateManager, EventListener<CertificateEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
-
-    @Autowired
-    private Configuration configuration;
 
     @Autowired
     private Domain domain;
@@ -86,8 +79,12 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     @Autowired
     private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
 
+    @Autowired
+    @Qualifier("defaultCertificate")
     CertificateProvider defaultCertificateProvider;
 
+    @Autowired
+    @Qualifier("noneCertificate")
     CertificateProvider noneAlgorithmCertificateProvider;
 
     private final ConcurrentMap<String, Certificate> certificates = new ConcurrentHashMap<>();
@@ -127,14 +124,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     private void initialize() throws Exception {
-        logger.info("Initializing default certificate provider for domain {}", domain.getName());
-        initDefaultCertificateProvider();
-        logger.info("Default certificate loaded for domain {}", domain.getName());
-
-        logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
-        initNoneAlgorithmCertificateProvider();
-        logger.info("None algorithm certificate loaded for domain {}", domain.getName());
-
         logger.info("Initializing certificate settings for domain {}", domain.getName());
         initCertificateSettings();
 
@@ -296,26 +285,8 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         }
     }
 
-    private void initDefaultCertificateProvider() throws InvalidKeyException {
-        this.defaultCertificateProvider = certificateProviderManager.create(CertificateProviders.createShaCertificateProvider(signingKeyId(), signingKeySecret()));
-        this.defaultCertificateProvider.setDomain(domain.getId());
-    }
-
-    private void initNoneAlgorithmCertificateProvider() {
-        this.noneAlgorithmCertificateProvider = certificateProviderManager.create(CertificateProviders.createNoneCertificateProvider());
-        this.noneAlgorithmCertificateProvider.setDomain(domain.getId());
-    }
-
     private void initCertificateSettings() {
         this.certificateSettings.set(domain.getCertificateSettings());
-    }
-
-    private String signingKeySecret() {
-        return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
-    }
-
-    private String signingKeyId() {
-        return configuration.getProperty("jwt.kid", "default-gravitee-AM-key");
     }
 
     private class CertificateSettingsListener implements EventListener<DomainCertificateSettingsEvent, Payload> {

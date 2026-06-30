@@ -35,5 +35,10 @@ public interface CertificateProviderManager {
 
     Collection<CertificateProvider> certificateProviders();
 
-    CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider certificateProvider);
+    default CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider certificateProvider) {
+        return create(certificateProvider, false);
+    }
+
+    CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider certificateProvider, boolean isDefault);
+
 }
