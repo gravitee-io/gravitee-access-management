@@ -64,24 +64,16 @@ export class AuthGuard {
     }
 
     if (needsDomain) {
-      combineSources.push(
-        this.domainService.getById(domainId).pipe(
-          mergeMap((domain) => this.domainService.permissions(domain.id)),
-        ),
-      );
+      combineSources.push(this.domainService.getById(domainId).pipe(mergeMap((domain) => this.domainService.permissions(domain.id))));
     }
     if (needsApp) {
       combineSources.push(
-        this.domainService.getById(domainId).pipe(
-          mergeMap((domain) => this.applicationService.permissions(domain.id, appId)),
-        ),
+        this.domainService.getById(domainId).pipe(mergeMap((domain) => this.applicationService.permissions(domain.id, appId))),
       );
     }
     if (needsProtectedResource) {
       combineSources.push(
-        this.domainService.getById(domainId).pipe(
-          mergeMap((domain) => this.protectedResourceService.permissions(domain.id, mcpServerId)),
-        ),
+        this.domainService.getById(domainId).pipe(mergeMap((domain) => this.protectedResourceService.permissions(domain.id, mcpServerId))),
       );
     }
     // check permissions
