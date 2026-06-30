@@ -34,8 +34,15 @@ public class CertificateProvider {
     private JWTParser jwtParser;
     private JWTBuilder jwtBuilder;
     private CertificateInfo certificateInfo;
+    private final boolean defaultCertificate;
 
     public CertificateProvider(io.gravitee.am.certificate.api.CertificateProvider provider) {
-        this.provider = provider;
+        this(provider, false);
     }
+
+    public CertificateProvider(io.gravitee.am.certificate.api.CertificateProvider provider, boolean defaultCertificate) {
+        this.provider = provider;
+        this.defaultCertificate = defaultCertificate;
+    }
+
 }
