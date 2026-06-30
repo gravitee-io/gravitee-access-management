@@ -28,9 +28,15 @@ public class CertificateProvider {
     private String keyId;
     private JWTParser jwtParser;
     private JWTBuilder jwtBuilder;
+    private final boolean defaultCertificate;
 
     public CertificateProvider(io.gravitee.am.certificate.api.CertificateProvider provider) {
+        this(provider, false);
+    }
+
+    public CertificateProvider(io.gravitee.am.certificate.api.CertificateProvider provider, boolean defaultCertificate) {
         this.provider = provider;
+        this.defaultCertificate = defaultCertificate;
     }
 
     public io.gravitee.am.certificate.api.CertificateProvider getProvider() {
@@ -71,5 +77,9 @@ public class CertificateProvider {
 
     public void setJwtBuilder(JWTBuilder jwtBuilder) {
         this.jwtBuilder = jwtBuilder;
+    }
+
+    public boolean isDefaultCertificate() {
+        return defaultCertificate;
     }
 }

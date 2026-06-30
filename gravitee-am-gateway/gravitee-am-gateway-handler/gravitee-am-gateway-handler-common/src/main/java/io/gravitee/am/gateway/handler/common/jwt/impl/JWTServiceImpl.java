@@ -173,7 +173,7 @@ public class JWTServiceImpl implements JWTService {
         return Stream.concat(certs, Stream.of(certificateManager.defaultCertificateProvider()))
                 .filter(Objects::nonNull)
                 .filter(provider -> kid.equals(provider.getKeyId()))
-                .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()))
+                .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()) || (domain.isMaster() && provider.isDefaultCertificate()))
                 .collect(Collectors.toList());
     }
 
