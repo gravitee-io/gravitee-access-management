@@ -131,4 +131,8 @@ export class AuthService {
   applicationPermissionsLoaded(): boolean {
     return this.applicationPermissions != null;
   }
+
+  protectedResourcePermissionsLoaded(): boolean {
+    return this.protectedResourcePermissions != null;
+  }
 }

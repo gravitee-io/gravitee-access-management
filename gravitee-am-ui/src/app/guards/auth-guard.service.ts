@@ -22,6 +22,7 @@ import { AuthService } from '../services/auth.service';
 import { DomainService } from '../services/domain.service';
 import { ApplicationService } from '../services/application.service';
 import { EnvironmentService } from '../services/environment.service';
+import { ProtectedResourceService } from '../services/protected-resource.service';
 import { DomainStoreService } from '../stores/domain.store';
 
 @Injectable()
@@ -31,6 +32,7 @@ export class AuthGuard {
     private environmentService: EnvironmentService,
     private domainService: DomainService,
     private applicationService: ApplicationService,
+    private protectedResourceService: ProtectedResourceService,
     private domainStore: DomainStoreService,
   ) {}
 
@@ -71,6 +73,13 @@ export class AuthGuard {
             ),
           ),
         );
+      }
+    } else if (requiredPerms[0].startsWith('protected_resource')) {
+      const domainId = route.paramMap.get('domainId');
+      const mcpServerId = route.paramMap.get('mcpServerId');
+
+      if (domainId && mcpServerId && !this.authService.protectedResourcePermissionsLoaded()) {
+        combineSources.push(this.protectedResourceService.permissions(domainId, mcpServerId));
       }
     }
     // check permissions
