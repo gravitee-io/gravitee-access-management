@@ -76,9 +76,9 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
     }
 
     @Override
-    public CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider provider) {
+    public CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider provider, boolean isDefault) {
         // create certificate provider
-        CertificateProvider certificateProvider = new CertificateProvider(provider);
+        CertificateProvider certificateProvider = new CertificateProvider(provider, isDefault);
         try {
             io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
             certificateProvider.setKeyId(providerKey.getKeyId());
