@@ -481,6 +481,7 @@ import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
+import { DomainMcpServerDesignComponent } from './domain/mcp-servers/mcp-server/design/design.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
 import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
@@ -551,6 +552,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     DomainNewMcpServerComponent,
     DomainMcpServerOverviewComponent,
     DomainMcpServerToolsComponent,
+    DomainMcpServerDesignComponent,
     DomainMcpServerAdvancedComponent,
     DomainMcpServerGeneralComponent,
     DomainMcpServerMembershipsComponent,

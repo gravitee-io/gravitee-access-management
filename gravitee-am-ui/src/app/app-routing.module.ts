@@ -267,6 +267,7 @@ import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { McpServerFlowsResolver } from './resolvers/mcp-server-flows.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
+import { DomainMcpServerDesignComponent } from './domain/mcp-servers/mcp-server/design/design.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
 import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
@@ -1590,26 +1591,42 @@ export const routes: Routes = [
                             },
                           },
                           {
-                            path: 'flows',
-                            component: ApplicationFlowsComponent,
-                            canActivate: [AuthGuard],
-                            resolve: {
-                              flows: McpServerFlowsResolver,
-                              policies: PluginPoliciesResolver,
-                              flowSettingsForm: PlatformFlowSchemaResolver,
-                              factors: FactorsResolver,
-                            },
+                            path: 'design',
+                            component: DomainMcpServerDesignComponent,
                             data: {
                               menu: {
-                                label: 'Flows',
-                                section: 'Flows',
+                                label: 'Design',
+                                section: 'Design',
                                 level: 'level2',
                               },
                               perms: {
                                 only: ['protected_resource_flow_list', 'protected_resource_flow_read'],
                               },
-                              flowsContext: 'mcp',
                             },
+                            children: [
+                              {
+                                path: 'flows',
+                                component: ApplicationFlowsComponent,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  flows: McpServerFlowsResolver,
+                                  policies: PluginPoliciesResolver,
+                                  flowSettingsForm: PlatformFlowSchemaResolver,
+                                  factors: FactorsResolver,
+                                },
+                                data: {
+                                  menu: {
+                                    label: 'Flows',
+                                    section: 'Design',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['protected_resource_flow_list', 'protected_resource_flow_read'],
+                                  },
+                                  flowsContext: 'mcp',
+                                },
+                              },
+                            ],
                           },
 
                           {
