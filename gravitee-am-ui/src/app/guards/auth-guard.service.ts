@@ -47,59 +47,40 @@ export class AuthGuard {
     const requiredPerms = route.data.perms.only;
     combineSources.push(!this.authService.isAuthenticated() ? this.authService.userInfo() : of(this.authService.user()));
 
-    if ((requiredPerms[0].startsWith('domain') || requiredPerms[0].startsWith('application')) && requiredPerms[0] !== 'domain_create') {
-      // check if the authenticated user can navigate to the next route (domain settings or application settings)
-      const environmentId = route.paramMap.get('envHrid');
-      const domainId = route.paramMap.get('domainId');
-      const appId = route.paramMap.get('appId');
+    const environmentId = route.paramMap.get('envHrid');
+    const domainId = route.paramMap.get('domainId');
+    const appId = route.paramMap.get('appId');
+    const mcpServerId = route.paramMap.get('mcpServerId');
+    const perm = requiredPerms[0];
 
-      if (environmentId && !this.authService.environmentPermissionsLoaded()) {
-        combineSources.push(this.environmentService.permissions(environmentId));
-      }
+    const needsEnv = !!environmentId && !this.authService.environmentPermissionsLoaded() && perm !== 'domain_create';
+    const needsDomain = !!domainId && !this.authService.domainPermissionsLoaded() && perm !== 'domain_create';
+    const needsApp = !!appId && !this.authService.applicationPermissionsLoaded() && perm.startsWith('application');
+    const needsProtectedResource =
+      !!mcpServerId && !this.authService.protectedResourcePermissionsLoaded() && perm.startsWith('protected_resource');
 
-      if (domainId && !this.authService.domainPermissionsLoaded()) {
-        combineSources.push(
-          this.domainService.getById(domainId).pipe(
-            mergeMap((domain) =>
-              this.domainService.permissions(domain.id).pipe(
-                mergeMap((__) => {
-                  if (appId && !this.authService.applicationPermissionsLoaded()) {
-                    return this.applicationService.permissions(domain.id, appId);
-                  } else {
-                    return of([]);
-                  }
-                }),
-              ),
+    if (needsEnv) {
+      combineSources.push(this.environmentService.permissions(environmentId));
+    }
+
+    if (needsDomain) {
+      combineSources.push(
+        this.domainService.getById(domainId).pipe(
+          mergeMap((domain) =>
+            this.domainService.permissions(domain.id).pipe(
+              mergeMap(() => {
+                if (needsApp) {
+                  return this.applicationService.permissions(domain.id, appId);
+                }
+                if (needsProtectedResource) {
+                  return this.protectedResourceService.permissions(domain.id, mcpServerId);
+                }
+                return of([]);
+              }),
             ),
           ),
-        );
-      }
-    } else if (requiredPerms[0].startsWith('protected_resource')) {
-      const environmentId = route.paramMap.get('envHrid');
-      const domainId = route.paramMap.get('domainId');
-      const mcpServerId = route.paramMap.get('mcpServerId');
-
-      if (environmentId && !this.authService.environmentPermissionsLoaded()) {
-        combineSources.push(this.environmentService.permissions(environmentId));
-      }
-
-      if (domainId && !this.authService.domainPermissionsLoaded()) {
-        combineSources.push(
-          this.domainService.getById(domainId).pipe(
-            mergeMap((domain) =>
-              this.domainService.permissions(domain.id).pipe(
-                mergeMap((__) => {
-                  if (mcpServerId && !this.authService.protectedResourcePermissionsLoaded()) {
-                    return this.protectedResourceService.permissions(domain.id, mcpServerId);
-                  } else {
-                    return of([]);
-                  }
-                }),
-              ),
-            ),
-          ),
-        );
-      }
+        ),
+      );
     }
     // check permissions
     return combineLatest(combineSources).pipe(
