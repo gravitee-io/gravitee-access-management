@@ -32,6 +32,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
@@ -291,6 +293,41 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
                 "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
                 null,
                 HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldNarrowScopesToApprovedSet_afterSelectiveConsent() throws Exception {
+        final String clientId = "client_id";
+        Client client = new Client();
+        client.setClientId(clientId);
+
+        User user = new User();
+        user.setId("user_id");
+
+        // the replayed authorize request carries the full requested scope set and an approved flag restored
+        // from session; the handler must narrow it to the scopes actually approved (read only, not write)
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId(clientId);
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "write")));
+        authorizationRequest.setApproved(true);
+
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.singleton("read")));
+
+        router.route().order(-1).handler(routingContext -> {
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            routingContext.put("client", client);
+            when(session.get("userConsentCompleted")).thenReturn(true);
+            routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        assertEquals(Collections.singleton("read"), authorizationRequest.getScopes());
     }
 
 }

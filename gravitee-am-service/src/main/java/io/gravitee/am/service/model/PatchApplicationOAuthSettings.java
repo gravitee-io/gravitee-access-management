@@ -97,6 +97,8 @@ public class PatchApplicationOAuthSettings {
 
     private Optional<Boolean> disableRefreshTokenRotation;
 
+    private Optional<Boolean> optInScopeSelection;
+
     private Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings;
 
     public Optional<List<String>> getRedirectUris() {
@@ -571,6 +573,14 @@ public class PatchApplicationOAuthSettings {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
+    public Optional<Boolean> getOptInScopeSelection() {
+        return optInScopeSelection;
+    }
+
+    public void setOptInScopeSelection(Optional<Boolean> optInScopeSelection) {
+        this.optInScopeSelection = optInScopeSelection;
+    }
+
     public Optional<TokenExchangeOAuthSettings> getTokenExchangeOAuthSettings() {
         return tokenExchangeOAuthSettings;
     }
@@ -643,6 +653,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
         SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
+        SetterUtils.safeSet(toPatch::setOptInScopeSelection, this.getOptInScopeSelection());
         SetterUtils.safeSet(toPatch::setTokenExchangeOAuthSettings, this.getTokenExchangeOAuthSettings());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());

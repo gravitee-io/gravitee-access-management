@@ -321,6 +321,12 @@ public class ApplicationOAuthSettings {
 
     private boolean disableRefreshTokenRotation;
 
+    /**
+     * When true, users must explicitly select (opt-in to) each scope.
+     * When false, all requested scopes are preselected and users can deselect.
+     */
+    private boolean optInScopeSelection;
+
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     public ApplicationOAuthSettings() {
@@ -397,6 +403,7 @@ public class ApplicationOAuthSettings {
         this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
         this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
     }
 
@@ -985,6 +992,14 @@ public class ApplicationOAuthSettings {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
+    public boolean isOptInScopeSelection() {
+        return optInScopeSelection;
+    }
+
+    public void setOptInScopeSelection(boolean optInScopeSelection) {
+        this.optInScopeSelection = optInScopeSelection;
+    }
+
     public TokenExchangeOAuthSettings getTokenExchangeOAuthSettings() {
         return tokenExchangeOAuthSettings;
     }
@@ -1060,6 +1075,7 @@ public class ApplicationOAuthSettings {
         client.setBackchannelAuthRequestSignAlg(this.backchannelAuthRequestSignAlg);
         client.setBackchannelClientNotificationEndpoint(this.backchannelClientNotificationEndpoint);
         client.setDisableRefreshTokenRotation(this.disableRefreshTokenRotation);
+        client.setOptInScopeSelection(this.optInScopeSelection);
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
     }
 }

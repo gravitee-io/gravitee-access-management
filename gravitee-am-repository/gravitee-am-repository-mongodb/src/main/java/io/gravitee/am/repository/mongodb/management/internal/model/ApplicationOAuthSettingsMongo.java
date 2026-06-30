@@ -98,6 +98,8 @@ public class ApplicationOAuthSettingsMongo {
 
     private boolean disableRefreshTokenRotation;
 
+    private boolean optInScopeSelection;
+
     private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
 
     public String getClientId() {
@@ -658,6 +660,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public boolean isOptInScopeSelection() {
+        return optInScopeSelection;
+    }
+
+    public void setOptInScopeSelection(boolean optInScopeSelection) {
+        this.optInScopeSelection = optInScopeSelection;
     }
 
     public TokenExchangeOAuthSettingsMongo getTokenExchangeOAuthSettings() {

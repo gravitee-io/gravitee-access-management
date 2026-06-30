@@ -16,7 +16,27 @@
 import { Page } from '@playwright/test';
 import { BRIEF_TIMEOUT } from './test-constants';
 
-const CONSENT_ACCEPT_SELECTOR = 'button:has-text("Accept"), input[value="Accept"], #submitBtn';
+const CONSENT_SELECT_ALL_SELECTOR = '#selectAllScopes';
+const CONSENT_ALLOW_SELECTOR = '#allowButton';
+const CONSENT_SCOPE_CHECKBOX_SELECTOR = '.scope-consent-checkbox';
+
+/**
+ * Select all scopes and approve the consent page.
+ * If the #selectAllScopes toolbar button is not present, fall back to checking each scope checkbox individually.
+ */
+async function approveConsent(page: Page): Promise<void> {
+  const selectAllScopes = page.locator(CONSENT_SELECT_ALL_SELECTOR);
+  if (await selectAllScopes.count()) {
+    await selectAllScopes.click();
+  } else {
+    const checkboxes = page.locator(CONSENT_SCOPE_CHECKBOX_SELECTOR);
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      await checkboxes.nth(i).check();
+    }
+  }
+  await page.locator(CONSENT_ALLOW_SELECTOR).click();
+}
 
 /**
  * Handle the OAuth consent page if present.
@@ -24,7 +44,7 @@ const CONSENT_ACCEPT_SELECTOR = 'button:has-text("Accept"), input[value="Accept"
 export async function handleConsentIfPresent(page: Page, timeoutMs = BRIEF_TIMEOUT): Promise<void> {
   try {
     await page.waitForURL(/.*oauth\/consent.*/i, { timeout: timeoutMs });
-    await page.locator(CONSENT_ACCEPT_SELECTOR).click();
+    await approveConsent(page);
   } catch {
     // No consent page — that's fine
   }
@@ -70,14 +90,14 @@ export async function reachOAuthAuthorizationCallback(
     }
     if (href.includes('/oauth/consent')) {
       try {
-        await page.locator(CONSENT_ACCEPT_SELECTOR).click();
+        await approveConsent(page);
       } catch {
         // Transient click failure — retry on next iteration
       }
     } else {
       try {
         await page.waitForURL(/.*oauth\/consent.*/i, { timeout: pollIntervalMs });
-        await page.locator(CONSENT_ACCEPT_SELECTOR).click();
+        await approveConsent(page);
       } catch {
         // Consent not shown yet — wait before the next poll
         await new Promise((r) => setTimeout(r, pollIntervalMs));

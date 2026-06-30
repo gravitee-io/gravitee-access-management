@@ -23,8 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author GraviteeSource Team
@@ -69,5 +71,22 @@ public class ApplicationOAuthSettingsTest {
         settings.copyTo(client);
 
         assertEquals(claims, client.getUserinfoCustomClaims());
+    }
+
+    @Test
+    public void optInScopeSelection_defaultsToFalse_preservingLegacyBehaviour() {
+        assertFalse(new ApplicationOAuthSettings().isOptInScopeSelection());
+    }
+
+    @Test
+    public void copyConstructor_and_copyTo_propagate_optInScopeSelection() {
+        ApplicationOAuthSettings settings = new ApplicationOAuthSettings();
+        settings.setOptInScopeSelection(true);
+
+        assertTrue(new ApplicationOAuthSettings(settings).isOptInScopeSelection());
+
+        Client client = new Client();
+        settings.copyTo(client);
+        assertTrue(client.isOptInScopeSelection());
     }
 }

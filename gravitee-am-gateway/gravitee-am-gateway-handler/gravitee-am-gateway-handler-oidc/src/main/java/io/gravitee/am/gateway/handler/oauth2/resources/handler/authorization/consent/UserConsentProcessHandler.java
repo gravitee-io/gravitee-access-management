@@ -62,35 +62,55 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final HttpServerRequest request = routingContext.request();
-        final Session session = routingContext.session();
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final io.gravitee.am.model.User user = ((User) routingContext.user().getDelegate()).getUser();
         final AuthorizationRequest authorizationRequest = routingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
 
-        // get user consent
-        MultiMap params = routingContext.request().formAttributes();
-        Map<String, String> userConsent = params.entries().stream()
-                .filter(entry -> entry.getKey().startsWith(SCOPE_PREFIX))
-                .collect(Collectors.toMap(Map.Entry::getKey, scopeEntry -> params.get(USER_OAUTH_APPROVAL)));
+        final Set<String> requestedConsent = authorizationRequest.getScopes() == null
+                ? new HashSet<>() : new HashSet<>(authorizationRequest.getScopes());
 
-        final Set<String> requestedConsent = userConsent.keySet().stream()
-                .map(requestedScope -> requestedScope.replace(SCOPE_PREFIX, ""))
-                .collect(Collectors.toSet());
+        final boolean prompt = authorizationRequest.getPrompts() != null && authorizationRequest.getPrompts().contains("consent");
+        if (prompt || requestedConsent.isEmpty()) {
+            processConsent(routingContext, client, user, authorizationRequest, requestedConsent, requestedConsent);
+            return;
+        }
 
-        // compute user consent that have been approved / denied
+        // reconstruct the "presented" subset to avoid touching previously approved scopes
+        userConsentService.checkConsent(client, user)
+                .subscribe(
+                        alreadyApproved -> {
+                            Set<String> presentedConsent = requestedConsent.stream()
+                                    .filter(scope -> !alreadyApproved.contains(scope))
+                                    .collect(Collectors.toSet());
+                            processConsent(routingContext, client, user, authorizationRequest, requestedConsent, presentedConsent);
+                        },
+                        error -> routingContext.fail(error));
+    }
+
+    private void processConsent(RoutingContext routingContext,
+                                Client client,
+                                io.gravitee.am.model.User user,
+                                AuthorizationRequest authorizationRequest,
+                                Set<String> requestedConsent,
+                                Set<String> presentedConsent) {
+        final HttpServerRequest request = routingContext.request();
+        final Session session = routingContext.session();
+        final MultiMap params = request.formAttributes();
+        final boolean userRejected = "false".equalsIgnoreCase(params.get(USER_OAUTH_APPROVAL));
+
+        // derive each scope's outcome from its own submitted field value
         Set<String> approvedConsent = new HashSet<>();
         List<ScopeApproval> approvals = new ArrayList<>();
-        for (String requestedScope : requestedConsent) {
-            String value = userConsent.get(SCOPE_PREFIX + requestedScope);
+        for (String presentedScope : presentedConsent) {
+            String value = userRejected ? "false" : params.get(SCOPE_PREFIX + presentedScope);
             value = value == null ? "" : value.toLowerCase();
             if ("true".equals(value) || value.startsWith("approve")) {
-                approvedConsent.add(requestedScope);
+                approvedConsent.add(presentedScope);
                 approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getFullId(), client.getClientId(), domain.getId(),
-                        requestedScope, ScopeApproval.ApprovalStatus.APPROVED));
+                        presentedScope, ScopeApproval.ApprovalStatus.APPROVED));
             } else {
                 approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getFullId(), client.getClientId(), domain.getId(),
-                        requestedScope, ScopeApproval.ApprovalStatus.DENIED));
+                        presentedScope, ScopeApproval.ApprovalStatus.DENIED));
             }
         }
 

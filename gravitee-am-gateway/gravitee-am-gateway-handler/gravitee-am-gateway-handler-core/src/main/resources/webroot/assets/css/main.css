@@ -356,6 +356,151 @@ div.section > form {
     line-height: 24px;
 }
 
+/* Selective scope consent */
+.scope-consent-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.scope-consent-actions {
+    display: flex;
+    width: auto;
+    gap: 8px;
+}
+
+.scope-consent-control {
+    width: auto;
+    min-height: 0;
+    padding: 4px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.scope-consent-count {
+    color: var(--scope-consent-description-color, #6b6b6b);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.scope-consent-search {
+    position: relative;
+}
+
+.scope-consent-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--scope-consent-description-color, #6b6b6b);
+    pointer-events: none;
+}
+
+.scope-consent-search-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px 8px 36px;
+    font-size: 14px;
+    color: var(--input-text-color, #000);
+    background: var(--input-background-color, #fff);
+    border: 1px solid var(--input-border-color, rgba(0, 0, 0, 0.12));
+    border-radius: var(--input-border-radius, 8px);
+}
+
+.scope-consent-filter {
+    display: inline-flex;
+    border: 2px solid var(--scope-consent-border-color, #ededed);
+    border-radius: 8px;
+    padding: 2px;
+    width: auto;
+    min-height: 32px;
+}
+
+.scope-consent-filter-option {
+    width: auto;
+    min-height: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--secondary-foreground-color, #000);
+    background: var(--white, #fff);
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.scope-consent-filter-option:last-child {
+    border-right: 0;
+}
+
+.scope-consent-filter-option.is-active {
+    color: var(--primary-foreground-color, #fff);
+    background: var(--primary-background-color, #DA3B00);
+}
+
+.scope-consent-table {
+    width: 100%;
+    border: 2px solid var(--scope-consent-border-color, #ededed);
+    border-radius: 8px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    text-align: left;
+}
+
+.scope-consent-table td {
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.scope-consent-table tr:not(:last-child) > td {
+    border-bottom: 2px solid var(--scope-consent-border-color, #ededed);
+}
+
+.scope-consent-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.scope-consent-cell-checkbox {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.scope-consent-cell-description {
+    width: 66%;
+    color: var(--scope-consent-description-color, #6b6b6b);
+}
+
+.scope-consent-checkbox {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--primary-background-color);
+    cursor: pointer;
+}
+
+.scope-consent-cell-name label {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.scope-consent-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.scope-consent-buttons .button {
+    flex: 1;
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .button {
     box-sizing: border-box;
     text-align: center;
