@@ -420,6 +420,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         oAuthSettings.setClientSecret(hasLength(newApplication.getClientSecret()) ? newApplication.getClientSecret() : null);
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
+        oAuthSettings.setOptInScopeSelection(true);
         applicationSettings.setOauth(oAuthSettings);
 
         // apply default SAML 2.0 settings
@@ -542,6 +543,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         oAuthSettings.setClientId(preview.url());
         oAuthSettings.setRedirectUris(preview.redirectUris());
         oAuthSettings.setClientName(resolvedClientName);
+        oAuthSettings.setOptInScopeSelection(true);
         if (preview.tokenEndpointAuthMethod() != null) {
             oAuthSettings.setTokenEndpointAuthMethod(preview.tokenEndpointAuthMethod());
         }

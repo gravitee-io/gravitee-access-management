@@ -27,24 +27,47 @@
             <span th:text="#{oauth.consent.title}"/>
         </div>
         <div class="header-description">
-            <img class="cimd-consent-client-logo" th:if="${cimdLogoUrl}" th:src="${cimdLogoUrl}"
-                 th:attr="alt=${client.clientName}" onerror="this.style.display='none'">
-            <span class="deep-blue" th:text="${client.clientName}"/> <span th:text="#{oauth.consent.description}"/>
+            <img class="cimd-consent-client-logo" th:if="${cimdLogoUrl}" th:src="${cimdLogoUrl}" th:attr="alt=${client.clientName}">
+            <span th:text="#{oauth.consent.description.before}"/><span class="deep-blue" th:text="${client.clientName}"/><span th:text="#{oauth.consent.description.after}"/>
         </div>
     </div>
     <div class="section">
         <form class="form" role="form" th:id="confirmationForm" th:action="${action}" method="post">
-            <div class="box center" th:each="scope : ${scopes}">
-                <div>
-                    <span th:text="(${scope.name})
-                    ? ${scope.name} + ' (' + ${scope.key} + ')'
-                    : ${scope.key} + ' (' + ${scope.key} + ')'"></span>
-                </div>
-                <div>
-                    <span class="grey" th:text="${scope.description}"></span>
-                </div>
-                <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
+            <span class="header-description start" th:text="#{oauth.consent.instructions}"></span>
+            <div class="scope-consent-search" th:if="${scopes != null and #lists.size(scopes) > 10}">
+                <span class="icons scope-consent-search-icon" aria-hidden="true">search</span>
+                <input type="text" id="scopeSearchInput" class="scope-consent-search-input" autocomplete="off"
+                       th:attr="placeholder=#{oauth.consent.scope.search_placeholder}"/>
             </div>
+            <div class="scope-consent-toolbar" th:if="${scopes != null and #lists.size(scopes) > 1}">
+                <div class="scope-consent-filter" role="group" th:if="${scopes != null and #lists.size(scopes) > 10}">
+                    <button type="button" class="scope-consent-filter-option is-active" data-filter="all" id="filterAll" th:text="#{oauth.consent.scope.filter_all}"></button>
+                    <button type="button" class="scope-consent-filter-option" data-filter="selected" id="filterSelected" th:text="#{oauth.consent.scope.filter_selected}"></button>
+                    <button type="button" class="scope-consent-filter-option" data-filter="unselected" id="filterUnselected" th:text="#{oauth.consent.scope.filter_unselected}"></button>
+                </div>
+                <div class="scope-consent-actions">
+                    <button type="button" class="button secondary scope-consent-control" id="selectAllScopes" th:text="#{oauth.consent.scope.select_all}"></button>
+                    <button type="button" class="button secondary scope-consent-control" id="clearAllScopes" th:text="#{oauth.consent.scope.clear_all}"></button>
+                </div>
+                <span class="scope-consent-count" id="scopeSelectionCount"
+                      th:attr="data-template=#{oauth.consent.scope.selected_count},data-total=${#lists.size(scopes)}"></span>
+            </div>
+            <table class="scope-consent-table" th:if="${scopes != null and not #lists.isEmpty(scopes)}">
+                <tbody>
+                    <tr class="scope-consent-row" th:each="scope : ${scopes}">
+                        <td class="scope-consent-cell-checkbox">
+                            <input type="checkbox" class="scope-consent-checkbox" th:id="'scope-'+${scope.key}"
+                                   th:name="'scope.'+${scope.key}" value="true" th:checked="${preselectAllScopes}"/>
+                        </td>
+                        <td class="scope-consent-cell-name">
+                            <label th:for="'scope-'+${scope.key}" th:text="${scope.key}"></label>
+                        </td>
+                        <td class="scope-consent-cell-description">
+                            <span class="grey" th:text="${scope.description}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
             <span class="header-description start" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"></span>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -55,14 +78,106 @@
                 <span th:text="#{oauth.consent.cimd.verified}"></span>
             </div>
 
-            <div>
-                <button type="submit" name="user_oauth_approval" value="true" class="button primary" th:text="#{oauth.button.accept}"></button>
-            </div>
-            <div>
-                <button type="submit" name="user_oauth_approval" value="false" class="button secondary" th:text="#{oauth.button.cancel}"></button>
+            <div class="scope-consent-buttons">
+                <button type="submit" name="user_oauth_approval" value="false" class="button secondary" th:text="#{oauth.button.deny}"></button>
+                <button type="submit" id="allowButton" name="user_oauth_approval" value="true" class="button primary" th:text="#{oauth.button.allow}"></button>
             </div>
         </form>
     </div>
+
+    <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
+        /*<![CDATA[*/
+        (function () {
+            var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.scope-consent-checkbox'));
+            var rows = Array.prototype.slice.call(document.querySelectorAll('.scope-consent-row'));
+            var allowButton = document.getElementById('allowButton');
+            var selectAll = document.getElementById('selectAllScopes');
+            var clearAll = document.getElementById('clearAllScopes');
+            var countLabel = document.getElementById('scopeSelectionCount');
+            var searchInput = document.getElementById('scopeSearchInput');
+            var filterButtons = Array.prototype.slice.call(document.querySelectorAll('.scope-consent-filter-option'));
+            var cimdLogo = document.querySelector('.cimd-consent-client-logo');
+
+            var activeFilter = 'all';
+            var searchTerm = '';
+
+            function refreshCount() {
+                var selected = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
+                if (allowButton && checkboxes.length > 0) {
+                    allowButton.disabled = selected === 0;
+                }
+                if (countLabel) {
+                    var template = countLabel.getAttribute('data-template') || '{0} of {1} selected';
+                    var total = countLabel.getAttribute('data-total') || String(checkboxes.length);
+                    countLabel.textContent = template.replace('{0}', selected).replace('{1}', total);
+                }
+            }
+
+            function rowVisible(row) {
+                var checkbox = row.querySelector('.scope-consent-checkbox');
+                if (activeFilter === 'selected' && !(checkbox && checkbox.checked)) {
+                    return false;
+                }
+                if (activeFilter === 'unselected' && (checkbox && checkbox.checked)) {
+                    return false;
+                }
+                if (searchTerm && row.textContent.toLowerCase().indexOf(searchTerm) === -1) {
+                    return false;
+                }
+                return true;
+            }
+
+            function applyFilters() {
+                rows.forEach(function (row) {
+                    row.style.display = rowVisible(row) ? '' : 'none';
+                });
+            }
+
+            function refresh() {
+                refreshCount();
+                applyFilters();
+            }
+
+            checkboxes.forEach(function (checkbox) { checkbox.addEventListener('change', refresh); });
+            if (selectAll) {
+                selectAll.addEventListener('click', function () {
+                    checkboxes.forEach(function (checkbox) { checkbox.checked = true; });
+                    refresh();
+                });
+            }
+            if (clearAll) {
+                clearAll.addEventListener('click', function () {
+                    checkboxes.forEach(function (checkbox) { checkbox.checked = false; });
+                    refresh();
+                });
+            }
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    searchTerm = searchInput.value.trim().toLowerCase();
+                    applyFilters();
+                });
+            }
+            filterButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    activeFilter = button.getAttribute('data-filter') || 'all';
+                    filterButtons.forEach(function (other) { other.classList.remove('is-active'); });
+                    button.classList.add('is-active');
+                    applyFilters();
+                });
+            });
+            if (cimdLogo) {
+                cimdLogo.addEventListener('error', function () {
+                    cimdLogo.style.display = 'none';
+                });
+                if (cimdLogo.complete && cimdLogo.naturalWidth === 0) {
+                    cimdLogo.style.display = 'none';
+                }
+            }
+
+            refresh();
+        })();
+        /*]]>*/
+    </script>
 
 </div>
 </body>

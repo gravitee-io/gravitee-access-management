@@ -306,6 +306,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
+    // ----------- Consent Settings -----------
+    private boolean optInScopeSelection;
+
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     private SecretExpirationSettings secretExpirationSettings;
@@ -417,6 +420,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.notBeforeTimeSkewSeconds = other.notBeforeTimeSkewSeconds;
         this.notOnOrAfterTimeSkewSeconds = other.notOnOrAfterTimeSkewSeconds;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentType = other.agentType;
@@ -1290,6 +1294,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public boolean isOptInScopeSelection() {
+        return optInScopeSelection;
+    }
+
+    public void setOptInScopeSelection(boolean optInScopeSelection) {
+        this.optInScopeSelection = optInScopeSelection;
     }
 
     public TokenExchangeOAuthSettings getTokenExchangeOAuthSettings() {

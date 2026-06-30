@@ -119,6 +119,15 @@ export class ScopesComponent implements OnInit {
     return this.oauthSettings.enhanceScopesWithUserPermissions;
   }
 
+  togglePreselectAllScopes(event) {
+    this.oauthSettings.optInScopeSelection = !event.checked;
+    this.modelChanged();
+  }
+
+  isPreselectAllScopes() {
+    return !this.oauthSettings.optInScopeSelection;
+  }
+
   scopeApprovalExists(scopeKey) {
     // eslint-disable-next-line no-prototype-builtins
     return this.selectedScopeApprovals.hasOwnProperty(scopeKey);
@@ -184,7 +193,6 @@ export class ScopesComponent implements OnInit {
 
       updatedSettings.scopeSettings.push(setting);
     });
-    console.log('Scopes component emitting:', updatedSettings);
     this.settingsChange.emit(updatedSettings);
   }
 }

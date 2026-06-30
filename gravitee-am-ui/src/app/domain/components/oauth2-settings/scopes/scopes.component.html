@@ -42,6 +42,26 @@
 
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Consent</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <div fxLayout="row" style="align-items: baseline">
+            <div fxLayout="column">
+              <mat-slide-toggle (change)="togglePreselectAllScopes($event)" [checked]="isPreselectAllScopes()" [disabled]="readonly">
+                Preselect consent for all scopes
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%"
+                >When enabled, all requested scopes are checked by default on the consent page. Users can still change individual selections
+                before approving.</mat-hint
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <div>
             <div fxFlex>
               <h5>Scopes</h5>

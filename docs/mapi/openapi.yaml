@@ -12836,6 +12836,8 @@ components:
           type: string
         logoUri:
           type: string
+        optInScopeSelection:
+          type: boolean
         policyUri:
           type: string
         postLogoutRedirectUris:
@@ -16094,6 +16096,8 @@ components:
           type: string
         logoUri:
           type: string
+        optInScopeSelection:
+          type: boolean
         policyUri:
           type: string
         postLogoutRedirectUris:

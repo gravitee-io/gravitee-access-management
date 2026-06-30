@@ -89,6 +89,7 @@ export class OAuth2SettingsComponent implements OnInit {
     // Scopes
     this.oauthSettings.scopeSettings = newSettings.scopeSettings;
     this.oauthSettings.enhanceScopesWithUserPermissions = newSettings.enhanceScopesWithUserPermissions;
+    this.oauthSettings.optInScopeSelection = newSettings.optInScopeSelection;
 
     // Tokens
     this.oauthSettings.accessTokenValiditySeconds = newSettings.accessTokenValiditySeconds;
@@ -159,6 +160,7 @@ export class OAuth2SettingsComponent implements OnInit {
     // Scopes
     oauthSettings.scopeSettings = this.oauthSettings.scopeSettings;
     oauthSettings.enhanceScopesWithUserPermissions = this.oauthSettings.enhanceScopesWithUserPermissions;
+    oauthSettings.optInScopeSelection = this.oauthSettings.optInScopeSelection;
 
     // Token settings
     oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;

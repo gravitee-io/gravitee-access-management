@@ -82,7 +82,22 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         // check if user is already set its consent
         if (Boolean.TRUE.equals(session.get(ConstantKeys.USER_CONSENT_COMPLETED_KEY))) {
             if (authorizationRequest.isApproved()) {
-                routingContext.next();
+                // narrow the original (full) requested scope set to those selected
+                if (user == null) {
+                    routingContext.next();
+                    return;
+                }
+                checkUserConsent(client, user, h -> {
+                    if (h.failed()) {
+                        routingContext.fail(h.cause());
+                        return;
+                    }
+                    Set<String> approvedConsent = h.result();
+                    authorizationRequest.setScopes(requestedConsent.stream()
+                            .filter(approvedConsent::contains)
+                            .collect(Collectors.toSet()));
+                    routingContext.next();
+                });
             } else {
                 routingContext.fail(new AccessDeniedException("User denied access"));
             }

@@ -620,6 +620,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setBackchannelUserCodeParameter(other.isBackchannelUserCodeParameter());
         applicationOAuthSettingsMongo.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
         applicationOAuthSettingsMongo.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
+        applicationOAuthSettingsMongo.setOptInScopeSelection(other.isOptInScopeSelection());
         applicationOAuthSettingsMongo.setTokenExchangeOAuthSettings(
                 TokenExchangeOAuthSettingsMongo.convert(other.getTokenExchangeOAuthSettings()));
 
@@ -704,6 +705,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
         applicationOAuthSettings.setRequireParRequest(other.isRequireParRequest());
         applicationOAuthSettings.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
+        applicationOAuthSettings.setOptInScopeSelection(other.isOptInScopeSelection());
         applicationOAuthSettings.setTokenExchangeOAuthSettings(
                 other.getTokenExchangeOAuthSettings() != null ? other.getTokenExchangeOAuthSettings().convert() : null);
 

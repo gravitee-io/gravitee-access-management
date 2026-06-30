@@ -76,6 +76,7 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
             List<Scope> requestedScopes = h.result();
             routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, requestedScopes);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
+            routingContext.put(ConstantKeys.PRESELECT_ALL_SCOPES, client == null || !client.isOptInScopeSelection());
             CimdConsentPageAttributes.putIfApplicable(routingContext, domain, client);
             engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
                     .subscribe(
