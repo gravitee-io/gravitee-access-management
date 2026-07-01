@@ -90,7 +90,7 @@ public class ProtectedResourceFlowsResource extends AbstractResource {
                     "or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain " +
                     "or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment " +
                     "or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. " +
-                    "Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
+                    "Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the resource, domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List registered flows for a protected resource",
                     content = @Content(mediaType = "application/json",
@@ -111,7 +111,7 @@ public class ProtectedResourceFlowsResource extends AbstractResource {
                         .flatMap(__ -> protectedResourceService.findById(protectedResourceId))
                         .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId)))
                         .ignoreElement())
-                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE_FLOW, Acl.READ)
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_FLOW, Acl.READ)
                         .flatMapPublisher(hasPermission ->
                                 flowService.findByApplication(ReferenceType.DOMAIN, domainId, protectedResourceId).map(flow -> FlowUtils.filterFlowInfos(hasPermission, flow)))
                         .toList())
