@@ -24,17 +24,23 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Upgrader for re-seeding the *default* roles (e.g. *_OWNER, *_USER) for every organization.
+ *
+ * @author GraviteeSource Team
+ */
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
 @Slf4j
 public class OrganizationRolesUpgrader implements Upgrader {
 
-
     private final OrganizationService organizationService;
     private final RoleService roleService;
 
-    private static final String VERSION = "4_12_0_a";
+    // Bump this VERSION every time the default-role permission sets are modified in RoleServiceImpl#buildDefaultRoles
+    // so existing installations pick up newly added permissions.
+    private static final String VERSION = "4_13_0_a";
 
     @Override
     public boolean upgrade() {
