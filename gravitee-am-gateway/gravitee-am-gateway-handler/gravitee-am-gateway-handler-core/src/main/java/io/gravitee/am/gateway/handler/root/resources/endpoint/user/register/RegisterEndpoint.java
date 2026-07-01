@@ -85,7 +85,7 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         String registrationIdp = UserRegistrationIdpResolver.getRegistrationIdp(domain, client);
         IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(registrationIdp);
 
-        passwordPolicyManager.getPolicy(client, identityProvider).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+        passwordPolicyManager.getPolicy(identityProvider).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
         String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
 

@@ -19,8 +19,6 @@ package io.gravitee.am.gateway.handler.common.password;
 
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.oidc.Client;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -32,7 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -76,15 +73,15 @@ public class PasswordPolicyManagerTest {
     }
 
     @Test
-    public void shouldGetDefaultPolicy_whenClientAndIdp_notDefined() {
-        var optPolicy = passwordPolicyManager.getPolicy(new Client(), new IdentityProvider());
+    public void shouldGetDefaultPolicy_whenIdp_notDefined() {
+        var optPolicy = passwordPolicyManager.getPolicy(new IdentityProvider());
         assertTrue(optPolicy.isPresent());
         assertEquals(DEFAULT_POLICY_ID, optPolicy.get().getId());
     }
 
     @Test
-    public void shouldGetDefaultPolicy_whenClient_notDefined_and_Idp_IsNull() {
-        var optPolicy = passwordPolicyManager.getPolicy(new Client(), null);
+    public void shouldGetDefaultPolicy_whenIdp_IsNull() {
+        var optPolicy = passwordPolicyManager.getPolicy((IdentityProvider) null);
         assertTrue(optPolicy.isPresent());
         assertEquals(DEFAULT_POLICY_ID, optPolicy.get().getId());
     }
@@ -92,7 +89,7 @@ public class PasswordPolicyManagerTest {
     @Test
     public void shouldNotGetPolicy_nothingDefined() {
         resetPolicies();
-        var optPolicy = passwordPolicyManager.getPolicy(new Client(), new IdentityProvider());
+        var optPolicy = passwordPolicyManager.getPolicy(new IdentityProvider());
         assertTrue(optPolicy.isEmpty());
     }
 
@@ -101,55 +98,9 @@ public class PasswordPolicyManagerTest {
         var identityProvider = new IdentityProvider();
         identityProvider.setPasswordPolicy(POLICY_ID_1);
 
-        var optPolicy = passwordPolicyManager.getPolicy(new Client(), identityProvider);
+        var optPolicy = passwordPolicyManager.getPolicy(identityProvider);
         assertTrue(optPolicy.isPresent());
         assertEquals(POLICY_ID_1, optPolicy.get().getId());
-    }
-
-    @Test
-    public void shouldGetIdpPolicy_evenIf_appDefineSettings() {
-        var identityProvider = new IdentityProvider();
-        identityProvider.setPasswordPolicy(POLICY_ID_2);
-
-        var client = new Client();
-        var passwordSettings = new PasswordSettings();
-        passwordSettings.setInherited(true);
-        client.setPasswordSettings(passwordSettings);
-
-        var optPolicy = passwordPolicyManager.getPolicy(client, identityProvider);
-        assertTrue(optPolicy.isPresent());
-        assertEquals(POLICY_ID_2, optPolicy.get().getId());
-    }
-
-    @Test
-    public void shouldGetAppSettings_domainInherited() {
-        var identityProvider = new IdentityProvider();
-
-        var client = new Client();
-        var passwordSettings = new PasswordSettings();
-        passwordSettings.setInherited(true);
-        client.setPasswordSettings(passwordSettings);
-
-        var optPolicy = passwordPolicyManager.getPolicy(client, identityProvider);
-        assertTrue(optPolicy.isPresent());
-        assertEquals(DEFAULT_POLICY_ID, optPolicy.get().getId());
-    }
-
-    @Test
-    public void shouldGetAppSettings_domainNotInherited() {
-        var identityProvider = new IdentityProvider();
-        identityProvider.setPasswordPolicy(POLICY_ID_1);
-
-        var client = new Client();
-        var passwordSettings = new PasswordSettings();
-        passwordSettings.setInherited(false);
-        passwordSettings.setMaxLength(124);
-        client.setPasswordSettings(passwordSettings);
-
-        var optPolicy = passwordPolicyManager.getPolicy(client, identityProvider);
-        assertTrue(optPolicy.isPresent());
-        assertNull(optPolicy.get().getId());
-        assertEquals(passwordSettings.getMaxLength(), optPolicy.get().getMaxLength());
     }
 
     @Test

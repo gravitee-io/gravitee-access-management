@@ -40,11 +40,11 @@ const setting: DomainTestSettings = {
       autoLoginAfterResetPassword: true,
       redirectUriAfterResetPassword: 'http://localhost:4000',
     },
-    passwordSettings: {
-      inherited: false,
-      minLength: 5,
-      maxLength: 24,
-    },
+  },
+  passwordPolicy: {
+    name: 'default',
+    minLength: 5,
+    maxLength: 24,
   },
 };
 

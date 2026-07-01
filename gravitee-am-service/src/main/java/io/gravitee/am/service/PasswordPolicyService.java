@@ -19,7 +19,6 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
@@ -96,14 +95,14 @@ public interface PasswordPolicyService {
     Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     /**
-     * Retrieve the password policy associated with a user, based on the user's password settings awareness.
+     * Retrieve the password policy associated with a user, based on the identity provider's assigned
+     * policy, falling back to the domain's default policy.
      *
      * @param user the user for whom to retrieve the password policy
-     * @param passwordSettingsAware the object that is aware of the password settings
      * @param provider the identity provider
      * @return a Maybe emitting the retrieved PasswordPolicy, if found; otherwise, completes
      */
-    Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider);
+    Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, IdentityProvider provider);
 
     /**
      * Set a password policy as the default policy for a reference entity (e.g., domain).

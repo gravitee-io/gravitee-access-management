@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.common.password;
 
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
 
 import java.util.Optional;
@@ -27,6 +26,6 @@ public interface PasswordPolicyManager extends Service {
 
     Optional<PasswordPolicy> getPolicy(String policyId);
     Optional<PasswordPolicy> getDefaultPolicy();
-    Optional<PasswordPolicy> getPolicy(Client client, IdentityProvider identityProvider);
+    Optional<PasswordPolicy> getPolicy(IdentityProvider identityProvider);
 
 }

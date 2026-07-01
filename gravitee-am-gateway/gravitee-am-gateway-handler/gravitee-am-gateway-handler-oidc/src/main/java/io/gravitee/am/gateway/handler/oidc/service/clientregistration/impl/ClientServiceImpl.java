@@ -24,7 +24,6 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -286,10 +285,6 @@ public class ClientServiceImpl implements ClientService {
         if (client.getAccountSettings() != null) {
             AccountSettings accountSettings = new AccountSettings(client.getAccountSettings());
             applicationSettings.setAccount(accountSettings);
-        }
-
-        if (client.getPasswordSettings() != null) {
-            applicationSettings.setPasswordSettings(new PasswordSettings(client.getPasswordSettings()));
         }
 
         if (client.getLoginSettings() != null) {

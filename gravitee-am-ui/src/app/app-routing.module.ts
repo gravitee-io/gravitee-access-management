@@ -136,7 +136,6 @@ import { ApplicationEmailsComponent } from './domain/applications/application/de
 import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
-import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
 import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
@@ -671,21 +670,6 @@ const APPLICATION_DETAIL_CHILDREN: Routes = [
           },
           types: {
             only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
-          },
-        },
-      },
-      {
-        path: 'password-policy',
-        component: PasswordPolicyComponent,
-        canActivate: [AuthGuard],
-        data: {
-          menu: {
-            label: 'Password policy',
-            section: 'Security',
-            level: 'level3',
-          },
-          perms: {
-            only: ['application_settings_read'],
           },
         },
       },

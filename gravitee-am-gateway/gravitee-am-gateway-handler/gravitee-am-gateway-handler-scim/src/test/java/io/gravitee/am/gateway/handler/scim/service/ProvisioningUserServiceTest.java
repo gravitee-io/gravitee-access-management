@@ -113,6 +113,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -914,7 +915,7 @@ public class ProvisioningUserServiceTest {
 
         // when
         when(identityProviderManager.getIdentityProvider(any())).thenReturn(new IdentityProvider());
-        when(passwordPolicyManager.getPolicy(any(),any())).thenReturn(Optional.of(new PasswordPolicy()));
+        when(passwordPolicyManager.getPolicy(nullable(IdentityProvider.class))).thenReturn(Optional.of(new PasswordPolicy()));
         when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
 
         TestObserver<User> observer = new TestObserver<>();

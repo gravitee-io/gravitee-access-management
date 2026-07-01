@@ -41,13 +41,13 @@ const setting: DomainTestSettings = {
       autoLoginAfterResetPassword: true,
       redirectUriAfterResetPassword: 'http://localhost:4000',
     },
-    passwordSettings: {
-      inherited: false,
-      minLength: 5,
-      maxLength: 24,
-      excludePasswordsInDictionary: true,
-      excludeUserProfileInfoInPassword: true,
-    },
+  },
+  passwordPolicy: {
+    name: 'default',
+    minLength: 5,
+    maxLength: 24,
+    excludePasswordsInDictionary: true,
+    excludeUserProfileInfoInPassword: true,
   },
 };
 
@@ -69,16 +69,16 @@ afterAll(async () => {
 
 describe('Gateway reset password', () => {
   describe('when a Password Policy has been configured', () => {
-    describe(`when a password is shorter than the minimum length of ${setting.settings.passwordSettings.minLength}`, () => {
-      const minLength = 'SomeP@ssw0rd99'.substring(0, setting.settings.passwordSettings.minLength - 1);
+    describe(`when a password is shorter than the minimum length of ${setting.passwordPolicy.minLength}`, () => {
+      const minLength = 'SomeP@ssw0rd99'.substring(0, setting.passwordPolicy.minLength - 1);
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
         await resetPassword(confirmationLink, minLength, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
-    describe(`when a password is longer than the maximum length of ${setting.settings.passwordSettings.maxLength}`, () => {
+    describe(`when a password is longer than the maximum length of ${setting.passwordPolicy.maxLength}`, () => {
       let maxLength = 'SomeP@ssw0rd99';
-      while (maxLength.length <= setting.settings.passwordSettings.maxLength) {
+      while (maxLength.length <= setting.passwordPolicy.maxLength) {
         maxLength += maxLength;
       }
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
