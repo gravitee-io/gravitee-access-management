@@ -35,6 +35,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
@@ -55,15 +56,13 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
 
     @Override
     public void handle(RoutingContext context) {
-        final String email = context.request().getParam(ConstantKeys.EMAIL_PARAM_KEY);
-        final String username = context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY);
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
 
         AccountSettings settings = AccountSettings.getInstance(domain, client);
 
-        final ForgotPasswordParameters parameters = new ForgotPasswordParameters(email, username, settings != null && settings.isResetPasswordCustomForm(), settings != null && settings.isResetPasswordConfirmIdentity());
-        userService.forgotPassword(parameters, client, getAuthenticatedUser(context))
+        final ForgotPasswordParameters parameters = ForgotPasswordRequestMapper.toParameters(context, settings);
+        userService.forgotPassword(parameters, client, getAuthenticatedUser(context, parameters))
                 .subscribe(
                         () -> {
                             queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
@@ -99,8 +98,15 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
 
     @Override
     protected User getAuthenticatedUser(RoutingContext routingContext) {
+        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final AccountSettings settings = AccountSettings.getInstance(domain, client);
+        final ForgotPasswordParameters parameters = ForgotPasswordRequestMapper.toParameters(routingContext, settings);
+        return getAuthenticatedUser(routingContext, parameters);
+    }
+
+    private User getAuthenticatedUser(RoutingContext routingContext, ForgotPasswordParameters parameters) {
         // override principal user
-        DefaultUser principal = new DefaultUser(routingContext.request().getParam(ConstantKeys.EMAIL_PARAM_KEY));
+        DefaultUser principal = new DefaultUser(ForgotPasswordRequestMapper.principalIdentifier(parameters));
         Map<String, Object> additionalInformation = new HashMap<>();
         if (canSaveIp(routingContext)) {
             additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(routingContext.request()));
