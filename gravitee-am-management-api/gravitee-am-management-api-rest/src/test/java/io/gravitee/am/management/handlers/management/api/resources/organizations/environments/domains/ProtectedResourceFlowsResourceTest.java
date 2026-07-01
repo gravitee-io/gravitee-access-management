@@ -33,16 +33,21 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class ProtectedResourceFlowsResourceTest extends JerseySpringTest {
 
@@ -130,6 +135,35 @@ public class ProtectedResourceFlowsResourceTest extends JerseySpringTest {
         assertNull(flow.get("type"));
         assertNull(flow.get("pre"));
         assertNull(flow.get("post"));
+    }
+
+    @Test
+    public void shouldGetFlows_fullDetailsWhenResourceLevelReadPermission() {
+        Flow tokenFlow = new Flow();
+        tokenFlow.setId("flow-1");
+        tokenFlow.setName("TOKEN");
+        tokenFlow.setType(Type.TOKEN);
+        tokenFlow.setEnabled(true);
+
+        doReturn(Maybe.just(domain(DOMAIN_ID))).when(domainService).findById(DOMAIN_ID);
+        doReturn(Maybe.just(protectedResource())).when(protectedResourceService).findById(PROTECTED_RESOURCE_ID);
+        doReturn(Flowable.just(tokenFlow)).when(flowService).findByApplication(ReferenceType.DOMAIN, DOMAIN_ID, PROTECTED_RESOURCE_ID);
+        reset(permissionService);
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = flowsTarget().request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final List<Map<String, Object>> flows = response.readEntity(new GenericType<List<Map<String, Object>>>() {});
+        assertEquals(1, flows.size());
+        assertEquals("token", flows.get(0).get("type"));
+
+        ArgumentCaptor<PermissionAcls> aclsCaptor = ArgumentCaptor.forClass(PermissionAcls.class);
+        verify(permissionService, times(2)).hasPermission(any(User.class), aclsCaptor.capture());
+        boolean everyCheckCoversResource = aclsCaptor.getAllValues().stream()
+                .allMatch(acls -> acls.referenceStream()
+                        .anyMatch(ref -> ref.getKey() == ReferenceType.PROTECTED_RESOURCE && PROTECTED_RESOURCE_ID.equals(ref.getValue())));
+        assertTrue("LIST and READ permission checks must both cover the protected resource scope", everyCheckCoversResource);
     }
 
     @Test

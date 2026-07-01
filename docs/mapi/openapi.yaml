@@ -6806,8 +6806,9 @@ paths:
         \ specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified\
         \ environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified\
         \ organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission\
-        \ on the domain, environment or organization, each returned flow is filtered\
-        \ and contains only basic information such as id and name and isEnabled."
+        \ on the resource, domain, environment or organization, each returned flow\
+        \ is filtered and contains only basic information such as id and name and\
+        \ isEnabled."
       operationId: listProtectedResourceFlows
       parameters:
       - in: path
