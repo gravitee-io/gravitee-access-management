@@ -1732,11 +1732,12 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows:
     get:
       description: "User must have the APPLICATION_FLOW[LIST] permission on the specified\
-        \ domain or APPLICATION_FLOW[LIST] permission on the specified environment\
-        \ or APPLICATION_FLOW[LIST] permission on the specified organization. Except\
-        \ if user has APPLICATION_FLOW[READ] permission on the domain, environment\
-        \ or organization, each returned flow is filtered and contains only basic\
-        \ information such as id and name and isEnabled."
+        \ application or APPLICATION_FLOW[LIST] permission on the specified domain\
+        \ or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST]\
+        \ permission on the specified organization. Except if user has APPLICATION_FLOW[READ]\
+        \ permission on the application, domain, environment or organization, each\
+        \ returned flow is filtered and contains only basic information such as id\
+        \ and name and isEnabled."
       operationId: listAppFlows
       parameters:
       - in: path
@@ -1776,8 +1777,9 @@ paths:
       - domain
     put:
       description: "User must have the APPLICATION_FLOW[UPDATE] permission on the\
-        \ specified domain or APPLICATION_FLOW[UPDATE] permission on the specified\
-        \ environment or APPLICATION_FLOW[UPDATE] permission on the specified organization"
+        \ specified application or APPLICATION_FLOW[UPDATE] permission on the specified\
+        \ domain or APPLICATION_FLOW[UPDATE] permission on the specified environment\
+        \ or APPLICATION_FLOW[UPDATE] permission on the specified organization"
       operationId: defineAppFlows
       parameters:
       - in: path
