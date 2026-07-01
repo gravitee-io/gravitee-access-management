@@ -72,11 +72,6 @@ if [ "x$GIO_DISABLE_STARTING_MEMORY" = "x" ]; then
   JAVA_OPTS="$JAVA_OPTS -Xmx${GIO_MAX_MEM}"
 fi
 
-# min and max heap sizes should be set to the same value to avoid
-# stop-the-world GC pauses during resize
-JAVA_OPTS="$JAVA_OPTS -Xms${GIO_MIN_MEM}"
-JAVA_OPTS="$JAVA_OPTS -Xmx${GIO_MAX_MEM}"
-
 # set to headless, just in case
 JAVA_OPTS="$JAVA_OPTS -Djava.awt.headless=true"
 
