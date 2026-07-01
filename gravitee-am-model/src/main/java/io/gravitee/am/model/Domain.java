@@ -22,6 +22,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
+import io.gravitee.am.model.webprotection.WebProtectionSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -194,6 +195,11 @@ public class Domain implements Resource, Managed {
     private CorsSettings corsSettings;
 
     /**
+     * Web protection settings (CSP, X-Frame-Options, X-XSS-Protection)
+     */
+    private WebProtectionSettings webProtectionSettings;
+
+    /**
      * ID of Data Plane
      */
     private String dataPlaneId;
@@ -258,6 +264,7 @@ public class Domain implements Resource, Managed {
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
         this.saml = other.saml != null ? new SAMLSettings(other.saml) : null;
         this.corsSettings = other.corsSettings;
+        this.webProtectionSettings = other.webProtectionSettings != null ? new WebProtectionSettings(other.webProtectionSettings) : null;
         this.dataPlaneId = other.dataPlaneId;
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
         this.tokenExchangeSettings = other.tokenExchangeSettings;
@@ -488,6 +495,14 @@ public class Domain implements Resource, Managed {
 
     public void setCorsSettings(CorsSettings corsSettings) {
         this.corsSettings = corsSettings;
+    }
+
+    public WebProtectionSettings getWebProtectionSettings() {
+        return webProtectionSettings;
+    }
+
+    public void setWebProtectionSettings(WebProtectionSettings webProtectionSettings) {
+        this.webProtectionSettings = webProtectionSettings;
     }
 
     public String getDataPlaneId() {

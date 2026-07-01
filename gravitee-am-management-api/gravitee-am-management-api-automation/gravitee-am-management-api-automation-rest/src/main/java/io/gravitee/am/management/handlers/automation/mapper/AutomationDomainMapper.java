@@ -85,6 +85,7 @@ public final class AutomationDomainMapper {
         out.setPasswordSettings(domain.getPasswordSettings());
         out.setSelfServiceAccountManagementSettings(domain.getSelfServiceAccountManagementSettings());
         out.setCorsSettings(domain.getCorsSettings());
+        out.setWebProtectionSettings(domain.getWebProtectionSettings());
         out.setSecretExpirationSettings(domain.getSecretExpirationSettings());
         out.setTokenExchangeSettings(domain.getTokenExchangeSettings());
 
@@ -203,6 +204,7 @@ public final class AutomationDomainMapper {
         target.setPasswordSettings(in.getPasswordSettings());
         target.setSelfServiceAccountManagementSettings(in.getSelfServiceAccountManagementSettings());
         target.setCorsSettings(in.getCorsSettings());
+        target.setWebProtectionSettings(in.getWebProtectionSettings());
         target.setSecretExpirationSettings(in.getSecretExpirationSettings());
         target.setTokenExchangeSettings(in.getTokenExchangeSettings());
 

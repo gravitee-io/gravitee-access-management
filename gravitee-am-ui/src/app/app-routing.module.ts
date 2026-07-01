@@ -181,6 +181,7 @@ import { ApplicationResourcePolicyComponent } from './domain/applications/applic
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
 import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoints/entrypoints.component';
+import { DomainSettingsWebProtectionComponent } from './domain/settings/web-protection/web-protection.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
 import { IdentitiesResolver } from './resolvers/identities.resolver';
@@ -1814,6 +1815,21 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Entrypoints',
+                            section: 'Settings',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_settings_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'web-protection',
+                        component: DomainSettingsWebProtectionComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Web protection',
                             section: 'Settings',
                             level: 'level2',
                           },

@@ -13739,7 +13739,13 @@ components:
         enabled:
           type: boolean
           default: false
-          description: Whether CORS handling is enabled for the domain.
+          description: Whether CORS handling is enabled for the domain when not inherited.
+        inherited:
+          type: boolean
+          default: true
+          description: "Whether CORS settings are inherited from the gateway defaults\
+            \ (gravitee.yml). When null, legacy behaviour applies: enabled=true overrides\
+            \ and enabled=false inherits."
         maxAge:
           type: integer
           format: int32
@@ -13802,6 +13808,42 @@ components:
           type: string
         username:
           type: string
+    CspSettings:
+      type: object
+      description: Content Security Policy configuration for the domain's login and
+        consent pages.
+      properties:
+        directives:
+          type: array
+          description: "CSP directives, each in the form \"directive-name value;\"\
+            ."
+          example:
+          - default-src 'self';
+          - script-src 'self';
+          items:
+            type: string
+            description: "CSP directives, each in the form \"directive-name value;\"\
+              ."
+            example: "[\"default-src 'self';\",\"script-src 'self';\"]"
+        enabled:
+          type: boolean
+          default: false
+          description: Whether CSP is enabled for the domain when not inherited.
+        inherited:
+          type: boolean
+          default: true
+          description: "Whether CSP settings are inherited from the gateway defaults\
+            \ (gravitee.yml). When null, legacy behaviour applies: enabled=true overrides\
+            \ and enabled=false inherits."
+        reportOnly:
+          type: boolean
+          default: false
+          description: "When true, the policy is delivered as Content-Security-Policy-Report-Only."
+        scriptInlineNonce:
+          type: boolean
+          default: true
+          description: Whether inline scripts are allowed via a per-request nonce.
+      title: CSP settings
     DataPlane:
       type: object
       properties:
@@ -13954,6 +13996,8 @@ components:
             $ref: "#/components/schemas/VirtualHost"
         webAuthnSettings:
           $ref: "#/components/schemas/WebAuthnSettings"
+        webProtectionSettings:
+          $ref: "#/components/schemas/WebProtectionSettings"
     DomainPage:
       type: object
       properties:
@@ -16564,6 +16608,8 @@ components:
             $ref: "#/components/schemas/VirtualHost"
         webAuthnSettings:
           $ref: "#/components/schemas/WebAuthnSettings"
+        webProtectionSettings:
+          $ref: "#/components/schemas/WebProtectionSettings"
     PatchEnrollSettings:
       type: object
       properties:
@@ -19111,6 +19157,60 @@ components:
           - PREFERRED
           - DISCOURAGED
       title: WebAuthn settings
+    WebProtectionSettings:
+      type: object
+      description: HTTP security headers applied to the domain's login and consent
+        pages.
+      properties:
+        csp:
+          $ref: "#/components/schemas/CspSettings"
+        xframe:
+          $ref: "#/components/schemas/XFrameSettings"
+        xss:
+          $ref: "#/components/schemas/XssProtectionSettings"
+      title: Web protection settings
+    XFrameSettings:
+      type: object
+      description: Controls whether the domain's pages may be embedded in frames on
+        other origins.
+      properties:
+        action:
+          type: string
+          description: "X-Frame-Options action. Supported values: DENY, SAMEORIGIN.\
+            \ Leave empty to omit the header."
+          example: DENY
+        enabled:
+          type: boolean
+          default: false
+          description: Whether X-Frame-Options is enabled for the domain when not
+            inherited.
+        inherited:
+          type: boolean
+          default: true
+          description: "Whether X-Frame-Options settings are inherited from the gateway\
+            \ defaults (gravitee.yml). When null, legacy behaviour applies: enabled=true\
+            \ overrides and enabled=false inherits."
+      title: X-Frame-Options settings
+    XssProtectionSettings:
+      type: object
+      description: Controls the legacy X-XSS-Protection response header.
+      properties:
+        action:
+          type: string
+          description: Value of the X-XSS-Protection header.
+          example: 1; mode=block
+        enabled:
+          type: boolean
+          default: false
+          description: Whether X-XSS-Protection is enabled for the domain when not
+            inherited.
+        inherited:
+          type: boolean
+          default: true
+          description: "Whether X-XSS-Protection settings are inherited from the gateway\
+            \ defaults (gravitee.yml). When null, legacy behaviour applies: enabled=true\
+            \ overrides and enabled=false inherits."
+      title: XSS protection settings
   securitySchemes:
     gravitee-auth:
       scheme: Bearer
