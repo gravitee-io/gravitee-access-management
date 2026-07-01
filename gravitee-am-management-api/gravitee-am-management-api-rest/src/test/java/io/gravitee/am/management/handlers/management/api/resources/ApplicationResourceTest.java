@@ -21,7 +21,6 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
@@ -94,7 +93,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(application.getSettings().getAdvanced());
         assertNotNull(application.getSettings().getAccount());
         assertNotNull(application.getSettings().getOauth());
-        assertNotNull(application.getSettings().getPasswordSettings());
     }
 
     @Test
@@ -130,7 +128,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(application.getSettings());
         assertNull(application.getSettings().getAccount());
         assertNull(application.getSettings().getOauth());
-        assertNull(application.getSettings().getPasswordSettings());
     }
 
     @Test
@@ -223,7 +220,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(settings.getAdvanced());
         assertNotNull(settings.getAccount());
         assertNotNull(settings.getOauth());
-        assertNotNull(settings.getPasswordSettings());
         assertNotNull(settings.getRiskAssessment());
     }
 
@@ -264,7 +260,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(settings);
         assertNull(settings.getAccount());
         assertNull(settings.getOauth());
-        assertNull(settings.getPasswordSettings());
     }
 
     @Test
@@ -334,7 +329,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         filteredApplicationSettings.setAdvanced(new ApplicationAdvancedSettings());
         filteredApplicationSettings.setAccount(new AccountSettings());
         filteredApplicationSettings.setOauth(new ApplicationOAuthSettings());
-        filteredApplicationSettings.setPasswordSettings(new PasswordSettings());
         filteredApplicationSettings.setRiskAssessment(new RiskAssessmentSettings());
 
         mockApplication.setSettings(filteredApplicationSettings);

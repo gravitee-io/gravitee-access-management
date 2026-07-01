@@ -244,7 +244,7 @@ public class UserServiceImpl implements UserService {
                         .flatMap(userProvider -> userProvider.create(convert(user)))
                         .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser, queryParams))
                         .flatMap(amUser -> sendVerifyAccountEmail(client, amUser, accountSettings, queryParams))
-                        .flatMap(amUser -> createPasswordHistory(client, amUser, rawPassword, principal))
+                        .flatMap(amUser -> createPasswordHistory(amUser, rawPassword, principal))
                         .flatMap(userService::enhance)
                         .map(enhancedUser -> buildRegistrationResponse(accountSettings, enhancedUser))
                         .doOnSuccess(registrationResponse -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
@@ -356,7 +356,7 @@ public class UserServiceImpl implements UserService {
                     }
                     return userService.update(user);
                 })
-                .flatMap(amUser -> createPasswordHistory(client, amUser, rawPassword, principal))
+                .flatMap(amUser -> createPasswordHistory(amUser, rawPassword, principal))
                 .flatMap(userService::enhance)
                 .map(user1 -> {
                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
@@ -407,7 +407,7 @@ public class UserServiceImpl implements UserService {
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                             .flatMap(idpUser -> passwordHistoryService
-                                    .addPasswordToHistory(domain, user, user.getPassword(), principal, getPasswordPolicy(client, identityProviderManager.getIdentityProvider(user.getSource())))
+                                    .addPasswordToHistory(domain, user, user.getPassword(), principal, getPasswordPolicy(identityProviderManager.getIdentityProvider(user.getSource())))
                                     .switchIfEmpty(Single.just(new PasswordHistory()))
                                     .flatMap(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
@@ -815,17 +815,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private Single<User> createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
+    private Single<User> createPasswordHistory(User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         passwordHistoryService
-                .addPasswordToHistory(domain, user, rawPassword, principal, getPasswordPolicy(client, provider))
+                .addPasswordToHistory(domain, user, rawPassword, principal, getPasswordPolicy(provider))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
                         throwable -> logger.debug("Failed to create password history", throwable));
         return Single.just(user);
     }
 
-    private PasswordPolicy getPasswordPolicy(Client client, IdentityProvider provider) {
-        return passwordPolicyManager.getPolicy(client, provider).orElse(null);
+    private PasswordPolicy getPasswordPolicy(IdentityProvider provider) {
+        return passwordPolicyManager.getPolicy(provider).orElse(null);
     }
 
     private static final class UserAuthentication {

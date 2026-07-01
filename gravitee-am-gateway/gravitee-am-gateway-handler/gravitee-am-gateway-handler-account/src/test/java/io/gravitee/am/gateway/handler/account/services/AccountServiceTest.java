@@ -33,6 +33,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
@@ -60,6 +61,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atMostOnce;
@@ -394,7 +396,7 @@ public class AccountServiceTest {
         var user = new io.gravitee.am.model.User();
         user.setReferenceId("DOMAIN_ID");
         user.setReferenceType(ReferenceType.DOMAIN);
-        when(passwordPolicyManager.getPolicy(any(),any())).thenReturn(Optional.of(new PasswordPolicy()));
+        when(passwordPolicyManager.getPolicy(nullable(IdentityProvider.class))).thenReturn(Optional.of(new PasswordPolicy()));
         doThrow(InvalidPasswordException.of("invalid password minimum length"))
                 .when(passwordService).validate(anyString(), any(), any());
         var observable = accountService.resetPassword(user, client, "123", new DefaultUser(), Optional.empty()).test();

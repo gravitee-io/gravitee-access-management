@@ -16,13 +16,11 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -153,95 +151,6 @@ public class PatchApplicationTest {
 
 
     @Test
-    public void testPatchWithPasswordPolicy() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 24));
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
-
-        PatchApplication patch = new PatchApplication();
-        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
-        patch.setSettings(Optional.of(patchAppSettings));
-        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
-
-        Application toPatch = new Application();
-        final ApplicationSettings appSettings = new ApplicationSettings();
-        appSettings.setPasswordSettings(new PasswordSettings());
-        toPatch.setSettings(appSettings);
-
-        //apply patch
-        Application result = patch.patch(toPatch);
-
-        //check.
-        assertNotNull("was expecting a domain", result);
-        assertNotNull(result.getPasswordSettings());
-        assertTrue(result.getPasswordSettings().isPasswordHistoryEnabled());
-        assertEquals(24, result.getPasswordSettings().getOldPasswords().shortValue());
-    }
-
-    @Test(expected = InvalidParameterException.class)
-    public void testPatchWithPasswordPolicy_missingOldPassword() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
-
-        PatchApplication patch = new PatchApplication();
-        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
-        patch.setSettings(Optional.of(patchAppSettings));
-        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
-
-        Application toPatch = new Application();
-        final ApplicationSettings appSettings = new ApplicationSettings();
-        appSettings.setPasswordSettings(new PasswordSettings());
-        toPatch.setSettings(appSettings);
-
-        //apply patch
-        patch.patch(toPatch);
-    }
-
-    @Test(expected = InvalidParameterException.class)
-    public void testPatchWithPasswordPolicy_outOfRange_min_OldPassword() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 0));
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
-
-        PatchApplication patch = new PatchApplication();
-        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
-        patch.setSettings(Optional.of(patchAppSettings));
-        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
-
-        Application toPatch = new Application();
-        final ApplicationSettings appSettings = new ApplicationSettings();
-        appSettings.setPasswordSettings(new PasswordSettings());
-        toPatch.setSettings(appSettings);
-
-        //apply patch
-        patch.patch(toPatch);
-    }
-
-    @Test(expected = InvalidParameterException.class)
-    public void testPatchWithPasswordPolicy_outOfRange_max_OldPassword() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 25));
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
-
-        PatchApplication patch = new PatchApplication();
-        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
-        patch.setSettings(Optional.of(patchAppSettings));
-        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
-
-        Application toPatch = new Application();
-        final ApplicationSettings appSettings = new ApplicationSettings();
-        appSettings.setPasswordSettings(new PasswordSettings());
-        toPatch.setSettings(appSettings);
-
-        //apply patch
-        patch.patch(toPatch);
-    }
-
-    @Test
     public void patch_applies_userinfoCustomClaims_when_present() {
         List<UserInfoClaim> patchedClaims = List.of(UserInfoClaim.of("custom", "#expr"));
 
@@ -286,6 +195,39 @@ public class PatchApplicationTest {
         Application result = patch.patch(toPatch);
 
         assertEquals(existing, result.getSettings().getOauth().getUserinfoCustomClaims());
+    }
+
+    @Test
+    public void patch_ignores_deprecated_passwordSettings_but_applies_other_settings() {
+        // Application-level password settings were removed. A patch still carrying `passwordSettings`
+        // must be silently ignored (never applied, never validated) while the rest of the patch applies.
+        // The values below would previously have failed validation and thrown InvalidParameterException.
+        PatchPasswordSettings deprecatedPasswordSettings = new PatchPasswordSettings();
+        deprecatedPasswordSettings.setPasswordHistoryEnabled(Optional.of(true));
+        deprecatedPasswordSettings.setOldPasswords(Optional.of((short) 999)); // out of range under the old rules
+
+        List<UserInfoClaim> patchedClaims = List.of(UserInfoClaim.of("custom", "#expr"));
+        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
+        oauthPatch.setUserinfoCustomClaims(Optional.of(patchedClaims));
+
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setPasswordSettings(Optional.of(deprecatedPasswordSettings));
+        settingsPatch.setOauth(Optional.of(oauthPatch));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(settingsPatch));
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setOauth(new ApplicationOAuthSettings());
+        toPatch.setSettings(appSettings);
+
+        // Must not throw even though passwordSettings holds values that were previously rejected.
+        Application result = patch.patch(toPatch);
+
+        assertNotNull(result.getSettings());
+        // The rest of the patch is still applied.
+        assertEquals(patchedClaims, result.getSettings().getOauth().getUserinfoCustomClaims());
     }
 
 }

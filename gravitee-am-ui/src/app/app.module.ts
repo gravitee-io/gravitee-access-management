@@ -283,7 +283,6 @@ import { ApplicationAnalyticsComponent } from './domain/applications/application
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
 import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
-import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
 import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
 import { ApplicationIdPComponent, CreateIdpSelectionRuleComponent } from './domain/applications/application/idp/idp.component';
 import { ApplicationDesignComponent } from './domain/applications/application/design/design.component';
@@ -687,7 +686,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationOverviewComponent,
     ApplicationEndpointsComponent,
     ApplicationGeneralComponent,
-    PasswordPolicyComponent,
     PasswordPolicyStatusComponent,
     DomainPasswordPolicyComponent,
     ApplicationIdPComponent,

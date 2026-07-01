@@ -22,8 +22,6 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -55,7 +53,6 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 import static java.util.Optional.ofNullable;
-import static java.util.function.Predicate.not;
 import static org.springframework.util.StringUtils.hasLength;
 
 /**
@@ -232,25 +229,15 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     }
 
     @Override
-    public Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider) {
-        // The application password settings always take precedence (if present and not inherited)
-        // If the app doesn't have such settings then fallback to the one linked to the IDP
-        // if the IDP doesn't have such settings,
-        // look for default policy linked to the domain
-        Maybe<PasswordPolicy> clientPasswordPolicy = ofNullable(passwordSettingsAware)
-                .map(PasswordSettingsAware::getPasswordSettings)
-                .filter(not(PasswordSettings::isInherited))
-                .map(PasswordSettings::toPasswordPolicy)
-                .map(Maybe::just)
-                .orElse(Maybe.empty());
-
+    public Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, IdentityProvider provider) {
+        // Look for the policy linked to the IDP; if the IDP doesn't have such a policy,
+        // fall back to the default policy linked to the domain.
         Maybe<PasswordPolicy> idpPasswordPolicy = ofNullable(provider)
                 .map(IdentityProvider::getPasswordPolicy)
                 .map(policyId -> passwordPolicyRepository.findByReferenceAndId(user.getReferenceType(), user.getReferenceId(), policyId))
                 .orElse(Maybe.empty());
 
-        return clientPasswordPolicy
-                .switchIfEmpty(idpPasswordPolicy)
+        return idpPasswordPolicy
                 .switchIfEmpty(Maybe.defer(() -> this.defaultPasswordPolicy(user)));
     }
 

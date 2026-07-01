@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.model.application;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -41,6 +41,7 @@ import java.util.Optional;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ApplicationSettings {
     /**
      * OAuth 2.0/OIDC Client settings
@@ -62,11 +63,6 @@ public class ApplicationSettings {
      * Advanced settings
      */
     private ApplicationAdvancedSettings advanced;
-
-    /**
-     * Password settings
-     */
-    private PasswordSettings passwordSettings;
 
     /**
      * MFA settings
@@ -105,7 +101,6 @@ public class ApplicationSettings {
         this.account = other.account != null ? new AccountSettings(other.account) : null;
         this.login = other.login != null ? new LoginSettings(other.login) : null;
         this.advanced = other.advanced != null ? new ApplicationAdvancedSettings(other.advanced) : null;
-        this.passwordSettings = Optional.ofNullable(other.passwordSettings).map(PasswordSettings::new).orElse(null);
         this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
@@ -116,7 +111,6 @@ public class ApplicationSettings {
     public void copyTo(Client client) {
         client.setAccountSettings(this.account);
         client.setLoginSettings(this.login);
-        client.setPasswordSettings(this.passwordSettings);
         Optional.ofNullable(this.oauth).ifPresent(o -> o.copyTo(client));
         Optional.ofNullable(getAdvanced()).ifPresent(a -> a.copyTo(client));
         client.setMfaSettings(this.mfa);

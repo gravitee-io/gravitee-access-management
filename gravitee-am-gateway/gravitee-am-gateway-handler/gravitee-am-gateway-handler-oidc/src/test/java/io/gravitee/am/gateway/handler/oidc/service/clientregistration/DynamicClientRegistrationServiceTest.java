@@ -42,7 +42,6 @@ import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
@@ -1051,7 +1050,6 @@ public class DynamicClientRegistrationServiceTest {
         template.setIdTokenValiditySeconds(900);
         template.setMfaSettings(new MFASettings());
         template.setRiskAssessment(new RiskAssessmentSettings());
-        template.setPasswordSettings(new PasswordSettings());
         template.setCookieSettings(new CookieSettings());
         template.setLoginSettings(new LoginSettings());
 
@@ -1084,7 +1082,6 @@ public class DynamicClientRegistrationServiceTest {
                         client.getFactors().iterator().next().equals(factorId) &&
                         client.getLoginSettings() != null &&
                         client.getMfaSettings() != null &&
-                        client.getPasswordSettings() != null &&
                         client.getCookieSettings() != null &&
                         client.getRiskAssessment() != null &&
                         client.getAccessTokenValiditySeconds() == 3600 &&

@@ -58,7 +58,7 @@ public class PasswordHistoryHandler implements Handler<RoutingContext> {
                        final var user = userToken.getUser();
                        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
                        return passwordHistoryService
-                               .passwordAlreadyUsed(domain, user.getId(), password, getPasswordPolicy(context, provider));
+                               .passwordAlreadyUsed(domain, user.getId(), password, getPasswordPolicy(provider));
 
                    })
                    .doOnError(throwable -> context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500, throwable))
@@ -72,8 +72,7 @@ public class PasswordHistoryHandler implements Handler<RoutingContext> {
 
     }
 
-    private PasswordPolicy getPasswordPolicy(RoutingContext context, IdentityProvider provider) {
-        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        return passwordPolicyManager.getPolicy(client, provider).orElse(null);
+    private PasswordPolicy getPasswordPolicy(IdentityProvider provider) {
+        return passwordPolicyManager.getPolicy(provider).orElse(null);
     }
 }

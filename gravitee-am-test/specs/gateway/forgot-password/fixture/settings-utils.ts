@@ -15,14 +15,12 @@
  */
 
 import { AccountSettings } from '@management-models/AccountSettings';
-import { PasswordSettings } from '@management-models/PasswordSettings';
 import { NewPasswordPolicy } from '@management-models/NewPasswordPolicy';
 
 export interface DomainTestSettings {
   inherited: boolean;
   settings: {
     accountSettings?: AccountSettings;
-    passwordSettings?: PasswordSettings;
   };
   passwordPolicy?: NewPasswordPolicy;
 }

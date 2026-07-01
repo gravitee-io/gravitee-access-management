@@ -27,7 +27,6 @@ import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
 import io.gravitee.am.service.model.PatchApplicationSAMLSettings;
 import io.gravitee.am.service.model.PatchApplicationSettings;
 import io.gravitee.am.service.model.PatchMFASettings;
-import io.gravitee.am.service.model.PatchPasswordSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import org.junit.Test;
 
@@ -152,7 +151,6 @@ public class PermissionSettingsUtilsTest {
         settings.setAccount(Optional.of(new AccountSettings()));
         settings.setLogin(Optional.of(new LoginSettings()));
         settings.setAdvanced(Optional.of(new PatchApplicationAdvancedSettings()));
-        settings.setPasswordSettings(Optional.of(new PatchPasswordSettings()));
         settings.setMfa(Optional.of(new PatchMFASettings()));
         settings.setCookieSettings(Optional.of(new CookieSettings()));
         settings.setRiskAssessment(Optional.of(new RiskAssessmentSettings()));
@@ -171,7 +169,6 @@ public class PermissionSettingsUtilsTest {
         settings.setAccount(Optional.empty());
         settings.setLogin(Optional.empty());
         settings.setAdvanced(Optional.empty());
-        settings.setPasswordSettings(Optional.empty());
         settings.setMfa(Optional.empty());
         settings.setCookieSettings(Optional.empty());
         settings.setRiskAssessment(Optional.empty());
@@ -221,7 +218,6 @@ public class PermissionSettingsUtilsTest {
         settings.setAccount(Optional.of(new AccountSettings()));
         settings.setLogin(Optional.of(new LoginSettings()));
         settings.setAdvanced(Optional.of(new PatchApplicationAdvancedSettings()));
-        settings.setPasswordSettings(Optional.of(new PatchPasswordSettings()));
         settings.setMfa(Optional.of(new PatchMFASettings()));
         settings.setCookieSettings(Optional.of(new CookieSettings()));
         settings.setRiskAssessment(Optional.of(new RiskAssessmentSettings()));

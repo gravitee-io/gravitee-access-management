@@ -302,7 +302,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         return identityProviderManager.getUserProvider(lastIdp)
                 .flatMapSingle(__ -> {
                     final var idp = identityProviderManager.getIdentityProvider(lastIdp);
-                    final PasswordPolicy passwordPolicy = passwordPolicyManager.getPolicy(client, idp).orElse(null);
+                    final PasswordPolicy passwordPolicy = passwordPolicyManager.getPolicy(idp).orElse(null);
                     final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
 
                     if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicy)) {

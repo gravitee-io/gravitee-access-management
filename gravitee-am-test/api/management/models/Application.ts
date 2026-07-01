@@ -42,13 +42,6 @@ import {
   ApplicationIdentityProviderToJSON,
   ApplicationIdentityProviderToJSONTyped,
 } from './ApplicationIdentityProvider';
-import type { PasswordSettings } from './PasswordSettings';
-import {
-  PasswordSettingsFromJSON,
-  PasswordSettingsFromJSONTyped,
-  PasswordSettingsToJSON,
-  PasswordSettingsToJSONTyped,
-} from './PasswordSettings';
 import type { ApplicationSecretSettings } from './ApplicationSecretSettings';
 import {
   ApplicationSecretSettingsFromJSON,
@@ -135,12 +128,6 @@ export interface Application {
    * @memberof Application
    */
   name?: string;
-  /**
-   *
-   * @type {PasswordSettings}
-   * @memberof Application
-   */
-  passwordSettings?: PasswordSettings;
   /**
    *
    * @type {Array<ApplicationSecretSettings>}
@@ -233,7 +220,6 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     kind: json['kind'] == null ? undefined : json['kind'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
-    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
     secretSettings:
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     secrets: json['secrets'] == null ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
@@ -269,7 +255,6 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
     kind: value['kind'],
     metadata: value['metadata'],
     name: value['name'],
-    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
     secretSettings:
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     secrets: value['secrets'] == null ? undefined : (value['secrets'] as Array<any>).map(ClientSecretToJSON),
