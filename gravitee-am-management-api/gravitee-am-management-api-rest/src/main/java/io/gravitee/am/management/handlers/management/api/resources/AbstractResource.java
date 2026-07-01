@@ -120,6 +120,14 @@ public abstract class AbstractResource {
                 of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
 
+    protected Single<Boolean> hasAnyPermission(User user, String organizationId, String environmentId, String domainId, ReferenceType resourceType, String resourceId, Permission permission, Acl... acls) {
+
+        return hasPermission(user, or(of(resourceType, resourceId, permission, acls),
+                of(ReferenceType.DOMAIN, domainId, permission, acls),
+                of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
+                of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
+    }
+
     protected Single<Boolean> hasPermission(User user, PermissionAcls permissionAcls) {
 
         return permissionService.hasPermission(user, permissionAcls);
