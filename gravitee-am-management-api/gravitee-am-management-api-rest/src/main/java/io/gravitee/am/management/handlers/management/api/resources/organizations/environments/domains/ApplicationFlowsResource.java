@@ -79,10 +79,11 @@ public class ApplicationFlowsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "List registered flows for an application",
             operationId = "listAppFlows",
-            description = "User must have the APPLICATION_FLOW[LIST] permission on the specified domain " +
+            description = "User must have the APPLICATION_FLOW[LIST] permission on the specified application " +
+                    "or APPLICATION_FLOW[LIST] permission on the specified domain " +
                     "or APPLICATION_FLOW[LIST] permission on the specified environment " +
                     "or APPLICATION_FLOW[LIST] permission on the specified organization. " +
-                    "Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
+                    "Except if user has APPLICATION_FLOW[READ] permission on the application, domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List registered flows for an application",
                     content = @Content(mediaType =  "application/json",
@@ -97,8 +98,8 @@ public class ApplicationFlowsResource extends AbstractResource {
 
         User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.LIST)
-                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FLOW, Acl.LIST)
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FLOW, Acl.READ)
                         .flatMapPublisher(hasPermission ->
                                 flowService.findByApplication(ReferenceType.DOMAIN, domain, application).map(flow -> filterFlowInfos(hasPermission, flow)))
                         .toList())
@@ -110,7 +111,8 @@ public class ApplicationFlowsResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create or update list of flows",
             operationId = "defineAppFlows",
-            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
+            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified application " +
+                    "or APPLICATION_FLOW[UPDATE] permission on the specified domain " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified environment " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
@@ -128,7 +130,7 @@ public class ApplicationFlowsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FLOW, Acl.UPDATE)
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
                 .andThen(flowValidator.validateAll(flows))
                 .andThen(domainService.findById(domain)
