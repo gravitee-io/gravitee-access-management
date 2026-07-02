@@ -102,7 +102,7 @@ public class VirtualHostValidatorImpl implements VirtualHostValidator {
             // Get paths of all other domains on the same host.
             paths = domain.getVhosts().stream()
                     .flatMap(virtualHost -> otherVhosts.stream()
-                            .filter(otherVhost -> virtualHost.getHost().equals(otherVhost.getHost())))
+                            .filter(otherVhost -> virtualHost.getHost().equalsIgnoreCase(otherVhost.getHost())))
                     .map(VirtualHost::getPath).collect(Collectors.toList());
 
             for (VirtualHost vhost : domain.getVhosts()) {
