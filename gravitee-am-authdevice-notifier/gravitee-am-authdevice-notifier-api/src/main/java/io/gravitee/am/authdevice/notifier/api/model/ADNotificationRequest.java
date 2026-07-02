@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
@@ -46,9 +47,14 @@ public class ADNotificationRequest {
     private int expiresIn;
     private Set<String> scopes;
     private List<String> acrValues;
+    private List<Map<String, Object>> authorizationDetails;
+    private String loginHint;
+    private String loginHintToken;
     private String state;
     private String message;
     private RoutingContext context;
+    private FederatedConnection connection;
+    private String callbackUrl;
 
     private TemplateEngine templateEngine;
 
