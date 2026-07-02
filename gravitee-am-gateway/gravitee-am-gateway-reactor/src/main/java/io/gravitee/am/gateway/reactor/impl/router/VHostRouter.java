@@ -84,7 +84,7 @@ public class VHostRouter extends RouterImpl {
         super(vertx);
         this.domain = domain;
         this.vhost = vhost;
-        this.vhostPattern = Pattern.compile(Pattern.quote(vhost.getHost()));
+        this.vhostPattern = Pattern.compile(Pattern.quote(vhost.getHost()), Pattern.CASE_INSENSITIVE);
         this.pathPattern = Pattern.compile(Pattern.quote(vhost.getPath()) + ".*");
         this.delegate = delegate;
     }
