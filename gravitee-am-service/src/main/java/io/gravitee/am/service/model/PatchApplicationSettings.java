@@ -50,16 +50,6 @@ public class PatchApplicationSettings {
     private Optional<PatchApplicationOAuthSettings> oauth;
     private Optional<PatchApplicationSAMLSettings> saml;
     private Optional<PatchApplicationAdvancedSettings> advanced;
-    /**
-     * Application-level password settings have been removed. This field is retained only so that
-     * existing clients still sending {@code passwordSettings} do not get a deserialization error;
-     * the value is ignored. Password policy is now resolved from the identity provider's assigned
-     * policy or the domain default policy.
-     *
-     * @deprecated application-level password policy no longer exists; this field is a no-op.
-     */
-    @Deprecated
-    private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<PatchMFASettings> mfa;
     private Optional<CookieSettings> cookieSettings;
     private Optional<RiskAssessmentSettings> riskAssessment;
