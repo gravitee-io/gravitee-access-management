@@ -248,6 +248,11 @@
             <b>externalInformation</b>
             <a-hint>java.util.Map</a-hint>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ListOfMapsToStringConverter">
+            <a>authorizationDetails</a>
+            <b>authorizationDetails</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
     </mapping>
 
     <mapping map-null="false">

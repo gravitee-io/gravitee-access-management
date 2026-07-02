@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-ciba-add-authorization-details
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: ciba_auth_requests
+                columnName: authorization_details
+      changes:
+        - addColumn:
+            tableName: ciba_auth_requests
+            columns:
+              - column: { name: authorization_details, type: clob, constraints: { nullable: true } }

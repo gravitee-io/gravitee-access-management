@@ -27,7 +27,7 @@ import { SnackbarService } from '../../../../../../services/snackbar.service';
   standalone: false,
 })
 export class DeviceNotifiersCreationComponent implements OnInit {
-  private domainId: string;
+  domainId: string;
   deviceNotifier: any = {};
   configurationIsValid = true;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;

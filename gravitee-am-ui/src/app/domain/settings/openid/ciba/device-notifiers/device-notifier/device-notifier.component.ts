@@ -21,7 +21,9 @@ import { AuthService } from '../../../../../../services/auth.service';
 import { DeviceNotifiersService } from '../../../../../../services/device-notifiers.service';
 import { DialogService } from '../../../../../../services/dialog.service';
 import { OrganizationService } from '../../../../../../services/organization.service';
+import { ProviderService } from '../../../../../../services/provider.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { DynamicSourceMap } from '../dynamic-sources';
 
 @Component({
   selector: 'app-device-notifier',
@@ -39,12 +41,15 @@ export class DeviceNotifierComponent implements OnInit {
   deviceNotifierConfiguration: any;
   updateDeviceNotifierConfiguration: any;
   editMode: boolean;
+  /** Populated on init; passed to the form so AJSF can render dynamic dropdowns. */
+  dynamicSources: DynamicSourceMap = {};
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private organizationService: OrganizationService,
     private notifierService: DeviceNotifiersService,
+    private providerService: ProviderService,
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
@@ -57,8 +62,30 @@ export class DeviceNotifierComponent implements OnInit {
     this.updateDeviceNotifierConfiguration = this.deviceNotifierConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_authdevice_notifier_update']);
 
-    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe((data) => {
-      this.deviceNotifierSchema = data;
+    // Fetch identity providers so the form can render a populated dropdown for
+    // any schema property whose widget is 'graviteeIdentityProvider'.
+    this.providerService.findByDomain(this.domainId).subscribe({
+      next: (idps: Array<{ id: string; name: string }>) => {
+        this.dynamicSources = { graviteeIdentityProvider: idps ?? [] };
+      },
+      error: (err: unknown) => {
+        // An IdP fetch failure is distinct from a domain that genuinely has no IdPs: surface it and
+        // log, then fall back to an empty list so the form still renders (the picker becomes readonly).
+        console.error('Failed to load identity providers for the device-notifier form', err);
+        this.snackbarService.open('Unable to load identity providers');
+        this.dynamicSources = { graviteeIdentityProvider: [] };
+      },
+    });
+
+    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe({
+      next: (data) => {
+        this.deviceNotifierSchema = data;
+      },
+      error: (err: unknown) => {
+        // Schema load failed: without this the form would render blank with no specific feedback.
+        console.error('Failed to load the device-notifier configuration schema', err);
+        this.snackbarService.open('Unable to load the device notifier configuration');
+      },
     });
   }
 

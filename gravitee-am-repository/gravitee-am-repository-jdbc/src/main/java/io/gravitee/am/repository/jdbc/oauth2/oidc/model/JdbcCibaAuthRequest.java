@@ -46,6 +46,9 @@ public class JdbcCibaAuthRequest {
     @Column("external_information")
     private String externalInformation;
 
+    @Column("authorization_details")
+    private String authorizationDetails;
+
     public String getId() {
         return id;
     }
@@ -132,5 +135,13 @@ public class JdbcCibaAuthRequest {
 
     public void setExternalInformation(String externalInformation) {
         this.externalInformation = externalInformation;
+    }
+
+    public String getAuthorizationDetails() {
+        return authorizationDetails;
+    }
+
+    public void setAuthorizationDetails(String authorizationDetails) {
+        this.authorizationDetails = authorizationDetails;
     }
 }
