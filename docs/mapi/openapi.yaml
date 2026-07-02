@@ -16241,8 +16241,6 @@ components:
           $ref: "#/components/schemas/PatchMFASettings"
         oauth:
           $ref: "#/components/schemas/PatchApplicationOAuthSettings"
-        passwordSettings:
-          $ref: "#/components/schemas/PatchPasswordSettings"
         requiredPermissions:
           type: array
           items:

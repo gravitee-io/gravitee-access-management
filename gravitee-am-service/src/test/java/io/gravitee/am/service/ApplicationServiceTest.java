@@ -955,7 +955,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         Application toPatch = emptyAppWithDomain();
@@ -1001,7 +1000,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         Application toPatch = emptyAppWithDomain();
@@ -1048,7 +1046,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("implicit")));
         patchApplicationOAuthSettings.setResponseTypes(Optional.of(Arrays.asList("token")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
@@ -1319,7 +1316,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(List.of("https://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
@@ -1359,7 +1355,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         final AccountSettings accountSettings = new AccountSettings();
         final FormField formField = new FormField();
         formField.setKey("username");
@@ -1406,7 +1401,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         final AccountSettings accountSettings = new AccountSettings();
         final FormField formField = new FormField();
         formField.setKey("unknown");
@@ -1439,7 +1433,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("com.gravitee.app://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
@@ -1468,7 +1461,6 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("com.google.app:/callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
-        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));

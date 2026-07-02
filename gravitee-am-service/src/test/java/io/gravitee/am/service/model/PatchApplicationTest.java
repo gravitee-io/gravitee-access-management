@@ -197,37 +197,4 @@ public class PatchApplicationTest {
         assertEquals(existing, result.getSettings().getOauth().getUserinfoCustomClaims());
     }
 
-    @Test
-    public void patch_ignores_deprecated_passwordSettings_but_applies_other_settings() {
-        // Application-level password settings were removed. A patch still carrying `passwordSettings`
-        // must be silently ignored (never applied, never validated) while the rest of the patch applies.
-        // The values below would previously have failed validation and thrown InvalidParameterException.
-        PatchPasswordSettings deprecatedPasswordSettings = new PatchPasswordSettings();
-        deprecatedPasswordSettings.setPasswordHistoryEnabled(Optional.of(true));
-        deprecatedPasswordSettings.setOldPasswords(Optional.of((short) 999)); // out of range under the old rules
-
-        List<UserInfoClaim> patchedClaims = List.of(UserInfoClaim.of("custom", "#expr"));
-        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
-        oauthPatch.setUserinfoCustomClaims(Optional.of(patchedClaims));
-
-        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
-        settingsPatch.setPasswordSettings(Optional.of(deprecatedPasswordSettings));
-        settingsPatch.setOauth(Optional.of(oauthPatch));
-
-        PatchApplication patch = new PatchApplication();
-        patch.setSettings(Optional.of(settingsPatch));
-
-        Application toPatch = new Application();
-        ApplicationSettings appSettings = new ApplicationSettings();
-        appSettings.setOauth(new ApplicationOAuthSettings());
-        toPatch.setSettings(appSettings);
-
-        // Must not throw even though passwordSettings holds values that were previously rejected.
-        Application result = patch.patch(toPatch);
-
-        assertNotNull(result.getSettings());
-        // The rest of the patch is still applied.
-        assertEquals(patchedClaims, result.getSettings().getOauth().getUserinfoCustomClaims());
-    }
-
 }
