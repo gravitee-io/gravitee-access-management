@@ -42,6 +42,7 @@ beforeAll(async () => {
     withOpenidScope: false,
     type: 'WEB',
     grantTypes: ['authorization_code'],
+    withRequiredScopeApp: true,
   });
   user = fixture.users[0];
 });
@@ -154,6 +155,62 @@ describe('OAuth2 - RFC 6746 - Authorization Code Grant', () => {
     expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
     await logoutUser(fixture.oidc.end_session_endpoint, postConsentRedirect);
+  });
+
+  it('must reject consent with access_denied when a required scope is not approved', async () => {
+    const requiredScopeApp = fixture.requiredScopeApplication;
+    const clientId = requiredScopeApp.settings.oauth.clientId;
+    const params = `?response_type=code&client_id=${clientId}&redirect_uri=http://localhost:4000/`;
+
+    // Initiate the Login Flow
+    const authResponse = await performGet(fixture.oidc.authorization_endpoint, params).expect(302);
+
+    // Authentication
+    const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
+    const postLogin = await performFormPost(
+      loginResult.action,
+      '',
+      {
+        'X-XSRF-TOKEN': loginResult.token,
+        username: user.username,
+        password: user.password,
+        client_id: clientId,
+      },
+      {
+        Cookie: loginResult.headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
+    ).expect(302);
+
+    // Post authentication redirect -> consent page
+    const postLoginRedirect = await performGet(postLogin.headers['location'], '', {
+      Cookie: postLogin.headers['set-cookie'],
+    }).expect(302);
+
+    expect(postLoginRedirect.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${fixture.masterDomain.hrid}/oauth/consent`);
+
+    const consentResult = await extractXsrfTokenAndActionResponse(postLoginRedirect);
+
+    // Submit consent WITHOUT the required scope's approval (scope.scope1). A correctly rendered page
+    // submits it via a hidden input; its absence here mimics a rendering issue or tampered payload.
+    // The server must refuse to persist consent and send the user back to login with access_denied.
+    const postConsent = await performFormPost(
+      consentResult.action,
+      '',
+      {
+        'X-XSRF-TOKEN': consentResult.token,
+        user_oauth_approval: true,
+      },
+      {
+        Cookie: consentResult.headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
+    ).expect(302);
+
+    // Bounced back to the login page carrying the access_denied error, not to the client redirect_uri
+    expect(postConsent.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${fixture.masterDomain.hrid}/login`);
+    expect(postConsent.headers['location']).toContain('access_denied');
+    expect(postConsent.headers['location']).not.toMatch(/\bcode=[-_a-zA-Z0-9]+/);
   });
 
   it('must handle code flow with fragment response_mode', async () => {

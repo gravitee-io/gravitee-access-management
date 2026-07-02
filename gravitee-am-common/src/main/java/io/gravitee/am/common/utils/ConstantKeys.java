@@ -32,6 +32,8 @@ public interface ConstantKeys {
     String IDENTITY_PROVIDER_CONTEXT_KEY = "identityProvider";
     String PARAM_CONTEXT_KEY = "param";
     String SCOPES_CONTEXT_KEY = "scopes";
+    String REQUIRED_SCOPES_CONTEXT_KEY = "requiredScopes";
+    String OPTIONAL_SCOPES_CONTEXT_KEY = "optionalScopes";
     String PRESELECT_ALL_SCOPES = "preselectAllScopes";
     String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorization_request";
     String ID_TOKEN_CONTEXT_KEY = "idToken";

@@ -29,6 +29,7 @@ import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
@@ -290,9 +291,21 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
                 break;
 
+            case OAUTH2_USER_CONSENT:
+                final Scope requiredScope = previewScope("profile", "Access to the End-User default profile Claims");
+                final Scope optionalScope1 = previewScope("read:orders", "View your orders");
+                final Scope optionalScope2 = previewScope("write:orders", "Create and update your orders");
+                final List<Scope> requiredScopes = List.of(requiredScope);
+                final List<Scope> optionalScopes = List.of(optionalScope1, optionalScope2);
+                // required scopes are displayed first, mirroring the gateway ordering
+                variables.put(ConstantKeys.SCOPES_CONTEXT_KEY, List.of(requiredScope, optionalScope1, optionalScope2));
+                variables.put(ConstantKeys.REQUIRED_SCOPES_CONTEXT_KEY, requiredScopes);
+                variables.put(ConstantKeys.OPTIONAL_SCOPES_CONTEXT_KEY, optionalScopes);
+                variables.put(ConstantKeys.PRESELECT_ALL_SCOPES, Boolean.TRUE);
+                break;
+
             // template without specific variables
             case RESET_PASSWORD:
-            case OAUTH2_USER_CONSENT:
             case BLOCKED_ACCOUNT:
             case COMPLETE_PROFILE:
             case WEBAUTHN_REGISTER:
@@ -302,6 +315,12 @@ public class PreviewBuilder {
                 break;
         }
         return variables;
+    }
+
+    private static Scope previewScope(String key, String description) {
+        final Scope scope = new Scope(key);
+        scope.setDescription(description);
+        return scope;
     }
 
     private UserProperties generateFakeUser() {

@@ -232,6 +232,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isDefaultScope());
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScopeApproval() == 42);
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScope().equals("scopename"));
+        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isRequiredScope());
         testObserver.assertValue(a -> a.getMetadata() != null);
         testObserver.assertValue(a -> a.getMetadata().containsKey("key1"));
         testObserver.assertValue(a -> a.getSettings() != null && a.getSettings().getAccount() != null );
@@ -301,6 +302,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         scopeSettings.setScope("scopename");
         scopeSettings.setDefaultScope(true);
         scopeSettings.setScopeApproval(42);
+        scopeSettings.setRequiredScope(true);
         oauth.setScopeSettings(List.of(scopeSettings));
         TokenExchangeOAuthSettings teSettings = new TokenExchangeOAuthSettings();
         teSettings.setInherited(false);

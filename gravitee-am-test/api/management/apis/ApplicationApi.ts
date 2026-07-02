@@ -921,7 +921,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified application or APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
    * Create or update list of flows
    */
   async defineAppFlowsRaw(
@@ -996,7 +996,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified application or APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
    * Create or update list of flows
    */
   async defineAppFlows(
@@ -2105,7 +2105,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+   * User must have the APPLICATION_FLOW[LIST] permission on the specified application or APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the application, domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
    * List registered flows for an application
    */
   async listAppFlowsRaw(
@@ -2170,7 +2170,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+   * User must have the APPLICATION_FLOW[LIST] permission on the specified application or APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the application, domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
    * List registered flows for an application
    */
   async listAppFlows(

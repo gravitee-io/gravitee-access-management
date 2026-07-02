@@ -790,6 +790,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationScopeSettings.setScope(other.getScope());
         applicationScopeSettings.setScopeApproval(other.getScopeApproval());
         applicationScopeSettings.setDefaultScope(other.isDefaultScope());
+        applicationScopeSettings.setRequiredScope(other.isRequiredScope());
         return applicationScopeSettings;
     }
 
@@ -798,6 +799,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationScopeSettingsMongo.setScope(other.getScope());
         applicationScopeSettingsMongo.setScopeApproval(other.getScopeApproval());
         applicationScopeSettingsMongo.setDefaultScope(other.isDefaultScope());
+        applicationScopeSettingsMongo.setRequiredScope(other.isRequiredScope());
         return applicationScopeSettingsMongo;
     }
 

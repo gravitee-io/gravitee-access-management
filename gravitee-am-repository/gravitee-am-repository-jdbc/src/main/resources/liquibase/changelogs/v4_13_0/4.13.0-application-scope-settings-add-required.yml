@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-ApplicationScopeSettings-AddRequired
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: application_scope_settings
+            columns:
+              - column: { name: is_required, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }

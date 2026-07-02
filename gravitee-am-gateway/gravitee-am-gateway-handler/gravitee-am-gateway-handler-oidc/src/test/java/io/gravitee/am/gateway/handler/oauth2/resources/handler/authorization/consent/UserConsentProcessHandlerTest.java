@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -98,7 +101,14 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
 
         router.route(HttpMethod.POST, "/oauth/consent")
                 .handler(new UserConsentProcessHandler(userConsentService, domain))
-                .handler(rc -> rc.response().setStatusCode(200).end());
+                .handler(rc -> rc.response().setStatusCode(200).end())
+                .failureHandler(rc -> {
+                    if (rc.failure() instanceof OAuth2Exception oAuth2Exception) {
+                        rc.response().setStatusCode(oAuth2Exception.getHttpStatusCode()).end(oAuth2Exception.getOAuth2ErrorCode());
+                    } else {
+                        rc.response().setStatusCode(500).end();
+                    }
+                });
     }
 
     private List<ScopeApproval> captureSavedApprovals() {
@@ -214,6 +224,75 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
         List<ScopeApproval> approvals = captureSavedApprovals();
         assertEquals(Set.of("read"), approvedScopes(approvals));
         assertEquals(Set.of("write"), deniedScopes(approvals));
+    }
+
+    @Test
+    public void shouldApproveRequiredScope_whenSubmittedTrue() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "admin")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "scope.read=true&scope.admin=true&user_oauth_approval=true"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        List<ScopeApproval> approvals = captureSavedApprovals();
+        assertEquals(Set.of("read", "admin"), approvedScopes(approvals));
+        assertTrue(deniedScopes(approvals).isEmpty());
+        assertEquals(Set.of("read", "admin"), authorizationRequest.getScopes());
+    }
+
+    @Test
+    public void shouldRejectWithAccessDenied_whenRequiredScopeIsMissing() throws Exception {
+        // a presented required scope with no submitted value means it was not shown/approved
+        // (rendering issue or tampering): consent must not be persisted
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "admin")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "scope.read=true&user_oauth_approval=true"),
+                403, "Forbidden", "access_denied");
+
+        verify(userConsentService, never()).saveConsent(any(), anyList(), any());
+        assertFalse(authorizationRequest.isApproved());
+    }
+
+    @Test
+    public void shouldRejectWithAccessDenied_whenRequiredScopeIsSubmittedFalse() throws Exception {
+        // a tampered payload sets the required scope to false
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "admin")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "scope.read=true&scope.admin=false&user_oauth_approval=true"),
+                403, "Forbidden", "access_denied");
+
+        verify(userConsentService, never()).saveConsent(any(), anyList(), any());
+    }
+
+    @Test
+    public void shouldDenyRequiredScope_whenUserRejectsOverall() throws Exception {
+        // the required-scope check is skipped on an outright rejection: everything is denied, no access_denied
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "admin")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "user_oauth_approval=false"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        List<ScopeApproval> approvals = captureSavedApprovals();
+        assertTrue(approvedScopes(approvals).isEmpty());
+        assertEquals(Set.of("read", "admin"), deniedScopes(approvals));
+        assertFalse(authorizationRequest.isApproved());
+    }
+
+    private static ApplicationScopeSettings requiredScopeSetting(String scope) {
+        ApplicationScopeSettings settings = new ApplicationScopeSettings(scope);
+        settings.setRequiredScope(true);
+        return settings;
     }
 
     private void writeForm(io.vertx.rxjava3.core.http.HttpClientRequest req, String body) {

@@ -30,6 +30,10 @@ public class ApplicationScopeSettingsMongo {
      * Scope approval duration times
      */
     private Integer scopeApproval;
+    /**
+     * True if the scope is required: it cannot be deselected by the user during consent.
+     */
+    private boolean requiredScope;
 
     public String getScope() {
         return scope;
@@ -53,5 +57,13 @@ public class ApplicationScopeSettingsMongo {
 
     public void setScopeApproval(Integer scopeApproval) {
         this.scopeApproval = scopeApproval;
+    }
+
+    public boolean isRequiredScope() {
+        return requiredScope;
+    }
+
+    public void setRequiredScope(boolean requiredScope) {
+        this.requiredScope = requiredScope;
     }
 }

@@ -640,11 +640,12 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         final List<ApplicationScopeSettings> scopeSettings = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getScopeSettings).orElse(Collections.emptyList());
         if (scopeSettings != null && !scopeSettings.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(scopeSettings).concatMap(value -> {
-                String INSERT_STMT = "INSERT INTO application_scope_settings(application_id, scope, is_default, scope_approval) VALUES (:app, :scope, :default, :approval)";
+                String INSERT_STMT = "INSERT INTO application_scope_settings(application_id, scope, is_default, scope_approval, is_required) VALUES (:app, :scope, :default, :approval, :required)";
                 DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
-                        .bind("default", value.isDefaultScope());
+                        .bind("default", value.isDefaultScope())
+                        .bind("required", value.isRequiredScope());
                 sql = value.getScope() == null ? sql.bindNull("scope", String.class) : sql.bind("scope", value.getScope());
                 sql = value.getScopeApproval() == null ? sql.bindNull("approval", Integer.class) : sql.bind("approval", value.getScopeApproval());
                 return sql.fetch().rowsUpdated();
