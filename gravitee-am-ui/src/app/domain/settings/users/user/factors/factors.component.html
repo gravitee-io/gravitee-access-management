@@ -36,6 +36,11 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
+      <ngx-datatable-column name="Target" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.target }}
+        </ng-template>
+      </ngx-datatable-column>
       <ngx-datatable-column name="Last update" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.updatedAt | humanDate }}
