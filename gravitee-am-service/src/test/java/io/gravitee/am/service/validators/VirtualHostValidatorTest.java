@@ -265,6 +265,24 @@ public class VirtualHostValidatorTest {
     }
 
     @Test
+    public void validateDomainVhosts_pathOverlapWithDifferentHostCase() {
+
+        Domain domain = getValidDomain();
+        domain.setVhostMode(true);
+
+        Domain otherDomain = getValidDomain();
+        otherDomain.setId("otherDomain");
+        otherDomain.setVhostMode(true);
+        otherDomain.getVhosts().get(0).setHost("VALID.HOST.GRAVITEE.IO");
+        otherDomain.getVhosts().get(0).setPath("/test/subPath");
+
+        List<Domain> otherDomains = new ArrayList<>();
+        otherDomains.add(otherDomain);
+
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
+    }
+
+    @Test
     public void validateDomainVhosts_pathIsOverlapped() {
 
         Domain domain = getValidDomain();
