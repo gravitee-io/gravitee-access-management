@@ -12997,6 +12997,8 @@ components:
       properties:
         defaultScope:
           type: boolean
+        requiredScope:
+          type: boolean
         scope:
           type: string
         scopeApproval:

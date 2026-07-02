@@ -37,6 +37,7 @@ export class ScopesComponent implements OnInit {
   @Output() formChanged = new EventEmitter<boolean>();
 
   private defaultScopes: string[];
+  private requiredScopes: string[];
   selectedScopes: any[];
   selectedScopeApprovals: any;
 
@@ -55,6 +56,7 @@ export class ScopesComponent implements OnInit {
     // Merge with existing scope
     this.selectedScopes = [];
     this.defaultScopes = [];
+    this.requiredScopes = [];
     this.selectedScopeApprovals = {};
     if (this.oauthSettings.scopeSettings) {
       this.oauthSettings.scopeSettings.forEach((scopeSettings) => {
@@ -63,6 +65,9 @@ export class ScopesComponent implements OnInit {
           this.selectedScopes.push(definedScope);
           if (scopeSettings.defaultScope) {
             this.defaultScopes.push(scopeSettings.scope);
+          }
+          if (scopeSettings.requiredScope) {
+            this.requiredScopes.push(scopeSettings.scope);
           }
           if (scopeSettings.scopeApproval) {
             this.selectedScopeApprovals[scopeSettings.scope] = {
@@ -107,6 +112,10 @@ export class ScopesComponent implements OnInit {
     );
     this.selectedScopes = [...this.selectedScopes];
     delete this.selectedScopeApprovals[scopeKey];
+    const requiredIndex = this.requiredScopes.indexOf(scopeKey);
+    if (requiredIndex !== -1) {
+      this.requiredScopes.splice(requiredIndex, 1);
+    }
     this.modelChanged();
   }
 
@@ -154,6 +163,19 @@ export class ScopesComponent implements OnInit {
     return this.defaultScopes.indexOf(scope) !== -1;
   }
 
+  toggleRequiredScope(event, scope) {
+    if (event.checked) {
+      this.requiredScopes.push(scope);
+    } else {
+      this.requiredScopes.splice(this.requiredScopes.indexOf(scope), 1);
+    }
+    this.modelChanged();
+  }
+
+  isRequiredScope(scope) {
+    return this.requiredScopes.indexOf(scope) !== -1;
+  }
+
   onExpiresInEvent(event, scope) {
     this.selectedScopeApprovals[scope] = this.selectedScopeApprovals[scope] || {};
     this.selectedScopeApprovals[scope].expiresIn = event.target.value;
@@ -184,6 +206,7 @@ export class ScopesComponent implements OnInit {
       const setting = {
         scope: s.key,
         defaultScope: this.defaultScopes.indexOf(s.key) !== -1,
+        requiredScope: this.requiredScopes.indexOf(s.key) !== -1,
       };
 
       const approval = this.selectedScopeApprovals[s.key];

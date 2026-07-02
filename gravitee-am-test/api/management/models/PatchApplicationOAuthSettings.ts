@@ -205,6 +205,12 @@ export interface PatchApplicationOAuthSettings {
   logoUri?: string;
   /**
    *
+   * @type {boolean}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  optInScopeSelection?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof PatchApplicationOAuthSettings
    */
@@ -459,6 +465,7 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
     jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
     logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
+    optInScopeSelection: json['optInScopeSelection'] == null ? undefined : json['optInScopeSelection'],
     policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
@@ -538,6 +545,7 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     jwks: JWKSetToJSON(value['jwks']),
     jwksUri: value['jwksUri'],
     logoUri: value['logoUri'],
+    optInScopeSelection: value['optInScopeSelection'],
     policyUri: value['policyUri'],
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUris: value['redirectUris'],

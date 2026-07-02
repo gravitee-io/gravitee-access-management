@@ -38,6 +38,7 @@ export interface OAuth2Fixture extends Fixture {
   oidc: DomainOidcConfig;
   application: Application;
   anotherApplication: Application;
+  requiredScopeApplication?: Application;
   scope: Scope;
   shortLivingScope: Scope;
   users: { username: string; password: string }[];
@@ -47,6 +48,8 @@ export interface OAuth2ApplicationSettings {
   type: 'WEB' | 'SERVICE';
   withOpenidScope: boolean;
   grantTypes: string[];
+  // When true, provisions an extra application whose default scope is also marked as required
+  withRequiredScopeApp?: boolean;
 }
 
 export const setupFixture = async (appSettings: OAuth2ApplicationSettings): Promise<OAuth2Fixture> => {
@@ -73,6 +76,19 @@ export const setupFixture = async (appSettings: OAuth2ApplicationSettings): Prom
 
   const app = await createApp(domain, accessToken, appSettings.type, scopeSettings, appSettings.grantTypes, identityProviders);
   const anotherApp = await createApp(domain, accessToken, appSettings.type, scopeSettings, appSettings.grantTypes, identityProviders);
+  const requiredScopeApp = appSettings.withRequiredScopeApp
+    ? await createApp(
+        domain,
+        accessToken,
+        appSettings.type,
+        [
+          { scope: scope.key, defaultScope: true, requiredScope: true },
+          { scope: shortLivingScope.key, defaultScope: false },
+        ],
+        appSettings.grantTypes,
+        identityProviders,
+      )
+    : undefined;
 
   await startDomain(domain.id, accessToken);
 
@@ -83,6 +99,7 @@ export const setupFixture = async (appSettings: OAuth2ApplicationSettings): Prom
     oidc: domainWithOidc.oidcConfig,
     application: app,
     anotherApplication: anotherApp,
+    requiredScopeApplication: requiredScopeApp,
     users: idp.users,
     scope: scope,
     shortLivingScope: shortLivingScope,

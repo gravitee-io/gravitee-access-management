@@ -18,8 +18,10 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.co
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.RequiredScopeUtils;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
@@ -98,13 +100,23 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         final MultiMap params = request.formAttributes();
         final boolean userRejected = "false".equalsIgnoreCase(params.get(USER_OAUTH_APPROVAL));
 
+        // Unless the user rejected the request outright, every required scope that is being presented must
+        // come back explicitly approved in the submission. Otherwise, bounce back to login with access_denied.
+        if (!userRejected) {
+            final Set<String> requiredScopes = RequiredScopeUtils.requiredScopeKeys(client);
+            for (String presentedScope : presentedConsent) {
+                if (requiredScopes.contains(presentedScope) && !isApproved(params.get(SCOPE_PREFIX + presentedScope))) {
+                    routingContext.fail(new AccessDeniedException("Consent could not be verified"));
+                    return;
+                }
+            }
+        }
+
         // derive each scope's outcome from its own submitted field value
         Set<String> approvedConsent = new HashSet<>();
         List<ScopeApproval> approvals = new ArrayList<>();
         for (String presentedScope : presentedConsent) {
-            String value = userRejected ? "false" : params.get(SCOPE_PREFIX + presentedScope);
-            value = value == null ? "" : value.toLowerCase();
-            if ("true".equals(value) || value.startsWith("approve")) {
+            if (!userRejected && isApproved(params.get(SCOPE_PREFIX + presentedScope))) {
                 approvedConsent.add(presentedScope);
                 approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getFullId(), client.getClientId(), domain.getId(),
                         presentedScope, ScopeApproval.ApprovalStatus.APPROVED));
@@ -141,6 +153,14 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
                         approvals1 -> handler.handle(Future.succeededFuture(approvals1)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
+    }
+
+    private static boolean isApproved(String submittedValue) {
+        if (submittedValue == null) {
+            return false;
+        }
+        final String normalized = submittedValue.toLowerCase();
+        return "true".equals(normalized) || normalized.startsWith("approve");
     }
 
     private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(RoutingContext context,

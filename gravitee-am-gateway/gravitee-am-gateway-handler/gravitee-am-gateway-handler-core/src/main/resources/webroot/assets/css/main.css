@@ -441,6 +441,12 @@ div.section > form {
     background: var(--primary-background-color, #DA3B00);
 }
 
+.scope-consent-main-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .scope-consent-table {
     width: 100%;
     border: 2px solid var(--scope-consent-border-color, #ededed);
@@ -469,8 +475,19 @@ div.section > form {
     white-space: nowrap;
 }
 
+.scope-consent-table .scope-consent-cell-name {
+    padding-left: 0;
+}
+
+.scope-consent-name-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
 .scope-consent-cell-description {
-    width: 66%;
+    width: 60%;
     color: var(--scope-consent-description-color, #6b6b6b);
 }
 
@@ -478,13 +495,68 @@ div.section > form {
     width: 18px;
     height: 18px;
     margin: 0;
+    top: 2px;
+    position: relative;
     accent-color: var(--primary-background-color);
     cursor: pointer;
+}
+
+.scope-consent-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .scope-consent-cell-name label {
     font-weight: 600;
     cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.scope-consent-cell-name label.grey {
+    cursor: not-allowed;
+}
+
+.scope-consent-required-chip {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: var(--scope-consent-description-color, #6b6b6b);
+    background: var(--item-background-color, #f0f0f0);
+    border: 1px solid var(--scope-consent-border-color, #ededed);
+    border-radius: 999px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.scope-consent-required-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scope-consent-required-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--scope-consent-border-color, #ededed);
+    border-radius: 8px;
+    background: var(--item-background-color, #f7f7f7);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.scope-consent-required-header .icons {
+    font-size: 20px;
+    color: var(--scope-consent-description-color, #6b6b6b);
+}
+
+.scope-consent-required-section.is-collapsed .scope-consent-table {
+    display: none;
 }
 
 .scope-consent-buttons {

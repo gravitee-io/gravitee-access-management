@@ -32,7 +32,12 @@ async function approveConsent(page: Page): Promise<void> {
     const checkboxes = page.locator(CONSENT_SCOPE_CHECKBOX_SELECTOR);
     const count = await checkboxes.count();
     for (let i = 0; i < count; i++) {
-      await checkboxes.nth(i).check();
+      const checkbox = checkboxes.nth(i);
+      // Required scopes render as checked+disabled; they can't (and needn't) be toggled.
+      if (await checkbox.isDisabled()) {
+        continue;
+      }
+      await checkbox.check();
     }
   }
   await page.locator(CONSENT_ALLOW_SELECTOR).click();

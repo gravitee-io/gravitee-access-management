@@ -1000,7 +1000,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+   * User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the resource, domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
    * List registered flows for a protected resource
    */
   async listProtectedResourceFlowsRaw(
@@ -1065,7 +1065,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+   * User must have the PROTECTED_RESOURCE_FLOW[LIST] permission on the specified resource or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified domain or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified environment or PROTECTED_RESOURCE_FLOW[LIST] permission on the specified organization. Except if user has PROTECTED_RESOURCE_FLOW[READ] permission on the resource, domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
    * List registered flows for a protected resource
    */
   async listProtectedResourceFlows(

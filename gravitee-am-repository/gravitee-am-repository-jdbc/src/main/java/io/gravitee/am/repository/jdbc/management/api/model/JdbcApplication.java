@@ -342,6 +342,8 @@ public class JdbcApplication {
         private boolean defaultScope;
         @Column("scope_approval")
         private Integer scopeApproval;
+        @Column("is_required")
+        private boolean requiredScope;
 
         public String getApplicationId() {
             return applicationId;
@@ -373,6 +375,14 @@ public class JdbcApplication {
 
         public void setScopeApproval(Integer scopeApproval) {
             this.scopeApproval = scopeApproval;
+        }
+
+        public boolean isRequiredScope() {
+            return requiredScope;
+        }
+
+        public void setRequiredScope(boolean requiredScope) {
+            this.requiredScope = requiredScope;
         }
     }
 

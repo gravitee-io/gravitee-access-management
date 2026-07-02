@@ -253,6 +253,12 @@ export interface ApplicationOAuthSettings {
   logoUri?: string;
   /**
    *
+   * @type {boolean}
+   * @memberof ApplicationOAuthSettings
+   */
+  optInScopeSelection?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ApplicationOAuthSettings
    */
@@ -534,6 +540,7 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
     jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
     logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
+    optInScopeSelection: json['optInScopeSelection'] == null ? undefined : json['optInScopeSelection'],
     policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
@@ -621,6 +628,7 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     jwks: JWKSetToJSON(value['jwks']),
     jwksUri: value['jwksUri'],
     logoUri: value['logoUri'],
+    optInScopeSelection: value['optInScopeSelection'],
     policyUri: value['policyUri'],
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUris: value['redirectUris'],

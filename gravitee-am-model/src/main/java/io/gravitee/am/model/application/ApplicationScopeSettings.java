@@ -29,6 +29,11 @@ public class ApplicationScopeSettings {
      * Scope approval duration times
      */
     private Integer scopeApproval;
+    /**
+     * True if the scope is required: it cannot be deselected by the user during consent
+     * and has to be granted to allow the authorization request.
+     */
+    private boolean requiredScope;
 
     public ApplicationScopeSettings() {
     }
@@ -41,6 +46,7 @@ public class ApplicationScopeSettings {
         this.scope = other.scope;
         this.defaultScope = other.defaultScope;
         this.scopeApproval = other.scopeApproval;
+        this.requiredScope = other.requiredScope;
     }
 
     public String getScope() {
@@ -65,5 +71,13 @@ public class ApplicationScopeSettings {
 
     public void setScopeApproval(Integer scopeApproval) {
         this.scopeApproval = scopeApproval;
+    }
+
+    public boolean isRequiredScope() {
+        return requiredScope;
+    }
+
+    public void setRequiredScope(boolean requiredScope) {
+        this.requiredScope = requiredScope;
     }
 }

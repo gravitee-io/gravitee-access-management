@@ -40,6 +40,12 @@ export interface ApplicationScopeSettings {
   defaultScope?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof ApplicationScopeSettings
+   */
+  requiredScope?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof ApplicationScopeSettings
    */
@@ -69,6 +75,7 @@ export function ApplicationScopeSettingsFromJSONTyped(json: any, ignoreDiscrimin
   }
   return {
     defaultScope: json['defaultScope'] == null ? undefined : json['defaultScope'],
+    requiredScope: json['requiredScope'] == null ? undefined : json['requiredScope'],
     scope: json['scope'] == null ? undefined : json['scope'],
     scopeApproval: json['scopeApproval'] == null ? undefined : json['scopeApproval'],
   };
@@ -85,6 +92,7 @@ export function ApplicationScopeSettingsToJSONTyped(value?: ApplicationScopeSett
 
   return {
     defaultScope: value['defaultScope'],
+    requiredScope: value['requiredScope'],
     scope: value['scope'],
     scopeApproval: value['scopeApproval'],
   };

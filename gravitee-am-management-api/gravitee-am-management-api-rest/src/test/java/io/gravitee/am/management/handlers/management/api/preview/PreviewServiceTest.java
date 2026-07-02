@@ -176,6 +176,29 @@ public class PreviewServiceTest {
     }
 
     @Test
+    public void shouldRenderConsentForm_withSampleScopes() {
+        when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
+        when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.empty());
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
+        final PreviewRequest previewRequest = new PreviewRequest();
+        previewRequest.setContent(
+                "<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><body>" +
+                        "<span class=\"required-count\" th:text=\"${#lists.size(requiredScopes)}\"></span>" +
+                        "<span class=\"scope\" th:each=\"scope : ${scopes}\" th:text=\"${scope.key}\"></span>" +
+                        "</body></html>");
+        previewRequest.setTemplate(Template.OAUTH2_USER_CONSENT.template());
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH, BASE_URL).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(response -> response.getContent() != null && response.getContent().contains("profile"));
+        observer.assertValue(response -> response.getContent() != null && response.getContent().contains("read:orders"));
+        observer.assertValue(response -> response.getContent() != null && response.getContent().contains("write:orders"));
+        observer.assertValue(response -> response.getContent() != null && response.getContent().contains(">1<"));
+    }
+
+    @Test
     public void shouldNotRenderDomainForm_missingValues() {
         when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
         when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.empty());

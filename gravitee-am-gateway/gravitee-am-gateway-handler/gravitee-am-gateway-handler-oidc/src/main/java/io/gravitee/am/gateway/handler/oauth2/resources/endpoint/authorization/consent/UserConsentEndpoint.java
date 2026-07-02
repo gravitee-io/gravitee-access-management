@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.RequiredScopeUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oauth2.Scope;
@@ -35,6 +36,7 @@ import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -74,7 +76,15 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
                 return;
             }
             List<Scope> requestedScopes = h.result();
-            routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, requestedScopes);
+            Set<String> requiredScopeKeys = RequiredScopeUtils.requiredScopeKeys(client);
+            List<Scope> requiredScopes = requestedScopes.stream().filter(scope -> requiredScopeKeys.contains(scope.getKey())).collect(Collectors.toList());
+            List<Scope> optionalScopes = requestedScopes.stream().filter(scope -> !requiredScopeKeys.contains(scope.getKey())).collect(Collectors.toList());
+            // required scopes are always displayed first
+            List<Scope> orderedScopes = new ArrayList<>(requiredScopes);
+            orderedScopes.addAll(optionalScopes);
+            routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, orderedScopes);
+            routingContext.put(ConstantKeys.REQUIRED_SCOPES_CONTEXT_KEY, requiredScopes);
+            routingContext.put(ConstantKeys.OPTIONAL_SCOPES_CONTEXT_KEY, optionalScopes);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.PRESELECT_ALL_SCOPES, client == null || !client.isOptInScopeSelection());
             CimdConsentPageAttributes.putIfApplicable(routingContext, domain, client);
