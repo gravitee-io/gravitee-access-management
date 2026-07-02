@@ -146,7 +146,7 @@ public class RegisterConfirmationEndpointTest {
         PasswordPolicy pp = new PasswordPolicy();
         pp.setMinLength(5);
         pp.setMaxLength(15);
-        Mockito.when(passwordPolicyManager.getPolicy(Mockito.any(), Mockito.any())).thenReturn(Optional.of(pp));
+        Mockito.when(passwordPolicyManager.getPolicy(Mockito.nullable(IdentityProvider.class))).thenReturn(Optional.of(pp));
 
         var routingContext = Mockito.spy(ctx);
         final Client client = new Client();

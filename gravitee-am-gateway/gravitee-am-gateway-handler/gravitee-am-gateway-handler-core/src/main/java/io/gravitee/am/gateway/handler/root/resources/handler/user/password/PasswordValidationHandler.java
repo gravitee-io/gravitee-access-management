@@ -20,7 +20,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
@@ -50,14 +49,13 @@ public class PasswordValidationHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         var accessToken = context.request().getFormAttribute(ConstantKeys.TOKEN_CONTEXT_KEY);
         var password = context.request().getFormAttribute(ConstantKeys.PASSWORD_PARAM_KEY);
-        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         userService.verifyToken(accessToken)
                 .switchIfEmpty(Single.error(() -> new InvalidRequestException("No user found for given access_token")))
                 .map(userToken -> {
                     final var user = userToken.getUser();
                     final var provider = identityProviderManager.getIdentityProvider(user.getSource());
-                    return this.passwordService.evaluate(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
+                    return this.passwordService.evaluate(password, passwordPolicyManager.getPolicy(provider).orElse(null), user);
 
                 })
                 .doOnError(throwable -> context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500, throwable))

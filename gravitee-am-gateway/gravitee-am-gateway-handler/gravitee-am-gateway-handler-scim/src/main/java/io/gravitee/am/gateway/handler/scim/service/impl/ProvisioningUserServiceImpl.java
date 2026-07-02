@@ -599,7 +599,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         if (isNull(password)) {
             return false;
-        } else if (!passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user)) {
+        } else if (!passwordService.isValid(password, passwordPolicyManager.getPolicy(provider).orElse(null), user)) {
             Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(eventType).user(user).throwable(exception));
             return true;
@@ -668,7 +668,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         return passwordHistoryService
-                .addPasswordToHistory(domain, user, rawPassword, principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
+                .addPasswordToHistory(domain, user, rawPassword, principal, passwordPolicyManager.getPolicy(provider).orElse(null));
     }
 
     private io.gravitee.am.model.User convertUserToUpdate(io.gravitee.am.model.User existingUser, User scimUser) {

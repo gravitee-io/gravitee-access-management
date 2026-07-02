@@ -82,11 +82,6 @@ export const test = base.extend<{ forgotPasswordBundle: ForgotPasswordGatewayBun
             autoLoginAfterResetPassword: true,
             redirectUriAfterResetPassword: REDIRECT_URI,
           },
-          passwordSettings: {
-            inherited: false,
-            minLength: 5,
-            maxLength: 24,
-          },
           advanced: { skipConsent: true },
         },
       }),

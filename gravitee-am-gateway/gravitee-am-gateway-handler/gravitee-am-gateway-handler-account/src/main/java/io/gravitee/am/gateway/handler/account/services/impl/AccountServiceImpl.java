@@ -214,7 +214,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal, Optional<String> olPassword) {
         return Single.defer(() -> {
             final var idp = identityProviderManager.getIdentityProvider(user.getSource());
-            final var passwordPolicy = passwordPolicyManager.getPolicy(client, idp).orElse(null);
+            final var passwordPolicy = passwordPolicyManager.getPolicy(idp).orElse(null);
             try {
                 passwordService.validate(password, passwordPolicy, user);
             } catch (InvalidPasswordException e){

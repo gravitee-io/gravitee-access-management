@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Application implements Resource, PasswordSettingsAware, Notifiable {
+public class Application implements Resource, Notifiable {
 
     /**
      * Application technical id
@@ -169,11 +169,6 @@ public class Application implements Resource, PasswordSettingsAware, Notifiable 
         client.setSecretSettings(this.secretSettings);
         client.setClientSecrets(this.getSecrets());
         return client;
-    }
-
-    @Override
-    public PasswordSettings getPasswordSettings() {
-        return Optional.ofNullable(settings).map(ApplicationSettings::getPasswordSettings).orElse(null);
     }
 
     public String clientId(){

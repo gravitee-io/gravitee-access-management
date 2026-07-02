@@ -70,7 +70,7 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
                 .orElseGet(() -> UserRegistrationIdpResolver.getRegistrationIdp(domain, client));
         IdentityProvider provider = identityProviderManager.getIdentityProvider(source);
         try {
-            passwordService.validate(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
+            passwordService.validate(password, passwordPolicyManager.getPolicy(provider).orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));

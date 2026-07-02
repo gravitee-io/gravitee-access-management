@@ -109,7 +109,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         }
         IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(registrationIdp);
 
-        passwordPolicyManager.getPolicy(client, identityProvider)
+        passwordPolicyManager.getPolicy(identityProvider)
                 .ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         // check if user has already completed its registration

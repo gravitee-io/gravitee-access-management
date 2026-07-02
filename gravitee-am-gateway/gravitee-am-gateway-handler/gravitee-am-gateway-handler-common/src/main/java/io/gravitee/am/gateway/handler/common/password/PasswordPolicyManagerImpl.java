@@ -22,10 +22,8 @@ import io.gravitee.am.common.event.PasswordPolicyEvent;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -40,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.util.Optional.ofNullable;
-import static java.util.function.Predicate.not;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -131,16 +128,11 @@ public class PasswordPolicyManagerImpl extends AbstractService implements Passwo
     }
 
     @Override
-    public Optional<PasswordPolicy> getPolicy(Client client, IdentityProvider identityProvider) {
-        Optional<PasswordPolicy> clientPasswordPolicy = ofNullable(client)
-                .map(Client::getPasswordSettings)
-                .filter(not(PasswordSettings::isInherited))
-                .map(PasswordSettings::toPasswordPolicy);
+    public Optional<PasswordPolicy> getPolicy(IdentityProvider identityProvider) {
         Optional<PasswordPolicy> idpPasswordPolicy = ofNullable(identityProvider)
                 .map(IdentityProvider::getPasswordPolicy)
                 .map(this.policies::get);
-            return clientPasswordPolicy
-                .or(() -> idpPasswordPolicy)
+        return idpPasswordPolicy
                 .or(this::getDefaultPolicy);
     }
 }

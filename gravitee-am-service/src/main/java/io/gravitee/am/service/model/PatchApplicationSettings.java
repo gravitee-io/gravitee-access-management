@@ -50,7 +50,6 @@ public class PatchApplicationSettings {
     private Optional<PatchApplicationOAuthSettings> oauth;
     private Optional<PatchApplicationSAMLSettings> saml;
     private Optional<PatchApplicationAdvancedSettings> advanced;
-    private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<PatchMFASettings> mfa;
     private Optional<CookieSettings> cookieSettings;
     private Optional<RiskAssessmentSettings> riskAssessment;
@@ -73,9 +72,8 @@ public class PatchApplicationSettings {
         if (this.getAdvanced() != null && this.getAdvanced().isPresent()) {
             toPatch.setAdvanced(this.getAdvanced().get().patch(toPatch.getAdvanced()));
         }
-        if (this.getPasswordSettings() != null && this.getPasswordSettings().isPresent()) {
-            toPatch.setPasswordSettings(this.getPasswordSettings().get().patch(toPatch.getPasswordSettings()));
-        }
+        // Application-level password settings are no longer supported; any incoming
+        // passwordSettings value is intentionally ignored (kept only for API compatibility).
         if (this.getMfa() != null && this.getMfa().isPresent()) {
             toPatch.setMfa(this.getMfa().get().patch(toPatch.getMfa()));
         }

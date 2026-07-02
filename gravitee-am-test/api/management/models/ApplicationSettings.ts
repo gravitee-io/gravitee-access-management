@@ -74,13 +74,6 @@ import {
   SecretExpirationSettingsToJSON,
   SecretExpirationSettingsToJSONTyped,
 } from './SecretExpirationSettings';
-import type { PasswordSettings } from './PasswordSettings';
-import {
-  PasswordSettingsFromJSON,
-  PasswordSettingsFromJSONTyped,
-  PasswordSettingsToJSON,
-  PasswordSettingsToJSONTyped,
-} from './PasswordSettings';
 import type { SpiffeApplicationSettings } from './SpiffeApplicationSettings';
 import {
   SpiffeApplicationSettingsFromJSON,
@@ -133,12 +126,6 @@ export interface ApplicationSettings {
   oauth?: ApplicationOAuthSettings;
   /**
    *
-   * @type {PasswordSettings}
-   * @memberof ApplicationSettings
-   */
-  passwordSettings?: PasswordSettings;
-  /**
-   *
    * @type {RiskAssessmentSettings}
    * @memberof ApplicationSettings
    */
@@ -185,7 +172,6 @@ export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator:
     login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
     mfa: json['mfa'] == null ? undefined : MFASettingsFromJSON(json['mfa']),
     oauth: json['oauth'] == null ? undefined : ApplicationOAuthSettingsFromJSON(json['oauth']),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
     riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
     saml: json['saml'] == null ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
@@ -211,7 +197,6 @@ export function ApplicationSettingsToJSONTyped(value?: ApplicationSettings | nul
     login: LoginSettingsToJSON(value['login']),
     mfa: MFASettingsToJSON(value['mfa']),
     oauth: ApplicationOAuthSettingsToJSON(value['oauth']),
-    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: ApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),

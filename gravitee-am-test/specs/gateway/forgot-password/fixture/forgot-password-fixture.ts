@@ -98,7 +98,6 @@ export const setupFixture = async (setting: DomainTestSettings, userProps: User)
               ],
             },
             account: setting.inherited ? {} : setting.settings.accountSettings,
-            passwordSettings: setting.inherited ? {} : setting.settings.passwordSettings,
           },
           identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
         },

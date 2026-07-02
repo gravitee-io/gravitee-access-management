@@ -32,7 +32,6 @@ public class ApplicationSettingsMongo {
     private AccountSettingsMongo account;
     private LoginSettingsMongo login;
     private ApplicationAdvancedSettingsMongo advanced;
-    private PasswordSettingsMongo passwordSettings;
     private MFASettingsMongo mfa;
     private CookieSettingsMongo cookieSettings;
     private RiskAssessmentSettingsMongo riskAssessment;

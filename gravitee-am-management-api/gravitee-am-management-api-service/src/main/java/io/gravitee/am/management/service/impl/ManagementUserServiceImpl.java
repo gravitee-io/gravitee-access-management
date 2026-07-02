@@ -247,7 +247,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                                 // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
                                                 // - in case of error, trace the event otherwise continue the creation process
                                                 final var identityProvider = identityProviderManager.getIdentityProvider(newUser.getSource());
-                                                return passwordPolicyService.retrievePasswordPolicy(transform, client, identityProvider.orElse(null))
+                                                return passwordPolicyService.retrievePasswordPolicy(transform, identityProvider.orElse(null))
                                                         .map(Optional::ofNullable)
                                                         .switchIfEmpty(Maybe.just(Optional.empty()))
                                                         .flatMapSingle(optPolicy -> ensurePasswordMatchesPolicy(newUser.getPassword(), transform, optPolicy))
@@ -444,7 +444,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                         .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
                                         .flatMap(userProvider -> {
                                             final var identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
-                                            return passwordPolicyService.retrievePasswordPolicy(user, client, identityProvider.orElse(null))
+                                            return passwordPolicyService.retrievePasswordPolicy(user, identityProvider.orElse(null))
                                                     .map(Optional::ofNullable)
                                                     .switchIfEmpty(Maybe.just(Optional.empty()))
                                                     .flatMap(optPolicy -> ensurePasswordMatchesPolicy(password, user, optPolicy)
@@ -732,7 +732,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createPasswordHistory(Domain domain, Application client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, IdentityProvider provider) {
-        passwordPolicyService.retrievePasswordPolicy(user, client, provider)
+        passwordPolicyService.retrievePasswordPolicy(user, provider)
                 .map(Optional::of)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(domain, user, rawPassword, principal, optPolicy.orElse(null)))

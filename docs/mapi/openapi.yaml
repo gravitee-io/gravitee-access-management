@@ -12693,8 +12693,6 @@ components:
             type: object
         name:
           type: string
-        passwordSettings:
-          $ref: "#/components/schemas/PasswordSettings"
         secretSettings:
           type: array
           items:
@@ -13026,8 +13024,6 @@ components:
           $ref: "#/components/schemas/MFASettings"
         oauth:
           $ref: "#/components/schemas/ApplicationOAuthSettings"
-        passwordSettings:
-          $ref: "#/components/schemas/PasswordSettings"
         riskAssessment:
           $ref: "#/components/schemas/RiskAssessmentSettings"
         saml:

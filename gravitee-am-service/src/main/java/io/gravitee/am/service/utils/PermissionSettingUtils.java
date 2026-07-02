@@ -120,7 +120,6 @@ public class PermissionSettingUtils {
         var account = settings.getAccount();
         var login = settings.getLogin();
         var advanced = settings.getAdvanced();
-        var passwordSettings = settings.getPasswordSettings();
         var mfa = settings.getMfa();
         var cookieSettings = settings.getCookieSettings();
         var riskAssessment = settings.getRiskAssessment();
@@ -128,7 +127,6 @@ public class PermissionSettingUtils {
         if (account != null && account.isPresent()
                 || login != null && login.isPresent()
                 || advanced != null && advanced.isPresent()
-                || passwordSettings != null && passwordSettings.isPresent()
                 || mfa != null && mfa.isPresent()
                 || cookieSettings != null && cookieSettings.isPresent()
                 || riskAssessment != null && riskAssessment.isPresent()

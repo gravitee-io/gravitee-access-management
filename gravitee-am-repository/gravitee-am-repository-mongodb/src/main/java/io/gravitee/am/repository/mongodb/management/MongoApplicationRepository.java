@@ -25,7 +25,6 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
@@ -67,7 +66,6 @@ import io.gravitee.am.repository.mongodb.management.internal.model.CookieSetting
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLAssertionAttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
@@ -513,7 +511,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
-        applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettingsMongo.setMfa(convert(other.getMfa()));
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
@@ -533,7 +530,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setAccount(convert(other.getAccount()));
         applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
-        applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettings.setMfa(convert(other.getMfa()));
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
@@ -819,14 +815,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private static LoginSettingsMongo convert(LoginSettings loginSettings) {
         return LoginSettingsMongo.convert(loginSettings);
-    }
-
-    private static PasswordSettings convert(PasswordSettingsMongo passwordSettingsMongo) {
-        return passwordSettingsMongo != null ? passwordSettingsMongo.convert() : null;
-    }
-
-    private static PasswordSettingsMongo convert(PasswordSettings passwordSettings) {
-        return PasswordSettingsMongo.convert(passwordSettings);
     }
 
     private static ApplicationAdvancedSettings convert(ApplicationAdvancedSettingsMongo other) {

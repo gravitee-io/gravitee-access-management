@@ -24,8 +24,6 @@ import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
@@ -63,7 +61,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  */
 @Builder
 @AllArgsConstructor
-public class Client implements Cloneable, Resource, PasswordSettingsAware {
+public class Client implements Cloneable, Resource {
 
     public static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     public static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
@@ -227,8 +225,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private LoginSettings loginSettings;
 
-    private PasswordSettings passwordSettings;
-
     private List<TokenClaim> tokenCustomClaims;
 
     private List<UserInfoClaim> userinfoCustomClaims;
@@ -380,7 +376,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
         this.accountSettings = other.accountSettings;
         this.loginSettings = other.loginSettings;
-        this.passwordSettings = other.passwordSettings;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.userinfoCustomClaims = other.userinfoCustomClaims != null ? new ArrayList<>(other.userinfoCustomClaims) : null;
         this.template = other.template;
@@ -908,14 +903,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.loginSettings = loginSettings;
     }
 
-    public PasswordSettings getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(PasswordSettings passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
     public List<TokenClaim> getTokenCustomClaims() {
         return tokenCustomClaims;
     }
@@ -1394,7 +1381,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setIdentityProviders(this.getIdentityProviders() != null ? new TreeSet<>(this.getIdentityProviders()) : null);
         clone.setFactorSettings(this.getFactorSettings());
         clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
-        Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));
         clone.setSecretSettings(this.getSecretSettings() != null ? new ArrayList<>(this.getSecretSettings()) : new ArrayList<>());
         clone.setClientSecrets(this.getClientSecrets() != null ? this.getClientSecrets().stream().map(ClientSecret::new).collect(Collectors.toList()) : new ArrayList<>());
         clone.setSecretExpirationSettings(this.getSecretExpirationSettings() != null ? new SecretExpirationSettings(this.getSecretExpirationSettings()) : null);

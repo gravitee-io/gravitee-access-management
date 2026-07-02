@@ -74,7 +74,7 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         // and the user is redirected to the resetPassword page to render a confirmation
         User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final var provider = user != null ? identityProviderManager.getIdentityProvider(user.getSource()) : null;
-        passwordPolicyManager.getPolicy(client, provider).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+        passwordPolicyManager.getPolicy(provider).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
