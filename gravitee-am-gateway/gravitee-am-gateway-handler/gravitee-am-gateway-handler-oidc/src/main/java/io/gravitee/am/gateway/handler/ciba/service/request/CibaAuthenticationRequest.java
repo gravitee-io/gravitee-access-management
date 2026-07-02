@@ -33,6 +33,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getRawClaim;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
@@ -57,6 +58,8 @@ public class CibaAuthenticationRequest extends OAuth2Request {
     Integer expiry;
     Integer nbf;
     User user;
+    /** RFC 9396 authorization_details — populated only when the domain flag is on (never by createFrom). */
+    List<Map<String, Object>> authorizationDetails;
 
     public static CibaAuthenticationRequest createFrom(RoutingContext context) {
         final HttpServerRequest request = context.request();

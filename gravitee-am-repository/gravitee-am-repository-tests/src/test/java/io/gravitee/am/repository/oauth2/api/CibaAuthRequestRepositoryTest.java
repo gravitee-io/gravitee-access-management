@@ -23,8 +23,13 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -184,6 +189,34 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldPersistAndReadAuthorizationDetails() {
+        CibaAuthRequest request = new CibaAuthRequest();
+        request.setId("ciba-rar-1");
+        request.setClientId("client-1");
+        request.setSubject("alice");
+        request.setStatus("ONGOING");
+        request.setScopes(Set.of("openid"));
+        request.setCreatedAt(new Date());
+        request.setLastAccessAt(new Date());
+        request.setExpireAt(new Date(System.currentTimeMillis() + 600_000));
+        request.setExternalTrxId("ciba-rar-trx-1");
+
+        Map<String, Object> detail = new HashMap<>();
+        detail.put("type", "fdx_v1.0");
+        detail.put("scope", List.of("ACCOUNT_DETAILED"));
+        request.setAuthorizationDetails(List.of(detail));
+
+        CibaAuthRequest created = repository.create(request).blockingGet();
+        assertNotNull(created.getAuthorizationDetails());
+
+        CibaAuthRequest found = repository.findById("ciba-rar-1").blockingGet();
+        assertNotNull(found.getAuthorizationDetails());
+        assertEquals(1, found.getAuthorizationDetails().size());
+        assertEquals("fdx_v1.0", found.getAuthorizationDetails().get(0).get("type"));
+        assertEquals(List.of("ACCOUNT_DETAILED"), found.getAuthorizationDetails().get(0).get("scope"));
     }
 
 

@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
 import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY;
@@ -113,6 +114,9 @@ public class CibaStrategy implements GrantStrategy {
                     .orElse(null);
         }
 
+        // Extract authorization_details from CIBA request (typed field, RFC 9396)
+        List<Map<String, Object>> authorizationDetails = cibaRequest.getAuthorizationDetails();
+
         // Store context attributes for EL templating
         request.getContext().put(AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, Collections.emptyMap());
         if (acrValues != null) {
@@ -123,6 +127,7 @@ public class CibaStrategy implements GrantStrategy {
         request.setScopes(cibaRequest.getScopes());
 
         List<String> finalAcrValues = acrValues;
+        List<Map<String, Object>> finalAuthorizationDetails = authorizationDetails;
 
         // Load the user
         return userAuthenticationManager.loadPreAuthenticatedUser(cibaRequest.getSubject(), request)
@@ -138,6 +143,7 @@ public class CibaStrategy implements GrantStrategy {
                             user,
                             authReqId,
                             finalAcrValues,
+                            finalAuthorizationDetails,
                             supportRefresh
                     );
                 });

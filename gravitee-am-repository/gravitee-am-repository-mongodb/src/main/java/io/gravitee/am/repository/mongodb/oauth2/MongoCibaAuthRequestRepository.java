@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -130,6 +131,10 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
             authReqMongo.setExternalInformation(new Document(authReq.getExternalInformation()));
         }
 
+        if (authReq.getAuthorizationDetails() != null) {
+            authReqMongo.setAuthorizationDetails(authReq.getAuthorizationDetails().stream().map(Document::new).toList());
+        }
+
         return authReqMongo;
     }
 
@@ -152,6 +157,11 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
 
         if (authReqMongo.getExternalInformation() != null) {
             authReq.setExternalInformation(new HashMap<>(authReqMongo.getExternalInformation()));
+        }
+
+        if (authReqMongo.getAuthorizationDetails() != null) {
+            authReq.setAuthorizationDetails(authReqMongo.getAuthorizationDetails().stream()
+                    .map(doc -> (Map<String, Object>) new HashMap<String, Object>(doc)).toList());
         }
 
         return authReq;

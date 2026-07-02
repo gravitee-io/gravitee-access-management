@@ -57,6 +57,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -962,6 +963,81 @@ public class TokenServiceImplTest {
         assertThat(auditMessage).contains("SUBJECT_TOKEN");
         assertThat(auditMessage).contains("subject-jti-789");
         assertThat(auditMessage).contains("SUBJECT_TOKEN_TYPE");
+    }
+
+    // ========== RAR authorization_details Tests ==========
+
+    @Test
+    public void emitsAuthorizationDetails_asClaimAndResponseMember_whenPresent() {
+        // Arrange: request with authorization_details set (RFC 9396)
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("rar-client");
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+        request.setAuthorizationDetails(List.of(Map.of("type", "fdx_v1.0")));
+
+        Client client = createClient("rar-client");
+        User user = createUser("user-rar");
+        setupCommonMocks(request);
+        // Pass the token through the enhancer so additionalInformation is preserved
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        // Act
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+
+        // Assert (a): JWT claim "authorization_details" is present with expected value
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(1)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        JWT capturedJwt = jwtCaptor.getValue();
+        assertThat(capturedJwt.containsKey("authorization_details")).isTrue();
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> jwtAuthDetails = (List<Map<String, Object>>) capturedJwt.get("authorization_details");
+        assertThat(jwtAuthDetails).hasSize(1);
+        assertThat(jwtAuthDetails.get(0)).containsEntry("type", "fdx_v1.0");
+
+        // Assert (b): token response additionalInformation contains "authorization_details"
+        observer.assertValue(token -> {
+            assertThat(token.getAdditionalInformation()).containsKey("authorization_details");
+            return true;
+        });
+    }
+
+    @Test
+    public void omitsAuthorizationDetails_whenAbsent() {
+        // Arrange: request without authorization_details
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("rar-client");
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+        // authorizationDetails intentionally NOT set
+
+        Client client = createClient("rar-client");
+        User user = createUser("user-rar");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        // Act
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+
+        // Assert: JWT claim "authorization_details" is absent
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(1)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        JWT capturedJwt = jwtCaptor.getValue();
+        assertThat(capturedJwt.containsKey("authorization_details")).isFalse();
+
+        // Assert: token response additionalInformation does NOT contain "authorization_details"
+        observer.assertValue(token -> {
+            assertThat(token.getAdditionalInformation()).doesNotContainKey("authorization_details");
+            return true;
+        });
     }
 
 }

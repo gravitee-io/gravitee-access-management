@@ -48,6 +48,7 @@ import org.mockito.ArgumentCaptor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -564,5 +565,110 @@ class StrategyGranterAdapterTest {
         Map<String, Object> actClaim = capturedRequest.getActClaim();
         assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
         assertFalse(actClaim.containsKey("actor_act"), "Act claim should NOT have actor_act when actor token is not delegated");
+    }
+
+    @Test
+    void shouldMapCibaAuthorizationDetailsOntoOAuth2Request() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("user-id");
+
+        Map<String, Object> d = new HashMap<>();
+        d.put("type", "fdx_v1.0");
+        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null, List.of(d));
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.CIBA_GRANT_TYPE,
+                Set.of("openid"),
+                user,
+                cibaData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        Token expectedToken = new AccessToken("ciba-token-value");
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(expectedToken));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
+        assertNotNull(capturedRequest.getAuthorizationDetails(), "Should have authorizationDetails");
+        assertEquals(1, capturedRequest.getAuthorizationDetails().size());
+        assertEquals("fdx_v1.0", capturedRequest.getAuthorizationDetails().get(0).get("type"),
+                "authorizationDetails type should be threaded through from CibaData");
+    }
+
+    @Test
+    void shouldLeaveAuthorizationDetailsAbsentWhenCibaDataHasNullAuthorizationDetails() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("user-id");
+
+        // null authorizationDetails — the "no RAR" path
+        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null, null);
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.CIBA_GRANT_TYPE,
+                Set.of("openid"),
+                user,
+                cibaData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        Token expectedToken = new AccessToken("ciba-token-no-rar");
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(expectedToken));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
+        assertNull(capturedRequest.getAuthorizationDetails(),
+                "authorizationDetails should be null (absent) when CibaData carries no RAR — no NPE");
     }
 }

@@ -27,6 +27,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
@@ -63,6 +64,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
     public static final String PARAM_EXPIRE = "expire";
     public static final String PARAM_ACR = "acr";
     public static final String PARAM_MESSAGE = "message";
+    public static final String PARAM_AUTHORIZATION_DETAILS = "authorization_details";
     public static final String RESPONSE_ATTR_DATA = "data";
     public static final String CALLBACK_VALIDATE = "validated";
 
@@ -158,6 +160,11 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         if (hasText(request.getMessage())) {
             formData.set(PARAM_MESSAGE, request.getMessage());
         }
+
+        if (!CollectionUtils.isEmpty(request.getAuthorizationDetails())) {
+            formData.set(PARAM_AUTHORIZATION_DETAILS, Json.encode(request.getAuthorizationDetails()));
+        }
+
         return formData;
     }
 

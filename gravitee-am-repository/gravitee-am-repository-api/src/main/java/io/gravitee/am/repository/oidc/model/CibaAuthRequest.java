@@ -17,6 +17,7 @@ package io.gravitee.am.repository.oidc.model;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,6 +76,11 @@ public class CibaAuthRequest {
     private Map<String, Object> externalInformation = new HashMap<>();
 
     private String deviceNotifierId;
+
+    /**
+     * RFC 9396 Rich Authorization Requests — authorization_details array
+     */
+    private List<Map<String, Object>> authorizationDetails;
 
     public String getId() {
         return id;
@@ -162,5 +168,13 @@ public class CibaAuthRequest {
 
     public void setDeviceNotifierId(String deviceNotifierId) {
         this.deviceNotifierId = deviceNotifierId;
+    }
+
+    public List<Map<String, Object>> getAuthorizationDetails() {
+        return authorizationDetails;
+    }
+
+    public void setAuthorizationDetails(List<Map<String, Object>> authorizationDetails) {
+        this.authorizationDetails = authorizationDetails;
     }
 }

@@ -29,15 +29,22 @@ import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationRejectedExcept
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -63,6 +70,7 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STA
 public class AuthenticationRequestServiceImpl implements AuthenticationRequestService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestServiceImpl.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private CibaAuthRequestRepository authRequestRepository;
@@ -82,6 +90,12 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     @Autowired
     @Qualifier("regularClientLookupService")
     private ClientLookupService clientLookupService;
+
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private UserAuthenticationManager userAuthenticationManager;
 
     /**
      * How many time (in sec) an auth-request is kept into the DB
@@ -108,6 +122,10 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         // as the application has to be informed of an expired request, we add retention time to the ttl
         // to avoid removing the request information from the database when ttl has expired
         entity.setExpireAt(new Date(now.plusSeconds(ttl + requestRetentionInSec).toEpochMilli()));
+        // Copy RFC 9396 authorization_details onto the persisted entity (presence-gated; no flag read)
+        if (request.getAuthorizationDetails() != null && !request.getAuthorizationDetails().isEmpty()) {
+            entity.setAuthorizationDetails(request.getAuthorizationDetails());
+        }
         // Store acrValues in externalInformation for later retrieval when generating ID token
         if (request.getAcrValues() != null && !request.getAcrValues().isEmpty()) {
             if (entity.getExternalInformation() == null) {
@@ -178,37 +196,98 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     }
 
     @Override
-    public Completable validateUserResponse(ADCallbackContext context) {
+    public Completable validateUserResponse(ADCallbackContext context, Request request) {
         return Flowable.fromIterable(this.notifierManager.getAuthDeviceNotifierProviders())
                 .flatMapSingle(provider -> provider.extractUserResponse(context))
-                .filter(Optional::isPresent)
-                .firstElement()
+                .filter(Optional::isPresent).firstElement()
                 .switchIfEmpty(Maybe.error(InvalidRequestException::new))
                 .map(Optional::get)
                 .flatMapSingle(userResponse -> {
                     final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
                     return this.jwtService.decode(userResponse.getState(), STATE)
-                            .flatMap(jwtState -> verifyState(userResponse, jwtState.getAud())
-                            ).flatMap(verifiedJwtState -> updateRequestStatus(verifiedJwtState.getJti(), status));
+                            .flatMap(jwtState -> this.clientLookupService.findByClientId(jwtState.getAud())
+                                    .switchIfEmpty(Single.error(InvalidClientException::new))
+                                    .flatMap(client -> verifyState(userResponse, client)
+                                            .flatMap(verified -> updateRequestStatus(verified.getJti(), status, userResponse, request))));
                 }).ignoreElement();
     }
 
-    private Single<JWT> verifyState(ADUserResponse userResponse, String clientId) {
-        LOGGER.debug("Prepare verification of state '{}' with client id '{}'", userResponse.getState(), clientId);
-        return this.clientLookupService.findByClientId(clientId)
-                .switchIfEmpty(Single.error(InvalidClientException::new))
-                .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client, STATE)))
+    private Single<JWT> verifyState(ADUserResponse userResponse, Client client) {
+        return Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client, STATE))
                 .filter(verifiedJwt -> userResponse.getTid().equals(verifiedJwt.getJti()))
                 .switchIfEmpty(Single.error(() -> new InvalidRequestException("state parameter mismatch with the transaction id")))
-                .onErrorResumeNext((error) -> {
-                    LOGGER.debug("Verification of state '{}' fails on CIBA callback with client id '{}'", userResponse.getState(), clientId, error);
+                .onErrorResumeNext(error -> {
+                    if (error instanceof InvalidRequestException) {
+                        return Single.error(error);
+                    }
+                    // Log the real cause (key rotation / clock skew / decode failure) but keep the
+                    // generic client-facing message on this security-critical state check.
+                    LOGGER.warn("CIBA state verification failed for tid={}: {}", userResponse.getTid(), error.getMessage(), error);
                     return Single.error(new InvalidRequestException("Invalid CIBA State"));
                 });
     }
 
-    private Single<CibaAuthRequest> updateRequestStatus(String reqExtId, String status) {
+    private Single<CibaAuthRequest> updateRequestStatus(String reqExtId, String status, ADUserResponse userResponse, Request request) {
         return this.authRequestRepository.findByExternalId(reqExtId)
                 .switchIfEmpty(Single.error(() -> new InvalidRequestException("Invalid CIBA State")))
-                .flatMap(cibaRequest -> this.authRequestRepository.updateStatus(cibaRequest.getId(), status));
+                .flatMap(cibaRequest -> {
+                    boolean success = AuthenticationRequestStatus.SUCCESS.name().equals(status);
+                    final String idpId = (success && cibaRequest.getDeviceNotifierId() != null)
+                            ? resolveIdpId(cibaRequest.getDeviceNotifierId()) : null;
+                    if (idpId == null) {
+                        // non-federated, rejected, or notifier has no IdP configured -> status-only
+                        return this.authRequestRepository.updateStatus(cibaRequest.getId(), status);
+                    }
+                    final AuthenticationContext authContext = new SimpleAuthenticationContext();
+                    return this.identityProviderManager.get(idpId)
+                            .switchIfEmpty(Single.error(() -> new InvalidRequestException("CIBA federation IdP not available: " + idpId)))
+                            .flatMap(provider -> provider.retrieveUserFromTokenResponse(
+                                            userResponse.getAccessToken(), userResponse.getIdToken(), authContext)
+                                    .switchIfEmpty(Maybe.error(() -> new InvalidRequestException("CIBA federation: empty user from IdP")))
+                                    .toSingle())
+                            .flatMap(principal -> {
+                                if (!(principal instanceof io.gravitee.am.identityprovider.api.DefaultUser du)) {
+                                    return Single.error(new InvalidRequestException("CIBA federation: IdP returned non-DefaultUser principal"));
+                                }
+                                java.util.Map<String, Object> info = du.getAdditionalInformation() != null
+                                        ? new java.util.HashMap<>(du.getAdditionalInformation()) : new java.util.HashMap<>();
+                                info.put("source", idpId);
+                                du.setAdditionalInformation(info);
+                                // Completion is an authentication event: connect() (UserAuthenticationServiceImpl#create0)
+                                // derives lastIdentityUsed from source and records loggedAt/loginsCount when
+                                // afterAuthentication=true — no need to plant last_identity by hand.
+                                return this.userAuthenticationManager.connect(du, null, request, true);
+                            })
+                            .flatMap(localUser -> {
+                                cibaRequest.setSubject(localUser.getId());
+                                return this.authRequestRepository.update(cibaRequest)
+                                        .flatMap(saved -> this.authRequestRepository.updateStatus(saved.getId(), status));
+                            });
+                });
+    }
+
+    /**
+     * Reads the {@code identityProviderId} field from the active notifier's configuration JSON.
+     * The field was removed from {@code CIBASettingNotifier} (model binding) and now lives
+     * exclusively inside the notifier plugin's configuration JSON — same source as the
+     * acknowledge handler uses via {@code readIdpIdFromNotifierConfig}.
+     */
+    private String resolveIdpId(String deviceNotifierId) {
+        var notifier = this.notifierManager.getAuthDeviceNotifier(deviceNotifierId);
+        if (notifier == null || notifier.getConfiguration() == null) {
+            return null;
+        }
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(notifier.getConfiguration());
+            JsonNode idpNode = root.get("identityProviderId");
+            // Absent field is legitimate (non-federated notifier) -> null -> status-only completion.
+            return (idpNode != null && !idpNode.isNull()) ? idpNode.asText() : null;
+        } catch (Exception e) {
+            // Unparseable config is a misconfiguration, NOT "absent": failing to distinguish it would
+            // silently downgrade a federated completion to a bare status-only SUCCESS with no identity
+            // verification. Fail the completion closed instead.
+            LOGGER.error("Malformed notifier configuration JSON for notifier {}; failing the federated completion", deviceNotifierId, e);
+            throw new InvalidRequestException("Invalid notifier configuration");
+        }
     }
 }
