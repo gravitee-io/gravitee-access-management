@@ -29,6 +29,7 @@ public class EnrolledFactorEntity {
     private String id;
     private String type;
     private String name;
+    private String target;
     @Schema(type = "java.lang.Long")
     private Date createdAt;
     @Schema(type = "java.lang.Long")
@@ -41,6 +42,9 @@ public class EnrolledFactorEntity {
         id = enrolledFactor.getFactorId();
         createdAt = enrolledFactor.getCreatedAt();
         updatedAt = enrolledFactor.getUpdatedAt();
+        if (enrolledFactor.getChannel() != null) {
+            target = enrolledFactor.getChannel().getTarget();
+        }
     }
 
     public String getId() {
@@ -65,6 +69,14 @@ public class EnrolledFactorEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getTarget() {
+        return target;
+    }
+
+    public void setTarget(String target) {
+        this.target = target;
     }
 
     public Date getCreatedAt() {
