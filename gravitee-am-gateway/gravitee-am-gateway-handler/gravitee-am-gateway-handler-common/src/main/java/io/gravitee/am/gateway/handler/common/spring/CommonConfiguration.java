@@ -208,10 +208,9 @@ public class CommonConfiguration {
     @Bean
     public JWTService jwtService(
             CertificateManager certificateManager,
-            Domain domain,
             ObjectMapper objectMapper,
             @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}") Boolean fallbackToHmacSignature) {
-        return new JWTServiceImpl(certificateManager, domain, objectMapper, fallbackToHmacSignature);
+        return new JWTServiceImpl(certificateManager, objectMapper, fallbackToHmacSignature);
     }
 
     @Bean
