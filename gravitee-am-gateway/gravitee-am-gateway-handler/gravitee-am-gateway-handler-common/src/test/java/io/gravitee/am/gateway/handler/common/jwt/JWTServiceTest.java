@@ -80,7 +80,7 @@ public class JWTServiceTest {
 
     @Before
     public void setUp() {
-        jwtService = new JWTServiceImpl(certificateManager, new Domain(), new ObjectMapper(), true);
+        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), true);
         var rs256CertProvider = mockCertProvider(mockJwtBuilder("token_rs_256"));
         var rs512CertProvider = mockCertProvider(mockJwtBuilder("token_rs_512"));
         var defaultCertProvider = mockCertProvider(mockJwtBuilder("token_default"));
@@ -247,7 +247,7 @@ public class JWTServiceTest {
 
     @Test
     public void encode_noClientCertificateFound_noFallback() throws Exception {
-        jwtService = new JWTServiceImpl(certificateManager, new Domain(), new ObjectMapper(), false);
+        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), false);
         when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
 
         Client client = new Client();

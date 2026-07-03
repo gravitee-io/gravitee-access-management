@@ -67,17 +67,14 @@ public class JWTServiceImpl implements JWTService {
     private final CertificateManager certificateManager;
     private final ObjectMapper objectMapper;
     private final Boolean fallbackToHmacSignature;
-    private final Domain domain;
 
     @Autowired
     public JWTServiceImpl(CertificateManager certificateManager,
-                          Domain domain,
                           ObjectMapper objectMapper,
                           Boolean fallbackToHmacSignature) {
         this.certificateManager = certificateManager;
         this.objectMapper = objectMapper;
         this.fallbackToHmacSignature = fallbackToHmacSignature;
-        this.domain = domain;
     }
 
     @Autowired
@@ -190,7 +187,7 @@ public class JWTServiceImpl implements JWTService {
         return Stream.concat(certificateManager.providers().stream(), Stream.of(certificateManager.defaultCertificateProvider()))
                 .filter(Objects::nonNull)
                 .filter(provider -> kid.equals(provider.getKeyId()) || kid.equals(ofNullable(provider.getCertificateInfo()).map(CertificateInfo::certificateId).orElse(null)))
-                .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()) || (domain.isMaster() && provider.isDefaultCertificate()))
+                .filter(provider -> issuerDomain == null || issuerDomain.equals(provider.getDomain()) || provider.isDefaultCertificate())
                 .collect(Collectors.toList());
     }
 
