@@ -28,7 +28,12 @@
 import { exists, mapValues } from '../runtime';
 import { AccountSettings, AccountSettingsFromJSON, AccountSettingsFromJSONTyped, AccountSettingsToJSON } from './AccountSettings';
 import { CorsSettings, CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON } from './CorsSettings';
-import { LoginSettings, LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON } from './LoginSettings';
+import {
+  PatchLoginSettings,
+  PatchLoginSettingsFromJSON,
+  PatchLoginSettingsFromJSONTyped,
+  PatchLoginSettingsToJSON,
+} from './PatchLoginSettings';
 import { PatchOIDCSettings, PatchOIDCSettingsFromJSON, PatchOIDCSettingsFromJSONTyped, PatchOIDCSettingsToJSON } from './PatchOIDCSettings';
 import {
   PatchPasswordSettings,
@@ -122,10 +127,10 @@ export interface PatchDomain {
   scim?: SCIMSettings;
   /**
    *
-   * @type {LoginSettings}
+   * @type {PatchLoginSettings}
    * @memberof PatchDomain
    */
-  loginSettings?: LoginSettings;
+  loginSettings?: PatchLoginSettings;
   /**
    *
    * @type {WebAuthnSettings}
@@ -281,7 +286,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     oidc: !exists(json, 'oidc') ? undefined : PatchOIDCSettingsFromJSON(json['oidc']),
     uma: !exists(json, 'uma') ? undefined : UMASettingsFromJSON(json['uma']),
     scim: !exists(json, 'scim') ? undefined : SCIMSettingsFromJSON(json['scim']),
-    loginSettings: !exists(json, 'loginSettings') ? undefined : LoginSettingsFromJSON(json['loginSettings']),
+    loginSettings: !exists(json, 'loginSettings') ? undefined : PatchLoginSettingsFromJSON(json['loginSettings']),
     webAuthnSettings: !exists(json, 'webAuthnSettings') ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
     accountSettings: !exists(json, 'accountSettings') ? undefined : AccountSettingsFromJSON(json['accountSettings']),
     passwordSettings: !exists(json, 'passwordSettings') ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
@@ -316,7 +321,7 @@ export function PatchDomainToJSON(value?: PatchDomain | null): any {
     oidc: PatchOIDCSettingsToJSON(value.oidc),
     uma: UMASettingsToJSON(value.uma),
     scim: SCIMSettingsToJSON(value.scim),
-    loginSettings: LoginSettingsToJSON(value.loginSettings),
+    loginSettings: PatchLoginSettingsToJSON(value.loginSettings),
     webAuthnSettings: WebAuthnSettingsToJSON(value.webAuthnSettings),
     accountSettings: AccountSettingsToJSON(value.accountSettings),
     passwordSettings: PatchPasswordSettingsToJSON(value.passwordSettings),

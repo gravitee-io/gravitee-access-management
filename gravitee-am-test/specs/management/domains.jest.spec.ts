@@ -191,6 +191,35 @@ describe('Entrypoints: CORS settings - test strict configuration', () => {
 });
 
 describe('Entrypoints: User accounts', () => {
+  it('should keep unspecified login settings when patching one setting', async () => {
+    await patchDomain(domain.id, accessToken, {
+      loginSettings: {
+        registerEnabled: true,
+        rememberMeEnabled: true,
+        passwordlessEnabled: true,
+        passwordlessRememberDeviceEnabled: true,
+        passwordlessEnforcePasswordEnabled: true,
+        passwordlessEnforcePasswordMaxAge: 3600,
+        passwordlessDeviceNamingEnabled: true,
+      },
+    });
+
+    const patchedDomain = await patchDomain(domain.id, accessToken, {
+      loginSettings: {
+        forgotPasswordEnabled: true,
+      },
+    });
+
+    expect(patchedDomain.loginSettings.forgotPasswordEnabled).toBe(true);
+    expect(patchedDomain.loginSettings.registerEnabled).toBe(true);
+    expect(patchedDomain.loginSettings.rememberMeEnabled).toBe(true);
+    expect(patchedDomain.loginSettings.passwordlessEnabled).toBe(true);
+    expect(patchedDomain.loginSettings.passwordlessRememberDeviceEnabled).toBe(true);
+    expect(patchedDomain.loginSettings.passwordlessEnforcePasswordEnabled).toBe(true);
+    expect(patchedDomain.loginSettings.passwordlessEnforcePasswordMaxAge).toBe(3600);
+    expect(patchedDomain.loginSettings.passwordlessDeviceNamingEnabled).toBe(true);
+  });
+
   it('should define the "remember me" amount of time', async () => {
     const patchedDomain = await patchDomain(domain.id, accessToken, {
       path: `${domain.path}`,
