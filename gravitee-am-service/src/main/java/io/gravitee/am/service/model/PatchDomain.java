@@ -21,7 +21,6 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.Permission;
@@ -57,7 +56,7 @@ public class PatchDomain {
     private Optional<PatchOIDCSettings> oidc;
     private Optional<UMASettings> uma;
     private Optional<SCIMSettings> scim;
-    private Optional<LoginSettings> loginSettings;
+    private Optional<PatchLoginSettings> loginSettings;
     private Optional<WebAuthnSettings> webAuthnSettings;
     private Optional<AccountSettings> accountSettings;
     private Optional<PatchPasswordSettings> passwordSettings;
@@ -82,7 +81,9 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setVhosts, this.getVhosts());
         SetterUtils.safeSet(toPatch::setUma, this.getUma());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
-        SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
+        if (this.getLoginSettings() != null && this.getLoginSettings().isPresent()) {
+            toPatch.setLoginSettings(this.getLoginSettings().get().patch(toPatch.getLoginSettings()));
+        }
         SetterUtils.safeSet(toPatch::setWebAuthnSettings, this.getWebAuthnSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
         SetterUtils.safeSet(toPatch::setSelfServiceAccountManagementSettings, this.getSelfServiceAccountManagementSettings());
