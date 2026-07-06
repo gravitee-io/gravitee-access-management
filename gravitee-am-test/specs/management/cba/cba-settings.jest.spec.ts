@@ -101,6 +101,7 @@ describe('Certificate Based Authentication - Domain Settings', () => {
       patchDomain(fixture.domain.id, fixture.accessToken, {
         loginSettings: {
           certificateBasedAuthEnabled: true,
+          certificateBasedAuthUrl: null,
         },
       }),
     ).rejects.toMatchObject({
