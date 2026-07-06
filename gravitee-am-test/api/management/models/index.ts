@@ -171,6 +171,7 @@ export * from './PatchDomain';
 export * from './PatchEnrollSettings';
 export * from './PatchEnrollmentSettings';
 export * from './PatchFactorSettings';
+export * from './PatchLoginSettings';
 export * from './PatchMFASettings';
 export * from './PatchOIDCSettings';
 export * from './PatchOrganization';
