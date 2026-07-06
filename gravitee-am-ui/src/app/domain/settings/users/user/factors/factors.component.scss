@@ -1,4 +1,13 @@
 ngx-datatable {
+  .factor-target {
+    display: block;
+    overflow: hidden;
+    min-width: 0;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .factor-header {
     align-items: center;
     margin: 5px;
