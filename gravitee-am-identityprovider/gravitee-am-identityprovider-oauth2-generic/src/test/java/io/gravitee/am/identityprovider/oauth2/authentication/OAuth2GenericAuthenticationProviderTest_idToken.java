@@ -38,6 +38,7 @@ import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.WebClientInternal;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,8 +74,10 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
   @Mock
   private JWTProcessor jwtProcessor;
 
+  private final Vertx vertx = Vertx.vertx();
+
   @Spy
-  private WebClient client = WebClient.wrap(Vertx.vertx().createHttpClient());
+  private WebClient client = WebClient.wrap(vertx.createHttpClient());
 
   @Mock
   @SuppressWarnings({"rawtypes", "unchecked"}) // raw HttpResponse matches the interceptor's dispatchResponse(HttpResponse<?>)
@@ -94,6 +97,13 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
       }
       event.next();
     });
+  }
+
+  @AfterEach
+  void tearDown() {
+    // the WebClient wraps this Vertx instance; close it so the test does not leak
+    // event-loop threads and file descriptors across runs.
+    vertx.close().blockingAwait();
   }
 
   @Test
