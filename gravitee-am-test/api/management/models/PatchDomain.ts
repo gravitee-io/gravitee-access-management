@@ -42,6 +42,8 @@ import {
   PatchOIDCSettingsToJSON,
   PatchOIDCSettingsToJSONTyped,
 } from './PatchOIDCSettings';
+import type { PatchLoginSettings } from './PatchLoginSettings';
+import { PatchLoginSettingsFromJSON, PatchLoginSettingsFromJSONTyped, PatchLoginSettingsToJSON } from './PatchLoginSettings';
 import type { PatchPasswordSettings } from './PatchPasswordSettings';
 import {
   PatchPasswordSettingsFromJSON,
@@ -58,8 +60,6 @@ import {
 } from './SelfServiceAccountManagementSettings';
 import type { CorsSettings } from './CorsSettings';
 import { CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON, CorsSettingsToJSONTyped } from './CorsSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
 import type { SecretExpirationSettings } from './SecretExpirationSettings';
 import {
   SecretExpirationSettingsFromJSON,
@@ -154,10 +154,10 @@ export interface PatchDomain {
   scim?: SCIMSettings;
   /**
    *
-   * @type {LoginSettings}
+   * @type {PatchLoginSettings}
    * @memberof PatchDomain
    */
-  loginSettings?: LoginSettings;
+  loginSettings?: PatchLoginSettings;
   /**
    *
    * @type {WebAuthnSettings}
@@ -323,7 +323,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     oidc: json['oidc'] == null ? undefined : PatchOIDCSettingsFromJSON(json['oidc']),
     uma: json['uma'] == null ? undefined : UMASettingsFromJSON(json['uma']),
     scim: json['scim'] == null ? undefined : SCIMSettingsFromJSON(json['scim']),
-    loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
+    loginSettings: json['loginSettings'] == null ? undefined : PatchLoginSettingsFromJSON(json['loginSettings']),
     webAuthnSettings: json['webAuthnSettings'] == null ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
     accountSettings: json['accountSettings'] == null ? undefined : AccountSettingsFromJSON(json['accountSettings']),
     passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
@@ -361,7 +361,7 @@ export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscrim
     oidc: PatchOIDCSettingsToJSON(value['oidc']),
     uma: UMASettingsToJSON(value['uma']),
     scim: SCIMSettingsToJSON(value['scim']),
-    loginSettings: LoginSettingsToJSON(value['loginSettings']),
+    loginSettings: PatchLoginSettingsToJSON(value['loginSettings']),
     webAuthnSettings: WebAuthnSettingsToJSON(value['webAuthnSettings']),
     accountSettings: AccountSettingsToJSON(value['accountSettings']),
     passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
