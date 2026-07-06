@@ -165,6 +165,42 @@ public class PatchDomainTest {
         assertNull(result.getPasswordSettings());
     }
 
+    @Test
+    public void testPatchWithLoginSettingsShouldKeepUnspecifiedProperties() {
+        PatchLoginSettings patchedLoginSettings = new PatchLoginSettings();
+        patchedLoginSettings.setForgotPasswordEnabled(Optional.of(true));
+
+        PatchDomain patch = new PatchDomain();
+        patch.setLoginSettings(Optional.of(patchedLoginSettings));
+
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setRegisterEnabled(true);
+        loginSettings.setRememberMeEnabled(true);
+        loginSettings.setPasswordlessEnabled(true);
+        loginSettings.setPasswordlessRememberDeviceEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordMaxAge(3600);
+        loginSettings.setPasswordlessDeviceNamingEnabled(true);
+        loginSettings.setHideForm(true);
+        loginSettings.setResetPasswordOnExpiration(true);
+
+        Domain toPatch = new Domain();
+        toPatch.setLoginSettings(loginSettings);
+
+        Domain result = patch.patch(toPatch);
+
+        assertTrue(result.getLoginSettings().isForgotPasswordEnabled());
+        assertTrue(result.getLoginSettings().isRegisterEnabled());
+        assertTrue(result.getLoginSettings().isRememberMeEnabled());
+        assertTrue(result.getLoginSettings().isPasswordlessEnabled());
+        assertTrue(result.getLoginSettings().isPasswordlessRememberDeviceEnabled());
+        assertTrue(result.getLoginSettings().isPasswordlessEnforcePasswordEnabled());
+        assertEquals(3600, result.getLoginSettings().getPasswordlessEnforcePasswordMaxAge().intValue());
+        assertTrue(result.getLoginSettings().isPasswordlessDeviceNamingEnabled());
+        assertTrue(result.getLoginSettings().isHideForm());
+        assertTrue(result.getLoginSettings().getResetPasswordOnExpiration());
+    }
+
     @Test(expected = InvalidParameterException.class)
     public void testPatchWithPasswordPolicy_missingOldPassword() {
         //Build patcher
@@ -254,7 +290,7 @@ public class PatchDomainTest {
         assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
 
         patchDomain = new PatchDomain();
-        patchDomain.setLoginSettings(Optional.of(new LoginSettings()));
+        patchDomain.setLoginSettings(Optional.of(new PatchLoginSettings()));
         assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
 
         patchDomain = new PatchDomain();
