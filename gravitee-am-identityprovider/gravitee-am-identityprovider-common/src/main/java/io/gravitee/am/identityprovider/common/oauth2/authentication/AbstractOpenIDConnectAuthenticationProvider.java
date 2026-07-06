@@ -318,17 +318,27 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         return Maybe.error(new IllegalStateException("Wrong response_type for implicit flow: %s".formatted(providerResponseType.value())));
     }
 
+    /**
+     * @deprecated only the {@link AuthenticationContext} is needed to build the user profile;
+     * prefer {@link #profile(Token, AuthenticationContext)}. Retained so existing callers and
+     * subclass overrides keep working; delegates to the context-based variant.
+     */
+    @Deprecated
     protected Maybe<User> profile(Token token, Authentication authentication) {
+        return profile(token, authentication.getContext());
+    }
+
+    protected Maybe<User> profile(Token token, AuthenticationContext context) {
         // we only have the id_token, try to decode it and create the end-user
         if (TokenTypeHint.ID_TOKEN.equals(token.typeHint())) {
-            return retrieveUserFromIdToken(authentication.getContext(), token.value());
+            return retrieveUserFromIdToken(context, token.value());
         }
 
         // if it's an access token but user ask for id token verification, try to decode it and create the end-user
         if (TokenTypeHint.ACCESS_TOKEN.equals(token.typeHint()) && getConfiguration().isUseIdTokenForUserInfo()) {
-            if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
-                String idToken = String.valueOf(authentication.getContext().get(ID_TOKEN_PARAMETER));
-                return retrieveUserFromIdToken(authentication.getContext(), idToken);
+            if (context.get(ID_TOKEN_PARAMETER) != null) {
+                String idToken = String.valueOf(context.get(ID_TOKEN_PARAMETER));
+                return retrieveUserFromIdToken(context, idToken);
             } else {
                 // no suitable value to retrieve user
                 return Maybe.error(new BadCredentialsException("No suitable value to retrieve user information"));
@@ -349,14 +359,14 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     if (MediaType.APPLICATION_JWT.equalsIgnoreCase(mediaType.toMediaString())) {
                         try {
                             final var jwtClaimsSet = this.jwtProcessor.process(httpClientResponse.bodyAsString(), null);
-                            return createUser(authentication.getContext(), jwtClaimsSet.getClaims());
+                            return createUser(context, jwtClaimsSet.getClaims());
                         } catch (Exception ex) {
                             LOGGER.debug("Unable to extract the user profile information", ex);
                             throw new BadCredentialsException(ex.getMessage());
                         }
                     }
 
-                    return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject().getMap());
+                    return createUser(context, httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }
 
@@ -402,12 +412,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             // (reading the context set above) before ever dereferencing accessToken, so a null
             // accessToken is safe there; in userinfo mode accessToken is non-null per the guard above.
             final Token token = new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
-            final Authentication authentication = new Authentication() {
-                @Override public Object getPrincipal()  { return null; }
-                @Override public Object getCredentials() { return null; }
-                @Override public AuthenticationContext getContext() { return context; }
-            };
-            return profile(token, authentication);
+            return profile(token, context);
         });
     }
 
