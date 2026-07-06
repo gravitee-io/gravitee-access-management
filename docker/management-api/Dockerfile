@@ -45,7 +45,7 @@ RUN apk update \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/*
 
-FROM graviteeio/java:25
+FROM graviteeio/java:25-alpine
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
@@ -53,11 +53,10 @@ ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-management-api
 # jemalloc is installed but not active by default.
 # To enable: set LD_PRELOAD=/usr/lib/libjemalloc.so.2 via environment variable.
 
-RUN addgroup -g 1000 graviteeio \
-    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
+USER root
 
 RUN apk update \
-    && apk add --no-cache ca-certificates jemalloc perl \
+    && apk add --no-cache ca-certificates jemalloc \
     && rm -rf /var/cache/apk/*
 
 COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
