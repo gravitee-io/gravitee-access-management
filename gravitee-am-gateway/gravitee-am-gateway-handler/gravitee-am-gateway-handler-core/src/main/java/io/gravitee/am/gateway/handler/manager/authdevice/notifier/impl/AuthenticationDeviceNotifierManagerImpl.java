@@ -125,15 +125,6 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
     }
 
     @Override
-    public AuthenticationDeviceNotifier getAuthDeviceNotifier(String notifierId) {
-        return this.deviceNotifiers.get(notifierId);
-    }
-
-    Map<String, AuthenticationDeviceNotifier> getDeviceNotifiers() {
-        return this.deviceNotifiers;
-    }
-
-    @Override
     public void onEvent(Event<AuthenticationDeviceNotifierEvent, Payload> event) {
         if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
