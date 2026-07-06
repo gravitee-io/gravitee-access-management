@@ -88,8 +88,8 @@ import {
   SelfServiceAccountManagementSettingsToJSON,
   SelfServiceAccountManagementSettingsToJSONTyped,
 } from './SelfServiceAccountManagementSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
+import type { PatchLoginSettings } from './PatchLoginSettings';
+import { PatchLoginSettingsFromJSON, PatchLoginSettingsFromJSONTyped, PatchLoginSettingsToJSON } from './PatchLoginSettings';
 import type { TokenExchangeSettings } from './TokenExchangeSettings';
 import {
   TokenExchangeSettingsFromJSON,
@@ -150,10 +150,10 @@ export interface PatchDomain {
   enabled?: boolean;
   /**
    *
-   * @type {LoginSettings}
+   * @type {PatchLoginSettings}
    * @memberof PatchDomain
    */
-  loginSettings?: LoginSettings;
+  loginSettings?: PatchLoginSettings;
   /**
    *
    * @type {boolean}
@@ -351,7 +351,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     description: json['description'] == null ? undefined : json['description'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
-    loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
+    loginSettings: json['loginSettings'] == null ? undefined : PatchLoginSettingsFromJSON(json['loginSettings']),
     master: json['master'] == null ? undefined : json['master'],
     name: json['name'] == null ? undefined : json['name'],
     oidc: json['oidc'] == null ? undefined : PatchOIDCSettingsFromJSON(json['oidc']),
@@ -391,7 +391,7 @@ export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscrim
     dataPlaneId: value['dataPlaneId'],
     description: value['description'],
     enabled: value['enabled'],
-    loginSettings: LoginSettingsToJSON(value['loginSettings']),
+    loginSettings: PatchLoginSettingsToJSON(value['loginSettings']),
     master: value['master'],
     name: value['name'],
     oidc: PatchOIDCSettingsToJSON(value['oidc']),
