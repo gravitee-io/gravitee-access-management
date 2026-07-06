@@ -14921,7 +14921,7 @@ components:
         enabled:
           type: boolean
         loginSettings:
-          $ref: "#/components/schemas/LoginSettings"
+          $ref: "#/components/schemas/PatchLoginSettings"
         master:
           type: boolean
         name:
@@ -15064,6 +15064,38 @@ components:
             $ref: "#/components/schemas/PatchApplicationFactorSettings"
         defaultFactorId:
           type: string
+    PatchLoginSettings:
+      type: object
+      properties:
+        certificateBasedAuthEnabled:
+          type: boolean
+        certificateBasedAuthUrl:
+          type: string
+        forgotPasswordEnabled:
+          type: boolean
+        hideForm:
+          type: boolean
+        identifierFirstEnabled:
+          type: boolean
+        inherited:
+          type: boolean
+        passwordlessDeviceNamingEnabled:
+          type: boolean
+        passwordlessEnabled:
+          type: boolean
+        passwordlessEnforcePasswordEnabled:
+          type: boolean
+        passwordlessEnforcePasswordMaxAge:
+          type: integer
+          format: int32
+        passwordlessRememberDeviceEnabled:
+          type: boolean
+        registerEnabled:
+          type: boolean
+        rememberMeEnabled:
+          type: boolean
+        resetPasswordOnExpiration:
+          type: boolean
     PatchMFASettings:
       type: object
       properties:

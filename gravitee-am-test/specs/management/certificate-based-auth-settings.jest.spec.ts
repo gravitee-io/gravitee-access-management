@@ -148,6 +148,7 @@ describe('Certificate Based Authentication Settings', () => {
       patchDomain(domain.id, accessToken, {
         loginSettings: {
           certificateBasedAuthEnabled: true,
+          certificateBasedAuthUrl: null,
         },
       })
     ).rejects.toMatchObject({
