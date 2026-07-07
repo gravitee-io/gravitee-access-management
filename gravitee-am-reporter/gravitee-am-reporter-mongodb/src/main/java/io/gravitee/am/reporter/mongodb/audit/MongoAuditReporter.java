@@ -102,9 +102,9 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TARGET_ID;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TIMESTAMP;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TYPE;
-import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME;
-import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_ID_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TARGET_ID_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TARGET_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME;
@@ -396,8 +396,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME).partialFilterExpression(new Document(FIELD_STATUS, new Document("$eq", "SUCCESS"))).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_ID_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TIMESTAMP_NAME).background(true)));
 
             Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
                     .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
