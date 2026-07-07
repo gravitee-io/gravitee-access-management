@@ -33,6 +33,7 @@ public class PatchLoginSettings {
     private Optional<Boolean> passwordlessDeviceNamingEnabled;
     private Optional<Boolean> certificateBasedAuthEnabled;
     private Optional<String> certificateBasedAuthUrl;
+    private Optional<Boolean> magicLinkAuthEnabled;
     private Optional<Boolean> hideForm;
     private Optional<Boolean> identifierFirstEnabled;
     private Optional<Boolean> resetPasswordOnExpiration;
@@ -125,6 +126,14 @@ public class PatchLoginSettings {
         this.certificateBasedAuthUrl = certificateBasedAuthUrl;
     }
 
+    public Optional<Boolean> getMagicLinkAuthEnabled() {
+        return magicLinkAuthEnabled;
+    }
+
+    public void setMagicLinkAuthEnabled(Optional<Boolean> magicLinkAuthEnabled) {
+        this.magicLinkAuthEnabled = magicLinkAuthEnabled;
+    }
+
     public Optional<Boolean> getHideForm() {
         return hideForm;
     }
@@ -162,6 +171,7 @@ public class PatchLoginSettings {
         SetterUtils.safeSet(toPatch::setPasswordlessDeviceNamingEnabled, this.passwordlessDeviceNamingEnabled);
         SetterUtils.safeSet(toPatch::setCertificateBasedAuthEnabled, this.certificateBasedAuthEnabled);
         SetterUtils.safeSet(toPatch::setCertificateBasedAuthUrl, this.certificateBasedAuthUrl);
+        SetterUtils.safeSet(toPatch::setMagicLinkAuthEnabled, this.magicLinkAuthEnabled);
         SetterUtils.safeSet(toPatch::setHideForm, this.hideForm);
         SetterUtils.safeSet(toPatch::setIdentifierFirstEnabled, this.identifierFirstEnabled);
         SetterUtils.safeSet(toPatch::setResetPasswordOnExpiration, this.resetPasswordOnExpiration);
