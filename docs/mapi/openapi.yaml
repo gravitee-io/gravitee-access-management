@@ -16519,6 +16519,8 @@ components:
           type: boolean
         inherited:
           type: boolean
+        magicLinkAuthEnabled:
+          type: boolean
         passwordlessDeviceNamingEnabled:
           type: boolean
         passwordlessEnabled:
