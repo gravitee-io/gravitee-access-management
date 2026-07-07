@@ -104,6 +104,12 @@ export interface PatchLoginSettings {
    * @type {boolean}
    * @memberof PatchLoginSettings
    */
+  magicLinkAuthEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
   hideForm?: boolean;
   /**
    *
@@ -145,6 +151,7 @@ export function PatchLoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: 
     passwordlessDeviceNamingEnabled: !exists(json, 'passwordlessDeviceNamingEnabled') ? undefined : json['passwordlessDeviceNamingEnabled'],
     certificateBasedAuthEnabled: !exists(json, 'certificateBasedAuthEnabled') ? undefined : json['certificateBasedAuthEnabled'],
     certificateBasedAuthUrl: !exists(json, 'certificateBasedAuthUrl') ? undefined : json['certificateBasedAuthUrl'],
+    magicLinkAuthEnabled: !exists(json, 'magicLinkAuthEnabled') ? undefined : json['magicLinkAuthEnabled'],
     hideForm: !exists(json, 'hideForm') ? undefined : json['hideForm'],
     identifierFirstEnabled: !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
     resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
@@ -170,6 +177,7 @@ export function PatchLoginSettingsToJSON(value?: PatchLoginSettings | null): any
     passwordlessDeviceNamingEnabled: value.passwordlessDeviceNamingEnabled,
     certificateBasedAuthEnabled: value.certificateBasedAuthEnabled,
     certificateBasedAuthUrl: value.certificateBasedAuthUrl,
+    magicLinkAuthEnabled: value.magicLinkAuthEnabled,
     hideForm: value.hideForm,
     identifierFirstEnabled: value.identifierFirstEnabled,
     resetPasswordOnExpiration: value.resetPasswordOnExpiration,
