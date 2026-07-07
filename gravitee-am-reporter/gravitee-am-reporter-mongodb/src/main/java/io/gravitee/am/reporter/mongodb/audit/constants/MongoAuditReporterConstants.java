@@ -40,9 +40,11 @@ public class MongoAuditReporterConstants {
   public static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "r1ty1t_1";
   public static final String INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME = "r1ty1s1t_1";
   public static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "r1a1t_1";
+  public static final String INDEX_REFERENCE_ACTOR_ID_TIMESTAMP_NAME = "r1ai1t_1";
   public static final String INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "r1ta1t_1";
-  public static final String INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "r1a1ta1t_1";
-  public static final String INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME = "r1a1ti1t_1";
+  public static final String INDEX_REFERENCE_TARGET_ID_TIMESTAMP_NAME = "r1tai1t_1";
+  public static final String OLD_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME_SHORT_NAME = "r1a1ta1t_1";
+  public static final String OLD_INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME_SHORT_VERSION = "r1a1ti1t_1";
   public static final String OLD_INDEX_REFERENCE_TIMESTAMP_NAME = "ref_1_time_-1";
   private static final String OLD_INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "ref_1_type_1_time_-1";
   private static final String OLD_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "ref_1_actor_1_time_-1";
@@ -69,6 +71,8 @@ public class MongoAuditReporterConstants {
       OLDER_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME,
       OLDER_INDEX_REFERENCE_TARGET_TIMESTAMP_NAME,
       OLDER_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME,
-      OLD_INDEX_REFERENCE_TIMESTAMP_NAME
+      OLD_INDEX_REFERENCE_TIMESTAMP_NAME,
+      OLD_INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME_SHORT_VERSION,
+      OLD_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME_SHORT_NAME
   );
 }
