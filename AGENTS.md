@@ -16,7 +16,7 @@ If you are an AI agent operating in this repository:
 
 ### Prerequisites
 
-- Java 21+, Maven 3.6+, Node.js >= 20.11.1, Yarn 4.1.1, Docker & Docker Compose
+- Java 25+, Maven 3.6+, Node.js >= 20.11.1, Yarn 4.1.1, Docker & Docker Compose
 
 ### Backend (Java / Maven)
 
@@ -122,16 +122,16 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 ### Tech Stack
 
-| Layer | Technology                                                    |
-|-------|---------------------------------------------------------------|
-| Backend | Java 21, RxJava 3, Vert.x, Spring                             |
-| Frontend | Angular, TypeScript                                           |
-| Build | Maven (backend), Yarn 4.1.1 (frontend)                        |
-| Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server               |
-| Migrations | Liquibase (JDBC), programmatic (MongoDB)                      |
-| API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`)                          |
+| Layer | Technology                                                                                                |
+|-------|-----------------------------------------------------------------------------------------------------------|
+| Backend | Java 25, RxJava 3, Vert.x, Spring                                                                         |
+| Frontend | Angular, TypeScript                                                                                       |
+| Build | Maven (backend), Yarn 4.1.1 (frontend)                                                                    |
+| Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server                                                           |
+| Migrations | Liquibase (JDBC), programmatic (MongoDB)                                                                  |
+| API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`)                                                                      |
 | Tests | JUnit 5, Mockito, Testcontainers (backend); Jest (integration); Newman (contract); helm-unittest (charts) |
-| Containers | Docker, Docker Compose                                        |
+| Containers | Docker, Docker Compose                                                                                    |
 
 ### Key Paths
 
