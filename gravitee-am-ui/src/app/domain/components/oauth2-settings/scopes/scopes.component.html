@@ -84,16 +84,43 @@
           >
             <ngx-datatable-column name="Scopes" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-                <mat-icon style="vertical-align: middle">donut_large</mat-icon>
-                <span>{{ row.key }}</span> | <small>{{ row.name }}</small>
+                <div fxLayout="row" class="scope-cell">
+                  <mat-icon class="scope-cell__icon">donut_large</mat-icon>
+                  <span class="scope-cell__label" [matTooltip]="row.name ? row.key + ' | ' + row.name : row.key" matTooltipShowDelay="300">
+                    {{ row.key
+                    }}<ng-container *ngIf="row.name">
+                      | <small>{{ row.name }}</small></ng-container
+                    >
+                  </span>
+                </div>
               </ng-template>
             </ngx-datatable-column>
-            <ngx-datatable-column name="Default" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+            <ngx-datatable-column
+              name="Default"
+              headerClass="checkbox-col"
+              cellClass="checkbox-col"
+              [flexGrow]="1"
+              [minWidth]="72"
+              [maxWidth]="72"
+              [sortable]="false"
+              [resizeable]="false"
+              [draggable]="false"
+            >
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <mat-checkbox (change)="toggleDefaultScope($event, row.key)" [checked]="isDefaultScope(row.key)"></mat-checkbox>
               </ng-template>
             </ngx-datatable-column>
-            <ngx-datatable-column name="Required" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+            <ngx-datatable-column
+              name="Required"
+              headerClass="checkbox-col"
+              cellClass="checkbox-col"
+              [flexGrow]="1"
+              [minWidth]="72"
+              [maxWidth]="72"
+              [sortable]="false"
+              [resizeable]="false"
+              [draggable]="false"
+            >
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <mat-checkbox
                   (change)="toggleRequiredScope($event, row.key)"
@@ -148,7 +175,17 @@
                 </div>
               </ng-template>
             </ngx-datatable-column>
-            <ngx-datatable-column name="Actions" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+            <ngx-datatable-column
+              name="Actions"
+              headerClass="checkbox-col"
+              cellClass="checkbox-col"
+              [flexGrow]="1"
+              [minWidth]="72"
+              [maxWidth]="72"
+              [sortable]="false"
+              [resizeable]="false"
+              [draggable]="false"
+            >
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div fxLayout="row" class="gv-table-cell-actions" *ngIf="!readonly">
                   <button mat-icon-button (click)="removeScope(row.key, $event)"><mat-icon>highlight_off</mat-icon></button>

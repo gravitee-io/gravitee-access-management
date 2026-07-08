@@ -399,6 +399,7 @@ import { BotDetectionFormComponent } from './domain/settings/botdetections/bot-d
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from './resolvers/scopes-all.resolver';
 import { GvFormControlDirective } from './directives/gv-form-control.directive';
+import { DatatableAutoResizeDirective } from './directives/datatable-auto-resize.directive';
 import { DomainSettingsDeviceIdentifiersComponent } from './domain/settings/deviceidentifiers/device-identifiers.component';
 import { DeviceIdentifierCreationComponent } from './domain/settings/deviceidentifiers/creation/device-identifier-creation.component';
 import { DeviceIdentifierCreationStep1Component } from './domain/settings/deviceidentifiers/creation/steps/step1/step1.component';
@@ -768,6 +769,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ExpressionInfoDialogComponent,
     SelectionRuleDialogComponent,
     GvFormControlDirective,
+    DatatableAutoResizeDirective,
     IdpSelectionInfoDialogComponent,
     MfaSelectComponent,
     MfaRememberDeviceComponent,
