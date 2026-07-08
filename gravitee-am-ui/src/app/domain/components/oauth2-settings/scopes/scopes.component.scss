@@ -5,3 +5,28 @@
 ::ng-deep .cdk-overlay-pane {
   width: auto !important;
 }
+
+.scope-cell {
+  min-width: 0; // allow the label flex item to shrink so ellipsis applies
+  align-items: center;
+  gap: 4px;
+
+  &__icon {
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+
+  &__label {
+    overflow: hidden;
+    min-width: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+::ng-deep .datatable-header .datatable-header-cell.checkbox-col,
+::ng-deep .datatable-body-row .datatable-body-cell.checkbox-col {
+  padding-right: 6px;
+  padding-left: 6px;
+  text-align: center;
+}
