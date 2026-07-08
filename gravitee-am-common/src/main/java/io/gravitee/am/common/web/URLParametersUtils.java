@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,8 +31,15 @@ import java.util.Map;
 public class URLParametersUtils {
 
     public static final String CONTENT_TYPE = "application/x-www-form-urlencoded";
-    private static final char QP_SEP_A = '&';
+    private static final String QP_SEP_A = "&";
     private static final String NAME_VALUE_SEPARATOR = "=";
+
+    /**
+     * Splits a query string on a '&' only when it introduces a new "name=" pair (positive lookahead).
+     * Any other '&' — e.g. one embedded, unencoded, inside a value — is left untouched, so values
+     * may safely contain one or several '&'.
+     */
+    private static final Pattern PAIR_SEPARATOR = Pattern.compile("&(?=[^&=]+=)");
 
     public static String format(final Iterable<? extends Pair<String,String>> parameters) {
         final StringBuilder result = new StringBuilder();
@@ -52,9 +60,12 @@ public class URLParametersUtils {
 
     public static Map<String, String> parse(String query) {
         Map<String, String> queryPairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
+        for (String pair : PAIR_SEPARATOR.split(query)) {
+            int idx = pair.indexOf(NAME_VALUE_SEPARATOR);
+            if (idx < 0) {
+                // Not a name=value pair (no leading key to attach it to): ignore.
+                continue;
+            }
             queryPairs.put(pair.substring(0, idx), pair.substring(idx + 1));
         }
         return queryPairs;
