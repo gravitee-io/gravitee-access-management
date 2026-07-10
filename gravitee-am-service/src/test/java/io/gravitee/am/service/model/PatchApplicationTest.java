@@ -20,6 +20,7 @@ import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import org.junit.Test;
 

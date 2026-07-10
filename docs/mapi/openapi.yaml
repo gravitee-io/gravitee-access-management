@@ -16240,7 +16240,7 @@ components:
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
         login:
-          $ref: "#/components/schemas/LoginSettings"
+          $ref: "#/components/schemas/PatchLoginSettings"
         mfa:
           $ref: "#/components/schemas/PatchMFASettings"
         oauth:
