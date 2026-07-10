@@ -21,6 +21,7 @@ import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.Test;
@@ -151,6 +152,48 @@ public class PatchApplicationTest {
                 Permission.APPLICATION_CERTIFICATE, Permission.APPLICATION_FACTOR)), patchApplication.getRequiredPermissions());
     }
 
+
+    @Test
+    public void testPatchWithLoginSettingsShouldKeepUnspecifiedProperties() {
+        PatchLoginSettings patchedLoginSettings = new PatchLoginSettings();
+        patchedLoginSettings.setForgotPasswordEnabled(Optional.of(true));
+
+        PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
+        patchAppSettings.setLogin(Optional.of(patchedLoginSettings));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(patchAppSettings));
+
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setRegisterEnabled(true);
+        loginSettings.setRememberMeEnabled(true);
+        loginSettings.setPasswordlessEnabled(true);
+        loginSettings.setPasswordlessRememberDeviceEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordMaxAge(3600);
+        loginSettings.setPasswordlessDeviceNamingEnabled(true);
+        loginSettings.setHideForm(true);
+        loginSettings.setResetPasswordOnExpiration(true);
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setLogin(loginSettings);
+        toPatch.setSettings(appSettings);
+
+        Application result = patch.patch(toPatch);
+
+        LoginSettings patched = result.getSettings().getLogin();
+        assertTrue(patched.isForgotPasswordEnabled());
+        assertTrue(patched.isRegisterEnabled());
+        assertTrue(patched.isRememberMeEnabled());
+        assertTrue(patched.isPasswordlessEnabled());
+        assertTrue(patched.isPasswordlessRememberDeviceEnabled());
+        assertTrue(patched.isPasswordlessEnforcePasswordEnabled());
+        assertEquals(3600, patched.getPasswordlessEnforcePasswordMaxAge().intValue());
+        assertTrue(patched.isPasswordlessDeviceNamingEnabled());
+        assertTrue(patched.isHideForm());
+        assertTrue(patched.getResetPasswordOnExpiration());
+    }
 
     @Test
     public void testPatchWithPasswordPolicy() {

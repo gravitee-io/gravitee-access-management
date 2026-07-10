@@ -56,8 +56,8 @@ import {
   PatchApplicationAdvancedSettingsToJSON,
   PatchApplicationAdvancedSettingsToJSONTyped,
 } from './PatchApplicationAdvancedSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
+import type { PatchLoginSettings } from './PatchLoginSettings';
+import { PatchLoginSettingsFromJSON, PatchLoginSettingsFromJSONTyped, PatchLoginSettingsToJSON } from './PatchLoginSettings';
 import type { PatchApplicationOAuthSettings } from './PatchApplicationOAuthSettings';
 import {
   PatchApplicationOAuthSettingsFromJSON,
@@ -101,10 +101,10 @@ export interface PatchApplicationSettings {
   account?: AccountSettings;
   /**
    *
-   * @type {LoginSettings}
+   * @type {PatchLoginSettings}
    * @memberof PatchApplicationSettings
    */
-  login?: LoginSettings;
+  login?: PatchLoginSettings;
   /**
    *
    * @type {PatchApplicationOAuthSettings}
@@ -250,7 +250,7 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
   }
   return {
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
-    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
+    login: json['login'] == null ? undefined : PatchLoginSettingsFromJSON(json['login']),
     oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
     saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     advanced: json['advanced'] == null ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
@@ -275,7 +275,7 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
 
   return {
     account: AccountSettingsToJSON(value['account']),
-    login: LoginSettingsToJSON(value['login']),
+    login: PatchLoginSettingsToJSON(value['login']),
     oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
     saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
     advanced: PatchApplicationAdvancedSettingsToJSON(value['advanced']),
