@@ -45,7 +45,7 @@ import java.util.Set;
 public class PatchApplicationSettings {
 
     private Optional<AccountSettings> account;
-    private Optional<LoginSettings> login;
+    private Optional<PatchLoginSettings> login;
     private Optional<PatchApplicationOAuthSettings> oauth;
     private Optional<PatchApplicationSAMLSettings> saml;
     private Optional<PatchApplicationAdvancedSettings> advanced;
@@ -61,10 +61,12 @@ public class PatchApplicationSettings {
 
         // set values
         SetterUtils.safeSet(toPatch::setAccount, this.getAccount());
-        SetterUtils.safeSet(toPatch::setLogin, this.getLogin());
         SetterUtils.safeSet(toPatch::setCookieSettings, this.getCookieSettings());
         SetterUtils.safeSet(toPatch::setRiskAssessment, this.getRiskAssessment());
         SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretExpirationSettings());
+        if (this.getLogin() != null && this.getLogin().isPresent()) {
+            toPatch.setLogin(this.getLogin().get().patch(toPatch.getLogin()));
+        }
         if (this.getOauth() != null && this.getOauth().isPresent()) {
             toPatch.setOauth(this.getOauth().get().patch(toPatch.getOauth()));
         }
