@@ -56,8 +56,8 @@ import {
   PatchApplicationAdvancedSettingsToJSON,
   PatchApplicationAdvancedSettingsToJSONTyped,
 } from './PatchApplicationAdvancedSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
+import type { PatchLoginSettings } from './PatchLoginSettings';
+import { PatchLoginSettingsFromJSON, PatchLoginSettingsFromJSONTyped, PatchLoginSettingsToJSON } from './PatchLoginSettings';
 import type { PatchApplicationOAuthSettings } from './PatchApplicationOAuthSettings';
 import {
   PatchApplicationOAuthSettingsFromJSON,
@@ -120,10 +120,10 @@ export interface PatchApplicationSettings {
   cookieSettings?: CookieSettings;
   /**
    *
-   * @type {LoginSettings}
+   * @type {PatchLoginSettings}
    * @memberof PatchApplicationSettings
    */
-  login?: LoginSettings;
+  login?: PatchLoginSettings;
   /**
    *
    * @type {PatchMFASettings}
@@ -270,8 +270,7 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
     advanced: json['advanced'] == null ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
     cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
-    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
-    mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
+    login: json['login'] == null ? undefined : PatchLoginSettingsFromJSON(json['login']),mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
     oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
     passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
@@ -297,7 +296,7 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
     account: AccountSettingsToJSON(value['account']),
     advanced: PatchApplicationAdvancedSettingsToJSON(value['advanced']),
     cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
-    login: LoginSettingsToJSON(value['login']),
+    login: PatchLoginSettingsToJSON(value['login']),
     mfa: PatchMFASettingsToJSON(value['mfa']),
     oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
     passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
