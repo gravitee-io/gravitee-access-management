@@ -28,7 +28,12 @@
 import { exists, mapValues } from '../runtime';
 import { AccountSettings, AccountSettingsFromJSON, AccountSettingsFromJSONTyped, AccountSettingsToJSON } from './AccountSettings';
 import { CookieSettings, CookieSettingsFromJSON, CookieSettingsFromJSONTyped, CookieSettingsToJSON } from './CookieSettings';
-import { LoginSettings, LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON } from './LoginSettings';
+import {
+  PatchLoginSettings,
+  PatchLoginSettingsFromJSON,
+  PatchLoginSettingsFromJSONTyped,
+  PatchLoginSettingsToJSON,
+} from './PatchLoginSettings';
 import {
   PatchApplicationAdvancedSettings,
   PatchApplicationAdvancedSettingsFromJSON,
@@ -81,10 +86,10 @@ export interface PatchApplicationSettings {
   account?: AccountSettings;
   /**
    *
-   * @type {LoginSettings}
+   * @type {PatchLoginSettings}
    * @memberof PatchApplicationSettings
    */
-  login?: LoginSettings;
+  login?: PatchLoginSettings;
   /**
    *
    * @type {PatchApplicationOAuthSettings}
@@ -220,7 +225,7 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
   }
   return {
     account: !exists(json, 'account') ? undefined : AccountSettingsFromJSON(json['account']),
-    login: !exists(json, 'login') ? undefined : LoginSettingsFromJSON(json['login']),
+    login: !exists(json, 'login') ? undefined : PatchLoginSettingsFromJSON(json['login']),
     oauth: !exists(json, 'oauth') ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
     saml: !exists(json, 'saml') ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     advanced: !exists(json, 'advanced') ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
@@ -244,7 +249,7 @@ export function PatchApplicationSettingsToJSON(value?: PatchApplicationSettings 
   }
   return {
     account: AccountSettingsToJSON(value.account),
-    login: LoginSettingsToJSON(value.login),
+    login: PatchLoginSettingsToJSON(value.login),
     oauth: PatchApplicationOAuthSettingsToJSON(value.oauth),
     saml: PatchApplicationSAMLSettingsToJSON(value.saml),
     advanced: PatchApplicationAdvancedSettingsToJSON(value.advanced),

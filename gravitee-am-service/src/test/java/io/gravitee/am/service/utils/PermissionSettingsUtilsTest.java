@@ -18,7 +18,6 @@ package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
@@ -26,6 +25,7 @@ import io.gravitee.am.service.model.PatchApplicationIdentityProvider;
 import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
 import io.gravitee.am.service.model.PatchApplicationSAMLSettings;
 import io.gravitee.am.service.model.PatchApplicationSettings;
+import io.gravitee.am.service.model.PatchLoginSettings;
 import io.gravitee.am.service.model.PatchMFASettings;
 import io.gravitee.am.service.model.PatchPasswordSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -150,7 +150,7 @@ public class PermissionSettingsUtilsTest {
         final PatchApplicationSettings settings = new PatchApplicationSettings();
 
         settings.setAccount(Optional.of(new AccountSettings()));
-        settings.setLogin(Optional.of(new LoginSettings()));
+        settings.setLogin(Optional.of(new PatchLoginSettings()));
         settings.setAdvanced(Optional.of(new PatchApplicationAdvancedSettings()));
         settings.setPasswordSettings(Optional.of(new PatchPasswordSettings()));
         settings.setMfa(Optional.of(new PatchMFASettings()));
@@ -219,7 +219,7 @@ public class PermissionSettingsUtilsTest {
         final PatchApplicationSettings settings = new PatchApplicationSettings();
 
         settings.setAccount(Optional.of(new AccountSettings()));
-        settings.setLogin(Optional.of(new LoginSettings()));
+        settings.setLogin(Optional.of(new PatchLoginSettings()));
         settings.setAdvanced(Optional.of(new PatchApplicationAdvancedSettings()));
         settings.setPasswordSettings(Optional.of(new PatchPasswordSettings()));
         settings.setMfa(Optional.of(new PatchMFASettings()));
