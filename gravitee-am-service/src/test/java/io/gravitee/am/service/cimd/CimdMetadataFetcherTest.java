@@ -292,6 +292,38 @@ public class CimdMetadataFetcherTest {
     }
 
     @Test
+    public void fetchAndValidate_validCommandEndpoint_isProjected() {
+        respondJson("""
+                {
+                  "redirect_uris": ["https://acme.example/cb"],
+                  "token_endpoint_auth_method": "none",
+                  "command_endpoint": "https://rp.example.com/commands"
+                }
+                """);
+
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        assertEquals("https://rp.example.com/commands", obs.values().get(0).commandEndpoint());
+    }
+
+    @Test
+    public void fetchAndValidate_malformedCommandEndpoint_fails() {
+        respondJson("""
+                {
+                  "redirect_uris": ["https://acme.example/cb"],
+                  "token_endpoint_auth_method": "none",
+                  "command_endpoint": "https://rp.example.com/commands#fragment"
+                }
+                """);
+
+        TestObserver<CimdClientMetadata> obs = fetcher.fetchAndValidate(domain(true), url()).test();
+        obs.awaitDone(5, java.util.concurrent.TimeUnit.SECONDS);
+        obs.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
     public void fetchAndValidate_responseExceedsMaxSize_fails() {
         StringBuilder big = new StringBuilder("{ \"redirect_uris\": [\"https://acme.example/cb\"], \"x\": \"");
         big.append("a".repeat(20_000));

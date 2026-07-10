@@ -25,6 +25,7 @@ import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.common.oidc.command.CommandEndpointValidator;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -402,7 +403,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateRequestObjectSigningAlgorithm)
                 .flatMap(this::validateRequestObjectEncryptionAlgorithm)
                 .flatMap(this::enforceWithSoftwareStatement)
-                .flatMap(this::validateCibaSettings);
+                .flatMap(this::validateCibaSettings)
+                .flatMap(this::validateCommandEndpoint);
     }
 
     private Single<DynamicClientRegistrationRequest> enforceWithSoftwareStatement(DynamicClientRegistrationRequest request) {
@@ -960,6 +962,18 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         }
 
         return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateCommandEndpoint(DynamicClientRegistrationRequest request) {
+        if (request.getCommandEndpoint() == null || request.getCommandEndpoint().isEmpty()) {
+            return Single.just(request);
+        }
+        try {
+            CommandEndpointValidator.validate(request.getCommandEndpoint().get());
+            return Single.just(request);
+        } catch (IllegalArgumentException ex) {
+            return Single.error(new InvalidClientMetadataException(ex.getMessage()));
+        }
     }
 
     /**

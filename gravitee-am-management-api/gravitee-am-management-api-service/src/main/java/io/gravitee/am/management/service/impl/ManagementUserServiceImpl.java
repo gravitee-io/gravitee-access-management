@@ -28,6 +28,8 @@ import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.common.oidc.command.Command;
+import io.gravitee.am.management.service.CommandManagementService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
@@ -144,6 +146,9 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @Autowired
     protected RevokeTokenManagementService tokenService;
+
+    @Autowired
+    protected CommandManagementService commandManagementService;
 
     @Autowired
     protected PasswordPolicyService passwordPolicyService;
@@ -407,26 +412,65 @@ public class ManagementUserServiceImpl implements ManagementUserService {
         return userRepository.findById(domain.asReference(), UserId.internal(userId))
                 .switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(userId))))
                 .flatMap(user -> {
+                    final boolean statusChanged = !Boolean.valueOf(isUserEnabled).equals(user.isEnabled());
                     user.setEnabled(isUserEnabled);
 
                     final var action = new UpdateUserRule(userValidator, userRepository::update);
+                    Single<User> update;
                     if(isUserEnabled){
-                        return action.update(user);
+                        update = action.update(user);
                     } else {
                         RevokeToken request = RevokeToken.byUser(domain,
                                 user.getId(),
                                 user.getUsername(),
                                 principal.getId(),
                                 principal.getUsername());
-                        return tokenService.sendProcessRequest(domain, request)
+                        update = tokenService.sendProcessRequest(domain, request)
                                 .andThen(action.update(user));
                     }
+                    if (statusChanged) {
+                        // propagate the account lifecycle change to the applications
+                        // of the domain that registered a command_endpoint
+                        update = update.flatMap(updatedUser ->
+                                commandManagementService.sendCommand(domain, isUserEnabled ? Command.REACTIVATE : Command.SUSPEND, updatedUser.getId(), principal)
+                                        .andThen(Single.just(updatedUser)));
+                    }
+                    return update;
                 })
                 .doOnSuccess(user1 -> {
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((isUserEnabled ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1));
                     publishUserUpdateEvent(domain, user1);
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((isUserEnabled ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
+    }
+
+    @Override
+    public Completable revokeSessions(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        final var userRepository = dataPlaneRegistry.getUserRepository(domain);
+        return userRepository.findById(domain.asReference(), UserId.internal(userId))
+                .switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(userId))))
+                .flatMap(user -> {
+                    // lazy "not-before" pattern: the gateway SSOSessionHandler destroys any
+                    // session whose login predates lastLogoutAt on its next touch
+                    user.setLastLogoutAt(new Date());
+                    return new UpdateUserRule(userValidator, userRepository::update).update(user);
+                })
+                .flatMap(user -> {
+                    RevokeToken request = RevokeToken.byUser(domain,
+                            user.getId(),
+                            user.getUsername(),
+                            principal.getId(),
+                            principal.getUsername());
+                    return tokenService.sendProcessRequest(domain, request)
+                            .andThen(commandManagementService.sendCommand(domain, Command.INVALIDATE, user.getId(), principal))
+                            .andThen(Single.just(user));
+                })
+                .doOnSuccess(user -> {
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_SESSIONS_REVOKED).user(user));
+                    publishUserUpdateEvent(domain, user);
+                })
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_SESSIONS_REVOKED).throwable(throwable)))
+                .ignoreElement();
     }
 
     @Override

@@ -215,6 +215,13 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("backchannel_user_code_parameter")
     private Optional<Boolean> backchannelUserCodeParameter;
 
+    /*******************************************************************************
+     * OpenID Provider Commands 1.0 (draft) metadata
+     * https://openid.net/specs/openid-provider-commands-1_0.html
+     ********************************************************************************/
+    @JsonProperty("command_endpoint")
+    private Optional<String> commandEndpoint;
+
     // GETTER AND SETTERS //
 
     public Optional<List<String>> getRedirectUris() {
@@ -613,6 +620,14 @@ public class DynamicClientRegistrationRequest {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public Optional<String> getCommandEndpoint() {
+        return commandEndpoint;
+    }
+
+    public void setCommandEndpoint(Optional<String> commandEndpoint) {
+        this.commandEndpoint = commandEndpoint;
+    }
+
     @Override
     public String toString() {
         return "ClientPayload{clientName='" + (clientName != null ? clientName.orElse("") : "") + "\'}";
@@ -679,6 +694,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+        SetterUtils.safeSet(client::setCommandEndpoint, this.getCommandEndpoint());
 
         return client;
     }
@@ -749,6 +765,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+        SetterUtils.safeSet(client::setCommandEndpoint, this.getCommandEndpoint());
 
         return client;
     }

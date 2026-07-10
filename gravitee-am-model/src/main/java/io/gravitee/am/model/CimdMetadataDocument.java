@@ -53,6 +53,13 @@ public class CimdMetadataDocument {
         return getStringFromMetadata("client_name");
     }
 
+    /**
+     * OpenID Provider Commands command_endpoint from the cached metadata JSON, if registered.
+     */
+    public String getCommandEndpoint() {
+        return getStringFromMetadata("command_endpoint");
+    }
+
     private String getStringFromMetadata(String key) {
         if (metadata == null) {
             return null;

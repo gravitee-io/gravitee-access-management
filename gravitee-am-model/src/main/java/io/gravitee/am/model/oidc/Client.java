@@ -264,6 +264,11 @@ public class Client implements Cloneable, Resource {
 
     private boolean backchannelUserCodeParameter;
 
+    /**
+     * OpenID Provider Commands 1.0 (draft) command_endpoint client metadata.
+     */
+    private String commandEndpoint;
+
     // ----------- SAML Settings ----------------
     private String entityId;
 
@@ -397,6 +402,7 @@ public class Client implements Cloneable, Resource {
         this.backchannelClientNotificationEndpoint = other.backchannelClientNotificationEndpoint;
         this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
         this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
+        this.commandEndpoint = other.commandEndpoint;
         this.entityId = other.entityId;
         this.attributeConsumeServiceUrl = other.attributeConsumeServiceUrl;
         this.singleLogoutServiceUrl = other.singleLogoutServiceUrl;
@@ -1125,6 +1131,14 @@ public class Client implements Cloneable, Resource {
 
     public void setBackchannelUserCodeParameter(boolean backchannelUserCodeParameter) {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
+    }
+
+    public String getCommandEndpoint() {
+        return commandEndpoint;
+    }
+
+    public void setCommandEndpoint(String commandEndpoint) {
+        this.commandEndpoint = commandEndpoint;
     }
 
     public SortedSet<ApplicationIdentityProvider> getIdentityProviders() {

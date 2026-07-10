@@ -9902,6 +9902,45 @@ paths:
       tags:
       - user
       - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/sessions/revoke:
+    post:
+      description: "Terminates the user's access everywhere: destroys AM SSO sessions,\
+        \ revokes all tokens and sends the OpenID Provider Commands invalidate command\
+        \ to every application of the domain that registered a command_endpoint. User\
+        \ must have the DOMAIN_USER[UPDATE] permission on the specified domain or\
+        \ DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE]\
+        \ permission on the specified organization"
+      operationId: revokeUserSessions
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Sessions revoked
+        "500":
+          description: Internal server error
+      summary: Revoke all sessions of a user
+      tags:
+      - user
+      - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/status:
     put:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
@@ -12793,6 +12832,8 @@ components:
           type: string
         clientUri:
           type: string
+        commandEndpoint:
+          type: string
         contacts:
           type: array
           items:
@@ -13559,6 +13600,8 @@ components:
         client_name:
           type: string
         client_uri:
+          type: string
+        command_endpoint:
           type: string
         contacts:
           type: array
@@ -16058,6 +16101,8 @@ components:
           format: int64
           description: Epoch timestamp in milliseconds.
         clientUri:
+          type: string
+        commandEndpoint:
           type: string
         contacts:
           type: array

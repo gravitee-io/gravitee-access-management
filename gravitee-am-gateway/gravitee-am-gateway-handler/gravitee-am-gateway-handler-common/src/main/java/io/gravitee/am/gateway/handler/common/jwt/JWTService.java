@@ -79,6 +79,16 @@ public interface JWTService {
     }
 
     /**
+     * Encode raw JWT to a signed OpenID Provider Commands command token
+     * (JOSE header <code>typ: command+jwt</code>), using the same certificate
+     * as the client's ID tokens.
+     * @param jwt JWT to encode
+     * @param client client the command token is minted for
+     * @return JWT signed string representation
+     */
+    Single<String> encodeCommand(JWT jwt, Client client);
+
+    /**
      * Encode raw JWT to JWT signed representation using userinfo_signed_response_alg Client preferences.
      * @param jwt JWT to encode
      * @param client client which want to sign the token
