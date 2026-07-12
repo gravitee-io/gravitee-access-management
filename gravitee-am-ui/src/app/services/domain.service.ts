@@ -141,6 +141,18 @@ export class DomainService {
     );
   }
 
+  patchDpopSettings(id, dpopSettings): Observable<any> {
+    return this.http.patch<any>(
+      this.domainsURL + id,
+      {
+        oidc: { dpopSettings },
+      },
+      {
+        context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
+      },
+    );
+  }
+
   patchScimSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       scim: domain.scim,

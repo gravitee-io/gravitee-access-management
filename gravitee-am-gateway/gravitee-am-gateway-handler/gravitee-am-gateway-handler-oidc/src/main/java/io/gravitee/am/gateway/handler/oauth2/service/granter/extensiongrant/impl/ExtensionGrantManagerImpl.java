@@ -22,6 +22,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
@@ -107,6 +108,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private RulesEngine rulesEngine;
+
+    @Autowired
+    private DPoPProofValidator dpopProofValidator;
 
     @Autowired
     private SubjectManager subjectManager;
@@ -221,7 +225,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     extensionGrantStrategy.setMinDate(minDate);
 
                     // Wrap strategy with adapter to integrate with CompositeTokenGranter
-                    var adapter = new StrategyGranterAdapter(extensionGrantStrategy, domain, tokenService, rulesEngine, tokenRequestResolver);
+                    var adapter = new StrategyGranterAdapter(extensionGrantStrategy, domain, tokenService, rulesEngine, tokenRequestResolver, dpopProofValidator);
 
                     ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), adapter);
                     extensionGrants.put(extensionGrant.getId(), extensionGrant);

@@ -39,8 +39,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.UmaStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
-import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
@@ -82,6 +82,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private DPoPProofValidator dpopProofValidator;
 
     @Autowired
     private JWTService jwtService;
@@ -222,7 +225,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     }
 
     private void registerStrategy(String grantType, GrantStrategy strategy) {
-        TokenGranter adapter = new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, tokenRequestResolver);
+        TokenGranter adapter = new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, tokenRequestResolver, dpopProofValidator);
         addTokenGranter(grantType, adapter);
     }
 }

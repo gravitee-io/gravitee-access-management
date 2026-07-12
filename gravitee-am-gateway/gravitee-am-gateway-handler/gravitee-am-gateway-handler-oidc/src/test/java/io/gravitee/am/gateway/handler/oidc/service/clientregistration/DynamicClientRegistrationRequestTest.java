@@ -135,6 +135,25 @@ public class DynamicClientRegistrationRequestTest {
     }
 
     @Test
+    public void testPatch_dpopBoundAccessTokens() {
+        assertFalse("dpopBoundAccessTokens shall default to false", toPatch.isDpopBoundAccessTokens());
+        patcher.setDpopBoundAccessTokens(Optional.of(true));
+
+        Client result = patcher.patch(toPatch);
+
+        assertTrue("dpop_bound_access_tokens should have been applied", result.isDpopBoundAccessTokens());
+    }
+
+    @Test
+    public void testUpdate_dpopBoundAccessTokens() {
+        patcher.setDpopBoundAccessTokens(Optional.of(true));
+
+        Client result = patcher.update(toPatch);
+
+        assertTrue("dpop_bound_access_tokens should have been applied", result.isDpopBoundAccessTokens());
+    }
+
+    @Test
     public void testGetScope() {
         patcher.setScope(Optional.of(""));
         assertFalse(patcher.getScope().isPresent());

@@ -263,6 +263,8 @@ public class ApplicationOAuthSettings {
 
     private boolean tlsClientCertificateBoundAccessTokens;
 
+    private boolean dpopBoundAccessTokens;
+
     /**
      * JWS alg algorithm [JWA] REQUIRED for signing Authorization Responses.
      */
@@ -389,6 +391,7 @@ public class ApplicationOAuthSettings {
         this.tlsClientAuthSanIp = other.tlsClientAuthSanIp;
         this.tlsClientAuthSanUri = other.tlsClientAuthSanUri;
         this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
+        this.dpopBoundAccessTokens = other.dpopBoundAccessTokens;
         this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
@@ -944,6 +947,14 @@ public class ApplicationOAuthSettings {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public boolean isDpopBoundAccessTokens() {
+        return dpopBoundAccessTokens;
+    }
+
+    public void setDpopBoundAccessTokens(boolean dpopBoundAccessTokens) {
+        this.dpopBoundAccessTokens = dpopBoundAccessTokens;
+    }
+
     public boolean isRequireParRequest() {
         return requireParRequest;
     }
@@ -1061,6 +1072,7 @@ public class ApplicationOAuthSettings {
         client.setTlsClientAuthSanIp(this.tlsClientAuthSanIp);
         client.setTlsClientAuthSanUri(this.tlsClientAuthSanUri);
         client.setTlsClientCertificateBoundAccessTokens(this.tlsClientCertificateBoundAccessTokens);
+        client.setDpopBoundAccessTokens(this.dpopBoundAccessTokens);
         client.setAuthorizationSignedResponseAlg(this.authorizationSignedResponseAlg);
         client.setAuthorizationEncryptedResponseAlg(this.authorizationEncryptedResponseAlg);
         client.setAuthorizationEncryptedResponseEnc(this.authorizationEncryptedResponseEnc);

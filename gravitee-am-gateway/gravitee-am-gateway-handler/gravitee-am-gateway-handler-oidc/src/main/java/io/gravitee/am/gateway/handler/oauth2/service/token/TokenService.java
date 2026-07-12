@@ -36,6 +36,15 @@ public interface TokenService {
 
     Maybe<Token> getRefreshToken(String refreshToken, Client client);
 
+    /**
+     * Resolve the DPoP key binding ({@code cnf.jkt}) carried by a refresh token, if any. Emits the
+     * {@code jkt} when the refresh token is DPoP-bound; completes empty when it is unbound or cannot
+     * be decoded (the grant flow then rejects an invalid token with {@code invalid_grant}). Read from
+     * the signed token itself — no store lookup — since revocation is enforced later in the grant.
+     * Used at the token endpoint to enforce refresh key continuity (RFC 9449 §3).
+     */
+    Maybe<String> getStoredRefreshTokenJkt(String refreshToken, Client client);
+
     default Maybe<Token> introspect(String token) {
         return introspect(token, (String) null);
     }

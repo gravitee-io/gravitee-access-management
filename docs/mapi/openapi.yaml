@@ -12810,6 +12810,8 @@ components:
             type: string
         disableRefreshTokenRotation:
           type: boolean
+        dpopBoundAccessTokens:
+          type: boolean
         enhanceScopesWithUserPermissions:
           type: boolean
         forcePKCE:
@@ -13805,6 +13807,30 @@ components:
           type: string
         username:
           type: string
+    DPoPSettings:
+      type: object
+      description: Demonstrating Proof-of-Possession (RFC 9449) configuration for
+        the domain.
+      properties:
+        dpopSigningAlgorithms:
+          type: array
+          description: "Allowlist of DPoP (RFC 9449) proof signing algorithms accepted\
+            \ at the token endpoint, drawn from the base supported set (ES256/384/512,\
+            \ RS256/384/512). When null the full base set is accepted. Persisting\
+            \ an empty set is rejected."
+          items:
+            type: string
+            description: "Allowlist of DPoP (RFC 9449) proof signing algorithms accepted\
+              \ at the token endpoint, drawn from the base supported set (ES256/384/512,\
+              \ RS256/384/512). When null the full base set is accepted. Persisting\
+              \ an empty set is rejected."
+        requireDpopForAll:
+          type: boolean
+          default: false
+          description: Domain-wide floor (RFC 9449) requiring every application to
+            present a DPoP proof at the token endpoint. When true it cannot be overridden
+            by an application whose own dpop_bound_access_tokens flag is off.
+      title: DPoP settings
     DataPlane:
       type: object
       properties:
@@ -13923,6 +13949,8 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
+        requireDpopForAll:
+          type: boolean
         saml:
           $ref: "#/components/schemas/SAMLSettings"
         scim:
@@ -15662,6 +15690,8 @@ components:
           $ref: "#/components/schemas/CIMDSettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/ClientRegistrationSettings"
+        dpopSettings:
+          $ref: "#/components/schemas/DPoPSettings"
         postLogoutRedirectUris:
           type: array
           description: "URLs to which a relying party may request the user be redirected\
@@ -16072,6 +16102,8 @@ components:
           format: int32
         disableRefreshTokenRotation:
           type: boolean
+        dpopBoundAccessTokens:
+          type: boolean
         enhanceScopesWithUserPermissions:
           type: boolean
         forcePKCE:
@@ -16439,6 +16471,15 @@ components:
         openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
+    PatchDPoPSettings:
+      type: object
+      properties:
+        dpopSigningAlgorithms:
+          type: array
+          items:
+            type: string
+        requireDpopForAll:
+          type: boolean
     PatchDomain:
       type: object
       properties:
@@ -16672,6 +16713,8 @@ components:
           $ref: "#/components/schemas/PatchCIMDSettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/PatchClientRegistrationSettings"
+        dpopSettings:
+          $ref: "#/components/schemas/PatchDPoPSettings"
         postLogoutRedirectUris:
           type: array
           items:

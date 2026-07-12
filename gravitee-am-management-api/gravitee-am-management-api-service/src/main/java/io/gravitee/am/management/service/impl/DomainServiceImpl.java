@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -873,6 +874,18 @@ public class DomainServiceImpl implements DomainService {
                 return Completable.error(e);
             } catch (Exception e) {
                 return Completable.error(new InvalidRedirectUriException(e.getMessage()));
+            }
+
+            final List<String> dpopSigningAlgorithms = domain.getOidc().getDpopSettings() != null
+                    ? domain.getOidc().getDpopSettings().getDpopSigningAlgorithms() : null;
+            if (dpopSigningAlgorithms != null) {
+                if (dpopSigningAlgorithms.isEmpty()) {
+                    return Completable.error(new InvalidDomainException("DPoP signing algorithms allowlist must not be empty"));
+                }
+                if (!SignatureAlgorithm.DPOP_SUPPORTED_ALGORITHMS.containsAll(dpopSigningAlgorithms)) {
+                    return Completable.error(new InvalidDomainException(
+                            "DPoP signing algorithms allowlist must only contain supported algorithms: " + SignatureAlgorithm.DPOP_SUPPORTED_ALGORITHMS));
+                }
             }
         }
 

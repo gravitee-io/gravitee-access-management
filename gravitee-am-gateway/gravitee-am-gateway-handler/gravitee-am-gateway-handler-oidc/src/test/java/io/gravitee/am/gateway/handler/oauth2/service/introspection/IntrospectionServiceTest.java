@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.introspection;
 
 import io.gravitee.am.common.exception.jwt.InvalidGISException;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
@@ -35,6 +36,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
@@ -156,6 +158,27 @@ public class IntrospectionServiceTest {
         testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.AUD));
     }
 
+
+    @Test
+    public void shouldExposeCnfWithJktForDpopBoundToken() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("client-id");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        accessToken.setConfirmationMethod(Map.of(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jkt"));
+        when(tokenService.introspect(token, (String) null)).thenReturn(Maybe.just(accessToken));
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").build();
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(response -> response.getConfirmationMethod() instanceof Map<?, ?> cnf
+                && "the-jkt".equals(cnf.get(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT)));
+    }
 
     @Test
     public void shouldReturnAudClaim_IfConfigSetTrue() {

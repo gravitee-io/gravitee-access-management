@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
@@ -119,6 +120,9 @@ public class OIDCProvider extends AbstractProtocolProvider {
     private OAuth2AuthProvider oAuth2AuthProvider;
 
     @Autowired
+    private DPoPProofValidator dpopProofValidator;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
@@ -207,6 +211,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         userInfoAuthHandler.extractToken(true);
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
+        userInfoAuthHandler.dpopProofValidator(dpopProofValidator);
 
         Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager, executionContextFactory);
         oidcRouter.route("/userinfo").handler(corsHandler);
@@ -240,6 +245,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         dynamicClientRegistrationAuthHandler.extractToken(true);
         dynamicClientRegistrationAuthHandler.extractClient(true);
         dynamicClientRegistrationAuthHandler.forceClientToken(true);
+        dynamicClientRegistrationAuthHandler.dpopProofValidator(dpopProofValidator);
 
         DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(domain, dynamicClientRegistrationAuthHandler);
         DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(dcrService, clientSyncService);
@@ -257,6 +263,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         dynamicClientAccessAuthHandler.forceClientToken(true);
         dynamicClientAccessAuthHandler.selfResource(true, CLIENT_ID, Scope.DCR.getKey());
         dynamicClientAccessAuthHandler.offlineVerification(true);
+        dynamicClientAccessAuthHandler.dpopProofValidator(dpopProofValidator);
 
         DynamicClientAccessHandler dynamicClientAccessHandler = new DynamicClientAccessHandler(domain);
         DynamicClientAccessTokenHandler dynamicClientAccessTokenHandler = new DynamicClientAccessTokenHandler();

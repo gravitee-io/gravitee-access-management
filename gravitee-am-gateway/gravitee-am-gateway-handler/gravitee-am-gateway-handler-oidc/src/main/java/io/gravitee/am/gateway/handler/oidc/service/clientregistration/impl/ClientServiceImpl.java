@@ -263,6 +263,7 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setTlsClientAuthSanUri(client.getTlsClientAuthSanUri());
         oAuthSettings.setTlsClientAuthSubjectDn(client.getTlsClientAuthSubjectDn());
         oAuthSettings.setTlsClientCertificateBoundAccessTokens((client.isTlsClientCertificateBoundAccessTokens()));
+        oAuthSettings.setDpopBoundAccessTokens(client.isDpopBoundAccessTokens());
         oAuthSettings.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
         oAuthSettings.setRequireParRequest(client.isRequireParRequest());
         // CIBA settings

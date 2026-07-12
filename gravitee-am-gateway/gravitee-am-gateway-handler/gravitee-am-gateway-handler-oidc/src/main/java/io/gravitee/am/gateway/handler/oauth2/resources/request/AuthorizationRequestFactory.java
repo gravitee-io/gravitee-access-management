@@ -118,6 +118,11 @@ public final class AuthorizationRequestFactory {
             authorizationRequest.getParameters().put(Parameters.CODE_CHALLENGE_METHOD, List.of(codeChallengeMethod));
         }
 
+        String dpopJkt = getOAuthParameter(context, Parameters.DPOP_JKT);
+        if (dpopJkt != null) {
+            authorizationRequest.getParameters().put(Parameters.DPOP_JKT, List.of(dpopJkt));
+        }
+
         // store authorization request in context for later use
         context.put(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
 

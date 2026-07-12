@@ -237,6 +237,7 @@ import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ci
 import { SpiffeSettingsComponent } from './domain/settings/openid/spiffe/spiffe-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
 import { CimdSettingsComponent } from './domain/settings/cimd/cimd.component';
+import { DpopSettingsComponent } from './domain/settings/oauth/dpop/dpop.component';
 import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
 import { DeviceNotifiersCreationComponent } from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
 import { DeviceNotifiersResolver } from './resolvers/device-notifiers.resolver';
@@ -3022,6 +3023,21 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'CIMD',
+                            section: 'OAuth 2.0',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_openid_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'dpop',
+                        component: DpopSettingsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'DPoP',
                             section: 'OAuth 2.0',
                             level: 'level2',
                           },

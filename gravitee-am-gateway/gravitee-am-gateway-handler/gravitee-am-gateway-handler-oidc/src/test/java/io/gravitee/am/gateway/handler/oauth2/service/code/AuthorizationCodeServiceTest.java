@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.code;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCodeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
@@ -97,6 +100,29 @@ public class AuthorizationCodeServiceTest {
         // Verify the resource is set if provided
         verify(authorizationCodeRepository, times(1)).create(argThat(
                 code -> Objects.equals(code.getResources(), Set.of(resourceOne, resourceTwo)))
+        );
+    }
+
+    @Test
+    public void shouldCreate_persistsDpopJktOnRequestParameters() {
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId("my-client-id");
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.DPOP_JKT, "committed-thumbprint");
+        authorizationRequest.setParameters(parameters);
+
+        User user = new User();
+        user.setUsername("my-username-id");
+
+        when(authorizationCodeRepository.create(any())).thenReturn(Single.just(new AuthorizationCode()));
+
+        TestObserver<AuthorizationCode> testObserver = authorizationCodeService.create(authorizationRequest, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(authorizationCodeRepository, times(1)).create(argThat(
+                code -> code.getRequestParameters() != null
+                        && "committed-thumbprint".equals(code.getRequestParameters().getFirst(Parameters.DPOP_JKT)))
         );
     }
 

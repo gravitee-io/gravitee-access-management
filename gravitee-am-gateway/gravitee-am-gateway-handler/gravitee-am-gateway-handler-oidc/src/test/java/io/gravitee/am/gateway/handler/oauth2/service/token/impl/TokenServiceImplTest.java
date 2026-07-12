@@ -36,7 +36,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
@@ -61,6 +61,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.utils.ConstantKeys.BEARER_AUTH_SCHEME;
+import static io.gravitee.am.common.utils.ConstantKeys.DPOP_AUTH_SCHEME;
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,7 +77,7 @@ public class TokenServiceImplTest {
     IntrospectionTokenFacade introspectionTokenFacade;
 
     @Mock
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Mock
     private TokenEnhancer tokenEnhancer;
@@ -187,6 +189,180 @@ public class TokenServiceImplTest {
 
         assertThat(captured.getExp()).isEqualTo(expectedExpiration);
         assertThat(createdToken.getExpireAt().toInstant().getEpochSecond()).isEqualTo(expectedExpiration);
+    }
+
+    @Test
+    public void shouldBindAccessTokenToDpopKeyWhenConfirmationMethodJktPresent() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("read"));
+        request.setOrigin("https://auth.example.com");
+        request.setConfirmationMethodJkt("the-jwk-thumbprint");
+
+        Client client = createClient("test-client");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+        observer.assertValue(token -> DPOP_AUTH_SCHEME.equals(token.getTokenType()));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat((Map<String, Object>) jwtCaptor.getValue().getConfirmationMethod())
+                .containsEntry(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jwk-thumbprint")
+                .doesNotContainKey(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT);
+    }
+
+    @Test
+    public void shouldRecordDpopJktInTokenCreatedAudit() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("read"));
+        request.setOrigin("https://auth.example.com");
+        request.setConfirmationMethodJkt("the-jwk-thumbprint");
+
+        Client client = createClient("test-client");
+        client.setDomain("test-domain");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        executeTokenCreation(request, client, user);
+
+        ArgumentCaptor<AuditBuilder> auditCaptor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, Mockito.atLeastOnce()).report(auditCaptor.capture());
+        AuditBuilder capturedBuilder = auditCaptor.getAllValues().stream()
+                .filter(ClientTokenAuditBuilder.class::isInstance)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected to find a ClientTokenAuditBuilder in audit reports"));
+
+        String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
+        assertThat(auditMessage).contains("DPOP_JKT");
+        assertThat(auditMessage).contains("the-jwk-thumbprint");
+    }
+
+    @Test
+    public void shouldBindRefreshTokenToDpopKeyWhenConfirmationMethodJktPresent() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setSupportRefreshToken(true);
+        request.setScopes(Set.of("read"));
+        request.setOrigin("https://auth.example.com");
+        request.setConfirmationMethodJkt("the-jwk-thumbprint");
+
+        Client client = createClient("test-client");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        executeTokenCreation(request, client, user);
+
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor =
+                ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
+        verify(tokenManager).storeRefreshToken(captor.capture());
+        assertThat(captor.getValue().getJkt()).isEqualTo("the-jwk-thumbprint");
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues())
+                .allSatisfy(encoded -> assertThat((Map<String, Object>) encoded.getConfirmationMethod())
+                        .containsEntry(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jwk-thumbprint"));
+    }
+
+    @Test
+    public void shouldNotBindRefreshTokenWhenNoConfirmationMethodJkt() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setSupportRefreshToken(true);
+        request.setScopes(Set.of("read"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("test-client");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        executeTokenCreation(request, client, user);
+
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor =
+                ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
+        verify(tokenManager).storeRefreshToken(captor.capture());
+        assertThat(captor.getValue().getJkt()).isNull();
+    }
+
+    @Test
+    public void shouldResolveStoredRefreshTokenJkt_whenBound() {
+        Client client = createClient("test-client");
+        JWT jwt = new JWT();
+        jwt.setJti("rt-jti");
+        jwt.setConfirmationMethod(Map.of(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jkt"));
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(jwt));
+
+        tokenService.getStoredRefreshTokenJkt("rt", client).test()
+                .assertValue("the-jkt").assertComplete();
+    }
+
+    @Test
+    public void shouldResolveEmptyJkt_whenRefreshTokenUnbound() {
+        Client client = createClient("test-client");
+        JWT jwt = new JWT();
+        jwt.setJti("rt-jti");
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(jwt));
+
+        tokenService.getStoredRefreshTokenJkt("rt", client).test()
+                .assertNoValues().assertComplete();
+    }
+
+    @Test
+    public void shouldResolveEmptyJkt_whenRefreshTokenUndecodable() {
+        Client client = createClient("test-client");
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any()))
+                .thenReturn(Single.error(new RuntimeException("invalid token")));
+
+        tokenService.getStoredRefreshTokenJkt("bad-rt", client).test()
+                .assertNoValues().assertNoErrors().assertComplete();
+    }
+
+    @Test
+    public void shouldKeepCertificateBoundTokenAsBearer() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("read"));
+        request.setOrigin("https://auth.example.com");
+        request.setConfirmationMethodX5S256("the-cert-thumbprint");
+
+        Client client = createClient("test-client");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+        observer.assertValue(token -> BEARER_AUTH_SCHEME.toLowerCase().equals(token.getTokenType()));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat((Map<String, Object>) jwtCaptor.getValue().getConfirmationMethod())
+                .containsEntry(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT, "the-cert-thumbprint")
+                .doesNotContainKey(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT);
     }
 
     // ========== Helper Methods ==========

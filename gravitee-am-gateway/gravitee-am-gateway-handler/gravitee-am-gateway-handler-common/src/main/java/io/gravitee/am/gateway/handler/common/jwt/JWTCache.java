@@ -20,7 +20,12 @@ import io.reactivex.rxjava3.core.Single;
 public interface JWTCache {
     Single<Boolean> isPresent(String jwt);
 
-    void put(String jwt, long expiresAt);
+    /**
+     * Atomically records the jti. Returns {@code true} when it was newly added, {@code false} when
+     * an entry was already present (i.e. a replay). Callers that need replay detection must rely on
+     * this return value rather than a separate {@link #isPresent(String)} check, which is racy.
+     */
+    boolean put(String jwt, long expiresAt);
 
     class NoOpJtiCache implements JWTCache {
 
@@ -30,8 +35,8 @@ public interface JWTCache {
         }
 
         @Override
-        public void put(String jwt, long expiresAt) {
-            // do nothing
+        public boolean put(String jwt, long expiresAt) {
+            return true;
         }
     }
 }

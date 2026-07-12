@@ -48,6 +48,8 @@ import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.CimdAwareClientLookupServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.DefaultClientLookupServiceImpl;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
+import io.gravitee.am.gateway.handler.common.dpop.impl.DPoPProofValidatorImpl;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
@@ -364,6 +366,24 @@ public class CommonConfiguration {
         } else {
             return new JWTCache.NoOpJtiCache();
         }
+    }
+
+    @Bean
+    public DPoPProofValidator dpopProofValidator(
+            @Value("${handlers.oauth2.dpop.validitySeconds:30}") int validitySeconds,
+            @Value("${handlers.oauth2.dpop.replayCache.enabled:true}") boolean replayCacheEnabled,
+            @Value("${handlers.oauth2.dpop.replayCache.maxSize:10000}") long replayCacheMaxSize) {
+        final int clockSkewSeconds = 3;
+        final JWTCache replayCache;
+        if (replayCacheEnabled) {
+            replayCache = InMemoryJWTCache.builder()
+                    .maxSize(replayCacheMaxSize)
+                    .expireAfterWrite(Duration.ofSeconds((long) validitySeconds + clockSkewSeconds))
+                    .build();
+        } else {
+            replayCache = new JWTCache.NoOpJtiCache();
+        }
+        return new DPoPProofValidatorImpl(validitySeconds, clockSkewSeconds, replayCache);
     }
 
     @Bean

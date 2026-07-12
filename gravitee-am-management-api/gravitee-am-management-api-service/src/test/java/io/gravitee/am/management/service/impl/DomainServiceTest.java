@@ -59,6 +59,7 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
+import io.gravitee.am.model.oidc.DPoPSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
@@ -696,6 +697,55 @@ public class DomainServiceTest {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(ORGANIZATION);
         }));
+    }
+
+    @Test
+    public void shouldNotPatch_emptyDpopSigningAlgorithms() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = domainWithDpopAlgorithms(List.of());
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById(domain.getId())).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, domain.getId()), domain.getId(), patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDomainException.class);
+
+        verify(domainRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotPatch_unsupportedDpopSigningAlgorithm() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = domainWithDpopAlgorithms(List.of("HS256"));
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById(domain.getId())).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, domain.getId()), domain.getId(), patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDomainException.class);
+
+        verify(domainRepository, never()).update(any());
+    }
+
+    private static Domain domainWithDpopAlgorithms(List<String> algorithms) {
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        domain.setVersion(DomainVersion.V2_0);
+        OIDCSettings oidc = new OIDCSettings();
+        DPoPSettings dpopSettings = new DPoPSettings();
+        dpopSettings.setDpopSigningAlgorithms(algorithms);
+        oidc.setDpopSettings(dpopSettings);
+        domain.setOidc(oidc);
+        return domain;
     }
 
     @Test

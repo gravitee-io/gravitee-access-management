@@ -47,6 +47,7 @@ public record HttpRequestInfo(
         HttpVersion version,
         long timestamp,
         String confirmationMethodX5S256,
+        String confirmationMethodJkt,
         Response httpResponse
 ) {
 
@@ -75,6 +76,7 @@ public record HttpRequestInfo(
                 request.version(),
                 request.timestamp(),
                 request.getConfirmationMethodX5S256(),
+                request.getConfirmationMethodJkt(),
                 request.getHttpResponse()
         );
     }

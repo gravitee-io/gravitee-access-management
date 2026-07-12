@@ -15,8 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
+import io.gravitee.am.common.exception.oauth2.InvalidDPoPProofException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -27,7 +32,11 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTo
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.DPoPSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,12 +57,14 @@ import org.mockito.ArgumentCaptor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -72,6 +83,9 @@ class StrategyGranterAdapterTest {
     @Mock
     private TokenRequestResolver tokenRequestResolver;
 
+    @Mock
+    private DPoPProofValidator dpopProofValidator;
+
     private StrategyGranterAdapter adapter;
     private Domain domain;
     private Client client;
@@ -88,7 +102,7 @@ class StrategyGranterAdapterTest {
         lenient().when(tokenRequestResolver.resolve(any(), any(), any()))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
 
-        adapter = new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, tokenRequestResolver);
+        adapter = new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, tokenRequestResolver, dpopProofValidator);
     }
 
     @Test
@@ -564,5 +578,200 @@ class StrategyGranterAdapterTest {
         Map<String, Object> actClaim = capturedRequest.getActClaim();
         assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
         assertFalse(actClaim.containsKey("actor_act"), "Act claim should NOT have actor_act when actor token is not delegated");
+    }
+
+
+    @Test
+    void dpop_opportunisticBinding_setsJktWhenProofPresent() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, true, null);
+        when(dpopProofValidator.validateForToken(eq(tokenRequest), any())).thenReturn(Single.just("the-jkt"));
+        mockGrantFlow(tokenRequest);
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertEquals("the-jkt", tokenRequest.getConfirmationMethodJkt());
+    }
+
+    @Test
+    void dpop_malformedProof_failsWithInvalidDPoPProof() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, true, null);
+        when(dpopProofValidator.validateForToken(eq(tokenRequest), any()))
+                .thenReturn(Single.error(new InvalidDPoPProofException("bad proof")));
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidDPoPProofException.class);
+        verify(strategy, never()).process(any(), any(), any());
+    }
+
+    @Test
+    void dpop_noProof_bindsNothing() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, false, null);
+        mockGrantFlow(tokenRequest);
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertNull(tokenRequest.getConfirmationMethodJkt());
+        verify(dpopProofValidator, never()).validateForToken(any(), any());
+    }
+
+    @Test
+    void dpop_refreshBoundMatchingProof_setsSameJkt() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.REFRESH_TOKEN, true, "some-rt");
+        when(tokenService.getStoredRefreshTokenJkt(eq("some-rt"), eq(client))).thenReturn(Maybe.just("the-jkt"));
+        when(dpopProofValidator.validateForRefresh(eq(tokenRequest), eq("the-jkt"), any())).thenReturn(Single.just("the-jkt"));
+        mockGrantFlow(tokenRequest);
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertEquals("the-jkt", tokenRequest.getConfirmationMethodJkt());
+        verify(dpopProofValidator, never()).validateForToken(any(), any());
+    }
+
+    @Test
+    void dpop_refreshBoundMismatchedProof_failsWithInvalidDPoPProof() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.REFRESH_TOKEN, true, "some-rt");
+        when(tokenService.getStoredRefreshTokenJkt(eq("some-rt"), eq(client))).thenReturn(Maybe.just("the-jkt"));
+        when(dpopProofValidator.validateForRefresh(eq(tokenRequest), eq("the-jkt"), any()))
+                .thenReturn(Single.error(new InvalidDPoPProofException("key mismatch")));
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidDPoPProofException.class);
+        verify(strategy, never()).process(any(), any(), any());
+    }
+
+    @Test
+    void dpop_refreshBoundNoProof_failsWithInvalidRequest() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.REFRESH_TOKEN, false, "some-rt");
+        when(tokenService.getStoredRefreshTokenJkt(eq("some-rt"), eq(client))).thenReturn(Maybe.just("the-jkt"));
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
+        verify(dpopProofValidator, never()).validateForRefresh(any(), any(), any());
+        verify(strategy, never()).process(any(), any(), any());
+    }
+
+    @Test
+    void dpop_refreshUnboundNoProof_bindsNothing() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.REFRESH_TOKEN, false, "some-rt");
+        when(tokenService.getStoredRefreshTokenJkt(eq("some-rt"), eq(client))).thenReturn(Maybe.empty());
+        mockGrantFlow(tokenRequest);
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertNull(tokenRequest.getConfirmationMethodJkt());
+        verify(dpopProofValidator, never()).validateForRefresh(any(), any(), any());
+        verify(dpopProofValidator, never()).validateForToken(any(), any());
+    }
+
+    @Test
+    void dpop_refreshUnboundWithProof_bindsOpportunistically() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.REFRESH_TOKEN, true, "some-rt");
+        when(tokenService.getStoredRefreshTokenJkt(eq("some-rt"), eq(client))).thenReturn(Maybe.empty());
+        when(dpopProofValidator.validateForToken(eq(tokenRequest), any())).thenReturn(Single.just("proof-jkt"));
+        mockGrantFlow(tokenRequest);
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertEquals("proof-jkt", tokenRequest.getConfirmationMethodJkt());
+        verify(dpopProofValidator, never()).validateForRefresh(any(), any(), any());
+    }
+
+
+    @Test
+    void dpop_requiredByAppFlag_noProof_failsWithInvalidRequest() {
+        client.setDpopBoundAccessTokens(true);
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, false, null);
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
+
+        verify(strategy, never()).process(any(), any(), any());
+        verify(dpopProofValidator, never()).validateForToken(any(), any());
+    }
+
+    @Test
+    void dpop_requiredByDomainFloor_noProof_failsWithInvalidRequest() {
+        domain.setOidc(oidcRequiringDpopForAll());
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, false, null);
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
+
+        verify(strategy, never()).process(any(), any(), any());
+    }
+
+    @Test
+    void dpop_domainFloorNotOverridableByAppFlagOff_noProof_failsWithInvalidRequest() {
+        domain.setOidc(oidcRequiringDpopForAll());
+        client.setDpopBoundAccessTokens(false);
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, false, null);
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
+
+        verify(strategy, never()).process(any(), any(), any());
+    }
+
+    @Test
+    void dpop_requiredClient_nonDpopCapableGrant_noProof_failsWithInvalidRequest() {
+        client.setDpopBoundAccessTokens(true);
+        TokenRequest tokenRequest = dpopRequest(GrantType.TOKEN_EXCHANGE, false, null);
+
+        adapter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
+
+        verify(strategy, never()).process(any(), any(), any());
+    }
+
+    @Test
+    void dpop_notRequired_noProof_issuesOrdinaryToken() {
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, false, null);
+        mockGrantFlow(tokenRequest);
+
+        Token result = adapter.grant(tokenRequest, client).blockingGet();
+
+        assertNotNull(result);
+        assertNull(tokenRequest.getConfirmationMethodJkt());
+    }
+
+    @Test
+    void dpop_requiredClient_withValidProof_bindsToken() {
+        client.setDpopBoundAccessTokens(true);
+        TokenRequest tokenRequest = dpopRequest(GrantType.CLIENT_CREDENTIALS, true, null);
+        when(dpopProofValidator.validateForToken(eq(tokenRequest), any())).thenReturn(Single.just("the-jkt"));
+        mockGrantFlow(tokenRequest);
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertEquals("the-jkt", tokenRequest.getConfirmationMethodJkt());
+    }
+
+    private static OIDCSettings oidcRequiringDpopForAll() {
+        OIDCSettings oidc = new OIDCSettings();
+        DPoPSettings dpopSettings = new DPoPSettings();
+        dpopSettings.setRequireDpopForAll(true);
+        oidc.setDpopSettings(dpopSettings);
+        return oidc;
+    }
+
+    private TokenRequest dpopRequest(String grantType, boolean withProof, String refreshTokenValue) {
+        TokenRequest req = new TokenRequest();
+        req.setClientId("client-id");
+        req.setGrantType(grantType);
+        req.setScopes(Set.of("read"));
+        io.gravitee.gateway.api.http.HttpHeaders headers = io.gravitee.gateway.api.http.HttpHeaders.create();
+        if (withProof) {
+            headers.set(ConstantKeys.DPOP_PROOF_HEADER, "a-proof");
+        }
+        req.setHeaders(headers);
+        if (refreshTokenValue != null) {
+            LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add(Parameters.REFRESH_TOKEN, refreshTokenValue);
+            req.setParameters(params);
+        }
+        return req;
+    }
+
+    private void mockGrantFlow(TokenRequest tokenRequest) {
+        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, false);
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain))).thenReturn(Single.just(creationRequest));
+        ExecutionContext ec = mock(ExecutionContext.class);
+        lenient().when(ec.getAttributes()).thenReturn(new HashMap<>());
+        lenient().when(rulesEngine.fire(any(), any(), any(), eq(client), any())).thenReturn(Single.just(ec));
+        lenient().when(rulesEngine.fire(any(), any(), eq(client), any())).thenReturn(Single.just(ec));
+        when(tokenService.create(any(), eq(client), any())).thenReturn(Single.just(new AccessToken("access-token-value")));
     }
 }

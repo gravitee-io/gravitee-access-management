@@ -77,7 +77,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.gravitee.am.common.oauth2.Parameters.DPOP_JKT;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
+import static io.gravitee.am.common.utils.ConstantKeys.DPOP_AUTH_SCHEME;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 import static org.springframework.util.ObjectUtils.isEmpty;
@@ -151,6 +153,13 @@ public class TokenServiceImpl implements TokenService {
                     return Single.error(ex);
                 })
                 .flatMapMaybe(jwt -> tokenRepository.findRefreshTokenByJti(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
+    }
+
+    @Override
+    public Maybe<String> getStoredRefreshTokenJkt(String refreshToken, Client client) {
+        return jwtService.decodeAndVerify(refreshToken, client, REFRESH_TOKEN)
+                .onErrorComplete()
+                .mapOptional(jwt -> Optional.ofNullable(jwt.getDPoPConfirmationThumbprint()));
     }
 
     @Override
@@ -362,6 +371,7 @@ public class TokenServiceImpl implements TokenService {
         newToken.setSubject(user == null ? sourceToken.getSub() : user.getId());
         newToken.setCreatedAt(new Date(sourceToken.getIat() * 1000));
         newToken.setExpireAt(new Date(sourceToken.getExp() * 1000));
+        newToken.setJkt(request.getConfirmationMethodJkt());
         return newToken;
     }
 
@@ -378,6 +388,11 @@ public class TokenServiceImpl implements TokenService {
         token.setSubject(accessToken.getSub());
         token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());
         token.setScope(accessToken.getScope());
+
+        if (accessToken.getConfirmationMethod() instanceof Map<?, ?> cnf
+                && cnf.containsKey(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT)) {
+            token.setTokenType(DPOP_AUTH_SCHEME);
+        }
 
         // Token Exchange (RFC 8693) specific fields
         if (oAuth2Request.getIssuedTokenType() != null) {
@@ -461,6 +476,14 @@ public class TokenServiceImpl implements TokenService {
         final String cnfValue = request.getConfirmationMethodX5S256();
         if (cnfValue != null) {
             jwt.setConfirmationMethod(Maps.<String, Object>builder().put(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT, cnfValue).build());
+        }
+        final String dpopJkt = request.getConfirmationMethodJkt();
+        if (dpopJkt != null) {
+            Map<String, Object> cnf = jwt.getConfirmationMethod() instanceof Map<?, ?> existing
+                    ? new HashMap<>((Map<String, Object>) existing)
+                    : new HashMap<>();
+            cnf.put(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, dpopJkt);
+            jwt.setConfirmationMethod(cnf);
         }
         // set claims parameter (only for an access token)
         // useful for UserInfo Endpoint to request for specific claims
@@ -551,6 +574,13 @@ public class TokenServiceImpl implements TokenService {
         
         // Store originally granted resources in refresh token for RFC 8707 compliance
         setOrigResourcesClaim(jwt, request);
+
+        // DPoP (RFC 9449 §3): bind the refresh token to the same key as the access token so the
+        // binding travels inside the signed token and can be read back without a store lookup.
+        final String dpopJkt = request.getConfirmationMethodJkt();
+        if (dpopJkt != null) {
+            jwt.setConfirmationMethod(Maps.<String, Object>builder().put(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, dpopJkt).build());
+        }
 
         return jwt;
     }
@@ -701,6 +731,10 @@ public class TokenServiceImpl implements TokenService {
         if (certificateInfo != null) {
             params.put(SIGNING_CERTIFICATE_ID, certificateInfo.certificateId());
             params.put(SIGNING_CERTIFICATE_NAME, certificateInfo.certificateAlias());
+        }
+
+        if (oAuth2Request.getConfirmationMethodJkt() != null) {
+            params.put(DPOP_JKT.toUpperCase(), oAuth2Request.getConfirmationMethodJkt());
         }
 
         if (GrantType.TOKEN_EXCHANGE.equals(oAuth2Request.getGrantType())) {

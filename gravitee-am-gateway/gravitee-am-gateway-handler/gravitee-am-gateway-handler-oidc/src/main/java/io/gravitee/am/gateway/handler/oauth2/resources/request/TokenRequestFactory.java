@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
@@ -81,6 +82,8 @@ public final class TokenRequestFactory {
 
         // set RFC 8707 resource indicators
         tokenRequest.setResources(ResourceParameterUtils.parseResourceParameters(request));
+
+        tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
 
         return tokenRequest;
     }
