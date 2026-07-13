@@ -15,7 +15,7 @@
  */
 
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import {
   buildCreateAndTestUser,

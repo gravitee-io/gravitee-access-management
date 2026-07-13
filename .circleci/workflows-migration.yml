@@ -42,6 +42,8 @@ jobs:
     environment:
       # Provider hardcoded to k8s for CI (Kind cluster); pipeline param can be empty after continuation
       MIGRATION_TEST_BASE: "./scripts/migration-test.mjs --from-tag << pipeline.parameters.migration_test_from_tag >> --to-tag << pipeline.parameters.migration_test_to_tag >> --db-type << parameters.db_type >> --provider k8s"
+      # Inherited by the jest processes the migration orchestrator spawns (see gravitee-am-test/api/config/retry.setup.js)
+      JEST_RETRIES: "2"
     steps:
       - checkout
       - keeper/env-export:

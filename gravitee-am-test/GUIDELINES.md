@@ -1,15 +1,15 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-1. [Core Principles](#core-principles)
-1. [Fixture Pattern](#fixture-pattern)
-1. [File Structure](#file-structure)
-1. [Templates](#templates)
-1. [Best Practices](#best-practices)
-1. [Common Patterns](#common-patterns)
-1. [Migration Guide](#migration-guide)
-1. [Examples](#examples)
-1. [Checklist](#checklist)
+2. [Core Principles](#core-principles)
+3. [Fixture Pattern](#fixture-pattern)
+4. [File Structure](#file-structure)
+5. [Templates](#templates)
+6. [Best Practices](#best-practices)
+7. [Common Patterns](#common-patterns)
+8. [Migration Guide](#migration-guide)
+9. [Examples](#examples)
+10. [Checklist](#checklist)
 
 ---
 
@@ -27,7 +27,11 @@ This document defines the standards and best practices for writing Jest integrat
 
 ---
 
+
+
 ## Core Principles
+
+
 
 ### 1. Fixture Pattern First
 
@@ -37,6 +41,8 @@ All tests should use a fixture pattern for setup and teardown. This provides:
 - Guaranteed cleanup
 - Reusable test environments
 - Type safety through TypeScript interfaces
+
+
 
 ### 2. Single Responsibility
 
@@ -49,8 +55,11 @@ Each test file should focus on testing one feature or functionality area.
 Tests should be:
 
 - Independent (can run in any order)
+  - Exceptions exist but are discouraged - usage of ordered tests must call `retryImmediatelyForThisFile()` at file level to preserve ordering during retries
 - Isolated (don't share state)
 - Parallelizable (use `uniqueName()` for resources)
+
+
 
 ### 4. Clear and Descriptive
 
@@ -58,15 +67,21 @@ Tests should be:
 - Code is self-documenting
 - Complex logic is extracted to helper functions
 
+
+
 ### 5. Assertion quality
 
-- **Do not use `toBeDefined()` on required fields** — it passes for empty strings and wrong values. Prefer `toMatch(JWT_FORMAT)` for access tokens, `toEqual` for known values, and `expect.any(String)` when you only need a non-empty identifier shape.
+- **Do not use** `toBeDefined()` **on required fields** — it passes for empty strings and wrong values. Prefer `toMatch(JWT_FORMAT)` for access tokens, `toEqual` for known values, and `expect.any(String)` when you only need a non-empty identifier shape.
 - **One deterministic outcome per test** — no conditional branches around `expect()`.
 - **Assert what you configure** — if the fixture sets token claims or flow behaviour, the test should verify that output (or drop unused configuration).
 
 ---
 
+
+
 ## Fixture Pattern
+
+
 
 ### Why Use Fixtures?
 
@@ -77,6 +92,8 @@ Fixtures provide:
 - **Reusability**: Share setup logic across multiple test files
 - **Type Safety**: TypeScript interfaces ensure correct usage
 - **Test Helpers**: Include common operations as fixture methods
+
+
 
 ### Fixture File Structure
 
@@ -93,14 +110,18 @@ specs/
         test-utils.ts (optional)
 ```
 
+
+
 ### Fixture Interface Requirements
 
 Every fixture must export:
 
 1. **Interface**: TypeScript interface defining the fixture structure
-1. **Constants**: Test constants used by the fixture (if needed)
-1. **Setup Function**: Main function that creates and returns the fixture
-1. **Helper Functions**: Reusable functions for common operations (optional)
+2. **Constants**: Test constants used by the fixture (if needed)
+3. **Setup Function**: Main function that creates and returns the fixture
+4. **Helper Functions**: Reusable functions for common operations (optional)
+
+
 
 ### Fixture Interface Template
 
@@ -124,6 +145,8 @@ export interface FeatureFixture {
   getAccessToken?: () => Promise<string>;
 }
 ```
+
+
 
 ### Fixture Setup Function Template
 
@@ -179,7 +202,11 @@ export const setupFeatureFixture = async (): Promise<FeatureFixture> => {
 
 ---
 
+
+
 ## File Structure
+
+
 
 ### Standard Test File Layout
 
@@ -214,7 +241,11 @@ describe('Feature Name - Primary Functionality', () => {
 
 ---
 
+
+
 ## Templates
+
+
 
 ### Gateway Test Template
 
@@ -260,6 +291,8 @@ describe('Feature Name - Error Handling', () => {
   });
 });
 ```
+
+
 
 ### Management Test Template
 
@@ -322,6 +355,8 @@ describe('Resource Name - CRUD Operations', () => {
   });
 });
 ```
+
+
 
 ### Fixture Template
 
@@ -523,7 +558,11 @@ export function buildFeatureUrl(endpoint: string, params: Record<string, string>
 
 ---
 
+
+
 ## Best Practices
+
+
 
 ### 1. Unique Naming
 
@@ -541,6 +580,8 @@ const domain = await createDomain(
 const domain = await createDomain(accessToken, 'my-test-domain', 'Description');
 ```
 
+
+
 ### 2. Cleanup
 
 **Always** cleanup resources, even if domain deletion cascades:
@@ -553,20 +594,26 @@ afterAll(async () => {
 });
 ```
 
+
+
 ### 3. Domain Readiness and Sync
 
 Use the domain state commands from `@gateway-commands/monitoring-commands` and `@management-commands/domain-management-commands` to wait for domains. **Never** use raw `getWellKnownOpenIdConfiguration()` or `waitFor()` delays to check domain readiness.
 
 #### Available Commands
 
-| Command | Purpose | When to Use |
-|---|---|---|
-| `setupDomainForTest(name, { waitForStart: true })` | Creates, starts, and waits for domain + OIDC config | **Preferred** for all test/fixture setup |
-| `waitForDomainSync(domainId)` | Polls `_node/domains` until domain is stable and synchronized | After management API changes that must propagate to gateway |
-| `waitForSyncAfter(domainId, mutation)` | Snapshots `lastSync`, executes mutation, polls until `lastSync` advances | **Preferred** when wrapping a mutation (avoids race condition in `waitForNextSync`) |
-| `waitForNextSync(domainId)` | Waits for a **new** sync cycle to complete | When you can't wrap the mutation; note: has a race if sync completes before polling starts |
-| `waitForDomainReady(domainId)` | Low-level poll until domain state is `stable && synchronized` | Internal use; prefer `waitForDomainSync` or `setupDomainForTest` |
-| `waitForOidcReady(domainHrid)` | Retries well-known OIDC config endpoint until 200 | When you need OIDC config independently of domain setup |
+
+| Command                                            | Purpose                                                                  | When to Use                                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `setupDomainForTest(name, { waitForStart: true })` | Creates, starts, and waits for domain + OIDC config                      | **Preferred** for all test/fixture setup                                                   |
+| `waitForDomainSync(domainId)`                      | Polls `_node/domains` until domain is stable and synchronized            | After management API changes that must propagate to gateway                                |
+| `waitForSyncAfter(domainId, mutation)`             | Snapshots `lastSync`, executes mutation, polls until `lastSync` advances | **Preferred** when wrapping a mutation (avoids race condition in `waitForNextSync`)        |
+| `waitForNextSync(domainId)`                        | Waits for a **new** sync cycle to complete                               | When you can't wrap the mutation; note: has a race if sync completes before polling starts |
+| `waitForDomainReady(domainId)`                     | Low-level poll until domain state is `stable && synchronized`            | Internal use; prefer `waitForDomainSync` or `setupDomainForTest`                           |
+| `waitForOidcReady(domainHrid)`                     | Retries well-known OIDC config endpoint until 200                        | When you need OIDC config independently of domain setup                                    |
+
+
+
 
 #### Domain Setup
 
@@ -579,6 +626,8 @@ const { domain, oidcConfig } = await setupDomainForTest(uniqueName('my-feature',
 });
 // oidcConfig is guaranteed to have token_endpoint, introspection_endpoint, etc.
 ```
+
+
 
 #### After Resource Changes
 
@@ -600,6 +649,8 @@ await waitForSyncAfter(domain.id, () =>
 await updateApplication(domain.id, accessToken, updateRequest, app.id);
 await waitForNextSync(domain.id);
 ```
+
+
 
 #### After Domain Config Changes (patchDomain, updateFlows)
 
@@ -644,6 +695,8 @@ const response = await waitForOidcReady(domain.hrid);
 const oidcConfig = response.body;
 ```
 
+
+
 ### 4. Error Handling
 
 Handle errors gracefully in fixtures with try/catch:
@@ -659,6 +712,8 @@ try {
   throw error;
 }
 ```
+
+
 
 ### 5. Asserting Error Responses
 
@@ -681,6 +736,8 @@ expect(error).toBeInstanceOf(ResponseError);
 expect(error.response.status).toBe(400);
 ```
 
+
+
 ### 6. Test Constants
 
 Define constants at the top of fixture files:
@@ -692,6 +749,8 @@ export const FEATURE_TEST = {
   REDIRECT_URI: 'https://example.com/callback',
 } as const;
 ```
+
+
 
 ### 7. Helper Functions
 
@@ -707,6 +766,8 @@ export function buildAuthorizationUrl(endpoint: string, clientId: string): strin
 }
 ```
 
+
+
 ### 8. Dynamic Test Generation
 
 **Recommendation: Avoid dynamic test generation in most cases**
@@ -714,8 +775,10 @@ export function buildAuthorizationUrl(endpoint: string, clientId: string): strin
 #### Problems with Dynamic Test Generation
 
 1. **Debugging Difficulty**: Hard to run individual failing tests
-1. **Test Output Clarity**: Generated test names can be unclear
-1. **Maintenance**: Logic hidden in loops makes tests harder to understand
+2. **Test Output Clarity**: Generated test names can be unclear
+3. **Maintenance**: Logic hidden in loops makes tests harder to understand
+
+
 
 #### When It Might Be Acceptable
 
@@ -723,6 +786,8 @@ export function buildAuthorizationUrl(endpoint: string, clientId: string): strin
 - Test names are clear and descriptive
 - You document why dynamic generation is used
 - You can still run individual tests easily
+
+
 
 #### Better Alternatives
 
@@ -768,6 +833,8 @@ describe('Password validation', () => {
 // specs/gateway/forgot-password-domain-settings.jest.spec.ts
 ```
 
+
+
 ### 9. File Length
 
 Keep test files under **300 lines**. If a file grows longer:
@@ -775,6 +842,8 @@ Keep test files under **300 lines**. If a file grows longer:
 - Split into multiple test files by feature area
 - Extract complex setup to fixtures
 - Move helper functions to separate utility files
+
+
 
 ### 10. Test Descriptions
 
@@ -800,6 +869,8 @@ it('test 1', async () => {
 });
 ```
 
+
+
 ### 11. Test Organization
 
 Use `describe` blocks to group related tests:
@@ -820,7 +891,11 @@ describe('Feature Name - Edge Cases', () => {
 
 ---
 
+
+
 ## Common Patterns
+
+
 
 ### Pattern 1: Basic Gateway Test
 
@@ -851,6 +926,8 @@ afterAll(async () => {
 });
 ```
 
+
+
 ### Pattern 2: Management CRUD Test
 
 ```typescript
@@ -877,6 +954,8 @@ afterAll(async () => {
   await fixture.cleanup();
 });
 ```
+
+
 
 ### Pattern 3: Test with Helper Methods
 
@@ -913,7 +992,11 @@ export const setupFeatureFixture = async (): Promise<FeatureFixture> => {
 
 ---
 
+
+
 ## Gateway vs Management Tests
+
+
 
 ### Gateway Tests
 
@@ -940,6 +1023,8 @@ Management tests typically need:
 
 ---
 
+
+
 ## Migration Guide
 
 When migrating existing tests to use fixtures:
@@ -958,6 +1043,8 @@ specs/gateway/feature-name/
     feature-name-fixture.ts
 ```
 
+
+
 ### Step 3: Extract Setup to Fixture
 
 Move setup code to fixture file:
@@ -966,6 +1053,8 @@ Move setup code to fixture file:
 - Create setup function
 - Add cleanup function
 - Extract helper functions if needed
+
+
 
 ### Step 4: Update Test File
 
@@ -987,6 +1076,8 @@ beforeAll(async () => {
 });
 ```
 
+
+
 ### Step 5: Update Test References
 
 Replace direct resource access with fixture properties:
@@ -998,6 +1089,8 @@ const result = await performOperation(domain.id, application.id);
 // After
 const result = await performOperation(fixture.domain.id, fixture.application.id);
 ```
+
+
 
 ### Step 6: Add Cleanup
 
@@ -1011,40 +1104,50 @@ afterAll(async () => {
 });
 ```
 
+
+
 ### Step 7: Test
 
 Run tests to verify they still pass.
 
 ---
 
+
+
 ## Examples
+
+
 
 ### Reference Implementations
 
 **Excellent Examples:**
 
 1. **Gateway Test with Fixture:**
-    - `specs/gateway/protected-resources/authorization-endpoint-resource-indicators.jest.spec.ts`
+  - `specs/gateway/protected-resources/authorization-endpoint-resource-indicators.jest.spec.ts`
     - `specs/gateway/protected-resources/fixtures/protected-resources-fixture.ts`
-1. **Gateway Test with Simple Fixture:**
-    - `specs/gateway/fixtures/cors-fixture.ts`
+2. **Gateway Test with Simple Fixture:**
+  - `specs/gateway/fixtures/cors-fixture.ts`
     - `specs/gateway/cors.jest.spec.ts`
-1. **Management Test:**
-    - `specs/management/applications.jest.spec.ts`
+3. **Management Test:**
+  - `specs/management/applications.jest.spec.ts`
     - `specs/management/domains.jest.spec.ts`
-1. **Simple Gateway Test:**
-    - `specs/gateway/refresh-token.jest.spec.ts`
+4. **Simple Gateway Test:**
+  - `specs/gateway/refresh-token.jest.spec.ts`
+
+
 
 ### What Makes These Good?
 
 1. **Clear Structure**: Well-organized with logical grouping
-1. **Fixture Pattern**: Uses fixtures for setup/teardown
-1. **Descriptive Names**: Test names clearly describe what's being tested
-1. **Proper Cleanup**: All resources are cleaned up
-1. **Unique Naming**: Uses `uniqueName()` for parallel execution
-1. **Helper Functions**: Common operations extracted to helpers
+2. **Fixture Pattern**: Uses fixtures for setup/teardown
+3. **Descriptive Names**: Test names clearly describe what's being tested
+4. **Proper Cleanup**: All resources are cleaned up
+5. **Unique Naming**: Uses `uniqueName()` for parallel execution
+6. **Helper Functions**: Common operations extracted to helpers
 
 ---
+
+
 
 ## Checklist
 
@@ -1058,6 +1161,8 @@ Before submitting a test file, ensure:
 - [ ] Test descriptions are clear and descriptive
 - [ ] Tests are grouped logically with `describe` blocks
 
+
+
 ### Setup & Teardown
 
 - [ ] Uses `uniqueName()` for all resource names
@@ -1068,6 +1173,8 @@ Before submitting a test file, ensure:
 - [ ] Error handling in fixture setup
 - [ ] Cleanup in `afterAll` (even if domain deletion cascades)
 
+
+
 ### Code Quality
 
 - [ ] TypeScript types are properly used
@@ -1076,12 +1183,16 @@ Before submitting a test file, ensure:
 - [ ] No dynamic test generation (or documented exception)
 - [ ] No conditional tests based on environment (jdbc/mongo)
 
+
+
 ### Maintainability
 
 - [ ] Reusable fixtures for common patterns
 - [ ] Consistent naming conventions
 - [ ] Comments for complex logic
 - [ ] Error handling in cleanup
+
+
 
 ### Testing
 
@@ -1092,7 +1203,11 @@ Before submitting a test file, ensure:
 
 ---
 
+
+
 ## Running Tests Locally
+
+
 
 ### Prerequisites: Build & Deploy to Local Stack
 
@@ -1113,6 +1228,8 @@ npm --prefix docker/local-stack run stack:down && npm --prefix docker/local-stac
 ```
 
 > **Important:** The `-P ee-bundle,addons-bundle` profile is required to include mock test plugins (`gravitee-am-factor-mock`, `gravitee-am-resource-mfa-mock`). Without it, tests that use MFA mocks will fail with `Plugin type mock-am-factor not deployed`.
+
+
 
 ### Running Tests
 
@@ -1144,7 +1261,11 @@ REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
 
 ---
 
+
+
 ## Quick Reference
+
+
 
 ### Essential Commands
 
@@ -1168,6 +1289,8 @@ const oidcConfig = oidcResponse.body;
 // Cleanup
 await safeDeleteDomain(domain.id, accessToken);
 ```
+
+
 
 ### Common Imports
 
@@ -1198,3 +1321,4 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { User } from '@management-models/User';
 ```
+

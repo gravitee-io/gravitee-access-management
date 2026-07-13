@@ -16,7 +16,13 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  safeDeleteDomain,
+  startDomain,
+  waitForDomainStart,
+  waitForOidcReady,
+} from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -24,7 +30,7 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { uniqueName } from '@utils-commands/misc';
-import { performGet, performPost, getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { Fixture } from '../../test-fixture';
@@ -208,7 +214,7 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   await waitForDomainStart(domain);
 
   // Get OIDC config
-  const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+  const openIdConfigurationResponse = await waitForOidcReady(domain.hrid);
   const openIdConfiguration = openIdConfigurationResponse.body;
   expect(openIdConfiguration).toBeDefined();
   expect(openIdConfiguration.authorization_endpoint).toBeDefined();

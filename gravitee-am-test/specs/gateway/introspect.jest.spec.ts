@@ -17,19 +17,19 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import {
   deleteDomain,
-  setupDomainForTest, startDomain,
+  setupDomainForTest,
   waitForDomainStart,
-  waitForDomainSync
+  waitForDomainSync,
+  waitForOidcReady,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { buildCertificate } from '@api-fixtures/certificates';
-import {getWellKnownOpenIdConfiguration, performPost} from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { createTestApp } from '@utils-commands/application-commands';
-import {delay, uniqueName} from '@utils-commands/misc';
-import {retryUntil} from "@utils-commands/retry";
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -77,12 +77,10 @@ beforeAll(async () => {
     },
   });
 
+  await waitForDomainStart(domain);
 
-  await waitForDomainStart(domain)
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+  const result = await waitForOidcReady(domain.hrid);
   oidc = result.body;
-
 });
 
 afterAll(async () => {

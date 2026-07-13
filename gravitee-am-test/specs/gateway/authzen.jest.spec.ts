@@ -20,6 +20,7 @@ import {requestAdminAccessToken} from '@management-commands/token-management-com
 import {
     safeDeleteDomain,
     setupDomainForTest,
+    waitForOidcReady,
 } from '@management-commands/domain-management-commands';
 import {waitForNextSync} from '@gateway-commands/monitoring-commands';
 import {uniqueName} from '@utils-commands/misc';
@@ -30,7 +31,7 @@ import {mcpAuthorizationModel, tupleFactory, authzenFactory} from '@api-fixtures
 import {AuthorizationEngine} from '@management-models/AuthorizationEngine';
 import {createApplication, updateApplication} from '@management-commands/application-management-commands';
 import {evaluateAccess, evaluateAccessExpectError, evaluateAccessUnauthenticated} from '@gateway-commands/authzen-commands';
-import {getWellKnownOpenIdConfiguration, requestClientCredentialsToken} from '@gateway-commands/oauth-oidc-commands';
+import {requestClientCredentialsToken} from '@gateway-commands/oauth-oidc-commands';
 import {createProtectedResource, deleteProtectedResource} from '@management-commands/protected-resources-management-commands';
 
 setup();
@@ -129,7 +130,7 @@ beforeAll(async () => {
   await waitForNextSync(testDomain.id);
 
   // 9. Get OpenID configuration for token endpoint
-  const openIdConfigResponse = await getWellKnownOpenIdConfiguration(testDomain.hrid).expect(200);
+  const openIdConfigResponse = await waitForOidcReady(testDomain.hrid);
   openIdConfiguration = openIdConfigResponse.body;
   expect(openIdConfiguration?.token_endpoint).toBeDefined();
 
