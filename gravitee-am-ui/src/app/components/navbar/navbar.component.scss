@@ -105,10 +105,28 @@
       flex-direction: column;
       align-items: stretch;
       pointer-events: none;
+
+      // this wrapper is a single mat-menu-item spanning the whole list; suppress its own
+      // hover/focus state-layer so hovering one row doesn't grey the entire container
+      &:hover,
+      &.cdk-program-focused,
+      &.cdk-keyboard-focused,
+      &.mat-mdc-menu-item-highlighted {
+        background-color: transparent;
+      }
     }
 
     .domains_list {
       padding-top: 0;
+
+      // MDC renders an icon+meta list row at 56px with a 32px icon gap; tighten both for a compact menu
+      ::ng-deep .mat-mdc-list-item.mdc-list-item--with-leading-icon.mdc-list-item--with-one-line {
+        height: 40px;
+      }
+
+      ::ng-deep .mdc-list-item--with-leading-icon .mdc-list-item__start {
+        margin-right: 16px;
+      }
 
       &__search {
         display: flex;
