@@ -17,14 +17,12 @@ package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.audit.Status;
-import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.AuditReporterService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -33,15 +31,14 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class AuditServiceImpl implements AuditService, InitializingBean, DisposableBean {
+@Slf4j
+public class AuditServiceImpl implements AuditService, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditServiceImpl.class);
     private static final String AUDIT_TO_EXCLUDE_KEY = "reporters.audits.excluded_audit_types[%d]";
     public static final String PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS = "reporters.audits.exclude.clientAuthentication.success";
@@ -58,33 +55,32 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
     private Set<String> auditsToExclude = Collections.synchronizedSet(new HashSet<>());
     private boolean excludeSuccessfulAudits;
 
-    private ExecutorService executorService;
-
     @Override
     public void report(AuditBuilder<?> auditBuilder) {
-        executorService.execute(() -> {
-            final var audit = auditBuilder.build(objectMapper);
-            if (canReport(audit)) {
+        try {
+            if (canReport(auditBuilder)) {
+                final var audit = auditBuilder.build(objectMapper);
                 auditReporterService.report(audit);
             }
-        });
+        } catch (Throwable ex) {
+            log.error("An error occurred while reporting auditType {}", auditBuilder.getType(), ex);
+        }
     }
 
-    private boolean canReport(Audit audit) {
+    private boolean canReport(AuditBuilder audit) {
         return isAllowedAuditType(audit) && statusNotFiltered(audit);
     }
 
-    private boolean statusNotFiltered(Audit audit) {
-        return !audit.getType().equals(EventType.CLIENT_AUTHENTICATION) || (audit.getOutcome().getStatus().equals(Status.FAILURE) || !excludeSuccessfulAudits);
+    private boolean statusNotFiltered(AuditBuilder audit) {
+        return !audit.getType().equals(EventType.CLIENT_AUTHENTICATION) || (audit.isFailure() || !excludeSuccessfulAudits);
     }
 
-    private boolean isAllowedAuditType(Audit audit) {
+    private boolean isAllowedAuditType(AuditBuilder audit) {
         return !auditsToExclude.contains(audit.getType());
     }
 
     @Override
     public void afterPropertiesSet() {
-        executorService = Executors.newCachedThreadPool();
         excludeSuccessfulAudits = environment.getProperty(PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS, Boolean.class, Boolean.FALSE);
         int i = 0;
         do {
@@ -97,14 +93,4 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
         while(environment.containsProperty(AUDIT_TO_EXCLUDE_KEY.formatted(++i)));
     }
 
-    @Override
-    public void destroy() {
-        if (executorService != null) {
-            executorService.shutdown();
-        }
-    }
-
-    public ExecutorService getExecutorService() {
-        return executorService;
-    }
 }
