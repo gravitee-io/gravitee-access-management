@@ -17,6 +17,10 @@ alwaysApply: true
 - Use `Single`/`Maybe` for I/O operations and `Completable` for side-effect operations.
 - Preserve error intent: expected 4xx must not become generic 5xx.
 
+## Models / POJOs
+
+- For **new** models: use Lombok for mutable types — prefer `@Data` when it covers all needs, otherwise compose `@Getter`/`@Setter`/`@ToString`/`@AllArgsConstructor` — and use `record`s for immutable/simple ones. Do not retrofit existing models.
+
 ## Audit Logging (Mandatory for C/U/D)
 
 Audit logging is mandatory for **CREATE/UPDATE/DELETE**:

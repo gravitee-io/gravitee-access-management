@@ -161,6 +161,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 - Keep changes small and reviewable; avoid unrelated refactors or reformatting.
 - Prefer existing patterns over inventing new ones.
 - Each new Java/Typescript file should contain the license header
+- For **new** Java models/POJOs: use Lombok for mutable types — prefer `@Data` when it covers all needs, otherwise compose `@Getter`/`@Setter`/`@ToString`/`@AllArgsConstructor` — and use `record`s for immutable/simple ones. Do not retrofit existing models.
 
 ---
 
