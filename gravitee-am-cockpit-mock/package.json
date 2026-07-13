@@ -1,0 +1,19 @@
+{
+  "name": "gravitee-am-cockpit-mock",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mock cockpit WebSocket server to test Gravitee AM's cockpit command integration",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}
