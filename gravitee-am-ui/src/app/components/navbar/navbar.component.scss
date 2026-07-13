@@ -68,23 +68,39 @@
 }
 
 .userAccount {
-  width: 380px;
+  width: 340px;
 
-  .userAccountInfo {
-    h3 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: normal;
+  .userAccountProfile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+
+    .userAccountInfo {
+      flex: 1;
+      min-width: 0;
+
+      h3 {
+        overflow: hidden;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      small {
+        color: rgb(0 0 0 / 54%);
+      }
     }
 
-    small {
+    &__signout {
+      flex: none;
       color: rgb(0 0 0 / 54%);
     }
   }
 
   .userAccountActions {
-    border-top: 1px solid rgb(226 229 231);
-
     &.domains_menu-item {
       flex-direction: column;
       align-items: stretch;
@@ -92,13 +108,44 @@
     }
 
     .domains_list {
+      padding-top: 0;
+
       &__search {
-        padding: 0 16px 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-top: 1px solid rgb(0 0 0 / 8%);
+        border-bottom: 1px solid rgb(0 0 0 / 8%);
+        color: rgb(0 0 0 / 45%);
         pointer-events: initial;
 
-        mat-form-field {
-          width: 100%;
+        input {
+          flex: 1;
+          min-width: 0;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: rgb(0 0 0 / 87%);
+          font: inherit;
+
+          &::placeholder {
+            color: rgb(0 0 0 / 45%);
+          }
+
+          &:focus {
+            outline: none;
+          }
         }
+      }
+
+      &__label {
+        margin: 12px 16px 2px;
+        color: rgb(0 0 0 / 45%);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       &__item {
@@ -106,12 +153,60 @@
         pointer-events: initial;
 
         &__name {
+          overflow: hidden;
+          font-weight: 400;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        &__actions {
+        // amber status dot pinned to the domain icon of a disabled domain
+        &__icon--disabled {
+          position: relative;
+          overflow: visible;
+
+          &::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            bottom: 1px;
+            width: 8px;
+            height: 8px;
+            border: 1.5px solid #fff;
+            border-radius: 50%;
+            background: #e0a53a;
+          }
+        }
+
+        &__meta {
           display: flex;
+          align-items: center;
+        }
+
+        &__status {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding-right: 4px;
+        }
+
+        &__status-label {
+          color: rgb(0 0 0 / 45%);
+          font-size: 12px;
+        }
+
+        &__flag {
+          width: 18px;
+          height: 18px;
+          font-size: 18px;
+
+          &--default {
+            color: #d99a17;
+          }
+        }
+
+        // pin + default toggles stay hidden until the row is hovered or focused
+        &__controls {
+          display: none;
           align-items: center;
           gap: 2px;
 
@@ -130,15 +225,35 @@
           }
         }
 
-        &__pin--unpinned {
-          color: rgb(0 0 0 / 30%);
-        }
+        &:hover,
+        &:focus-within {
+          .domains_list__item__status {
+            display: none;
+          }
 
-        &.domain-disabled {
-          h4 {
-            color: orange;
+          .domains_list__item__controls {
+            display: flex;
           }
         }
+
+        // the domain you are currently in: highlighted, with pin/default always reachable
+        &--current {
+          background: rgb(18 129 110 / 6%);
+
+          .domains_list__item__name {
+            font-weight: 500;
+          }
+
+          // the always-visible control star already conveys the default state
+          .domains_list__item__flag--default {
+            display: none;
+          }
+
+          .domains_list__item__controls {
+            display: flex;
+          }
+        }
+
       }
 
       &__empty {
@@ -149,9 +264,26 @@
         pointer-events: initial;
       }
     }
+  }
 
-    &.first {
-      background-color: #f5f5f5;
+  .userAccountFooter {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgb(226 229 231);
+
+    &__link {
+      // mat-menu-item defaults to width:100%, which breaks flex sizing in a row
+      width: auto;
+      color: rgb(0 0 0 / 78%);
+
+      // "All domains" fills the row; "New" shrinks to its content on the right
+      &:first-child {
+        flex: 1 1 auto;
+      }
+
+      &:last-child {
+        flex: 0 0 auto;
+      }
     }
   }
 }

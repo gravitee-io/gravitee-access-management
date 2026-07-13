@@ -169,12 +169,30 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private loadPinnedDomains() {
+    const currentId = this.currentDomain?.id;
     const pinnedIds = this.userPreferencesService.pinnedDomainIds();
-    if (!this.hasCurrentEnvironment() || pinnedIds.length === 0) {
+    // always surface the current domain so it can be pinned even when it isn't yet
+    const ids = [...new Set([currentId, ...pinnedIds].filter(Boolean))];
+    if (!this.hasCurrentEnvironment() || ids.length === 0) {
       this.domains = [];
       return;
     }
-    this.domainService.findByIds(pinnedIds).subscribe((response) => (this.domains = response.data));
+    this.domainService.findByIds(ids).subscribe((response) => (this.domains = response.data));
+  }
+
+  // the current domain gets its own section so it never shows under "Pinned" when it isn't pinned
+  get currentDomainRow(): any {
+    if (this.domainSearchTerm || !this.currentDomain?.id || !this.domains) {
+      return null;
+    }
+    return this.domains.find((domain) => domain.id === this.currentDomain.id) ?? null;
+  }
+
+  get pinnedDomainRows(): any[] {
+    if (this.domainSearchTerm || !this.domains) {
+      return [];
+    }
+    return this.domains.filter((domain) => domain.id !== this.currentDomain?.id);
   }
 
   private initNavLinks() {
@@ -191,12 +209,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (this.hasCurrentEnvironment() && this.canDisplay(['domain_create'])) {
       this.navLinks.push({
         href: '/environments/' + this.currentEnvironment.hrids[0] + '/domains/new',
-        label: 'Create domain',
+        label: 'New',
         icon: 'add',
       });
     }
-
-    this.navLinks.push({ href: '/logout', label: 'Sign out', icon: 'exit_to_app' });
   }
 
   hasCurrentEnvironment(): boolean {
