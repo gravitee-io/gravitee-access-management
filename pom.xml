@@ -137,7 +137,7 @@
         <jdbc-mysql.version>8.0.33</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
-        <testcontainer-upper-version-psql>postgresql-tc~17.2</testcontainer-upper-version-psql>
+        <testcontainer-upper-version-psql>postgresql-tc~18.4</testcontainer-upper-version-psql>
         <testcontainer-upper-version-mysql>mysql-tc~8.4</testcontainer-upper-version-mysql>
         <testcontainer-upper-version-maria>mariadb-tc~11.6.2</testcontainer-upper-version-maria>
         <testcontainer-upper-version-mssql>mssql-tc~2022-latest</testcontainer-upper-version-mssql>

@@ -39,7 +39,7 @@
 
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
-        <jdbcType>postgresql-tc~17.2</jdbcType>
+        <jdbcType>postgresql-tc~18.4</jdbcType>
     </properties>
 
     <dependencyManagement>

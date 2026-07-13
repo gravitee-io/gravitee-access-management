@@ -301,6 +301,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 | **Repository** | JUnit + Testcontainers | `gravitee-am-repository/gravitee-am-repository-tests/src/test/java/` | Data layer against real DBs | `run_testcontainer_tests_*` |
 | **Jest Management** | Jest / TypeScript | `gravitee-am-test/specs/management/` | Management API endpoints | `run_jest_tests_*` |
 | **Jest Gateway** | Jest / TypeScript | `gravitee-am-test/specs/gateway/` | OAuth2/OIDC protocol flows | `run_jest_tests_*` |
+| **Playwright** | Playwright | `gravitee-am-test/playwright/` | Console UI E2E flows | `run_playwright_tests_*` |
 | **Postman** | Newman | `postman/collections/` | API contract testing | `run_postman_tests_*` |
 | **UI** | Jest / Angular | `gravitee-am-ui/src/**/*.spec.ts` | Angular component/service tests | `ui_tests` |
 | **Helm** | helm-unittest | `helm/tests/` | Kubernetes chart rendering | `job-test-am-charts` |
@@ -406,11 +407,13 @@ The PR workflow (`pull_requests`) runs the following test jobs:
 
 1. **`junit_tests`** — Backend unit tests (`mvn verify -pl \!gravitee-am-ui`)
 2. **`ui_tests`** — Angular tests (`mvn test -pl gravitee-am-ui`)
-3. **`run_jest_tests_mongo`** — Jest management (parallel) + gateway tests against MongoDB 4.4 and 8.0
-4. **`run_jest_tests_psql`** — Jest management (parallel) + gateway tests against PostgreSQL 11.18 and 17.2
-5. **`run_postman_tests_mongo`** — Newman collections against MongoDB 4.4 and 8.0
-6. **`run_postman_tests_psql`** — Newman collections against PostgreSQL 11.18 and 17.2
-7. **`job-test-am-charts`** — Helm lint + unittest
+3. **`run_jest_tests_mongo`** — Jest management (parallel) + gateway tests against MongoDB 8.2
+4. **`run_jest_tests_psql`** — Jest management (parallel) + gateway tests against PostgreSQL 18.4
+5. **`run_postman_tests_mongo`** — Newman collections against MongoDB 8.2
+6. **`run_postman_tests_psql`** — Newman collections against PostgreSQL 18.4
+7. **`run_playwright_tests_mongo`** — Playwright E2E tests against MongoDB 8.2
+8. **`run_playwright_tests_psql`** — Playwright E2E tests against PostgreSQL 18.4
+9. **`job-test-am-charts`** — Helm lint + unittest
 
 **Repository testcontainer tests** run in a separate `testcontainer_tests` workflow, triggered when files under `gravitee-am-repository/`, `gravitee-am-reporter/`, `gravitee-am-dataplane/`, or `pom.xml` are modified. This tests against a matrix of MongoDB, Redis, PostgreSQL, MySQL, MariaDB, and MSSQL (current + minimum supported versions).
 
