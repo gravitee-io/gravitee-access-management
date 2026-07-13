@@ -21,8 +21,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,18 +29,15 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class NewsletterServiceImpl implements NewsletterService, InitializingBean, DisposableBean {
+public class NewsletterServiceImpl implements NewsletterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NewsletterServiceImpl.class);
-    private ExecutorService executorService;
 
     @Value("${newsletter.url:https://newsletter.gravitee.io}")
     private String newsletterURI;
@@ -60,8 +55,9 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
 
     @Override
     public void subscribe(Object user) {
-        executorService.execute(() -> client.post(newsletterURI).sendJson(user)
-                .doOnError(throwable -> LOGGER.error("An error has occurred while register newsletter for a user", throwable)).subscribe());
+        client.post(newsletterURI).sendJson(user)
+                .doOnError(throwable -> LOGGER.error("An error has occurred while register newsletter for a user", throwable))
+                .subscribe();
     }
 
     @Override
@@ -85,17 +81,5 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
                     }
                     return mapper.readValue(res.bodyAsString(), List.class);
                 });
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        executorService = Executors.newCachedThreadPool();
-    }
-
-    @Override
-    public void destroy() {
-        if (executorService != null) {
-            executorService.shutdown();
-        }
     }
 }
