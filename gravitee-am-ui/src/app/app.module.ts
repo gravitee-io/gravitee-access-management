@@ -60,7 +60,8 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { MaterialDesignFrameworkModule } from '@ajsf/material';
 import { HighchartsChartModule } from 'highcharts-angular';
 import { ClipboardModule } from 'ngx-clipboard';
-import { map, mergeMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
   GioLicenseExpirationNotificationModule,
   GioLicenseModule,
@@ -108,6 +109,7 @@ import { ProviderService } from './services/provider.service';
 import { OrganizationService } from './services/organization.service';
 import { EnvironmentService } from './services/environment.service';
 import { AuthService } from './services/auth.service';
+import { UserPreferencesService } from './services/user-preferences.service';
 import { LogoutComponent } from './logout/logout.component';
 import { LogoutCallbackComponent } from './logout/callback/callback.component';
 import { DomainsResolver } from './resolvers/domains.resolver';
@@ -866,6 +868,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
   providers: [
     DomainGrantTypesResolver,
     DomainService,
+    UserPreferencesService,
     ProviderService,
     SidenavService,
     NavigationService,
@@ -1014,7 +1017,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
       multi: true,
     },
     provideAppInitializer(() => {
-      const initializerFn = initCurrentUser(inject(AuthService), inject(EnvironmentService));
+      const initializerFn = initCurrentUser(inject(AuthService), inject(EnvironmentService), inject(UserPreferencesService));
       return initializerFn();
     }),
     provideHttpClient(withInterceptorsFromDi()),
@@ -1022,17 +1025,28 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
 })
 export class AppModule {}
 
-export function initCurrentUser(authService: AuthService, environmentService: EnvironmentService): () => Promise<any> {
+export function initCurrentUser(
+  authService: AuthService,
+  environmentService: EnvironmentService,
+  userPreferencesService: UserPreferencesService,
+): () => Promise<any> {
   return (): Promise<any> => {
     return authService
       .userInfo()
       .pipe(
+        mergeMap((user) =>
+          userPreferencesService.load().pipe(
+            catchError(() => of({})),
+            map(() => user),
+          ),
+        ),
         mergeMap((user) => {
           return environmentService.getAllEnvironments().pipe(
             map((environments) => {
-              // For now the selected environment is the first from the list but could be changed in favor of a 'last env' coming from user's preferences.
               if (environments && environments.length >= 1) {
-                environmentService.setCurrentEnvironment(environments[0]);
+                const preferredEnvironmentId = userPreferencesService.preferences().defaultEnvironmentId;
+                const preferredEnvironment = preferredEnvironmentId ? environments.find((e) => e.id === preferredEnvironmentId) : null;
+                environmentService.setCurrentEnvironment(preferredEnvironment || environments[0]);
               } else {
                 environmentService.setCurrentEnvironment(EnvironmentService.NO_ENVIRONMENT);
               }

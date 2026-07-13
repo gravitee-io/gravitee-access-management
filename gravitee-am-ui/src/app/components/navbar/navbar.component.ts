@@ -15,14 +15,15 @@
  */
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { interval, Subject } from 'rxjs';
-import { switchMap, takeUntil, tap } from 'rxjs/operators';
+import { interval, of, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { UserNotificationsService } from '../../services/user-notifications.service';
 import { AuthService } from '../../services/auth.service';
 import { DomainService } from '../../services/domain.service';
 import { SidenavService } from '../sidenav/sidenav.service';
 import { EnvironmentService } from '../../services/environment.service';
+import { UserPreferencesService } from '../../services/user-preferences.service';
 import { AppConfig } from '../../../config/app.config';
 
 import { NavbarService } from './navbar.service';
@@ -45,6 +46,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   navLinks: any[];
   currentEnvironment: any;
   notifications: any[];
+  domainSearchTerm = '';
+  private domainSearchTerm$ = new Subject<string>();
 
   constructor(
     private authService: AuthService,
@@ -52,6 +55,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private navbarService: NavbarService,
     private sidenavService: SidenavService,
     private environmentService: EnvironmentService,
+    private userPreferencesService: UserPreferencesService,
     public router: Router,
     private userNotificationsService: UserNotificationsService,
   ) {}
@@ -97,6 +101,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
         takeUntil(this.unsubscribe$),
       )
       .subscribe();
+
+    this.domainSearchTerm$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((term) => (term ? this.domainService.search('*' + term + '*', 0, 10) : of(null))),
+        takeUntil(this.unsubscribe$),
+      )
+      .subscribe((response) => {
+        if (response) {
+          this.domains = response.data;
+        } else {
+          this.loadPinnedDomains();
+        }
+      });
   }
 
   private fetchListNotificationsInterval() {
@@ -116,11 +135,46 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   listDomains() {
-    if (this.hasCurrentEnvironment()) {
-      this.domainService.findByEnvironment(0, 5).subscribe((response) => (this.domains = response.data));
-    } else {
+    this.domainSearchTerm = '';
+    this.loadPinnedDomains();
+  }
+
+  onDomainSearch(term: string) {
+    this.domainSearchTerm = term;
+    this.domainSearchTerm$.next(term);
+  }
+
+  togglePin(domain: any, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.userPreferencesService.togglePin(domain.id).subscribe(() => {
+      if (!this.domainSearchTerm) {
+        this.loadPinnedDomains();
+      }
+    });
+  }
+
+  toggleDefault(domain: any, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.userPreferencesService.toggleDefaultDomain(domain.id, this.currentEnvironment.id).subscribe();
+  }
+
+  isPinned(domainId: string): boolean {
+    return this.userPreferencesService.isPinned(domainId);
+  }
+
+  isDefault(domainId: string): boolean {
+    return this.userPreferencesService.isDefault(domainId);
+  }
+
+  private loadPinnedDomains() {
+    const pinnedIds = this.userPreferencesService.pinnedDomainIds();
+    if (!this.hasCurrentEnvironment() || pinnedIds.length === 0) {
       this.domains = [];
+      return;
     }
+    this.domainService.findByIds(pinnedIds).subscribe((response) => (this.domains = response.data));
   }
 
   private initNavLinks() {

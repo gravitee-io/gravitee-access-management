@@ -18,6 +18,8 @@ import { ActivatedRoute } from '@angular/router';
 
 import { AppConfig } from '../../../config/app.config';
 import { DomainService } from '../../services/domain.service';
+import { EnvironmentService } from '../../services/environment.service';
+import { UserPreferencesService } from '../../services/user-preferences.service';
 
 @Component({
   selector: 'app-domains',
@@ -31,10 +33,13 @@ export class DomainsComponent implements OnInit {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   domains = [];
+  showPinnedOnly = false;
 
   constructor(
     private route: ActivatedRoute,
     private domainService: DomainService,
+    private environmentService: EnvironmentService,
+    private userPreferencesService: UserPreferencesService,
   ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
@@ -52,7 +57,39 @@ export class DomainsComponent implements OnInit {
     this.loadDomains();
   }
 
+  onPinnedOnlyChange() {
+    this.page.pageNumber = 0;
+    this.loadDomains();
+  }
+
+  togglePin(domain: any, event: Event) {
+    event.stopPropagation();
+    this.userPreferencesService.togglePin(domain.id).subscribe(() => {
+      if (this.showPinnedOnly) {
+        this.loadDomains();
+      }
+    });
+  }
+
+  toggleDefault(domain: any, event: Event) {
+    event.stopPropagation();
+    this.userPreferencesService.toggleDefaultDomain(domain.id, this.environmentService.getCurrentEnvironment().id).subscribe();
+  }
+
+  isPinned(domainId: string): boolean {
+    return this.userPreferencesService.isPinned(domainId);
+  }
+
+  isDefault(domainId: string): boolean {
+    return this.userPreferencesService.isDefault(domainId);
+  }
+
   loadDomains() {
+    if (this.showPinnedOnly) {
+      this.loadPinnedDomains();
+      return;
+    }
+
     const findDomains = this.searchValue
       ? this.domainService.search('*' + this.searchValue + '*', this.page.pageNumber, this.page.size)
       : this.domainService.findByEnvironment(this.page.pageNumber, this.page.size);
@@ -63,12 +100,28 @@ export class DomainsComponent implements OnInit {
     });
   }
 
+  private loadPinnedDomains() {
+    const pinnedIds = this.userPreferencesService.pinnedDomainIds();
+    if (pinnedIds.length === 0) {
+      this.domains = [];
+      this.page.totalElements = 0;
+      return;
+    }
+    this.domainService.findByIds(pinnedIds).subscribe((pagedDomains) => {
+      const domains = this.searchValue
+        ? pagedDomains.data.filter((domain) => domain.name.toLowerCase().includes(this.searchValue.toLowerCase()))
+        : pagedDomains.data;
+      this.page.totalElements = domains.length;
+      this.domains = domains;
+    });
+  }
+
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadDomains();
   }
 
   get isEmpty() {
-    return !this.domains || (this.domains.length === 0 && !this.searchValue);
+    return !this.domains || (this.domains.length === 0 && !this.searchValue && !this.showPinnedOnly);
   }
 }

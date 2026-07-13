@@ -57,6 +57,21 @@
         <mat-list class="domains_list">
           <h3 matSubheader>Domains</h3>
 
+          <div class="domains_list__search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                type="text"
+                matInput
+                placeholder="Search domains"
+                autocomplete="off"
+                [ngModel]="domainSearchTerm"
+                (ngModelChange)="onDomainSearch($event)"
+                data-testid="domain-picker-search"
+              />
+            </mat-form-field>
+          </div>
+
           <a
             [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]"
             *ngFor="let domain of domains"
@@ -69,10 +84,35 @@
               <span class="domains_list__item__name">{{ domain.name }}</span>
             </span>
 
-            <span *ngIf="!domain.enabled" matListItemMeta class="gio-badge-warning">
-              <mat-icon class="gio-left" svgIcon="gio:alert-circle"></mat-icon>Domain disabled</span
-            >
+            <span matListItemMeta class="domains_list__item__actions">
+              <span *ngIf="!domain.enabled" class="gio-badge-warning">
+                <mat-icon class="gio-left" svgIcon="gio:alert-circle"></mat-icon>Domain disabled</span
+              >
+              <button
+                mat-icon-button
+                (click)="toggleDefault(domain, $event)"
+                [matTooltip]="isDefault(domain.id) ? 'Unset default domain' : 'Set as default domain'"
+              >
+                <mat-icon>{{ isDefault(domain.id) ? 'star' : 'star_border' }}</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="togglePin(domain, $event)"
+                [matTooltip]="isPinned(domain.id) ? 'Unpin domain' : 'Pin domain'"
+              >
+                <!-- bookmark instead of push_pin: the bundled Material Icons font predates the push_pin ligature -->
+                <mat-icon [ngClass]="{ 'domains_list__item__pin--unpinned': !isPinned(domain.id) }">{{
+                  isPinned(domain.id) ? 'bookmark' : 'bookmark_border'
+                }}</mat-icon>
+              </button>
+            </span>
           </a>
+
+          <p *ngIf="!domains || domains.length === 0" class="domains_list__empty">
+            {{
+              domainSearchTerm ? 'No domains match your search' : 'No pinned domains yet. Search for a domain and pin it for quick access.'
+            }}
+          </p>
         </mat-list>
       </div>
       <div class="userAccountActions" *ngFor="let link of navLinks">

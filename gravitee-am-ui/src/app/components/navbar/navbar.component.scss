@@ -92,6 +92,15 @@
     }
 
     .domains_list {
+      &__search {
+        padding: 0 16px 8px;
+        pointer-events: initial;
+
+        mat-form-field {
+          width: 100%;
+        }
+      }
+
       &__item {
         cursor: pointer;
         pointer-events: initial;
@@ -101,11 +110,43 @@
           white-space: nowrap;
         }
 
+        &__actions {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+
+          button[mat-icon-button] {
+            --mdc-icon-button-state-layer-size: 32px;
+
+            width: 32px;
+            height: 32px;
+            padding: 4px;
+          }
+
+          mat-icon {
+            width: 18px;
+            height: 18px;
+            font-size: 18px;
+          }
+        }
+
+        &__pin--unpinned {
+          color: rgb(0 0 0 / 30%);
+        }
+
         &.domain-disabled {
           h4 {
             color: orange;
           }
         }
+      }
+
+      &__empty {
+        padding: 8px 16px 12px;
+        margin: 0;
+        color: rgb(0 0 0 / 54%);
+        font-size: 13px;
+        pointer-events: initial;
       }
     }
 

@@ -12,6 +12,11 @@
       padding-bottom: 4px;
       vertical-align: middle;
     }
+
+    .domains-pinned-filter {
+      margin-left: 16px;
+      vertical-align: middle;
+    }
   }
 
   ngx-datatable {
@@ -44,6 +49,27 @@
 
     a {
       text-decoration: none;
+    }
+  }
+
+  .domain-actions-cell {
+    .datatable-body-cell-label {
+      display: flex;
+      height: 100%;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    button[mat-icon-button] {
+      --mdc-icon-button-state-layer-size: 40px;
+
+      width: 40px;
+      height: 40px;
+      padding: 8px;
+    }
+
+    .domain-pin--unpinned {
+      color: rgb(0 0 0 / 30%);
     }
   }
 
