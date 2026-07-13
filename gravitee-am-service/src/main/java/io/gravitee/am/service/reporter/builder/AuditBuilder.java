@@ -215,7 +215,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         return null;
     }
 
-    protected String getType() {
+    public String getType() {
         return type;
     }
 
@@ -286,7 +286,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
 
         // result
         AuditOutcome result = new AuditOutcome();
-        if (throwable == null) {
+        if (isSuccess()) {
             result.setStatus(Status.SUCCESS);
 
             // set details
@@ -318,6 +318,14 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         audit.setOutcome(result);
 
         return audit;
+    }
+
+    public boolean isFailure(){
+        return !isSuccess();
+    }
+
+    public boolean isSuccess(){
+        return throwable == null;
     }
 
     protected AuditEntity createActor() {
