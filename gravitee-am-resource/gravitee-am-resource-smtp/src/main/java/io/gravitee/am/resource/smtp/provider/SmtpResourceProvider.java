@@ -16,6 +16,7 @@
 package io.gravitee.am.resource.smtp.provider;
 
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.common.utils.CappedExecutorFactory;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
 import io.gravitee.am.resource.smtp.configuration.SmtpResourceConfiguration;
@@ -27,6 +28,7 @@ import org.eclipse.angus.mail.auth.OAuth2SaslClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -34,7 +36,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -54,9 +55,11 @@ public class SmtpResourceProvider implements EmailSenderProvider {
     @Autowired
     private OAuth2TokenService oauth2TokenService;
 
-    private EmailSender mailSender;
-
+    @Autowired
+    @Qualifier("sharedExecutorService")
     private ExecutorService executorService;
+
+    private EmailSender mailSender;
 
     @Override
     public ResourceProvider start() throws Exception {
@@ -86,15 +89,11 @@ public class SmtpResourceProvider implements EmailSenderProvider {
         }
 
         this.mailSender = new EmailSender(javaMailSender, templatePath);
-        this.executorService = Executors.newCachedThreadPool();
         return this;
     }
 
     @Override
     public ResourceProvider stop() throws Exception {
-        if (executorService != null) {
-            executorService.shutdown();
-        }
         return this;
     }
 
