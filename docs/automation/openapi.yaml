@@ -34,7 +34,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   title: Gravitee.io AM - Automation API
-  version: 4.13.0-alpha.2
+  version: 4.13.0-alpha.3
 servers:
 - url: http://localhost:8093/automation
 security:
