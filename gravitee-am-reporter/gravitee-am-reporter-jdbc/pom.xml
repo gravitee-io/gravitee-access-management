@@ -33,7 +33,7 @@
 
     <properties>
         <skip-reporters-tests>true</skip-reporters-tests>
-        <jdbcType>postgresql-tc~17.2</jdbcType>
+        <jdbcType>postgresql-tc~18.4</jdbcType>
     </properties>
 
     <dependencies>

@@ -16,7 +16,7 @@
 
 services:
   postgres:
-    image: postgres:${POSTGRES_VERSION:-17.2}
+    image: postgres:${POSTGRES_VERSION:-18.4}
     restart: always
     ports:
       - 5432:5432
