@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.plugins.resource.spring;
 
+import io.gravitee.am.common.utils.CappedExecutorFactory;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
@@ -22,8 +23,11 @@ import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFacto
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,9 +39,11 @@ public class ResourceSpringConfiguration {
     @Bean
     public ResourcePluginManager resourcePluginManager(
             PluginContextFactory pluginContextFactory,
-            ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory
-    ) {
-        return new ResourcePluginManager(pluginContextFactory, resourceConfigurationFactory);
+            ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory,
+            @Value("${executors.shared.maxThreads:20}") int sharedExecutorServiceMaxThreads
+            ) {
+        ExecutorService executorService = CappedExecutorFactory.newCappedCachedThreadPool("sharedResourceExecutorService", sharedExecutorServiceMaxThreads);
+        return new ResourcePluginManager(pluginContextFactory, resourceConfigurationFactory, executorService);
     }
 
     @Bean
