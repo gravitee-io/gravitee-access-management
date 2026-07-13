@@ -138,7 +138,7 @@ export class Orchestrator {
 
             if (filter) {
                 console.log(`🔍 Filtering tests by: ${filter}`);
-                const args = ['jest', '--no-cache', '--config=api/config/ci.config.js', `--testPathPattern=${filter}`];
+                const args = ['jest', '--no-cache', '--config=api/config/ci.config.js', `--testPathPatterns=${filter}`];
                 await this._runJestWithEnv(testDir, jestEnv, args);
             } else {
                 await $`npm run ${npmScript} -- ${specPath || ''}`;

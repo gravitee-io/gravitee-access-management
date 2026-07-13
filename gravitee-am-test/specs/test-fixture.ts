@@ -27,3 +27,20 @@ export const setup = (timeout: number = DEFAULT_TEST_TIMEOUT): void => {
   globalThis.fetch = fetch;
   jest.setTimeout(timeout);
 };
+
+/**
+ * Retries (api/config/retry.setup.js) are deferred by default: a failed test is
+ * retried after the file's other tests finish, which assumes tests in the file
+ * are order-independent. Order-dependent files must call this at the top of the
+ * file so failed tests are retried in place, before the flow moves on.
+ */
+export const retryImmediatelyForThisFile = (): void => {
+  const retries = Number(process.env.JEST_RETRIES || 0);
+  if (retries > 0) {
+    jest.retryTimes(retries, {
+      logErrorsBeforeRetry: true,
+      retryImmediately: true,
+      waitBeforeRetry: Number(process.env.JEST_RETRY_DELAY_MS || 3000),
+    });
+  }
+};

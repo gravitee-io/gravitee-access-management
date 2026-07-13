@@ -27,11 +27,13 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
-import { setup } from '../../test-fixture';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 import { AutomationClient } from './fixtures/automation-client';
 import { buildAutomationDomainDef, buildInlineIdpDef } from './fixtures/automation-definitions';
 
 setup(120000);
+// This file's tests form an ordered workflow, so retries must run in place.
+retryImmediatelyForThisFile();
 
 const DOMAIN_KEY = uniqueName('customer-auth', true).toLowerCase();
 const TEST_USERS_IDP_KEY = uniqueName('test-users', true).toLowerCase();

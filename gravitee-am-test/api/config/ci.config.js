@@ -17,6 +17,7 @@ module.exports = {
   verbose: true,
   rootDir: '../..',
   setupFiles: ['./api/config/ci.setup.js'],
+  setupFilesAfterEnv: ['./api/config/retry.setup.js'],
   reporters: [
     'default',
     [

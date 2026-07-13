@@ -34,7 +34,7 @@ import { Domain } from '@management-models/Domain';
 import { User } from '@management-models/User';
 import { uniqueName } from '@utils-commands/misc';
 import { applicationBase64Token } from '@gateway-commands/utils';
-import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { Fixture } from '../../test-fixture';
 
 export interface CorsFixture extends Fixture {
@@ -109,7 +109,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
   const domainReady = await waitForDomainStart(domain);
 
   // Get OIDC config
-  const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domainReady.domain.hrid).expect(200);
+  const openIdConfigurationResponse = await waitForOidcReady(domainReady.domain.hrid);
   const openIdConfiguration = openIdConfigurationResponse.body;
   expect(openIdConfiguration).toBeDefined();
   expect(openIdConfiguration.authorization_endpoint).toBeDefined();
@@ -119,8 +119,8 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
 
   // Helper function to update CORS settings
   const updateCorsSettings = async (corsSettings: Partial<CorsSettings>) => {
-    await waitForSyncAfter(domain.id,
-      () => patchDomain(domain.id, accessToken, {
+    await waitForSyncAfter(domain.id, () =>
+      patchDomain(domain.id, accessToken, {
         path: domain.path,
         vhostMode: false,
         vhosts: [],

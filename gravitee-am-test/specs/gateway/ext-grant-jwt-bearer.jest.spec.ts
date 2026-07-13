@@ -16,8 +16,14 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
-import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import {
+  createDomain,
+  safeDeleteDomain,
+  startDomain,
+  waitForDomainSync,
+  waitForOidcReady,
+} from '@management-commands/domain-management-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createServiceApplication } from './fixtures/rate-limit-fixture';
 import { createExtensionGrant } from '@management-commands/extension-grant-commands';
 import { updateApplication } from '@management-commands/application-management-commands';
@@ -80,7 +86,7 @@ beforeAll(async () => {
   await startDomain(domain.id, accessToken);
   await waitForDomainSync(domain.id, accessToken);
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+  const result = await waitForOidcReady(domain.hrid);
   openIdConfiguration = result.body;
 });
 

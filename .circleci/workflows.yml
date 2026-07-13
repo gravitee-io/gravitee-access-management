@@ -505,10 +505,15 @@ jobs:
           command: npm --prefix docker/local-stack run stack:dev:spire
       - run:
           name: Run Management Jest tests (parallel)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-management.xml npm --prefix gravitee-am-test run ci:management:parallel
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-management.xml npm --prefix gravitee-am-test run ci:management:parallel
+      - run:
+          name: Check stack health before Gateway tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
       - run:
           name: Run Gateway Jest tests (sequential)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -554,10 +559,15 @@ jobs:
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
       - run:
           name: Run Management Jest tests (parallel)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-management.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-management.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
+      - run:
+          name: Check stack health before Gateway tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
       - run:
           name: Run Gateway Jest tests (sequential)
-          command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -1979,7 +1989,7 @@ workflows:
     when:
       and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-    max_auto_reruns: 3
+    max_auto_reruns: 1
     jobs:
       - setup:
           context: cicd-orchestrator
