@@ -473,6 +473,7 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
         user.setUpdatedAt(userMongo.getUpdatedAt());
         user.setForceResetPassword(userMongo.getForceResetPassword());
         user.setServiceAccount(userMongo.getServiceAccount());
+        user.setConsolePreferences(userMongo.getConsolePreferences());
         // organization user may have password if it belongs to the gravitee idp.
         if (IDP_GRAVITEE.equals(userMongo.getSource()) && (userMongo.getServiceAccount() == null || userMongo.getServiceAccount().equals(Boolean.FALSE))) {
             user.setPassword(userMongo.getPassword());
@@ -549,6 +550,7 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
         userMongo.setUpdatedAt(user.getUpdatedAt());
         userMongo.setForceResetPassword(user.getForceResetPassword());
         userMongo.setServiceAccount(user.getServiceAccount());
+        userMongo.setConsolePreferences(user.getConsolePreferences());
         return userMongo;
     }
 

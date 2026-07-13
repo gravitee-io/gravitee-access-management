@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.AccountAccessToken;
+import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -234,6 +235,23 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                     user.setUpdatedAt(now);
                     return getUserService().update(user);
                 });
+    }
+
+    @Override
+    public Single<ConsoleUserPreferences> getConsolePreferences(String organizationId, String userId) {
+        return getUserService().findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                .map(user -> user.getConsolePreferences() != null ? user.getConsolePreferences() : new ConsoleUserPreferences());
+    }
+
+    @Override
+    public Single<ConsoleUserPreferences> updateConsolePreferences(String organizationId, String userId, ConsoleUserPreferences preferences) {
+        return getUserService().findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                .flatMap(user -> {
+                    user.setConsolePreferences(preferences);
+                    user.setUpdatedAt(new Date());
+                    return getUserService().update(user);
+                })
+                .map(user -> user.getConsolePreferences() != null ? user.getConsolePreferences() : new ConsoleUserPreferences());
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.OrganizationUserServiceImpl;
+import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
@@ -46,6 +47,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
@@ -341,6 +343,55 @@ public class OrganizationUserServiceTest {
             assertTrue(updatedUser.getLastLogoutAt() != null && (System.currentTimeMillis() - updatedUser.getLastLogoutAt().getTime()) < 100);
             return true;
         });
+    }
+
+    @Test
+    public void shouldGetConsolePreferences() {
+        User user = new User();
+        user.setId("user#1");
+        user.setConsolePreferences(new ConsoleUserPreferences("domain-1", "env-1", List.of("domain-1", "domain-2")));
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "orga#1", user.getId())).thenReturn(Single.just(user));
+
+        organizationUserService.getConsolePreferences("orga#1", user.getId())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertValue(preferences -> preferences.equals(user.getConsolePreferences()));
+    }
+
+    @Test
+    public void shouldGetConsolePreferences_emptyByDefault() {
+        User user = new User();
+        user.setId("user#1");
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "orga#1", user.getId())).thenReturn(Single.just(user));
+
+        organizationUserService.getConsolePreferences("orga#1", user.getId())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertValue(preferences -> preferences.getDefaultDomainId() == null
+                        && preferences.getDefaultEnvironmentId() == null
+                        && preferences.getPinnedDomainIds() == null);
+    }
+
+    @Test
+    public void shouldUpdateConsolePreferences() {
+        User user = new User();
+        user.setId("user#1");
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "orga#1", user.getId())).thenReturn(Single.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        ConsoleUserPreferences preferences = new ConsoleUserPreferences("domain-1", "env-1", List.of("domain-1"));
+        organizationUserService.updateConsolePreferences("orga#1", user.getId(), preferences)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertValue(updated -> updated.equals(preferences));
+
+        verify(commonUserService).update(argThat((User u) -> preferences.equals(u.getConsolePreferences()) && u.getUpdatedAt() != null));
     }
 
     @Test

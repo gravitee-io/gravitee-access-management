@@ -415,6 +415,12 @@ paths:
         name: q
         schema:
           type: string
+      - in: query
+        name: ids
+        schema:
+          type: array
+          items:
+            type: string
       responses:
         "200":
           content:
@@ -12432,6 +12438,41 @@ paths:
       tags:
       - user notifications
       - user
+  /user/preferences:
+    get:
+      operationId: getConsolePreferences
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsoleUserPreferences"
+          description: Current user console preferences successfully fetched
+        "500":
+          description: Internal server error
+      summary: Get the console preferences of the current user
+      tags:
+      - user
+    put:
+      operationId: updateConsolePreferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsoleUserPreferences"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsoleUserPreferences"
+          description: Current user console preferences successfully updated
+        "500":
+          description: Internal server error
+      summary: Update the console preferences of the current user
+      tags:
+      - user
 components:
   schemas:
     AccessPolicy:
@@ -13718,6 +13759,19 @@ components:
           type: string
         settingsId:
           type: string
+    ConsoleUserPreferences:
+      type: object
+      properties:
+        defaultDomainId:
+          type: string
+        defaultEnvironmentId:
+          type: string
+        pinnedDomainIds:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+          minItems: 0
     CookieSettings:
       type: object
       properties:
@@ -18610,6 +18664,8 @@ components:
           type: string
         client:
           type: string
+        consolePreferences:
+          $ref: "#/components/schemas/ConsoleUserPreferences"
         createdAt:
           type: integer
           format: int64
@@ -18838,6 +18894,8 @@ components:
           type: string
         client:
           type: string
+        consolePreferences:
+          $ref: "#/components/schemas/ConsoleUserPreferences"
         createdAt:
           type: integer
           format: int64

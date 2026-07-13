@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -98,12 +99,19 @@ public class DomainsResource extends AbstractDomainResource {
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_DOMAINS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
+            @QueryParam("ids") List<String> ids,
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();
-        Flowable<Domain> domainSource = query != null
-                ? domainService.search(organizationId, environmentId, query)
-                : domainService.findAllByEnvironment(organizationId, environmentId);
+        Flowable<Domain> domainSource;
+        if (query != null) {
+            domainSource = domainService.search(organizationId, environmentId, query);
+        } else if (ids != null && !ids.isEmpty()) {
+            domainSource = domainService.findByIdIn(ids)
+                    .filter(domain -> domain.getReferenceType() == ReferenceType.ENVIRONMENT && environmentId.equals(domain.getReferenceId()));
+        } else {
+            domainSource = domainService.findAllByEnvironment(organizationId, environmentId);
+        }
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
                 // Check if user has DOMAIN:READ at env or org level (global access), otherwise filter by specific domain permissions.

@@ -208,6 +208,10 @@
             <b>factors</b>
             <a-hint>java.util.List</a-hint>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ConsoleUserPreferencesConverter">
+            <a>consolePreferences</a>
+            <b>consolePreferences</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

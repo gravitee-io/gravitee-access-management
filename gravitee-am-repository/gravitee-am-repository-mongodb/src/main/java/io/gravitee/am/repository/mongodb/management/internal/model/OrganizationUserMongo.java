@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
@@ -87,6 +88,7 @@ public class OrganizationUserMongo extends Auditable {
     private String lastIdentityUsed;
     private Boolean forceResetPassword;
     private Boolean serviceAccount;
+    private ConsoleUserPreferences consolePreferences;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */

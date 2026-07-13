@@ -125,6 +125,34 @@ public class DomainsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldGetDomains_byIds() {
+        final Domain mockDomain = new Domain();
+        mockDomain.setId("domain-id-1");
+        mockDomain.setName("domain-name-1");
+        mockDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        mockDomain.setReferenceId(Environment.DEFAULT);
+
+        final Domain otherEnvDomain = new Domain();
+        otherEnvDomain.setId("domain-id-2");
+        otherEnvDomain.setName("domain-name-2");
+        otherEnvDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        otherEnvDomain.setReferenceId("other-env");
+
+        doReturn(Flowable.just(mockDomain, otherEnvDomain)).when(domainService).findByIdIn(eq(List.of("domain-id-1", "domain-id-2")));
+
+        final Response response = target("domains")
+                .queryParam("ids", "domain-id-1", "domain-id-2")
+                .request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Map responseEntity = readEntity(response, Map.class);
+        List<Map<String, Object>> data = (List<Map<String, Object>>) responseEntity.get("data");
+        assertEquals(1, data.size());
+        assertEquals("domain-id-1", data.get(0).get("id"));
+        assertEquals(1, responseEntity.get("totalCount"));
+    }
+
+    @Test
     public void shouldGetDomains_technicalManagementException() {
         doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
 
