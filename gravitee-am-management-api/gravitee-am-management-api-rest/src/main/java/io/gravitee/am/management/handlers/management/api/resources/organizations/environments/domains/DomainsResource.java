@@ -37,6 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -70,6 +71,8 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
 public class DomainsResource extends AbstractDomainResource {
 
     private static final String MAX_DOMAINS_SIZE_PER_PAGE_STRING = "50";
+    // matches the pinned-domains cap on ConsoleUserPreferences; bounds the findByIdIn fetch
+    private static final int MAX_DOMAIN_IDS = 50;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -99,7 +102,7 @@ public class DomainsResource extends AbstractDomainResource {
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_DOMAINS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
-            @QueryParam("ids") List<String> ids,
+            @QueryParam("ids") @Size(max = MAX_DOMAIN_IDS) List<String> ids,
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();

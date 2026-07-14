@@ -421,6 +421,8 @@ paths:
           type: array
           items:
             type: string
+          maxItems: 50
+          minItems: 0
       responses:
         "200":
           content:

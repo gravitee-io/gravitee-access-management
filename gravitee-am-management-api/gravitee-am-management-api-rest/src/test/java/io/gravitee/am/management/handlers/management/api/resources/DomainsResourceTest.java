@@ -153,6 +153,19 @@ public class DomainsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldRejectDomains_tooManyIds() {
+        final String[] ids = new String[51];
+        for (int i = 0; i < ids.length; i++) {
+            ids[i] = "domain-id-" + i;
+        }
+
+        final Response response = target("domains")
+                .queryParam("ids", (Object[]) ids)
+                .request().get();
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
     public void shouldGetDomains_technicalManagementException() {
         doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
 
