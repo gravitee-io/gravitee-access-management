@@ -16,25 +16,34 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.CurrentUserPreferencesResource;
 import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.Organization;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * @author GraviteeSource Team
@@ -80,5 +89,42 @@ public class CurrentUserPreferencesResourceTest extends JerseySpringTest {
         final Response response = target("user").path("preferences").request().put(Entity.json(preferences));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnForbidden_whenGetPreferencesUnauthenticated() {
+        final CurrentUserPreferencesResource resource = unauthenticatedResource();
+        final AsyncResponse asyncResponse = mock(AsyncResponse.class);
+
+        resource.get(asyncResponse);
+
+        assertResumedForbidden(asyncResponse);
+        verifyNoInteractions(organizationUserService);
+    }
+
+    @Test
+    public void shouldReturnForbidden_whenUpdatePreferencesUnauthenticated() {
+        final CurrentUserPreferencesResource resource = unauthenticatedResource();
+        final AsyncResponse asyncResponse = mock(AsyncResponse.class);
+
+        resource.update(asyncResponse, new ConsoleUserPreferences());
+
+        assertResumedForbidden(asyncResponse);
+        verifyNoInteractions(organizationUserService);
+    }
+
+    private CurrentUserPreferencesResource unauthenticatedResource() {
+        final SecurityContext securityContext = mock(SecurityContext.class);
+        doReturn(null).when(securityContext).getUserPrincipal();
+        final CurrentUserPreferencesResource resource = new CurrentUserPreferencesResource();
+        ReflectionTestUtils.setField(resource, "securityContext", securityContext);
+        ReflectionTestUtils.setField(resource, "organizationUserService", organizationUserService);
+        return resource;
+    }
+
+    private static void assertResumedForbidden(AsyncResponse asyncResponse) {
+        final ArgumentCaptor<Throwable> resumed = ArgumentCaptor.forClass(Throwable.class);
+        verify(asyncResponse).resume(resumed.capture());
+        assertTrue(resumed.getValue() instanceof ForbiddenException);
     }
 }
