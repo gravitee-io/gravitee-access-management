@@ -54,6 +54,7 @@ public class OrganizationCommandHandler implements CommandHandler<OrganizationCo
         newOrganization.setHrids(organizationPayload.hrids());
         newOrganization.setName(organizationPayload.name());
         newOrganization.setDescription(organizationPayload.description());
+        newOrganization.setLicense(organizationPayload.license());
         if (organizationPayload.accessPoints() != null) {
             newOrganization.setDomainRestrictions(organizationPayload.accessPoints()
                     .stream()

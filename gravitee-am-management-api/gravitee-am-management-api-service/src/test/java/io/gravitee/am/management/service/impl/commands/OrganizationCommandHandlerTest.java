@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl.commands;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.exception.InvalidLicenseException;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -75,6 +78,7 @@ class OrganizationCommandHandlerTest {
                 .hrids(Collections.singletonList("orga-1"))
                 .description("Organization description")
                 .name("Organization name")
+                .license(Base64.getEncoder().encodeToString("license-content".getBytes()))
                 .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
                         AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build()))
                 .build();
@@ -84,6 +88,7 @@ class OrganizationCommandHandlerTest {
                 argThat(newOrganization -> newOrganization.getHrids().equals(organizationPayload.hrids())
                         && newOrganization.getDescription().equals(organizationPayload.description())
                         && newOrganization.getName().equals(organizationPayload.name())
+                        && newOrganization.getLicense().equals(organizationPayload.license())
                         && newOrganization.getDomainRestrictions().equals(organizationPayload.accessPoints().stream()
                         .map(AccessPoint::getHost).collect(Collectors.toList()))),
                 isNull())).thenReturn(Single.just(new Organization()));
