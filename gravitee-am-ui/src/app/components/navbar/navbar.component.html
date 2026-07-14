@@ -76,7 +76,10 @@
               [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]"
               mat-list-item
               class="domains_list__item"
-              [ngClass]="{ 'domain-disabled': !domain.enabled, 'domains_list__item--current': currentDomain && domain.id === currentDomain.id }"
+              [ngClass]="{
+                'domain-disabled': !domain.enabled,
+                'domains_list__item--current': currentDomain && domain.id === currentDomain.id
+              }"
             >
               <mat-icon matListItemIcon [ngClass]="{ 'domains_list__item__icon--disabled': !domain.enabled }">domain</mat-icon>
               <span matListItemTitle class="domains_list__item__name">{{ domain.name }}</span>
@@ -84,7 +87,10 @@
               <span matListItemMeta class="domains_list__item__meta">
                 <span class="domains_list__item__status">
                   <span *ngIf="!domain.enabled" class="domains_list__item__status-label">Disabled</span>
-                  <mat-icon *ngIf="isDefault(domain.id)" class="domains_list__item__flag domains_list__item__flag--default" matTooltip="Default domain"
+                  <mat-icon
+                    *ngIf="isDefault(domain.id)"
+                    class="domains_list__item__flag domains_list__item__flag--default"
+                    matTooltip="Default domain"
                     >star</mat-icon
                   >
                 </span>
