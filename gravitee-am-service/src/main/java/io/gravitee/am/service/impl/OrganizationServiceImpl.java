@@ -18,9 +18,11 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.LicenseService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
@@ -57,14 +59,18 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     private final AuditService auditService;
 
+    private final LicenseService licenseService;
+
     public OrganizationServiceImpl(@Lazy OrganizationRepository organizationRepository,
                                    RoleService roleService,
                                    EntrypointService entrypointService,
-                                   AuditService auditService) {
+                                   AuditService auditService,
+                                   LicenseService licenseService) {
         this.organizationRepository = organizationRepository;
         this.roleService = roleService;
         this.entrypointService = entrypointService;
         this.auditService = auditService;
+        this.licenseService = licenseService;
     }
 
     @Override
@@ -98,26 +104,40 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public Single<Organization> createOrUpdate(String organizationId, NewOrganization newOrganization, User byUser) {
 
-        return organizationRepository.findById(organizationId)
-                .flatMap(organization -> {
-                    Organization toUpdate = new Organization(organization);
-                    toUpdate.setName(newOrganization.getName());
-                    toUpdate.setDescription(newOrganization.getDescription());
-                    toUpdate.setDomainRestrictions(newOrganization.getDomainRestrictions());
-                    toUpdate.setHrids(newOrganization.getHrids());
+        return Single.defer(() -> {
+            if (newOrganization.getLicense() != null) {
+                licenseService.validate(newOrganization.getLicense());
+            }
+            return organizationRepository.findById(organizationId)
+                    .flatMap(organization -> {
+                        Organization toUpdate = new Organization(organization);
+                        toUpdate.setName(newOrganization.getName());
+                        toUpdate.setDescription(newOrganization.getDescription());
+                        toUpdate.setDomainRestrictions(newOrganization.getDomainRestrictions());
+                        toUpdate.setHrids(newOrganization.getHrids());
 
-                    return updateInternal(toUpdate, byUser, organization).toMaybe();
-                })
-                .switchIfEmpty(Single.defer(() -> {
-                    Organization toCreate = new Organization();
-                    toCreate.setId(organizationId);
-                    toCreate.setHrids(newOrganization.getHrids());
-                    toCreate.setName(newOrganization.getName());
-                    toCreate.setDescription(newOrganization.getDescription());
-                    toCreate.setDomainRestrictions(newOrganization.getDomainRestrictions());
+                        return updateInternal(toUpdate, byUser, organization).toMaybe();
+                    })
+                    .switchIfEmpty(Single.defer(() -> {
+                        Organization toCreate = new Organization();
+                        toCreate.setId(organizationId);
+                        toCreate.setHrids(newOrganization.getHrids());
+                        toCreate.setName(newOrganization.getName());
+                        toCreate.setDescription(newOrganization.getDescription());
+                        toCreate.setDomainRestrictions(newOrganization.getDomainRestrictions());
 
-                    return createInternal(toCreate, byUser);
-                }));
+                        return createInternal(toCreate, byUser);
+                    }))
+                    .flatMap(organization -> syncLicense(organizationId, newOrganization.getLicense()).andThen(Single.just(organization)));
+        });
+    }
+
+    private Completable syncLicense(String organizationId, String license) {
+        if (license == null) {
+            return licenseService.delete(ReferenceType.ORGANIZATION, organizationId);
+        }
+        return licenseService.createOrUpdate(ReferenceType.ORGANIZATION, organizationId, license)
+                .ignoreElement();
     }
 
     @Override

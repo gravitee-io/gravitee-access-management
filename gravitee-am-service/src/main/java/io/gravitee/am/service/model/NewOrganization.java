@@ -37,7 +37,12 @@ public class NewOrganization {
 
     private List<String> domainRestrictions;
 
-    
+    /**
+     * Desired-state license from Cockpit (base64-encoded).
+     * Null removes any persisted organization license.
+     */
+    private String license;
+
     public String getName() {
         return name;
     }
@@ -90,5 +95,13 @@ public class NewOrganization {
 
     public void setHrids(List<String> hrids) {
         this.hrids = hrids;
+    }
+
+    public String getLicense() {
+        return license;
+    }
+
+    public void setLicense(String license) {
+        this.license = license;
     }
 }

@@ -20,11 +20,13 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.License;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
+import io.gravitee.am.service.exception.InvalidLicenseException;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.OrganizationServiceImpl;
@@ -43,6 +45,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +55,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +72,7 @@ public class OrganizationServiceTest {
 
     public static final String ORGANIZATION_ID = "orga#1";
     public static final String USER_ID = "user#1";
+    private static final String LICENSE = Base64.getEncoder().encodeToString("license-content".getBytes());
 
     @Mock
     private OrganizationRepository organizationRepository;
@@ -79,12 +86,15 @@ public class OrganizationServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private LicenseService licenseService;
+
     private OrganizationService cut;
 
     @BeforeEach
     public void before() {
 
-        cut = new OrganizationServiceImpl(organizationRepository, roleService, entrypointService, auditService);
+        cut = new OrganizationServiceImpl(organizationRepository, roleService, entrypointService, auditService, licenseService);
     }
 
     @Test
@@ -200,12 +210,14 @@ public class OrganizationServiceTest {
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(roleService.createDefaultRoles(ORGANIZATION_ID)).thenReturn(Completable.complete());
         when(entrypointService.createDefaults(any(Organization.class))).thenReturn(Flowable.just(new Entrypoint()));
+        when(licenseService.createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE)).thenReturn(Single.just(new License()));
 
         NewOrganization newOrganization = new NewOrganization();
         newOrganization.setName("TestName");
         newOrganization.setDescription("TestDescription");
         newOrganization.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
         newOrganization.setHrids(Collections.singletonList("testOrgHRID"));
+        newOrganization.setLicense(LICENSE);
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -223,6 +235,8 @@ public class OrganizationServiceTest {
             return true;
         });
 
+        verify(licenseService).createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE);
+        verify(licenseService, never()).delete(any(), any());
         verify(auditService, times(1)).report(argThat(builder -> {
             Audit audit = builder.build(new ObjectMapper());
             assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
@@ -245,6 +259,7 @@ public class OrganizationServiceTest {
         newOrganization.setName("TestName");
         newOrganization.setDescription("TestDescription");
         newOrganization.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
+        newOrganization.setLicense(LICENSE);
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -254,6 +269,8 @@ public class OrganizationServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
+        verify(licenseService, never()).createOrUpdate(any(), any(), any());
+        verify(licenseService, never()).delete(any(), any());
         verify(auditService, times(1)).report(argThat(builder -> {
             Audit audit = builder.build(new ObjectMapper());
             assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
@@ -274,12 +291,14 @@ public class OrganizationServiceTest {
 
         when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.just(existingOrganization));
         when(organizationRepository.update(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(licenseService.createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE)).thenReturn(Single.just(new License()));
 
         NewOrganization newOrganization = new NewOrganization();
         newOrganization.setName("TestName");
         newOrganization.setDescription("TestDescription");
         newOrganization.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
         newOrganization.setHrids(Collections.singletonList("TestHridUpdate"));
+        newOrganization.setLicense(LICENSE);
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -297,6 +316,8 @@ public class OrganizationServiceTest {
             return true;
         });
 
+        verify(licenseService).createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE);
+        verify(licenseService, never()).delete(any(), any());
         verify(auditService, times(1)).report(argThat(builder -> {
             Audit audit = builder.build(new ObjectMapper());
             assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
@@ -307,6 +328,49 @@ public class OrganizationServiceTest {
 
             return true;
         }));
+    }
+
+    @Test
+    public void shouldDeleteLicenseWhenNull() {
+
+        Organization existingOrganization = new Organization();
+        existingOrganization.setId(ORGANIZATION_ID);
+
+        when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.just(existingOrganization));
+        when(organizationRepository.update(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(licenseService.delete(ReferenceType.ORGANIZATION, ORGANIZATION_ID)).thenReturn(Completable.complete());
+
+        NewOrganization newOrganization = new NewOrganization();
+        newOrganization.setName("TestName");
+        newOrganization.setLicense(null);
+
+        TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, new DefaultUser("test")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        verify(licenseService).delete(ReferenceType.ORGANIZATION, ORGANIZATION_ID);
+        verify(licenseService, never()).createOrUpdate(any(), any(), any());
+    }
+
+    @Test
+    public void shouldFailWhenLicenseInvalid() {
+
+        doThrow(new InvalidLicenseException("License is not a valid base64-encoded value"))
+                .when(licenseService).validate("not-base64!!!");
+
+        NewOrganization newOrganization = new NewOrganization();
+        newOrganization.setName("TestName");
+        newOrganization.setLicense("not-base64!!!");
+
+        TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, new DefaultUser("test")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(InvalidLicenseException.class);
+
+        verifyNoInteractions(organizationRepository);
+        verify(licenseService, never()).createOrUpdate(any(), any(), any());
+        verify(licenseService, never()).delete(any(), any());
     }
 
     @Test
@@ -322,6 +386,7 @@ public class OrganizationServiceTest {
         newOrganization.setName("TestName");
         newOrganization.setDescription("TestDescription");
         newOrganization.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
+        newOrganization.setLicense(LICENSE);
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -331,6 +396,8 @@ public class OrganizationServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
+        verify(licenseService, never()).createOrUpdate(any(), any(), any());
+        verify(licenseService, never()).delete(any(), any());
         verify(auditService, times(1)).report(argThat(builder -> {
             Audit audit = builder.build(new ObjectMapper());
             assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
@@ -360,6 +427,7 @@ public class OrganizationServiceTest {
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(updated -> updated.getIdentities().equals(identities));
+        verifyNoInteractions(licenseService);
     }
 
     @Test
