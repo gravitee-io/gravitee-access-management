@@ -244,12 +244,14 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
     }
 
     @Override
-    public Single<ConsoleUserPreferences> updateConsolePreferences(String organizationId, String userId, ConsoleUserPreferences preferences) {
+    public Single<ConsoleUserPreferences> updateConsolePreferences(String organizationId, String userId, ConsoleUserPreferences preferences, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(ReferenceType.ORGANIZATION, organizationId, userId)
                 .flatMap(user -> {
                     user.setConsolePreferences(preferences);
                     user.setUpdatedAt(new Date());
-                    return getUserService().update(user);
+                    return getUserService().update(user)
+                            .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PREFERENCES_UPDATED).user(updated)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PREFERENCES_UPDATED).reference(Reference.organization(organizationId)).throwable(throwable)));
                 })
                 .map(user -> user.getConsolePreferences() != null ? user.getConsolePreferences() : new ConsoleUserPreferences());
     }

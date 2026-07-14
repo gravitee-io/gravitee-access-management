@@ -72,13 +72,13 @@ public class CurrentUserPreferencesResourceTest extends JerseySpringTest {
     @Test
     public void shouldUpdatePreferences() {
         final ConsoleUserPreferences preferences = new ConsoleUserPreferences("domain-1", "env-1", List.of("domain-1"));
-        doReturn(Single.just(preferences)).when(organizationUserService).updateConsolePreferences(eq(Organization.DEFAULT), any(), any());
+        doReturn(Single.just(preferences)).when(organizationUserService).updateConsolePreferences(eq(Organization.DEFAULT), any(), any(), any());
 
         final Response response = target("user").path("preferences").request().put(Entity.json(preferences));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         verify(organizationUserService).updateConsolePreferences(eq(Organization.DEFAULT), any(),
-                argThat(p -> "domain-1".equals(p.getDefaultDomainId()) && List.of("domain-1").equals(p.getPinnedDomainIds())));
+                argThat(p -> "domain-1".equals(p.getDefaultDomainId()) && List.of("domain-1").equals(p.getPinnedDomainIds())), any());
     }
 
     @Test

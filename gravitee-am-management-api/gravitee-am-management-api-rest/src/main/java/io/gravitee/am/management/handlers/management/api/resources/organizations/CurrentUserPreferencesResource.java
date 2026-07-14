@@ -84,7 +84,7 @@ public class CurrentUserPreferencesResource extends AbstractResource {
         }
 
         final User authenticatedUser = getAuthenticatedUser();
-        organizationUserService.updateConsolePreferences(organizationId(authenticatedUser), authenticatedUser.getId(), preferences)
+        organizationUserService.updateConsolePreferences(organizationId(authenticatedUser), authenticatedUser.getId(), preferences, authenticatedUser)
                 .subscribe(response::resume, response::resume);
     }
 

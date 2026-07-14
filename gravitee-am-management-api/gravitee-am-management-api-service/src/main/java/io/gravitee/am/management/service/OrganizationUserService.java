@@ -58,7 +58,7 @@ public interface OrganizationUserService {
 
     Single<ConsoleUserPreferences> getConsolePreferences(String organizationId, String userId);
 
-    Single<ConsoleUserPreferences> updateConsolePreferences(String organizationId, String userId, ConsoleUserPreferences preferences);
+    Single<ConsoleUserPreferences> updateConsolePreferences(String organizationId, String userId, ConsoleUserPreferences preferences, io.gravitee.am.identityprovider.api.User principal);
 
     Flowable<AccountAccessToken> findAccountAccessTokens(String organizationId, String userId);
 
