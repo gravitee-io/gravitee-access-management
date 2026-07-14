@@ -73,12 +73,12 @@
   .userAccountProfile {
     display: flex;
     align-items: center;
-    gap: 12px;
     padding: 12px 16px;
+    gap: 12px;
 
     .userAccountInfo {
-      flex: 1;
       min-width: 0;
+      flex: 1;
 
       h3 {
         overflow: hidden;
@@ -131,16 +131,16 @@
       &__search {
         display: flex;
         align-items: center;
-        gap: 10px;
         padding: 10px 16px;
         border-top: 1px solid rgb(0 0 0 / 8%);
         border-bottom: 1px solid rgb(0 0 0 / 8%);
         color: rgb(0 0 0 / 45%);
+        gap: 10px;
         pointer-events: initial;
 
         input {
-          flex: 1;
           min-width: 0;
+          flex: 1;
           padding: 0;
           border: 0;
           background: transparent;
@@ -183,7 +183,6 @@
           overflow: visible;
 
           &::after {
-            content: '';
             position: absolute;
             right: -1px;
             bottom: 1px;
@@ -192,6 +191,7 @@
             border: 1.5px solid #fff;
             border-radius: 50%;
             background: #e0a53a;
+            content: '';
           }
         }
 
@@ -203,8 +203,8 @@
         &__status {
           display: flex;
           align-items: center;
-          gap: 6px;
           padding-right: 4px;
+          gap: 6px;
         }
 
         &__status-label {
@@ -243,17 +243,6 @@
           }
         }
 
-        &:hover,
-        &:focus-within {
-          .domains_list__item__status {
-            display: none;
-          }
-
-          .domains_list__item__controls {
-            display: flex;
-          }
-        }
-
         // the domain you are currently in: highlighted, with pin/default always reachable
         &--current {
           background: rgb(18 129 110 / 6%);
@@ -264,6 +253,17 @@
 
           // the always-visible control star already conveys the default state
           .domains_list__item__flag--default {
+            display: none;
+          }
+
+          .domains_list__item__controls {
+            display: flex;
+          }
+        }
+
+        &:hover,
+        &:focus-within {
+          .domains_list__item__status {
             display: none;
           }
 

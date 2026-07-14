@@ -76,7 +76,9 @@
           </button>
           <button mat-icon-button (click)="togglePin(row, $event)" [matTooltip]="isPinned(row.id) ? 'Unpin domain' : 'Pin domain'">
             <!-- bookmark instead of push_pin: the bundled Material Icons font predates the push_pin ligature -->
-            <mat-icon [ngClass]="{ 'domain-pin--unpinned': !isPinned(row.id) }">{{ isPinned(row.id) ? 'bookmark' : 'bookmark_border' }}</mat-icon>
+            <mat-icon [ngClass]="{ 'domain-pin--unpinned': !isPinned(row.id) }">{{
+              isPinned(row.id) ? 'bookmark' : 'bookmark_border'
+            }}</mat-icon>
           </button>
         </ng-template>
       </ngx-datatable-column>
