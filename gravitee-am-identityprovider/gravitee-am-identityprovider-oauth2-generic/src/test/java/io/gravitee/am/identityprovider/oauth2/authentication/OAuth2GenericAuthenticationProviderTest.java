@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTProcessor;
@@ -27,6 +28,7 @@ import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.common.web.URLParametersUtils;
+import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -36,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -46,9 +49,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
 import static com.github.tomakehurst.wiremock.client.WireMock.okForContentType;
@@ -57,6 +62,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.unauthorized;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -76,6 +82,9 @@ public class OAuth2GenericAuthenticationProviderTest {
 
     @Autowired
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private OAuth2GenericIdentityProviderConfiguration configuration;
 
     private JWTProcessor jwtProcessor = mock(JWTProcessor.class);
 
@@ -119,6 +128,25 @@ public class OAuth2GenericAuthenticationProviderTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+    }
+
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    public void shouldStopRetryingWhenProviderStopped() throws Exception {
+        OAuth2GenericAuthenticationProvider provider = (OAuth2GenericAuthenticationProvider) authenticationProvider;
+        configuration.setWellKnownUri("http://localhost:19999/.well-known/openid-configuration");
+        stubFor(any(urlPathEqualTo("/.well-known/openid-configuration"))
+                .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+
+        provider.afterPropertiesSet();
+        Thread.sleep(600);
+        provider.stop();
+
+        int afterStop = wireMockRule.findAll(getRequestedFor(urlPathEqualTo("/.well-known/openid-configuration"))).size();
+        Thread.sleep(2000);
+        int later = wireMockRule.findAll(getRequestedFor(urlPathEqualTo("/.well-known/openid-configuration"))).size();
+
+        assertEquals("provider must stop retrying after stop()", afterStop, later);
     }
 
 
