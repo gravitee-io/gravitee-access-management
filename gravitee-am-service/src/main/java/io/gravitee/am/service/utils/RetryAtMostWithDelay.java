@@ -25,7 +25,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
+ * @deprecated use {@link RetryWithDelay} (linear backoff with a retry cap)
  */
+@Deprecated
 public class RetryAtMostWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
         private final int maxRetries;
         private final int retryDelayMillis;
