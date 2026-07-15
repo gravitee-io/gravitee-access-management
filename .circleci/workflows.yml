@@ -7,7 +7,7 @@ orbs:
   aws-cli: circleci/aws-cli@5.4.1
   aws-s3: circleci/aws-s3@4.1.3
   helm: circleci/helm@2.0.1
-  aquasec: gravitee-io/aquasec@1.0.5
+  aikido: gravitee-io/aikido@1.0.1
 
 executors:
   ubuntu:
@@ -1661,67 +1661,38 @@ jobs:
                     ]
                   }
 
-  add-docker-images-in-aqua:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
+  add-docker-images-in-aikido:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: medium
     steps:
-      - keeper/env-export:
-          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-          var-name: AQUA_KEY
-      - keeper/env-export:
-          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-          var-name: AQUA_SECRET
-      - keeper/env-export:
-          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-          var-name: AQUA_USERNAME
-      - keeper/env-export:
-          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-          var-name: AQUA_PASSWORD
-      - keeper/env-export:
-          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-          var-name: SCANNER_TOKEN
       - keeper/env-export:
           secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
           var-name: GITHUB_TOKEN
-      - aquasec/install_billy
-      - aquasec/pull_aqua_scanner_image
-      - setup_remote_docker
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-      - aquasec/scan_docker_image:
+      - keeper/env-export:
+          secret-url: keeper://_XrkO71xa9HZBwxYoUHX0w/field/password
+          var-name: AIKIDO_API_KEY
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-      - aquasec/scan_docker_image:
+          fail_on: ""
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-      - aquasec/scan_docker_image:
+          fail_on: ""
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
-      - aquasec/scan_docker_image:
+          fail_on: ""
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
-      - aquasec/scan_docker_image:
+          fail_on: ""
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-debian
-      - aquasec/scan_docker_image:
+          fail_on: ""
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-debian
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-debian
-      - aquasec/scan_docker_image:
+          fail_on: ""
+      - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-debian
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
+          fail_on: ""
 
   job-test-am-charts:
     docker:
@@ -1827,8 +1798,8 @@ workflows:
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aqua:
-          name: add docker images to AquaSec
+      - add-docker-images-in-aikido:
+          name: add docker images to Aikido
           context: cicd-orchestrator
           requires:
             - publish docker images
@@ -1891,8 +1862,8 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aqua:
-          name: add docker images to AquaSec
+      - add-docker-images-in-aikido:
+          name: add docker images to Aikido
           context: cicd-orchestrator
           requires:
             - publish docker images
@@ -1938,8 +1909,8 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aqua:
-          name: add docker images to AquaSec
+      - add-docker-images-in-aikido:
+          name: add docker images to Aikido
           context: cicd-orchestrator
           requires:
             - publish docker images
@@ -2012,29 +1983,6 @@ workflows:
           name: Test Helm chart
           requires:
             - setup
-      - aquasec/fs_scan:
-          context:
-            - cicd-orchestrator
-          requires:
-            - setup
-          filters:
-            branches:
-              ignore:
-                - master
-                - /^\d\.\d+\.x$/
-          pre-steps:
-            - run:
-                name: Set Trivy timeout
-                command: echo 'export TRIVY_TIMEOUT=30m' >> "$BASH_ENV"
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
       - junit_tests:
           context: cicd-orchestrator
           requires:
@@ -2180,24 +2128,13 @@ workflows:
                 - master
                 - /^\d\.\d+\.x$/
 
-      - aquasec/docker_image_scan:
+      - aikido/docker_image_scan:
           context: cicd-orchestrator
+          checkout: false
           pre-steps:
             - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-                var-name: AQUA_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-                var-name: AQUA_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-                var-name: SCANNER_TOKEN
+                secret-url: keeper://_XrkO71xa9HZBwxYoUHX0w/field/password
+                var-name: AIKIDO_API_KEY
             - keeper/env-export:
                 secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
                 var-name: AZURE_DOCKER_REGISTRY_USERNAME
@@ -2209,7 +2146,6 @@ workflows:
                 var-name: GITHUB_TOKEN
             - attach_workspace:
                 at: /tmp
-            - setup_remote_docker
             - run:
                 name: Connect to Azure registry
                 command: |
@@ -2221,52 +2157,8 @@ workflows:
                   done < /tmp/built-docker-images.txt
           requires:
             - publish-images-azure-registry
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
           built_docker_image_file: /tmp/built-docker-images.txt
-          skip_remote_docker_step: true
-          filters:
-            branches:
-              only:
-                - master
-                - /^\d\.\d+\.x$/
-
-      - aquasec/register_artifact:
-          context: cicd-orchestrator
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-                var-name: AQUA_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-                var-name: AQUA_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-                var-name: SCANNER_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
-                var-name: AZURE_DOCKER_REGISTRY_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
-                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
-            - attach_workspace:
-                at: /tmp
-            - setup_remote_docker
-            - run:
-                name: Connect to Azure registry
-                command: |
-                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-          requires:
-            - publish-images-azure-registry
-          built_docker_image_file: /tmp/built-docker-images.txt
+          fail_on: ""
           filters:
             branches:
               only:
@@ -2324,7 +2216,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
-      - add-docker-images-in-aqua:
+      - add-docker-images-in-aikido:
           context: cicd-orchestrator
           requires:
             - build_n_push_am_ce_job
