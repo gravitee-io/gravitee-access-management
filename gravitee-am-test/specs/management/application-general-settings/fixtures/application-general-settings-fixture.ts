@@ -43,12 +43,11 @@ export const initFixture = async (): Promise<ApplicationGeneralSettingsFixture> 
   const accessToken = await requestAdminAccessToken();
   const { domain } = await setupDomainForTest(uniqueName('app-gen-settings', true), { accessToken, waitForStart: false });
 
-  // Create as SERVICE first (no redirect URIs required on creation), then switch to WEB
   const app = await createApplication(domain.id, accessToken, {
     name: uniqueName('gen-settings-app', true),
-    type: 'SERVICE',
+    type: 'WEB',
+    redirectUris: ['https://callback.example.com'],
   });
-  await updateApplicationType(domain.id, accessToken, app.id, 'WEB');
 
   const patchApp = (body: PatchApplication): Promise<Application> => patchApplication(domain.id, accessToken, body, app.id);
 

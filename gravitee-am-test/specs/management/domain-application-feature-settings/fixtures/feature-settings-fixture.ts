@@ -24,7 +24,6 @@ import {
   deleteApplication,
   getApplication,
   patchApplication,
-  updateApplicationType,
 } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
@@ -43,14 +42,11 @@ export const initFixture = async (): Promise<FeatureSettingsFixture> => {
   const accessToken = await requestAdminAccessToken();
   const { domain } = await setupDomainForTest(uniqueName('feature-settings', true), { accessToken, waitForStart: false });
 
-  // Create as SERVICE first (no redirect URIs required on creation), then switch to WEB
   const app = await createApplication(domain.id, accessToken, {
     name: uniqueName('feature-settings-app', true),
-    type: 'SERVICE',
+    type: 'WEB',
+    redirectUris: ['https://callback.example.com'],
   });
-  await updateApplicationType(domain.id, accessToken, app.id, 'WEB');
-  // WEB type requires at least one redirect URI for subsequent patches
-  await patchApplication(domain.id, accessToken, { settings: { oauth: { redirectUris: ['https://callback.example.com'] } } }, app.id);
 
   const patchDomainSettings = (settings: any): Promise<Domain> => patchDomain(domain.id, accessToken, settings);
 
