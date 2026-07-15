@@ -20,7 +20,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.SystemTaskTypes;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
-import io.gravitee.am.service.utils.RetryAtMostWithDelay;
+import io.gravitee.am.service.utils.RetryWithDelay;
 import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Flowable;
@@ -74,7 +74,11 @@ public abstract class SystemTaskUpgrader implements Upgrader {
                             // SUCCESS case
                             return Single.just(true);
                     }
-                }).retryWhen(new RetryAtMostWithDelay(3, 5000)).blockingGet();
+                }).retryWhen(RetryWithDelay.builder()
+                        .maxRetries(3)
+                        .initialDelay(5000, TimeUnit.MILLISECONDS)
+                        .linear()
+                        .build()).blockingGet();
 
         if (!upgraded) {
             throw getIllegalStateException();
