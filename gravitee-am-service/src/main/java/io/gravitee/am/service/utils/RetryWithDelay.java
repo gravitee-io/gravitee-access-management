@@ -23,27 +23,149 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 public class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RetryWithDelay.class);
 
-    private final AtomicInteger delayInSec = new AtomicInteger(1);
+    private static final int DEFAULT_MAX_RETRIES = 50;
+    private static final long DEFAULT_INITIAL_DELAY = 1;
+    private static final long DEFAULT_MAX_DELAY = 60;
+
+    public enum Backoff {
+        EXPONENTIAL, LINEAR
+    }
+
+    private final int maxRetries;
+    private final long initialDelay;
+    private final long maxDelay;
+    private final TimeUnit unit;
+    private final Backoff backoff;
+    private final Predicate<Throwable> retryOn;
+
     private final AtomicInteger counter = new AtomicInteger(0);
+    private final AtomicLong currentDelay;
+
+    public RetryWithDelay() {
+        this(builder()
+                .maxRetries(DEFAULT_MAX_RETRIES)
+                .initialDelay(DEFAULT_INITIAL_DELAY, TimeUnit.SECONDS)
+                .maxDelay(DEFAULT_MAX_DELAY)
+                .backoff(Backoff.EXPONENTIAL));
+    }
+
+    private RetryWithDelay(Builder builder) {
+        TimeUnit initialUnit = builder.unit;
+        TimeUnit maxUnit = builder.maxDelayUnit != null ? builder.maxDelayUnit : builder.unit;
+        TimeUnit common = initialUnit.compareTo(maxUnit) <= 0 ? initialUnit : maxUnit;
+
+        this.maxRetries = builder.maxRetries;
+        this.unit = common;
+        this.initialDelay = common.convert(builder.initialDelay, initialUnit);
+        this.maxDelay = builder.maxDelay <= 0 ? builder.maxDelay : common.convert(builder.maxDelay, maxUnit);
+        this.backoff = builder.backoff;
+        this.retryOn = builder.retryOn;
+        this.currentDelay = new AtomicLong(this.initialDelay);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
 
     @Override
-    public Publisher<?> apply(Flowable<Throwable> throwableFlowable) {
-        return throwableFlowable.flatMap(err -> {
-            if (counter.getAndIncrement() < 50) {
-                int delay = delayInSec.get();
-                LOGGER.warn("Initialization failed, attempt={}/50, delay={}", counter.get(), delay);
-                if (delay < 60) {
-                    delayInSec.set(delay * 2);
+    public Publisher<?> apply(Flowable<Throwable> attempts) {
+        return attempts.flatMap(error -> {
+            int attempt = counter.getAndIncrement();
+            boolean unlimited = maxRetries < 0;
+            boolean limitExceeded = !unlimited && attempt >= maxRetries;
+            if (limitExceeded || !retryOn.test(error)) {
+                if (limitExceeded) {
+                    LOGGER.error("Retry limit exceeded (maxRetries={})", maxRetries);
                 }
-                return Flowable.timer(delay, TimeUnit.SECONDS);
-            } else {
-                LOGGER.error("Retry limit exceeded");
-                return Flowable.error(err);
+                return Flowable.error(error);
             }
+            long delay = nextDelay(attempt);
+            if (unlimited) {
+                LOGGER.warn("Retry attempt {} in {} {}", attempt + 1, delay, unit.name().toLowerCase());
+            } else {
+                LOGGER.warn("Retry attempt {}/{} in {} {}", attempt + 1, maxRetries, delay, unit.name().toLowerCase());
+            }
+            return Flowable.timer(delay, unit);
         });
+    }
+
+    long nextDelay(int attempt) {
+        if (backoff == Backoff.LINEAR) {
+            long delay = initialDelay * (attempt + 1L);
+            return maxDelay > 0 ? Math.min(delay, maxDelay) : delay;
+        }
+        long delay = currentDelay.get();
+        if (maxDelay <= 0 || delay < maxDelay) {
+            currentDelay.set(delay * 2);
+        }
+        return maxDelay > 0 ? Math.min(delay, maxDelay) : delay;
+    }
+
+    public static final class Builder {
+        private int maxRetries = DEFAULT_MAX_RETRIES;
+        private long initialDelay = DEFAULT_INITIAL_DELAY;
+        private long maxDelay = 0;
+        private TimeUnit unit = TimeUnit.SECONDS;
+        private TimeUnit maxDelayUnit = null;
+        private Backoff backoff = Backoff.EXPONENTIAL;
+        private Predicate<Throwable> retryOn = throwable -> true;
+
+        public Builder maxRetries(int maxRetries) {
+            this.maxRetries = maxRetries;
+            return this;
+        }
+
+        public Builder unlimitedRetries() {
+            this.maxRetries = -1;
+            return this;
+        }
+
+        public Builder initialDelay(long delay, TimeUnit unit) {
+            this.initialDelay = delay;
+            this.unit = unit;
+            return this;
+        }
+
+        public Builder maxDelay(long maxDelay) {
+            this.maxDelay = maxDelay;
+            this.maxDelayUnit = null;
+            return this;
+        }
+
+        public Builder maxDelay(long maxDelay, TimeUnit unit) {
+            this.maxDelay = maxDelay;
+            this.maxDelayUnit = unit;
+            return this;
+        }
+
+        public Builder backoff(Backoff backoff) {
+            this.backoff = backoff;
+            return this;
+        }
+
+        public Builder linear() {
+            this.backoff = Backoff.LINEAR;
+            return this;
+        }
+
+        public Builder exponential() {
+            this.backoff = Backoff.EXPONENTIAL;
+            return this;
+        }
+
+        public Builder retryOn(Predicate<Throwable> retryOn) {
+            this.retryOn = retryOn;
+            return this;
+        }
+
+        public RetryWithDelay build() {
+            return new RetryWithDelay(this);
+        }
     }
 }
