@@ -82,7 +82,7 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.gravitee.am.service.utils.RetryAtMostWithDelay;
+import io.gravitee.am.service.utils.RetryWithDelay;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -104,6 +104,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.isNull;
@@ -384,7 +385,11 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     private void pushStagingEmail(io.gravitee.am.model.User user1, Client resolvedClient) {
         emailStagingService.push(new EmailContainer(user1, resolvedClient), Template.REGISTRATION_CONFIRMATION)
-                .retryWhen(new RetryAtMostWithDelay(2, 1000))
+                .retryWhen(RetryWithDelay.builder()
+                        .maxRetries(2)
+                        .initialDelay(1000, TimeUnit.MILLISECONDS)
+                        .linear()
+                        .build())
                 .onErrorComplete(error -> {
                     LOGGER.warn("The email cannot be push on staging on domain {} for user {}",
                             domain.getName(), user1.getUsername(), error);
