@@ -19,13 +19,9 @@ import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
-import io.reactivex.rxjava3.annotations.NonNull;
+import io.gravitee.am.service.utils.RetryWithDelay;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Function;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +80,12 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
                 throw new AuthenticationFlowConsistencyException();
             }
             return context;
-        }).retryWhen(new RetryWithDelay(consistencyRetries, retryDelay));
+        }).retryWhen(RetryWithDelay.builder()
+                .maxRetries(consistencyRetries)
+                .initialDelay(retryDelay, TimeUnit.MILLISECONDS)
+                .linear()
+                .retryOn(AuthenticationFlowConsistencyException.class::isInstance)
+                .build());
     }
 
     @Override
@@ -111,39 +112,6 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
             return authContextRepository.replace(authContext);
         } else {
             return authContextRepository.create(authContext);
-        }
-    }
-
-    /**
-     * Retry load context with delay
-     * from : https://stackoverflow.com/a/25292833
-     */
-    private class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
-        private final int maxRetries;
-        private final int retryDelayMillis;
-        private int retryCount;
-
-        public RetryWithDelay(int retries, int delay) {
-            this.maxRetries = retries;
-            this.retryDelayMillis = delay;
-            this.retryCount = 0;
-        }
-
-        @Override
-        public Publisher<?> apply(@NonNull Flowable<Throwable> attempts) {
-            return attempts
-                    .flatMap((throwable) -> {
-                        // perform retry only on Consistency exception
-                        if (throwable instanceof AuthenticationFlowConsistencyException && ++retryCount < maxRetries) {
-                                // When this Observable calls onNext, the original
-                                // Observable will be retried (i.e. re-subscribed).
-                                return Flowable.timer((long) retryDelayMillis * (retryCount + 1),
-                                        TimeUnit.MILLISECONDS);
-                            }
-
-                        // Max retries hit. Just pass the error along.
-                        return Flowable.error(throwable);
-                    });
         }
     }
 }
