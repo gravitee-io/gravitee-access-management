@@ -57,6 +57,7 @@ tags:
 - name: form
 - name: group
 - name: identity provider
+- name: license
 - name: platform
 - name: preview
 - name: protected-resource
@@ -10573,6 +10574,30 @@ paths:
       summary: Update an identity provider
       tags:
       - identity provider
+  /organizations/{organizationId}/license:
+    get:
+      operationId: getOrganizationLicense
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GraviteeLicense"
+          description: Organization license successfully fetched
+        "404":
+          description: Organization not found
+        "500":
+          description: Internal server error
+      summary: "Get the organization License, falling back to the platform License\
+        \ when the organization has none"
+      tags:
+      - license
   /organizations/{organizationId}/members:
     get:
       description: "User must have ORGANIZATION_MEMBER[LIST] permission on the specified\
@@ -11577,12 +11602,17 @@ paths:
     get:
       operationId: getLicense
       responses:
-        default:
+        "200":
           content:
-            application/json: {}
-          description: default response
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GraviteeLicense"
+          description: Platform license successfully fetched
+        "500":
+          description: Internal server error
       summary: Get current node License
       tags:
+      - license
       - platform
   /platform/plugins/auth-device-notifiers:
     get:
@@ -14460,6 +14490,29 @@ components:
           description: Input type of the field.
           example: email
       title: Form field
+    GraviteeLicense:
+      type: object
+      properties:
+        expired:
+          type: boolean
+        expiresAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        features:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        packs:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        scope:
+          type: string
+        tier:
+          type: string
     Group:
       type: object
       properties:

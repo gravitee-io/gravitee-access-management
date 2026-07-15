@@ -101,4 +101,9 @@ public class OrganizationResource extends AbstractResource {
     public FormsResource getFormsResource() {
         return resourceContext.getResource(FormsResource.class);
     }
+
+    @Path("license")
+    public LicenseResource getLicenseResource() {
+        return resourceContext.getResource(LicenseResource.class);
+    }
 }

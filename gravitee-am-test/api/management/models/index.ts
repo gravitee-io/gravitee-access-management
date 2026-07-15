@@ -103,6 +103,7 @@ export * from './Flow';
 export * from './FlowEntity';
 export * from './Form';
 export * from './FormField';
+export * from './GraviteeLicense';
 export * from './Group';
 export * from './GroupPage';
 export * from './I18nDictionary';

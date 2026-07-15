@@ -97,6 +97,7 @@ import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.am.service.validators.plugincfg.PluginJsonFormValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
+import io.gravitee.node.api.license.LicenseManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
@@ -329,6 +330,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected AuthorizationEnginePluginService authorizationEnginePluginService;
+
+    @Autowired
+    protected LicenseManager licenseManager;
 
     @BeforeEach
     public void init() {
@@ -717,6 +721,11 @@ public abstract class JerseySpringTest {
         @Bean
         public ConsentApplicationEntityFactory consentApplicationEntityFactory() {
             return mock(ConsentApplicationEntityFactory.class);
+        }
+
+        @Bean
+        public LicenseManager licenseManager() {
+            return mock(LicenseManager.class);
         }
     }
 

@@ -18,12 +18,18 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.License;
 import io.gravitee.am.model.ReferenceType;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author GraviteeSource Team
  */
 public interface LicenseService {
+
+    Flowable<License> findAll();
+
+    Maybe<License> findByReference(ReferenceType referenceType, String referenceId);
 
     Single<License> createOrUpdate(ReferenceType referenceType, String referenceId, String license);
 

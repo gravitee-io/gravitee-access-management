@@ -50,4 +50,6 @@ public class GraviteeLicense {
     private Date expiresAt;
 
     private boolean isExpired;
+
+    private String scope;
 }

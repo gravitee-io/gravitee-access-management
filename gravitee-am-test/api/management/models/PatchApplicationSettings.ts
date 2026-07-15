@@ -33,6 +33,13 @@ import {
   AccountSettingsToJSON,
   AccountSettingsToJSONTyped,
 } from './AccountSettings';
+import type { PatchLoginSettings } from './PatchLoginSettings';
+import {
+  PatchLoginSettingsFromJSON,
+  PatchLoginSettingsFromJSONTyped,
+  PatchLoginSettingsToJSON,
+  PatchLoginSettingsToJSONTyped,
+} from './PatchLoginSettings';
 import type { CookieSettings } from './CookieSettings';
 import { CookieSettingsFromJSON, CookieSettingsFromJSONTyped, CookieSettingsToJSON, CookieSettingsToJSONTyped } from './CookieSettings';
 import type { RiskAssessmentSettings } from './RiskAssessmentSettings';
@@ -42,13 +49,6 @@ import {
   RiskAssessmentSettingsToJSON,
   RiskAssessmentSettingsToJSONTyped,
 } from './RiskAssessmentSettings';
-import type { PatchPasswordSettings } from './PatchPasswordSettings';
-import {
-  PatchPasswordSettingsFromJSON,
-  PatchPasswordSettingsFromJSONTyped,
-  PatchPasswordSettingsToJSON,
-  PatchPasswordSettingsToJSONTyped,
-} from './PatchPasswordSettings';
 import type { PatchApplicationAdvancedSettings } from './PatchApplicationAdvancedSettings';
 import {
   PatchApplicationAdvancedSettingsFromJSON,
@@ -56,8 +56,6 @@ import {
   PatchApplicationAdvancedSettingsToJSON,
   PatchApplicationAdvancedSettingsToJSONTyped,
 } from './PatchApplicationAdvancedSettings';
-import type { PatchLoginSettings } from './PatchLoginSettings';
-import { PatchLoginSettingsFromJSON, PatchLoginSettingsFromJSONTyped, PatchLoginSettingsToJSON } from './PatchLoginSettings';
 import type { PatchApplicationOAuthSettings } from './PatchApplicationOAuthSettings';
 import {
   PatchApplicationOAuthSettingsFromJSON,
@@ -136,12 +134,6 @@ export interface PatchApplicationSettings {
    * @memberof PatchApplicationSettings
    */
   oauth?: PatchApplicationOAuthSettings;
-  /**
-   *
-   * @type {PatchPasswordSettings}
-   * @memberof PatchApplicationSettings
-   */
-  passwordSettings?: PatchPasswordSettings;
   /**
    *
    * @type {Set<string>}
@@ -271,9 +263,9 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
     advanced: json['advanced'] == null ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
     cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
-    login: json['login'] == null ? undefined : PatchLoginSettingsFromJSON(json['login']),mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
+    login: json['login'] == null ? undefined : PatchLoginSettingsFromJSON(json['login']),
+    mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
     oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
     saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
@@ -300,7 +292,6 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
     login: PatchLoginSettingsToJSON(value['login']),
     mfa: PatchMFASettingsToJSON(value['mfa']),
     oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
-    passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: PatchApplicationSAMLSettingsToJSON(value['saml']),

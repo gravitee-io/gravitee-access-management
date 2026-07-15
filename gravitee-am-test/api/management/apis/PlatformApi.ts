@@ -34,6 +34,9 @@ import {
   ErrorEntity,
   ErrorEntityFromJSON,
   ErrorEntityToJSON,
+  GraviteeLicense,
+  GraviteeLicenseFromJSON,
+  GraviteeLicenseToJSON,
   InstallationEntity,
   InstallationEntityFromJSON,
   InstallationEntityToJSON,
@@ -1117,7 +1120,7 @@ export class PlatformApi extends runtime.BaseAPI {
   /**
    * Get current node License
    */
-  async getLicenseRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+  async getLicenseRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<GraviteeLicense>> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -1140,14 +1143,15 @@ export class PlatformApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse(response, (jsonValue) => GraviteeLicenseFromJSON(jsonValue));
   }
 
   /**
    * Get current node License
    */
-  async getLicense(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getLicenseRaw(initOverrides);
+  async getLicense(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<GraviteeLicense> {
+    const response = await this.getLicenseRaw(initOverrides);
+    return await response.value();
   }
 
   /**

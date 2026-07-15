@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.License;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.LicenseRepository;
 import io.gravitee.am.service.exception.InvalidLicenseException;
 import io.gravitee.am.service.impl.LicenseServiceImpl;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -37,7 +41,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -55,11 +61,15 @@ class LicenseServiceTest {
     @Mock
     private LicenseRepository licenseRepository;
 
+    @Mock
+    private EventService eventService;
+
     private LicenseServiceImpl cut;
 
     @BeforeEach
     void before() {
-        cut = new LicenseServiceImpl(licenseRepository);
+        cut = new LicenseServiceImpl(licenseRepository, eventService);
+        lenient().when(eventService.create(any(Event.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
     }
 
     @Test
@@ -77,6 +87,10 @@ class LicenseServiceTest {
                 && license.getCreatedAt() != null
                 && license.getCreatedAt().equals(license.getUpdatedAt()));
         verify(licenseRepository, never()).update(any(License.class));
+        verify(eventService).create(argThat(event -> event.getType() == Type.LICENSE
+                && event.getPayload().getReferenceType() == ReferenceType.ORGANIZATION
+                && event.getPayload().getReferenceId().equals(ORGANIZATION_ID)
+                && event.getPayload().getAction() == Action.CREATE));
     }
 
     @Test
@@ -101,6 +115,27 @@ class LicenseServiceTest {
                 && license.getUpdatedAt().after(createdAt));
         verify(licenseRepository).update(argThat(license -> license.getReferenceId().equals(ORGANIZATION_ID)));
         verify(licenseRepository, never()).create(any(License.class));
+        verify(eventService).create(argThat(event -> event.getType() == Type.LICENSE
+                && event.getPayload().getAction() == Action.UPDATE));
+    }
+
+    @Test
+    void skipUpdateWhenLicenseUnchanged() {
+        License existing = new License();
+        existing.setReferenceId(ORGANIZATION_ID);
+        existing.setReferenceType(ReferenceType.ORGANIZATION);
+        existing.setLicense(LICENSE);
+
+        when(licenseRepository.findById(ORGANIZATION_ID, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(existing));
+
+        TestObserver<License> obs = cut.createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(existing);
+        verify(licenseRepository, never()).update(any(License.class));
+        verify(licenseRepository, never()).create(any(License.class));
+        verifyNoInteractions(eventService);
     }
 
     @Test
@@ -110,6 +145,7 @@ class LicenseServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidLicenseException.class);
         verifyNoInteractions(licenseRepository);
+        verifyNoInteractions(eventService);
     }
 
     @Test
@@ -119,6 +155,7 @@ class LicenseServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidLicenseException.class);
         verifyNoInteractions(licenseRepository);
+        verifyNoInteractions(eventService);
     }
 
     @Test
@@ -128,6 +165,7 @@ class LicenseServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidLicenseException.class);
         verifyNoInteractions(licenseRepository);
+        verifyNoInteractions(eventService);
     }
 
     @Test
@@ -143,7 +181,12 @@ class LicenseServiceTest {
     }
 
     @Test
-    void delete() {
+    void deleteWhenPresent() {
+        License existing = new License();
+        existing.setReferenceId(ORGANIZATION_ID);
+        existing.setReferenceType(ReferenceType.ORGANIZATION);
+
+        when(licenseRepository.findById(ORGANIZATION_ID, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(existing));
         when(licenseRepository.delete(ORGANIZATION_ID, ReferenceType.ORGANIZATION)).thenReturn(Completable.complete());
 
         TestObserver<Void> obs = cut.delete(ReferenceType.ORGANIZATION, ORGANIZATION_ID).test();
@@ -151,5 +194,38 @@ class LicenseServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         verify(licenseRepository).delete(ORGANIZATION_ID, ReferenceType.ORGANIZATION);
+        verify(eventService).create(argThat(event -> event.getType() == Type.LICENSE
+                && event.getPayload().getReferenceId().equals(ORGANIZATION_ID)
+                && event.getPayload().getAction() == Action.DELETE));
+    }
+
+    @Test
+    void deleteWhenAbsent() {
+        when(licenseRepository.findById(ORGANIZATION_ID, ReferenceType.ORGANIZATION)).thenReturn(Maybe.empty());
+
+        TestObserver<Void> obs = cut.delete(ReferenceType.ORGANIZATION, ORGANIZATION_ID).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        verify(licenseRepository, never()).delete(anyString(), any(ReferenceType.class));
+        verifyNoInteractions(eventService);
+    }
+
+    @Test
+    void findAll() {
+        when(licenseRepository.findAll()).thenReturn(Flowable.empty());
+
+        cut.findAll().test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(licenseRepository).findAll();
+    }
+
+    @Test
+    void findByReference() {
+        when(licenseRepository.findById(ORGANIZATION_ID, ReferenceType.ORGANIZATION)).thenReturn(Maybe.empty());
+
+        cut.findByReference(ReferenceType.ORGANIZATION, ORGANIZATION_ID).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(licenseRepository).findById(ORGANIZATION_ID, ReferenceType.ORGANIZATION);
     }
 }
