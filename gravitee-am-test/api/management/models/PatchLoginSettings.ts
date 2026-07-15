@@ -25,68 +25,13 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-
+import { mapValues } from '../runtime';
 /**
  *
  * @export
  * @interface PatchLoginSettings
  */
 export interface PatchLoginSettings {
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  inherited?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  forgotPasswordEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  registerEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  rememberMeEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  passwordlessEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  passwordlessRememberDeviceEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  passwordlessEnforcePasswordEnabled?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchLoginSettings
-   */
-  passwordlessEnforcePasswordMaxAge?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchLoginSettings
-   */
-  passwordlessDeviceNamingEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -104,7 +49,7 @@ export interface PatchLoginSettings {
    * @type {boolean}
    * @memberof PatchLoginSettings
    */
-  magicLinkAuthEnabled?: boolean;
+  forgotPasswordEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -122,7 +67,68 @@ export interface PatchLoginSettings {
    * @type {boolean}
    * @memberof PatchLoginSettings
    */
+  inherited?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  magicLinkAuthEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  passwordlessDeviceNamingEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  passwordlessEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  passwordlessEnforcePasswordEnabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchLoginSettings
+   */
+  passwordlessEnforcePasswordMaxAge?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  passwordlessRememberDeviceEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  registerEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
+  rememberMeEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchLoginSettings
+   */
   resetPasswordOnExpiration?: boolean;
+}
+
+/**
+ * Check if a given object implements the PatchLoginSettings interface.
+ */
+export function instanceOfPatchLoginSettings(value: object): value is PatchLoginSettings {
+  return true;
 }
 
 export function PatchLoginSettingsFromJSON(json: any): PatchLoginSettings {
@@ -130,56 +136,55 @@ export function PatchLoginSettingsFromJSON(json: any): PatchLoginSettings {
 }
 
 export function PatchLoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchLoginSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
-    forgotPasswordEnabled: !exists(json, 'forgotPasswordEnabled') ? undefined : json['forgotPasswordEnabled'],
-    registerEnabled: !exists(json, 'registerEnabled') ? undefined : json['registerEnabled'],
-    rememberMeEnabled: !exists(json, 'rememberMeEnabled') ? undefined : json['rememberMeEnabled'],
-    passwordlessEnabled: !exists(json, 'passwordlessEnabled') ? undefined : json['passwordlessEnabled'],
-    passwordlessRememberDeviceEnabled: !exists(json, 'passwordlessRememberDeviceEnabled')
-      ? undefined
-      : json['passwordlessRememberDeviceEnabled'],
-    passwordlessEnforcePasswordEnabled: !exists(json, 'passwordlessEnforcePasswordEnabled')
-      ? undefined
-      : json['passwordlessEnforcePasswordEnabled'],
-    passwordlessEnforcePasswordMaxAge: !exists(json, 'passwordlessEnforcePasswordMaxAge')
-      ? undefined
-      : json['passwordlessEnforcePasswordMaxAge'],
-    passwordlessDeviceNamingEnabled: !exists(json, 'passwordlessDeviceNamingEnabled') ? undefined : json['passwordlessDeviceNamingEnabled'],
-    certificateBasedAuthEnabled: !exists(json, 'certificateBasedAuthEnabled') ? undefined : json['certificateBasedAuthEnabled'],
-    certificateBasedAuthUrl: !exists(json, 'certificateBasedAuthUrl') ? undefined : json['certificateBasedAuthUrl'],
-    magicLinkAuthEnabled: !exists(json, 'magicLinkAuthEnabled') ? undefined : json['magicLinkAuthEnabled'],
-    hideForm: !exists(json, 'hideForm') ? undefined : json['hideForm'],
-    identifierFirstEnabled: !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
-    resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
+    certificateBasedAuthEnabled: json['certificateBasedAuthEnabled'] == null ? undefined : json['certificateBasedAuthEnabled'],
+    certificateBasedAuthUrl: json['certificateBasedAuthUrl'] == null ? undefined : json['certificateBasedAuthUrl'],
+    forgotPasswordEnabled: json['forgotPasswordEnabled'] == null ? undefined : json['forgotPasswordEnabled'],
+    hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
+    identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    magicLinkAuthEnabled: json['magicLinkAuthEnabled'] == null ? undefined : json['magicLinkAuthEnabled'],
+    passwordlessDeviceNamingEnabled: json['passwordlessDeviceNamingEnabled'] == null ? undefined : json['passwordlessDeviceNamingEnabled'],
+    passwordlessEnabled: json['passwordlessEnabled'] == null ? undefined : json['passwordlessEnabled'],
+    passwordlessEnforcePasswordEnabled:
+      json['passwordlessEnforcePasswordEnabled'] == null ? undefined : json['passwordlessEnforcePasswordEnabled'],
+    passwordlessEnforcePasswordMaxAge:
+      json['passwordlessEnforcePasswordMaxAge'] == null ? undefined : json['passwordlessEnforcePasswordMaxAge'],
+    passwordlessRememberDeviceEnabled:
+      json['passwordlessRememberDeviceEnabled'] == null ? undefined : json['passwordlessRememberDeviceEnabled'],
+    registerEnabled: json['registerEnabled'] == null ? undefined : json['registerEnabled'],
+    rememberMeEnabled: json['rememberMeEnabled'] == null ? undefined : json['rememberMeEnabled'],
+    resetPasswordOnExpiration: json['resetPasswordOnExpiration'] == null ? undefined : json['resetPasswordOnExpiration'],
   };
 }
 
-export function PatchLoginSettingsToJSON(value?: PatchLoginSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchLoginSettingsToJSON(json: any): PatchLoginSettings {
+  return PatchLoginSettingsToJSONTyped(json, false);
+}
+
+export function PatchLoginSettingsToJSONTyped(value?: PatchLoginSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    inherited: value.inherited,
-    forgotPasswordEnabled: value.forgotPasswordEnabled,
-    registerEnabled: value.registerEnabled,
-    rememberMeEnabled: value.rememberMeEnabled,
-    passwordlessEnabled: value.passwordlessEnabled,
-    passwordlessRememberDeviceEnabled: value.passwordlessRememberDeviceEnabled,
-    passwordlessEnforcePasswordEnabled: value.passwordlessEnforcePasswordEnabled,
-    passwordlessEnforcePasswordMaxAge: value.passwordlessEnforcePasswordMaxAge,
-    passwordlessDeviceNamingEnabled: value.passwordlessDeviceNamingEnabled,
-    certificateBasedAuthEnabled: value.certificateBasedAuthEnabled,
-    certificateBasedAuthUrl: value.certificateBasedAuthUrl,
-    magicLinkAuthEnabled: value.magicLinkAuthEnabled,
-    hideForm: value.hideForm,
-    identifierFirstEnabled: value.identifierFirstEnabled,
-    resetPasswordOnExpiration: value.resetPasswordOnExpiration,
+    certificateBasedAuthEnabled: value['certificateBasedAuthEnabled'],
+    certificateBasedAuthUrl: value['certificateBasedAuthUrl'],
+    forgotPasswordEnabled: value['forgotPasswordEnabled'],
+    hideForm: value['hideForm'],
+    identifierFirstEnabled: value['identifierFirstEnabled'],
+    inherited: value['inherited'],
+    magicLinkAuthEnabled: value['magicLinkAuthEnabled'],
+    passwordlessDeviceNamingEnabled: value['passwordlessDeviceNamingEnabled'],
+    passwordlessEnabled: value['passwordlessEnabled'],
+    passwordlessEnforcePasswordEnabled: value['passwordlessEnforcePasswordEnabled'],
+    passwordlessEnforcePasswordMaxAge: value['passwordlessEnforcePasswordMaxAge'],
+    passwordlessRememberDeviceEnabled: value['passwordlessRememberDeviceEnabled'],
+    registerEnabled: value['registerEnabled'],
+    rememberMeEnabled: value['rememberMeEnabled'],
+    resetPasswordOnExpiration: value['resetPasswordOnExpiration'],
   };
 }

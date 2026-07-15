@@ -21,6 +21,7 @@ apis/FlowApi.ts
 apis/FormApi.ts
 apis/GroupApi.ts
 apis/IdentityProviderApi.ts
+apis/LicenseApi.ts
 apis/NotifierApi.ts
 apis/PasswordPolicyApi.ts
 apis/PlatformApi.ts
@@ -117,6 +118,7 @@ models/Flow.ts
 models/FlowEntity.ts
 models/Form.ts
 models/FormField.ts
+models/GraviteeLicense.ts
 models/Group.ts
 models/GroupPage.ts
 models/I18nDictionary.ts
@@ -193,6 +195,7 @@ models/PatchDomain.ts
 models/PatchEnrollSettings.ts
 models/PatchEnrollmentSettings.ts
 models/PatchFactorSettings.ts
+models/PatchLoginSettings.ts
 models/PatchMFASettings.ts
 models/PatchOIDCSettings.ts
 models/PatchOrganization.ts

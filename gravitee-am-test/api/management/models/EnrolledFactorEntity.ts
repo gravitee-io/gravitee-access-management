@@ -55,6 +55,12 @@ export interface EnrolledFactorEntity {
    * @type {string}
    * @memberof EnrolledFactorEntity
    */
+  target?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof EnrolledFactorEntity
+   */
   type?: string;
   /**
    * Epoch timestamp in milliseconds.
@@ -83,6 +89,7 @@ export function EnrolledFactorEntityFromJSONTyped(json: any, ignoreDiscriminator
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
+    target: json['target'] == null ? undefined : json['target'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
@@ -101,6 +108,7 @@ export function EnrolledFactorEntityToJSONTyped(value?: EnrolledFactorEntity | n
     createdAt: value['createdAt'],
     id: value['id'],
     name: value['name'],
+    target: value['target'],
     type: value['type'],
     updatedAt: value['updatedAt'],
   };

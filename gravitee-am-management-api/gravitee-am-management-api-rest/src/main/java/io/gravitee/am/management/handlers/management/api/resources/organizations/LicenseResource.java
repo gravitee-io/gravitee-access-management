@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.resources.platform;
+package io.gravitee.am.management.handlers.management.api.resources.organizations;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.GraviteeLicense;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.node.api.license.License;
@@ -28,6 +29,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
@@ -35,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 /**
- * @author Kamiel Ahmadpour (kamiel.ahmadpour at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Tag(name = "license")
@@ -45,31 +46,39 @@ public class LicenseResource extends AbstractResource {
     private LicenseManager licenseManager;
 
     @Autowired
+    private OrganizationService organizationService;
+
+    @Autowired
     private Environment environment;
 
     @GET
     @Operation(
-            operationId = "getLicense",
-            summary = "Get current node License")
+            operationId = "getOrganizationLicense",
+            summary = "Get the organization License, falling back to the platform License when the organization has none")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Platform license successfully fetched",
+            @ApiResponse(responseCode = "200", description = "Organization license successfully fetched",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON,
                             schema = @Schema(implementation = GraviteeLicense.class))),
+            @ApiResponse(responseCode = "404", description = "Organization not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public void get(@Suspended final AsyncResponse response) {
+    public void get(
+            @PathParam("organizationId") String organizationId,
+            @Suspended final AsyncResponse response) {
         final boolean expirationNotifierEnabled = environment.getProperty("license.expire-notification.enabled", Boolean.class, true);
-        final License platformLicense = licenseManager.getPlatformLicense();
-        GraviteeLicense license = GraviteeLicense.builder()
-                .tier(platformLicense.getTier())
-                .packs(platformLicense.getPacks())
-                .features(platformLicense.getFeatures())
-                .expiresAt(expirationNotifierEnabled ? platformLicense.getExpirationDate() : null)
-                .isExpired(platformLicense.isExpired())
-                .scope(platformLicense.getReferenceType())
-                .build();
-        response.resume(license);
+        organizationService.findById(organizationId)
+                .map(organization -> {
+                    final License license = licenseManager.getOrganizationLicenseOrPlatform(organizationId);
+                    return GraviteeLicense.builder()
+                            .tier(license.getTier())
+                            .packs(license.getPacks())
+                            .features(license.getFeatures())
+                            .expiresAt(expirationNotifierEnabled ? license.getExpirationDate() : null)
+                            .isExpired(license.isExpired())
+                            .scope(license.getReferenceType())
+                            .build();
+                })
+                .subscribe(response::resume, response::resume);
     }
-
 }

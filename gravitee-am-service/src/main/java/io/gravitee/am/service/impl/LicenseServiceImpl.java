@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.License;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.LicenseRepository;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.LicenseService;
 import io.gravitee.am.service.exception.InvalidLicenseException;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -28,6 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author GraviteeSource Team
@@ -37,9 +45,22 @@ import java.util.Date;
 public class LicenseServiceImpl implements LicenseService {
 
     private final LicenseRepository licenseRepository;
+    private final EventService eventService;
 
-    public LicenseServiceImpl(@Lazy LicenseRepository licenseRepository) {
+    public LicenseServiceImpl(@Lazy LicenseRepository licenseRepository,
+                              EventService eventService) {
         this.licenseRepository = licenseRepository;
+        this.eventService = eventService;
+    }
+
+    @Override
+    public Flowable<License> findAll() {
+        return licenseRepository.findAll();
+    }
+
+    @Override
+    public Maybe<License> findByReference(ReferenceType referenceType, String referenceId) {
+        return licenseRepository.findById(referenceId, referenceType);
     }
 
     @Override
@@ -49,9 +70,14 @@ public class LicenseServiceImpl implements LicenseService {
             validate(license);
             return licenseRepository.findById(referenceId, referenceType)
                     .flatMap(existing -> {
+                        if (Objects.equals(existing.getLicense(), license)) {
+                            return Maybe.just(existing);
+                        }
                         existing.setLicense(license);
                         existing.setUpdatedAt(new Date());
-                        return licenseRepository.update(existing).toMaybe();
+                        return licenseRepository.update(existing)
+                                .flatMap(updated -> emitEvent(referenceType, referenceId, Action.UPDATE).andThen(Single.just(updated)))
+                                .toMaybe();
                     })
                     .switchIfEmpty(Single.defer(() -> {
                         License toCreate = new License();
@@ -61,7 +87,8 @@ public class LicenseServiceImpl implements LicenseService {
                         Date now = new Date();
                         toCreate.setCreatedAt(now);
                         toCreate.setUpdatedAt(now);
-                        return licenseRepository.create(toCreate);
+                        return licenseRepository.create(toCreate)
+                                .flatMap(created -> emitEvent(referenceType, referenceId, Action.CREATE).andThen(Single.just(created)));
                     }));
         });
     }
@@ -69,7 +96,9 @@ public class LicenseServiceImpl implements LicenseService {
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId) {
         log.debug("Delete license for {} [{}]", referenceType, referenceId);
-        return licenseRepository.delete(referenceId, referenceType);
+        return licenseRepository.findById(referenceId, referenceType)
+                .flatMapCompletable(existing -> licenseRepository.delete(referenceId, referenceType)
+                        .andThen(emitEvent(referenceType, referenceId, Action.DELETE)));
     }
 
     @Override
@@ -82,5 +111,10 @@ public class LicenseServiceImpl implements LicenseService {
         } catch (IllegalArgumentException e) {
             throw new InvalidLicenseException("License is not a valid base64-encoded value");
         }
+    }
+
+    private Completable emitEvent(ReferenceType referenceType, String referenceId, Action action) {
+        Event event = new Event(Type.LICENSE, new Payload(referenceId, referenceType, referenceId, action));
+        return eventService.create(event).ignoreElement();
     }
 }

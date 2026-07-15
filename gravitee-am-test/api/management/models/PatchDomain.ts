@@ -74,6 +74,13 @@ import {
   AccountSettingsToJSON,
   AccountSettingsToJSONTyped,
 } from './AccountSettings';
+import type { PatchLoginSettings } from './PatchLoginSettings';
+import {
+  PatchLoginSettingsFromJSON,
+  PatchLoginSettingsFromJSONTyped,
+  PatchLoginSettingsToJSON,
+  PatchLoginSettingsToJSONTyped,
+} from './PatchLoginSettings';
 import type { PatchOIDCSettings } from './PatchOIDCSettings';
 import {
   PatchOIDCSettingsFromJSON,
@@ -88,8 +95,6 @@ import {
   SelfServiceAccountManagementSettingsToJSON,
   SelfServiceAccountManagementSettingsToJSONTyped,
 } from './SelfServiceAccountManagementSettings';
-import type { PatchLoginSettings } from './PatchLoginSettings';
-import { PatchLoginSettingsFromJSON, PatchLoginSettingsFromJSONTyped, PatchLoginSettingsToJSON } from './PatchLoginSettings';
 import type { TokenExchangeSettings } from './TokenExchangeSettings';
 import {
   TokenExchangeSettingsFromJSON,
