@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import com.nimbusds.jwt.proc.JWTProcessor;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
@@ -25,12 +26,11 @@ import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractOpen
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
+import io.gravitee.am.service.utils.RetryWithDelay;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -69,6 +69,8 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     @Autowired
     private OAuth2GenericIdentityProviderConfiguration configuration;
 
+    private Disposable initializationDisposable;
+
     @Override
     public OpenIDConnectIdentityProviderConfiguration getConfiguration() {
         return this.configuration;
@@ -103,15 +105,29 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
             throw new IllegalArgumentException("A client_secret must be supplied in order to use the Authorization Code flow");
         }
 
-        initializeAuthProvider().subscribe();
+        this.initializationDisposable = initializeAuthProvider().subscribe();
+    }
+
+    @Override
+    public AuthenticationProvider stop() throws Exception {
+        if (initializationDisposable != null && !initializationDisposable.isDisposed()) {
+            initializationDisposable.dispose();
+        }
+        if (client != null) {
+            client.close();
+        }
+        return super.stop();
     }
 
     protected Completable initializeAuthProvider() {
-        // fetch OpenID Provider information
-        final RetryWithDelay retryHandler = new RetryWithDelay();
         return getOpenIDProviderConfiguration(configuration)
                 .doOnError(error -> LOGGER.warn("Unable to load configuration from '{}' due to : {}", configuration.getWellKnownUri(), error.getMessage()))
-                .retryWhen(retryHandler)
+                .retryWhen(RetryWithDelay.builder()
+                        .unlimitedRetries()
+                        .initialDelay(1, TimeUnit.SECONDS)
+                        .maxDelay(60)
+                        .exponential()
+                        .build())
                 .andThen(Completable.fromAction(this::generateJWTProcessor));
     }
 
@@ -163,24 +179,6 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
                                     return Single.just(providerConfiguration);
                                 }
                         ).ignoreElement();
-    }
-
-    /**
-     * trigger a retry with a delay of 1 second up to 60 seconds.
-     */
-    private static class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
-
-        private int delayInSec = 0;
-
-        @Override
-        public Publisher<?> apply(Flowable<Throwable> throwableFlowable) throws Exception {
-            return throwableFlowable.flatMap(err-> {
-                if (delayInSec < 60) {
-                    delayInSec = delayInSec + Math.max(delayInSec, 1);
-                }
-                return Flowable.timer(delayInSec, TimeUnit.SECONDS);
-            });
-        }
     }
 
     void setJwtProcessor(JWTProcessor jwtProcessor) {
