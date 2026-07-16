@@ -10590,6 +10590,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/GraviteeLicense"
           description: Organization license successfully fetched
+        "403":
+          description: Not a member of the organization
         "404":
           description: Organization not found
         "500":

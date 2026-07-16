@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.plugin.ValidationResult;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
@@ -36,6 +37,7 @@ import io.gravitee.am.service.exception.CertificateWithProtectedResourceExceptio
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
@@ -78,6 +80,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -139,6 +142,9 @@ public class CertificateServiceTest {
     @Mock
     private DomainRepository domainRepository;
 
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
     @BeforeClass
     public static void readCertificateSchemaDefinition() throws Exception {
         certificateSchemaDefinition = loadResource("certificate-schema-definition.json");
@@ -151,6 +157,7 @@ public class CertificateServiceTest {
     public void initCertificateServiceValues() {
         ReflectionTestUtils.setField(certificateService, "delay", 1);
         ReflectionTestUtils.setField(certificateService, "timeUnit", "Minutes");
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
     }
 
     private static String loadResource(String name) throws IOException {
@@ -902,4 +909,34 @@ public class CertificateServiceTest {
 
         verify(certificateRepository, times(1)).update(any());
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewCertificate newCertificate = Mockito.mock(NewCertificate.class);
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, new DefaultUser("user"), false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(certificateRepository, never()).create(any(Certificate.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateCertificate updateCertificate = Mockito.mock(UpdateCertificate.class);
+        Certificate certificate = new Certificate();
+        certificate.setId("cert-id");
+        certificate.setDomain(DOMAIN.getId());
+        certificate.setType("aws-am-certificate");
+        when(certificateRepository.findById("cert-id")).thenReturn(Maybe.just(certificate));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver<Certificate> testObserver = certificateService.update(DOMAIN, "cert-id", updateCertificate, new DefaultUser("user")).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(certificateRepository, never()).update(any(Certificate.class));
+    }
+
 }

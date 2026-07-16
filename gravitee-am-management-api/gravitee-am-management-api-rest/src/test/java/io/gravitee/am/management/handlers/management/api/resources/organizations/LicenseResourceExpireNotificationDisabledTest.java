@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 @TestPropertySource(properties = "license.expire-notification.enabled=false")
 public class LicenseResourceExpireNotificationDisabledTest extends JerseySpringTest {
 
-    private static final String ORGANIZATION_ID = "orga#1";
+    private static final String ORGANIZATION_ID = Organization.DEFAULT;
 
     @Test
     public void shouldNotExposeExpiresAtWhenExpireNotificationDisabled() {

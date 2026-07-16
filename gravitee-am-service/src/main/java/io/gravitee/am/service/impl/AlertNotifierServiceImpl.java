@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.common.event.Event;
@@ -28,6 +29,7 @@ import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AlertNotifierNotFoundException;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.model.PatchAlertNotifier;
@@ -62,11 +64,14 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
 
     private final NotifierValidator notifierValidator;
 
-    public AlertNotifierServiceImpl(@Lazy AlertNotifierRepository alertNotifierRepository, AuditService auditService, EventService eventService, NotifierValidator notifierValidator) {
+    private final PluginLicenseGate pluginLicenseGate;
+
+    public AlertNotifierServiceImpl(@Lazy AlertNotifierRepository alertNotifierRepository, AuditService auditService, EventService eventService, NotifierValidator notifierValidator, PluginLicenseGate pluginLicenseGate) {
         this.alertNotifierRepository = alertNotifierRepository;
         this.auditService = auditService;
         this.eventService = eventService;
         this.notifierValidator = notifierValidator;
+        this.pluginLicenseGate = pluginLicenseGate;
     }
 
     /**
@@ -127,7 +132,8 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
         LOGGER.debug("Create alert notifier for {} {}: {}", referenceType, referenceId, newAlertNotifier);
 
         final AlertNotifier alertNotifier = newAlertNotifier.toAlertNotifier(referenceType, referenceId);
-        return createInternal(alertNotifier);
+        return pluginLicenseGate.check(new Reference(referenceType, referenceId), PluginLicenseGate.TYPE_NOTIFIER, alertNotifier.getType())
+                .andThen(Single.defer(() -> createInternal(alertNotifier)));
     }
 
     /**
@@ -151,7 +157,8 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
                         // Do not update alert notifier if nothing has changed.
                         return Single.just(alertNotifier);
                     }
-                    return updateInternal(toUpdate);
+                    return pluginLicenseGate.check(new Reference(referenceType, referenceId), PluginLicenseGate.TYPE_NOTIFIER, alertNotifier.getType())
+                            .andThen(Single.defer(() -> updateInternal(toUpdate)));
                 });
     }
 

@@ -25,6 +25,7 @@ import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
 import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
 import io.gravitee.am.service.exception.ExtensionGrantWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.ExtensionGrantServiceImpl;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
@@ -34,6 +35,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -48,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,6 +65,14 @@ public class ExtensionGrantServiceTest {
 
     @InjectMocks
     private ExtensionGrantService extensionGrantService = new ExtensionGrantServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -358,4 +369,34 @@ public class ExtensionGrantServiceTest {
 
         verify(extensionGrantRepository, times(1)).delete("my-extension-grant");
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(extensionGrantRepository, never()).create(any(ExtensionGrant.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateExtensionGrant updateExtensionGrant = Mockito.mock(UpdateExtensionGrant.class);
+        when(updateExtensionGrant.getName()).thenReturn("my-extension-grant");
+        ExtensionGrant extensionGrant = new ExtensionGrant();
+        extensionGrant.setDomain(DOMAIN.getId());
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(extensionGrant));
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(extensionGrantRepository, never()).update(any(ExtensionGrant.class));
+    }
+
 }

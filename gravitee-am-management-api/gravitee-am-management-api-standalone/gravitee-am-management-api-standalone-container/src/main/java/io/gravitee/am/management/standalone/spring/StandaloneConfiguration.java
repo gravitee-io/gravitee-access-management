@@ -16,6 +16,7 @@
 package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.management.service.spring.ManagementServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
@@ -38,6 +39,7 @@ import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluator;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.plugin.AmPluginDeploymentContextFactory;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderSpringConfiguration;
 import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
@@ -52,16 +54,19 @@ import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.Node;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.api.cluster.ClusterManager;
+import io.gravitee.node.api.license.LicenseManager;
 import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
 import io.gravitee.node.plugin.cluster.standalone.StandaloneClusterManager;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
+import io.gravitee.plugin.api.PluginDeploymentContextFactory;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.rxjava3.core.Vertx;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
@@ -160,5 +165,16 @@ public class StandaloneConfiguration {
     @Bean
     public DataPlaneRegistry dataPlaneRegistry(MultiDataPlaneLoader loader, DataPlanePluginManager manager) {
         return new DataPlaneRegistryImpl(loader, manager);
+    }
+
+    /**
+     * Overrides the gravitee-node deployment context (which only consults the platform license):
+     * managed cloud nodes have no platform license, so every plugin must be deployed and license
+     * restrictions applied per request instead.
+     */
+    @Bean
+    @Primary
+    public PluginDeploymentContextFactory<?> pluginDeploymentContextFactory(LicenseManager licenseManager, Environment environment) {
+        return new AmPluginDeploymentContextFactory(licenseManager, CloudProperties.isManagedCloudEnabled(environment));
     }
 }

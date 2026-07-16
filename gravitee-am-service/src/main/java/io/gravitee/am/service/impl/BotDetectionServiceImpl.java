@@ -31,6 +31,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.exception.BotDetectionUsedException;
@@ -77,6 +78,9 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     @Override
     public Maybe<BotDetection> findById(String id) {
         log.debug("Find bot detection by ID: {}", id);
@@ -113,7 +117,8 @@ public class BotDetectionServiceImpl implements BotDetectionService {
         botDetection.setCreatedAt(new Date());
         botDetection.setUpdatedAt(botDetection.getCreatedAt());
 
-        return botDetectionRepository.create(botDetection)
+        return pluginLicenseGate.check(Reference.domain(domain), PluginLicenseGate.TYPE_BOT_DETECTION, newBotDetection.getType())
+                .andThen(Single.defer(() -> botDetectionRepository.create(botDetection)))
                 .flatMap(detection -> {
                     // create event for sync process
                     Event event = new Event(Type.BOT_DETECTION, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.CREATE));
@@ -141,7 +146,8 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                     botDetectionToUpdate.setConfiguration(updateBotDetection.getConfiguration());
                     botDetectionToUpdate.setUpdatedAt(new Date());
 
-                    return botDetectionRepository.update(botDetectionToUpdate)
+                    return pluginLicenseGate.check(Reference.domain(domain), PluginLicenseGate.TYPE_BOT_DETECTION, oldBotDetection.getType())
+                            .andThen(Single.defer(() -> botDetectionRepository.update(botDetectionToUpdate)))
                             .flatMap(detection -> {
                                 // create event for sync process
                                 Event event = new Event(Type.BOT_DETECTION, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.UPDATE));

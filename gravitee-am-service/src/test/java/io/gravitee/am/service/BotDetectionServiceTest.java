@@ -28,6 +28,7 @@ import io.gravitee.am.repository.management.api.BotDetectionRepository;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.exception.BotDetectionUsedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.BotDetectionServiceImpl;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.am.service.model.UpdateBotDetection;
@@ -38,6 +39,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -50,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,6 +66,14 @@ public class BotDetectionServiceTest {
 
     @InjectMocks
     private BotDetectionService botDetectionService = new BotDetectionServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -284,4 +295,30 @@ public class BotDetectionServiceTest {
 
         verify(botDetectionRepository, never()).delete(detection.getId());
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewBotDetection newBotDetection = Mockito.mock(NewBotDetection.class);
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = botDetectionService.create(DOMAIN, newBotDetection).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(botDetectionRepository, never()).create(any(BotDetection.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateBotDetection updateBotDetection = Mockito.mock(UpdateBotDetection.class);
+        when(botDetectionRepository.findById("bot-detection")).thenReturn(Maybe.just(new BotDetection()));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = botDetectionService.update(DOMAIN, "bot-detection", updateBotDetection).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(botDetectionRepository, never()).update(any(BotDetection.class));
+    }
+
 }

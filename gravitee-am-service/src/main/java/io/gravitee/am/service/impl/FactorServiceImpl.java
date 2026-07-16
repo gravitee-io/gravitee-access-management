@@ -30,6 +30,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FactorConfigurationException;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -90,6 +91,9 @@ public class FactorServiceImpl implements FactorService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     @Override
     public Maybe<Factor> findById(String id) {
         LOGGER.debug("Find factor by ID: {}", id);
@@ -125,7 +129,8 @@ public class FactorServiceImpl implements FactorService {
         factor.setCreatedAt(new Date());
         factor.setUpdatedAt(factor.getCreatedAt());
 
-        return checkFactorConfiguration(factor)
+        return pluginLicenseGate.check(Reference.domain(domain), PluginLicenseGate.TYPE_FACTOR, newFactor.getType())
+                .andThen(Single.defer(() -> checkFactorConfiguration(factor)))
                 .flatMap(factor1 -> factorRepository.create(factor1))
                 .flatMap(factor1 -> {
                     // create event for sync process
@@ -174,7 +179,8 @@ public class FactorServiceImpl implements FactorService {
                     factorToUpdate.setConfiguration(updateFactor.getConfiguration());
                     factorToUpdate.setUpdatedAt(new Date());
 
-                    return checkFactorConfiguration(factorToUpdate)
+                    return pluginLicenseGate.check(Reference.domain(domain), PluginLicenseGate.TYPE_FACTOR, oldFactor.getType())
+                            .andThen(Single.defer(() -> checkFactorConfiguration(factorToUpdate)))
                             .flatMap(factor1 -> factorRepository.update(factor1))
                             .flatMap(factor1 -> {
                                 // create event for sync process

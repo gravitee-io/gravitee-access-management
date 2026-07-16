@@ -30,6 +30,7 @@ import io.gravitee.am.repository.management.api.DeviceIdentifierRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DeviceIdentifierNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -66,6 +67,9 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     @Override
     public Maybe<DeviceIdentifier> findById(String id) {
         log.debug("Find device identifier by ID: {}", id);
@@ -101,7 +105,8 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
         deviceIdentifier.setCreatedAt(new Date());
         deviceIdentifier.setUpdatedAt(deviceIdentifier.getCreatedAt());
 
-        return deviceIdentifierRepository.create(deviceIdentifier)
+        return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_DEVICE_IDENTIFIER, newDeviceIdentifier.getType())
+                .andThen(Single.defer(() -> deviceIdentifierRepository.create(deviceIdentifier)))
                 .flatMap(rd -> {
                     // create event for sync process
                     Event event = new Event(Type.DEVICE_IDENTIFIER, new Payload(rd.getId(), rd.getReferenceType(), rd.getReferenceId(), Action.CREATE));
@@ -131,7 +136,8 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                     deviceIdentifierToUpdate.setConfiguration(updateDeviceIdentifier.getConfiguration());
                     deviceIdentifierToUpdate.setUpdatedAt(new Date());
 
-                    return deviceIdentifierRepository.update(deviceIdentifierToUpdate)
+                    return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_DEVICE_IDENTIFIER, oldDeviceIdentifier.getType())
+                            .andThen(Single.defer(() -> deviceIdentifierRepository.update(deviceIdentifierToUpdate)))
                             .flatMap(detection -> {
                                 // create event for sync process
                                 Event event = new Event(Type.DEVICE_IDENTIFIER, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.UPDATE));

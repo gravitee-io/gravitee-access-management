@@ -24,8 +24,10 @@ import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.UpdateReporter;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -63,6 +65,9 @@ class ReporterServiceImplTest {
     @Mock
     private PluginConfigurationValidationService validationService;
 
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
     @InjectMocks
     private ReporterServiceImpl service;
 
@@ -97,6 +102,7 @@ class ReporterServiceImplTest {
     @Test
     void update_allows_matching_type() {
         when(reporterRepository.findById(REPORTER_ID)).thenReturn(Maybe.just(existing("reporter-am-kafka")));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
         when(reporterRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

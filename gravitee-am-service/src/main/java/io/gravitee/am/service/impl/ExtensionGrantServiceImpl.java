@@ -31,6 +31,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
 import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
@@ -80,6 +81,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     @Override
     public Maybe<ExtensionGrant> findById(String id) {
         LOGGER.debug("Find extension grant by ID: {}", id);
@@ -105,8 +109,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     public Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant, User principal) {
         LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain.getId());
 
-        return extensionGrantRepository.findByDomainAndName(domain.getId(), newExtensionGrant.getName())
-                .isEmpty()
+        return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_EXTENSION_GRANT, newExtensionGrant.getType())
+                .andThen(Single.defer(() -> extensionGrantRepository.findByDomainAndName(domain.getId(), newExtensionGrant.getName())
+                .isEmpty()))
                 .flatMap(empty -> {
                     if (!empty) {
                         throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getName());
@@ -161,6 +166,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             }
                             return Single.just(tokenGranter);
                         }))
+                .flatMap(oldExtensionGrant -> pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_EXTENSION_GRANT, oldExtensionGrant.getType())
+                        .andThen(Single.just(oldExtensionGrant)))
                 .flatMap(oldExtensionGrant -> {
                     ExtensionGrant extensionGrantToUpdate = new ExtensionGrant(oldExtensionGrant);
                     extensionGrantToUpdate.setName(updateExtensionGrant.getName());

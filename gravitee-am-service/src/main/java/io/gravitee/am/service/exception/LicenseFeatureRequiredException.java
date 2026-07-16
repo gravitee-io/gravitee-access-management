@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
-
-import io.gravitee.am.model.IdentityProvider;
-import io.reactivex.rxjava3.core.Completable;
+package io.gravitee.am.service.exception;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * Thrown when a write operation targets a plugin whose license feature is not granted
+ * by the effective organization license.
+ *
  * @author GraviteeSource Team
  */
-public interface InMemoryIdentityProviderListener  {
+public class LicenseFeatureRequiredException extends AbstractForbiddenException {
 
-  Completable registerAuthenticationProvider(IdentityProvider provider);
+    private final String feature;
 
+    public LicenseFeatureRequiredException(String feature, String pluginId) {
+        super(String.format("Plugin '%s' requires the feature '%s' which is not included in your organization's license", pluginId, feature));
+        this.feature = feature;
+    }
+
+    public String getFeature() {
+        return feature;
+    }
 }

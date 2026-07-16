@@ -28,6 +28,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.ServiceResourceCurrentlyUsedException;
 import io.gravitee.am.service.exception.ServiceResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.ServiceResourceServiceImpl;
 import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
@@ -38,6 +39,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -50,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,6 +66,14 @@ public class ServiceResourceServiceTest {
 
     @InjectMocks
     private ServiceResourceService resourceService = new ServiceResourceServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -282,4 +293,43 @@ public class ServiceResourceServiceTest {
         verify(auditService, never()).report(any());
         verify(resourceRepository, never()).delete(any());
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewServiceResource resource = new NewServiceResource();
+        resource.setConfiguration("{}");
+        resource.setName("myresource");
+        resource.setType("rtype");
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = resourceService.create(DOMAIN, resource, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(resourceRepository, never()).create(any(ServiceResource.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateServiceResource resource = new UpdateServiceResource();
+        resource.setConfiguration("{}");
+        resource.setName("myresource");
+
+        ServiceResource record = new ServiceResource();
+        record.setId("resid");
+        record.setType("rtype");
+        record.setConfiguration("{}");
+        record.setCreatedAt(new Date());
+        record.setUpdatedAt(new Date());
+        when(resourceRepository.findById("resid")).thenReturn(Maybe.just(record));
+        when(resourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = resourceService.update(DOMAIN, "resid", resource, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(resourceRepository, never()).update(any(ServiceResource.class));
+    }
+
 }

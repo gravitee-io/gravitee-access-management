@@ -23,7 +23,10 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -47,6 +50,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -74,6 +78,9 @@ public class IdentityProviderManagerTest {
     @Mock
     private IdentityProviderPluginManager idpPluginManager;
 
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
     @InjectMocks
     private IdentityProviderManagerImpl cut = new IdentityProviderManagerImpl();
 
@@ -81,6 +88,18 @@ public class IdentityProviderManagerTest {
     public void init() {
         reset(listener);
         cut.setListener(listener);
+        lenient().when(listener.registerAuthenticationProvider(any())).thenReturn(Completable.complete());
+        lenient().when(pluginLicenseGate.checkPersisted(any(), any(), any())).thenReturn(Completable.complete());
+    }
+
+    @Test
+    public void shouldSkipUnlicensedOrganizationUserProvider() {
+        defineDefaultSecurityConfig(false);
+        when(pluginLicenseGate.checkPersisted(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        cut.loadIdentityProviders().blockingAwait();
+
+        verify(idpPluginManager, never()).create(any(), any(), any());
     }
 
     @Test

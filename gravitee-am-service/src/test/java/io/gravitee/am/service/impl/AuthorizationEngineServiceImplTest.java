@@ -25,10 +25,12 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AuthorizationEngineAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationEngineInvalidConfigurationException;
 import io.gravitee.am.service.exception.AuthorizationEngineNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.model.NewAuthorizationEngine;
 import io.gravitee.am.service.model.UpdateAuthorizationEngine;
 import io.reactivex.rxjava3.core.Completable;
@@ -37,6 +39,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -49,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -69,10 +73,18 @@ class AuthorizationEngineServiceImplTest {
     @Mock
     private AuthorizationEnginePluginManager authorizationEnginePluginManager;
 
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
     @InjectMocks
     private AuthorizationEngineServiceImpl service;
 
     private final User principal = new DefaultUser("test-user");
+
+    @BeforeEach
+    void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     private Domain createMockDomain(String domainId) {
         Domain domain = new Domain();
@@ -629,4 +641,39 @@ class AuthorizationEngineServiceImplTest {
         // then
         observer.assertError(TechnicalManagementException.class);
     }
+
+    @Test
+    void shouldNotCreateAuthorizationEngine_whenLicenseFeatureMissing() {
+        NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
+        newEngine.setName("Test Engine");
+        newEngine.setType("openfga");
+        newEngine.setConfiguration("{}");
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        service.create(createMockDomain("domain-id"), newEngine, principal)
+                .test()
+                .assertError(LicenseFeatureRequiredException.class);
+        verify(authorizationEngineRepository, never()).create(any());
+    }
+
+    @Test
+    void shouldNotUpdateAuthorizationEngine_whenLicenseFeatureMissing() {
+        AuthorizationEngine existing = new AuthorizationEngine();
+        existing.setId("engine-id");
+        existing.setType("openfga");
+        existing.setReferenceType(ReferenceType.DOMAIN);
+        existing.setReferenceId("domain-id");
+        when(authorizationEngineRepository.findByDomainAndId("domain-id", "engine-id")).thenReturn(Maybe.just(existing));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        UpdateAuthorizationEngine update = new UpdateAuthorizationEngine();
+        update.setName("Updated");
+        update.setConfiguration("{}");
+
+        service.update(createMockDomain("domain-id"), "engine-id", update, principal)
+                .test()
+                .assertError(LicenseFeatureRequiredException.class);
+        verify(authorizationEngineRepository, never()).update(any());
+    }
+
 }

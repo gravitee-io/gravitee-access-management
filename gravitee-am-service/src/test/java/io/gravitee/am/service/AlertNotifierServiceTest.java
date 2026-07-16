@@ -23,6 +23,7 @@ import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.exception.AlertNotifierNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.AlertNotifierServiceImpl;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.model.PatchAlertNotifier;
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -78,11 +80,15 @@ public class AlertNotifierServiceTest {
     @Mock
     private NotifierValidator notifierValidator;
 
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
     private AlertNotifierService cut;
 
     @Before
     public void before() {
-        cut = new AlertNotifierServiceImpl(alertNotifierRepository, auditService, eventService, notifierValidator);
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+        cut = new AlertNotifierServiceImpl(alertNotifierRepository, auditService, eventService, notifierValidator, pluginLicenseGate);
     }
 
     @Test
@@ -245,4 +251,43 @@ public class AlertNotifierServiceTest {
 
         verify(eventService, times(0)).create(any());
         verify(auditService, times(0)).report(any());    }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        final NewAlertNotifier newAlertNotifier = new NewAlertNotifier();
+        newAlertNotifier.setEnabled(true);
+        newAlertNotifier.setName(NAME);
+        newAlertNotifier.setConfiguration(CONFIGURATION);
+        newAlertNotifier.setType(TYPE);
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        final TestObserver<AlertNotifier> obs = cut.create(ReferenceType.DOMAIN, DOMAIN_ID, newAlertNotifier, new DefaultUser(USERNAME)).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(LicenseFeatureRequiredException.class);
+        verify(alertNotifierRepository, never()).create(any(AlertNotifier.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        final PatchAlertNotifier patchAlertNotifier = new PatchAlertNotifier();
+        patchAlertNotifier.setEnabled(Optional.of(true));
+        patchAlertNotifier.setName(Optional.of(NAME));
+        patchAlertNotifier.setConfiguration(Optional.of(CONFIGURATION));
+
+        final AlertNotifier alertNotifierToUpdate = new AlertNotifier();
+        alertNotifierToUpdate.setId(ALERT_NOTIFIER_ID);
+        alertNotifierToUpdate.setType(TYPE);
+        alertNotifierToUpdate.setReferenceType(ReferenceType.DOMAIN);
+        alertNotifierToUpdate.setReferenceId(DOMAIN_ID);
+        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.just(alertNotifierToUpdate));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        final TestObserver<AlertNotifier> obs = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID, patchAlertNotifier, new DefaultUser(USERNAME)).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(LicenseFeatureRequiredException.class);
+        verify(alertNotifierRepository, never()).update(any(AlertNotifier.class));
+    }
+
 }

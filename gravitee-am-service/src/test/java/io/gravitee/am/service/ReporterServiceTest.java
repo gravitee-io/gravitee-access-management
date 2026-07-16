@@ -26,12 +26,15 @@ import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.apache.commons.text.RandomStringGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,6 +51,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -73,9 +78,15 @@ class ReporterServiceTest {
     @Mock
     private PluginConfigurationValidationService validationService;
     private final MockEnvironment environment = new MockEnvironment();
+    private final PluginLicenseGate pluginLicenseGate = mock(PluginLicenseGate.class);
 
     @InjectMocks
-    private ReporterService reporterService = new ReporterServiceImpl(new RepositoriesEnvironment(environment), reporterRepository, null, null, validationService);
+    private ReporterService reporterService = new ReporterServiceImpl(new RepositoriesEnvironment(environment), reporterRepository, null, null, validationService, pluginLicenseGate);
+
+    @BeforeEach
+    void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
 
     @Test
@@ -374,4 +385,42 @@ class ReporterServiceTest {
 
         return reporter;
     }
+
+    @Test
+    void shouldNotCreate_whenLicenseFeatureMissing() {
+        final var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType("reporter-am-file");
+        reporter.setConfiguration("{\"filename\":\"audit\"}");
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        reporterService.create(Reference.domain("domain"), reporter, null, false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(LicenseFeatureRequiredException.class);
+    }
+
+    @Test
+    void shouldNotUpdate_whenLicenseFeatureMissing() {
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        final var newReporter = new NewReporter();
+        newReporter.setEnabled(true);
+        newReporter.setName("Test");
+        newReporter.setType("reporter-am-file");
+        newReporter.setConfiguration("{\"filename\":\"audit\"}");
+        final Reporter created = reporterService.create(Reference.domain("domain"), newReporter, null, false).blockingGet();
+
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+        final var updateReporter = new UpdateReporter();
+        updateReporter.setEnabled(true);
+        updateReporter.setName("Test updated");
+        updateReporter.setConfiguration(created.getConfiguration());
+
+        reporterService.update(Reference.domain("domain"), created.getId(), updateReporter, null, false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(LicenseFeatureRequiredException.class);
+    }
+
 }

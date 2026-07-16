@@ -28,6 +28,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -47,6 +48,7 @@ import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
@@ -61,6 +63,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -78,10 +81,16 @@ public class IdentityProviderServiceTest {
     private final ApplicationService applicationService = mock();
     private final DatasourceValidator datasourceValidator = mock();
     private PluginConfigurationValidationService validationService = mock();
+    private final PluginLicenseGate pluginLicenseGate = mock();
 
     private final IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator, pluginLicenseGate
     );
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     private final static String DOMAIN = "domain1";
     private final Clock testClock = Clock.fixed(Instant.parse("2024-07-15T10:00:00Z"), ZoneOffset.UTC);
@@ -196,6 +205,53 @@ public class IdentityProviderServiceTest {
 
         verify(identityProviderRepository, times(1)).create(any(IdentityProvider.class));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        when(pluginLicenseGate.check(any(), any(), any()))
+                .thenReturn(Completable.error(new LicenseFeatureRequiredException("am-idp-http", "http-am-idp")));
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(identityProviderRepository, never()).create(any(IdentityProvider.class));
+    }
+
+    @Test
+    public void shouldCreateSystemIdp_withoutLicenseCheck() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null, true).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(pluginLicenseGate, never()).check(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
+        IdentityProvider existing = new IdentityProvider();
+        existing.setId("my-identity-provider");
+        existing.setType("http-am-idp");
+        when(identityProviderRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-identity-provider")).thenReturn(Maybe.just(existing));
+        when(pluginLicenseGate.check(any(), any(), any()))
+                .thenReturn(Completable.error(new LicenseFeatureRequiredException("am-idp-http", "http-am-idp")));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(identityProviderRepository, never()).update(any(IdentityProvider.class));
     }
 
     @Test

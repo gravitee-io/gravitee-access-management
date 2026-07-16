@@ -30,6 +30,7 @@ import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepo
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
@@ -67,6 +68,9 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     @Override
     public Maybe<AuthenticationDeviceNotifier> findById(String id) {
         log.debug("Find authentication device notifier by ID: {}", id);
@@ -102,7 +106,8 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
         notifier.setCreatedAt(new Date());
         notifier.setUpdatedAt(notifier.getCreatedAt());
 
-        return adNotifierRepository.create(notifier)
+        return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_AUTHDEVICE_NOTIFIER, newADNotifier.getType())
+                .andThen(Single.defer(() -> adNotifierRepository.create(notifier)))
                 .flatMap(authDeviceNotifier -> {
                     // create event for sync process
                     Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(authDeviceNotifier.getId(), authDeviceNotifier.getReferenceType(), authDeviceNotifier.getReferenceId(), Action.CREATE));
@@ -139,7 +144,8 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                     notifierToUpdate.setConfiguration(updateNotifier.getConfiguration());
                     notifierToUpdate.setUpdatedAt(new Date());
 
-                    return adNotifierRepository.update(notifierToUpdate)
+                    return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_AUTHDEVICE_NOTIFIER, oldNotifier.getType())
+                            .andThen(Single.defer(() -> adNotifierRepository.update(notifierToUpdate)))
                             .flatMap(notifier -> {
                                 // create event for sync process
                                 Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifier.getId(), notifier.getReferenceType(), notifier.getReferenceId(), Action.UPDATE));

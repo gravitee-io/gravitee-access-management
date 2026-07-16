@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -30,6 +31,7 @@ import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationEngineAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationEngineInvalidConfigurationException;
@@ -61,13 +63,16 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     private final AuthorizationEngineRepository authorizationEngineRepository;
     private final EventService eventService;
     private final AuthorizationEnginePluginManager authorizationEnginePluginManager;
+    private final PluginLicenseGate pluginLicenseGate;
 
     public AuthorizationEngineServiceImpl(@Lazy AuthorizationEngineRepository authorizationEngineRepository,
                                          EventService eventService,
-                                         AuthorizationEnginePluginManager authorizationEnginePluginManager) {
+                                         AuthorizationEnginePluginManager authorizationEnginePluginManager,
+                                         PluginLicenseGate pluginLicenseGate) {
         this.authorizationEngineRepository = authorizationEngineRepository;
         this.eventService = eventService;
         this.authorizationEnginePluginManager = authorizationEnginePluginManager;
+        this.pluginLicenseGate = pluginLicenseGate;
     }
 
     @Override
@@ -105,9 +110,10 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     public Single<AuthorizationEngine> create(Domain domain, NewAuthorizationEngine newAuthorizationEngine, User principal) {
         LOGGER.debug("Create a new authorization engine {} for domain {}", newAuthorizationEngine, domain.getId());
 
-        // Check if authorization engine of this type already exists in the domain
-        return authorizationEngineRepository.findByDomainAndType(domain.getId(), newAuthorizationEngine.getType())
-                .isEmpty()
+        return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_AUTHORIZATION_ENGINE, newAuthorizationEngine.getType())
+                // Check if authorization engine of this type already exists in the domain
+                .andThen(Single.defer(() -> authorizationEngineRepository.findByDomainAndType(domain.getId(), newAuthorizationEngine.getType())
+                .isEmpty()))
                 .flatMap(isEmpty -> {
                     if (!isEmpty) {
                         return Single.error(new AuthorizationEngineAlreadyExistsException(newAuthorizationEngine.getType()));
@@ -148,7 +154,8 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
 
         return authorizationEngineRepository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Single.error(new AuthorizationEngineNotFoundException(id)))
-                .flatMap(oldEngine -> validateConfiguration(oldEngine.getType(), updateAuthorizationEngine.getConfiguration())
+                .flatMap(oldEngine -> pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_AUTHORIZATION_ENGINE, oldEngine.getType())
+                        .andThen(validateConfiguration(oldEngine.getType(), updateAuthorizationEngine.getConfiguration()))
                         .andThen(Single.defer(() -> {
                     AuthorizationEngine engineToUpdate = new AuthorizationEngine(oldEngine);
                     engineToUpdate.setName(updateAuthorizationEngine.getName());

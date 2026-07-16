@@ -40,6 +40,11 @@
             <version>${gravitee-plugin.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-api</artifactId>
+        </dependency>
+
         <!-- Jackson libraries -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

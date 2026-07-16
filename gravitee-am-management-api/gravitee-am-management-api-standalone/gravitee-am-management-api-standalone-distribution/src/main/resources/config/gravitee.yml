@@ -27,6 +27,10 @@
 # Please have a look to https://docs.gravitee.io/ for more options and fine-grained granularity
 ############################################################################################################
 
+## Installation type of this node: "standalone" (default) or "managed".
+#installation:
+#  type: standalone
+
 # Secret managers config in order to use secret
 #secrets:
 #  kubernetes:

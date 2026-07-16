@@ -49,6 +49,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
@@ -92,6 +93,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private final ObjectMapper objectMapper;
     private final PluginConfigurationValidationService validationService;
     private final DatasourceValidator datasourceValidator;
+    private final PluginLicenseGate pluginLicenseGate;
 
     public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
                                        ApplicationService applicationService,
@@ -99,7 +101,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                                        AuditService auditService,
                                        ObjectMapper objectMapper,
                                        PluginConfigurationValidationService validationService,
-                                       DatasourceValidator datasourceValidator) {
+                                       DatasourceValidator datasourceValidator,
+                                       PluginLicenseGate pluginLicenseGate) {
         this.identityProviderRepository = identityProviderRepository;
         this.applicationService = applicationService;
         this.eventService = eventService;
@@ -107,6 +110,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         this.objectMapper = objectMapper;
         this.validationService = validationService;
         this.datasourceValidator = datasourceValidator;
+        this.pluginLicenseGate = pluginLicenseGate;
     }
 
     @Override
@@ -167,7 +171,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         LOGGER.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
         var identityProvider = prepareIdp(newIdentityProvider, referenceType, referenceId, system);
-        return validateConfiguration(identityProvider, system).andThen(Single.defer(() -> innerCreate(identityProvider)));
+        return checkLicense(new Reference(referenceType, referenceId), newIdentityProvider.getType(), system)
+                .andThen(validateConfiguration(identityProvider, system))
+                .andThen(Single.defer(() -> innerCreate(identityProvider)));
     }
 
     @Override
@@ -177,7 +183,16 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         var identityProvider = prepareIdp(newIdentityProvider, ReferenceType.DOMAIN, domain.getId(), system);
         identityProvider.setDataPlaneId(domain.getDataPlaneId());
 
-        return validateConfiguration(identityProvider, system).andThen(Single.defer(() -> innerCreate(identityProvider)));
+        return checkLicense(Reference.domain(domain.getId()), newIdentityProvider.getType(), system)
+                .andThen(validateConfiguration(identityProvider, system))
+                .andThen(Single.defer(() -> innerCreate(identityProvider)));
+    }
+
+    private Completable checkLicense(Reference reference, String type, boolean system) {
+        if (system) {
+            return Completable.complete();
+        }
+        return pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_IDENTITY_PROVIDER, type);
     }
 
     private Completable validateConfiguration(IdentityProvider identityProvider, boolean system) {
@@ -236,31 +251,11 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             && !updateIdentityProvider.getType().equals(oldIdentity.getType())) {
                         return Single.error(new InvalidParameterException("Identity provider type cannot be changed"));
                     }
-                    IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
-                    identityToUpdate.setName(updateIdentityProvider.getName());
-                    // System idp config is normally immutable through the API, but the Automation API owns
-                    // the lifecycle of the resources it manages, so it may update their configuration.
-                    if (!identityToUpdate.isSystem() || isUpgrader || identityToUpdate.isManagedBy(ManagedBy.AUTOMATION_API)) {
-                        identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
+                    if (!oldIdentity.isSystem() && !isUpgrader) {
+                        return pluginLicenseGate.check(new Reference(referenceType, referenceId), PluginLicenseGate.TYPE_IDENTITY_PROVIDER, oldIdentity.getType())
+                                .andThen(Single.defer(() -> doUpdate(updateIdentityProvider, oldIdentity, isUpgrader)));
                     }
-                    identityToUpdate.setMappers(updateIdentityProvider.getMappers());
-                    identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
-                    identityToUpdate.setGroupMapper(updateIdentityProvider.getGroupMapper());
-                    identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
-                    identityToUpdate.setUpdatedAt(new Date());
-                    identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
-
-                    // for update validate config against schema here instead of the resource
-                    // as idp may be system idp so on the UI config is empty.
-                    validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
-
-                    return datasourceValidator.validate(identityToUpdate.getConfiguration())
-                            .andThen(identityProviderRepository.update(identityToUpdate))
-                            .flatMap(identityProvider1 -> {
-                                // create event for sync process
-                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
-                            });
+                    return doUpdate(updateIdentityProvider, oldIdentity, isUpgrader);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -269,6 +264,34 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
                     LOGGER.error("An error occurs while trying to update an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
+                });
+    }
+
+    private Single<IdentityProvider> doUpdate(UpdateIdentityProvider updateIdentityProvider, IdentityProvider oldIdentity, boolean isUpgrader) {
+        IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
+        identityToUpdate.setName(updateIdentityProvider.getName());
+        // System idp config is normally immutable through the API, but the Automation API owns
+        // the lifecycle of the resources it manages, so it may update their configuration.
+        if (!identityToUpdate.isSystem() || isUpgrader || identityToUpdate.isManagedBy(ManagedBy.AUTOMATION_API)) {
+            identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
+        }
+        identityToUpdate.setMappers(updateIdentityProvider.getMappers());
+        identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
+        identityToUpdate.setGroupMapper(updateIdentityProvider.getGroupMapper());
+        identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
+        identityToUpdate.setUpdatedAt(new Date());
+        identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
+
+        // for update validate config against schema here instead of the resource
+        // as idp may be system idp so on the UI config is empty.
+        validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
+
+        return datasourceValidator.validate(identityToUpdate.getConfiguration())
+                .andThen(identityProviderRepository.update(identityToUpdate))
+                .flatMap(identityProvider1 -> {
+                    // create event for sync process
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 });
     }
 
