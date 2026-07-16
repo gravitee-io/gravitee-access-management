@@ -159,7 +159,7 @@
             </mat-slide-toggle>
           </div>
         </div>
-        <div class="gv-form-section" *ngIf="!isEmptyObject(user.additionalInformation)">
+        <div class="gv-form-section" *ngIf="canEdit || !isEmptyObject(user.additionalInformation)">
           <div class="gv-form-section-title">
             <h5>Additional information</h5>
             <small>Custom information about the user. These details are available in the user's profile.</small>
