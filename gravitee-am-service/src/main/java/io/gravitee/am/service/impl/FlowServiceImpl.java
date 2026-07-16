@@ -24,11 +24,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.api.FlowRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -54,6 +56,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,6 +85,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
 
     @Override
     public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps) {
@@ -215,7 +221,8 @@ public class FlowServiceImpl implements FlowService {
                         // force the ROOT post with emptyList to avoid UI issue
                         flowToUpdate.setPost(emptyList());
                     }
-                    return flowRepository.update(flowToUpdate)
+                    return checkPoliciesLicense(referenceType, referenceId, flowToUpdate)
+                            .andThen(Single.defer(() -> flowRepository.update(flowToUpdate)))
                             // create event for sync process
                             .flatMap(flow1 -> {
                                 Event event = new Event(io.gravitee.am.common.event.Type.FLOW, new Payload(flow1.getId(), flow1.getReferenceType(), flow1.getReferenceId(), Action.UPDATE));
@@ -393,18 +400,37 @@ public class FlowServiceImpl implements FlowService {
         flow.setCreatedAt(new Date());
         flow.setUpdatedAt(flow.getCreatedAt());
 
-        return flowRepository.create(flow)
+        return checkPoliciesLicense(referenceType, referenceId, flow)
+                .andThen(Single.defer(() -> flowRepository.create(flow)))
                 .flatMap(flow1 -> {
                     // create event for sync process
                     Event event = new Event(io.gravitee.am.common.event.Type.FLOW, new Payload(flow1.getId(), referenceType, referenceId, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(flow1));
                 })
                 .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
                     log.error("An error has occurred while trying to create a flow", ex);
                     return Single.error(new TechnicalManagementException("An error has occurred while trying to create a flow", ex));
                 })
                 .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_CREATED).flow(flow1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).reference(new Reference(referenceType, referenceId)).type(EventType.FLOW_CREATED).throwable(throwable)));
+    }
+
+    /**
+     * Checks every policy referenced by the flow's steps against the organization license.
+     * Gating relies on the incoming payload only, so removing an unlicensed step remains possible.
+     */
+    private Completable checkPoliciesLicense(ReferenceType referenceType, String referenceId, Flow flow) {
+        final var reference = new Reference(referenceType, referenceId);
+        return Flowable.fromIterable(Stream.concat(
+                            ofNullable(flow.getPre()).orElse(emptyList()).stream(),
+                            ofNullable(flow.getPost()).orElse(emptyList()).stream())
+                        .map(Step::getPolicy)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet()))
+                .concatMapCompletable(policy -> pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_POLICY, policy));
     }
 
     private Flow buildFlow(Type type, ReferenceType referenceType, String referenceId) {

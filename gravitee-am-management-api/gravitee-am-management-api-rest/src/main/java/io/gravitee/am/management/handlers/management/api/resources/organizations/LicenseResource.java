@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.GraviteeLicense;
 import io.gravitee.common.http.MediaType;
@@ -28,6 +30,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -59,6 +62,7 @@ public class LicenseResource extends AbstractResource {
             @ApiResponse(responseCode = "200", description = "Organization license successfully fetched",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON,
                             schema = @Schema(implementation = GraviteeLicense.class))),
+            @ApiResponse(responseCode = "403", description = "Not a member of the organization"),
             @ApiResponse(responseCode = "404", description = "Organization not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -66,6 +70,10 @@ public class LicenseResource extends AbstractResource {
     public void get(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
+        if (!checkOrganizationMembership(organizationId)) {
+            response.resume(new ForbiddenException("Current user is not a member of organization " + organizationId));
+            return;
+        }
         final boolean expirationNotifierEnabled = environment.getProperty("license.expire-notification.enabled", Boolean.class, true);
         organizationService.findById(organizationId)
                 .map(organization -> {
@@ -80,5 +88,13 @@ public class LicenseResource extends AbstractResource {
                             .build();
                 })
                 .subscribe(response::resume, response::resume);
+    }
+
+    private boolean checkOrganizationMembership(String organizationId) {
+        final var authenticatedUser = getAuthenticatedUser();
+        final String userOrganizationId = authenticatedUser == null
+                ? null
+                : (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.ORGANIZATION, Organization.DEFAULT);
+        return organizationId.equals(userOrganizationId);
     }
 }

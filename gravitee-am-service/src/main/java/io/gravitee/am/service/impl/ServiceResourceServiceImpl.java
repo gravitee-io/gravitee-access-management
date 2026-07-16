@@ -29,6 +29,7 @@ import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.management.api.ServiceResourceRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -78,6 +79,9 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     @Autowired
     private ResourceValidator resourceValidator;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     @Override
     public Maybe<ServiceResource> findById(String id) {
         log.debug("Find resource by ID: {}", id);
@@ -112,7 +116,8 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
         resource.setCreatedAt(new Date());
         resource.setUpdatedAt(resource.getCreatedAt());
 
-        return serviceResourceRepository.create(resource)
+        return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_RESOURCE, newServiceResource.getType())
+                .andThen(Single.defer(() -> serviceResourceRepository.create(resource)))
                 .flatMap(resource1 -> {
                     // send sync event to refresh plugins that are using this resource
                     Event event = new Event(Type.RESOURCE, new Payload(resource1.getId(), resource1.getReferenceType(), resource1.getReferenceId(), Action.CREATE));
@@ -140,7 +145,8 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                     resourceToUpdate.setConfiguration(updateResource.getConfiguration());
                     resourceToUpdate.setUpdatedAt(new Date());
 
-                    return resourceValidator.validate(new ResourceHolder(resourceToUpdate.getType(), resourceToUpdate.getConfiguration()))
+                    return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_RESOURCE, oldServiceResource.getType())
+                            .andThen(resourceValidator.validate(new ResourceHolder(resourceToUpdate.getType(), resourceToUpdate.getConfiguration())))
                             .andThen(Single.defer(() -> serviceResourceRepository.update(resourceToUpdate)
                                     .flatMap(resource1 -> {
                                         // send sync event to refresh plugins that are using this resource

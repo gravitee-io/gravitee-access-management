@@ -23,6 +23,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DeviceIdentifierRepository;
 import io.gravitee.am.service.exception.DeviceIdentifierNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.DeviceIdentifierServiceImpl;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
@@ -33,6 +34,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -44,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +60,14 @@ public class DeviceIdentifierServiceTest {
 
     @InjectMocks
     private DeviceIdentifierService deviceIdentifierService = new DeviceIdentifierServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -233,4 +244,33 @@ public class DeviceIdentifierServiceTest {
         verify(deviceIdentifierRepository).delete(detection.getId());
         verify(auditService).report(any(DeviceIdentifierAuditBuilder.class));
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewDeviceIdentifier newDeviceIdentifier = Mockito.mock(NewDeviceIdentifier.class);
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = deviceIdentifierService.create(DOMAIN, newDeviceIdentifier).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(deviceIdentifierRepository, never()).create(any(DeviceIdentifier.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateDeviceIdentifier updateDeviceIdentifier = Mockito.mock(UpdateDeviceIdentifier.class);
+        DeviceIdentifier existing = new DeviceIdentifier();
+        existing.setReferenceType(ReferenceType.DOMAIN);
+        existing.setReferenceId("id");
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(existing));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = deviceIdentifierService.update(DOMAIN, "device-identifier", updateDeviceIdentifier).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(deviceIdentifierRepository, never()).update(any(DeviceIdentifier.class));
+    }
+
 }

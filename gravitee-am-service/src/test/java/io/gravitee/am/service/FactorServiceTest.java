@@ -25,6 +25,7 @@ import io.gravitee.am.service.exception.FactorConfigurationException;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.FactorWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.FactorServiceImpl;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
@@ -34,6 +35,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -45,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,6 +62,14 @@ public class FactorServiceTest {
 
     @InjectMocks
     private FactorService factorService = new FactorServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -311,4 +322,33 @@ public class FactorServiceTest {
 
         verify(factorRepository, times(1)).delete(factor.getId());
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewFactor newFactor = Mockito.mock(NewFactor.class);
+        when(newFactor.getFactorType()).thenReturn(FactorType.OTP.getType());
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(factorRepository, never()).create(any(Factor.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateFactor updateFactor = Mockito.mock(UpdateFactor.class);
+        Factor factor = new Factor();
+        factor.setDomain(DOMAIN);
+        when(factorRepository.findById("my-factor")).thenReturn(Maybe.just(factor));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = factorService.update(DOMAIN, "my-factor", updateFactor).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(factorRepository, never()).update(any(Factor.class));
+    }
+
 }

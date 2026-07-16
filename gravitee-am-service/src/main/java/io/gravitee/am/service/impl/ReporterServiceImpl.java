@@ -35,6 +35,7 @@ import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -103,12 +104,15 @@ public class ReporterServiceImpl implements ReporterService {
 
     private PluginConfigurationValidationService validationService;
 
-    public ReporterServiceImpl(RepositoriesEnvironment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService, PluginConfigurationValidationService validationService) {
+    private PluginLicenseGate pluginLicenseGate;
+
+    public ReporterServiceImpl(RepositoriesEnvironment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService, PluginConfigurationValidationService validationService, PluginLicenseGate pluginLicenseGate) {
         this.environment = environment;
         this.reporterRepository = reporterRepository;
         this.eventService = eventService;
         this.auditService = auditService;
         this.validationService = validationService;
+        this.pluginLicenseGate = pluginLicenseGate;
     }
 
 
@@ -213,7 +217,11 @@ public class ReporterServiceImpl implements ReporterService {
         }
 
 
-        return validateConfiguration(newReporter, system)
+        final Completable licenseCheck = system
+                ? Completable.complete()
+                : pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_REPORTER, newReporter.getType());
+        return licenseCheck
+                .andThen(validateConfiguration(newReporter, system))
                 .andThen(Single.defer(() -> checkReporterConfiguration(reporter)
                         .flatMap(ignore -> reporterRepository.create(reporter))
                         .flatMap(createdReporter -> {
@@ -250,33 +258,10 @@ public class ReporterServiceImpl implements ReporterService {
                             && !updateReporter.getType().equals(oldReporter.getType())) {
                         return Single.error(new InvalidParameterException("Reporter type cannot be changed"));
                     }
-                    Reporter reporterToUpdate = new Reporter(oldReporter);
-                    reporterToUpdate.setEnabled(updateReporter.isEnabled());
-
-                    reporterToUpdate.setName(updateReporter.getName());
-                    // System reporter config is normally immutable through the API, but the Automation API
-                    // owns the lifecycle of the resources it manages, so it may update their configuration.
-                    if (!oldReporter.isSystem() || isUpgrader || oldReporter.isManagedBy(ManagedBy.AUTOMATION_API)) {
-                        reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
-                    }
-                    if (updateReporter.isInherited() && (oldReporter.getReference().type() != ReferenceType.ORGANIZATION || oldReporter.isSystem())) {
-                        return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
-                    }
-
-                    reporterToUpdate.setInherited(updateReporter.isInherited());
-                    reporterToUpdate.setUpdatedAt(new Date());
-
-                    // for update validate config against schema here instead of the resource
-                    // as reporter may be system reporter so on the UI config is empty.
-                    validationService.validate(reporterToUpdate.getType(), reporterToUpdate.getConfiguration());
-
-                    return checkReporterConfiguration(reporterToUpdate)
-                            .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
-                                    .flatMap(reporter -> {
-                                        Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
-                                        return eventService.create(event).flatMap(e -> Single.just(reporter));
-
-                                    }));
+                    final Completable licenseCheck = oldReporter.isSystem() || isUpgrader
+                            ? Completable.complete()
+                            : pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_REPORTER, oldReporter.getType());
+                    return licenseCheck.andThen(Single.defer(() -> doUpdate(updateReporter, oldReporter, isUpgrader)));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to update a reporter", ex);
@@ -289,6 +274,36 @@ public class ReporterServiceImpl implements ReporterService {
                     }
                     return Single.error(new TechnicalManagementException(message, ex));
                 });
+    }
+
+    private Single<Reporter> doUpdate(UpdateReporter updateReporter, Reporter oldReporter, boolean isUpgrader) {
+        Reporter reporterToUpdate = new Reporter(oldReporter);
+        reporterToUpdate.setEnabled(updateReporter.isEnabled());
+
+        reporterToUpdate.setName(updateReporter.getName());
+        // System reporter config is normally immutable through the API, but the Automation API
+        // owns the lifecycle of the resources it manages, so it may update their configuration.
+        if (!oldReporter.isSystem() || isUpgrader || oldReporter.isManagedBy(ManagedBy.AUTOMATION_API)) {
+            reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
+        }
+        if (updateReporter.isInherited() && (oldReporter.getReference().type() != ReferenceType.ORGANIZATION || oldReporter.isSystem())) {
+            return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
+        }
+
+        reporterToUpdate.setInherited(updateReporter.isInherited());
+        reporterToUpdate.setUpdatedAt(new Date());
+
+        // for update validate config against schema here instead of the resource
+        // as reporter may be system reporter so on the UI config is empty.
+        validationService.validate(reporterToUpdate.getType(), reporterToUpdate.getConfiguration());
+
+        return checkReporterConfiguration(reporterToUpdate)
+                .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
+                        .flatMap(reporter -> {
+                            Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
+                            return eventService.create(event).flatMap(e -> Single.just(reporter));
+
+                        }));
     }
 
     @Override

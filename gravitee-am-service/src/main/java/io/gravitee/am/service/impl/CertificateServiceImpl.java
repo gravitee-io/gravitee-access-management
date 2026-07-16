@@ -46,6 +46,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CertificateIsFallbackException;
@@ -171,6 +172,9 @@ public class CertificateServiceImpl implements CertificateService {
     private PluginConfigurationValidationService validationService;
 
     @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Autowired
     private Environment environment;
 
     @Autowired
@@ -220,7 +224,10 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal, boolean isSystem) {
         log.debug("Create a new certificate {} for domain {}", newCertificate, domain.getId());
-        return validateConfiguration(newCertificate, isSystem).andThen(Single.defer(() -> certificatePluginService
+        final Completable licenseCheck = isSystem
+                ? Completable.complete()
+                : pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_CERTIFICATE, newCertificate.getType());
+        return licenseCheck.andThen(validateConfiguration(newCertificate, isSystem)).andThen(Single.defer(() -> certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
                 .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
@@ -356,9 +363,12 @@ public class CertificateServiceImpl implements CertificateService {
                             && !updateCertificate.getType().equals(certificate.getType())) {
                         return Single.error(new InvalidParameterException("Certificate type cannot be changed"));
                     }
-                    return certificatePluginService.getSchema(certificate.getType())
+                    final Completable licenseCheck = certificate.isSystem()
+                            ? Completable.complete()
+                            : pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_CERTIFICATE, certificate.getType());
+                    return licenseCheck.andThen(Single.defer(() -> certificatePluginService.getSchema(certificate.getType())
                             .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(certificate.getType())))
-                            .map(schema -> new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)));
+                            .map(schema -> new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)))));
                 })
                 .flatMap(oldCertificate -> {
                     boolean oldWithMTls = usageContains(oldCertificate.certificate().getConfiguration(), "mtls");

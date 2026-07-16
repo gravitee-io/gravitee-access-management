@@ -25,6 +25,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.validators.idp.DatasourceValidator;
@@ -73,6 +74,9 @@ class IdentityProviderServiceImplTest {
     @Mock
     private DatasourceValidator datasourceValidator;
 
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
     @InjectMocks
     private IdentityProviderServiceImpl service;
 
@@ -110,6 +114,7 @@ class IdentityProviderServiceImplTest {
     void update_allows_matching_type() {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(IDP_ID)))
                 .thenReturn(Maybe.just(existing("inline-am-idp")));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
         when(identityProviderRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));

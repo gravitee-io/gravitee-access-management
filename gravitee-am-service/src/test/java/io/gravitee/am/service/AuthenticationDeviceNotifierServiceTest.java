@@ -23,6 +23,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepository;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.AuthenticationDeviceNotifierServiceImpl;
 import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
@@ -33,6 +34,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -44,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +60,14 @@ public class AuthenticationDeviceNotifierServiceTest {
 
     @InjectMocks
     private AuthenticationDeviceNotifierService authDeviceNotifierService = new AuthenticationDeviceNotifierServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -225,4 +236,33 @@ public class AuthenticationDeviceNotifierServiceTest {
         verify(authDeviceNotifierRepository).delete(deviceNotifier.getId());
         verify(auditService).report(any(AuthDeviceNotifierAuditBuilder.class));
     }
+
+    @Test
+    public void shouldNotCreate_whenLicenseFeatureMissing() {
+        NewAuthenticationDeviceNotifier newNotifier = Mockito.mock(NewAuthenticationDeviceNotifier.class);
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = authDeviceNotifierService.create(DOMAIN, newNotifier).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(authDeviceNotifierRepository, never()).create(any(AuthenticationDeviceNotifier.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenLicenseFeatureMissing() {
+        UpdateAuthenticationDeviceNotifier updateNotifier = Mockito.mock(UpdateAuthenticationDeviceNotifier.class);
+        AuthenticationDeviceNotifier existing = new AuthenticationDeviceNotifier();
+        existing.setReferenceType(ReferenceType.DOMAIN);
+        existing.setReferenceId("id");
+        when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(existing));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = authDeviceNotifierService.update(DOMAIN, "auth-dev-notifier", updateNotifier).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(authDeviceNotifierRepository, never()).update(any(AuthenticationDeviceNotifier.class));
+    }
+
 }

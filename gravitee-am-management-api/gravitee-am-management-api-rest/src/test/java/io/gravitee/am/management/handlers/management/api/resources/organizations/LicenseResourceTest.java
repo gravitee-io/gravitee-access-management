@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
  */
 public class LicenseResourceTest extends JerseySpringTest {
 
-    private static final String ORGANIZATION_ID = "orga#1";
+    private static final String ORGANIZATION_ID = Organization.DEFAULT;
 
     @Test
     public void shouldGetOrganizationLicense() {
@@ -67,6 +67,13 @@ public class LicenseResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         GraviteeLicense license = readEntity(response, GraviteeLicense.class);
         assertEquals("PLATFORM", license.getScope());
+    }
+
+    @Test
+    public void shouldReturn403WhenNotAMemberOfTheOrganization() {
+        Response response = target("organizations").path("another-org").path("license").request().get();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
     @Test

@@ -22,11 +22,14 @@ import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -78,6 +81,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private PluginLicenseGate pluginLicenseGate;
+
     private InMemoryIdentityProviderListener listener;
 
     public void setListener(InMemoryIdentityProviderListener listener) {
@@ -120,10 +126,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             return loadProvidersFromConfig()
                     // add the Gravitee provider to allow addition of OrganizationUser through the console
                     .mergeWith(Single.just(graviteeIdp))
-                    .doOnNext(listener::registerAuthenticationProvider)
-                    // load gravitee idp into this component to allow user creation and update
-                    .flatMapMaybe(this::loadUserProvider)
-                    .ignoreElements();
+                    .flatMapCompletable(identityProvider -> listener.registerAuthenticationProvider(identityProvider)
+                            // load gravitee idp into this component to allow user creation and update
+                            .andThen(loadUserProvider(identityProvider).ignoreElement()));
         }
         return Completable.complete();
     }
@@ -213,6 +218,23 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     private Maybe<UserProvider> loadUserProvider(IdentityProvider identityProvider) {
+        if (identityProvider.getReferenceType() != ReferenceType.ORGANIZATION) {
+            return doLoadUserProvider(identityProvider);
+        }
+        return pluginLicenseGate.checkPersisted(Reference.organization(identityProvider.getReferenceId()), PluginLicenseGate.TYPE_IDENTITY_PROVIDER, identityProvider.getType())
+                .andThen(Maybe.defer(() -> doLoadUserProvider(identityProvider)))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof LicenseFeatureRequiredException) {
+                        logger.warn("Skipping user provider {} for organization {} [{}]: the plugin's feature is not included in the organization's license",
+                                identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
+                    } else {
+                        logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
+                    }
+                    return Maybe.empty();
+                });
+    }
+
+    private Maybe<UserProvider> doLoadUserProvider(IdentityProvider identityProvider) {
         return identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
                 .flatMapMaybe(userProviderOpt -> {
                     if (userProviderOpt.isPresent()) {

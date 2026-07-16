@@ -36,6 +36,7 @@ import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.CertificateIsFallbackException;
@@ -105,6 +106,9 @@ class CertificateServiceImplTest {
 
     @Mock
     private PluginConfigurationValidationService validationService;
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
 
     @InjectMocks
     private CertificateServiceImpl service;
@@ -325,6 +329,7 @@ class CertificateServiceImplTest {
         String schema = "{\"properties\":{\"content\":{\"widget\":\"file\"}}}";
 
         Mockito.when(certificateRepository.findById(certId)).thenReturn(Maybe.just(existing));
+        Mockito.when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
         Mockito.when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(schema));
         Mockito.when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
         Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));

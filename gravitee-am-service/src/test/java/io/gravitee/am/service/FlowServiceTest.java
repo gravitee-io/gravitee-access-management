@@ -25,6 +25,7 @@ import io.gravitee.am.repository.management.api.FlowRepository;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.FlowServiceImpl;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -32,6 +33,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -60,6 +62,7 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -75,6 +78,14 @@ public class FlowServiceTest {
 
     @InjectMocks
     private FlowService flowService = new FlowServiceImpl();
+
+    @Mock
+    private PluginLicenseGate pluginLicenseGate;
+
+    @Before
+    public void allowPluginLicenseGate() {
+        lenient().when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+    }
 
     @Mock
     private EventService eventService;
@@ -672,4 +683,22 @@ public class FlowServiceTest {
 
         return flow;
     }
+
+    @Test
+    public void shouldNotCreate_whenPolicyLicenseFeatureMissing() {
+        Flow newFlow = new Flow();
+        newFlow.setReferenceType(ReferenceType.DOMAIN);
+        newFlow.setReferenceId(DOMAIN);
+        Step step = new Step();
+        step.setPolicy("ee-policy");
+        newFlow.setPre(List.of(step));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
+
+        TestObserver testObserver = flowService.create(ReferenceType.DOMAIN, DOMAIN, newFlow).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(LicenseFeatureRequiredException.class);
+        verify(flowRepository, never()).create(any(Flow.class));
+    }
+
 }
