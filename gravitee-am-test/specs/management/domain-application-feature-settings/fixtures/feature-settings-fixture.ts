@@ -17,44 +17,44 @@
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { PatchApplication } from '@management-models/PatchApplication';
-import { PatchApplicationTypeTypeEnum } from '@management-models/PatchApplicationType';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, setupDomainForTest, patchDomain, getDomain } from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
   getApplication,
   patchApplication,
-  updateApplicationType,
 } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
-export interface ApplicationGeneralSettingsFixture {
+export interface FeatureSettingsFixture {
   accessToken: string;
   domain: Domain;
   app: Application;
+  patchDomainSettings: (settings: any) => Promise<Domain>;
+  fetchDomain: () => Promise<Domain>;
   patchApp: (body: PatchApplication) => Promise<Application>;
   fetchApp: () => Promise<Application>;
-  setAppType: (type: PatchApplicationTypeTypeEnum) => Promise<Application>;
   cleanUp: () => Promise<void>;
 }
 
-export const initFixture = async (): Promise<ApplicationGeneralSettingsFixture> => {
+export const initFixture = async (): Promise<FeatureSettingsFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const { domain } = await setupDomainForTest(uniqueName('app-gen-settings', true), { accessToken, waitForStart: false });
+  const { domain } = await setupDomainForTest(uniqueName('feature-settings', true), { accessToken, waitForStart: false });
 
   const app = await createApplication(domain.id, accessToken, {
-    name: uniqueName('gen-settings-app', true),
+    name: uniqueName('feature-settings-app', true),
     type: 'WEB',
     redirectUris: ['https://callback.example.com'],
   });
 
+  const patchDomainSettings = (settings: any): Promise<Domain> => patchDomain(domain.id, accessToken, settings);
+
+  const fetchDomain = (): Promise<Domain> => getDomain(domain.id, accessToken);
+
   const patchApp = (body: PatchApplication): Promise<Application> => patchApplication(domain.id, accessToken, body, app.id);
 
   const fetchApp = (): Promise<Application> => getApplication(domain.id, accessToken, app.id);
-
-  const setAppType = (type: PatchApplicationTypeTypeEnum): Promise<Application> =>
-    updateApplicationType(domain.id, accessToken, app.id, type);
 
   const cleanUp = async (): Promise<void> => {
     try {
@@ -65,5 +65,5 @@ export const initFixture = async (): Promise<ApplicationGeneralSettingsFixture> 
     await safeDeleteDomain(domain?.id, accessToken);
   };
 
-  return { accessToken, domain, app, patchApp, fetchApp, setAppType, cleanUp };
+  return { accessToken, domain, app, patchDomainSettings, fetchDomain, patchApp, fetchApp, cleanUp };
 };
