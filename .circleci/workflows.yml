@@ -961,7 +961,7 @@ jobs:
   junit_tests:
     executor:
       name: openjdk
-      class: medium
+      class: large
       version: "21.0.6"
     steps:
       - attach_workspace:
@@ -971,6 +971,7 @@ jobs:
           jobName: pull_requests
       - run:
           name: "Maven verify (backend)"
+          no_output_timeout: 30m
           command: |
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui -Dlicense.skip=true
       - run:
