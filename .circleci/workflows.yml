@@ -1725,7 +1725,7 @@ jobs:
           secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
           var-name: GITHUB_TOKEN
       - keeper/env-export:
-          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/AIKIDO_API_KEY
+          secret-url: keeper://_XrkO71xa9HZBwxYoUHX0w/field/password
           var-name: AIKIDO_API_KEY
       - aikido/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
@@ -2188,7 +2188,7 @@ workflows:
           checkout: false
           pre-steps:
             - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/custom_field/AIKIDO_API_KEY
+                secret-url: keeper://_XrkO71xa9HZBwxYoUHX0w/field/password
                 var-name: AIKIDO_API_KEY
             - keeper/env-export:
                 secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
