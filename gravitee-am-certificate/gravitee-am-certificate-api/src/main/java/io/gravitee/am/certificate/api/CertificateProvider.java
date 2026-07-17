@@ -66,4 +66,9 @@ public interface CertificateProvider extends AmPluginProvider {
     default Optional<JWTParser> jwtParser() throws InvalidKeyException, JOSEException  {
         return Optional.empty();
     }
+
+    default boolean useBlockingSigner() {
+        // Kept for backward compatibility with AwsHsmCertificateProvider.
+        return "AwsHsmCertificateProvider".equals(this.getClass().getSimpleName());
+    }
 }
