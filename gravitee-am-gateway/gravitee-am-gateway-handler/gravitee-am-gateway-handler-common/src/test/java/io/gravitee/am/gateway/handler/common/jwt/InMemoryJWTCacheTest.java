@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class InMemoryJWTCacheTest {
 
@@ -66,7 +65,7 @@ public class InMemoryJWTCacheTest {
 
     @Test
     public void shouldKeepNoOpCacheEmpty() {
-        JWTCache cache = new JWTCache.NoOpJtiCache();
+        JWTCache cache = new JWTCache.NoOpJwtCache();
 
         cache.isPresent("token").test().assertResult(false);
         cache.put("token", 10L);

@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.jwt;
+package io.gravitee.am.gateway.handler.common.dpop;
 
 import io.reactivex.rxjava3.core.Single;
 
-public interface JWTCache {
-    Single<Boolean> isPresent(String jwt);
+public interface ReplayCache {
 
-    void put(String jwt, long expiresAt);
+    Single<Boolean> register(String jti);
 
-    class NoOpJwtCache implements JWTCache {
-
-        @Override
-        public Single<Boolean> isPresent(String jwt) {
-            return Single.just(false);
-        }
+    class NoOpReplayCache implements ReplayCache {
 
         @Override
-        public void put(String jwt, long expiresAt) {
+        public Single<Boolean> register(String jti) {
+            return Single.just(true);
         }
     }
 }

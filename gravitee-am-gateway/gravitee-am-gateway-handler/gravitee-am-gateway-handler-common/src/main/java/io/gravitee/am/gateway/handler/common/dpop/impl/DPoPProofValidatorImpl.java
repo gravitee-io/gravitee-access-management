@@ -30,10 +30,9 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidDPoPProofException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
-import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
+import io.gravitee.am.gateway.handler.common.dpop.ReplayCache;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.gateway.api.Request;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
 import java.nio.charset.StandardCharsets;
@@ -45,17 +44,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Nimbus-backed implementation of {@link DPoPProofValidator}.
- *
- * <p>The proof is self-verifying: it embeds the public key in its {@code jwk} header, so signature
- * verification and thumbprint computation are done directly against that key without consulting any
- * key store. Replay is bounded by the {@code iat} acceptance window plus the mandatory
- * {@code htm}/{@code htu}/{@code ath}/{@code jkt} bindings, with a node-local best-effort cache
- * keyed on {@code jti} for same-node duplicate detection.</p>
- *
- * @author GraviteeSource Team
- */
 public class DPoPProofValidatorImpl implements DPoPProofValidator {
 
     static final String DPOP_JWT_TYPE = "dpop+jwt";
@@ -66,9 +54,9 @@ public class DPoPProofValidatorImpl implements DPoPProofValidator {
 
     private final int validitySeconds;
     private final int clockSkewSeconds;
-    private final JWTCache replayCache;
+    private final ReplayCache replayCache;
 
-    public DPoPProofValidatorImpl(int validitySeconds, int clockSkewSeconds, JWTCache replayCache) {
+    public DPoPProofValidatorImpl(int validitySeconds, int clockSkewSeconds, ReplayCache replayCache) {
         this.validitySeconds = validitySeconds;
         this.clockSkewSeconds = clockSkewSeconds;
         this.replayCache = replayCache;
@@ -119,7 +107,9 @@ public class DPoPProofValidatorImpl implements DPoPProofValidator {
                 validateThumbprintBinding(thumbprint, expectedThumbprint);
             }
 
-            return registerJti(jti).andThen(Single.just(thumbprint));
+            return replayCache.register(jti).flatMap(registered -> registered
+                    ? Single.just(thumbprint)
+                    : Single.error(invalid("DPoP proof has already been used (replay detected)")));
         });
     }
 
@@ -229,15 +219,6 @@ public class DPoPProofValidatorImpl implements DPoPProofValidator {
         if (!expectedThumbprint.equals(thumbprint)) {
             throw invalid("DPoP proof key does not match the token cnf.jkt binding");
         }
-    }
-
-    private Completable registerJti(String jti) {
-        return Completable.defer(() -> {
-            final long expiresAt = Instant.now().plusSeconds((long) validitySeconds + clockSkewSeconds).toEpochMilli();
-            return replayCache.put(jti, expiresAt)
-                    ? Completable.complete()
-                    : Completable.error(invalid("DPoP proof has already been used (replay detected)"));
-        });
     }
 
     private String resolveRequestUri(Request request) {

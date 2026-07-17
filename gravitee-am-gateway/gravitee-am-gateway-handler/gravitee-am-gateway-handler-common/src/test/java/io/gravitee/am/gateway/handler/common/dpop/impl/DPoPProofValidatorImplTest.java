@@ -37,18 +37,17 @@ import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidDPoPProofException;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.jwt.InMemoryJWTCache;
-import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
+import io.gravitee.am.gateway.handler.common.dpop.ReplayCache;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.gateway.api.Request;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -56,16 +55,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Full RFC 9449 §4.3 failure matrix for {@link DPoPProofValidatorImpl}. Every assertion checks the
- * externally observable outcome (returned thumbprint, or {@link InvalidDPoPProofException}), never
- * internal state.
- *
- * @author GraviteeSource Team
- */
 class DPoPProofValidatorImplTest {
 
     private static final String HOST = "am.example.com";
@@ -82,6 +77,7 @@ class DPoPProofValidatorImplTest {
     private String ecJkt;
     private String rsaJkt;
 
+    private ReplayCache replayCache;
     private DPoPProofValidatorImpl validator;
 
     @BeforeEach
@@ -94,7 +90,9 @@ class DPoPProofValidatorImplTest {
         rsaSigner = new RSASSASigner(rsaKey);
         ecJkt = ecPublicJwk.computeThumbprint().toString();
         rsaJkt = rsaPublicJwk.computeThumbprint().toString();
-        validator = new DPoPProofValidatorImpl(30, 3, cache(Duration.ofSeconds(33)));
+        replayCache = mock(ReplayCache.class);
+        when(replayCache.register(anyString())).thenReturn(Single.just(true));
+        validator = new DPoPProofValidatorImpl(30, 3, replayCache);
     }
 
 
@@ -273,23 +271,24 @@ class DPoPProofValidatorImplTest {
 
 
     @Test
-    void duplicate_jti_within_window_is_rejected_on_same_node() throws Exception {
+    void shouldRejectDuplicateJtiForTokenValidation() throws Exception {
         String proof = new ProofBuilder().jti("fixed-jti").sign();
+        when(replayCache.register("fixed-jti")).thenReturn(Single.just(true), Single.just(false));
+
         validator.validateForToken(tokenRequest(proof), null).test().assertValue(ecJkt);
-        validator.validateForToken(tokenRequest(proof), null).test().assertError(InvalidDPoPProofException.class);
+        validator.validateForToken(tokenRequest(proof), null).test()
+                .assertError(error -> error instanceof InvalidDPoPProofException
+                        && "DPoP proof has already been used (replay detected)".equals(error.getMessage()));
+        verify(replayCache, times(2)).register("fixed-jti");
     }
 
     @Test
-    void replay_entry_expires_after_the_acceptance_window() throws Exception {
-        DPoPProofValidatorImpl shortLived = new DPoPProofValidatorImpl(30, 3, cache(Duration.ofMillis(150)));
-        String proof = new ProofBuilder().jti("expiring-jti").sign();
+    void shouldPropagateReplayCacheError() throws Exception {
+        IllegalStateException failure = new IllegalStateException("cache failure");
+        String proof = new ProofBuilder().jti("failing-jti").sign();
+        when(replayCache.register("failing-jti")).thenReturn(Single.error(failure));
 
-        shortLived.validateForToken(tokenRequest(proof), null).test().assertValue(ecJkt);
-        shortLived.validateForToken(tokenRequest(proof), null).test().assertError(InvalidDPoPProofException.class);
-
-        Thread.sleep(350);
-
-        shortLived.validateForToken(tokenRequest(proof), null).test().assertValue(ecJkt).assertComplete();
+        validator.validateForToken(tokenRequest(proof), null).test().assertError(error -> error == failure);
     }
 
 
@@ -360,10 +359,15 @@ class DPoPProofValidatorImplTest {
     }
 
     @Test
-    void refresh_mode_duplicate_jti_within_window_is_rejected_on_same_node() throws Exception {
+    void shouldRejectDuplicateJtiForRefreshMode() throws Exception {
         String proof = new ProofBuilder().jti("refresh-fixed-jti").sign();
+        when(replayCache.register("refresh-fixed-jti")).thenReturn(Single.just(true), Single.just(false));
+
         validator.validateForRefresh(tokenRequest(proof), ecJkt, null).test().assertValue(ecJkt);
-        validator.validateForRefresh(tokenRequest(proof), ecJkt, null).test().assertError(InvalidDPoPProofException.class);
+        validator.validateForRefresh(tokenRequest(proof), ecJkt, null).test()
+                .assertError(error -> error instanceof InvalidDPoPProofException
+                        && "DPoP proof has already been used (replay detected)".equals(error.getMessage()));
+        verify(replayCache, times(2)).register("refresh-fixed-jti");
     }
 
 
@@ -398,11 +402,6 @@ class DPoPProofValidatorImplTest {
         String proof = new ProofBuilder().alg(JWSAlgorithm.RS256).headerJwk(rsaPublicJwk).signer(rsaSigner)
                 .ath(ath(ACCESS_TOKEN)).sign();
         validator.validateForResource(tokenRequest(proof), ACCESS_TOKEN, rsaJkt).test().assertValue(rsaJkt).assertComplete();
-    }
-
-
-    private static JWTCache cache(Duration ttl) {
-        return InMemoryJWTCache.builder().maxSize(100).expireAfterWrite(ttl).build();
     }
 
     private static String ath(String token) throws Exception {

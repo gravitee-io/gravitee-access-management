@@ -49,7 +49,10 @@ import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.CimdAwareClientLookupServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.DefaultClientLookupServiceImpl;
 import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
+
+import io.gravitee.am.gateway.handler.common.dpop.ReplayCache;
 import io.gravitee.am.gateway.handler.common.dpop.impl.DPoPProofValidatorImpl;
+import io.gravitee.am.gateway.handler.common.dpop.impl.ReplayCacheFactory;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
@@ -364,25 +367,22 @@ public class CommonConfiguration {
                         .build();
             }
         } else {
-            return new JWTCache.NoOpJtiCache();
+            return new JWTCache.NoOpJwtCache();
         }
     }
 
     @Bean
     public DPoPProofValidator dpopProofValidator(
+            Domain domain,
+            CacheManager cacheManager,
             @Value("${handlers.oauth2.dpop.validitySeconds:30}") int validitySeconds,
             @Value("${handlers.oauth2.dpop.replayCache.enabled:true}") boolean replayCacheEnabled,
-            @Value("${handlers.oauth2.dpop.replayCache.maxSize:10000}") long replayCacheMaxSize) {
+            @Value("${handlers.oauth2.dpop.replayCache.maxSize:10000}") long replayCacheMaxSize,
+            @Value("${cache.type:standalone}") String cacheType) {
         final int clockSkewSeconds = 3;
-        final JWTCache replayCache;
-        if (replayCacheEnabled) {
-            replayCache = InMemoryJWTCache.builder()
-                    .maxSize(replayCacheMaxSize)
-                    .expireAfterWrite(Duration.ofSeconds((long) validitySeconds + clockSkewSeconds))
-                    .build();
-        } else {
-            replayCache = new JWTCache.NoOpJtiCache();
-        }
+        final ReplayCache replayCache = ReplayCacheFactory.create(
+                replayCacheEnabled, cacheManager, domain.getId(), replayCacheMaxSize,
+                (long) validitySeconds + clockSkewSeconds, cacheType);
         return new DPoPProofValidatorImpl(validitySeconds, clockSkewSeconds, replayCache);
     }
 
