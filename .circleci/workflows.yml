@@ -1177,6 +1177,7 @@ jobs:
       - mvn_git_commit_id
       - run:
           name: "Maven unit tests"
+          no_output_timeout: 30m
           command: |
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
       - save-maven-job-cache:
