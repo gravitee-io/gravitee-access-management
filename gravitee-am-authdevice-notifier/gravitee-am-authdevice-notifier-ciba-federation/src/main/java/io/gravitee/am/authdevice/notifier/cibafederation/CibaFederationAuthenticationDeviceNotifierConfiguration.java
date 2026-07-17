@@ -41,5 +41,8 @@ public class CibaFederationAuthenticationDeviceNotifierConfiguration implements 
     // Blank/absent = raw relay (authorization_details relayed unchanged); a non-blank value selects a
     // strategy contributed by a strategy module on the plugin classpath. See ConsentRelayStrategyRegistry.
     private String consentRelayStrategy;
+    // Blank/absent = relay the CIBA hint verbatim (default); a non-blank value selects a hint-decoration
+    // transform contributed by a strategy module on the plugin classpath. See HintDecorationStrategyRegistry.
+    private String hintDecorationStrategy;
     private Integer maxLifetimeSeconds = 120;
 }
