@@ -35,8 +35,7 @@ public class OidcDiscoveryResolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(OidcDiscoveryResolver.class);
     private static final String GENERIC_ERROR = "CIBA federation: could not resolve the identity provider's OIDC discovery document";
 
-    public record Endpoints(String backchannelAuthEndpoint, String tokenEndpoint) {}
-    private record Cached(Endpoints endpoints, long expiresAtMillis) {}
+    private record Cached(ProviderMetadata metadata, long expiresAtMillis) {}
 
     private final WebClient client;
     private final long ttlMillis;
@@ -53,13 +52,13 @@ public class OidcDiscoveryResolver {
         this.clock = clock;
     }
 
-    public Single<Endpoints> resolve(String wellKnownUri) {
+    public Single<ProviderMetadata> resolve(String wellKnownUri) {
         if (wellKnownUri == null || wellKnownUri.isBlank()) {
             return Single.error(new IllegalStateException("CIBA federation: IdP wellKnownUri is not configured"));
         }
         Cached c = cache.get(wellKnownUri);
         if (c != null && c.expiresAtMillis() > clock.getAsLong()) {
-            return Single.just(c.endpoints());
+            return Single.just(c.metadata());
         }
         return client.getAbs(wellKnownUri).rxSend().map(resp -> {
             // The wellKnownUri is an internal configuration detail — log it server-side, but keep it
@@ -73,8 +72,13 @@ public class OidcDiscoveryResolver {
                 LOGGER.warn("CIBA-FED discovery returned a non-JSON document for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
+            String issuer = body.getString("issuer");
             String bc = body.getString("backchannel_authentication_endpoint");
             String token = body.getString("token_endpoint");
+            if (issuer == null || issuer.isBlank()) {
+                LOGGER.warn("CIBA-FED discovery omits issuer for {}", wellKnownUri);
+                throw new IllegalStateException(GENERIC_ERROR);
+            }
             if (bc == null || bc.isBlank()) {
                 LOGGER.warn("CIBA-FED discovery omits backchannel_authentication_endpoint for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
@@ -83,7 +87,7 @@ public class OidcDiscoveryResolver {
                 LOGGER.warn("CIBA-FED discovery omits token_endpoint for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
-            Endpoints ep = new Endpoints(bc, token);
+            ProviderMetadata ep = new ProviderMetadata(issuer, bc, token);
             cache.put(wellKnownUri, new Cached(ep, clock.getAsLong() + ttlMillis));
             return ep;
         });
