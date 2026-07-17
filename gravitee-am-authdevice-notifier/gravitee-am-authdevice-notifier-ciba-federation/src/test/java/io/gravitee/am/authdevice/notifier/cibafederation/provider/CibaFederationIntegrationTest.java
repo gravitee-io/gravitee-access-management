@@ -17,6 +17,7 @@ package io.gravitee.am.authdevice.notifier.cibafederation.provider;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.jupiter.api.*;
@@ -25,6 +26,9 @@ import java.util.*;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CibaFederationIntegrationTest {
 
@@ -50,17 +54,26 @@ class CibaFederationIntegrationTest {
     @AfterAll static void down() { acmeAuth.stop(); gateway.stop(); vertx.close(); }
     @BeforeEach void reset() { acmeAuth.resetAll(); gateway.resetAll(); }
 
-    /** Stubs the well-known on the acmeAuth mock and returns a discovery resolver pointing at it. */
-    private OidcDiscoveryResolver resolverFor(WireMockServer srv) {
-        srv.stubFor(get(urlEqualTo("/.well-known/openid-configuration")).willReturn(okJson(
-            "{\"backchannel_authentication_endpoint\":\"http://localhost:" + srv.port() + "/bc-authorize\","
-          + "\"token_endpoint\":\"http://localhost:" + srv.port() + "/oauth/token\"}")));
-        return new OidcDiscoveryResolver(sharedClient, 3600);
+    /** Provider metadata pointing at the given mock's CIBA endpoints. In the Y flow discovery is resolved
+     *  once up front by the provider; the pure-transport client is bound directly to these endpoints. */
+    private ProviderMetadata metaFor(WireMockServer srv) {
+        return new ProviderMetadata("http://localhost:" + srv.port() + "/",
+            "http://localhost:" + srv.port() + "/bc-authorize",
+            "http://localhost:" + srv.port() + "/oauth/token");
     }
 
     private CibaClient clientFor(WireMockServer srv) {
-        return new CibaClient(sharedClient, resolverFor(srv),
-            "http://localhost:" + srv.port() + "/.well-known/openid-configuration", "cid", "sec", "https://api", "client_secret_post");
+        return new CibaClient(sharedClient, metaFor(srv), "cid", "sec", "https://api", "client_secret_post");
+    }
+
+    /** Stub discovery resolver for the provider's resolve-once step: returns fixed metadata regardless of
+     *  the well-known URI. This suite exercises the notify->poll->callback chain, not discovery itself
+     *  (covered by OidcDiscoveryResolverTest); the pre-built client above is already endpoint-bound. */
+    private static OidcDiscoveryResolver stubResolver() {
+        var r = mock(OidcDiscoveryResolver.class);
+        when(r.resolve(any())).thenReturn(Single.just(new ProviderMetadata(
+                "https://idp.acme.example/", "https://idp.acme.example/bc", "https://idp.acme.example/token")));
+        return r;
     }
 
     @Test
@@ -92,7 +105,7 @@ class CibaFederationIntegrationTest {
         store.put(new PendingAuthStore.Pending("tid1","stateJwt","R1",1,
                 Instant.now().getEpochSecond()+120, CrossWitness.hash(rendered), cbUrl));
         // exercise the bc-authorize relay (asserted below): hint relayed verbatim, relayed RAR
-        a0.bcAuthorize("acme|u1", null, "openid", "Approve?", rendered).blockingGet();
+        a0.bcAuthorize(new CibaHints("acme|u1", null, null), "openid", "Approve?", rendered).blockingGet();
 
         assertEquals(AuthorizationPoller.Outcome.CONTINUE, poller.pollOnce("tid1").blockingGet());
         assertEquals(AuthorizationPoller.Outcome.APPROVED, poller.pollOnce("tid1").blockingGet());
@@ -145,7 +158,7 @@ class CibaFederationIntegrationTest {
         AuthorizationPoller poller = new AuthorizationPoller(cb, store, () -> Instant.now().getEpochSecond());
 
         var provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud) -> a0, null, store, poller, vertx, 120);
+                (conn, aud, meta) -> a0, stubResolver(), null, null, store, poller, vertx, 120);
 
         // Verbatim hint, NO subject — Gravitee is a transparent relay.
         String verbatimHint = "acme|completion-user-7";
@@ -239,7 +252,7 @@ class CibaFederationIntegrationTest {
 
         // Non-identity transform strategy — relay tags each FDX entry before it is sent.
         var provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud) -> a0, new TaggingConsentRelayStrategy(), store, poller, vertx, 120);
+                (conn, aud, meta) -> a0, stubResolver(), new TaggingConsentRelayStrategy(), null, store, poller, vertx, 120);
 
         // Verbatim hint, NO subject — Gravitee is a transparent relay.
         String verbatimHint = "acme|completion-user-10";

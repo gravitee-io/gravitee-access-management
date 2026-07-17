@@ -18,6 +18,7 @@ package io.gravitee.am.authdevice.notifier.cibafederation.provider.spring;
 import io.gravitee.am.authdevice.notifier.cibafederation.provider.CibaClientFactory;
 import io.gravitee.am.authdevice.notifier.cibafederation.provider.ConsentRelayStrategyRegistry;
 import io.gravitee.am.authdevice.notifier.cibafederation.provider.DefaultCibaClientFactory;
+import io.gravitee.am.authdevice.notifier.cibafederation.provider.HintDecorationStrategyRegistry;
 import io.gravitee.am.authdevice.notifier.cibafederation.provider.OidcDiscoveryResolver;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -50,15 +51,20 @@ public class CibaFederationProviderSpringConfiguration {
     }
 
     @Bean
-    public CibaClientFactory cibaClientFactory(@Qualifier("cibaFederationWebClient") WebClient webClient,
-                                               OidcDiscoveryResolver oidcDiscoveryResolver) {
-        return new DefaultCibaClientFactory(webClient, oidcDiscoveryResolver);
+    public CibaClientFactory cibaClientFactory(@Qualifier("cibaFederationWebClient") WebClient webClient) {
+        return new DefaultCibaClientFactory(webClient);
     }
 
     @Bean
     public ConsentRelayStrategyRegistry consentRelayStrategyRegistry() {
         // getClass().getClassLoader() is the plugin classloader → spans the plugin's lib/ jars.
         return ConsentRelayStrategyRegistry.discover(getClass().getClassLoader());
+    }
+
+    @Bean
+    public HintDecorationStrategyRegistry hintDecorationStrategyRegistry() {
+        // getClass().getClassLoader() is the plugin classloader → spans the plugin's lib/ jars.
+        return HintDecorationStrategyRegistry.discover(getClass().getClassLoader());
     }
 
     @Bean

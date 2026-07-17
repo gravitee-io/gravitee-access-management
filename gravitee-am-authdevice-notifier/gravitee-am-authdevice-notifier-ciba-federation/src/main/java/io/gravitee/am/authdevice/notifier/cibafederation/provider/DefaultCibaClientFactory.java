@@ -21,23 +21,22 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import java.util.Objects;
 
 /**
- * Production {@link CibaClientFactory}: a stateless bean holding the shared web client and discovery
- * resolver, building a per-request {@link CibaClient} from the federated connection's endpoint and
- * credentials plus the notifier's configured resource audience.
+ * Production {@link CibaClientFactory}: a stateless bean holding the shared web client, building a
+ * per-request {@link CibaClient} from the federated connection's credentials, the notifier's configured
+ * resource audience, and the already-resolved {@link ProviderMetadata} (discovery is resolved once, up
+ * front, by the provider and handed in here).
  */
 public class DefaultCibaClientFactory implements CibaClientFactory {
 
     private final WebClient webClient;
-    private final OidcDiscoveryResolver discovery;
 
-    public DefaultCibaClientFactory(WebClient webClient, OidcDiscoveryResolver discovery) {
+    public DefaultCibaClientFactory(WebClient webClient) {
         this.webClient = Objects.requireNonNull(webClient, "webClient");
-        this.discovery = Objects.requireNonNull(discovery, "discovery");
     }
 
     @Override
-    public CibaClient create(FederatedConnection connection, String resourceAudience) {
-        return new CibaClient(webClient, discovery, connection.wellKnownUri(),
+    public CibaClient create(FederatedConnection connection, String resourceAudience, ProviderMetadata metadata) {
+        return new CibaClient(webClient, metadata,
                 connection.clientId(), connection.clientSecret(), resourceAudience, connection.clientAuthMethod());
     }
 }

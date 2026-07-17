@@ -50,8 +50,11 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
     @Autowired(required = false) private Vertx vertx;
     @Autowired(required = false) private CibaClientFactory cibaClientFactory;
     @Autowired(required = false) private ConsentRelayStrategyRegistry consentRelayStrategyRegistry;
+    @Autowired(required = false) private OidcDiscoveryResolver discoveryResolver;
+    @Autowired(required = false) private HintDecorationStrategyRegistry hintDecorationStrategyRegistry;
 
     private ConsentRelayStrategy consentStrategy;
+    private HintDecorationStrategy hintStrategy;
     private ConsentRelayContext consentRelayContext;
     private PendingAuthStore store;
     private AuthorizationPoller poller;
@@ -67,10 +70,13 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
 
     /** Test seam — inject collaborators directly, supplying the per-request client via a stub factory. */
     static CibaFederationAuthenticationDeviceNotifierProvider forTest(
-            CibaClientFactory cibaClientFactory, ConsentRelayStrategy consentStrategy, PendingAuthStore store,
-            AuthorizationPoller poller, Vertx vertx, int maxLifetimeSeconds) {
+            CibaClientFactory cibaClientFactory, OidcDiscoveryResolver discoveryResolver,
+            ConsentRelayStrategy consentStrategy, HintDecorationStrategy hintStrategy,
+            PendingAuthStore store, AuthorizationPoller poller, Vertx vertx, int maxLifetimeSeconds) {
         var p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.cibaClientFactory = cibaClientFactory; p.consentStrategy = consentStrategy; p.store = store; p.poller = poller; p.vertx = vertx;
+        p.cibaClientFactory = cibaClientFactory; p.discoveryResolver = discoveryResolver;
+        p.consentStrategy = consentStrategy; p.hintStrategy = hintStrategy;
+        p.store = store; p.poller = poller; p.vertx = vertx;
         p.maxLifetimeSeconds = maxLifetimeSeconds; p.wired = true;
         p.consentRelayContext = new ConsentRelayContext(null);
         return p;
@@ -85,9 +91,32 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         return Objects.requireNonNull(registry, "consentRelayStrategyRegistry not wired").resolve(stratId);
     }
 
+    /** Config→strategy selection glue for hint decoration; same semantics as {@link #selectStrategy}. */
+    static HintDecorationStrategy selectHintStrategy(String stratId, HintDecorationStrategyRegistry registry) {
+        if (stratId == null || stratId.isBlank()) {
+            return null; // no decoration → relay hint verbatim
+        }
+        return Objects.requireNonNull(registry, "hintDecorationStrategyRegistry not wired").resolve(stratId);
+    }
+
+    /** CIBA Core §7.1: exactly one of login_hint / login_hint_token / id_token_hint must be present.
+     *  Enforced post-decoration so a mis-behaving hint strategy fails closed here, not as an opaque
+     *  upstream invalid_request. */
+    static void requireSingleHint(CibaHints h) {
+        int n = 0;
+        if (hasText(h.loginHint())) n++;
+        if (hasText(h.loginHintToken())) n++;
+        if (hasText(h.idTokenHint())) n++;
+        if (n != 1) {
+            throw new IllegalStateException(
+                "CIBA federation: exactly one of login_hint, login_hint_token, id_token_hint must be present (found " + n + ")");
+        }
+    }
+
     private synchronized void ensureWired() {
         if (wired) return;
         this.consentStrategy = selectStrategy(configuration.getConsentRelayStrategy(), consentRelayStrategyRegistry);
+        this.hintStrategy = selectHintStrategy(configuration.getHintDecorationStrategy(), hintDecorationStrategyRegistry);
         this.consentRelayContext = new ConsentRelayContext(configuration.getRecipientDisplayName());
         this.store = new PendingAuthStore();
         var callbackClient = new GatewayCallbackClient(webClient, configuration.getCallbackClientId(),
@@ -151,27 +180,28 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         final String callbackUrl = Objects.requireNonNull(request.getCallbackUrl(),
                 "callbackUrl must be supplied by the gateway on ADNotificationRequest");
         final java.util.List<java.util.Map<String, Object>> rar = request.getAuthorizationDetails();
-        final java.util.List<java.util.Map<String, Object>> relayedRar =
-                (rar == null || consentStrategy == null) ? rar : consentStrategy.relay(rar, consentRelayContext);
         final String scope = conn.scope();
-        // resourceAudience is a notifier-config value sent as the downstream `audience` form parameter;
-        // the IdP config cannot carry it. configuration is @Autowired(required=false), so guard for null
-        // as elsewhere in this class (see getIdentityProviderId()).
         final String resourceAudience = configuration != null ? configuration.getResourceAudience() : null;
-        // The client is intrinsically per-request (endpoint + credentials come from the FederatedConnection),
-        // so it is built through the injected factory — a single path for both production and tests.
-        final CibaClient cibaClient = cibaClientFactory.create(conn, resourceAudience);
-        return cibaClient.bcAuthorize(request.getLoginHint(), request.getLoginHintToken(), scope, request.getMessage(), relayedRar)
-                .map(res -> {
-                    long expiresAt = Instant.now().getEpochSecond() + Math.min(res.expiresInSeconds(), maxLifetimeSeconds);
-                    // Null hash when nothing was relayed: adHashPreSend != null then means exactly
-                    // "RAR was sent", which is the poller's cross-witness enforcement guard.
-                    final String adHashPreSend = relayedRar == null ? null : CrossWitness.hash(relayedRar);
-                    store.put(new PendingAuthStore.Pending(tid, request.getState(), res.authReqId(),
-                            res.intervalSeconds(), expiresAt, adHashPreSend, callbackUrl));
-                    poller.schedule(vertx, tid, res.intervalSeconds(), cibaClient);
-                    return new ADNotificationResponse(tid);
-                });
+        // Y flow: resolve provider metadata once (issuer + endpoints), PREPARE (both IdP-adapter
+        // transforms) with it, then hand a fully-formed request to pure transport.
+        return discoveryResolver.resolve(conn.wellKnownUri()).flatMap(metadata -> {
+            final java.util.List<java.util.Map<String, Object>> relayedRar =
+                    (rar == null || consentStrategy == null) ? rar : consentStrategy.relay(rar, consentRelayContext);
+            final CibaHints inbound = new CibaHints(request.getLoginHint(), request.getLoginHintToken(), null);
+            final CibaHints hints = (hintStrategy == null) ? inbound
+                    : hintStrategy.decorate(inbound, new HintDecorationContext(metadata));
+            requireSingleHint(hints);
+            final CibaClient cibaClient = cibaClientFactory.create(conn, resourceAudience, metadata);
+            return cibaClient.bcAuthorize(hints, scope, request.getMessage(), relayedRar)
+                    .map(res -> {
+                        long expiresAt = Instant.now().getEpochSecond() + Math.min(res.expiresInSeconds(), maxLifetimeSeconds);
+                        final String adHashPreSend = relayedRar == null ? null : CrossWitness.hash(relayedRar);
+                        store.put(new PendingAuthStore.Pending(tid, request.getState(), res.authReqId(),
+                                res.intervalSeconds(), expiresAt, adHashPreSend, callbackUrl));
+                        poller.schedule(vertx, tid, res.intervalSeconds(), cibaClient);
+                        return new ADNotificationResponse(tid);
+                    });
+        });
     }
 
     @Override
