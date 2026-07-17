@@ -1178,7 +1178,7 @@ jobs:
   junit_tests:
     executor:
       name: openjdk
-      class: medium
+      class: large
       version: "21.0.6"
     steps:
       - attach_workspace:
@@ -1189,6 +1189,7 @@ jobs:
       - mvn_git_commit_id
       - run:
           name: "Maven unit tests"
+          no_output_timeout: 30m
           command: |
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
       - save-maven-job-cache:
