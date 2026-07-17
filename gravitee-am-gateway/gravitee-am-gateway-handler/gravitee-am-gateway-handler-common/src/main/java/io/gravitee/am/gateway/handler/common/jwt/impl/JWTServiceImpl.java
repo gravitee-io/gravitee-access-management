@@ -57,8 +57,6 @@ import java.util.stream.Stream;
 public class JWTServiceImpl implements JWTService {
 
     private static final Logger logger = LoggerFactory.getLogger(JWTServiceImpl.class);
-    public static final String AWS_HSM_CERTIFICATE_PROVIDER = "AwsHsmCertificateProvider";
-
 
     private final CertificateManager certificateManager;
     private final ObjectMapper objectMapper;
@@ -233,7 +231,7 @@ public class JWTServiceImpl implements JWTService {
             }
         });
 
-        if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
+        if (certificateProvider.getProvider().useBlockingSigner()) {
             return signer.subscribeOn(Schedulers.from(executor.getExecutor())).observeOn(Schedulers.computation());
         } else {
             return signer;
@@ -269,7 +267,7 @@ public class JWTServiceImpl implements JWTService {
             }
         });
 
-        if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
+        if (certificateProvider.getProvider().useBlockingSigner()) {
             return verifier.subscribeOn(Schedulers.from(executor.getExecutor())).observeOn(Schedulers.computation());
         } else {
             return verifier;
