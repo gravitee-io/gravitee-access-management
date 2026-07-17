@@ -56,4 +56,15 @@ class SchemaFormJsonTest {
         assertTrue(authMethod.getJsonArray("enum").contains("client_secret_basic"),
                 "schema must offer client_secret_basic");
     }
+
+    @Test
+    void schema_declares_hint_decoration_strategy_property() throws Exception {
+        String raw = Files.readString(Path.of("src/main/resources/schemas/schema-form.json"));
+        JsonObject schema = new JsonObject(raw);
+        JsonObject props = schema.getJsonObject("properties");
+
+        JsonObject hintStrat = props.getJsonObject("hintDecorationStrategy");
+        assertNotNull(hintStrat, "schema-form.json must expose hintDecorationStrategy so the notifier UI renders it");
+        assertEquals("string", hintStrat.getString("type"));
+    }
 }
