@@ -78,6 +78,27 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByEnvironment() {
+
+        Entrypoint entrypoint = buildEntrypoint();
+        entrypoint.setEnvironmentId("env#1");
+        Entrypoint createdEntrypoint = entrypointRepository.create(entrypoint).blockingGet();
+
+        Entrypoint otherEnvironmentEntrypoint = buildEntrypoint();
+        otherEnvironmentEntrypoint.setEnvironmentId("env#2");
+        entrypointRepository.create(otherEnvironmentEntrypoint).blockingGet();
+
+        TestSubscriber<Entrypoint> testSubscriber = entrypointRepository.findByEnvironment(ORGANIZATION_ID, "env#1").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        assertEquals(entrypoint, createdEntrypoint.getId(), testSubscriber);
+        testSubscriber.assertValue(e -> "env#1".equals(e.getEnvironmentId()));
+    }
+
+    @Test
     public void testFindById() {
 
         Entrypoint entrypoint = buildEntrypoint();

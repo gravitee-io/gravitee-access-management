@@ -31,6 +31,7 @@ public class EntrypointMongo  extends Auditable {
     private String url;
     private List<String> tags;
     private String organizationId;
+    private String environmentId;
     private boolean defaultEntrypoint;
 
     public String getId() {
@@ -87,5 +88,13 @@ public class EntrypointMongo  extends Auditable {
 
     public void setDefaultEntrypoint(boolean defaultEntrypoint) {
         this.defaultEntrypoint = defaultEntrypoint;
+    }
+
+    public String getEnvironmentId() {
+        return environmentId;
+    }
+
+    public void setEnvironmentId(String environmentId) {
+        this.environmentId = environmentId;
     }
 }

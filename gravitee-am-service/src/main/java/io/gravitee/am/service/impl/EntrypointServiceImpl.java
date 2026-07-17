@@ -93,12 +93,21 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     @Override
+    public Flowable<Entrypoint> findByEnvironment(String organizationId, String environmentId) {
+
+        log.debug("Find entrypoints by organizationId {} and environmentId {}", organizationId, environmentId);
+
+        return entrypointRepository.findByEnvironment(organizationId, environmentId);
+    }
+
+    @Override
     public Single<Entrypoint> create(String organizationId, NewEntrypoint newEntrypoint, User principal) {
 
         log.debug("Create a new entrypoint {} for organization {}", newEntrypoint, organizationId);
 
         Entrypoint toCreate = new Entrypoint();
         toCreate.setOrganizationId(organizationId);
+        toCreate.setEnvironmentId(newEntrypoint.getEnvironmentId());
         toCreate.setName(newEntrypoint.getName());
         toCreate.setDescription(newEntrypoint.getDescription());
         toCreate.setUrl(newEntrypoint.getUrl());
