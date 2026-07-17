@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-entrypoints-add-environment-id-column
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: entrypoints
+              columnName: environment_id
+      changes:
+        #############################
+        # entrypoints #
+        ############################
+        - addColumn:
+            tableName: entrypoints
+            columns:
+              - column: { name: environment_id, type: nvarchar(255), constraints: { nullable: true } }

@@ -36,6 +36,8 @@ public class NewEntrypoint {
     @NotNull
     private List<String> tags;
 
+    private String environmentId;
+
     public String getName() {
         return name;
     }
@@ -73,5 +75,13 @@ public class NewEntrypoint {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public String getEnvironmentId() {
+        return environmentId;
+    }
+
+    public void setEnvironmentId(String environmentId) {
+        this.environmentId = environmentId;
     }
 }
