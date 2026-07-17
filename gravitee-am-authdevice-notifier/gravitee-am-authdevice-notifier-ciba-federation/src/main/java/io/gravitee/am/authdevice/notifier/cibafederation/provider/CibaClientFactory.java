@@ -20,14 +20,14 @@ import io.gravitee.am.authdevice.notifier.api.model.FederatedConnection;
 /**
  * Builds a {@link CibaClient} bound to a specific federated connection's OP endpoint and credentials.
  *
- * <p>The client is intrinsically per-request: its well-known URI and client credentials come from the
- * inbound {@link FederatedConnection}, so there is no single long-lived client. The factory itself is a
- * stateless bean holding only the shared collaborators (web client, discovery resolver); tests supply a
- * stub factory, removing the need for a test-only client field or a test-vs-production branch in the
- * provider.
+ * <p>The client is intrinsically per-request: its endpoints and client credentials come from the
+ * inbound {@link FederatedConnection} and the already-resolved {@link ProviderMetadata}, so there is no
+ * single long-lived client. Discovery is resolved once, up front, by the provider (Y flow) and handed in
+ * here; the factory itself is a stateless bean holding only the shared web client. Tests supply a stub
+ * factory, removing the need for a test-only client field or a test-vs-production branch in the provider.
  */
 @FunctionalInterface
 public interface CibaClientFactory {
 
-    CibaClient create(FederatedConnection connection, String resourceAudience);
+    CibaClient create(FederatedConnection connection, String resourceAudience, ProviderMetadata metadata);
 }

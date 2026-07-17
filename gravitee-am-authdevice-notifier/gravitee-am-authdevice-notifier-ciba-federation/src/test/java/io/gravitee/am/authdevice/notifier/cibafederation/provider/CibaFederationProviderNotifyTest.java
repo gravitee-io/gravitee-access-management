@@ -57,6 +57,24 @@ class CibaFederationProviderNotifyTest {
         }
     }
 
+    /** Non-identity hint-decoration double: wraps the login_hint using the discovery issuer, proving the
+     *  provider prepares the hint with the resolved {@link ProviderMetadata} before relay. */
+    static final class WrappingHintStrategy implements HintDecorationStrategy {
+        public String id() { return "test-wrap"; }
+        public CibaHints decorate(CibaHints in, HintDecorationContext ctx) {
+            return in.withLoginHint("wrapped(" + ctx.provider().issuer() + "|" + in.loginHint() + ")");
+        }
+    }
+
+    /** Stub discovery resolver: returns fixed provider metadata regardless of the well-known URI, so the
+     *  Y-flow's resolve-once step succeeds without an HTTP round-trip. */
+    static OidcDiscoveryResolver stubResolver() {
+        var r = mock(OidcDiscoveryResolver.class);
+        when(r.resolve(any())).thenReturn(Single.just(new ProviderMetadata(
+                "https://idp.acme.example/", "https://idp.acme.example/bc", "https://idp.acme.example/token")));
+        return r;
+    }
+
     CibaClient acmeAuth; ConsentRelayStrategy consentStrategy; PendingAuthStore store; AuthorizationPoller poller;
     CibaFederationAuthenticationDeviceNotifierProvider provider;
 
@@ -65,10 +83,11 @@ class CibaFederationProviderNotifyTest {
         consentStrategy = null; // blank config → raw relay (no transform)
         store = new PendingAuthStore();
         poller = mock(AuthorizationPoller.class);
-        when(acmeAuth.bcAuthorize(any(), any(), any(), any(), any()))
+        when(acmeAuth.bcAuthorize(any(), any(), any(), any()))
                 .thenReturn(Single.just(new CibaClient.BcAuthorizeResult("R1", 120, 5)));
         provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud) -> acmeAuth, consentStrategy, store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), consentStrategy, /*hintStrategy*/ null,
+                store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
     }
 
     @Test
@@ -78,7 +97,8 @@ class CibaFederationProviderNotifyTest {
         // (blank -> unchanged, selected -> transformed) is covered by the two seam tests below, so this
         // stays a stateless identity double rather than a vendor transform.
         provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud) -> acmeAuth, new TestStrategy(), store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), new TestStrategy(), /*hintStrategy*/ null,
+                store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tid1"); req.setState("stateJwt"); req.setLoginHint("acme|u1");
         req.setScopes(Set.of("openid")); req.setMessage("Approve?");
@@ -92,8 +112,11 @@ class CibaFederationProviderNotifyTest {
         var resp = provider.notify(req).blockingGet();
 
         assertEquals("tid1", resp.getTransactionId());
+        ArgumentCaptor<CibaHints> hints = ArgumentCaptor.forClass(CibaHints.class);
         ArgumentCaptor<Object> rar = ArgumentCaptor.forClass(Object.class);
-        verify(acmeAuth).bcAuthorize(eq("acme|u1"), isNull(), eq("openid profile email"), eq("Approve?"), rar.capture());
+        verify(acmeAuth).bcAuthorize(hints.capture(), eq("openid profile email"), eq("Approve?"), rar.capture());
+        assertEquals("acme|u1", hints.getValue().loginHint());
+        assertNull(hints.getValue().loginHintToken());
         assertTrue(CrossWitness.canonical(rar.getValue()).contains("fdx_v1.0"));
         PendingAuthStore.Pending p = store.get("tid1");
         assertNotNull(p);
@@ -121,7 +144,7 @@ class CibaFederationProviderNotifyTest {
         provider.notify(req).blockingGet(); // provider from init(): consentStrategy == null
 
         ArgumentCaptor<Object> rar = ArgumentCaptor.forClass(Object.class);
-        verify(acmeAuth).bcAuthorize(any(), any(), any(), any(), rar.capture());
+        verify(acmeAuth).bcAuthorize(any(), any(), any(), rar.capture());
         assertEquals(inputRar, rar.getValue(), "blank strategy must relay authorization_details unchanged");
     }
 
@@ -130,7 +153,8 @@ class CibaFederationProviderNotifyTest {
     @Test
     void selected_strategy_transforms_before_relay() {
         var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud) -> acmeAuth, new TaggingTestStrategy(), store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), new TaggingTestStrategy(), /*hintStrategy*/ null,
+                store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
         var inputRar = List.of(Map.<String, Object>of("type", "fdx_v1.0",
                 "consentRequest", Map.of("durationType", "ONE_TIME",
                         "resources", List.of(Map.of("dataClusters", List.of("ACCOUNT_BASIC"))))));
@@ -145,7 +169,7 @@ class CibaFederationProviderNotifyTest {
         p.notify(req).blockingGet();
 
         ArgumentCaptor<Object> rar = ArgumentCaptor.forClass(Object.class);
-        verify(acmeAuth).bcAuthorize(any(), any(), any(), any(), rar.capture());
+        verify(acmeAuth).bcAuthorize(any(), any(), any(), rar.capture());
         @SuppressWarnings("unchecked")
         var relayed = (List<Map<String, Object>>) rar.getValue();
         assertNotEquals(inputRar, relayed, "selected strategy's transform must actually change the relayed payload");
@@ -154,7 +178,7 @@ class CibaFederationProviderNotifyTest {
 
     @Test
     void notify_propagates_bcauthorize_error_and_stores_nothing() {
-        when(acmeAuth.bcAuthorize(any(), any(), any(), any(), any()))
+        when(acmeAuth.bcAuthorize(any(), any(), any(), any()))
                 .thenReturn(io.reactivex.rxjava3.core.Single.error(new IllegalStateException("bc-authorize failed: invalid_client")));
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidX"); req.setState("s"); req.setLoginHint("acme|u1");
@@ -179,7 +203,10 @@ class CibaFederationProviderNotifyTest {
         req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
                 "cid", "secret", "openid profile email phone", "https://idp.acme.example/.well-known/openid-configuration"));
         provider.notify(req).blockingGet();
-        verify(acmeAuth).bcAuthorize(eq("acme|u1"), isNull(), eq("openid profile email phone"), eq("Approve?"), any());
+        ArgumentCaptor<CibaHints> hints = ArgumentCaptor.forClass(CibaHints.class);
+        verify(acmeAuth).bcAuthorize(hints.capture(), eq("openid profile email phone"), eq("Approve?"), any());
+        assertEquals("acme|u1", hints.getValue().loginHint());
+        assertNull(hints.getValue().loginHintToken());
     }
 
     @Test
@@ -336,9 +363,10 @@ class CibaFederationProviderNotifyTest {
     @Test
     void notify_builds_client_via_factory_from_connection_and_configured_audience() {
         CibaClientFactory factory = mock(CibaClientFactory.class);
-        when(factory.create(any(), any())).thenReturn(acmeAuth);
+        when(factory.create(any(), any(), any())).thenReturn(acmeAuth);
         var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                factory, new TestStrategy(), new PendingAuthStore(), mock(AuthorizationPoller.class), null, 120);
+                factory, stubResolver(), new TestStrategy(), /*hintStrategy*/ null,
+                new PendingAuthStore(), mock(AuthorizationPoller.class), null, 120);
         CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
         cfg.setIdentityProviderId("idp-acme");
         cfg.setResourceAudience("https://api.example");
@@ -353,6 +381,32 @@ class CibaFederationProviderNotifyTest {
 
         p.notify(req).blockingGet();
 
-        verify(factory).create(eq(conn), eq("https://api.example"));
+        verify(factory).create(eq(conn), eq("https://api.example"), any());
+    }
+
+    @Test void selected_hint_strategy_decorates_using_discovery_issuer() {
+        var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
+                (conn, aud, meta) -> acmeAuth, stubResolver(), null, new WrappingHintStrategy(),
+                store, poller, null, 120);
+        ADNotificationRequest req = new ADNotificationRequest();
+        req.setTransactionId("tidH"); req.setState("s"); req.setLoginHint("acme|u1");
+        req.setScopes(Set.of("openid")); req.setMessage("Approve?"); req.setCallbackUrl("http://gw/cb");
+        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
+                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
+        p.notify(req).blockingGet();
+        ArgumentCaptor<CibaHints> hints = ArgumentCaptor.forClass(CibaHints.class);
+        verify(acmeAuth).bcAuthorize(hints.capture(), any(), any(), any());
+        assertEquals("wrapped(https://idp.acme.example/|acme|u1)", hints.getValue().loginHint());
+    }
+
+    @Test void no_hint_fails_closed() {
+        var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
+                (conn, aud, meta) -> acmeAuth, stubResolver(), null, null, store, poller, null, 120);
+        ADNotificationRequest req = new ADNotificationRequest();
+        req.setTransactionId("tidN"); req.setState("s"); // no hint set
+        req.setScopes(Set.of("openid")); req.setCallbackUrl("http://gw/cb");
+        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
+                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
+        assertThrows(IllegalStateException.class, () -> p.notify(req).blockingGet());
     }
 }
