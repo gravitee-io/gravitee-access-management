@@ -24,10 +24,11 @@
         </encoder>
     </appender>
 
-    <logger name="io.gravitee" level="TRACE" />
+    <logger name="io.gravitee" level="INFO" />
     <logger name="io.netty" level="WARN" />
 
-    <root level="TRACE">
+    <!-- Third-party libraries (netty, mongo, spring) stay at WARN to keep test logs readable. -->
+    <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>
 
