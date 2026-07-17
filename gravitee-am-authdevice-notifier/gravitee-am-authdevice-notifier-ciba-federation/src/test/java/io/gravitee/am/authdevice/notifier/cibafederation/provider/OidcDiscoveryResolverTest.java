@@ -40,17 +40,25 @@ class OidcDiscoveryResolverTest {
 
     private void stubDiscovery(String bc, String token) {
         wm.stubFor(get(urlEqualTo("/.well-known/openid-configuration")).willReturn(okJson(
-            "{\"backchannel_authentication_endpoint\":\"" + bc + "\",\"token_endpoint\":\"" + token + "\"}")));
+            "{\"issuer\":\"https://op/\",\"backchannel_authentication_endpoint\":\"" + bc + "\",\"token_endpoint\":\"" + token + "\"}")));
     }
 
     @Test void resolves_and_caches_endpoints() {
         stubDiscovery("https://op/bc", "https://op/token");
         var r = new OidcDiscoveryResolver(webClient, 3600);
         var ep = r.resolve(wellKnown).blockingGet();
+        assertEquals("https://op/", ep.issuer());
         assertEquals("https://op/bc", ep.backchannelAuthEndpoint());
         assertEquals("https://op/token", ep.tokenEndpoint());
         r.resolve(wellKnown).blockingGet(); // second call served from cache
         wm.verify(1, getRequestedFor(urlEqualTo("/.well-known/openid-configuration")));
+    }
+
+    @Test void fails_closed_when_issuer_missing() {
+        wm.stubFor(get(urlEqualTo("/.well-known/openid-configuration"))
+            .willReturn(okJson("{\"backchannel_authentication_endpoint\":\"https://op/bc\",\"token_endpoint\":\"https://op/token\"}")));
+        var r = new OidcDiscoveryResolver(webClient, 3600);
+        assertThrows(IllegalStateException.class, () -> r.resolve(wellKnown).blockingGet());
     }
 
     @Test void refetches_after_ttl_expiry() {
