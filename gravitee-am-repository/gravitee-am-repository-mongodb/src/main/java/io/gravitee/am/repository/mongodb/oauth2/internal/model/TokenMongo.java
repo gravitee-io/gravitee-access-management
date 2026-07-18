@@ -74,6 +74,9 @@ public class TokenMongo {
     @BsonProperty(FIELD_PARENT_JTIS)
     private Set<String> parentJtis;
 
+    @BsonProperty("jkt")
+    private String jkt;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

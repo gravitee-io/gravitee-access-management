@@ -178,6 +178,9 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("tls_client_certificate_bound_access_tokens")
     private Optional<Boolean> tlsClientCertificateBoundAccessTokens;
 
+    @JsonProperty("dpop_bound_access_tokens")
+    private Optional<Boolean> dpopBoundAccessTokens;
+
     /*******************************************************************************
      * Metadata in same order than the openid JARM specification
      * https://openid.net//specs/openid-financial-api-jarm.html#client-metadata
@@ -541,6 +544,14 @@ public class DynamicClientRegistrationRequest {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public Optional<Boolean> getDpopBoundAccessTokens() {
+        return dpopBoundAccessTokens;
+    }
+
+    public void setDpopBoundAccessTokens(Optional<Boolean> dpopBoundAccessTokens) {
+        this.dpopBoundAccessTokens = dpopBoundAccessTokens;
+    }
+
     public Optional<String> getAuthorizationSignedResponseAlg() {
         return authorizationSignedResponseAlg;
     }
@@ -668,6 +679,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
         SetterUtils.safeSet(client::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
+        SetterUtils.safeSet(client::setDpopBoundAccessTokens, this.getDpopBoundAccessTokens());
 
         /* set client require_pushed_authorization_requests : https://datatracker.ietf.org/doc/html/draft-ietf-oauth-par#page-16 */
         SetterUtils.safeSet(client::setRequireParRequest, this.getRequireParRequest());
@@ -737,6 +749,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
         SetterUtils.safeSet(client::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
+        SetterUtils.safeSet(client::setDpopBoundAccessTokens, this.getDpopBoundAccessTokens());
 
         /* set client require_pushed_authorization_requests : https://datatracker.ietf.org/doc/html/draft-ietf-oauth-par#page-16 */
         SetterUtils.safeSet(client::setRequireParRequest, this.getRequireParRequest());

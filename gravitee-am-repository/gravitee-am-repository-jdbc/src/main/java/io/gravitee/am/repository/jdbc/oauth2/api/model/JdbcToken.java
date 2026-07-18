@@ -39,4 +39,7 @@ public class JdbcToken extends JdbcBaseToken {
 
     @Column("parent_jti_2")
     private String parentJti2;
+
+    @Column("jkt")
+    private String jkt;
 }

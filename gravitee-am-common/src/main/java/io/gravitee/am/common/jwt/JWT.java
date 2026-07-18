@@ -31,6 +31,8 @@ public class JWT extends HashMap<String, Object> {
 
     public static final String CONFIRMATION_METHOD_X509_THUMBPRINT = "x5t#S256";
 
+    public static final String CONFIRMATION_METHOD_JWK_THUMBPRINT = "jkt";
+
     public JWT() { }
 
     public JWT(Map<? extends String, ?> claims) {
@@ -159,5 +161,13 @@ public class JWT extends HashMap<String, Object> {
 
     public Object getConfirmationMethod() {
         return get(Claims.CNF);
+    }
+
+    public String getDPoPConfirmationThumbprint() {
+        if (getConfirmationMethod() instanceof Map<?, ?> cnf
+                && cnf.get(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT) instanceof String jkt) {
+            return jkt;
+        }
+        return null;
     }
 }

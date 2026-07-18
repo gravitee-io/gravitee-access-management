@@ -45,6 +45,9 @@ public class PatchOIDCSettings {
     @JsonProperty("cimdSettings")
     private Optional<PatchCIMDSettings> cimdSettings;
 
+    @JsonProperty("dpopSettings")
+    private Optional<PatchDPoPSettings> dpopSettings;
+
     @JsonProperty("workloadIdentitySettings")
     private Optional<PatchSpiffeDomainSettings> workloadIdentitySettings;
 
@@ -75,6 +78,14 @@ public class PatchOIDCSettings {
 
     public void setRedirectUriStrictMatching(Optional<Boolean> redirectUriStrictMatching) {
         this.redirectUriStrictMatching = redirectUriStrictMatching;
+    }
+
+    public Optional<PatchDPoPSettings> getDpopSettings() {
+        return dpopSettings;
+    }
+
+    public void setDpopSettings(Optional<PatchDPoPSettings> dpopSettings) {
+        this.dpopSettings = dpopSettings;
     }
 
     public Optional<List<String>> getPostLogoutRedirectUris() {
@@ -164,6 +175,16 @@ public class PatchOIDCSettings {
             }
         }
 
+        if (getDpopSettings() != null) {
+            if (getDpopSettings().isPresent()) {
+                final PatchDPoPSettings patcher = getDpopSettings().get();
+                final DPoPSettings source = toPatch.getDpopSettings();
+                toPatch.setDpopSettings(patcher.patch(source));
+            } else {
+                toPatch.setDpopSettings(DPoPSettings.defaultSettings());
+            }
+        }
+
         if (getWorkloadIdentitySettings() != null) {
             if (getWorkloadIdentitySettings().isPresent()) {
                 final PatchSpiffeDomainSettings patcher = getWorkloadIdentitySettings().get();
@@ -184,6 +205,7 @@ public class PatchOIDCSettings {
 
         if ((clientRegistrationSettings != null && clientRegistrationSettings.isPresent())
                 || (redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent())
+                || (dpopSettings != null && dpopSettings.isPresent())
                 || (cibaSettings != null && cibaSettings.isPresent())
                 || (cimdSettings != null && cimdSettings.isPresent())
                 || (workloadIdentitySettings != null && workloadIdentitySettings.isPresent())

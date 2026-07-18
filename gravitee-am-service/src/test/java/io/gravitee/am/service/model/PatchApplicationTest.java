@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -172,6 +173,29 @@ public class PatchApplicationTest {
         Application result = patch.patch(toPatch);
 
         assertEquals(patchedClaims, result.getSettings().getOauth().getUserinfoCustomClaims());
+    }
+
+    @Test
+    public void patch_applies_dpopBoundAccessTokens_when_present() {
+        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
+        oauthPatch.setDpopBoundAccessTokens(Optional.of(true));
+
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setOauth(Optional.of(oauthPatch));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(settingsPatch));
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        ApplicationOAuthSettings existingOauth = new ApplicationOAuthSettings();
+        assertFalse("dpopBoundAccessTokens shall default to false", existingOauth.isDpopBoundAccessTokens());
+        appSettings.setOauth(existingOauth);
+        toPatch.setSettings(appSettings);
+
+        Application result = patch.patch(toPatch);
+
+        assertTrue(result.getSettings().getOauth().isDpopBoundAccessTokens());
     }
 
     @Test

@@ -39,6 +39,9 @@ public class OIDCSettings {
             defaultValue = "false")
     private boolean redirectUriStrictMatching;
 
+    @Schema(description = "Demonstrating Proof-of-Possession (RFC 9449) settings for the domain.")
+    private DPoPSettings dpopSettings;
+
     @Schema(description = "URLs to which a relying party may request the user be redirected after logout, via " +
             "the post_logout_redirect_uri parameter.")
     private List<String> postLogoutRedirectUris;
@@ -61,6 +64,7 @@ public class OIDCSettings {
         this.securityProfileSettings = other.securityProfileSettings != null
                 ? new SecurityProfileSettings(other.securityProfileSettings) : null;
         this.redirectUriStrictMatching = other.redirectUriStrictMatching;
+        this.dpopSettings = other.dpopSettings != null ? new DPoPSettings(other.dpopSettings) : null;
         this.postLogoutRedirectUris = other.postLogoutRedirectUris != null
                 ? new ArrayList<>(other.postLogoutRedirectUris) : null;
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
@@ -83,6 +87,14 @@ public class OIDCSettings {
 
     public void setRedirectUriStrictMatching(boolean redirectUriStrictMatching) {
         this.redirectUriStrictMatching = redirectUriStrictMatching;
+    }
+
+    public DPoPSettings getDpopSettings() {
+        return dpopSettings;
+    }
+
+    public void setDpopSettings(DPoPSettings dpopSettings) {
+        this.dpopSettings = dpopSettings;
     }
 
     public List<String> getPostLogoutRedirectUris() {
@@ -138,6 +150,7 @@ public class OIDCSettings {
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
         defaultSettings.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
         defaultSettings.setRedirectUriStrictMatching(false);
+        defaultSettings.setDpopSettings(DPoPSettings.defaultSettings());
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
         defaultSettings.setCimdSettings(CIMDSettings.defaultSettings());
         defaultSettings.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());

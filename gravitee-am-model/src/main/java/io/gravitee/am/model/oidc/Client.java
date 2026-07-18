@@ -179,6 +179,8 @@ public class Client implements Cloneable, Resource {
 
     private boolean tlsClientCertificateBoundAccessTokens;
 
+    private boolean dpopBoundAccessTokens;
+
     private String authorizationSignedResponseAlg;
 
     private String authorizationEncryptedResponseAlg;
@@ -392,6 +394,7 @@ public class Client implements Cloneable, Resource {
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
         this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
+        this.dpopBoundAccessTokens = other.dpopBoundAccessTokens;
         this.requireParRequest = other.requireParRequest;
         this.backchannelTokenDeliveryMode = other.backchannelTokenDeliveryMode;
         this.backchannelClientNotificationEndpoint = other.backchannelClientNotificationEndpoint;
@@ -1085,6 +1088,14 @@ public class Client implements Cloneable, Resource {
 
     public void setTlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
+    }
+
+    public boolean isDpopBoundAccessTokens() {
+        return dpopBoundAccessTokens;
+    }
+
+    public void setDpopBoundAccessTokens(boolean dpopBoundAccessTokens) {
+        this.dpopBoundAccessTokens = dpopBoundAccessTokens;
     }
 
     public boolean isRequireParRequest() {

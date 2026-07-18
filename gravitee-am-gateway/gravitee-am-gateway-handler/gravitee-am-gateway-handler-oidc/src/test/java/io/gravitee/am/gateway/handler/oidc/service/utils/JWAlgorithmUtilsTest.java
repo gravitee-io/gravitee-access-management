@@ -19,6 +19,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -93,5 +96,12 @@ public class JWAlgorithmUtilsTest {
     @Test
     public void defaultIdTokenResponseEnc() {
         assertTrue("should be A128CBC-HS256", "A128CBC-HS256".equals(JWAlgorithmUtils.getDefaultIdTokenResponseEnc()));
+    }
+
+    @Test
+    public void supportedDpopSigningAlg_isEcAndRsaAsymmetricOnly() {
+        assertEquals(
+                List.of("ES256", "ES384", "ES512", "RS256", "RS384", "RS512"),
+                JWAlgorithmUtils.getSupportedDpopSigningAlg());
     }
 }

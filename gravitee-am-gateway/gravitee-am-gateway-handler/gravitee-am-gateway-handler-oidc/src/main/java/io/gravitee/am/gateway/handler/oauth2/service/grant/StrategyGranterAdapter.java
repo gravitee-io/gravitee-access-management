@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
@@ -27,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -34,6 +38,7 @@ import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Response;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -42,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -68,18 +74,21 @@ public class StrategyGranterAdapter implements TokenGranter {
     private final TokenService tokenService;
     private final RulesEngine rulesEngine;
     private final TokenRequestResolver tokenRequestResolver;
+    private final DPoPProofValidator dpopProofValidator;
 
     public StrategyGranterAdapter(
             GrantStrategy strategy,
             Domain domain,
             TokenService tokenService,
             RulesEngine rulesEngine,
-            TokenRequestResolver tokenRequestResolver) {
+            TokenRequestResolver tokenRequestResolver,
+            DPoPProofValidator dpopProofValidator) {
         this.strategy = strategy;
         this.domain = domain;
         this.tokenService = tokenService;
         this.rulesEngine = rulesEngine;
         this.tokenRequestResolver = tokenRequestResolver;
+        this.dpopProofValidator = dpopProofValidator;
     }
 
     @Override
@@ -97,7 +106,8 @@ public class StrategyGranterAdapter implements TokenGranter {
         LOGGER.debug("Processing grant via strategy adapter for client: {}, grant type: {}",
                 client.getClientId(), tokenRequest.getGrantType());
 
-        return strategy.process(tokenRequest, client, domain)
+        return applyDPoPBinding(tokenRequest, client)
+                .andThen(Single.defer(() -> strategy.process(tokenRequest, client, domain)))
                 .flatMap(creationRequest -> resolveScopes(creationRequest, client))
                 .flatMap(resolved -> {
                     // Create ONE OAuth2Request that will be reused throughout the entire flow.
@@ -110,6 +120,71 @@ public class StrategyGranterAdapter implements TokenGranter {
                             .flatMap(ignored -> createToken(oAuth2Request, client, resolved))
                             .flatMap(token -> executePostTokenPolicy(oAuth2Request, client, user, token));
                 });
+    }
+
+    private Completable applyDPoPBinding(TokenRequest tokenRequest, Client client) {
+        if (dpopProofValidator == null) {
+            return Completable.complete();
+        }
+        if (mustUseDpop(client) && !isDPoPRequest(tokenRequest)) {
+            return Completable.error(new InvalidRequestException("A DPoP proof is required for this client"));
+        }
+        if (GrantType.REFRESH_TOKEN.equals(tokenRequest.getGrantType())) {
+            return applyRefreshBinding(tokenRequest, client);
+        }
+        return applyOpportunisticBinding(tokenRequest);
+    }
+
+    private boolean mustUseDpop(Client client) {
+        return domain.isRequireDpopForAll() || (client != null && client.isDpopBoundAccessTokens());
+    }
+
+    private Completable applyOpportunisticBinding(TokenRequest tokenRequest) {
+        if (!isDPoPRequest(tokenRequest)) {
+            return Completable.complete();
+        }
+        return dpopProofValidator.validateForToken(tokenRequest, dpopSigningAlgorithms())
+                .doOnSuccess(tokenRequest::setConfirmationMethodJkt)
+                .ignoreElement();
+    }
+
+    /**
+     * The domain's DPoP signing-algorithm allowlist (RFC 9449), resolved to the full base set when
+     * the domain leaves it unconfigured. Applied to the token and refresh proof-validation modes.
+     */
+    private Set<String> dpopSigningAlgorithms() {
+        List<String> configured = domain.getOidc() != null && domain.getOidc().getDpopSettings() != null
+                ? domain.getOidc().getDpopSettings().getDpopSigningAlgorithms() : null;
+        return Set.copyOf(JWAlgorithmUtils.resolveDpopSigningAlg(configured));
+    }
+
+    private Completable applyRefreshBinding(TokenRequest tokenRequest, Client client) {
+        final String refreshToken = tokenRequest.parameters() != null
+                ? tokenRequest.parameters().getFirst(Parameters.REFRESH_TOKEN)
+                : null;
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return applyOpportunisticBinding(tokenRequest);
+        }
+        return tokenService.getStoredRefreshTokenJkt(refreshToken, client)
+                .map(Optional::of)
+                .switchIfEmpty(Single.just(Optional.<String>empty()))
+                .flatMapCompletable(boundJkt -> boundJkt
+                        .map(jkt -> enforceRefreshContinuity(tokenRequest, jkt))
+                        .orElseGet(() -> applyOpportunisticBinding(tokenRequest)));
+    }
+
+    private Completable enforceRefreshContinuity(TokenRequest tokenRequest, String boundJkt) {
+        if (!isDPoPRequest(tokenRequest)) {
+            return Completable.error(new InvalidRequestException("A DPoP proof is required to refresh a DPoP-bound token"));
+        }
+        return dpopProofValidator.validateForRefresh(tokenRequest, boundJkt, dpopSigningAlgorithms())
+                .doOnSuccess(tokenRequest::setConfirmationMethodJkt)
+                .ignoreElement();
+    }
+
+    private static boolean isDPoPRequest(TokenRequest tokenRequest) {
+        return tokenRequest.headers() != null
+                && tokenRequest.headers().get(ConstantKeys.DPOP_PROOF_HEADER) != null;
     }
 
     private Single<TokenCreationRequest> resolveScopes(TokenCreationRequest request, Client client) {
@@ -221,6 +296,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             oAuth2Request.setVersion(httpInfo.version());
             oAuth2Request.setTimestamp(httpInfo.timestamp());
             oAuth2Request.setConfirmationMethodX5S256(httpInfo.confirmationMethodX5S256());
+            oAuth2Request.setConfirmationMethodJkt(httpInfo.confirmationMethodJkt());
             oAuth2Request.setHttpResponse(httpInfo.httpResponse());
         }
 

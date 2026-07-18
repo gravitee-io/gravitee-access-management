@@ -598,6 +598,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setTlsClientAuthSanIp(other.getTlsClientAuthSanIp());
         applicationOAuthSettingsMongo.setTlsClientAuthSanUri(other.getTlsClientAuthSanUri());
         applicationOAuthSettingsMongo.setTlsClientCertificateBoundAccessTokens(other.isTlsClientCertificateBoundAccessTokens());
+        applicationOAuthSettingsMongo.setDpopBoundAccessTokens(other.isDpopBoundAccessTokens());
         applicationOAuthSettingsMongo.setAuthorizationSignedResponseAlg(other.getAuthorizationSignedResponseAlg());
         applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
         applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
@@ -683,6 +684,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setTlsClientAuthSanIp(other.getTlsClientAuthSanIp());
         applicationOAuthSettings.setTlsClientAuthSanUri(other.getTlsClientAuthSanUri());
         applicationOAuthSettings.setTlsClientCertificateBoundAccessTokens(other.isTlsClientCertificateBoundAccessTokens());
+        applicationOAuthSettings.setDpopBoundAccessTokens(other.isDpopBoundAccessTokens());
         applicationOAuthSettings.setAuthorizationSignedResponseAlg(other.getAuthorizationSignedResponseAlg());
         applicationOAuthSettings.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
         applicationOAuthSettings.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());

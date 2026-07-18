@@ -133,6 +133,20 @@
 
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Demonstrating Proof-of-Possession (DPoP)</h5>
+          <small>DPoP binds access tokens to a key held by the client, so a stolen token cannot be replayed without the private key.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle (change)="dpopBoundAccessTokens($event)" [checked]="isDpopBoundAccessTokens()" [disabled]="readonly">
+            DPoP-bound access tokens
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Require this client to send a valid DPoP proof at the token endpoint.</mat-hint>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Public / Confidential</h5>
           <small>Clients capability of maintaining the confidentiality of their credentials.</small>
           <small>Native or SPA applications are incapable of secure their credentials and should set this value to "none".</small>

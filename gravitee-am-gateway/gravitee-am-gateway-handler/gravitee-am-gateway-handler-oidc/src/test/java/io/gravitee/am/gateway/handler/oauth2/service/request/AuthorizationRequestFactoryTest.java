@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.MultiMap;
@@ -27,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,6 +80,77 @@ public class AuthorizationRequestFactoryTest {
         Assert.assertNotNull(authorizationRequest);
         Assert.assertEquals("client-id", authorizationRequest.getClientId());
         Assert.assertTrue(authorizationRequest.getAdditionalParameters().size() == 1 && authorizationRequest.getAdditionalParameters().containsKey("custom"));
+    }
+
+
+    @Test
+    public void shouldCaptureDpopJkt_fromQueryParameter() {
+        RoutingContext routingContext = newRoutingContext();
+        when(routingContext.request().getParam(Parameters.DPOP_JKT)).thenReturn("thumb-query");
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
+
+        Assert.assertEquals("thumb-query", authorizationRequest.getParameters().getFirst(Parameters.DPOP_JKT));
+    }
+
+    @Test
+    public void shouldCaptureDpopJkt_fromJarRequestObject() {
+        RoutingContext routingContext = newRoutingContext();
+        PlainJWT requestObject = new PlainJWT(new JWTClaimsSet.Builder().claim(Parameters.DPOP_JKT, "thumb-jar").build());
+        when(routingContext.get(ConstantKeys.REQUEST_OBJECT_KEY)).thenReturn(requestObject);
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
+
+        Assert.assertEquals("thumb-jar", authorizationRequest.getParameters().getFirst(Parameters.DPOP_JKT));
+    }
+
+    @Test
+    public void shouldCaptureDpopJkt_fromPushedAuthorizationRequest() {
+        RoutingContext routingContext = newRoutingContext();
+        Map<String, Object> pushedParameters = new HashMap<>();
+        pushedParameters.put(Parameters.DPOP_JKT, "thumb-par");
+        Map<String, Object> data = new HashMap<>();
+        data.put(ConstantKeys.REQUEST_PARAMETERS_KEY, pushedParameters);
+        AuthenticationFlowContext authFlowContext = new AuthenticationFlowContext();
+        authFlowContext.setData(data);
+        when(routingContext.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY)).thenReturn(authFlowContext);
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
+
+        Assert.assertEquals("thumb-par", authorizationRequest.getParameters().getFirst(Parameters.DPOP_JKT));
+    }
+
+    @Test
+    public void shouldNotCaptureDpopJkt_whenAbsent() {
+        RoutingContext routingContext = newRoutingContext();
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
+
+        Assert.assertNull(authorizationRequest.getParameters().getFirst(Parameters.DPOP_JKT));
+    }
+
+    private RoutingContext newRoutingContext() {
+        List<Map.Entry<String, String>> entries = new ArrayList<>();
+
+        MultiMap multiMap = mock(MultiMap.class);
+        when(multiMap.entries()).thenReturn(entries);
+
+        io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
+
+        HttpServerResponse httpServerResponse = mock(HttpServerResponse.class);
+
+        HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
+        when(rxHttpServerRequest.params()).thenReturn(multiMap);
+        when(rxHttpServerRequest.params().entries()).thenReturn(entries);
+        when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
+        when(rxHttpServerRequest.getDelegate().response()).thenReturn(httpServerResponse);
+
+        RoutingContext routingContext = mock(RoutingContext.class);
+        when(routingContext.request()).thenReturn(rxHttpServerRequest);
+        when(routingContext.get(CONTEXT_PATH)).thenReturn("/test");
+
+        return routingContext;
     }
 
     private class Parameter<K, V> implements Map.Entry<K, V> {

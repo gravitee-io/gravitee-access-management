@@ -64,10 +64,9 @@ public class InMemoryJWTCache implements JWTCache {
     @Override
     public void put(String jwt, long expiresAt) {
         String hash = hash(jwt);
-        if (cache.asMap().putIfAbsent(hash, expiresAt) == null) {
-            if (statsConsumer != null) {
-                statsConsumer.accept(stats());
-            }
+        boolean added = cache.asMap().putIfAbsent(hash, expiresAt) == null;
+        if (added && statsConsumer != null) {
+            statsConsumer.accept(stats());
         }
     }
 

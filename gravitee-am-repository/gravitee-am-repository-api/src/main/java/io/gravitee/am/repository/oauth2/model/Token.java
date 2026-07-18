@@ -69,6 +69,11 @@ public abstract class Token {
 
     private Set<String> allParentJtis;
 
+    /**
+     * The JWK SHA-256 thumbprint (DPoP - RFC 9449)
+     */
+    private String jkt;
+
 
     @Override
     public boolean equals(Object o) {

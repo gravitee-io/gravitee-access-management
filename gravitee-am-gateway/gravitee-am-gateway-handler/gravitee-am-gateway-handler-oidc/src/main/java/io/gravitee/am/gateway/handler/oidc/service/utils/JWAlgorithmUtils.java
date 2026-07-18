@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.utils;
 
 import com.nimbusds.jose.EncryptionMethod;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -75,6 +76,14 @@ public class JWAlgorithmUtils {
     public static boolean isSignAlgCompliantWithFapi(String alg) {
         return PS256.getName().equals(alg) || ES256.getName().equals(alg);
     }
+
+    /**
+     * DPoP proof signing algorithms (RFC 9449). Asymmetric only: EC and RSA (PKCS#1 v1.5).
+     * No {@code none} and no symmetric {@code HS*}, since a DPoP proof is verified against the
+     * public key embedded in the proof header. Single source of truth shared with the domain
+     * allowlist validation in the management API.
+     */
+    private static final Set<String> SUPPORTED_DPOP_SIGNING_ALG = SignatureAlgorithm.DPOP_SUPPORTED_ALGORITHMS;
 
 
     /**
@@ -318,5 +327,27 @@ public class JWAlgorithmUtils {
 
     public static List<String> getSupportedBackchannelAuthenticationSigningAl() {
         return SUPPORTED_SIGNING_ALG.stream().sorted().toList();
+    }
+
+    /**
+     * @return the supported list of DPoP (RFC 9449) proof signing algorithms.
+     */
+    public static List<String> getSupportedDpopSigningAlg() {
+        return SUPPORTED_DPOP_SIGNING_ALG.stream().sorted().toList();
+    }
+
+    /**
+     * Resolve the effective DPoP signing-algorithm allowlist for a domain: the configured set when
+     * non-empty, otherwise the full base supported set. Used for both token-endpoint enforcement and
+     * discovery advertisement, so an unconfigured domain behaves exactly as v1.
+     *
+     * @param configured the domain's configured allowlist (may be {@code null} or empty)
+     * @return the effective, sorted list of accepted DPoP signing algorithms
+     */
+    public static List<String> resolveDpopSigningAlg(List<String> configured) {
+        if (configured == null || configured.isEmpty()) {
+            return getSupportedDpopSigningAlg();
+        }
+        return configured.stream().sorted().toList();
     }
 }

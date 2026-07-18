@@ -568,6 +568,12 @@ public class Domain implements Resource, Managed {
         return this.getOidc() != null && this.getOidc().isRedirectUriStrictMatching();
     }
 
+    public boolean isRequireDpopForAll() {
+        return this.getOidc() != null
+                && this.getOidc().getDpopSettings() != null
+                && this.getOidc().getDpopSettings().isRequireDpopForAll();
+    }
+
     public boolean usePlainFapiProfile() {
         return this.getOidc() != null &&
                 this.getOidc().getSecurityProfileSettings() != null &&

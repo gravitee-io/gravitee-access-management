@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler;
 
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl.OAuth2AuthHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -143,6 +144,14 @@ public interface OAuth2AuthHandler extends AuthHandler {
      * @param offlineVerification
      */
     void offlineVerification(boolean offlineVerification);
+
+    /**
+     * Provide the DPoP proof validator (RFC 9449) used to enforce sender-constrained (cnf.jkt) tokens.
+     * When set, a bound token must be presented under the DPoP scheme with a valid proof; when absent,
+     * the gate fails closed and rejects any cnf.jkt-bound token.
+     * @param dpopProofValidator the validator
+     */
+    void dpopProofValidator(DPoPProofValidator dpopProofValidator);
 
     static OAuth2AuthHandler create(OAuth2AuthProvider oAuth2AuthProvider) {
         return new OAuth2AuthHandlerImpl(oAuth2AuthProvider, null);

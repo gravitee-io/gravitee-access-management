@@ -205,6 +205,15 @@ export class GrantFlowsComponent implements OnInit {
     return this.oauthSettings.forceS256CodeChallengeMethod;
   }
 
+  dpopBoundAccessTokens(event) {
+    this.oauthSettings.dpopBoundAccessTokens = event.checked;
+    this.modelChanged();
+  }
+
+  isDpopBoundAccessTokens() {
+    return this.oauthSettings.dpopBoundAccessTokens;
+  }
+
   isRefreshTokenFlowSelected() {
     return this.selectedGrantTypes.includes('refresh_token');
   }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
+import io.gravitee.am.common.exception.oauth2.InvalidDPoPProofException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -122,6 +123,8 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
 
         // Validate PKCE
         validatePKCE(codeVerifier, authorizationCode);
+
+        validateDPoPJkt(request, authorizationCode);
 
         // Load user and create token request
         return authenticationFlowContextService
@@ -232,6 +235,24 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
         String encodedCodeVerifier = getCodeChallenge(codeChallengeMethod, codeVerifier);
         if (!codeChallenge.equals(encodedCodeVerifier)) {
             throw new InvalidGrantException("Invalid code_verifier");
+        }
+    }
+
+    private void validateDPoPJkt(TokenRequest request, AuthorizationCode authorizationCode) {
+        String committedJkt = authorizationCode.getRequestParameters().getFirst(Parameters.DPOP_JKT);
+        if (committedJkt == null) {
+            return;
+        }
+
+        String presentedJkt = request.getConfirmationMethodJkt();
+        if (presentedJkt == null) {
+            LOGGER.debug("Authorization code is bound to a DPoP key (dpop_jkt) but the redemption carried no DPoP proof");
+            throw new InvalidDPoPProofException("DPoP proof is required: the authorization code is bound to a DPoP key");
+        }
+
+        if (!committedJkt.equals(presentedJkt)) {
+            LOGGER.debug("Presented DPoP key thumbprint does not match the dpop_jkt bound to the authorization code");
+            throw new InvalidDPoPProofException("DPoP proof key does not match the key bound to the authorization code");
         }
     }
 

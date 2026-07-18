@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
@@ -58,6 +59,9 @@ public class AccountProvider extends AbstractProtocolProvider {
     private OAuth2AuthProvider oAuth2AuthProvider;
 
     @Autowired
+    private DPoPProofValidator dpopProofValidator;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
@@ -87,6 +91,7 @@ public class AccountProvider extends AbstractProtocolProvider {
             OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
             oAuth2AuthHandler.extractToken(true);
             oAuth2AuthHandler.extractClient(true);
+            oAuth2AuthHandler.dpopProofValidator(dpopProofValidator);
             accountRouter.route().handler(oAuth2AuthHandler);
 
             // Account profile routes

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
+import io.gravitee.am.common.exception.oauth2.InvalidDPoPProofException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
@@ -517,5 +518,133 @@ class AuthorizationCodeStrategyTest {
 
         assertNotNull(result);
         assertFalse(result.supportRefreshToken());
+    }
+
+
+    @Test
+    void shouldFailWhenDpopJktBoundButNoProofPresented() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.CODE, "valid-code");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+
+        MultiValueMap<String, String> codeParams = new LinkedMultiValueMap<>();
+        codeParams.add(Parameters.DPOP_JKT, "committed-thumbprint");
+
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("valid-code");
+        authorizationCode.setSubject("user-id");
+        authorizationCode.setRequestParameters(codeParams);
+
+        when(authorizationCodeService.remove(eq("valid-code"), eq(client)))
+                .thenReturn(Maybe.just(authorizationCode));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(InvalidDPoPProofException.class);
+    }
+
+    @Test
+    void shouldFailWhenDpopJktBoundButProofKeyMismatch() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.CODE, "valid-code");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+        tokenRequest.setConfirmationMethodJkt("different-thumbprint");
+
+        MultiValueMap<String, String> codeParams = new LinkedMultiValueMap<>();
+        codeParams.add(Parameters.DPOP_JKT, "committed-thumbprint");
+
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("valid-code");
+        authorizationCode.setSubject("user-id");
+        authorizationCode.setRequestParameters(codeParams);
+
+        when(authorizationCodeService.remove(eq("valid-code"), eq(client)))
+                .thenReturn(Maybe.just(authorizationCode));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(InvalidDPoPProofException.class);
+    }
+
+    @Test
+    void shouldProcessSuccessfullyWhenDpopJktMatchesProof() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.CODE, "valid-code");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+        tokenRequest.setConfirmationMethodJkt("bound-thumbprint");
+
+        User user = new User();
+        user.setId("user-id");
+
+        MultiValueMap<String, String> codeParams = new LinkedMultiValueMap<>();
+        codeParams.add(Parameters.DPOP_JKT, "bound-thumbprint");
+
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("valid-code");
+        authorizationCode.setSubject("user-id");
+        authorizationCode.setScopes(Set.of("openid"));
+        authorizationCode.setTransactionId("tx-id");
+        authorizationCode.setRequestParameters(codeParams);
+
+        when(authorizationCodeService.remove(eq("valid-code"), eq(client)))
+                .thenReturn(Maybe.just(authorizationCode));
+        when(authenticationFlowContextService.removeContext(anyString(), anyInt()))
+                .thenReturn(Single.just(new AuthenticationFlowContext()));
+        when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
+                .thenReturn(Maybe.just(user));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(), any()))
+                .thenReturn(Set.of());
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertNotNull(result);
+        assertEquals(GrantType.AUTHORIZATION_CODE, result.grantType());
+        assertEquals(user, result.resourceOwner());
+    }
+
+    @Test
+    void shouldProcessSuccessfullyWhenNoDpopJktCommittedEvenIfProofPresent() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.CODE, "valid-code");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+        tokenRequest.setConfirmationMethodJkt("opportunistic-thumbprint");
+
+        User user = new User();
+        user.setId("user-id");
+
+        MultiValueMap<String, String> codeParams = new LinkedMultiValueMap<>();
+
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("valid-code");
+        authorizationCode.setSubject("user-id");
+        authorizationCode.setScopes(Set.of("openid"));
+        authorizationCode.setTransactionId("tx-id");
+        authorizationCode.setRequestParameters(codeParams);
+
+        when(authorizationCodeService.remove(eq("valid-code"), eq(client)))
+                .thenReturn(Maybe.just(authorizationCode));
+        when(authenticationFlowContextService.removeContext(anyString(), anyInt()))
+                .thenReturn(Single.just(new AuthenticationFlowContext()));
+        when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
+                .thenReturn(Maybe.just(user));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(), any()))
+                .thenReturn(Set.of());
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertNotNull(result);
+        assertEquals(GrantType.AUTHORIZATION_CODE, result.grantType());
     }
 }
