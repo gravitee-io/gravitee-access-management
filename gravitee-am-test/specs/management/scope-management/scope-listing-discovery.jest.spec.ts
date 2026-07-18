@@ -25,6 +25,7 @@ import {
 } from '@management-commands/scope-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { retryUntil } from '@utils-commands/retry';
 import {setup} from '../../test-fixture';
 
 setup();
@@ -190,14 +191,7 @@ describe('Scope Discovery', () => {
   });
 
   it('should expose only discovery=true scopes in well-known openid-configuration', async () => {
-    await waitForSyncAfter(fixture.domain.id, () => patchScope(fixture.domain.id, fixture.accessToken, walletScopeId, { discovery: true }));
-
-    const response = await getWellKnownOpenIdConfiguration(fixture.domain.hrid);
-
-    expect(response.status).toBe(200);
-    // System scopes (discovery=true by default) + custom scopes with discovery=true (body, wallet)
-    // discadmin has discovery=false and must not appear
-    expect(response.body.scopes_supported).toEqual([
+    const expectedScopes = [
       'address',
       'body',
       'email',
@@ -209,6 +203,17 @@ describe('Scope Discovery', () => {
       'profile',
       'roles',
       'wallet',
-    ]);
+    ];
+
+    await patchScope(fixture.domain.id, fixture.accessToken, walletScopeId, { discovery: true });
+
+    const response = await retryUntil(
+      () => getWellKnownOpenIdConfiguration(fixture.domain.hrid),
+      (res) => res.status === 200 && ['body', 'wallet'].every((s) => res.body.scopes_supported?.includes(s)),
+      { timeoutMillis: 30000, intervalMillis: 500 },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.scopes_supported).toEqual(expectedScopes);
   });
 });
