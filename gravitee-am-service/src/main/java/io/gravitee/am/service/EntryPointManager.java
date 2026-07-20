@@ -24,6 +24,10 @@ import java.util.List;
  * In-memory cache of entrypoints, loaded on startup and kept current through entrypoint events, so
  * lookups by organization or environment do not require a database query. Wired in both the
  * management API and the gateway.
+ * <p>
+ * The cache only holds entrypoints within the node's configured organization/environment scope
+ * (node metadata; unscoped nodes cache everything), and {@link #findByEnvironmentId(String)} only
+ * returns environment-scoped entrypoints — organization-level ones are not matched by it.
  *
  * @author GraviteeSource Team
  */

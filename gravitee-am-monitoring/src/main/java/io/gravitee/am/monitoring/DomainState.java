@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +49,11 @@ public class DomainState {
      * domain state is queried (entrypoints are environment-scoped, not per-domain, so they are
      * resolved from the entrypoint cache rather than tracked through domain sync).
      */
-    private volatile List<EntrypointRef> entrypoints;
+    private final AtomicReference<List<EntrypointRef>> entrypoints = new AtomicReference<>();
+
+    public List<EntrypointRef> getEntrypoints() {
+        return entrypoints.get();
+    }
 
     public synchronized DomainState setStatus(Status status) {
         this.status = status;
@@ -60,8 +65,8 @@ public class DomainState {
         return this;
     }
 
-    public synchronized DomainState setEntrypoints(List<EntrypointRef> entrypoints) {
-        this.entrypoints = entrypoints;
+    public DomainState setEntrypoints(List<EntrypointRef> entrypoints) {
+        this.entrypoints.set(entrypoints);
         return this;
     }
 
@@ -134,13 +139,12 @@ public class DomainState {
     }
 
     @Getter
-    @Setter
     @Builder
     public static class EntrypointRef {
-        private String id;
-        private String name;
-        private String url;
-        private String organizationId;
-        private String environmentId;
+        private final String id;
+        private final String name;
+        private final String url;
+        private final String organizationId;
+        private final String environmentId;
     }
 }
