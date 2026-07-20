@@ -25,6 +25,7 @@ import { CloudEntrypointFixture, setupCloudEntrypointFixture } from './fixtures/
 setup(120000);
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
+const sameUrls = (urls: string[], expected: string[]) => urls.length === expected.length && expected.every((u) => urls.includes(u));
 
 let accessToken: string;
 let fixture: CloudEntrypointFixture;
@@ -39,6 +40,10 @@ afterAll(async () => {
   await fixture?.cleanup();
 });
 
+// These specs share one environment/domain and run in order (jest --runInBand): the initial access
+// points are asserted first, then re-synced to a new set, then cleared. Each ENVIRONMENT command
+// deletes-and-recreates the environment's entrypoints, and the gateway cache refreshes off the sync
+// event without redeploying the domain.
 describe('Cloud entrypoint cache (Cockpit access points -> gateway)', () => {
   it("surfaces the environment's Cockpit access points as cached entrypoints on the domain state", async () => {
     const state = await retryUntil(
@@ -55,5 +60,25 @@ describe('Cloud entrypoint cache (Cockpit access points -> gateway)', () => {
       expect(entrypoint.environmentId).toBe(fixture.environmentId);
       expect(entrypoint.organizationId).toBe(fixture.organizationId);
     });
+  });
+
+  it('refreshes the cached entrypoints when the environment access points change', async () => {
+    const keptHost = fixture.initialHosts[1];
+    const droppedUrl = `https://${fixture.initialHosts[0]}`;
+    const addedHost = fixture.uniqueHost();
+    const expectedUrls = await fixture.resyncAccessPoints([keptHost, addedHost]);
+
+    const cached = await retryUntil(() => fixture.cachedEntrypointUrls(), (urls) => sameUrls(urls, expectedUrls), POLL);
+
+    expect(cached).toEqual([...expectedUrls].sort());
+    expect(cached).not.toContain(droppedUrl);
+  });
+
+  it('evicts every cached entrypoint when the environment has no gateway access points', async () => {
+    await fixture.resyncAccessPoints([]);
+
+    const cached = await retryUntil(() => fixture.cachedEntrypointUrls(), (urls) => urls.length === 0, POLL);
+
+    expect(cached).toEqual([]);
   });
 });
