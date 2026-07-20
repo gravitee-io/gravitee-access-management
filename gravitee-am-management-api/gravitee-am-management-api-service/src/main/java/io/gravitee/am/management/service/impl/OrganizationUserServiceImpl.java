@@ -251,7 +251,7 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                     user.setUpdatedAt(new Date());
                     return getUserService().update(user)
                             .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PREFERENCES_UPDATED).user(updated)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PREFERENCES_UPDATED).reference(Reference.organization(organizationId)).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PREFERENCES_UPDATED).user(user).throwable(throwable)));
                 })
                 .map(user -> user.getConsolePreferences() != null ? user.getConsolePreferences() : new ConsoleUserPreferences());
     }
