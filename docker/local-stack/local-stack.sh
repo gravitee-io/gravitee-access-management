@@ -102,13 +102,13 @@ FULL=0
 DETACH=1
 LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
-WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0
+WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0
 
 want_set() { # want_set <name> <value>
   case "$1" in
     ui) WANT_UI="$2" ;; wiremock) WANT_WIREMOCK="$2" ;; ciba) WANT_CIBA="$2" ;;
     openfga) WANT_OPENFGA="$2" ;; kafka) WANT_KAFKA="$2" ;; mtls) WANT_MTLS="$2" ;;
-    spire) WANT_SPIRE="$2" ;; *) return 1 ;;
+    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; *) return 1 ;;
   esac
 }
 
@@ -142,7 +142,10 @@ SERVICES
   --full               UI + wiremock + ciba + openfga + kafka + mtls
                        (the union the jest gateway + playwright suites need)
   --with a,b,...       opt-in extras individually:
-                       ui,wiremock,ciba,openfga,kafka,mtls,spire
+                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud
+  --cloud              managed-cloud mode: start the cockpit mock and point the
+                       management API at it (console/cloud command path, e.g.
+                       Cockpit access points -> entrypoints)
 
 DATABASE
   --db mongo|psql      backend database (default: mongo)
@@ -196,6 +199,7 @@ while [ $# -gt 0 ]; do
                  for s in "${_x[@]}"; do
                    want_set "$s" 1 || die "unknown --with service: $s"
                  done; shift 2 ;;
+    --cloud)     WANT_CLOUD=1; shift ;;
     --build)     BUILD_MODE="force"; shift ;;
     --quick|--no-build) BUILD_MODE="skip"; shift ;;
     --license)   LICENSE_FILE="${2:?--license needs a path}"; shift 2 ;;
@@ -230,6 +234,7 @@ ALL_FILES=(
   -f "$DEV/docker-compose-ui.yml"
   -f "$DEV/docker-compose-kerberos.yml"
   -f "$DEV/docker-compose.spire.yml"
+  -f "$DEV/docker-compose.cloud.yml"
   -f "$DEV/docker-compose.images.yml"
 )
 
@@ -245,6 +250,7 @@ build_compose_files() {
   else COMPOSE_FILES+=(-f "$DEV/docker-compose.postgres.yml"); fi
   if [ "$WANT_UI" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ui.yml"); fi
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
+  if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
   if [ "$PULLED" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.images.yml"); fi
   if [ -f "$LOCAL_OVERRIDE" ]; then COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE"); fi   # per-dev overrides win
 }
@@ -261,6 +267,7 @@ build_service_list() {
   [ "$WANT_OPENFGA" -eq 1 ]  && SERVICES+=(openfga)
   [ "$WANT_KAFKA" -eq 1 ]    && SERVICES+=(kafka)
   [ "$WANT_MTLS" -eq 1 ]     && SERVICES+=(gateway-mtls)
+  [ "$WANT_CLOUD" -eq 1 ]    && SERVICES+=(cockpit-mock)
   if [ "$WANT_SPIRE" -eq 1 ]; then
     SERVICES+=(spire-perms-init spire-server spire-bootstrap spire-agent spire-oidc)
   fi
