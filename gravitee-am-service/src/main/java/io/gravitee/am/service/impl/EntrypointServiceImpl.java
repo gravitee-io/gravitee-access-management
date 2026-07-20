@@ -16,13 +16,20 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
@@ -61,17 +68,20 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final OrganizationService organizationService;
     private final AuditService auditService;
     private final VirtualHostValidator virtualHostValidator;
+    private final EventService eventService;
     private final String gatewayUrl;
 
     public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository,
                                  @Lazy OrganizationService organizationService,
                                  AuditService auditService,
                                  VirtualHostValidator virtualHostValidator,
+                                 EventService eventService,
                                  @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
         this.entrypointRepository = entrypointRepository;
         this.organizationService = organizationService;
         this.auditService = auditService;
         this.virtualHostValidator = virtualHostValidator;
+        this.eventService = eventService;
         this.gatewayUrl = gatewayUrl;
     }
 
@@ -165,7 +175,8 @@ public class EntrypointServiceImpl implements EntrypointService {
                     return validate(toUpdate, oldEntrypoint)
                             .andThen(entrypointRepository.update(toUpdate)
                                     .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).entrypoint(updated).oldValue(oldEntrypoint)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).entrypoint(toUpdate).throwable(throwable))));
+                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).entrypoint(toUpdate).throwable(throwable))))
+                            .flatMap(updated -> publishEntrypointEvent(updated, Action.UPDATE).toSingleDefault(updated));
                 });
     }
 
@@ -179,6 +190,7 @@ public class EntrypointServiceImpl implements EntrypointService {
                         .flatMapCompletable(entrypoint -> entrypointRepository.delete(id))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).entrypoint(e)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).entrypoint(e).type(EventType.ENTRYPOINT_DELETED).throwable(throwable)))
+                        .andThen(publishEntrypointEvent(e, Action.DELETE))
                 );
     }
 
@@ -208,7 +220,18 @@ public class EntrypointServiceImpl implements EntrypointService {
         return validate(toCreate)
                 .andThen(entrypointRepository.create(toCreate)
                         .doOnSuccess(entrypoint -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).entrypoint(entrypoint).principal(principal).type(EventType.ENTRYPOINT_CREATED)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).entrypoint(toCreate).principal(principal).type(EventType.ENTRYPOINT_CREATED).throwable(throwable))));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).entrypoint(toCreate).principal(principal).type(EventType.ENTRYPOINT_CREATED).throwable(throwable))))
+                .flatMap(created -> publishEntrypointEvent(created, Action.CREATE).toSingleDefault(created));
+    }
+
+    private Completable publishEntrypointEvent(Entrypoint entrypoint, Action action) {
+        ReferenceType referenceType = entrypoint.getEnvironmentId() != null ? ReferenceType.ENVIRONMENT : ReferenceType.ORGANIZATION;
+        String referenceId = entrypoint.getEnvironmentId() != null ? entrypoint.getEnvironmentId() : entrypoint.getOrganizationId();
+        Payload payload = new Payload(entrypoint.getId(), referenceType, referenceId, action);
+        // Tag with a data-plane id so the gateway sync (which polls events by data-plane) picks it up.
+        // No environment->data-plane mapping exists; sharded multi-data-plane is out of scope (AM-7226).
+        Event event = new Event(Type.ENTRYPOINT, payload, DataPlaneDescription.DEFAULT_DATA_PLANE_ID, entrypoint.getEnvironmentId());
+        return eventService.create(event).ignoreElement();
     }
 
     private Completable validate(Entrypoint entrypoint) {
