@@ -18,6 +18,7 @@ import { Configuration } from '../../../management/runtime';
 import { managementConf } from './config';
 import { DomainApi } from '@management-apis/DomainApi';
 import { ApplicationApi } from '@management-apis/ApplicationApi';
+import { EntrypointsApi } from '@management-apis/EntrypointsApi';
 import { UserApi } from '@management-apis/UserApi';
 import { RoleApi } from '@management-apis/RoleApi';
 import { GroupApi } from '@management-apis/GroupApi';
@@ -63,6 +64,10 @@ export function getDomainApi(accessToken) {
 
 export function getApplicationApi(accessToken) {
   return new ApplicationApi(createAccessTokenConfig(accessToken));
+}
+
+export function getEntrypointsApi(accessToken) {
+  return new EntrypointsApi(createAccessTokenConfig(accessToken));
 }
 
 export function getProtectedResourcesApi(accessToken) {
