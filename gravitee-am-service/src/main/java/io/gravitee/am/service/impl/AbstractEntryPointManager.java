@@ -139,7 +139,7 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
         Set<String> environmentIds = configured(Node.META_ENVIRONMENTS);
 
         if (organizationIds.isEmpty() && environmentIds.isEmpty()) {
-            return allOrganizationIds().flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)));
+            return allOrganizationIds().flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)), false, 10);
         }
 
         Completable byEnvironment = Flowable.fromIterable(environmentIds).flatMapCompletable(environmentId -> cache(loadEnvironmentEntrypoints(environmentId)));
