@@ -72,15 +72,22 @@ export const setupCloudEntrypointFixture = async (accessToken: string): Promise<
   await waitForDomainReady(domain.id);
 
   const cleanup = async () => {
-    await domainApi.deleteDomain({ organizationId, environmentId, domain: domain.id }).catch(() => {});
+    await domainApi
+      .deleteDomain({ organizationId, environmentId, domain: domain.id })
+      .catch((e) => console.warn(`cleanup: failed to delete domain ${domain.id}: ${e.message}`));
     const entrypoints = await getEntrypointsApi(accessToken)
       .listEntrypoints({ organizationId })
-      .catch(() => [] as any[]);
+      .catch((e) => {
+        console.warn(`cleanup: failed to list entrypoints: ${e.message}`);
+        return [] as any[];
+      });
     await Promise.all(
       entrypoints
         .filter((e: any) => expectedUrls.includes(e.url))
         .map((e: any) =>
-          getEntrypointsApi(accessToken).deleteEntrypoint({ organizationId, entrypointId: e.id }).catch(() => {}),
+          getEntrypointsApi(accessToken)
+            .deleteEntrypoint({ organizationId, entrypointId: e.id })
+            .catch((err) => console.warn(`cleanup: failed to delete entrypoint ${e.id}: ${err.message}`)),
         ),
     );
   };
