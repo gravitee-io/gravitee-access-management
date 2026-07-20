@@ -27,6 +27,7 @@ import io.gravitee.am.management.service.impl.ProtectedResourceSecretManager;
 import io.gravitee.am.management.service.spring.ManagementUpgraderConfiguration;
 import io.gravitee.am.management.service.tasks.TasksLoader;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.service.purge.ScheduledPurgeService;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
@@ -88,6 +89,7 @@ public class ManagementNode extends JettyNode {
         components.add(OrganizationLicenseManager.class);
         components.add(ProtectedResourceSecretManager.class);
         components.add(ScheduledPurgeService.class);
+        components.add(EntryPointManager.class);
         return components;
     }
 }

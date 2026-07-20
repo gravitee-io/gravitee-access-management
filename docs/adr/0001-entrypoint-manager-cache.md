@@ -22,11 +22,17 @@ and in cloud mode recreates an environment's entrypoints on every Cockpit `Envir
 
 ## Decision
 
-- Introduce `EntryPointManager`, an in-memory cache with two indexes (by organization, by
-  environment) exposing `findByOrganizationId` and `findByEnvironmentId`. Entrypoints with no
-  environment are reachable by organization only.
+- Introduce `EntryPointManager`, an in-memory cache exposing `findByOrganizationId` and
+  `findByEnvironmentId`. Entrypoints with no environment are reachable by organization only.
 - Wire it in **both** the MAPI and the Gateway. This ticket is **groundwork**: it delivers the
   manager, cache, refresh and lookups only. **No request-time consumer is rewired.**
+- Shared logic lives in `AbstractEntryPointManager` (an `AbstractService` lifecycle component). The
+  MAPI and gateway contexts expose different beans — the gateway container has the management
+  repositories but not the service layer, the MAPI has the services but the repositories are not
+  directly injectable there — so each plane has a thin subclass supplying data access
+  (`ManagementEntryPointManager` via services, `GatewayEntryPointManager` via repositories).
+- The cache is loaded in `doStart()` (registered in each node's `components()`), not at bean
+  construction, so it runs after the data layer is ready.
 - Load on startup scoped to the configured organizations/environments (read from node metadata,
   the same signal the gateway already uses to decide which domains it serves); load all
   organizations when no scope is configured.

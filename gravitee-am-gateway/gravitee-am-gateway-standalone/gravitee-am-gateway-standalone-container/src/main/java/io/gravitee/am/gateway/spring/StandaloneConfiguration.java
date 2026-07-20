@@ -58,6 +58,12 @@ import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.am.repository.GatewayRepositoryScopeProvider;
+import io.gravitee.am.repository.management.api.EntrypointRepository;
+import io.gravitee.am.repository.management.api.EnvironmentRepository;
+import io.gravitee.am.repository.management.api.OrganizationRepository;
+import io.gravitee.am.gateway.entrypoint.GatewayEntryPointManager;
+import io.gravitee.am.service.EntryPointManager;
+import org.springframework.context.annotation.Lazy;
 import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -129,6 +135,15 @@ public class StandaloneConfiguration {
     @Bean
     public EventManager eventManager() {
         return new EventManagerImpl();
+    }
+
+    @Bean
+    public EntryPointManager entryPointManager(@Lazy EntrypointRepository entrypointRepository,
+                                               @Lazy OrganizationRepository organizationRepository,
+                                               @Lazy EnvironmentRepository environmentRepository,
+                                               EventManager eventManager,
+                                               Node node) {
+        return new GatewayEntryPointManager(entrypointRepository, organizationRepository, environmentRepository, eventManager, node);
     }
 
     @Bean
