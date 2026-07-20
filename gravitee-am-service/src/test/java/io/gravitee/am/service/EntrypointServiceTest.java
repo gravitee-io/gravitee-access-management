@@ -18,6 +18,8 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
@@ -53,6 +55,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,12 +83,16 @@ public class EntrypointServiceTest {
     @Mock
     private VirtualHostValidator virtualHostValidator;
 
+    @Mock
+    private EventService eventService;
+
     private EntrypointService cut;
 
     @Before
     public void before() {
 
-        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, "https://gravitee.io");
+        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io");
+        lenient().when(eventService.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
     }
 
     @Test
@@ -575,5 +582,117 @@ public class EntrypointServiceTest {
         obs.assertError(EntrypointNotFoundException.class);
 
         verify(auditService, times(0)).report(any());
+    }
+
+    @Test
+    public void shouldPublishEntrypointEventOnCreate() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setName("name");
+        newEntrypoint.setDescription("description");
+        newEntrypoint.setTags(Arrays.asList("tag#1"));
+        newEntrypoint.setUrl("https://auth.gravitee.io");
+
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
+        when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.gravitee.io", null);
+
+        cut.create(ORGANIZATION_ID, newEntrypoint, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(eventService, times(1)).create(argThat(event ->
+                event.getType() == Type.ENTRYPOINT
+                        && event.getPayload().getAction() == Action.CREATE
+                        && event.getPayload().getReferenceType() == ReferenceType.ORGANIZATION
+                        && ORGANIZATION_ID.equals(event.getPayload().getReferenceId())
+                        && event.getDataPlaneId() != null));
+    }
+
+    @Test
+    public void shouldPublishEntrypointEventOnCreate_withEnvironment() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setName("name");
+        newEntrypoint.setDescription("description");
+        newEntrypoint.setTags(Arrays.asList("tag#1"));
+        newEntrypoint.setUrl("https://auth.gravitee.io");
+        newEntrypoint.setEnvironmentId("env#1");
+
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
+        when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.gravitee.io", null);
+
+        cut.create(ORGANIZATION_ID, newEntrypoint, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(eventService, times(1)).create(argThat(event ->
+                event.getType() == Type.ENTRYPOINT
+                        && event.getPayload().getAction() == Action.CREATE
+                        && event.getPayload().getReferenceType() == ReferenceType.ENVIRONMENT
+                        && "env#1".equals(event.getPayload().getReferenceId())
+                        && "env#1".equals(event.getEnvironmentId())
+                        && event.getDataPlaneId() != null));
+    }
+
+    @Test
+    public void shouldPublishEntrypointEventOnUpdate() {
+
+        Entrypoint existingEntrypoint = new Entrypoint();
+        existingEntrypoint.setId(ENTRYPOINT_ID);
+        existingEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        UpdateEntrypoint updateEntrypoint = new UpdateEntrypoint();
+        updateEntrypoint.setName("name");
+        updateEntrypoint.setDescription("description");
+        updateEntrypoint.setTags(Arrays.asList("tag#1"));
+        updateEntrypoint.setUrl("https://auth.gravitee.io");
+
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(new Organization()));
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
+        when(entrypointRepository.update(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.gravitee.io", null);
+
+        cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(eventService, times(1)).create(argThat(event ->
+                event.getType() == Type.ENTRYPOINT
+                        && event.getPayload().getAction() == Action.UPDATE
+                        && event.getPayload().getReferenceType() == ReferenceType.ORGANIZATION
+                        && ORGANIZATION_ID.equals(event.getPayload().getReferenceId())
+                        && event.getDataPlaneId() != null));
+    }
+
+    @Test
+    public void shouldPublishEntrypointEventOnDelete() {
+
+        Entrypoint existingEntrypoint = new Entrypoint();
+        existingEntrypoint.setId(ENTRYPOINT_ID);
+        existingEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        existingEntrypoint.setEnvironmentId("env#1");
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+
+        cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(eventService, times(1)).create(argThat(event ->
+                event.getType() == Type.ENTRYPOINT
+                        && event.getPayload().getAction() == Action.DELETE
+                        && event.getPayload().getReferenceType() == ReferenceType.ENVIRONMENT
+                        && "env#1".equals(event.getPayload().getReferenceId())
+                        && "env#1".equals(event.getEnvironmentId())
+                        && event.getDataPlaneId() != null));
     }
 }

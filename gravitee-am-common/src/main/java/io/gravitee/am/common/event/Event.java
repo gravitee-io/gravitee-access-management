@@ -60,6 +60,7 @@ public abstract class Event {
             case DOMAIN_CERTIFICATE_SETTINGS -> DomainCertificateSettingsEvent.actionOf(action);
             case CIMD_METADATA -> CimdMetadataEvent.actionOf(action);
             case LICENSE -> LicenseEvent.actionOf(action);
+            case ENTRYPOINT -> EntrypointEvent.actionOf(action);
             default -> null;
         };
     }
