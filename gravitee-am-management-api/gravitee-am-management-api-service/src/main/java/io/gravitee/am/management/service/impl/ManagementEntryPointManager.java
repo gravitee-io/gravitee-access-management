@@ -23,6 +23,7 @@ import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
+import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.impl.AbstractEntryPointManager;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
@@ -79,6 +80,7 @@ public class ManagementEntryPointManager extends AbstractEntryPointManager {
 
         return organizationId.flatMapMaybe(orgId -> entrypointService.findById(entrypointId, orgId)
                 .toMaybe()
-                .onErrorComplete(EntrypointNotFoundException.class::isInstance));
+                .onErrorComplete(EntrypointNotFoundException.class::isInstance))
+                .onErrorComplete(EnvironmentNotFoundException.class::isInstance);
     }
 }
