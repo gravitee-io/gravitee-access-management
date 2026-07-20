@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,6 +43,13 @@ public class DomainState {
     private volatile Status status = Status.INITIALIZING;
     private volatile JtiCacheStatus jtiCacheStatus;
 
+    /**
+     * Entrypoints the gateway has cached for this domain's environment. Populated on demand when the
+     * domain state is queried (entrypoints are environment-scoped, not per-domain, so they are
+     * resolved from the entrypoint cache rather than tracked through domain sync).
+     */
+    private volatile List<EntrypointRef> entrypoints;
+
     public synchronized DomainState setStatus(Status status) {
         this.status = status;
         return this;
@@ -49,6 +57,11 @@ public class DomainState {
 
     public synchronized DomainState setJtiCacheStatus(JtiCacheStatus jtiCacheStatus) {
         this.jtiCacheStatus = jtiCacheStatus;
+        return this;
+    }
+
+    public synchronized DomainState setEntrypoints(List<EntrypointRef> entrypoints) {
+        this.entrypoints = entrypoints;
         return this;
     }
 
@@ -118,5 +131,16 @@ public class DomainState {
         private long maxSize;
         private double hitRate;
         private double missRate;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    public static class EntrypointRef {
+        private String id;
+        private String name;
+        private String url;
+        private String organizationId;
+        private String environmentId;
     }
 }
