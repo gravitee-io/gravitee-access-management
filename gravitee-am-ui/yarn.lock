@@ -10781,7 +10781,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.6.3"
-    ulid: "npm:3.0.1"
+    ulid: "npm:3.0.2"
     vis-data: "npm:8.0.3"
     vis-network: "npm:10.0.2"
     webpack: "npm:5.99.9"
@@ -17539,12 +17539,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ulid@npm:3.0.1":
-  version: 3.0.1
-  resolution: "ulid@npm:3.0.1"
+"ulid@npm:3.0.2":
+  version: 3.0.2
+  resolution: "ulid@npm:3.0.2"
   bin:
     ulid: dist/cli.js
-  checksum: 10c0/3b3eba4bea0d22fee7a7465d1d239f0bb20f604325a72fdb273085f18a2eeecf4391a967e8446f6d4eaa39f32fabe320a6d87846bd6313aacd2cd294d6d2b858
+  checksum: 10c0/3993499f0cb3f322e46a8da7144b184d9b12d2cc1976dd7eeb35fc2b4e153c547e8963db4d5a320995c481b0e0294289ba8260e0f69dce99ded3c647c33ac574
   languageName: node
   linkType: hard
 
