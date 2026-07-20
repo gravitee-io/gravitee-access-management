@@ -11,6 +11,7 @@
     "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js",
     "ci:management:parallel": "jest --maxWorkers=2 --no-cache --bail --config=api/config/ci.config.js specs/management",
     "ci:gateway": "jest --runInBand --no-cache --bail --config=api/config/ci.config.js specs/gateway",
+    "ci:cloud": "jest --runInBand --no-cache --bail --config=api/config/ci.config.js specs/cloud",
     "ci:gateway:parallel": "jest --maxWorkers=2 --no-cache --bail --config=api/config/ci.config.js specs/gateway",
     "ci:migration": "jest --runInBand --no-cache --bail --config=api/config/ci.config.js specs/migration",
     "migration:seed": "cross-env TS_NODE_PROJECT=tsconfig.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register migration-seeding/bootstrap.ts",

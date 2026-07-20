@@ -21,6 +21,7 @@ module.exports = {
   moduleNameMapper: {
     '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
     '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
+    '@cloud-commands/(.*)': '<rootDir>/api/commands/cloud/$1',
     '@gateway-commands/(.*)': '<rootDir>/api/commands/gateway/$1',
     '@utils-commands/(.*)': '<rootDir>/api/commands/utils/$1',
     '@utils/(.*)': '<rootDir>/api/utils/$1',

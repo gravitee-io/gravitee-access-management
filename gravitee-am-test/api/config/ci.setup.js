@@ -19,6 +19,7 @@ process.env.AM_GATEWAY_URL = process.env.AM_GATEWAY_URL || 'http://localhost:809
 process.env.AM_DOMAIN_DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 process.env.AM_INTERNAL_GATEWAY_URL = 'http://gateway:8092';
 process.env.AM_GATEWAY_NODE_MONITORING_URL = 'http://localhost:18092/_node';
+process.env.AM_COCKPIT_MOCK_URL = 'http://localhost:8085';
 process.env.AM_MONGODB_URI = 'mongodb://mongodb:27017';
 process.env.AM_INTERNAL_MONGODB_URI = 'mongodb://mongodb:27017';
 process.env.AM_POSTGRES_HOST = 'postgres';

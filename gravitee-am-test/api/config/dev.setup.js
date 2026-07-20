@@ -21,6 +21,7 @@ process.env.AM_INTERNAL_GATEWAY_URL = 'http://localhost:8092';
 process.env.AM_MONGODB_URI = 'mongodb://localhost:27017';
 process.env.AM_POSTGRES_HOST = 'localhost';
 process.env.AM_GATEWAY_NODE_MONITORING_URL = 'http://localhost:18092/_node';
+process.env.AM_COCKPIT_MOCK_URL = 'http://localhost:8085';
 process.env.AM_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
 process.env.AM_INTERNAL_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
 process.env.AM_OPENFGA_URL = 'http://localhost:8090';

@@ -22,6 +22,14 @@ export interface PluginStatus {
   lastSync: number;
 }
 
+export interface EntrypointRef {
+  id: string;
+  name: string;
+  url: string;
+  organizationId: string;
+  environmentId: string;
+}
+
 export interface DomainState {
   lastSync: number;
   syncState: Record<string, boolean>;
@@ -29,4 +37,5 @@ export interface DomainState {
   status: string;
   stable: boolean;
   synchronized: boolean;
+  entrypoints?: EntrypointRef[];
 }
