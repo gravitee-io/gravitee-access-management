@@ -5,6 +5,7 @@ target/
 *.iml
 .DS_Store
 .tmp/
+.scratch/
 
 # eclipse
 .settings/
