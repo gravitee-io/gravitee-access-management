@@ -14190,6 +14190,8 @@ components:
           type: boolean
         description:
           type: string
+        environmentId:
+          type: string
         id:
           type: string
         name:
@@ -15176,6 +15178,8 @@ components:
       type: object
       properties:
         description:
+          type: string
+        environmentId:
           type: string
         name:
           type: string
