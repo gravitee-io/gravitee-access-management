@@ -112,7 +112,8 @@ export class DomainsComponent implements OnInit {
         ? pagedDomains.data.filter((domain) => domain.name.toLowerCase().includes(this.searchValue.toLowerCase()))
         : pagedDomains.data;
       this.page.totalElements = domains.length;
-      this.domains = domains;
+      const start = this.page.pageNumber * this.page.size;
+      this.domains = domains.slice(start, start + this.page.size);
     });
   }
 
