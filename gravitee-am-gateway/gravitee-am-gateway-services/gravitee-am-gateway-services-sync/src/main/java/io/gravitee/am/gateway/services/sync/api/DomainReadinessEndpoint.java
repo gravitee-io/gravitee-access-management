@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.gateway.services.sync.api;
 
+import io.gravitee.am.gateway.reactor.SecurityDomainManager;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.DomainState;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -25,6 +30,7 @@ import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import io.gravitee.node.management.http.endpoint.ManagementEndpoint;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -37,6 +43,13 @@ public class DomainReadinessEndpoint implements ManagementEndpoint, Probe {
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Lazy
+    @Autowired
+    private EntryPointManager entryPointManager;
+
+    @Autowired
+    private SecurityDomainManager securityDomainManager;
 
     @Override
     public String id() {
@@ -82,6 +95,8 @@ public class DomainReadinessEndpoint implements ManagementEndpoint, Probe {
             return;
         }
 
+        enrichWithEntrypoints(domainId, details);
+
         if (details.isSynchronized() && details.isStable()) {
             context.response().setStatusCode(HttpStatusCode.OK_200);
             if (isOutputJson) {
@@ -99,6 +114,27 @@ public class DomainReadinessEndpoint implements ManagementEndpoint, Probe {
                     .putHeader("content-type", MediaType.APPLICATION_JSON)
                     .end(Json.encode(details));
         }
+    }
+
+    /**
+     * Attach the entrypoints the gateway has cached for this domain's environment. Entrypoints are
+     * environment-scoped rather than per-domain, so we resolve the domain's environment from the
+     * deployed domain registry and read that environment's entrypoints from the in-memory cache.
+     */
+    private void enrichWithEntrypoints(String domainId, DomainState details) {
+        Domain domain = securityDomainManager.get(domainId);
+        if (domain == null || domain.getReferenceType() != ReferenceType.ENVIRONMENT) {
+            return;
+        }
+        details.setEntrypoints(entryPointManager.findByEnvironmentId(domain.getReferenceId()).stream()
+                .map(entrypoint -> DomainState.EntrypointRef.builder()
+                        .id(entrypoint.getId())
+                        .name(entrypoint.getName())
+                        .url(entrypoint.getUrl())
+                        .organizationId(entrypoint.getOrganizationId())
+                        .environmentId(entrypoint.getEnvironmentId())
+                        .build())
+                .toList());
     }
 
     private void fetchAllDomainStates(RoutingContext context, boolean isOutputJson) {
