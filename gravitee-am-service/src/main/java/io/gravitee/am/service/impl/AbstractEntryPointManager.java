@@ -142,8 +142,8 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
             return allOrganizationIds().flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)), false, 10);
         }
 
-        Completable byEnvironment = Flowable.fromIterable(environmentIds).flatMapCompletable(environmentId -> cache(loadEnvironmentEntrypoints(environmentId)));
-        Completable byOrganization = Flowable.fromIterable(organizationIds).flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)));
+        Completable byEnvironment = Flowable.fromIterable(environmentIds).flatMapCompletable(environmentId -> cache(loadEnvironmentEntrypoints(environmentId)), false, 10);
+        Completable byOrganization = Flowable.fromIterable(organizationIds).flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)), false, 10);
         return Completable.mergeArray(byEnvironment, byOrganization);
     }
 

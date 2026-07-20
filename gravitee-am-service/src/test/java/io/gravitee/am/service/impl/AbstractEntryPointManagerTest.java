@@ -186,6 +186,31 @@ public class AbstractEntryPointManagerTest {
     }
 
     @Test
+    public void shouldRemoveEntrypointOnUpdateWhenNoLongerResolvable() {
+        when(node.metadata()).thenReturn(Map.of());
+        Entrypoint entrypoint = entrypoint("e1", "org#1", "env#1");
+        when(entrypointRepository.findById("e1")).thenReturn(Maybe.just(entrypoint), Maybe.empty());
+
+        cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
+        assertEquals(1, cut.findByEnvironmentId("env#1").size());
+
+        cut.onEvent(event(EntrypointEvent.UPDATE, "e1"));
+        assertTrue(cut.findByEnvironmentId("env#1").isEmpty());
+    }
+
+    @Test
+    public void shouldKeepCachedEntrypointWhenReloadFails() {
+        when(node.metadata()).thenReturn(Map.of());
+        Entrypoint entrypoint = entrypoint("e1", "org#1", "env#1");
+        when(entrypointRepository.findById("e1")).thenReturn(Maybe.just(entrypoint), Maybe.error(new RuntimeException("database unavailable")));
+
+        cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
+        cut.onEvent(event(EntrypointEvent.UPDATE, "e1"));
+
+        assertEquals(List.of(entrypoint), cut.findByEnvironmentId("env#1"));
+    }
+
+    @Test
     public void shouldIgnoreOutOfScopeEntrypointOnEvent() {
         when(node.metadata()).thenReturn(Map.of(Node.META_ENVIRONMENTS, Set.of("env#1")));
         Entrypoint outOfScope = entrypoint("e2", "org#9", "env#9");
