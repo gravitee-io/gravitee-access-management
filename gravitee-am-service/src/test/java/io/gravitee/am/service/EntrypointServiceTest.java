@@ -124,6 +124,83 @@ public class EntrypointServiceTest {
     }
 
     @Test
+    public void shouldFindByEnvironment() {
+
+        Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+        entrypoint.setEnvironmentId("env#1");
+        when(entrypointRepository.findByEnvironment(ORGANIZATION_ID, "env#1")).thenReturn(Flowable.just(entrypoint));
+
+        TestSubscriber<Entrypoint> obs = cut.findByEnvironment(ORGANIZATION_ID, "env#1").test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(entrypoint);
+    }
+
+    @Test
+    public void shouldCreateWithEnvironmentId() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setName("name");
+        newEntrypoint.setDescription("description");
+        newEntrypoint.setTags(Arrays.asList("tag#1", "tags#2"));
+        newEntrypoint.setUrl("https://auth.gravitee.io");
+        newEntrypoint.setEnvironmentId("env#1");
+
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
+        when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.gravitee.io", null);
+
+        TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(entrypoint -> entrypoint.getId() != null
+                && entrypoint.getOrganizationId().equals(ORGANIZATION_ID)
+                && "env#1".equals(entrypoint.getEnvironmentId()));
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(new ObjectMapper());
+            assertEquals(EventType.ENTRYPOINT_CREATED, audit.getType());
+            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+            assertEquals("system", audit.getActor().getId());
+
+            return true;
+        }));
+    }
+
+    @Test
+    public void shouldDeleteWithNullPrincipal() {
+
+        Entrypoint existingEntrypoint = new Entrypoint();
+        existingEntrypoint.setId(ENTRYPOINT_ID);
+        existingEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        existingEntrypoint.setEnvironmentId("env#1");
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+
+        TestObserver<Void> obs = cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(new ObjectMapper());
+            assertEquals(EventType.ENTRYPOINT_DELETED, audit.getType());
+            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+            assertEquals("system", audit.getActor().getId());
+
+            return true;
+        }));
+    }
+
+    @Test
     public void shouldCreateDefaults() {
 
         Organization organization = new Organization();

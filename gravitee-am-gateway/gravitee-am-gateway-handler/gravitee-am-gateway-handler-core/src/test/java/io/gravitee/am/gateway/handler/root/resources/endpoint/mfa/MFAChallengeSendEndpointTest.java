@@ -34,7 +34,6 @@ import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
@@ -48,6 +47,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -93,22 +93,17 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
         when(domainDataPlane.getDomain()).thenReturn(domain);
     }
 
-    private void awaitResponseEnd(SpyRoutingContext spyRoutingContext) {
-        Completable completable = spyRoutingContext.ended()
-                ? Completable.complete()
-                : Completable.create(emitter -> spyRoutingContext.response().endHandler(v -> {
-                    if (!emitter.isDisposed()) {
-                        emitter.onComplete();
-                    }
-                }));
-        TestObserver<Void> testObserver = completable.test();
-        testObserver.awaitDone(20, TimeUnit.SECONDS);
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+    // Register the end handler before handle() so the response completion signal can't be missed,
+    // even when the endpoint ends the response on a Schedulers.io() thread.
+    private void handleAndAwaitEnd(SpyRoutingContext spyRoutingContext) throws InterruptedException {
+        CountDownLatch responseEnded = new CountDownLatch(1);
+        spyRoutingContext.response().endHandler(v -> responseEnded.countDown());
+        mfaChallengeSendEndpoint.handle(spyRoutingContext);
+        Assert.assertTrue("response did not end within 20s", responseEnded.await(20, TimeUnit.SECONDS));
     }
 
     @Test
-    public void shouldResendCode_andReturnJsonSuccess() {
+    public void shouldResendCode_andReturnJsonSuccess() throws Exception {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
@@ -132,8 +127,7 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         spyRoutingContext.put(CONTEXT_PATH, "");
 
-        mfaChallengeSendEndpoint.handle(spyRoutingContext);
-        awaitResponseEnd(spyRoutingContext);
+        handleAndAwaitEnd(spyRoutingContext);
 
         verify(factorProvider, times(1)).sendChallenge(any());
         Assert.assertEquals("factorId", spyRoutingContext.session().get(ConstantKeys.MFA_CHALLENGE_SENT_FACTOR_ID_KEY));
@@ -142,7 +136,7 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldReturnJsonError_whenFactorDoesNotNeedChallengeSending() {
+    public void shouldReturnJsonError_whenFactorDoesNotNeedChallengeSending() throws Exception {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(false);
         Factor factor = mock(Factor.class);
@@ -159,8 +153,7 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
                 new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
-        mfaChallengeSendEndpoint.handle(spyRoutingContext);
-        awaitResponseEnd(spyRoutingContext);
+        handleAndAwaitEnd(spyRoutingContext);
 
         Assert.assertEquals(HttpStatusCode.BAD_REQUEST_400, spyRoutingContext.response().getStatusCode());
         Assert.assertEquals(MediaType.APPLICATION_JSON, spyRoutingContext.response().headers().get("Content-Type"));

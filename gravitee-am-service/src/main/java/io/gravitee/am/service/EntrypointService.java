@@ -34,6 +34,8 @@ public interface EntrypointService {
 
     Flowable<Entrypoint> findAll(String organizationId);
 
+    Flowable<Entrypoint> findByEnvironment(String organizationId, String environmentId);
+
     Single<Entrypoint> create(String organizationId, NewEntrypoint entrypoint, User principal);
 
     Flowable<Entrypoint> createDefaults(Organization organization);

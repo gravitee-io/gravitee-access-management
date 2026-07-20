@@ -33,6 +33,7 @@ public class Entrypoint {
     private String url;
     private List<String> tags;
     private String organizationId;
+    private String environmentId;
     private boolean defaultEntrypoint;
     @Schema(type = "java.lang.Long")
     private Date createdAt;
@@ -48,6 +49,7 @@ public class Entrypoint {
         this.url = other.url;
         this.tags = other.tags;
         this.organizationId = other.organizationId;
+        this.environmentId = other.environmentId;
         this.defaultEntrypoint = other.defaultEntrypoint;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
@@ -147,5 +149,13 @@ public class Entrypoint {
 
     public void setDefaultEntrypoint(boolean defaultEntrypoint) {
         this.defaultEntrypoint = defaultEntrypoint;
+    }
+
+    public String getEnvironmentId() {
+        return environmentId;
+    }
+
+    public void setEnvironmentId(String environmentId) {
+        this.environmentId = environmentId;
     }
 }

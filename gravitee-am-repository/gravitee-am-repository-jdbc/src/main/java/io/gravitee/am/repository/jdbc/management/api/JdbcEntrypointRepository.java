@@ -82,6 +82,16 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Flowable<Entrypoint> findByEnvironment(String organizationId, String environmentId) {
+        LOGGER.debug("findByEnvironment({}, {})", organizationId, environmentId);
+
+        return entrypointRepository.findByEnvironment(organizationId, environmentId).map(this::toEntity)
+                .flatMap(entrypoint -> completeTags(entrypoint).toFlowable())
+                .doOnError(error -> LOGGER.error("Unable to list entrypoints with organization {} and environment {}", organizationId, environmentId, error))
+                .observeOn(Schedulers.computation());
+    }
+
     private Single<Entrypoint> completeTags(Entrypoint entrypoint) {
         return tagRepository.findAllByEntrypoint(entrypoint.getId())
                 .map(JdbcEntrypoint.Tag::getTag).toList().map(tags -> {

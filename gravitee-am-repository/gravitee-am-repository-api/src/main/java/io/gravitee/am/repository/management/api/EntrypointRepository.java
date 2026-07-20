@@ -29,4 +29,6 @@ public interface EntrypointRepository extends CrudRepository<Entrypoint, String>
     Maybe<Entrypoint> findById(String id, String organizationId);
 
     Flowable<Entrypoint> findAll(String organizationId);
+
+    Flowable<Entrypoint> findByEnvironment(String organizationId, String environmentId);
 }

@@ -34,6 +34,8 @@ public class JdbcEntrypoint {
     private String url;
     @Column("organization_id")
     private String organizationId;
+    @Column("environment_id")
+    private String environmentId;
     @Column("default_entrypoint")
     private boolean defaultEntrypoint;
     @Column("created_at")
@@ -87,6 +89,14 @@ public class JdbcEntrypoint {
 
     public void setDefaultEntrypoint(boolean defaultEntrypoint) {
         this.defaultEntrypoint = defaultEntrypoint;
+    }
+
+    public String getEnvironmentId() {
+        return environmentId;
+    }
+
+    public void setEnvironmentId(String environmentId) {
+        this.environmentId = environmentId;
     }
 
     public LocalDateTime getCreatedAt() {
