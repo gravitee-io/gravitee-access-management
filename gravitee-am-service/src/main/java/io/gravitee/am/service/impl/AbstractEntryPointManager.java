@@ -83,6 +83,7 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
 
         logger.info("Initializing entrypoints cache");
         loadEntrypoints().blockingAwait();
+        logger.debug("Entrypoints cache initialized with {} entrypoint(s)", entrypoints.size());
     }
 
     @Override
@@ -111,8 +112,8 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
         String entrypointId = payload.getId();
         switch (event.type()) {
             case UNDEPLOY -> {
-                logger.debug("Undeploy entrypoint {}", entrypointId);
                 entrypoints.remove(entrypointId);
+                logger.debug("Entrypoint {} undeployed - cache now holds {} entrypoint(s)", entrypointId, entrypoints.size());
             }
             case DEPLOY, UPDATE -> reload(entrypointId, payload.getReferenceType(), payload.getReferenceId());
         }
@@ -123,8 +124,10 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
                 entrypoint -> {
                     if (isInScope(entrypoint)) {
                         entrypoints.put(entrypointId, entrypoint);
+                        logger.debug("Entrypoint {} cached - cache now holds {} entrypoint(s)", entrypointId, entrypoints.size());
                     } else {
                         entrypoints.remove(entrypointId);
+                        logger.debug("Entrypoint {} is out of scope for this instance", entrypointId);
                     }
                 },
                 error -> logger.error("Unable to reload entrypoint {}", entrypointId, error),
