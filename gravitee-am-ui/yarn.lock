@@ -5052,7 +5052,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfga/syntax-transformer@npm:0.2.0, @openfga/syntax-transformer@npm:^0.2.0-beta.21":
+"@openfga/syntax-transformer@npm:0.2.2":
+  version: 0.2.2
+  resolution: "@openfga/syntax-transformer@npm:0.2.2"
+  dependencies:
+    ajv: "npm:^8.18.0"
+    antlr4: "npm:^4.13.2"
+    yaml: "npm:^2.8.2"
+  checksum: 10c0/2a6d81d5788f3a6072bb0ddb07a94b35190d0570d99bda80aa670a19e01ff69741554c6f457a46960da0624a42fd210b88e68f8bcb6a5999d51256657bd67648
+  languageName: node
+  linkType: hard
+
+"@openfga/syntax-transformer@npm:^0.2.0-beta.21":
   version: 0.2.0
   resolution: "@openfga/syntax-transformer@npm:0.2.0"
   dependencies:
@@ -6893,6 +6904,18 @@ __metadata:
   linkType: hard
 
 "ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.17.1, ajv@npm:^8.9.0":
+  version: 8.20.0
+  resolution: "ajv@npm:8.20.0"
+  dependencies:
+    fast-deep-equal: "npm:^3.1.3"
+    fast-uri: "npm:^3.0.1"
+    json-schema-traverse: "npm:^1.0.0"
+    require-from-string: "npm:^2.0.2"
+  checksum: 10c0/5df9a1c8f83863cde1bd3a9ddb426f599718f88e3dc9153616c79fb28e0be455335830d7f21d745576519f057b371352daa31047b6a33d7036fe08777d60cf2a
+  languageName: node
+  linkType: hard
+
+"ajv@npm:^8.18.0":
   version: 8.20.0
   resolution: "ajv@npm:8.20.0"
   dependencies:
@@ -10736,7 +10759,7 @@ __metadata:
     "@ngx-formly/material": "npm:6.3.12"
     "@openfga/frontend-utils": "npm:0.2.0-beta.11"
     "@openfga/sdk": "npm:0.2.10"
-    "@openfga/syntax-transformer": "npm:0.2.0"
+    "@openfga/syntax-transformer": "npm:0.2.2"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
     "@types/json-schema": "npm:7.0.15"
@@ -18468,6 +18491,15 @@ __metadata:
   linkType: hard
 
 "yaml@npm:^2.8.0":
+  version: 2.9.0
+  resolution: "yaml@npm:2.9.0"
+  bin:
+    yaml: bin.mjs
+  checksum: 10c0/f340718df45e97a9551b9bf9dac61c80050bc464513b710debfb5067c380c8472e3b67809cffacb4ab5ffb5e66ef9310816c88b05f371cec60abfedd8c88e0a2
+  languageName: node
+  linkType: hard
+
+"yaml@npm:^2.8.2":
   version: 2.9.0
   resolution: "yaml@npm:2.9.0"
   bin:
