@@ -207,7 +207,9 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                         response.setExpiresIn(expiresIn);
 
                         // specify rate limit for Poll and Ping mode
-                        if (client.getBackchannelTokenDeliveryMode()!= null && !client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.PUSH)) {
+                        // currently AM support only PULL mode by default,
+                        // consider null value for the Mode as PULL
+                        if (client.getBackchannelTokenDeliveryMode() == null || !client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.PUSH)) {
                             response.setInterval(domain.getOidc().getCibaSettings().getTokenReqInterval());
                         }
 

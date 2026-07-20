@@ -23,6 +23,8 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class CibaClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CibaClient.class);
@@ -82,7 +84,7 @@ public class CibaClient {
             if (authReqId == null || authReqId.isBlank()) {
                 throw new IllegalStateException("CIBA federation: back-channel authorization response omitted auth_req_id");
             }
-            return new BcAuthorizeResult(authReqId, body.getInteger("expires_in", 120), body.getInteger("interval", 5));
+            return new BcAuthorizeResult(authReqId, Optional.ofNullable(body.getInteger("expires_in")).orElse(120),  Optional.ofNullable(body.getInteger("interval")).orElse(5));
         });
     }
 
