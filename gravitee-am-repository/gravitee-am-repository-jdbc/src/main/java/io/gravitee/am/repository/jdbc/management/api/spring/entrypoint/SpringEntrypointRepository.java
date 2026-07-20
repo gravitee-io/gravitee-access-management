@@ -34,4 +34,7 @@ public interface SpringEntrypointRepository extends RxJava3CrudRepository<JdbcEn
 
     @Query("select * from entrypoints e where e.organization_id = :org")
     Flowable<JdbcEntrypoint> findAllByOrganization(@Param("org") String organizationId);
+
+    @Query("select * from entrypoints e where e.organization_id = :org and e.environment_id = :env")
+    Flowable<JdbcEntrypoint> findByEnvironment(@Param("org") String organizationId, @Param("env") String environmentId);
 }

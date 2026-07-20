@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.management.service.impl.commands;
 
+import io.gravitee.am.common.env.CloudProperties;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
@@ -23,11 +26,14 @@ import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommand;
 import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommandPayload;
 import io.gravitee.cockpit.api.command.v1.environment.EnvironmentReply;
 import io.gravitee.exchange.api.command.CommandHandler;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +47,8 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
 
 
     private final EnvironmentService environmentService;
+    private final EntrypointService entrypointService;
+    private final Environment environment;
 
     @Override
     public String supportType() {
@@ -55,7 +63,7 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         newEnvironment.setHrids(environmentPayload.hrids());
         newEnvironment.setName(environmentPayload.name());
         newEnvironment.setDescription(environmentPayload.description());
-        if (environmentPayload.accessPoints() != null) {
+        if (environmentPayload.accessPoints() != null && !CloudProperties.isManagedCloudEnabled(environment)) {
             newEnvironment.setDomainRestrictions(environmentPayload.accessPoints()
                     .stream()
                     .filter(accessPoint -> accessPoint.getTarget() == AccessPoint.Target.GATEWAY)
@@ -64,9 +72,40 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         }
 
         return environmentService.createOrUpdate(environmentPayload.organizationId(), environmentPayload.id(), newEnvironment, null)
+                .flatMap(env -> syncEntrypoints(environmentPayload).andThen(Single.just(env)))
                 .map(organization -> new EnvironmentReply(command.getId()))
                 .doOnSuccess(reply -> log.info("Environment [{}] handled with id [{}].", environmentPayload.name(), environmentPayload.id()))
                 .doOnError(error -> log.error("Error occurred when handling environment [{}] with id [{}].", environmentPayload.name(), environmentPayload.id(), error))
                 .onErrorReturn(throwable -> new EnvironmentReply(command.getId(), throwable.getMessage()));
+    }
+
+    private Completable syncEntrypoints(EnvironmentCommandPayload environmentPayload) {
+        if (!CloudProperties.isManagedCloudEnabled(environment)) {
+            return Completable.complete();
+        }
+
+        String organizationId = environmentPayload.organizationId();
+        String environmentId = environmentPayload.id();
+
+        List<AccessPoint> gatewayAccessPoints = environmentPayload.accessPoints() == null
+                ? List.of()
+                : environmentPayload.accessPoints().stream()
+                        .filter(accessPoint -> accessPoint.getTarget() == AccessPoint.Target.GATEWAY)
+                        .collect(Collectors.toList());
+
+        return entrypointService.findByEnvironment(organizationId, environmentId)
+                .flatMapCompletable(entrypoint -> entrypointService.delete(entrypoint.getId(), organizationId, null))
+                .andThen(Completable.defer(() -> Completable.merge(gatewayAccessPoints.stream()
+                        .map(accessPoint -> createEntrypoint(organizationId, environmentId, accessPoint))
+                        .collect(Collectors.toList()))));
+    }
+
+    private Completable createEntrypoint(String organizationId, String environmentId, AccessPoint accessPoint) {
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setUrl("https://" + accessPoint.getHost());
+        newEntrypoint.setName(accessPoint.getHost());
+        newEntrypoint.setEnvironmentId(environmentId);
+
+        return entrypointService.create(organizationId, newEntrypoint, null).ignoreElement();
     }
 }

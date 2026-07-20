@@ -68,7 +68,13 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
 
     @Override
     public Flowable<Entrypoint> findAll(String organizationId) {
-        return Flowable.fromPublisher(withMaxTime(collection.find(eq("organizationId", organizationId)))).map(this::convert)
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_ORGANIZATION_ID, organizationId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<Entrypoint> findByEnvironment(String organizationId, String environmentId) {
+        return Flowable.fromPublisher(withMaxTime(collection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq("environmentId", environmentId))))).map(this::convert)
                 .observeOn(Schedulers.computation());
     }
 
@@ -105,6 +111,7 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
         entrypoint.setUrl(entrypointMongo.getUrl());
         entrypoint.setTags(entrypointMongo.getTags());
         entrypoint.setOrganizationId(entrypointMongo.getOrganizationId());
+        entrypoint.setEnvironmentId(entrypointMongo.getEnvironmentId());
         entrypoint.setDefaultEntrypoint(entrypointMongo.isDefaultEntrypoint());
         entrypoint.setCreatedAt(entrypointMongo.getCreatedAt());
         entrypoint.setUpdatedAt(entrypointMongo.getUpdatedAt());
@@ -124,6 +131,7 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
         entrypointMongo.setUrl(entrypoint.getUrl());
         entrypointMongo.setTags(entrypoint.getTags());
         entrypointMongo.setOrganizationId(entrypoint.getOrganizationId());
+        entrypointMongo.setEnvironmentId(entrypoint.getEnvironmentId());
         entrypointMongo.setDefaultEntrypoint(entrypoint.isDefaultEntrypoint());
         entrypointMongo.setCreatedAt(entrypoint.getCreatedAt());
         entrypointMongo.setUpdatedAt(entrypoint.getUpdatedAt());

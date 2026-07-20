@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.13.0-alpha.3
+  version: 4.13.0-alpha.4
 servers:
 - url: /management
 security:
@@ -14190,6 +14190,8 @@ components:
           type: boolean
         description:
           type: string
+        environmentId:
+          type: string
         id:
           type: string
         name:
@@ -15176,6 +15178,8 @@ components:
       type: object
       properties:
         description:
+          type: string
+        environmentId:
           type: string
         name:
           type: string
