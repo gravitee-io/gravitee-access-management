@@ -25,6 +25,31 @@
 .currentDomain {
   background: rgb(240 241 248 / 30%) !important;
   color: #fff !important;
+
+  // pin the layout order so the caret always trails the name and the default star always leads,
+  // regardless of how MDC lays out the projected button content
+  &__default {
+    width: 16px;
+    height: 16px;
+    order: -1;
+    margin-right: 4px;
+    margin-left: -4px;
+    color: #ffca28;
+    font-size: 16px;
+  }
+
+  &__caret {
+    // Material's default .mat-mdc-button > .mat-icon margins assume a leading icon
+    // (margin-left: -4px), which pulls the trailing chevron into the name — override both
+    width: 18px;
+    height: 18px;
+    align-self: center;
+    order: 1;
+    margin-right: -4px !important;
+    margin-left: 4px !important;
+    font-size: 18px;
+    line-height: 18px;
+  }
 }
 
 .notifications-menu {
@@ -68,49 +93,239 @@
 }
 
 .userAccount {
-  width: 380px;
+  width: 340px;
 
-  .userAccountInfo {
-    h3 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: normal;
+  .userAccountProfile {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+
+    .userAccountInfo {
+      min-width: 0;
+      flex: 1;
+
+      h3 {
+        overflow: hidden;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      small {
+        color: rgb(0 0 0 / 54%);
+      }
     }
 
-    small {
+    &__signout {
+      flex: none;
       color: rgb(0 0 0 / 54%);
     }
   }
 
   .userAccountActions {
-    border-top: 1px solid rgb(226 229 231);
-
     &.domains_menu-item {
       flex-direction: column;
       align-items: stretch;
       pointer-events: none;
+
+      // this wrapper is a single mat-menu-item spanning the whole list; suppress its own
+      // hover/focus state-layer so hovering one row doesn't grey the entire container
+      &:hover,
+      &.cdk-program-focused,
+      &.cdk-keyboard-focused,
+      &.mat-mdc-menu-item-highlighted {
+        background-color: transparent;
+      }
     }
 
     .domains_list {
+      padding-top: 0;
+
+      // MDC renders an icon+meta list row at 56px with a 32px icon gap; tighten both for a compact menu
+      ::ng-deep .mat-mdc-list-item.mdc-list-item--with-leading-icon.mdc-list-item--with-one-line {
+        height: 40px;
+      }
+
+      ::ng-deep .mdc-list-item--with-leading-icon .mdc-list-item__start {
+        margin-right: 16px;
+      }
+
+      &__search {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        border-top: 1px solid rgb(0 0 0 / 8%);
+        border-bottom: 1px solid rgb(0 0 0 / 8%);
+        color: rgb(0 0 0 / 45%);
+        gap: 10px;
+        pointer-events: initial;
+
+        input {
+          min-width: 0;
+          flex: 1;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: rgb(0 0 0 / 87%);
+          font: inherit;
+
+          &::placeholder {
+            color: rgb(0 0 0 / 45%);
+          }
+
+          &:focus {
+            outline: none;
+          }
+        }
+      }
+
+      &__label {
+        margin: 12px 16px 2px;
+        color: rgb(0 0 0 / 45%);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
       &__item {
         cursor: pointer;
         pointer-events: initial;
 
         &__name {
+          overflow: hidden;
+          font-weight: 400;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        &.domain-disabled {
-          h4 {
-            color: orange;
+        // amber status dot pinned to the domain icon of a disabled domain
+        &__icon--disabled {
+          position: relative;
+          overflow: visible;
+
+          &::after {
+            position: absolute;
+            right: -1px;
+            bottom: 1px;
+            width: 8px;
+            height: 8px;
+            border: 1.5px solid #fff;
+            border-radius: 50%;
+            background: #e0a53a;
+            content: '';
+          }
+        }
+
+        &__meta {
+          display: flex;
+          align-items: center;
+        }
+
+        &__status {
+          display: flex;
+          align-items: center;
+          padding-right: 4px;
+          gap: 6px;
+        }
+
+        &__status-label {
+          color: rgb(0 0 0 / 45%);
+          font-size: 12px;
+        }
+
+        &__flag {
+          width: 18px;
+          height: 18px;
+          font-size: 18px;
+
+          &--default {
+            color: #d99a17;
+          }
+        }
+
+        // pin + default toggles stay hidden until the row is hovered or focused
+        &__controls {
+          display: none;
+          align-items: center;
+          gap: 2px;
+
+          button[mat-icon-button] {
+            --mdc-icon-button-state-layer-size: 32px;
+
+            width: 32px;
+            height: 32px;
+            padding: 4px;
+          }
+
+          mat-icon {
+            width: 18px;
+            height: 18px;
+            font-size: 18px;
+          }
+        }
+
+        // the domain you are currently in: highlighted, with pin/default always reachable
+        &--current {
+          background: rgb(18 129 110 / 6%);
+
+          .domains_list__item__name {
+            font-weight: 500;
+          }
+
+          // the always-visible control star already conveys the default state
+          .domains_list__item__flag--default {
+            display: none;
+          }
+
+          .domains_list__item__controls {
+            display: flex;
+          }
+        }
+
+        &:hover,
+        &:focus-within {
+          .domains_list__item__status {
+            display: none;
+          }
+
+          .domains_list__item__controls {
+            display: flex;
           }
         }
       }
-    }
 
-    &.first {
-      background-color: #f5f5f5;
+      &__empty {
+        padding: 8px 16px 12px;
+        margin: 0;
+        color: rgb(0 0 0 / 54%);
+        font-size: 13px;
+        pointer-events: initial;
+      }
+    }
+  }
+
+  .userAccountFooter {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgb(226 229 231);
+
+    &__link {
+      // mat-menu-item defaults to width:100%, which breaks flex sizing in a row
+      width: auto;
+      color: rgb(0 0 0 / 78%);
+
+      // "All domains" fills the row; "New" shrinks to its content on the right
+      &:first-child {
+        flex: 1 1 auto;
+      }
+
+      &:last-child {
+        flex: 0 0 auto;
+      }
     }
   }
 }

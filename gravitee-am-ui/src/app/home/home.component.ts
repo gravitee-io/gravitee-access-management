@@ -21,6 +21,7 @@ import { DomainService } from '../services/domain.service';
 import { AuthService } from '../services/auth.service';
 import { NavbarService } from '../components/navbar/navbar.service';
 import { EnvironmentService } from '../services/environment.service';
+import { UserPreferencesService } from '../services/user-preferences.service';
 
 @Component({
   selector: 'app-home',
@@ -41,6 +42,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private navbarService: NavbarService,
     private environmentService: EnvironmentService,
+    private userPreferencesService: UserPreferencesService,
   ) {}
 
   ngOnInit() {
@@ -56,7 +58,16 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   initDomain(environment: any) {
     if (this.hasCurrentEnvironment()) {
-      this.router.navigate(['environments', environment.hrids[0]], { relativeTo: this.route });
+      const defaultDomainId = this.userPreferencesService.consumeDefaultDomainRedirect();
+      if (defaultDomainId) {
+        // land on the user's default domain; fall back to the environment page if it's gone or inaccessible
+        this.domainService.getByIdSilently(defaultDomainId).subscribe({
+          next: (domain) => this.router.navigate(['environments', environment.hrids[0], 'domains', domain.id], { relativeTo: this.route }),
+          error: () => this.router.navigate(['environments', environment.hrids[0]], { relativeTo: this.route }),
+        });
+      } else {
+        this.router.navigate(['environments', environment.hrids[0]], { relativeTo: this.route });
+      }
     } else {
       this.isLoading = false;
     }
