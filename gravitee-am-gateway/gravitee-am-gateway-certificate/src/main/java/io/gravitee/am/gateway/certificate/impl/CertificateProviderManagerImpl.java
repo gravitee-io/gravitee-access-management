@@ -24,14 +24,13 @@ import io.gravitee.am.jwt.NoJWTParser;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.Key;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -81,15 +80,17 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
             io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
             certificateProvider.setKeyId(providerKey.getKeyId());
             Object keyValue = providerKey.getValue();
-            if (keyValue instanceof KeyPair) {
-                PrivateKey privateKey = ((KeyPair) keyValue).getPrivate();
-                PublicKey publicKey = ((KeyPair) keyValue).getPublic();
-                certificateProvider.setJwtBuilder(provider.jwtBuilder().orElse(new DefaultJWTBuilder(privateKey, provider.signatureAlgorithm(), providerKey.getKeyId())));
-                certificateProvider.setJwtParser(provider.jwtParser().orElse(new DefaultJWTParser(publicKey)));
-            } else {
-                Key sharedKey = (Key) keyValue;
-                certificateProvider.setJwtBuilder(provider.jwtBuilder().orElse(new DefaultJWTBuilder(sharedKey, provider.signatureAlgorithm(), providerKey.getKeyId())));
-                certificateProvider.setJwtParser(provider.jwtParser().orElse(new DefaultJWTParser(sharedKey)));
+            switch (keyValue) {
+                case null -> throw new IllegalArgumentException("Key value cannot be null");
+                case KeyPair kp -> {
+                    certificateProvider.setJwtBuilder(provider.jwtBuilder().orElseGet(() -> signer(kp.getPrivate(), provider.signatureAlgorithm(), providerKey.getKeyId())));
+                    certificateProvider.setJwtParser(provider.jwtParser().orElseGet(() -> verifier(kp.getPublic())));
+                }
+                case Key key -> {
+                    certificateProvider.setJwtBuilder(provider.jwtBuilder().orElseGet(() -> signer(key, provider.signatureAlgorithm(), providerKey.getKeyId())));
+                    certificateProvider.setJwtParser(provider.jwtParser().orElseGet(() -> verifier(key)));
+                }
+                default -> throw new RuntimeException(keyValue + " is not supported");
             }
         } catch (UnsupportedOperationException ex) {
             // alg=none provider
@@ -100,6 +101,16 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
             return null;
         }
         return certificateProvider;
+    }
+
+    @SneakyThrows
+    private DefaultJWTBuilder signer(Key signerKey, String alg, String keyId) {
+        return new DefaultJWTBuilder(signerKey, alg, keyId);
+    }
+
+    @SneakyThrows
+    private DefaultJWTParser verifier(Key verifier) {
+        return new DefaultJWTParser(verifier);
     }
 
     private void deploy(Certificate certificate) {
