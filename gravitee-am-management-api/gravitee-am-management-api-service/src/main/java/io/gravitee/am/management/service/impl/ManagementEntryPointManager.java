@@ -57,19 +57,23 @@ public class ManagementEntryPointManager extends AbstractEntryPointManager {
     }
 
     @Override
-    protected Flowable<Entrypoint> loadOrganizationEntrypoints(String organizationId) {
+    protected Flowable<Entrypoint> findEntrypointsByOrganization(String organizationId) {
         return entrypointService.findAll(organizationId);
     }
 
     @Override
-    protected Flowable<Entrypoint> loadEnvironmentEntrypoints(String environmentId) {
-        return environmentService.findById(environmentId)
-                .flatMapPublisher(environment -> entrypointService.findByEnvironment(environment.getOrganizationId(), environmentId));
+    protected Flowable<Entrypoint> findEntrypointsByEnvironment(String organizationId, String environmentId) {
+        return entrypointService.findByEnvironment(organizationId, environmentId);
     }
 
     @Override
-    protected Flowable<String> allOrganizationIds() {
-        return organizationService.findAll().map(Organization::getId);
+    protected Maybe<Environment> findEnvironmentById(String environmentId) {
+        return environmentService.findById(environmentId).toMaybe();
+    }
+
+    @Override
+    protected Flowable<Organization> findAllOrganizations() {
+        return organizationService.findAll();
     }
 
     @Override

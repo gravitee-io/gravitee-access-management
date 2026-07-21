@@ -73,19 +73,23 @@ public class AbstractEntryPointManagerTest {
     public void before() {
         cut = new AbstractEntryPointManager(eventManager, node) {
             @Override
-            protected Flowable<Entrypoint> loadOrganizationEntrypoints(String organizationId) {
+            protected Flowable<Entrypoint> findEntrypointsByOrganization(String organizationId) {
                 return entrypointRepository.findAll(organizationId);
             }
 
             @Override
-            protected Flowable<Entrypoint> loadEnvironmentEntrypoints(String environmentId) {
-                return environmentRepository.findById(environmentId)
-                        .flatMapPublisher(environment -> entrypointRepository.findByEnvironment(environment.getOrganizationId(), environmentId));
+            protected Flowable<Entrypoint> findEntrypointsByEnvironment(String organizationId, String environmentId) {
+                return entrypointRepository.findByEnvironment(organizationId, environmentId);
             }
 
             @Override
-            protected Flowable<String> allOrganizationIds() {
-                return organizationRepository.findAll().map(Organization::getId);
+            protected Maybe<Environment> findEnvironmentById(String environmentId) {
+                return environmentRepository.findById(environmentId);
+            }
+
+            @Override
+            protected Flowable<Organization> findAllOrganizations() {
+                return organizationRepository.findAll();
             }
 
             @Override
