@@ -21,8 +21,8 @@ import { tap } from 'rxjs/operators';
 import { AppConfig } from '../../config/app.config';
 
 export interface ConsoleUserPreferences {
-  defaultDomainId?: string;
-  defaultEnvironmentId?: string;
+  defaultDomainId?: string | null;
+  defaultEnvironmentId?: string | null;
   pinnedDomainIds?: string[];
 }
 
@@ -60,8 +60,8 @@ export class UserPreferencesService {
     return this.preferences().defaultDomainId === domainId;
   }
 
-  defaultDomainId(): string {
-    return this.preferences().defaultDomainId;
+  defaultDomainId(): string | null {
+    return this.preferences().defaultDomainId ?? null;
   }
 
   togglePin(domainId: string): Observable<ConsoleUserPreferences> {
@@ -83,10 +83,10 @@ export class UserPreferencesService {
    * Returns the default domain id once per application bootstrap, so the
    * post-login redirect fires on initial entry only (not when navigating back home).
    */
-  consumeDefaultDomainRedirect(): string {
+  consumeDefaultDomainRedirect(): string | null {
     if (this.pendingDefaultDomainRedirect) {
       this.pendingDefaultDomainRedirect = false;
-      return this.preferences().defaultDomainId;
+      return this.preferences().defaultDomainId ?? null;
     }
     return null;
   }
