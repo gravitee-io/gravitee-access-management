@@ -37,6 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -53,6 +54,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,6 +71,8 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
 public class DomainsResource extends AbstractDomainResource {
 
     private static final String MAX_DOMAINS_SIZE_PER_PAGE_STRING = "50";
+    // matches the pinned-domains cap on ConsoleUserPreferences; bounds the findByIdIn fetch
+    private static final int MAX_DOMAIN_IDS = 50;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -98,12 +102,19 @@ public class DomainsResource extends AbstractDomainResource {
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_DOMAINS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
+            @QueryParam("ids") @Size(max = MAX_DOMAIN_IDS) List<String> ids,
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();
-        Flowable<Domain> domainSource = query != null
-                ? domainService.search(organizationId, environmentId, query)
-                : domainService.findAllByEnvironment(organizationId, environmentId);
+        Flowable<Domain> domainSource;
+        if (query != null) {
+            domainSource = domainService.search(organizationId, environmentId, query);
+        } else if (ids != null && !ids.isEmpty()) {
+            domainSource = domainService.findByIdIn(ids)
+                    .filter(domain -> domain.getReferenceType() == ReferenceType.ENVIRONMENT && environmentId.equals(domain.getReferenceId()));
+        } else {
+            domainSource = domainService.findAllByEnvironment(organizationId, environmentId);
+        }
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
                 // Check if user has DOMAIN:READ at env or org level (global access), otherwise filter by specific domain permissions.

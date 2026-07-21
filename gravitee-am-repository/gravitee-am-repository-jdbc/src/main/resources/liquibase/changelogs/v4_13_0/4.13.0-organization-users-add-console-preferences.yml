@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-organization-users-add-console-preferences
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: organization_users
+              columnName: console_preferences
+      changes:
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: console_preferences, type: clob, constraints: { nullable: true } }

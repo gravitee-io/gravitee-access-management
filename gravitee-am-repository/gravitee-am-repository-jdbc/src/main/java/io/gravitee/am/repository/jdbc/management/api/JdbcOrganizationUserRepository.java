@@ -132,6 +132,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
     private static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
     private static final String USER_COL_SERVICE_ACCOUNT = "service_account";
+    private static final String USER_COL_CONSOLE_PREFERENCES = "console_preferences";
 
 
     private static final List<String> USER_COLUMNS = List.of(
@@ -173,7 +174,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             USER_COL_FACTORS,
             USER_COL_ADDITIONAL_INFORMATION,
             USER_COL_FORCE_RESET_PASSWORD,
-            USER_COL_SERVICE_ACCOUNT
+            USER_COL_SERVICE_ACCOUNT,
+            USER_COL_CONSOLE_PREFERENCES
     );
 
 
@@ -458,6 +460,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
         insertSpec = addQuotedField(insertSpec, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_SERVICE_ACCOUNT, item.getServiceAccount(), Boolean.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_CONSOLE_PREFERENCES, item.getConsolePreferences());
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
@@ -519,6 +522,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
         update = addQuotedField(update, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
         update = addQuotedField(update, USER_COL_SERVICE_ACCOUNT, item.getServiceAccount(), Boolean.class);
+        update = databaseDialectHelper.addJsonField(update, USER_COL_CONSOLE_PREFERENCES, item.getConsolePreferences());
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
