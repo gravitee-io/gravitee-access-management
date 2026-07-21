@@ -36,8 +36,10 @@ import java.util.List;
 @EqualsAndHashCode
 public class ConsoleUserPreferences {
 
+    public static final int MAX_PINNED_DOMAINS = 50;
+
     private String defaultDomainId;
     private String defaultEnvironmentId;
-    @Size(max = 50)
+    @Size(max = MAX_PINNED_DOMAINS)
     private List<String> pinnedDomainIds;
 }
