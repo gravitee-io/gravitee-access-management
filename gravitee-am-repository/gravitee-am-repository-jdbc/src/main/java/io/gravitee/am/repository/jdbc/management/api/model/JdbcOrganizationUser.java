@@ -29,6 +29,10 @@ public class JdbcOrganizationUser extends AbstractUser {
 
     private Boolean serviceAccount;
 
+    // json field
+    @Column("console_preferences")
+    private String consolePreferences;
+
     public String getPassword() {
         return password;
     }
@@ -43,6 +47,14 @@ public class JdbcOrganizationUser extends AbstractUser {
 
     public void setServiceAccount(Boolean serviceAccount) {
         this.serviceAccount = serviceAccount;
+    }
+
+    public String getConsolePreferences() {
+        return consolePreferences;
+    }
+
+    public void setConsolePreferences(String consolePreferences) {
+        this.consolePreferences = consolePreferences;
     }
 
     @Table("organization_user_entitlements")

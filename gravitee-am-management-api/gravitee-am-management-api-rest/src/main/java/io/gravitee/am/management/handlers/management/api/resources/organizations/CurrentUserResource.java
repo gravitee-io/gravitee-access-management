@@ -99,4 +99,9 @@ public class CurrentUserResource extends AbstractResource {
     public UserNotificationsResource getUserNotificationsResource() {
         return resourceContext.getResource(UserNotificationsResource.class);
     }
+
+    @Path("/preferences")
+    public CurrentUserPreferencesResource getCurrentUserPreferencesResource() {
+        return resourceContext.getResource(CurrentUserPreferencesResource.class);
+    }
 }

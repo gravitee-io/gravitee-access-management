@@ -176,6 +176,8 @@ public class User implements IUser {
 
     private Boolean serviceAccount = Boolean.FALSE;
 
+    private ConsoleUserPreferences consolePreferences;
+
     public User() {
 
     }
@@ -253,6 +255,7 @@ public class User implements IUser {
         this.updatedAt = other.updatedAt;
         this.lastUsernameReset = other.lastUsernameReset;
         this.forceResetPassword = other.forceResetPassword;
+        this.consolePreferences = other.consolePreferences;
     }
 
     public static User simpleUser(String userId, ReferenceType referenceType, String referenceId) {

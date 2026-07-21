@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -183,6 +184,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
         testObserver.assertValue(u -> u.getAdditionalInformation().size() == 1);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
+        testObserver.assertValue(u -> u.getConsolePreferences().equals(user.getConsolePreferences()));
     }
 
     @Test
@@ -916,6 +918,8 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         Map<String, Object> info = new HashMap<>();
         info.put(StandardClaims.EMAIL, random+"@info.acme.fr");
         user.setAdditionalInformation(info);
+
+        user.setConsolePreferences(new ConsoleUserPreferences("domain"+random, "env"+random, List.of("pinned1"+random, "pinned2"+random)));
         return user;
     }
 }

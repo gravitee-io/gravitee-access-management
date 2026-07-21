@@ -226,4 +226,6 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-licenses-table.yml
   - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-organization-users-add-console-preferences.yml
+  - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-entrypoints-add-environment-id-column.yml

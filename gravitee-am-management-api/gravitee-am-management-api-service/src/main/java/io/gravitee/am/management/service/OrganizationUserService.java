@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.AccountAccessToken;
+import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -54,6 +55,10 @@ public interface OrganizationUserService {
     Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> updateLogoutDate(ReferenceType referenceType, String referenceId, String id);
+
+    Single<ConsoleUserPreferences> getConsolePreferences(String organizationId, String userId);
+
+    Single<ConsoleUserPreferences> updateConsolePreferences(String organizationId, String userId, ConsoleUserPreferences preferences, io.gravitee.am.identityprovider.api.User principal);
 
     Flowable<AccountAccessToken> findAccountAccessTokens(String organizationId, String userId);
 
