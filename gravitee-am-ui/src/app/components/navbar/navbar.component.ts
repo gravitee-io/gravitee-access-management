@@ -37,6 +37,8 @@ import { NavbarService } from './navbar.service';
 export class NavbarComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private readonly REFRESH_INTERVAL_MS = 10000;
+  // matches the cap on the domains `ids` query param (DomainsResource.MAX_DOMAIN_IDS)
+  private readonly MAX_DOMAIN_IDS = 50;
 
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
@@ -172,8 +174,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const currentId = this.currentDomain?.id;
     const defaultId = this.userPreferencesService.defaultDomainId();
     const pinnedIds = this.userPreferencesService.pinnedDomainIds();
-    // always surface the current and default domains so they can be shown/pinned even when they aren't yet
-    const ids = [...new Set([currentId, defaultId, ...pinnedIds].filter(Boolean))];
+    // always surface the current and default domains so they can be shown/pinned even when they aren't yet;
+    // they lead the list so clamping to the backend cap can only ever drop trailing pinned ids
+    const ids = [...new Set([currentId, defaultId, ...pinnedIds].filter(Boolean))].slice(0, this.MAX_DOMAIN_IDS);
     if (!this.hasCurrentEnvironment() || ids.length === 0) {
       this.domains = [];
       return;
