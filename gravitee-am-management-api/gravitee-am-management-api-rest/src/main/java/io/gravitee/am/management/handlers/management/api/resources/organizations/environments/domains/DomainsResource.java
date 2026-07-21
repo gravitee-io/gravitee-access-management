@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ConsoleUserPreferences;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
@@ -71,8 +72,7 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
 public class DomainsResource extends AbstractDomainResource {
 
     private static final String MAX_DOMAINS_SIZE_PER_PAGE_STRING = "50";
-    // matches the pinned-domains cap on ConsoleUserPreferences; bounds the findByIdIn fetch
-    private static final int MAX_DOMAIN_IDS = 50;
+    private static final int MAX_DOMAIN_IDS = ConsoleUserPreferences.MAX_PINNED_DOMAINS;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
