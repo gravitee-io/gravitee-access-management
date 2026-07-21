@@ -101,6 +101,9 @@ public abstract class FileAuditReporterTest {
                 return;
             } catch (AssertionError e) {
                 lastError = e;
+            } catch (RuntimeException | IOException e) {
+                // A not-yet-flushed file surfaces as e.g. IndexOutOfBounds while indexing lines; retry.
+                lastError = new AssertionError("Audit log check failed on attempt " + attempt, e);
             }
         }
         throw lastError;
