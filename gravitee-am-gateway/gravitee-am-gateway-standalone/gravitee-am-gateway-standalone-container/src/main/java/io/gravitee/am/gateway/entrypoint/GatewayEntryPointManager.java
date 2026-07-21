@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.entrypoint;
 
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
@@ -51,19 +52,23 @@ public class GatewayEntryPointManager extends AbstractEntryPointManager {
     }
 
     @Override
-    protected Flowable<Entrypoint> loadOrganizationEntrypoints(String organizationId) {
+    protected Flowable<Entrypoint> findEntrypointsByOrganization(String organizationId) {
         return entrypointRepository.findAll(organizationId);
     }
 
     @Override
-    protected Flowable<Entrypoint> loadEnvironmentEntrypoints(String environmentId) {
-        return environmentRepository.findById(environmentId)
-                .flatMapPublisher(environment -> entrypointRepository.findByEnvironment(environment.getOrganizationId(), environmentId));
+    protected Flowable<Entrypoint> findEntrypointsByEnvironment(String organizationId, String environmentId) {
+        return entrypointRepository.findByEnvironment(organizationId, environmentId);
     }
 
     @Override
-    protected Flowable<String> allOrganizationIds() {
-        return organizationRepository.findAll().map(Organization::getId);
+    protected Maybe<Environment> findEnvironmentById(String environmentId) {
+        return environmentRepository.findById(environmentId);
+    }
+
+    @Override
+    protected Flowable<Organization> findAllOrganizations() {
+        return organizationRepository.findAll();
     }
 
     @Override

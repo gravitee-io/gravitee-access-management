@@ -17,6 +17,8 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.event.EntrypointEvent;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.service.EntryPointManager;
@@ -63,13 +65,16 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
     }
 
     /** Load all entrypoints owned by the given organization. */
-    protected abstract Flowable<Entrypoint> loadOrganizationEntrypoints(String organizationId);
+    protected abstract Flowable<Entrypoint> findEntrypointsByOrganization(String organizationId);
 
     /** Load all entrypoints owned by the given environment. */
-    protected abstract Flowable<Entrypoint> loadEnvironmentEntrypoints(String environmentId);
+    protected abstract Flowable<Entrypoint> findEntrypointsByEnvironment(String organizationId, String environmentId);
 
-    /** Enumerate every organization id (used when no scope is configured). */
-    protected abstract Flowable<String> allOrganizationIds();
+    /** Resolve an environment by its id. */
+    protected abstract Maybe<Environment> findEnvironmentById(String environmentId);
+
+    /** Enumerate every organization (used when no scope is configured). */
+    protected abstract Flowable<Organization> findAllOrganizations();
 
     /** Load a single entrypoint by id; the payload reference identifies its owning scope. */
     protected abstract Maybe<Entrypoint> findEntrypointById(String entrypointId, ReferenceType referenceType, String referenceId);
@@ -139,12 +144,17 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
         Set<String> environmentIds = configured(Node.META_ENVIRONMENTS);
 
         if (organizationIds.isEmpty() && environmentIds.isEmpty()) {
-            return allOrganizationIds().flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)), false, 10);
+            return findAllOrganizations().flatMapCompletable(organization -> cache(findEntrypointsByOrganization(organization.getId())), false, 10);
         }
 
         Completable byEnvironment = Flowable.fromIterable(environmentIds).flatMapCompletable(environmentId -> cache(loadEnvironmentEntrypoints(environmentId)), false, 10);
-        Completable byOrganization = Flowable.fromIterable(organizationIds).flatMapCompletable(organizationId -> cache(loadOrganizationEntrypoints(organizationId)), false, 10);
+        Completable byOrganization = Flowable.fromIterable(organizationIds).flatMapCompletable(organizationId -> cache(findEntrypointsByOrganization(organizationId)), false, 10);
         return Completable.mergeArray(byEnvironment, byOrganization);
+    }
+
+    private Flowable<Entrypoint> loadEnvironmentEntrypoints(String environmentId) {
+        return findEnvironmentById(environmentId)
+                .flatMapPublisher(environment -> findEntrypointsByEnvironment(environment.getOrganizationId(), environmentId));
     }
 
     private Completable cache(Flowable<Entrypoint> source) {
