@@ -23,8 +23,20 @@
       </button>
       <gio-top-bar-content type="am" productName="Access Management"></gio-top-bar-content>
       <gio-top-bar-menu>
-        <button *ngIf="currentDomain && currentDomain.name" class="currentDomain" mat-raised-button disabled>
-          <span>{{ currentDomain.name | lowercase }}</span>
+        <button
+          *ngIf="hasCurrentEnvironment()"
+          class="currentDomain"
+          mat-raised-button
+          [matMenuTriggerFor]="domainPickerMenu"
+          (click)="listDomains()"
+          data-testid="domain-picker-trigger"
+        >
+          <mat-icon *ngIf="currentDomain?.id && isDefault(currentDomain.id)" class="currentDomain__default" matTooltip="Default domain"
+            >star</mat-icon
+          >
+          <span>{{ currentDomain?.name ? (currentDomain.name | lowercase) : 'Select domain' }}</span>
+          <!-- expand_more (a centered chevron) instead of arrow_drop_down, whose triangle sits low in the glyph box -->
+          <mat-icon class="currentDomain__caret">expand_more</mat-icon>
         </button>
         <button mat-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()">
           <div class="notifications-menu">
@@ -32,51 +44,122 @@
             <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
           </div>
         </button>
-        <button
-          class="userAccountMenu"
-          mat-icon-button
-          [matMenuTriggerFor]="userAccountMenu"
-          (click)="listDomains()"
-          data-testid="user-notifications-button"
-        >
+        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" data-testid="user-account-button">
           <app-user-avatar [user]="user" [width]="'36'"></app-user-avatar>
         </button>
       </gio-top-bar-menu>
     </gio-top-bar>
   </div>
-  <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
+  <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false" class="userAccountMenuPanel">
     <div class="userAccount" fxLayout="column">
-      <div class="userAccountProfile" fxLayout="row">
-        <app-user-avatar [user]="user" [width]="'80'"></app-user-avatar>
-        <div class="userAccountInfo" fxLayout="column" style="margin: 20px">
+      <div class="userAccountProfile">
+        <app-user-avatar [user]="user" [width]="'40'"></app-user-avatar>
+        <div class="userAccountInfo">
           <h3>{{ user.name }}</h3>
           <small>{{ user.preferred_username }}</small>
         </div>
+        <a mat-icon-button routerLink="/logout" matTooltip="Sign out" class="userAccountProfile__signout">
+          <mat-icon>exit_to_app</mat-icon>
+        </a>
       </div>
+    </div>
+  </mat-menu>
+
+  <mat-menu #domainPickerMenu="matMenu" [overlapTrigger]="false" class="userAccountMenuPanel">
+    <div class="userAccount" fxLayout="column">
       <div mat-menu-item class="userAccountActions domains_menu-item first" *ngIf="hasCurrentEnvironment()">
         <mat-list class="domains_list">
-          <h3 matSubheader>Domains</h3>
+          <div class="domains_list__search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <mat-icon>search</mat-icon>
+            <input
+              type="text"
+              placeholder="Find a domain…"
+              autocomplete="off"
+              [ngModel]="domainSearchTerm"
+              (ngModelChange)="onDomainSearch($event)"
+              data-testid="domain-picker-search"
+            />
+          </div>
 
-          <a
-            [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]"
-            *ngFor="let domain of domains"
-            mat-list-item
-            class="domains_list__item"
-            [ngClass]="{ 'domain-disabled': !domain.enabled }"
-          >
-            <mat-icon matListItemIcon>domain</mat-icon>
-            <span matListItemTitle>
-              <span class="domains_list__item__name">{{ domain.name }}</span>
-            </span>
-
-            <span *ngIf="!domain.enabled" matListItemMeta class="gio-badge-warning">
-              <mat-icon class="gio-left" svgIcon="gio:alert-circle"></mat-icon>Domain disabled</span
+          <!-- single row definition reused across the Current, Pinned and search Results sections -->
+          <ng-template #domainRow let-domain>
+            <a
+              [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]"
+              mat-list-item
+              class="domains_list__item"
+              [ngClass]="{
+                'domain-disabled': !domain.enabled,
+                'domains_list__item--current': currentDomain && domain.id === currentDomain.id
+              }"
             >
-          </a>
+              <mat-icon matListItemIcon [ngClass]="{ 'domains_list__item__icon--disabled': !domain.enabled }">domain</mat-icon>
+              <span matListItemTitle class="domains_list__item__name">{{ domain.name }}</span>
+
+              <span matListItemMeta class="domains_list__item__meta">
+                <span class="domains_list__item__status">
+                  <span *ngIf="!domain.enabled" class="domains_list__item__status-label">Disabled</span>
+                  <mat-icon
+                    *ngIf="isDefault(domain.id)"
+                    class="domains_list__item__flag domains_list__item__flag--default"
+                    matTooltip="Default domain"
+                    >star</mat-icon
+                  >
+                </span>
+                <span class="domains_list__item__controls">
+                  <button
+                    mat-icon-button
+                    (click)="toggleDefault(domain, $event)"
+                    [matTooltip]="isDefault(domain.id) ? 'Unset default domain' : 'Set as default domain'"
+                  >
+                    <mat-icon>{{ isDefault(domain.id) ? 'star' : 'star_border' }}</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    (click)="togglePin(domain, $event)"
+                    [matTooltip]="isPinned(domain.id) ? 'Unpin domain' : 'Pin domain'"
+                  >
+                    <!-- bookmark instead of push_pin: the bundled Material Icons font predates the push_pin ligature -->
+                    <mat-icon>{{ isPinned(domain.id) ? 'bookmark' : 'bookmark_border' }}</mat-icon>
+                  </button>
+                </span>
+              </span>
+            </a>
+          </ng-template>
+
+          <ng-container *ngIf="!domainSearchTerm; else searchResults">
+            <ng-container *ngIf="currentDomainRow as current">
+              <h4 class="domains_list__label">Current</h4>
+              <ng-container *ngTemplateOutlet="domainRow; context: { $implicit: current }"></ng-container>
+            </ng-container>
+
+            <ng-container *ngIf="defaultDomainRow as def">
+              <h4 class="domains_list__label">Default</h4>
+              <ng-container *ngTemplateOutlet="domainRow; context: { $implicit: def }"></ng-container>
+            </ng-container>
+
+            <ng-container *ngIf="pinnedDomainRows.length > 0">
+              <h4 class="domains_list__label">Pinned</h4>
+              <ng-container *ngFor="let domain of pinnedDomainRows">
+                <ng-container *ngTemplateOutlet="domainRow; context: { $implicit: domain }"></ng-container>
+              </ng-container>
+            </ng-container>
+
+            <p *ngIf="!currentDomainRow && !defaultDomainRow && pinnedDomainRows.length === 0" class="domains_list__empty">
+              No pinned domains yet. Search for a domain and pin it for quick access.
+            </p>
+          </ng-container>
+
+          <ng-template #searchResults>
+            <h4 class="domains_list__label">Results</h4>
+            <ng-container *ngFor="let domain of domains">
+              <ng-container *ngTemplateOutlet="domainRow; context: { $implicit: domain }"></ng-container>
+            </ng-container>
+            <p *ngIf="!domains || domains.length === 0" class="domains_list__empty">No domains match your search</p>
+          </ng-template>
         </mat-list>
       </div>
-      <div class="userAccountActions" *ngFor="let link of navLinks">
-        <a [routerLink]="link.href" mat-menu-item>
+      <div class="userAccountFooter">
+        <a *ngFor="let link of navLinks" [routerLink]="link.href" mat-menu-item class="userAccountFooter__link">
           <mat-icon>{{ link.icon }}</mat-icon>
           <span>{{ link.label }}</span>
         </a>

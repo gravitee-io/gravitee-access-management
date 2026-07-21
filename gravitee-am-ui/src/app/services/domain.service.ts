@@ -19,7 +19,7 @@ import { Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
-import { SKIP_ERROR_SNACKBAR } from '../interceptors/http-request.interceptor';
+import { SKIP_404_REDIRECT, SKIP_ERROR_SNACKBAR } from '../interceptors/http-request.interceptor';
 
 import { AuthService } from './auth.service';
 
@@ -40,6 +40,16 @@ export class DomainService {
 
   search(searchTerm, page, size): Observable<any> {
     return this.http.get<any>(this.domainsURL + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
+  }
+
+  findByIds(ids: string[]): Observable<any> {
+    return this.http.get<any>(this.domainsURL + '?' + ids.map((id) => 'ids=' + encodeURIComponent(id)).join('&'));
+  }
+
+  getByIdSilently(id: string): Observable<any> {
+    return this.http.get<any>(this.domainsURL + id, {
+      context: new HttpContext().set(SKIP_404_REDIRECT, true).set(SKIP_ERROR_SNACKBAR, true),
+    });
   }
 
   list(): Observable<any> {
