@@ -132,7 +132,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -276,7 +275,6 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private EntryPointManager entryPointManager;
 
-    // Spring environment (node config), distinct from the io.gravitee.am.model.Environment used elsewhere in this class.
     @Autowired
     private org.springframework.core.env.Environment springEnvironment;
 
@@ -809,30 +807,26 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
-    /**
-     * Managed cloud mode: the domain's entrypoint is scoped to its environment and resolved from the
-     * {@link EntryPointManager} cache rather than the org-wide default/tags filter. Self-contained -
-     * never falls through to the non-cloud path (which would return the org default's gateway URL,
-     * the wrong URL in cloud). See ADR 0001.
-     */
     private Single<List<Entrypoint>> listEnvironmentEntryPoint(Domain domain) {
         return Single.defer(() -> {
             List<Entrypoint> environmentEntrypoints = entryPointManager.findByEnvironmentId(domain.getReferenceId());
             if (environmentEntrypoints.isEmpty()) {
-                // Not synced yet: return a single entrypoint carrying the gateway URL so the page still
-                // renders (the UI selects the single element and reads its url). Never return an empty list.
                 Entrypoint fallback = new Entrypoint();
-                fallback.setUrl(dataPlaneRegistry.getDescription(domain).gatewayUrl());
+                ofNullable(dataPlaneRegistry.getDescription(domain).gatewayUrl()).ifPresent(fallback::setUrl);
                 return Single.just(List.of(fallback));
             }
-            if (environmentEntrypoints.size() > 1) {
-                LOGGER.warn("Environment {} resolves to {} entrypoints, expected one; picking deterministically until the override flag (AM-7298) lands", domain.getReferenceId(), environmentEntrypoints.size());
-            }
-            // Non-empty by the guard above: min() always yields a value.
+
+            // Cockpit recreates every environment entrypoint on each environment command, so createdAt/id
+            // churn and are not stable to order on. Prefer the one flagged default (the overridden access
+            // point), otherwise take the first in the list received from the command.
             Entrypoint selected = environmentEntrypoints.stream()
-                    .min(Comparator.comparing(Entrypoint::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                            .thenComparing(Entrypoint::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                    .orElseThrow();
+                    .filter(Entrypoint::isDefaultEntrypoint)
+                    .findFirst()
+                    .orElseGet(() -> environmentEntrypoints.get(0));
+
+            if (environmentEntrypoints.size() > 1 && !selected.isDefaultEntrypoint()) {
+                LOGGER.warn("Environment {} resolves to {} entrypoints and none is flagged default; using the first", domain.getReferenceId(), environmentEntrypoints.size());
+            }
             return Single.just(List.of(selected));
         });
     }
