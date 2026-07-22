@@ -199,7 +199,6 @@ export const waitForDomainStart = async (domain: Domain): Promise<DomainWithOidc
  *
  * @returns Promise that resolves when sync is complete
  */
-// AM-7300: raised from 60s for slow CI executors (see monitoring-commands.ts). Env-overridable.
 const DEFAULT_DOMAIN_SYNC_TIMEOUT_MS = Number(process.env.AM_DOMAIN_SYNC_TIMEOUT_MS) || 120000;
 const DEFAULT_DOMAIN_SYNC_INTERVAL_MS = 500;
 const DOMAIN_SYNC_FALLBACK_WAIT_MS = 2000;
@@ -255,6 +254,30 @@ export async function waitForOidcReady(
       (lastStatus ? ` Last status: ${lastStatus}` : '') +
       (lastError instanceof Error ? ` Last error: ${lastError.message}` : ''),
   );
+}
+
+/**
+ * Poll until the domain's OIDC endpoint stops serving (undeployed), so a disable→enable cycle produces a
+ * genuine redeploy instead of being coalesced into a no-op by the gateway's periodic sync.
+ */
+export async function waitForOidcDown(domainHrid: string, options?: { timeoutMs?: number; intervalMs?: number }): Promise<void> {
+  const { timeoutMs = 30000, intervalMs = 500 } = options || {};
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await getWellKnownOpenIdConfiguration(domainHrid);
+      if (res.status !== 200) {
+        return;
+      }
+    } catch {
+      return;
+    }
+    await waitFor(intervalMs);
+  }
+  console.warn(
+    `domain "${domainHrid}" OIDC still serving after ${timeoutMs}ms; proceeding with redeploy anyway (disable may have been coalesced)`,
+  );
+  // Undeploy not observed within the window; proceed anyway — the enable + waitForOidcReady still redeploys.
 }
 
 /**

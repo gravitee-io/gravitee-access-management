@@ -21,6 +21,7 @@ import {
   startDomain,
   waitForDomainStart,
   waitForOidcReady,
+  waitForOidcDown,
   patchDomain,
 } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
@@ -742,30 +743,6 @@ export function setupSamlProviderTestViaMetadataFile(domainSuffix: string, provi
 async function waitForSamlMetadataReady(providerDomain: Domain): Promise<void> {
   const metadataUrl = getProviderMetadataUrl(providerDomain);
   await withRetry(() => performGet(metadataUrl, '').expect(200), 60, 500);
-}
-
-/**
- * Poll until the domain's OIDC endpoint stops serving (undeployed), so a disable→enable cycle produces a
- * genuine redeploy instead of being coalesced into a no-op by the gateway's periodic sync.
- */
-async function waitForOidcDown(domainHrid: string, options?: { timeoutMs?: number; intervalMs?: number }): Promise<void> {
-  const { timeoutMs = 30000, intervalMs = 500 } = options || {};
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    try {
-      const res = await getWellKnownOpenIdConfiguration(domainHrid);
-      if (res.status !== 200) {
-        return;
-      }
-    } catch {
-      return;
-    }
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
-  console.warn(
-    `domain "${domainHrid}" OIDC still serving after ${timeoutMs}ms; proceeding with redeploy anyway (disable may have been coalesced)`,
-  );
-  // Undeploy not observed within the window; proceed anyway — the enable + waitForOidcReady still redeploys.
 }
 
 export async function cleanupSamlTestDomains(accessToken: string, domains: SamlTestDomains): Promise<void> {
