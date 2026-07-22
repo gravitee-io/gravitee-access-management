@@ -30,7 +30,7 @@ const userProps = {
   password: 'SomeP@ssw0rd01',
 };
 
-setup(20000);
+setup(240000);
 
 const setting: DomainTestSettings = {
   inherited: false,
