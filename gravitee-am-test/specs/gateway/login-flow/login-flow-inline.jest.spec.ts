@@ -27,7 +27,7 @@ import { INLINE_USER, LoginFlowInlineFixture, REDIRECT_URI, setupInlineFixture }
 
 const cheerio = require('cheerio');
 import { setup } from '../../test-fixture';
-import { withRetry } from "@utils-commands/retry";
+import { retryUntil, withRetry } from '@utils-commands/retry';
 import { patchApplication } from '@management-commands/application-management-commands';
 
 setup(200000);
@@ -316,13 +316,16 @@ describe('Account Disabled', () => {
   });
 
   it('should reject login for a disabled user', async () => {
-    await waitForSyncAfter(fixture.domain.id, () =>
-      updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false),
-    );
-    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+    await updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false);
 
     const clientId = fixture.appAccountTests.settings.oauth.clientId;
-    const postLogin = await fixture.attemptLogin(clientId, testUsername, testPassword);
+    // Disabling a user fires a best-effort USER event, so gating on the domain sync marker can
+    // time out under CI load. Poll the observable login outcome until the rejection takes effect.
+    const postLogin = await retryUntil(
+      () => fixture.attemptLogin(clientId, testUsername, testPassword),
+      (res) => (res.headers['location'] ?? '').includes('error=login_failed'),
+      { timeoutMillis: 30000, intervalMillis: 500 },
+    );
     expect(postLogin.headers['location']).toContain('error=login_failed');
   });
 });
@@ -376,7 +379,6 @@ describe('Account Locked - Login Attempt', () => {
     expect(nestPostLogin.headers['location']).toContain('error=login_failed');
   });
 
-
   it('should lock the account after exceeding max login attempts and send recovery email', async () => {
     const clientId = fixture.appSso1.settings.oauth.clientId;
     const postLogin = await fixture.attemptLogin(clientId, testUsername, 'wrong-password');
@@ -406,10 +408,7 @@ describe('Account Locked - REST API', () => {
     expect(user.id).toBeDefined();
     userId = user.id;
 
-    await waitForSyncAfter(fixture.domain.id, () =>
-      lockUser(fixture.domain.id, fixture.accessToken, userId),
-    );
-    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+    await lockUser(fixture.domain.id, fixture.accessToken, userId);
   });
 
   afterAll(async () => {
@@ -424,7 +423,13 @@ describe('Account Locked - REST API', () => {
 
   it('should reject login for a user locked via the management REST API', async () => {
     const clientId = fixture.appAccountTests.settings.oauth.clientId;
-    const postLogin = await fixture.attemptLogin(clientId, testUsername, testPassword);
+    // Locking a user fires a best-effort USER event; poll the observable login outcome rather
+    // than gating on the domain sync marker, which can time out under CI load.
+    const postLogin = await retryUntil(
+      () => fixture.attemptLogin(clientId, testUsername, testPassword),
+      (res) => (res.headers['location'] ?? '').includes('error=login_failed'),
+      { timeoutMillis: 30000, intervalMillis: 500 },
+    );
     expect(postLogin.headers['location']).toContain('error=login_failed');
   });
 });
