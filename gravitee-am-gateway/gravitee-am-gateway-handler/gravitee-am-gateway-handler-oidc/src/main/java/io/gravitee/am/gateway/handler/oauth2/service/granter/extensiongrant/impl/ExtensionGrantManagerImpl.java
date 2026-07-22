@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
@@ -39,6 +40,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantProviderConfiguration;
@@ -113,6 +115,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     @Override
     public void afterPropertiesSet() {
@@ -198,6 +203,10 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         if (!needDeployment(extensionGrant)) {
             logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
             domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
+            return Completable.complete();
+        }
+        if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_EXTENSION_GRANT, extensionGrant.getType(), extensionGrant.getId())) {
+            removeExtensionGrant(extensionGrant.getId());
             return Completable.complete();
         }
 

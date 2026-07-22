@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.factor;
 
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
@@ -43,7 +44,9 @@ import java.util.List;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,11 +72,15 @@ public class FactorManagerTest {
     @Mock
     private DomainReadinessService domainReadinessService;
 
+    @Mock
+    private DomainPluginLicenseGate domainPluginLicenseGate;
+
     @InjectMocks
     private FactorManagerImpl factorMng = new FactorManagerImpl();
 
     @Before
     public void prepare() {
+        lenient().when(domainPluginLicenseGate.check(any(), any(), any())).thenReturn(true);
         when(domain.getId()).thenReturn(DOMAIN_ID);
         final Factor factor = new Factor();
         factor.setId(FACTOR_ID);
@@ -155,6 +162,25 @@ public class FactorManagerTest {
 
         verify(domainReadinessService).initPluginSync(DOMAIN_ID, "error-factor", Type.FACTOR.name());
         verify(domainReadinessService).pluginFailed(DOMAIN_ID, "error-factor", "Error loading factor");
+    }
+
+    @Test
+    public void shouldSkipUnlicensedFactorWithoutFailingReadiness() {
+        Factor factor = new Factor();
+        factor.setId("ee-factor");
+        factor.setType("otp-sender-am-factor");
+        when(factorService.findById("ee-factor")).thenReturn(Maybe.just(factor));
+        when(domainPluginLicenseGate.check(io.gravitee.am.service.PluginLicenseGate.TYPE_FACTOR, "otp-sender-am-factor", "ee-factor")).thenReturn(false);
+
+        Event<FactorEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(FactorEvent.UPDATE);
+        when(event.content()).thenReturn(new Payload("ee-factor", ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.UPDATE));
+
+        factorMng.onEvent(event);
+
+        assertFalse(factorMng.getClientFactor(null, "ee-factor").isPresent());
+        verify(factorPluginManager, times(1)).create(any()); // only the factor loaded in prepare()
+        verify(domainReadinessService, never()).pluginFailed(any(), any(), any());
     }
 
     @Test

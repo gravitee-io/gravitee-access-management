@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.common.service.DomainAwareListener;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.Domain;
@@ -34,6 +35,7 @@ import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -81,6 +83,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
@@ -244,6 +249,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
         domainReadinessService.initPluginSync(domain.getId(), reporter.getId(), io.gravitee.am.common.event.Type.REPORTER.name());
+        if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_REPORTER, reporter.getType(), reporter.getId())) {
+            return false;
+        }
         var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
         io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 

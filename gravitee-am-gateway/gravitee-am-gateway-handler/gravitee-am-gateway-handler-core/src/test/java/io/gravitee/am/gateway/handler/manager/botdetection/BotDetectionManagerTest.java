@@ -68,13 +68,33 @@ public class BotDetectionManagerTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate domainPluginLicenseGate;
+
     private BotDetection botDetection = new BotDetection();
 
     @Before
     public void setUp() {
+        org.mockito.Mockito.lenient().when(domainPluginLicenseGate.check(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(true);
         botDetection.setConfiguration("{\"key\": \"value\"}");
         botDetection.setType(BOT_DETECTION_PLUGIN_TYPE);
         cut.getBotDetections().put(BOT_DETECTION_PLUGIN, botDetection);
+    }
+
+    @Test
+    public void shouldSkipUnlicensedBotDetectionWithoutFailingReadiness() {
+        when(domain.getId()).thenReturn("domain-id");
+        final BotDetection eeDetection = new BotDetection();
+        eeDetection.setId("ee-bot-detection");
+        eeDetection.setType("ee-bot-detection-plugin");
+        when(botDetectionService.findByDomain("domain-id")).thenReturn(io.reactivex.rxjava3.core.Flowable.just(eeDetection));
+        when(domainPluginLicenseGate.check(io.gravitee.am.service.PluginLicenseGate.TYPE_BOT_DETECTION, "ee-bot-detection-plugin", "ee-bot-detection")).thenReturn(false);
+
+        cut.afterPropertiesSet();
+
+        verify(domainReadinessService).initPluginSync("domain-id", "ee-bot-detection", io.gravitee.am.common.event.Type.BOT_DETECTION.name());
+        org.mockito.Mockito.verify(domainReadinessService, org.mockito.Mockito.never()).pluginFailed(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        assertFalse(cut.getBotDetections().containsKey("ee-bot-detection"));
     }
 
     @Test

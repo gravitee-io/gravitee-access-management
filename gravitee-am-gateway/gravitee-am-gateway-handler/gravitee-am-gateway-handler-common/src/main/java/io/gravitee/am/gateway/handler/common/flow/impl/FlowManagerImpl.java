@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.FlowEvent;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.common.flow.execution.ExecutionFlow;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
@@ -32,6 +33,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -96,6 +98,9 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     private final ConcurrentMap<String, Flow> flows = new ConcurrentHashMap<>();
     private final ConcurrentMap<ExtensionPoint, Set<ExecutionFlow>> policies = new ConcurrentHashMap<>();
@@ -290,6 +295,9 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     private Policy createPolicy(Step step) {
         try {
+            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_POLICY, step.getPolicy(), step.getPolicy())) {
+                return null;
+            }
             logger.info("\tInitializing policy: {} [{}]", step.getName(), step.getPolicy());
             Policy policy = policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration());
             logger.info("\tPolicy : {} [{}] has been loaded", step.getName(), step.getPolicy());

@@ -61,10 +61,39 @@ public class DomainReadinessServiceImplTest {
     }
 
     @Test
+    public void shouldKeepDomainStableWhenPluginIsUnlicensed() {
+        String domainId = "domain-1";
+        String pluginId = "ee-factor";
+
+        domainReadinessService.initPluginSync(domainId, pluginId, "FACTOR");
+        domainReadinessService.pluginUnlicensed(domainId, pluginId, "Plugin requires the feature 'am-factor-otp'");
+
+        verifyDomainState(domainId, DomainState.Status.DEPLOYED, true, 1);
+        DomainState domainState = domainReadinessService.getDomainState(domainId);
+        assertTrue(domainState.isSynchronized());
+        assertEquals("FACTOR", domainState.getCreationState().get(pluginId).getType());
+        assertEquals("Plugin requires the feature 'am-factor-otp'", domainState.getCreationState().get(pluginId).getMessage());
+        assertTrue(domainReadinessService.isAllDomainsReady());
+    }
+
+    @Test
+    public void shouldRecordUnlicensedPluginWithoutPriorInit() {
+        String domainId = "domain-1";
+        String pluginId = "ee-resource";
+
+        domainReadinessService.pluginUnlicensed(domainId, pluginId, "feature required");
+
+        verifyDomainState(domainId, DomainState.Status.DEPLOYED, true, 1);
+        assertEquals("feature required", domainReadinessService.getDomainState(domainId).getCreationState().get(pluginId).getMessage());
+        assertTrue(domainReadinessService.isAllDomainsReady());
+    }
+
+    @Test
     public void shouldHandleNullsSafely() {
         domainReadinessService.initPluginSync(null, "plugin", "type");
         domainReadinessService.pluginLoaded(null, "plugin");
         domainReadinessService.pluginFailed(null, "plugin", "error");
+        domainReadinessService.pluginUnlicensed(null, "plugin", "feature required");
         domainReadinessService.pluginUnloaded(null, "plugin");
         domainReadinessService.updateDomainStatus(null, DomainState.Status.DEPLOYED);
         domainReadinessService.removeDomain(null);

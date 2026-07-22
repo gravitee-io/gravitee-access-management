@@ -34,6 +34,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class AuthenticatorPluginManager extends
         ProviderPluginManager<AuthenticatorPlugin<?, AuthenticatorProvider>, AuthenticatorProvider, AuthenticatorProviderConfiguration>
@@ -49,8 +50,12 @@ public class AuthenticatorPluginManager extends
         this.pluginClassLoaderFactory = pluginClassLoaderFactory;
     }
 
-    public List<AuthenticatorProvider> createAll(ApplicationContext applicationContext){
+    /**
+     * Creates a provider for every deployed authenticator plugin whose id is accepted by the filter.
+     */
+    public List<AuthenticatorProvider> createAll(ApplicationContext applicationContext, Predicate<String> pluginFilter) {
         return findAll().stream()
+                .filter(auth -> pluginFilter.test(auth.id()))
                 .flatMap(auth -> create(auth, applicationContext).stream())
                 .toList();
     }

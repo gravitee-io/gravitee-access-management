@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
@@ -44,6 +45,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.authenticator.core.AuthenticatorPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpHeadersValues;
@@ -85,6 +87,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     @Autowired
     private AuthenticatorPluginManager authenticatorPluginManager;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -172,6 +177,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
         PROTOCOLS.forEach(protocol -> {
             try {
+                if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_PROTOCOL, protocol, protocol)) {
+                    return;
+                }
                 var providerConfig = new ProtocolProviderConfiguration(protocol, applicationContext);
                 var protocolProvider = protocolPluginManager.create(providerConfig);
                 if (protocolProvider != null) {
@@ -187,7 +195,8 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     private void startSecurityDomainAuthenticators() {
         logger.info("Start security domain authenticators");
-        List<AuthenticatorProvider> providers = authenticatorPluginManager.createAll(applicationContext);
+        List<AuthenticatorProvider> providers = authenticatorPluginManager.createAll(applicationContext,
+                pluginId -> domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHENTICATOR, pluginId, pluginId));
         providers.forEach(provider -> {
             try {
                 provider.start();
