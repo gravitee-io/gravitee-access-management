@@ -492,8 +492,8 @@ jobs:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+          name: Load prebuilt CIBA image
+          command: docker load -i /tmp/workspace/ciba-image.tar
       - run:
           name: Build stack
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
@@ -513,7 +513,12 @@ jobs:
             curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
       - run:
           name: Run Gateway Jest tests (sequential)
-          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
+          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
+      # AM-7300: capture per-suite JVM/sync metrics even when the gateway suite fails
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports/metrics
+          destination: gateway-metrics
+          when: always
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -546,8 +551,8 @@ jobs:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+          name: Load prebuilt CIBA image
+          command: docker load -i /tmp/workspace/ciba-image.tar
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -567,7 +572,12 @@ jobs:
             curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
       - run:
           name: Run Gateway Jest tests (sequential)
-          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+      # AM-7300: capture per-suite JVM/sync metrics even when the gateway suite fails
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports/metrics
+          destination: gateway-metrics
+          when: always
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -1194,12 +1204,22 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
+      - run:
+          name: Build CIBA delegated-service image tar
+          # AM-7300: build the CIBA image once here (reactor already warm from the install above) as a tar,
+          # so downstream jest jobs docker-load it instead of each rebuilding it from source (~90s/job).
+          # buildTar needs a single platform (amd64 = the CI executor arch) and Docker archive format so
+          # plain `docker load` tags it on any daemon (OCI-layout load needs the containerd image store).
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -DskipTests -Djib.from.platforms=linux/amd64 -Djib.container.format=Docker -f gravitee-am-ciba-delegated-service/pom.xml package jib:buildTar
+            cp ./gravitee-am-ciba-delegated-service/target/jib-image.tar ~/ciba-image.tar
       - persist_to_workspace:
           root: ~/
           paths:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
+            - ./ciba-image.tar
 
   release:
     parameters:
