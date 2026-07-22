@@ -35,6 +35,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -55,6 +56,17 @@ import static org.mockito.Mockito.doReturn;
  * @author GraviteeSource Team
  */
 public class DomainResourceTest extends JerseySpringTest {
+
+    @AfterEach
+    public void clearCloudModeProperties() {
+        System.clearProperty("cloud.enabled");
+        System.clearProperty("installation.type");
+    }
+
+    private void enableCloudMode() {
+        System.setProperty("cloud.enabled", "true");
+        System.setProperty("installation.type", "managed");
+    }
 
     @Test
     public void shouldGetDomain() {
@@ -223,6 +235,105 @@ public class DomainResourceTest extends JerseySpringTest {
         assertEquals(mockDomain.getTags(), domain.getTags());
         assertNotNull(domain.getCertificateSettings());
         assertEquals("fallback-cert-id", domain.getCertificateSettings().getFallbackCertificate());
+    }
+
+    @Test
+    public void shouldNotEnableVhostMode_cloudMode() {
+        enableCloudMode();
+
+        Domain mockDomain = buildDomainMock();
+        mockDomain.setVhostMode(false);
+        mockDomain.setVhosts(Collections.emptyList());
+
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setVhostMode(Optional.of(true));
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+
+        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotAddVhostEntries_cloudMode() {
+        enableCloudMode();
+
+        ArrayList<VirtualHost> currentVhosts = new ArrayList<>();
+        VirtualHost existing = new VirtualHost();
+        existing.setHost("existing.host.gravitee.io");
+        existing.setPath("/existing");
+        currentVhosts.add(existing);
+
+        Domain mockDomain = buildDomainMock();
+        mockDomain.setVhostMode(true);
+        mockDomain.setVhosts(currentVhosts);
+
+        ArrayList<VirtualHost> newVhosts = new ArrayList<>(currentVhosts);
+        VirtualHost added = new VirtualHost();
+        added.setHost("new.host.gravitee.io");
+        added.setPath("/new");
+        newVhosts.add(added);
+
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setVhosts(Optional.of(newVhosts));
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+
+        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldUpdateDomain_cloudMode_unrelatedField() {
+        enableCloudMode();
+
+        Domain mockDomain = buildDomainMock();
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setDescription(Optional.of("New description"));
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Single.just(mockDomain)).when(domainService).patch(any(GraviteeContext.class), eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
+
+        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldUpdateDomain_cloudMode_unchangedVhosts() {
+        enableCloudMode();
+
+        ArrayList<VirtualHost> currentVhosts = new ArrayList<>();
+        VirtualHost existing = new VirtualHost();
+        existing.setHost("existing.host.gravitee.io");
+        existing.setPath("/existing");
+        currentVhosts.add(existing);
+
+        Domain mockDomain = buildDomainMock();
+        mockDomain.setVhostMode(true);
+        mockDomain.setVhosts(currentVhosts);
+
+        ArrayList<VirtualHost> sameVhosts = new ArrayList<>();
+        VirtualHost same = new VirtualHost();
+        same.setHost("existing.host.gravitee.io");
+        same.setPath("/existing");
+        sameVhosts.add(same);
+
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setVhostMode(Optional.of(true));
+        patchDomain.setVhosts(Optional.of(sameVhosts));
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+        doReturn(Single.just(mockDomain)).when(domainService).patch(any(GraviteeContext.class), eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
+
+        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
     @Test

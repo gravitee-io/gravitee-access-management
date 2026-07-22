@@ -21,6 +21,7 @@ import regexEscape from 'regex-escape';
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
+import { CloudModeService } from '../../../services/cloud-mode.service';
 import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
@@ -34,6 +35,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   domain: any = {};
   entrypoint: any;
   readonly = false;
+  cloudModeEnabled = false;
   switchModeLabel: string;
   domainRestrictions: string[];
   domainRegexList: RegExp[] = [];
@@ -44,6 +46,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private route: ActivatedRoute,
     private authService: AuthService,
+    private cloudModeService: CloudModeService,
     private domainStore: DomainStoreService,
   ) {}
 
@@ -55,6 +58,10 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
 
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
+    this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => {
+      this.cloudModeEnabled = enabled;
+      this.readonly = this.readonly || enabled;
+    });
     this.changeSwitchModeLabel();
 
     this.domainRestrictions = this.route.snapshot.data['environment'].domainRestrictions;

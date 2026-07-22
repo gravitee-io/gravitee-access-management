@@ -21,12 +21,14 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -49,6 +51,8 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -368,10 +372,49 @@ public class DomainResource extends AbstractDomainResource {
         } else {
             Completable.merge(requiredPermissions.stream()
                     .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, permission, Acl.UPDATE)).collect(Collectors.toList()))
-                    .andThen(domainService.patch(new GraviteeContext(organizationId, environmentId, domainId), domainId, patchDomain, authenticatedUser)
+                    .andThen(checkVhostCloudModeChange(domainId, patchDomain))
+                    .andThen(Single.defer(() -> domainService.patch(new GraviteeContext(organizationId, environmentId, domainId), domainId, patchDomain, authenticatedUser)
                             .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
-                                    .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
+                                    .map(userPermissions -> filterDomainInfos(domain, userPermissions)))))
                     .subscribe(response::resume, response::resume);
         }
+    }
+
+    private Completable checkVhostCloudModeChange(String domainId, PatchDomain patchDomain) {
+        boolean vhostModeTouched = patchDomain.getVhostMode() != null && patchDomain.getVhostMode().isPresent();
+        boolean vhostsTouched = patchDomain.getVhosts() != null && patchDomain.getVhosts().isPresent();
+
+        if (!isCloudModeEnabled() || (!vhostModeTouched && !vhostsTouched)) {
+            return Completable.complete();
+        }
+
+        return domainService.findById(domainId)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapCompletable(currentDomain -> {
+                    boolean vhostModeEnabled = vhostModeTouched
+                            && Boolean.TRUE.equals(patchDomain.getVhostMode().get())
+                            && !currentDomain.isVhostMode();
+
+                    boolean vhostsChanged = vhostsTouched
+                            && !sameVirtualHosts(currentDomain.getVhosts(), patchDomain.getVhosts().get());
+
+                    if (vhostModeEnabled || vhostsChanged) {
+                        return Completable.error(new BadRequestException("VHost mode cannot be changed: this instance is a managed installation"));
+                    }
+                    return Completable.complete();
+                });
+    }
+
+    private static boolean sameVirtualHosts(List<VirtualHost> current, List<VirtualHost> updated) {
+        List<VirtualHost> currentList = current == null ? List.of() : current;
+        if (currentList.size() != updated.size()) {
+            return false;
+        }
+        return currentList.stream().map(DomainResource::virtualHostKey).collect(Collectors.toList())
+                .equals(updated.stream().map(DomainResource::virtualHostKey).collect(Collectors.toList()));
+    }
+
+    private static String virtualHostKey(VirtualHost virtualHost) {
+        return Objects.toString(virtualHost.getHost(), "") + '|' + Objects.toString(virtualHost.getPath(), "") + '|' + virtualHost.isOverrideEntrypoint();
     }
 }

@@ -11552,6 +11552,18 @@ paths:
       summary: Get the alert service status
       tags:
       - platform
+  /platform/configuration/deployment:
+    get:
+      description: There is no particular permission needed. User must be authenticated.
+      operationId: getDeploymentConfiguration
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Get the deployment configuration of this instance
+      tags:
+      - platform
   /platform/configuration/flow/schema:
     get:
       description: There is no particular permission needed. User must be authenticated.

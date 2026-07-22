@@ -24,6 +24,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -104,7 +105,8 @@ public class EntrypointsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.CREATE)
-                .andThen(entrypointService.create(organizationId, newEntrypoint, authenticatedUser))
+                .andThen(checkNotCloudMode("Entrypoints cannot be created: this instance is a managed installation"))
+                .andThen(Single.defer(() -> entrypointService.create(organizationId, newEntrypoint, authenticatedUser)))
                 .subscribe(entrypoint -> response.resume(Response
                                 .created(URI.create("/organizations/" + organizationId + "/entrypoints/" + entrypoint.getId()))
                                 .entity(entrypoint)
@@ -124,6 +126,7 @@ public class EntrypointsResource extends AbstractResource {
         filteredEntrypoint.setUrl(entrypoint.getUrl());
         filteredEntrypoint.setDescription(entrypoint.getDescription());
         filteredEntrypoint.setDefaultEntrypoint(entrypoint.isDefaultEntrypoint());
+        filteredEntrypoint.setEnvironmentId(entrypoint.getEnvironmentId());
 
         return filteredEntrypoint;
     }

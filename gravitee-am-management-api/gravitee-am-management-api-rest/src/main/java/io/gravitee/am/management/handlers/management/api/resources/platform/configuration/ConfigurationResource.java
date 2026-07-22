@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.configuration;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.management.handlers.management.api.model.AlertServiceStatusEntity;
 import io.gravitee.am.management.service.AlertService;
 import io.gravitee.am.service.FlowService;
@@ -100,6 +101,17 @@ public class ConfigurationResource {
     public void getUserEmailRequired(@Suspended final AsyncResponse response) {
         var emailRequired = environment.getProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);
         response.resume(Map.of("emailRequired", emailRequired));
+    }
+
+    @GET
+    @Path("deployment")
+    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "getDeploymentConfiguration",
+            summary = "Get the deployment configuration of this instance",
+            description = "There is no particular permission needed. User must be authenticated.")
+    public void getDeployment(@Suspended final AsyncResponse response) {
+        response.resume(Map.of("managed", CloudProperties.isManagedCloudEnabled(environment)));
     }
 
 }

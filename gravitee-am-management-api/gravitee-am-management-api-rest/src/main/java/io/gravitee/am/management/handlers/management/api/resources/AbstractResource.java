@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
@@ -25,6 +26,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.SecurityContext;
@@ -53,6 +55,24 @@ public abstract class AbstractResource {
 
     @Autowired
     protected PermissionService permissionService;
+
+    @Autowired
+    protected org.springframework.core.env.Environment environment;
+
+    protected boolean isCloudModeEnabled() {
+        return CloudProperties.isManagedCloudEnabled(environment);
+    }
+
+    /**
+     * @return a Completable that errors with a 400 BadRequestException carrying the given message when Cloud Mode
+     * is enabled, or completes normally otherwise.
+     */
+    protected Completable checkNotCloudMode(String message) {
+        if (isCloudModeEnabled()) {
+            return Completable.error(new BadRequestException(message));
+        }
+        return Completable.complete();
+    }
 
     protected User getAuthenticatedUser() {
         if (isAuthenticated()) {

@@ -21,6 +21,8 @@ import { EntrypointService } from '../../../services/entrypoint.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DialogService } from '../../../services/dialog.service';
 import { AuthService } from '../../../services/auth.service';
+import { CloudModeService } from '../../../services/cloud-mode.service';
+import { EnvironmentService } from '../../../services/environment.service';
 
 @Component({
   selector: 'app-entrypoints',
@@ -30,6 +32,8 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class EntrypointsComponent implements OnInit {
   public entrypoints: any[];
+  public cloudModeEnabled = false;
+  private environmentNameById: { [id: string]: string } = {};
 
   constructor(
     private entrypointService: EntrypointService,
@@ -37,14 +41,27 @@ export class EntrypointsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private route: ActivatedRoute,
     private authService: AuthService,
+    private cloudModeService: CloudModeService,
+    private environmentService: EnvironmentService,
   ) {}
 
   ngOnInit() {
     this.entrypoints = this.route.snapshot.data['entrypoints'];
+    this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => (this.cloudModeEnabled = enabled));
+    this.environmentService.getAllEnvironments().subscribe((environments) => {
+      this.environmentNameById = (environments || []).reduce((acc, environment) => {
+        acc[environment.id] = environment.name;
+        return acc;
+      }, {});
+    });
   }
 
   get isEmpty() {
     return !this.entrypoints || this.entrypoints.length === 0;
+  }
+
+  environmentName(entrypoint): string {
+    return this.environmentNameById[entrypoint.environmentId] || entrypoint.environmentId;
   }
 
   loadEntrypoints() {
@@ -67,6 +84,10 @@ export class EntrypointsComponent implements OnInit {
   }
 
   canDelete(entrypoint) {
-    return !entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
+    return !this.cloudModeEnabled && !entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
+  }
+
+  canEdit(): boolean {
+    return !this.cloudModeEnabled;
   }
 }
