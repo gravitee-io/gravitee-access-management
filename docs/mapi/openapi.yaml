@@ -13761,6 +13761,19 @@ components:
           type: string
         settingsId:
           type: string
+    ConsoleUserPreferences:
+      type: object
+      properties:
+        defaultDomainId:
+          type: string
+        defaultEnvironmentId:
+          type: string
+        pinnedDomainIds:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+          minItems: 0
     CookieSettings:
       type: object
       properties:
@@ -18703,6 +18716,8 @@ components:
           type: string
         client:
           type: string
+        consolePreferences:
+          $ref: "#/components/schemas/ConsoleUserPreferences"
         createdAt:
           type: integer
           format: int64
@@ -18931,6 +18946,8 @@ components:
           type: string
         client:
           type: string
+        consolePreferences:
+          $ref: "#/components/schemas/ConsoleUserPreferences"
         createdAt:
           type: integer
           format: int64
