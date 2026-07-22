@@ -514,7 +514,7 @@ jobs:
       - run:
           name: Run Gateway Jest tests (sequential)
           command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
-      # AM-7300: capture per-suite JVM/sync metrics even when the gateway suite fails
+      # capture per-suite JVM/sync metrics even when the gateway suite fails
       - store_artifacts:
           path: gravitee-am-test/jest-reports/metrics
           destination: gateway-metrics
@@ -573,7 +573,7 @@ jobs:
       - run:
           name: Run Gateway Jest tests (sequential)
           command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
-      # AM-7300: capture per-suite JVM/sync metrics even when the gateway suite fails
+      # capture per-suite JVM/sync metrics even when the gateway suite fails
       - store_artifacts:
           path: gravitee-am-test/jest-reports/metrics
           destination: gateway-metrics
@@ -1206,7 +1206,7 @@ jobs:
             cp ./gravitee-am-ui/target/*.zip ~/
       - run:
           name: Build CIBA delegated-service image tar
-          # AM-7300: build the CIBA image once here (reactor already warm from the install above) as a tar,
+          # build the CIBA image once here (reactor already warm from the install above) as a tar,
           # so downstream jest jobs docker-load it instead of each rebuilding it from source (~90s/job).
           # buildTar needs a single platform (amd64 = the CI executor arch) and Docker archive format so
           # plain `docker load` tags it on any daemon (OCI-layout load needs the containerd image store).
