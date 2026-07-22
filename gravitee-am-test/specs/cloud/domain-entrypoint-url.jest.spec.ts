@@ -55,8 +55,9 @@ const domainEntrypointUrls = async (): Promise<string[]> => {
 // not the internal data-plane gateway URL. retryUntil covers the management API sync-tick cache latency.
 describe('Cloud domain entrypoint URL (management API)', () => {
   it('resolves a single environment access-point URL when the environment has several access points', async () => {
-    // The fixture provisions two GATEWAY access points; cloud mode returns exactly one, chosen
-    // deterministically, and always one of the environment URLs (never the gateway fallback).
+    // The fixture provisions two GATEWAY access points; cloud mode returns exactly one (the
+    // default-flagged access point if any, otherwise the first), always one of the environment
+    // URLs (never the gateway fallback).
     const urls = await retryUntil(
       () => domainEntrypointUrls(),
       (resolved) => resolved.length === 1 && fixture.expectedUrls.includes(resolved[0]),
@@ -77,5 +78,21 @@ describe('Cloud domain entrypoint URL (management API)', () => {
     );
 
     expect(urls).toEqual([expectedUrl]);
+  });
+
+  it('never returns an empty list when the environment has no access points', async () => {
+    await fixture.resyncAccessPoints([]);
+
+    // Once the environment entrypoint is evicted, the endpoint must still return exactly one
+    // entrypoint (the fallback), never an empty list — an empty list would crash the UI. In managed
+    // cloud the DataPlane gatewayUrl may be absent, so the fallback entrypoint can have no url; the
+    // guarantee under test is that the list stays non-empty and is no longer an environment host.
+    const urls = await retryUntil(
+      () => domainEntrypointUrls(),
+      (resolved) => resolved.length === 1 && (resolved[0] == null || !resolved[0].endsWith('.example.com')),
+      POLL,
+    );
+
+    expect(urls).toHaveLength(1);
   });
 });
