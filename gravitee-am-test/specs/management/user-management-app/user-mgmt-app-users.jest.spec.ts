@@ -19,6 +19,7 @@ import { setup } from '../../test-fixture';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { waitForDomainSync } from '@management-commands/domain-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
+import { withRetry } from '@utils-commands/retry';
 import { UserManagementAppFixture, setupUserManagementAppFixture, CONSTANTS } from './fixtures/user-management-app-fixture';
 
 setup();
@@ -276,7 +277,13 @@ describe('Users - Create', () => {
 
     it('should initiate the post-registration flow', async () => {
       const registrationUrl = new URL(`${registrationUserUri}?token=${registrationAccessToken}`);
-      const response = await performGet(registrationUrl.origin, `${registrationUrl.pathname}${registrationUrl.search}`).expect(200);
+      // Enabling dynamicUserRegistration redeploys the domain routes; the registration route transiently
+      // 302s during that window, so poll until it serves the form (200) rather than asserting one shot.
+      const response = await withRetry(
+        () => performGet(registrationUrl.origin, `${registrationUrl.pathname}${registrationUrl.search}`).expect(200),
+        60,
+        500,
+      );
       expect(response.text).toContain('Thanks for signing up, please complete the form to activate your account');
     });
 
