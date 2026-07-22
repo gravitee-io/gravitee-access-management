@@ -199,7 +199,8 @@ export const waitForDomainStart = async (domain: Domain): Promise<DomainWithOidc
  *
  * @returns Promise that resolves when sync is complete
  */
-const DEFAULT_DOMAIN_SYNC_TIMEOUT_MS = 60000;
+// AM-7300: raised from 60s for slow CI executors (see monitoring-commands.ts). Env-overridable.
+const DEFAULT_DOMAIN_SYNC_TIMEOUT_MS = Number(process.env.AM_DOMAIN_SYNC_TIMEOUT_MS) || 120000;
 const DEFAULT_DOMAIN_SYNC_INTERVAL_MS = 500;
 const DOMAIN_SYNC_FALLBACK_WAIT_MS = 2000;
 

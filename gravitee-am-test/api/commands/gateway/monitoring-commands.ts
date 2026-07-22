@@ -17,7 +17,11 @@
 import { DomainState } from '@gateway-apis/MonitoringApi';
 import { retryUntil } from '@utils-commands/retry';
 
-const DEFAULT_TIMEOUT_MS = 30000;
+// AM-7300: raised from 30s. On slow CI executors, domain deploys that normally take ~1.5s stretch
+// past 30s (the box sits idle, so they succeed given time rather than failing) — a too-tight ceiling
+// turns that into a whole-job cascade and a full pipeline rerun. Env-overridable so CI can tune it
+// without a code change, and local runs can lower it to surface real failures fast.
+const DEFAULT_TIMEOUT_MS = Number(process.env.AM_DOMAIN_READY_TIMEOUT_MS) || 90000;
 const DEFAULT_INTERVAL_MS = 500;
 
 type PollOptions = { timeoutMillis?: number; intervalMillis?: number };
