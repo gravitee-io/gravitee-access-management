@@ -95,8 +95,8 @@ export async function setupSamlProviderDomain(domainSuffix: string): Promise<Sam
   expect(accessToken).toBeDefined();
 
   // Create provider domain
-  const providerDomain = await createDomain(accessToken, `saml-provider-${domainSuffix}`, 'Shared SAML Provider Domain for testing').then((domain) =>
-    allowHttpLocalhostRedirects(domain, accessToken),
+  const providerDomain = await createDomain(accessToken, `saml-provider-${domainSuffix}`, 'Shared SAML Provider Domain for testing').then(
+    (domain) => allowHttpLocalhostRedirects(domain, accessToken),
   );
   expect(providerDomain).toBeDefined();
   expect(providerDomain.id).toBeDefined();
@@ -161,16 +161,7 @@ export async function addClientDomain(
   // Use waitForSyncAfter to ensure the provider domain picks up the new app
   const providerApplication = await waitForSyncAfter(
     providerDomain.id,
-    () =>
-      createProviderApp(
-        providerDomain,
-        clientDomain,
-        accessToken,
-        inlineIdp.id,
-        samlEntityId,
-        true,
-        certificatePem,
-      ),
+    () => createProviderApp(providerDomain, clientDomain, accessToken, inlineIdp.id, samlEntityId, true, certificatePem),
     { timeoutMillis: 60000, intervalMillis: 500 },
   );
 
@@ -178,7 +169,7 @@ export async function addClientDomain(
   const clientApplication = await createClientApp(clientDomain, accessToken, samlIdp.id);
 
   // Start client domain
-  const startedClient = await doStartDomain(clientDomain, accessToken);
+  const startedClient = await startClientDomainResilient(clientDomain, accessToken);
 
   return {
     providerDomain,
@@ -190,12 +181,15 @@ export async function addClientDomain(
   };
 }
 
-type IdpCreatorFn = (clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) => Promise<any>;
-
-async function setupSamlTestDomainsWithIdpCreator(
+type IdpCreatorFn = (
+  clientDomain: Domain,
+  providerDomain: Domain,
+  accessToken: string,
   domainSuffix: string,
-  createIdpFn: IdpCreatorFn,
-): Promise<SamlTestDomains> {
+  providerCertificatePem: string,
+) => Promise<any>;
+
+async function setupSamlTestDomainsWithIdpCreator(domainSuffix: string, createIdpFn: IdpCreatorFn): Promise<SamlTestDomains> {
   let providerDomain: Domain;
   let clientDomain: Domain;
 
@@ -268,7 +262,7 @@ async function setupSamlTestDomainsWithIdpCreator(
   // because METADATA_URL-configured IdPs fetch metadata at deploy time.
   const startedProviderDomain = await doStartDomain(providerDomain, accessToken);
   await waitForSamlMetadataReady(providerDomain);
-  const startedClientDomain = await doStartDomain(clientDomain, accessToken);
+  const startedClientDomain = await startClientDomainResilient(clientDomain, accessToken);
 
   return {
     providerDomain: startedProviderDomain.domain,
@@ -316,7 +310,13 @@ async function fetchCertificatePem(domainId: string, accessToken: string, certif
   return pem;
 }
 
-export async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) {
+export async function createSamlProvider(
+  clientDomain: Domain,
+  providerDomain: Domain,
+  accessToken: string,
+  domainSuffix: string,
+  providerCertificatePem: string,
+) {
   const samlIdpConfig = {
     entityId: `saml-idp-${domainSuffix}`,
     signInUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/SSO`,
@@ -351,7 +351,45 @@ export function getProviderMetadataUrl(providerDomain: Domain): string {
   return `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/metadata`;
 }
 
-async function createSamlProviderViaMetadataUrl(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, _providerCertificatePem: string) {
+// WireMock base URLs — the gateway reaches it on the Docker network (INTERNAL_SFR_URL), the test runner on the
+// host (SFR_URL). Same env vars the http-factor tests use, so this resolves identically locally and in CI.
+const wiremockGatewayFacingBase = (): string => process.env.INTERNAL_SFR_URL || 'http://wiremock:8080';
+const wiremockTestFacingBase = (): string => process.env.SFR_URL || 'http://localhost:8181';
+const samlMetadataStubPath = (providerHrid: string): string => `/${providerHrid}/saml2/idp/metadata`;
+
+/** METADATA_URL value stored in the client IdP config — points at WireMock, reachable from the gateway. */
+export function getWiremockMetadataUrl(providerDomain: Domain): string {
+  return `${wiremockGatewayFacingBase()}${samlMetadataStubPath(providerDomain.hrid)}`;
+}
+
+/** Same stub, addressed from the test runner (host) for direct assertions. */
+export function getWiremockMetadataUrlExternal(providerDomain: Domain): string {
+  return `${wiremockTestFacingBase()}${samlMetadataStubPath(providerDomain.hrid)}`;
+}
+
+// Publish the provider's real SAML metadata to WireMock. The client domain's METADATA_URL IdP fetches its
+// metadata once, at deploy time; pointing that fetch at WireMock (an idle container) instead of looping back
+// into the gateway while it is busy deploying that same client domain removes the deploy-time-fetch flake.
+async function stubProviderMetadataInWiremock(providerDomain: Domain): Promise<void> {
+  const metadataXml = (await withRetry(() => performGet(getProviderMetadataUrl(providerDomain), '').expect(200), 60, 500)).text;
+  const res = await fetch(`${wiremockTestFacingBase()}/__admin/mappings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      request: { method: 'GET', urlPath: samlMetadataStubPath(providerDomain.hrid) },
+      response: { status: 200, headers: { 'Content-Type': 'application/xml' }, body: metadataXml },
+    }),
+  });
+  expect(res.ok).toBe(true);
+}
+
+async function createSamlProviderViaMetadataUrl(
+  clientDomain: Domain,
+  providerDomain: Domain,
+  accessToken: string,
+  domainSuffix: string,
+  _providerCertificatePem: string,
+) {
   // Create certificate in client domain for signing AuthnRequests (required when WantAuthnRequestsSigned=true in IdP metadata)
   const clientCertificate = await createCertificate(clientDomain.id, accessToken, {
     name: `saml-sign-cert-${domainSuffix}`,
@@ -359,10 +397,13 @@ async function createSamlProviderViaMetadataUrl(clientDomain: Domain, providerDo
     configuration: SAML_JKS_CERTIFICATE_CONFIG,
   });
 
+  // Serve the provider metadata from WireMock and point the client IdP at it (see stubProviderMetadataInWiremock).
+  await stubProviderMetadataInWiremock(providerDomain);
+
   const samlIdpConfig = {
     idpMetadataProvider: 'METADATA_URL',
     entityId: `saml-idp-${domainSuffix}`,
-    idpMetadataUrl: getProviderMetadataUrl(providerDomain),
+    idpMetadataUrl: getWiremockMetadataUrl(providerDomain),
     graviteeCertificate: clientCertificate.id,
     requestSigningAlgorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
     attributeMapping: {
@@ -383,7 +424,13 @@ async function createSamlProviderViaMetadataUrl(clientDomain: Domain, providerDo
   });
 }
 
-async function createSamlProviderViaMetadataFile(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, _providerCertificatePem: string) {
+async function createSamlProviderViaMetadataFile(
+  clientDomain: Domain,
+  providerDomain: Domain,
+  accessToken: string,
+  domainSuffix: string,
+  _providerCertificatePem: string,
+) {
   // Create certificate in client domain for signing AuthnRequests (required when WantAuthnRequestsSigned=true in IdP metadata)
   const clientCertificate = await createCertificate(clientDomain.id, accessToken, {
     name: `saml-sign-cert-${domainSuffix}`,
@@ -493,6 +540,32 @@ async function doStartDomain(domain: Domain, accessToken: string) {
   return { domain: enabledDomain, oidcConfig: oidcResponse.body };
 }
 
+// The client's METADATA_URL SAML IdP fetches the provider metadata once, at deploy time, via a 20s
+// blockingAwait that runs on the gateway's own event loop — the same loop busy deploying this domain.
+// Serving the metadata from WireMock (see stubProviderMetadataInWiremock) makes the response instant and
+// removes the loopback contention, but the fetch is still initiated and completed on the busy deploy path,
+// so it can still time out when deploy work hogs the loop (deploy succeeds but the IdP loads without a
+// signInUrl) or, on a non-200, fail the deploy outright. Redeploying re-runs the fetch against fast
+// WireMock, which recovers reliably. Safety net on top of the WireMock hosting.
+async function startClientDomainResilient(clientDomain: Domain, accessToken: string) {
+  const maxRedeploys = 2;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await doStartDomain(clientDomain, accessToken);
+    } catch (err) {
+      if (attempt >= maxRedeploys) {
+        throw err;
+      }
+      console.log(
+        `client domain "${clientDomain.hrid}" did not become ready (${(err as Error).message}) — ` +
+          `redeploying to re-trigger the SAML IdP metadata fetch (${attempt + 1}/${maxRedeploys})`,
+      );
+      await patchDomain(clientDomain.id, accessToken, { enabled: false });
+      await waitForOidcDown(clientDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
+    }
+  }
+}
+
 export async function setupSamlProviderTest(
   domainSuffix: string,
   setupFn: (suffix: string) => Promise<SamlTestDomains> = setupSamlTestDomains,
@@ -529,21 +602,77 @@ export async function setupSamlProviderTest(
     );
   };
 
-  const navigateToSamlProviderLogin = async (response: BasicResponse) => {
-    const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
-    const loginPageUrl = response.headers['location'];
-
-    let samlProviderLoginUrl: string | undefined;
-    const maxAttempts = 30;
+  // Poll the client login page for the SAML provider button, returning its href once it renders
+  // (or undefined if it never appears within the window).
+  const pollForSamlProviderLink = async (
+    headers: Record<string, string>,
+    loginPageUrl: string,
+    maxAttempts: number,
+  ): Promise<string | undefined> => {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const result = await performGet(loginPageUrl, '', headers).expect(200);
-      samlProviderLoginUrl = findSamlProviderLink(result.text);
-      if (samlProviderLoginUrl) break;
+      try {
+        const result = await performGet(loginPageUrl, '', headers).expect(200);
+        const link = findSamlProviderLink(result.text);
+        if (link) {
+          return link;
+        }
+      } catch (err) {
+        // Transient non-200 during a redeploy/route-wiring window — treat as "not ready yet" and keep polling.
+        console.debug(`SAML login page not ready (attempt ${attempt}/${maxAttempts}): ${err instanceof Error ? err.message : err}`);
+      }
       if (attempt < maxAttempts) {
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
+    return undefined;
+  };
 
+  const initiateSamlLoginPage = async (): Promise<{ headers: Record<string, string>; loginPageUrl: string }> => {
+    const response = await initiateLoginFlow(
+      domains.clientApplication.settings.oauth.clientId,
+      clientOpenIdConfiguration,
+      domains.clientDomain,
+    );
+    const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
+    return { headers, loginPageUrl: response.headers['location'] };
+  };
+
+  // Mode-2 safety net: even with the metadata served from WireMock, the client's one-shot deploy-time fetch
+  // can time out on a busy gateway event loop, leaving the IdP with no signInUrl so the SAML button never
+  // renders. Redeploying the client domain re-inits the IdP bean and re-runs the fetch (against fast
+  // WireMock), which recovers. Complements startClientDomainResilient, which covers the deploy-fails case.
+  const ensureClientSamlIdpReady = async () => {
+    const maxRedeploys = 2;
+    for (let attempt = 0; attempt <= maxRedeploys; attempt++) {
+      const { headers, loginPageUrl } = await initiateSamlLoginPage();
+      if (await pollForSamlProviderLink(headers, loginPageUrl, 15)) {
+        return;
+      }
+      if (attempt < maxRedeploys) {
+        console.log(
+          `SAML login button not rendered for client domain "${
+            domains.clientDomain.hrid
+          }" — redeploying to re-trigger the METADATA_URL fetch (${attempt + 1}/${maxRedeploys})`,
+        );
+        await patchDomain(domains.clientDomain.id, accessToken, { enabled: false });
+        await waitForOidcDown(domains.clientDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
+        await startDomain(domains.clientDomain.id, accessToken);
+        await waitForDomainReady(domains.clientDomain.id, { timeoutMillis: 120000, intervalMillis: 500 });
+        await waitForOidcReady(domains.clientDomain.hrid, { timeoutMs: 120000, intervalMs: 500 });
+      }
+    }
+    throw new Error(
+      `SAML IdP for client domain "${domains.clientDomain.hrid}" never became ready after ${maxRedeploys} redeploys ` +
+        `(METADATA_URL metadata fetch kept failing at deploy time)`,
+    );
+  };
+
+  const navigateToSamlProviderLogin = async (response: BasicResponse) => {
+    const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
+    const loginPageUrl = response.headers['location'];
+
+    // ensureClientSamlIdpReady already confirmed the button renders; keep a generous poll for router lag.
+    const samlProviderLoginUrl = await pollForSamlProviderLink(headers, loginPageUrl, 60);
     expect(samlProviderLoginUrl).toBeDefined();
     return await performGet(samlProviderLoginUrl, '', headers).expect(302);
   };
@@ -554,6 +683,10 @@ export async function setupSamlProviderTest(
     expect(location).toMatch(new RegExp(/^/.source + domains.clientApplication.settings.oauth.redirectUris[0]));
     return location.match(/\?code=([^&]+)/)?.[1];
   };
+
+  // Ensure the client's SAML IdP has loaded the provider metadata (redeploying if the one-shot deploy-time
+  // fetch timed out) before exercising the login flow.
+  await ensureClientSamlIdpReady();
 
   // Pre-authenticate user to handle consents
   await initiateLoginFlow(domains.clientApplication.settings.oauth.clientId, clientOpenIdConfiguration, domains.clientDomain)
@@ -609,6 +742,30 @@ export function setupSamlProviderTestViaMetadataFile(domainSuffix: string, provi
 async function waitForSamlMetadataReady(providerDomain: Domain): Promise<void> {
   const metadataUrl = getProviderMetadataUrl(providerDomain);
   await withRetry(() => performGet(metadataUrl, '').expect(200), 60, 500);
+}
+
+/**
+ * Poll until the domain's OIDC endpoint stops serving (undeployed), so a disable→enable cycle produces a
+ * genuine redeploy instead of being coalesced into a no-op by the gateway's periodic sync.
+ */
+async function waitForOidcDown(domainHrid: string, options?: { timeoutMs?: number; intervalMs?: number }): Promise<void> {
+  const { timeoutMs = 30000, intervalMs = 500 } = options || {};
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await getWellKnownOpenIdConfiguration(domainHrid);
+      if (res.status !== 200) {
+        return;
+      }
+    } catch {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  console.warn(
+    `domain "${domainHrid}" OIDC still serving after ${timeoutMs}ms; proceeding with redeploy anyway (disable may have been coalesced)`,
+  );
+  // Undeploy not observed within the window; proceed anyway — the enable + waitForOidcReady still redeploys.
 }
 
 export async function cleanupSamlTestDomains(accessToken: string, domains: SamlTestDomains): Promise<void> {
