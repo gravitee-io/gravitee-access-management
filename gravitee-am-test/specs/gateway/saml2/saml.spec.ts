@@ -25,7 +25,8 @@ import {
   setupSamlProviderTest,
   setupSamlProviderTestViaMetadataUrl,
   setupSamlProviderTestViaMetadataFile,
-  getProviderMetadataUrl,
+  getWiremockMetadataUrl,
+  getWiremockMetadataUrlExternal,
   TEST_USER,
   FALLBACK_USER,
 } from './setup';
@@ -354,12 +355,13 @@ describe('SAML IdP configured via METADATA_URL', () => {
 
   it('should have metadata URL pointing to a valid IdP metadata endpoint', async () => {
     const config = JSON.parse(metadataUrlFixture.domains.samlIdp.configuration);
-    const expectedMetadataUrl = getProviderMetadataUrl(metadataUrlFixture.domains.providerDomain);
+    const expectedMetadataUrl = getWiremockMetadataUrl(metadataUrlFixture.domains.providerDomain);
 
     expect(config.idpMetadataUrl).toBe(expectedMetadataUrl);
     expect(config.idpMetadataUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/metadata$/);
 
-    const metadataResponse = await performGet(config.idpMetadataUrl, '').expect(200);
+    // config.idpMetadataUrl is the gateway-facing WireMock URL; fetch the same stub via the host-facing URL.
+    const metadataResponse = await performGet(getWiremockMetadataUrlExternal(metadataUrlFixture.domains.providerDomain), '').expect(200);
     expect(metadataResponse.text).toContain('IDPSSODescriptor');
     expect(metadataResponse.text).toContain('SingleSignOnService');
   });
@@ -450,11 +452,7 @@ describe('SAML Assertion Mapping — NameID', () => {
     const authCode = await nameidFixture.expectRedirectToClient(loginResponse);
     expect(authCode).toBeDefined();
 
-    const usersPage = await listUsers(
-      nameidFixture.domains.clientDomain.id,
-      provider.accessToken,
-      TEST_USER.username,
-    );
+    const usersPage = await listUsers(nameidFixture.domains.clientDomain.id, provider.accessToken, TEST_USER.username);
     expect(usersPage.data).toHaveLength(1);
     const federatedUser = usersPage.data[0];
     expect(federatedUser.username).toBe(TEST_USER.username);
@@ -514,11 +512,7 @@ describe('SAML Assertion Mapping — Custom Attributes', () => {
     const authCode = await attrFixture.expectRedirectToClient(loginResponse);
     expect(authCode).toBeDefined();
 
-    const usersPage = await listUsers(
-      attrFixture.domains.clientDomain.id,
-      provider.accessToken,
-      TEST_USER.username,
-    );
+    const usersPage = await listUsers(attrFixture.domains.clientDomain.id, provider.accessToken, TEST_USER.username);
     expect(usersPage.data).toHaveLength(1);
     const federatedUser = usersPage.data[0];
     expect(federatedUser.username).toBe(TEST_USER.username);
@@ -547,11 +541,7 @@ describe('SAML Assertion Mapping — Custom Attributes', () => {
     const authCode = await attrFixture.expectRedirectToClient(loginResponse);
     expect(authCode).toBeDefined();
 
-    const usersPage = await listUsers(
-      attrFixture.domains.clientDomain.id,
-      provider.accessToken,
-      FALLBACK_USER.username,
-    );
+    const usersPage = await listUsers(attrFixture.domains.clientDomain.id, provider.accessToken, FALLBACK_USER.username);
     expect(usersPage.data).toHaveLength(1);
     const federatedUser = usersPage.data[0];
     expect(federatedUser.username).toBe(FALLBACK_USER.username);
