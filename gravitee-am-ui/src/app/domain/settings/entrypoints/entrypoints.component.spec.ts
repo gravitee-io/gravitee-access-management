@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
+import { CloudModeService } from '../../../services/cloud-mode.service';
 import { DomainStoreService } from '../../../stores/domain.store';
 
 jest.mock('@gravitee/ui-components/src/lib/utils', () => ({
@@ -41,6 +42,7 @@ describe('DomainSettingsEntrypointsComponent', () => {
   let domainServiceStub: DomainService;
   let snackbarServiceStub: SnackbarService;
   let authServiceStub: AuthService;
+  let cloudModeServiceStub: CloudModeService;
   let domainStoreStub: DomainStoreService;
   let activatedRouteStub: ActivatedRoute;
 
@@ -57,6 +59,10 @@ describe('DomainSettingsEntrypointsComponent', () => {
     authServiceStub = {
       hasPermissions: jest.fn().mockReturnValue(true),
     } as Partial<AuthService> as AuthService;
+
+    cloudModeServiceStub = {
+      isCloudModeEnabled: jest.fn().mockReturnValue(of(false)),
+    } as Partial<CloudModeService> as CloudModeService;
 
     domainStoreStub = {
       domain$: new BehaviorSubject({ id: 'test-domain', name: 'Test Domain', vhosts: [] }),
@@ -86,6 +92,7 @@ describe('DomainSettingsEntrypointsComponent', () => {
         { provide: DomainService, useValue: domainServiceStub },
         { provide: SnackbarService, useValue: snackbarServiceStub },
         { provide: AuthService, useValue: authServiceStub },
+        { provide: CloudModeService, useValue: cloudModeServiceStub },
         { provide: DomainStoreService, useValue: domainStoreStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
       ],

@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { EntrypointService } from '../../../../services/entrypoint.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
+import { CloudModeService } from '../../../../services/cloud-mode.service';
 import { Tag } from '../../../../domain/settings/general/general.component';
 
 @Component({
@@ -38,6 +39,7 @@ export class EntrypointComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;
   formChanged = false;
   readonly: boolean;
+  cloudModeEnabled = false;
   tags: Tag[];
   selectedTags: Tag[];
 
@@ -48,11 +50,16 @@ export class EntrypointComponent implements OnInit {
     private router: Router,
     private dialogService: DialogService,
     private authService: AuthService,
+    private cloudModeService: CloudModeService,
   ) {}
 
   ngOnInit() {
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.readonly = !this.authService.hasPermissions(['organization_entrypoint_update']);
+    this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => {
+      this.cloudModeEnabled = enabled;
+      this.readonly = this.readonly || enabled;
+    });
     this.initTags();
   }
 
@@ -103,6 +110,8 @@ export class EntrypointComponent implements OnInit {
   }
 
   canDelete() {
-    return !this.entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
+    return (
+      !this.cloudModeEnabled && !this.entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete'])
+    );
   }
 }

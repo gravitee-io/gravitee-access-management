@@ -24,6 +24,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -97,7 +99,8 @@ public class EntrypointResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.UPDATE)
-                .andThen(entrypointService.update(entrypointId, organizationId, entrypointToUpdate, authenticatedUser))
+                .andThen(checkNotCloudMode("Entrypoints cannot be updated: this instance is a managed installation"))
+                .andThen(Single.defer(() -> entrypointService.update(entrypointId, organizationId, entrypointToUpdate, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -116,7 +119,8 @@ public class EntrypointResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.DELETE)
-                .andThen(entrypointService.delete(entrypointId, organizationId, authenticatedUser))
+                .andThen(checkNotCloudMode("Entrypoints cannot be deleted: this instance is a managed installation"))
+                .andThen(Completable.defer(() -> entrypointService.delete(entrypointId, organizationId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

@@ -260,6 +260,7 @@ import { TagComponent } from './settings/management/tags/tag/tag.component';
 import { EntrypointsResolver } from './resolvers/entrypoints.resolver';
 import { EntrypointResolver } from './resolvers/entrypoint.resolver';
 import { EntrypointService } from './services/entrypoint.service';
+import { CloudModeService } from './services/cloud-mode.service';
 import { EntrypointsComponent } from './settings/management/entrypoints/entrypoints.component';
 import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
 import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
@@ -946,6 +947,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     TagsResolver,
     TagResolver,
     EntrypointService,
+    CloudModeService,
     EntrypointsResolver,
     EntrypointResolver,
     PolicyService,

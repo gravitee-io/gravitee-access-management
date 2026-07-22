@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -45,6 +46,17 @@ public class EntrypointsResourceTest extends JerseySpringTest {
 
     public static final String ORGANIZATION_ID = "orga-1";
     public static final String ENTRYPOINT_ID = "entrypoint-1";
+
+    @AfterEach
+    public void clearCloudModeProperties() {
+        System.clearProperty("cloud.enabled");
+        System.clearProperty("installation.type");
+    }
+
+    private void enableCloudMode() {
+        System.setProperty("cloud.enabled", "true");
+        System.setProperty("installation.type", "managed");
+    }
 
     @Test
     public void shouldGetEntrypoints() {
@@ -99,5 +111,22 @@ public class EntrypointsResourceTest extends JerseySpringTest {
         final Response response = post(path, newEntrypoint);
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
         assertEquals(path.getUri().toString() + "/"+ entrypoint.getId(), response.getHeaderString(HttpHeaders.LOCATION));
+    }
+
+    @Test
+    public void shouldNotCreate_cloudMode() {
+        enableCloudMode();
+
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setName("name");
+        newEntrypoint.setUrl("https://auth.gravitee.io");
+        newEntrypoint.setTags(Collections.emptyList());
+
+        WebTarget path = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("entrypoints");
+
+        final Response response = post(path, newEntrypoint);
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }

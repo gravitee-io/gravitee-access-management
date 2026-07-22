@@ -23,6 +23,7 @@ import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -42,6 +43,17 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
     public static final String ORGANIZATION_ID = "orga#1";
     public static final String ENTRYPOINT_ID = "entrypoint#1";
+
+    @AfterEach
+    public void clearCloudModeProperties() {
+        System.clearProperty("cloud.enabled");
+        System.clearProperty("installation.type");
+    }
+
+    private void enableCloudMode() {
+        System.setProperty("cloud.enabled", "true");
+        System.setProperty("installation.type", "managed");
+    }
 
     @Test
     public void shouldGetEntrypoint() {
@@ -128,5 +140,32 @@ public class EntrypointResourceTest extends JerseySpringTest {
                 .path("entrypoints").path(ENTRYPOINT_ID), updateEntrypoint);
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotUpdateEntrypoint_cloudMode() {
+        enableCloudMode();
+
+        UpdateEntrypoint updateEntrypoint = new UpdateEntrypoint();
+        updateEntrypoint.setName("name");
+        updateEntrypoint.setUrl("https://auth.gravitee.io");
+        updateEntrypoint.setTags(Collections.emptyList());
+
+        final Response response = put(target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("entrypoints").path(ENTRYPOINT_ID), updateEntrypoint);
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotDeleteEntrypoint_cloudMode() {
+        enableCloudMode();
+
+        final Response response = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("entrypoints").path(ENTRYPOINT_ID).request().delete();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }

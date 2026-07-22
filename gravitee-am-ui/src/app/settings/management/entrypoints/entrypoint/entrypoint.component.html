@@ -97,16 +97,18 @@
           </mat-form-field>
         </div>
 
-        <div fxLayout="row" *hasPermission="['organization_entrypoint_update']">
-          <button
-            mat-raised-button
-            color="primary"
-            [disabled]="(!entrypointForm.valid || entrypointForm.pristine) && !formChanged"
-            type="submit"
-          >
-            SAVE
-          </button>
-        </div>
+        <ng-container *ngIf="!cloudModeEnabled">
+          <div fxLayout="row" *hasPermission="['organization_entrypoint_update']">
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="(!entrypointForm.valid || entrypointForm.pristine) && !formChanged"
+              type="submit"
+            >
+              SAVE
+            </button>
+          </div>
+        </ng-container>
       </form>
 
       <div class="gv-page-delete-zone" fxLayout="column" *ngIf="canDelete()">
