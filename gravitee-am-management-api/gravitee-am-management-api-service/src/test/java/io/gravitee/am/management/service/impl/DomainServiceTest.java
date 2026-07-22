@@ -135,7 +135,6 @@ import io.gravitee.am.service.EntryPointManager;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -193,7 +192,6 @@ public class DomainServiceTest {
     @InjectMocks
     private DomainServiceImpl domainService = new DomainServiceImpl();
 
-    // Real Spring environment so CloudProperties resolves defaults (non-cloud) without stubbing.
     @Spy
     private MockEnvironment springEnvironment = new MockEnvironment();
 
@@ -1905,27 +1903,62 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldGetEntrypoint_cloud_multipleEnvironmentEntrypoints_picksEarliestDeterministically() {
+    public void shouldGetEntrypoint_cloud_multipleEntrypoints_picksDefaultFlagged() {
         enableCloudMode();
 
-        final Entrypoint newer = new Entrypoint();
-        newer.setId("b-entrypoint");
-        newer.setEnvironmentId(ENVIRONMENT_ID);
-        newer.setUrl("https://newer.gravitee.io");
-        newer.setCreatedAt(new Date(2000));
+        final Entrypoint first = new Entrypoint();
+        first.setId("first-entrypoint");
+        first.setEnvironmentId(ENVIRONMENT_ID);
+        first.setUrl("https://first.gravitee.io");
 
-        final Entrypoint older = new Entrypoint();
-        older.setId("a-entrypoint");
-        older.setEnvironmentId(ENVIRONMENT_ID);
-        older.setUrl("https://older.gravitee.io");
-        older.setCreatedAt(new Date(1000));
+        final Entrypoint flagged = new Entrypoint();
+        flagged.setId("flagged-entrypoint");
+        flagged.setEnvironmentId(ENVIRONMENT_ID);
+        flagged.setUrl("https://flagged.gravitee.io");
+        flagged.setDefaultEntrypoint(true);
 
-        // Cache order (newer first) must not influence the result: earliest createdAt wins.
-        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(newer, older));
+        // The default-flagged entrypoint wins even when it is not first in the list.
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(first, flagged));
 
         final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
         subscriber.assertValue(entrypoints -> entrypoints.size() == 1
-                && entrypoints.get(0).getId().equals("a-entrypoint"));
+                && entrypoints.get(0).getId().equals("flagged-entrypoint"));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_nullGatewayUrl_returnsNonEmpty() {
+        enableCloudMode();
+
+        final Domain mockDomain = cloudDomain();
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        when(dataPlaneRegistry.getDescription(mockDomain))
+                .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        // Even with no gateway URL the list must never be empty (the UI dereferences the single element).
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 && entrypoints.get(0).getUrl() == null);
+    }
+
+    @Test
+    public void shouldGetEntrypoint_cloud_multipleEntrypoints_noneDefault_picksFirstInList() {
+        enableCloudMode();
+
+        final Entrypoint first = new Entrypoint();
+        first.setId("first-entrypoint");
+        first.setEnvironmentId(ENVIRONMENT_ID);
+        first.setUrl("https://first.gravitee.io");
+
+        final Entrypoint second = new Entrypoint();
+        second.setId("second-entrypoint");
+        second.setEnvironmentId(ENVIRONMENT_ID);
+        second.setUrl("https://second.gravitee.io");
+
+        // None flagged default: fall back to the first in the list received from the command.
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(first, second));
+
+        final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && entrypoints.get(0).getId().equals("first-entrypoint"));
     }
 
     @Test
