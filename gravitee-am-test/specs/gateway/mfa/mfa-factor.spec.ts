@@ -34,7 +34,6 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
-import * as faker from 'faker';
 import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
@@ -517,7 +516,7 @@ const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFact
   const application = await createApplication(domain.id, accessToken, {
     name: 'mfaEnrollFlowApp',
     type: 'WEB',
-    clientId: faker.internet.domainWord(),
+    clientId: uniqueName('mfa-client', true),
     redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(
@@ -598,9 +597,9 @@ const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFact
 
 const createMfaFlowApp = async (domain, accessToken, factor) => {
   const application = await createApplication(domain.id, accessToken, {
-    name: faker.company.bsBuzz(),
+    name: uniqueName('mfa-app', true),
     type: 'WEB',
-    clientId: faker.internet.domainWord(),
+    clientId: uniqueName('mfa-client', true),
     redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(
@@ -679,9 +678,9 @@ const createMfaFlowApp = async (domain, accessToken, factor) => {
 
 const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
   const application = await createApplication(domain.id, accessToken, {
-    name: faker.company.bsBuzz(),
+    name: uniqueName('mfa-app', true),
     type: 'WEB',
-    clientId: faker.internet.domainWord(),
+    clientId: uniqueName('mfa-client', true),
     redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(
