@@ -17,7 +17,7 @@ module.exports = {
   verbose: true,
   rootDir: '../..',
   setupFiles: ['./api/config/dev.setup.js'],
-  setupFilesAfterEnv: ['./api/config/retry.setup.js'],
+  setupFilesAfterEnv: ['./api/config/retry.setup.js', './api/config/metrics.setup.js'],
   moduleNameMapper: {
     '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
     '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
