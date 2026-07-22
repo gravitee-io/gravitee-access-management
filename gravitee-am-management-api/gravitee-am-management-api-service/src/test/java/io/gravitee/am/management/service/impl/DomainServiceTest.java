@@ -127,10 +127,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.env.MockEnvironment;
+
+import io.gravitee.am.service.EntryPointManager;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -187,6 +192,13 @@ public class DomainServiceTest {
 
     @InjectMocks
     private DomainServiceImpl domainService = new DomainServiceImpl();
+
+    // Real Spring environment so CloudProperties resolves defaults (non-cloud) without stubbing.
+    @Spy
+    private MockEnvironment springEnvironment = new MockEnvironment();
+
+    @Mock
+    private EntryPointManager entryPointManager;
 
     @Mock
     private DataPlaneRegistry dataPlaneRegistry;
@@ -1844,6 +1856,102 @@ public class DomainServiceTest {
         subscriber.assertValue(entrypoints -> entrypoints.size() == 2 &&
                 entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)) &&
                 entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID2)));
+    }
+
+    private void enableCloudMode() {
+        springEnvironment.setProperty("cloud.enabled", "true");
+        springEnvironment.setProperty("installation.type", "managed");
+    }
+
+    private Domain cloudDomain() {
+        Domain domain = new Domain();
+        domain.setId(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        return domain;
+    }
+
+    @Test
+    public void shouldGetEntrypoint_cloud_singleEnvironmentEntrypoint() {
+        enableCloudMode();
+
+        final Entrypoint envEntrypoint = new Entrypoint();
+        envEntrypoint.setId("env-entrypoint-1");
+        envEntrypoint.setEnvironmentId(ENVIRONMENT_ID);
+        envEntrypoint.setUrl("https://acme.gravitee.io");
+
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(envEntrypoint));
+
+        final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && entrypoints.get(0).getId().equals("env-entrypoint-1")
+                && entrypoints.get(0).getUrl().equals("https://acme.gravitee.io"));
+        verify(entrypointService, never()).findAll(anyString());
+    }
+
+    @Test
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_synthesizesGatewayUrl() {
+        enableCloudMode();
+
+        final Domain mockDomain = cloudDomain();
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        when(dataPlaneRegistry.getDescription(mockDomain))
+                .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", "http://gateway:8092"));
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        // Never an empty list (the UI would crash); a single entrypoint carrying the gateway URL.
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && "http://gateway:8092".equals(entrypoints.get(0).getUrl()));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_cloud_multipleEnvironmentEntrypoints_picksEarliestDeterministically() {
+        enableCloudMode();
+
+        final Entrypoint newer = new Entrypoint();
+        newer.setId("b-entrypoint");
+        newer.setEnvironmentId(ENVIRONMENT_ID);
+        newer.setUrl("https://newer.gravitee.io");
+        newer.setCreatedAt(new Date(2000));
+
+        final Entrypoint older = new Entrypoint();
+        older.setId("a-entrypoint");
+        older.setEnvironmentId(ENVIRONMENT_ID);
+        older.setUrl("https://older.gravitee.io");
+        older.setCreatedAt(new Date(1000));
+
+        // Cache order (newer first) must not influence the result: earliest createdAt wins.
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(newer, older));
+
+        final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && entrypoints.get(0).getId().equals("a-entrypoint"));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_nonCloud_usesOrgEntrypointsAndSkipsEnvironmentManager() {
+        // springEnvironment defaults to non-cloud (no cloud.enabled / installation.type).
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setTags(Arrays.asList(TAG_ID2));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Flowable.just(entrypoint, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && entrypoints.get(0).getId().equals(ENTRYPOINT_ID1));
+        verify(entryPointManager, never()).findByEnvironmentId(anyString());
     }
 
     @Test

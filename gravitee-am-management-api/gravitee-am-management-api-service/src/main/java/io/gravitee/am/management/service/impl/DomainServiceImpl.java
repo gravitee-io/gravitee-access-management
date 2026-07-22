@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
@@ -65,6 +66,7 @@ import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
@@ -130,6 +132,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -269,6 +272,13 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private EntrypointService entrypointService;
+
+    @Autowired
+    private EntryPointManager entryPointManager;
+
+    // Spring environment (node config), distinct from the io.gravitee.am.model.Environment used elsewhere in this class.
+    @Autowired
+    private org.springframework.core.env.Environment springEnvironment;
 
     @Autowired
     private DefaultIdentityProviderService defaultIdentityProviderService;
@@ -777,6 +787,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Single<List<Entrypoint>> listEntryPoint(Domain domain, String organizationId) {
+        if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
+            return listEnvironmentEntryPoint(domain);
+        }
         return entrypointService.findAll(organizationId)
                 .filter(entrypoint -> entrypoint.isDefaultEntrypoint()
                         || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag))))
@@ -794,6 +807,34 @@ public class DomainServiceImpl implements DomainService {
 
                     return filteredEntrypoints;
                 });
+    }
+
+    /**
+     * Managed cloud mode: the domain's entrypoint is scoped to its environment and resolved from the
+     * {@link EntryPointManager} cache rather than the org-wide default/tags filter. Self-contained -
+     * never falls through to the non-cloud path (which would return the org default's gateway URL,
+     * the wrong URL in cloud). See ADR 0001.
+     */
+    private Single<List<Entrypoint>> listEnvironmentEntryPoint(Domain domain) {
+        return Single.defer(() -> {
+            List<Entrypoint> environmentEntrypoints = entryPointManager.findByEnvironmentId(domain.getReferenceId());
+            if (environmentEntrypoints.isEmpty()) {
+                // Not synced yet: return a single entrypoint carrying the gateway URL so the page still
+                // renders (the UI selects the single element and reads its url). Never return an empty list.
+                Entrypoint fallback = new Entrypoint();
+                fallback.setUrl(dataPlaneRegistry.getDescription(domain).gatewayUrl());
+                return Single.just(List.of(fallback));
+            }
+            if (environmentEntrypoints.size() > 1) {
+                LOGGER.warn("Environment {} resolves to {} entrypoints, expected one; picking deterministically until the override flag (AM-7298) lands", domain.getReferenceId(), environmentEntrypoints.size());
+            }
+            // Non-empty by the guard above: min() always yields a value.
+            Entrypoint selected = environmentEntrypoints.stream()
+                    .min(Comparator.comparing(Entrypoint::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(Entrypoint::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .orElseThrow();
+            return Single.just(List.of(selected));
+        });
     }
 
     private Single<Domain> createSystemScopes(Domain domain) {
