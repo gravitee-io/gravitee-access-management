@@ -111,6 +111,20 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     @Override
+    public void pluginUnlicensed(String domainId, String pluginId, String message) {
+        if (domainId == null) {
+            logger.warn("Received pluginUnlicensed for null domainId. Plugin: {}, Reason: {}", pluginId, message);
+            return;
+        }
+
+        logger.info("[Domain: {}] Plugin not licensed: {} - {}", domainId, pluginId, message);
+
+        initPluginSync(domainId, pluginId, null);
+        // success=true: a licensing decision must not make the domain unstable or the readiness probe unhealthy.
+        updatePluginStatus(domainId, pluginId, true, message);
+    }
+
+    @Override
     public void pluginUnloaded(String domainId, String pluginId) {
         if (domainId == null) {
             logger.warn("Received pluginUnloaded for null domainId. Plugin: {}", pluginId);

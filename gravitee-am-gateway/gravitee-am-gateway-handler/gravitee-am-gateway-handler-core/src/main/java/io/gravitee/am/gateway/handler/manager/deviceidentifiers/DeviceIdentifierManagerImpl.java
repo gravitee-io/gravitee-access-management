@@ -29,7 +29,9 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.service.DeviceIdentifierService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -73,6 +75,9 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     public ConcurrentMap<String, DeviceIdentifier> getDeviceIdentifiers() {
         return deviceIdentifiers;
@@ -147,6 +152,11 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     private void updateDeviceIdentifier(DeviceIdentifier detection) {
         domainReadinessService.initPluginSync(domain.getId(), detection.getId(), Type.DEVICE_IDENTIFIER.name());
         try {
+            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_DEVICE_IDENTIFIER, detection.getType(), detection.getId())) {
+                this.deviceIdentifiers.remove(detection.getId());
+                this.providers.remove(detection.getId());
+                return;
+            }
             if (needDeployment(detection)) {
                 var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
                 var provider = deviceIdentifierPluginManager.create(providerConfig);

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.flow;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.DomainReadinessService;
@@ -67,8 +68,16 @@ public class FlowManagerTest {
     @Mock
     private DomainReadinessService domainReadinessService;
 
+    @Mock
+    private DomainPluginLicenseGate domainPluginLicenseGate;
+
     @InjectMocks
     private FlowManagerImpl flowManager = new FlowManagerImpl();
+
+    @org.junit.Before
+    public void prepareLicenseGate() {
+        lenient().when(domainPluginLicenseGate.check(anyString(), anyString(), anyString())).thenReturn(true);
+    }
 
     @Test
     public void shouldNoFindByExtensionPoint_noFlows() {
@@ -168,6 +177,31 @@ public class FlowManagerTest {
             return true;
         });
         verify(policyPluginManager, times(1)).create(anyString(), eq(null), anyString());
+    }
+
+    @Test
+    public void shouldSkipUnlicensedPolicyStep() {
+        Step step = mock(Step.class);
+        when(step.isEnabled()).thenReturn(true);
+        when(step.getPolicy()).thenReturn("ee-policy");
+
+        Flow flow = mock(Flow.class);
+        when(flow.getId()).thenReturn("flow-id");
+        when(flow.getType()).thenReturn(Type.CONSENT);
+        when(flow.isEnabled()).thenReturn(true);
+        when(flow.getPre()).thenReturn(Collections.singletonList(step));
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(domainPluginLicenseGate.check(io.gravitee.am.service.PluginLicenseGate.TYPE_POLICY, "ee-policy", "ee-policy")).thenReturn(false);
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
+        flowManager.afterPropertiesSet();
+        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(policies -> {
+            Assert.assertTrue(policies.isEmpty());
+            return true;
+        });
+        verify(policyPluginManager, never()).create(anyString(), any(), anyString());
     }
 
     @Test

@@ -19,6 +19,7 @@ import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvid
 import io.gravitee.am.common.event.AuthenticationDeviceNotifierEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Domain;
@@ -29,6 +30,7 @@ import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.plugins.authdevice.notifier.core.AuthenticationDeviceNotifierPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -69,6 +71,9 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
     @Autowired
     private DomainReadinessService domainReadinessService;
 
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
+
     private final Map<String, AuthenticationDeviceNotifierProvider> deviceNotifierProviders = new ConcurrentHashMap<>();
     private final Map<String, AuthenticationDeviceNotifier> deviceNotifiers = new ConcurrentHashMap<>();
 
@@ -99,6 +104,9 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                 .subscribe(
                         notifier -> {
                             domainReadinessService.initPluginSync(domain.getId(), notifier.getId(), Type.AUTH_DEVICE_NOTIFIER.name());
+                            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHDEVICE_NOTIFIER, notifier.getType(), notifier.getId())) {
+                                return;
+                            }
                             var providerConfiguration = new ProviderConfiguration(notifier.getType(), notifier.getConfiguration());
                             var provider = deviceNotifierPluginManager.create(providerConfiguration);
                             provider.start();
@@ -146,6 +154,9 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                     if (needDeployment(notifier)) {
                         unloadDeviceNotifierProvider(notifierId);
                         domainReadinessService.initPluginSync(domain.getId(), notifier.getId(), Type.AUTH_DEVICE_NOTIFIER.name());
+                        if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHDEVICE_NOTIFIER, notifier.getType(), notifier.getId())) {
+                            return notifier;
+                        }
                         var provider = deviceNotifierPluginManager.create(new ProviderConfiguration(notifier.getType(), notifier.getConfiguration()));
                         provider.start();
                         this.deviceNotifierProviders.put(notifier.getId(), provider);

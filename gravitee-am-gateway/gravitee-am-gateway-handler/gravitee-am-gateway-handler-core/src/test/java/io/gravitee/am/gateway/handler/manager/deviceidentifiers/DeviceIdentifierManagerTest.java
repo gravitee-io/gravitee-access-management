@@ -49,12 +49,44 @@ public class DeviceIdentifierManagerTest {
     @Spy
     private DeviceIdentifierProvider deviceIdentifierProvider;
 
+    @org.mockito.Mock
+    private io.gravitee.am.model.Domain domain;
+
+    @org.mockito.Mock
+    private io.gravitee.am.service.DeviceIdentifierService deviceIdentifierService;
+
+    @org.mockito.Mock
+    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+
+    @org.mockito.Mock
+    private io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate domainPluginLicenseGate;
+
     private DeviceIdentifier rememberDevice = new DeviceIdentifier();
 
     @Before
     public void setUp() {
         cut.getDeviceIdentifiers().put(REMEMBER_DEVICE_ID, rememberDevice);
         cut.getDeviceIdentifiersProviders().put(REMEMBER_DEVICE_ID, deviceIdentifierProvider);
+    }
+
+    @Test
+    public void shouldSkipUnlicensedDeviceIdentifierWithoutFailingReadiness() {
+        org.mockito.Mockito.when(domain.getId()).thenReturn("domain-id");
+        var eeIdentifier = new DeviceIdentifier();
+        eeIdentifier.setId("ee-device-identifier");
+        eeIdentifier.setType("ee-device-identifier-plugin");
+        org.mockito.Mockito.when(deviceIdentifierService.findByDomain("domain-id"))
+                .thenReturn(io.reactivex.rxjava3.core.Flowable.just(eeIdentifier));
+        org.mockito.Mockito.when(domainPluginLicenseGate.check(
+                io.gravitee.am.service.PluginLicenseGate.TYPE_DEVICE_IDENTIFIER, "ee-device-identifier-plugin", "ee-device-identifier"))
+                .thenReturn(false);
+
+        cut.afterPropertiesSet();
+
+        verify(domainReadinessService).initPluginSync("domain-id", "ee-device-identifier", io.gravitee.am.common.event.Type.DEVICE_IDENTIFIER.name());
+        org.mockito.Mockito.verify(domainReadinessService, org.mockito.Mockito.never()).pluginFailed(any(), any(), any());
+        assertFalse(cut.getDeviceIdentifiers().containsKey("ee-device-identifier"));
+        assertFalse(cut.getDeviceIdentifiersProviders().containsKey("ee-device-identifier"));
     }
 
     @Test

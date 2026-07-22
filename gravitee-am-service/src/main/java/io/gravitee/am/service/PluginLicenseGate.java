@@ -46,6 +46,8 @@ public interface PluginLicenseGate {
     String TYPE_POLICY = "policy";
     String TYPE_AUTHORIZATION_ENGINE = "authorization-engine";
     String TYPE_NOTIFIER = "notifier";
+    String TYPE_PROTOCOL = "protocol";
+    String TYPE_AUTHENTICATOR = "authenticator";
 
     /**
      * Checks that an instance of the given plugin may be created or updated under the given reference.

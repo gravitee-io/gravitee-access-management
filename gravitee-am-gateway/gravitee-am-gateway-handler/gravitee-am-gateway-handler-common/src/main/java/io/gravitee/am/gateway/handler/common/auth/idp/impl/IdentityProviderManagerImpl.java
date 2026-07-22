@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -31,6 +32,7 @@ import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -79,6 +81,9 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -178,7 +183,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private void removeIdentityProvider(String identityProviderId) {
         logger.info("Domain {} has received identity provider event, delete identity provider {}", domain.getName(), identityProviderId);
-        clearProvider(identityProviderId);
+        clearProvider(identityProviderId, true);
     }
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
@@ -193,6 +198,12 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private Single<IdentityProvider> forceUpdateAuthenticationProvider(IdentityProvider identityProvider) {
         String identityProviderId = identityProvider.getId();
         try {
+            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_IDENTITY_PROVIDER, identityProvider.getType(), identityProviderId)) {
+                if (hasExistingProvider(identityProviderId)) {
+                    clearProvider(identityProviderId, false);
+                }
+                return Single.just(identityProvider);
+            }
             if (hasExistingProvider(identityProviderId)) {
                 return redeployProvider(identityProvider).doOnError(error -> logger.error("An error occurs while redeploying the identity provider : {}", identityProvider.getName(), error));
             } else {
@@ -206,7 +217,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private void clearProviders() {
-        providers.keySet().forEach(this::clearProvider);
+        providers.keySet().forEach(idpId -> clearProvider(idpId, true));
     }
 
     private Single<Providers> createProvider(IdentityProvider identityProvider) throws IOException {
@@ -345,11 +356,13 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         }
     }
 
-    private void clearProvider(String identityProviderId) {
+    private void clearProvider(String identityProviderId, boolean updateReadiness) {
         AuthenticationProvider authenticationProvider = providers.remove(identityProviderId);
         UserProvider userProvider = userProviders.remove(identityProviderId);
         identities.remove(identityProviderId);
-        domainReadinessService.pluginUnloaded(domain.getId(), identityProviderId);
+        if (updateReadiness) {
+            domainReadinessService.pluginUnloaded(domain.getId(), identityProviderId);
+        }
         if (authenticationProvider != null) {
             // stop the authentication provider
             try {

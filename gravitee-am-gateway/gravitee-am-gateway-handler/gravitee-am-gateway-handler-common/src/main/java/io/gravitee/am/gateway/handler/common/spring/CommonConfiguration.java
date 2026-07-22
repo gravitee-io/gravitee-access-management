@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationMa
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -194,6 +195,11 @@ public class CommonConfiguration {
     @Bean
     public RuleEngine ruleEngine() {
         return new SpELRuleEngine();
+    }
+
+    @Bean
+    public DomainPluginLicenseGate domainPluginLicenseGate() {
+        return new DomainPluginLicenseGate();
     }
 
     @Bean

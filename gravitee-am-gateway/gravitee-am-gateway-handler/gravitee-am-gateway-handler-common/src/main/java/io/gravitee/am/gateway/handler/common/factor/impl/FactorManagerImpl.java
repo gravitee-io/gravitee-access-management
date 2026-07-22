@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.FactorEvent;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
@@ -30,6 +31,7 @@ import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -66,6 +68,9 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     @Override
     public void afterPropertiesSet() {
@@ -152,6 +157,11 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     private void updateFactor(Factor factor) {
         domainReadinessService.initPluginSync(domain.getId(), factor.getId(), Type.FACTOR.name());
         try {
+            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_FACTOR, factor.getType(), factor.getId())) {
+                this.factorProviders.remove(factor.getId());
+                this.factors.remove(factor.getId());
+                return;
+            }
             if (needDeployment(factor)) {
                 var factorProviderConfig = new ProviderConfiguration(factor.getType(), factor.getConfiguration());
                 var factorProvider = factorPluginManager.create(factorProviderConfig);

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.manager.resource.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ResourceEvent;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -25,6 +26,7 @@ import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceProvider;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.exception.ResourceNotFoundException;
 import io.gravitee.common.event.Event;
@@ -62,6 +64,9 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     @Autowired
     private ServiceResourceService resourceService;
 
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
+
     private final Map<String, ResourceProvider> resourceProviders = new ConcurrentHashMap<>();
     private final Map<String, ServiceResource> resources = new ConcurrentHashMap<>();
 
@@ -91,6 +96,9 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
+                            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_RESOURCE, res.getType(), res.getId())) {
+                                return;
+                            }
                             var providerConfiguration = new ProviderConfiguration(res.getType(), res.getConfiguration());
                             try {
                                 ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
@@ -130,6 +138,9 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .map(res -> {
                     if (needDeployment(res)) {
                         unloadResource(res.getId());
+                        if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_RESOURCE, res.getType(), res.getId())) {
+                            return res;
+                        }
                         var provider = resourcePluginManager.create(new ProviderConfiguration(res.getType(), res.getConfiguration()));
                         provider.start();
                         this.resources.put(res.getId(), res);

@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
@@ -30,6 +31,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -78,6 +80,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Autowired
     private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     @Autowired
     @Qualifier("defaultCertificate")
@@ -133,6 +138,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 .subscribe(
                         certificate -> {
                             domainReadinessService.initPluginSync(domain.getId(), certificate.getId(), Type.CERTIFICATE.name());
+                            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_CERTIFICATE, certificate.getType(), certificate.getId())) {
+                                return;
+                            }
                             certificateProviderManager.create(certificate);
                             certificates.put(certificate.getId(), certificate);
                             logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
@@ -240,6 +248,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 .subscribe(
                         certificate -> {
                             try {
+                                if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_CERTIFICATE, certificate.getType(), certificateId)) {
+                                    certificates.remove(certificateId);
+                                    return;
+                                }
                                 certificateProviderManager.create(certificate);
                                 certificates.put(certificateId, certificate);
                                 logger.info("Certificate {} loaded for domain {}", certificateId, domain.getName());

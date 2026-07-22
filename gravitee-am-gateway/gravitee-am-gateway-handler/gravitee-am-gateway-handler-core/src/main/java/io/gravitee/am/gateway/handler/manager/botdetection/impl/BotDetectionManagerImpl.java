@@ -22,6 +22,7 @@ import io.gravitee.am.botdetection.api.BotDetectionProvider;
 import io.gravitee.am.common.event.BotDetectionEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Domain;
@@ -34,6 +35,7 @@ import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.BotDetectionService;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -82,6 +84,9 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     public ConcurrentMap<String, BotDetection> getBotDetections() {
         return botDetections;
@@ -193,6 +198,11 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
     private void updateBotDetection(BotDetection detection) {
         domainReadinessService.initPluginSync(domain.getId(), detection.getId(), Type.BOT_DETECTION.name());
         try {
+            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_BOT_DETECTION, detection.getType(), detection.getId())) {
+                stopBotDetectionProvider(this.providers.remove(detection.getId()));
+                this.botDetections.remove(detection.getId());
+                return;
+            }
             if (needDeployment(detection)) {
                 var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
                 BotDetectionProvider botDetectionProvider = botDetectionPluginManager.create(providerConfig);

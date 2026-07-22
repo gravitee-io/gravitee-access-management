@@ -88,6 +88,9 @@ public class CertificateManagerImplTest {
     @Mock
     private io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader identityProviderReloader;
 
+    @Mock
+    private io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate domainPluginLicenseGate;
+
     private static final String DOMAIN_ID = "test-domain-id";
     private static final String CERTIFICATE_ID = "test-certificate-id";
 
@@ -96,6 +99,7 @@ public class CertificateManagerImplTest {
     @Before
     public void setUp() throws Exception {
         when(domain.getId()).thenReturn(DOMAIN_ID);
+        lenient().when(domainPluginLicenseGate.check(anyString(), Mockito.any(), anyString())).thenReturn(true);
 
         CertificateProvider rs256CertificateProvider = mock(CertificateProvider.class);
         CertificateProvider rs512CertificateProvider = mock(CertificateProvider.class);
@@ -296,6 +300,30 @@ public class CertificateManagerImplTest {
         // Assert - initPluginSync should be called, followed by pluginFailed
         verify(domainReadinessService, timeout(1000)).initPluginSync(DOMAIN_ID, CERTIFICATE_ID, Type.CERTIFICATE.name());
         verify(domainReadinessService, timeout(1000)).pluginFailed(eq(DOMAIN_ID), eq(CERTIFICATE_ID), anyString());
+    }
+
+    @Test
+    public void deployCertificate_shouldSkipUnlicensedCertificateWithoutFailingReadiness() throws InterruptedException {
+        Certificate certificate = new Certificate();
+        certificate.setId(CERTIFICATE_ID);
+        certificate.setName("EE Certificate");
+        certificate.setType("hsm-am-certificate");
+        certificate.setDomain(DOMAIN_ID);
+
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
+        when(domainPluginLicenseGate.check(io.gravitee.am.service.PluginLicenseGate.TYPE_CERTIFICATE, "hsm-am-certificate", CERTIFICATE_ID)).thenReturn(false);
+
+        Event<CertificateEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(CertificateEvent.DEPLOY);
+        when(event.content()).thenReturn(new Payload(CERTIFICATE_ID, ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.CREATE));
+
+        certificateManager.onEvent(event);
+
+        verify(domainReadinessService, timeout(1000)).initPluginSync(DOMAIN_ID, CERTIFICATE_ID, Type.CERTIFICATE.name());
+        TimeUnit.MILLISECONDS.sleep(200);
+        verify(certificateProviderManager, never()).create(Mockito.any(Certificate.class));
+        verify(domainReadinessService, never()).pluginLoaded(DOMAIN_ID, CERTIFICATE_ID);
+        verify(domainReadinessService, never()).pluginFailed(eq(DOMAIN_ID), eq(CERTIFICATE_ID), anyString());
     }
 
     @Test

@@ -20,6 +20,8 @@ import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.authorizationengine.AuthorizationEngineManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -62,6 +64,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private DomainPluginLicenseGate domainPluginLicenseGate;
 
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
 
@@ -172,6 +177,10 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
             ProviderConfiguration config = new ProviderConfiguration(authorizationEngine.getType(), authorizationEngine.getConfiguration());
 
             domainReadinessService.initPluginSync(domain.getId(), authorizationEngine.getId(), Type.AUTHORIZATION_ENGINE.name());
+            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHORIZATION_ENGINE, authorizationEngine.getType(), authorizationEngine.getId())) {
+                clearProvider(authorizationEngine.getId(), false);
+                return Single.just(authorizationEngine);
+            }
             AuthorizationEngineProvider provider = authorizationEnginePluginManager.create(config);
             clearProvider(authorizationEngine.getId());
             if (provider != null) {
@@ -199,11 +208,17 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     private void clearProvider(String authorizationEngineId) {
+        clearProvider(authorizationEngineId, true);
+    }
+
+    private void clearProvider(String authorizationEngineId, boolean updateReadiness) {
         AuthorizationEngineProvider provider = providers.remove(authorizationEngineId);
 
         if (provider != null) {
             try {
-                domainReadinessService.pluginUnloaded(domain.getId(), authorizationEngineId);
+                if (updateReadiness) {
+                    domainReadinessService.pluginUnloaded(domain.getId(), authorizationEngineId);
+                }
                 logger.info("Stopping authorization engine provider: {}", authorizationEngineId);
                 provider.stop();
             } catch (Exception e) {

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.node;
 
+import io.gravitee.am.gateway.license.GatewayOrganizationLicenseManager;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
@@ -57,6 +58,7 @@ public class GatewayNode extends AbstractNode {
         List<Class<? extends LifecycleComponent>> components = super.components();
 
         components.add(DataPlaneRegistryImpl.class);
+        components.add(GatewayOrganizationLicenseManager.class);
         components.addAll(GatewayUpgraderConfiguration.getComponents());
         components.add(Reactor.class);
         components.add(VertxEmbeddedContainer.class);

@@ -61,6 +61,17 @@ public interface DomainReadinessService {
     void pluginInitFailed(String domainId, String pluginType, String message);
 
     /**
+     * Mark a plugin as skipped because the organization license does not grant its feature.
+     * The plugin counts as handled (readiness stays healthy) but the message is exposed
+     * so operators can see why the plugin is not available.
+     *
+     * @param domainId Domain ID.
+     * @param pluginId Plugin ID.
+     * @param message Reason the plugin was not loaded.
+     */
+    void pluginUnlicensed(String domainId, String pluginId, String message);
+
+    /**
      * Remove a plugin from matching.
      * @param domainId Domain ID.
      * @param pluginId Plugin ID.

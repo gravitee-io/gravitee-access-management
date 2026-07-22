@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
+import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -46,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -77,6 +80,9 @@ class AuthorizationEngineManagerImplTest {
     @Mock
     private DomainReadinessService domainReadinessService;
 
+    @Mock
+    private DomainPluginLicenseGate domainPluginLicenseGate;
+
     @InjectMocks
     private AuthorizationEngineManagerImpl manager;
 
@@ -96,6 +102,7 @@ class AuthorizationEngineManagerImplTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(domainPluginLicenseGate.check(any(), any(), any())).thenReturn(true);
         testEngine = new AuthorizationEngine();
         testEngine.setId("engine-id");
         testEngine.setName("Test Engine");
@@ -123,6 +130,51 @@ class AuthorizationEngineManagerImplTest {
         verify(authorizationEnginePluginManager, timeout(1000).times(1)).create(any(ProviderConfiguration.class));
         verify(domainReadinessService, timeout(1000).times(1)).initPluginSync("domain-id", "engine-id", "AUTHORIZATION_ENGINE");
         verify(domainReadinessService, timeout(1000).times(1)).pluginLoaded("domain-id", "engine-id");
+    }
+
+    @Test
+    void shouldSkipUnlicensedEngineWithoutFailingReadiness() {
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHORIZATION_ENGINE, "openfga", "engine-id")).thenReturn(false);
+
+        manager.afterPropertiesSet();
+
+        verify(domainReadinessService, timeout(1000).times(1)).initPluginSync("domain-id", "engine-id", "AUTHORIZATION_ENGINE");
+        verify(authorizationEnginePluginManager, never()).create(any(ProviderConfiguration.class));
+        verify(domainReadinessService, never()).pluginLoaded(any(), any());
+        verify(domainReadinessService, never()).pluginFailed(any(), any(), any());
+    }
+
+    @Test
+    void shouldKeepReadinessRecordWhenLoadedEngineBecomesUnlicensedOnUpdate() throws Exception {
+        // given - a licensed engine is deployed
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+        when(mockProvider.stop()).thenReturn(mockProvider);
+        when(authorizationEngineRepository.findByDomain("domain-id")).thenReturn(Flowable.just(testEngine));
+        when(authorizationEngineRepository.findById("engine-id")).thenReturn(Maybe.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class))).thenReturn(mockProvider);
+        // licensed on the initial load, then unlicensed on the following update event
+        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHORIZATION_ENGINE, "openfga", "engine-id"))
+                .thenReturn(true, false);
+
+        manager.afterPropertiesSet();
+
+        // when - an update event arrives and the engine is now unlicensed
+        Payload payload = new Payload("engine-id", ReferenceType.DOMAIN, "domain-id", io.gravitee.am.common.event.Action.UPDATE);
+        Event<AuthorizationEngineEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(AuthorizationEngineEvent.UPDATE);
+        when(event.content()).thenReturn(payload);
+        manager.onEvent(event);
+
+        // then - the running provider is stopped and no longer served, but the readiness record is left
+        // untouched so the unlicensed entry recorded by the gate survives (rather than being wiped by an unload)
+        verify(mockProvider, times(1)).stop();
+        verify(domainReadinessService, never()).pluginUnloaded("domain-id", "engine-id");
+        manager.get("engine-id").test().assertNoValues();
     }
 
     @Test
