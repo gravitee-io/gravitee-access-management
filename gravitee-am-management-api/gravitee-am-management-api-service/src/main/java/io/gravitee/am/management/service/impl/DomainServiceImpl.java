@@ -786,8 +786,12 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public Single<List<Entrypoint>> listEntryPoint(Domain domain, String organizationId) {
         if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
-            return listEnvironmentEntryPoint(domain);
+            return listEnvironmentEntryPoint(domain, organizationId);
         }
+        return listOrganizationEntryPoint(domain, organizationId);
+    }
+
+    private Single<List<Entrypoint>> listOrganizationEntryPoint(Domain domain, String organizationId) {
         return entrypointService.findAll(organizationId)
                 .filter(entrypoint -> entrypoint.isDefaultEntrypoint()
                         || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag))))
@@ -807,13 +811,13 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
-    private Single<List<Entrypoint>> listEnvironmentEntryPoint(Domain domain) {
+    private Single<List<Entrypoint>> listEnvironmentEntryPoint(Domain domain, String organizationId) {
         return Single.defer(() -> {
             List<Entrypoint> environmentEntrypoints = entryPointManager.findByEnvironmentId(domain.getReferenceId());
             if (environmentEntrypoints.isEmpty()) {
-                Entrypoint fallback = new Entrypoint();
-                ofNullable(dataPlaneRegistry.getDescription(domain).gatewayUrl()).ifPresent(fallback::setUrl);
-                return Single.just(List.of(fallback));
+                // No environment entrypoint synced yet: degrade to the organization resolution, whose
+                // default entrypoint always carries a url (the UI builds links from it, never null).
+                return listOrganizationEntryPoint(domain, organizationId);
             }
 
             // Cockpit recreates every environment entrypoint on each environment command, so createdAt/id
@@ -822,11 +826,12 @@ public class DomainServiceImpl implements DomainService {
             Entrypoint selected = environmentEntrypoints.stream()
                     .filter(Entrypoint::isDefaultEntrypoint)
                     .findFirst()
-                    .orElseGet(() -> environmentEntrypoints.get(0));
-
-            if (environmentEntrypoints.size() > 1 && !selected.isDefaultEntrypoint()) {
-                LOGGER.warn("Environment {} resolves to {} entrypoints and none is flagged default; using the first", domain.getReferenceId(), environmentEntrypoints.size());
-            }
+                    .orElseGet(() -> {
+                        if (environmentEntrypoints.size() > 1) {
+                            LOGGER.warn("Environment {} resolves to {} entrypoints and none is flagged default; using the first", domain.getReferenceId(), environmentEntrypoints.size());
+                        }
+                        return environmentEntrypoints.get(0);
+                    });
             return Single.just(List.of(selected));
         });
     }
