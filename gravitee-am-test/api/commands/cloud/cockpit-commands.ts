@@ -29,6 +29,15 @@ export interface CockpitCommand {
   payload: Record<string, any>;
 }
 
+/** A message AM emitted, as surfaced on the cockpit mock's FIFO queue. */
+export interface CockpitQueueEntry {
+  protocolType: 'COMMAND' | 'REPLY' | 'UNKNOWN';
+  type?: string;
+  commandId?: string;
+  commandStatus?: string;
+  errorDetails?: string;
+}
+
 /** POST a command toward AM. Returns the generated command id; AM's reply lands on the mock queue. */
 export const sendCockpitCommand = async (command: CockpitCommand): Promise<string> => {
   const response = await fetch(`${baseUrl}/_control/send`, {
@@ -41,6 +50,29 @@ export const sendCockpitCommand = async (command: CockpitCommand): Promise<strin
   }
   return (await response.json()).id;
 };
+
+/** Wait for AM's REPLY to the command identified by `commandId` and return it. */
+export const waitForCockpitReply = (
+  commandId: string,
+  options?: { timeoutMillis?: number; intervalMillis?: number },
+): Promise<CockpitQueueEntry> =>
+  retryUntil(
+    async (): Promise<CockpitQueueEntry | null> => {
+      const response = await fetch(`${baseUrl}/_control/queue`);
+      if (response.status === 204) {
+        return null;
+      }
+      if (response.status !== 200) {
+        throw new Error(`cockpit mock /_control/queue returned ${response.status}: ${await response.text()}`);
+      }
+      return (await response.json()) as CockpitQueueEntry;
+    },
+    (entry) => entry !== null && entry.protocolType === 'REPLY' && entry.commandId === commandId,
+    {
+      timeoutMillis: options?.timeoutMillis ?? 15000,
+      intervalMillis: options?.intervalMillis ?? 500,
+    },
+  ) as Promise<CockpitQueueEntry>;
 
 /** Whether an AM instance is currently connected to the cockpit mock. */
 export const isCockpitConnected = async (): Promise<boolean> => {

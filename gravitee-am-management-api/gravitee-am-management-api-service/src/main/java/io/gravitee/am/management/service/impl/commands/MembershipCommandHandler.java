@@ -36,6 +36,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 import static io.gravitee.am.management.service.impl.commands.UserCommandHandler.COCKPIT_SOURCE;
 
 /**
@@ -60,6 +62,19 @@ public class MembershipCommandHandler implements CommandHandler<MembershipComman
     public Single<MembershipReply> handle(MembershipCommand command) {
 
         MembershipCommandPayload membershipPayload = command.getPayload();
+
+        Optional<String> validationError = RequiredPayloadFields.forType("Membership")
+                .string("organizationId", membershipPayload.organizationId())
+                .string("referenceType", membershipPayload.referenceType())
+                .string("referenceId", membershipPayload.referenceId())
+                .string("userId", membershipPayload.userId())
+                .string("role", membershipPayload.role())
+                .validate();
+        if (validationError.isPresent()) {
+            log.warn(validationError.get());
+            return Single.just(new MembershipReply(command.getId(), validationError.get()));
+        }
+
         ReferenceType assignableType;
 
         try {

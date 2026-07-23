@@ -34,6 +34,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +60,18 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
     public Single<EnvironmentReply> handle(EnvironmentCommand command) {
 
         EnvironmentCommandPayload environmentPayload = command.getPayload();
+
+        Optional<String> validationError = RequiredPayloadFields.forType("Environment")
+                .string("organizationId", environmentPayload.organizationId())
+                .string("id", environmentPayload.id())
+                .string("name", environmentPayload.name())
+                .stringList("hrids", environmentPayload.hrids())
+                .validate();
+        if (validationError.isPresent()) {
+            log.warn(validationError.get());
+            return Single.just(new EnvironmentReply(command.getId(), validationError.get()));
+        }
+
         NewEnvironment newEnvironment = new NewEnvironment();
         newEnvironment.setHrids(environmentPayload.hrids());
         newEnvironment.setName(environmentPayload.name());

@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +51,17 @@ public class OrganizationCommandHandler implements CommandHandler<OrganizationCo
     public Single<OrganizationReply> handle(OrganizationCommand command) {
 
         OrganizationCommandPayload organizationPayload = command.getPayload();
+
+        Optional<String> validationError = RequiredPayloadFields.forType("Organization")
+                .string("id", organizationPayload.id())
+                .string("name", organizationPayload.name())
+                .stringList("hrids", organizationPayload.hrids())
+                .validate();
+        if (validationError.isPresent()) {
+            log.warn(validationError.get());
+            return Single.just(new OrganizationReply(command.getId(), validationError.get()));
+        }
+
         NewOrganization newOrganization = new NewOrganization();
         newOrganization.setHrids(organizationPayload.hrids());
         newOrganization.setName(organizationPayload.name());

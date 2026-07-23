@@ -114,6 +114,7 @@ class EnvironmentCommandHandlerTest {
     void handleWithException() {
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
                 .organizationId("orga#1")
                 .description("Environment description")
                 .name("Environment name")
@@ -129,6 +130,52 @@ class EnvironmentCommandHandlerTest {
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
     }
 
+    @Test
+    void shouldRejectEmptyPayload() {
+        EnvironmentCommand command = new EnvironmentCommand(EnvironmentCommandPayload.builder().build());
+
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(environmentService, entrypointService);
+    }
+
+    @Test
+    void shouldRejectMissingOrganizationId() {
+        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
+                .name("Environment name")
+                .build();
+        EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
+
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(environmentService, entrypointService);
+    }
+
+    @Test
+    void shouldRejectMissingHrids() {
+        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .organizationId("orga#1")
+                .name("Environment name")
+                .build();
+        EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
+
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(environmentService, entrypointService);
+    }
+
     private void enableCloudMode() {
         springEnvironment.setProperty("cloud.enabled", "true");
         springEnvironment.setProperty("installation.type", "managed");
@@ -140,6 +187,7 @@ class EnvironmentCommandHandlerTest {
 
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
                 .organizationId("orga#1")
                 .description("Environment description")
                 .name("Environment name")
@@ -186,6 +234,7 @@ class EnvironmentCommandHandlerTest {
 
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
                 .organizationId("orga#1")
                 .description("Environment description")
                 .name("Environment name")
@@ -211,6 +260,7 @@ class EnvironmentCommandHandlerTest {
 
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
                 .organizationId("orga#1")
                 .description("Environment description")
                 .name("Environment name")
@@ -234,6 +284,7 @@ class EnvironmentCommandHandlerTest {
 
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
                 .organizationId("orga#1")
                 .description("Environment description")
                 .name("Environment name")

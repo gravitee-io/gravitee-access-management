@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Named;
 import java.util.HashMap;
+import java.util.Optional;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -54,10 +55,15 @@ public class UserCommandHandler implements CommandHandler<UserCommand, UserReply
     @Override
     public Single<UserReply> handle(UserCommand command) {
         UserCommandPayload userPayload = command.getPayload();
-        if (userPayload.username() == null) {
-            String errorMsg = "Request rejected due to null username.";
-            log.warn(errorMsg);
-            return Single.just(new UserReply(command.getId(), errorMsg));
+
+        Optional<String> validationError = RequiredPayloadFields.forType("User")
+                .string("id", userPayload.id())
+                .string("username", userPayload.username())
+                .string("organizationId", userPayload.organizationId())
+                .validate();
+        if (validationError.isPresent()) {
+            log.warn(validationError.get());
+            return Single.just(new UserReply(command.getId(), validationError.get()));
         }
 
         NewOrganizationUser newUser = new NewOrganizationUser();

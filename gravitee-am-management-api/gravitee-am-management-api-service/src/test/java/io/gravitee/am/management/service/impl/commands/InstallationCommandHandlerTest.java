@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -113,5 +114,17 @@ class InstallationCommandHandlerTest {
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+    }
+
+    @Test
+    void shouldRejectMissingStatus() {
+        InstallationCommand command = new InstallationCommand(InstallationCommandPayload.builder().id(INSTALLATION_ID).build());
+
+        TestObserver<InstallationReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(installationService);
     }
 }

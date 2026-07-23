@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -104,6 +105,7 @@ class OrganizationCommandHandlerTest {
 
         OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
                 .id("orga#1")
+                .hrids(Collections.singletonList("orga-1"))
                 .description("Organization description")
                 .name("Organization name")
                 .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
@@ -118,5 +120,50 @@ class OrganizationCommandHandlerTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+    }
+
+    @Test
+    void shouldRejectEmptyPayload() {
+        OrganizationCommand command = new OrganizationCommand(OrganizationCommandPayload.builder().build());
+
+        TestObserver<OrganizationReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(organizationService);
+    }
+
+    @Test
+    void shouldRejectMissingHrids() {
+        OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
+                .id("orga#1")
+                .name("Organization name")
+                .build();
+        OrganizationCommand command = new OrganizationCommand(organizationPayload);
+
+        TestObserver<OrganizationReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(organizationService);
+    }
+
+    @Test
+    void shouldRejectBlankId() {
+        OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
+                .id("   ")
+                .hrids(Collections.singletonList("orga-1"))
+                .name("Organization name")
+                .build();
+        OrganizationCommand command = new OrganizationCommand(organizationPayload);
+
+        TestObserver<OrganizationReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(organizationService);
     }
 }
