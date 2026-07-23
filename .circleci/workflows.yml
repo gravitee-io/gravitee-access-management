@@ -888,7 +888,8 @@ jobs:
       - run:
           name: Build
           command: |
-            mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+            # -T 1C runs one build thread per core across the reactor; safe here because -DskipTests means no fixed-port test collisions.
+            mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_mongo
   run_testcontainer_tests_redis:
@@ -905,7 +906,8 @@ jobs:
       - run:
           name: Build
           command: |
-            mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-redis -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+            # -T 1C runs one build thread per core across the reactor; safe here because -DskipTests means no fixed-port test collisions.
+            mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-redis -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_redis
   run_testcontainer_tests_jdbc:
@@ -926,7 +928,8 @@ jobs:
       - run:
           name: Build
           command: |
-            mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-jdbc -P << parameters.jdbcType >> -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+            # -T 1C runs one build thread per core across the reactor; safe here because -DskipTests means no fixed-port test collisions.
+            mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-jdbc -P << parameters.jdbcType >> -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_jdbc
 
