@@ -716,8 +716,9 @@ consentFixture.describe('AM-6623/AM-6624: Consent revocation propagates to token
     // Revoke user consent via Management API
     await revokeUserConsents(tokenExchangeDomain.id, teAdminToken, tokenExchangeUser.id, clientId);
 
-    // Poll until tokens become inactive (consent revocation is async — needs longer timeout under parallel load)
-    await waitForTokenInactive(doIntrospect, exchangedToken, 180000);
+    // Poll until tokens become inactive (consent revocation is async via a REVOKE_TOKEN sync event).
+    // Keep the poll well under the 180s test timeout so a lost event fails with a clear error.
+    await waitForTokenInactive(doIntrospect, exchangedToken, 60000);
     expect((await doIntrospect(exchangedToken)).active, 'exchanged token should be revoked after consent revocation').toBe(false);
   });
 
@@ -757,9 +758,10 @@ consentFixture.describe('AM-6623/AM-6624: Consent revocation propagates to token
     // Revoke consent
     await revokeUserConsents(tokenExchangeDomain.id, teAdminToken, tokenExchangeUser.id, clientId);
 
-    // Both branches should become inactive (consent revocation is async — needs longer timeout under parallel load)
-    await waitForTokenInactive(doIntrospect, branch1.body.access_token, 180000);
-    await waitForTokenInactive(doIntrospect, branch2.body.access_token, 180000);
+    // Both branches should become inactive (consent revocation is async via a REVOKE_TOKEN sync event).
+    // Keep the polls well under the 180s test timeout so a lost event fails with a clear error.
+    await waitForTokenInactive(doIntrospect, branch1.body.access_token, 60000);
+    await waitForTokenInactive(doIntrospect, branch2.body.access_token, 60000);
     expect((await doIntrospect(branch1.body.access_token)).active, 'branch 1 should be revoked').toBe(false);
     expect((await doIntrospect(branch2.body.access_token)).active, 'branch 2 should be revoked').toBe(false);
   });
