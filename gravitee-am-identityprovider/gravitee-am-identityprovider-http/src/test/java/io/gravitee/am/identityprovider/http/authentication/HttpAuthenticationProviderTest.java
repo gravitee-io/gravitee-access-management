@@ -28,7 +28,9 @@ import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.http.authentication.spring.HttpAuthenticationProviderConfiguration;
+import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,8 +72,16 @@ public class HttpAuthenticationProviderTest {
     @Autowired
     private DefaultIdentityProviderMapper mapper;
 
+    @Autowired
+    private HttpIdentityProviderConfiguration configuration;
+
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
+
+    @Before
+    public void setUp() {
+        configuration.getAuthenticationResource().setBaseURL("http://localhost:" + wireMockRule.port() + "/api/authentication");
+    }
 
     @Test
     public void shouldLoadUserByUsername_authentication() {
