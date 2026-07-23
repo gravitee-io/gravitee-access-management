@@ -42,6 +42,7 @@ Run `./local-stack.sh help` for the full reference.
 ```bash
 ./local-stack.sh up                 # lean, MongoDB
 ./local-stack.sh up --full          # full service set + Console UI
+./local-stack.sh up --cloud         # managed-cloud (cockpit mock)
 ./local-stack.sh up --db psql --ui  # PostgreSQL + Console UI
 ```
 
@@ -102,7 +103,8 @@ docker login graviteeio.azurecr.io
 | *(default lean)* | gateway, management, db, smtp, wiremock |
 | `--ui` | + Console UI (`:4200`) — needed for playwright & manual Console work |
 | `--full` | UI + wiremock + ciba + openfga + kafka + mtls (the jest-gateway + playwright union) |
-| `--with a,b,…` | opt-in individually: `ui,wiremock,ciba,openfga,kafka,mtls,spire` |
+| `--cloud` | cockpit mock; management API in managed-cloud mode (Cockpit command path) |
+| `--with a,b,…` | opt-in individually: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud` |
 | `--db mongo\|psql` | choose the backend database (default `mongo`) |
 
 SPIRE is only needed by the env-guarded gateway tests (`RUN_SPIRE_TESTS=true`); start it with
@@ -133,6 +135,7 @@ for source-built and `--version` images.
 | Management API | http://localhost:8093/management | REST API |
 | Management node | http://localhost:18093/_node | health/metrics |
 | Console UI | http://localhost:4200 | with `--ui` / `--full` |
+| Cockpit mock | http://localhost:8085 | with `--cloud` |
 | Mailbox (fake SMTP) | http://localhost:5080 | SMTP on `:5025` |
 | WireMock | http://localhost:8181 | SFR/CIMD mocks |
 | MongoDB / PostgreSQL | `:27017` / `:5432` | per `--db` |
@@ -148,6 +151,9 @@ The suites live in `gravitee-am-test/` and default to the ports above.
 npm --prefix gravitee-am-test run ci:management:parallel
 npm --prefix gravitee-am-test run ci:gateway
 REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel   # with --db psql
+
+# Cloud / Cockpit command specs (needs --cloud, distinct from --full)
+npm --prefix gravitee-am-test run ci:cloud
 
 # Playwright (needs --ui / --full)
 npm --prefix gravitee-am-test run pw            # interactive

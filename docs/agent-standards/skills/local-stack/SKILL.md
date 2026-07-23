@@ -24,6 +24,7 @@ cd docker/local-stack
 
 ./local-stack.sh up                              # lean, MongoDB, built from source
 ./local-stack.sh up --full                       # full service set + Console UI
+./local-stack.sh up --cloud                      # managed-cloud (cockpit mock)
 ./local-stack.sh up --db psql --ui               # PostgreSQL + Console UI
 ./local-stack.sh up --version 4.12.x-latest --ui # pull a version instead of building
 ./local-stack.sh down                            # stop + remove (incl. volumes)
@@ -37,8 +38,9 @@ cd docker/local-stack
 | `--registry <host>` | Image registry (default `graviteeio` / Docker Hub). Private registry for nightlies. |
 | `--db mongo\|psql` | Backend database (default `mongo`). `psql` auto-downloads JDBC drivers. |
 | `--ui` | Also start the Console UI on `:4200` (required for playwright). |
-| `--full` | UI + wiremock + ciba + openfga + kafka + mtls (jest-gateway + playwright union). |
-| `--with a,b,…` | Opt-in extras: `ui,wiremock,ciba,openfga,kafka,mtls,spire`. |
+| `--full` | UI + wiremock + ciba + openfga + kafka + mtls (jest-gateway + playwright union). Does **not** include cloud. |
+| `--cloud` | Overlay: cockpit mock + management API in managed-cloud mode. |
+| `--with a,b,…` | Opt-in extras: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud`. |
 | `--build` | Full clean rebuild: wipes stale source-tree plugin caches, `mvn clean install`, `make plugins`. Use when a container crashes on boot. |
 | `--quick` / `--no-build` | Skip Maven; reuse existing zips, just rebuild images. |
 | `--license <path>` | EE license file (default `dev/license/gravitee-universe-v4.key`). |
@@ -50,7 +52,8 @@ Other commands: `down`, `logs [svc]`, `status`, `pull --version <tag>`, `help`.
 - **Lean (default)** — `gateway, management, <db>, smtp, wiremock`. Enough for management
   jest specs and most manual work.
 - **`--ui`** — adds the Console (`:4200`); needed for **playwright** and manual Console work.
-- **`--full`** — the union the **jest gateway** and **playwright** suites need.
+- **`--full`** — the union the **jest gateway** and **playwright** suites need (not cloud).
+- **`--cloud`** — managed-cloud overlay (Cockpit mock) for the **cloud** jest suite.
 - **`--with spire`** — only for the env-guarded gateway specs (`RUN_SPIRE_TESTS=true`).
 
 ## URLs & credentials (once up)
@@ -60,6 +63,7 @@ Other commands: `down`, `logs [svc]`, `status`, `pull --version <tag>`, `help`.
 | Gateway | http://localhost:8092 |
 | Management API | http://localhost:8093/management |
 | Console UI (`--ui`/`--full`) | http://localhost:4200 |
+| Cockpit mock (`--cloud`) | http://localhost:8085 |
 | Mailbox (fake SMTP) | http://localhost:5080 |
 
 Admin login **`admin` / `adminadmin`**; organization & environment **`DEFAULT`**.
@@ -70,6 +74,7 @@ Admin login **`admin` / `adminadmin`**; organization & environment **`DEFAULT`**
 npm --prefix gravitee-am-test run ci:management:parallel
 npm --prefix gravitee-am-test run ci:gateway
 REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel   # when started with --db psql
+npm --prefix gravitee-am-test run ci:cloud      # needs --cloud
 npm --prefix gravitee-am-test run pw            # playwright (needs --ui/--full)
 ```
 
