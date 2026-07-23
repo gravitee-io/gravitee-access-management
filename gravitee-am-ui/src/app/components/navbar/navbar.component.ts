@@ -184,12 +184,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.domainService.findByIds(ids).subscribe((response) => (this.domains = response.data));
   }
 
-  // the current domain gets its own section so it never shows under "Pinned" when it isn't pinned
+  // the current domain gets its own section so it never shows under "Pinned" when it isn't pinned;
+  // fall back to the navbar's own domain object so the section renders even when the picker was
+  // opened before the domain list load could include the current domain id
   get currentDomainRow(): any {
     if (this.domainSearchTerm || !this.currentDomain?.id || !this.domains) {
       return null;
     }
-    return this.domains.find((domain) => domain.id === this.currentDomain.id) ?? null;
+    return this.domains.find((domain) => domain.id === this.currentDomain.id) ?? this.currentDomain;
   }
 
   // the default domain is always surfaced, unless it is the current domain (then "Current" already shows it)
