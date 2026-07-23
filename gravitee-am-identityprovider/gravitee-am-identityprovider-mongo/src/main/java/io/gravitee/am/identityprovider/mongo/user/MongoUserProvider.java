@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.mongo.user;
 
 import com.google.common.base.Strings;
+import com.mongodb.MongoException;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -140,10 +141,18 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                         // set date fields
                         document.put(FIELD_CREATED_AT, new Date());
                         document.put(FIELD_UPDATED_AT, document.get(FIELD_CREATED_AT));
-                        return Single.fromPublisher(usersCollection.insertOne(document)).flatMap(success -> findById(document.getString(FIELD_ID)).toSingle());
+                        return Single.fromPublisher(usersCollection.insertOne(document))
+                                .flatMap(success -> findById(document.getString(FIELD_ID)).toSingle())
+                                .onErrorResumeNext(error -> isUniqueConstraintViolation(error)
+                                        ? Single.error(new UserAlreadyExistsException(user.getUsername()))
+                                        : Single.error(error));
                     }
                 })
                 .observeOn(Schedulers.computation());
+    }
+
+    private boolean isUniqueConstraintViolation(Throwable error) {
+        return error instanceof MongoException mongoException && mongoException.getCode() == 11000;
     }
 
     @Override
