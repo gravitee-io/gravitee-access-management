@@ -53,8 +53,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
@@ -68,15 +66,16 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserAuthenticationManagerImpl implements UserAuthenticationManager {
 
-    private final Logger logger = LoggerFactory.getLogger(UserAuthenticationManagerImpl.class);
 
     @Autowired
     private Domain domain;
@@ -109,7 +108,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
-        logger.debug("Trying to authenticate [{}]", authentication);
+        log.debug("Trying to authenticate [{}]", authentication);
 
         var applicationIdentityProviders = getApplicationIdentityProviders(client);
         if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
@@ -141,7 +140,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             } else if (lastException instanceof NegotiateContinueException) {
                                 return Single.error(lastException);
                             } else {
-                                logger.error("An error occurs during user authentication", lastException);
+                                log.error("An error occurs during user authentication", lastException);
                                 return Single.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
                             }
                         } else {
@@ -198,7 +197,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         return identityProviderManager.get(authProvider)
                 .switchIfEmpty(Maybe.error(() -> new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
                 .flatMap(authenticationProvider -> {
-                    logger.debug("Authentication attempt using identity provider {} ({})", authenticationProvider, authenticationProvider.getClass().getName());
+                    log.debug("Authentication attempt using identity provider {} ({})", authenticationProvider, authenticationProvider.getClass().getName());
                     return Maybe.just(preAuthenticated)
                             .flatMap(preAuth -> {
                                 if (preAuth) {
@@ -216,7 +215,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             .switchIfEmpty(Maybe.error(() -> new UsernameNotFoundException(authentication.getPrincipal().toString())));
                 })
                 .map(user -> {
-                    logger.debug("Successfully Authenticated: {} with provider authentication provider {}", authentication.getPrincipal(), authProvider);
+                    log.debug("Successfully Authenticated: {} with provider authentication provider {}", authentication.getPrincipal(), authProvider);
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getId());
@@ -224,7 +223,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     return new UserAuthentication(user, null);
                 })
                 .onErrorResumeNext(error -> {
-                    logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication.getPrincipal(), authProvider, error);
+                    log.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication.getPrincipal(), authProvider, error);
                     return Maybe.just(new UserAuthentication(null, error));
                 });
     }
@@ -349,7 +348,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             var templateEngine = authentication.getContext().getTemplateEngine();
             return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
         } catch (Exception e) {
-            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            log.warn("Cannot evaluate the expression [{}] as boolean", rule);
             return false;
         }
     }

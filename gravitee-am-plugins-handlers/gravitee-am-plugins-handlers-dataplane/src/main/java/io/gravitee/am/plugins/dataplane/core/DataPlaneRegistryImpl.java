@@ -33,7 +33,7 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.exceptions.IllegalDataPlaneIdException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.AbstractService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.List;
 import java.util.Map;
@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static io.gravitee.am.dataplane.api.DataPlaneDescription.DEFAULT_DATA_PLANE_ID;
 import static org.springframework.util.StringUtils.hasText;
 
-@Slf4j
+@CustomLog
 public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl> implements DataPlaneRegistry {
 
     private DataPlanePluginManager dataPlanePluginManager;

@@ -17,7 +17,7 @@ package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.el.TemplateEngine;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -30,7 +30,7 @@ import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_
  * @author GraviteeSource Team
  */
 public class DefaultIdentityProviderMapper implements IdentityProviderMapper {
-    public static final Logger LOGGER = LoggerFactory.getLogger(DefaultIdentityProviderMapper.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(DefaultIdentityProviderMapper.class);
 
     private Map<String, String> mappers;
 

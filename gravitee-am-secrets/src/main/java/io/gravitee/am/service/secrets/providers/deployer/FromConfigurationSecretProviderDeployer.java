@@ -22,7 +22,7 @@ import io.gravitee.node.secrets.plugins.SecretProviderPluginManager;
 import io.gravitee.secrets.api.errors.SecretManagerConfigurationException;
 import io.gravitee.secrets.api.plugin.SecretManagerConfiguration;
 import io.gravitee.secrets.api.util.ConfigHelper;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.lang.reflect.Constructor;
@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class FromConfigurationSecretProviderDeployer  extends AbstractSecretProviderDeployer<Map<String, Object>> {
 
     public static final String CONFIG_PREFIX = "domains.secrets";

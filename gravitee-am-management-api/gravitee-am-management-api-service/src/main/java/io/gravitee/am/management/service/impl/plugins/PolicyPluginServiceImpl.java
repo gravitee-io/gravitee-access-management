@@ -29,23 +29,22 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class PolicyPluginServiceImpl implements PolicyPluginService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PolicyPluginServiceImpl.class);
 
     private final PolicyPluginManager policyPluginManager;
     private final ObjectMapper objectMapper;
@@ -57,7 +56,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
 
     @Override
     public Single<List<PolicyPlugin>> findAll(List<String> expand) {
-        LOGGER.debug("List all policy plugins");
+        log.debug("List all policy plugins");
         return Observable.fromIterable(policyPluginManager.getAll(true))
                 .map(policyPlugin -> convert(policyPlugin, expand))
                 .toList();
@@ -65,7 +64,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
 
     @Override
     public Maybe<PolicyPlugin> findById(String policyId) {
-        LOGGER.debug("Find policy plugin by ID: {}", policyId);
+        log.debug("Find policy plugin by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
                 ofNullable(convert(policyPluginManager.get(policyId))).ifPresentOrElse(
@@ -73,7 +72,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
                         emitter::onComplete
                 );
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get policy plugin : {}", policyId, ex);
+                log.error("An error occurs while trying to get policy plugin : {}", policyId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get policy plugin : " + policyId, ex));
             }
         });
@@ -81,7 +80,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
 
     @Override
     public Maybe<String> getSchema(String policyId) {
-        LOGGER.debug("Find policy plugin schema by ID: {}", policyId);
+        log.debug("Find policy plugin schema by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
                 final String schema = policyPluginManager.getSchema(policyId);
@@ -90,7 +89,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
                         emitter::onComplete
                 );
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for policy plugin {}", policyId, e);
+                log.error("An error occurs while trying to get schema for policy plugin {}", policyId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for policy plugin " + policyId, e));
             }
         });
@@ -113,7 +112,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
 
     @Override
     public Maybe<String> getIcon(String policyId) {
-        LOGGER.debug("Find policy plugin icon by ID: {}", policyId);
+        log.debug("Find policy plugin icon by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
                 final String icon = policyPluginManager.getIcon(policyId);
@@ -122,7 +121,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
                         emitter::onComplete
                 );
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get icon for policy plugin {}", policyId, e);
+                log.error("An error occurs while trying to get icon for policy plugin {}", policyId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for policy plugin " + policyId, e));
             }
         });
@@ -130,7 +129,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
 
     @Override
     public Maybe<String> getDocumentation(String policyId) {
-        LOGGER.debug("Find policy plugin documentation by ID: {}", policyId);
+        log.debug("Find policy plugin documentation by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
                 final String documentation = policyPluginManager.getDocumentation(policyId);
@@ -139,7 +138,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
                         emitter::onComplete
                 );
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get documentation for policy plugin {}", policyId, e);
+                log.error("An error occurs while trying to get documentation for policy plugin {}", policyId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get documentation for policy plugin " + policyId, e));
             }
         });
@@ -179,7 +178,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
 
     public Completable checkPluginDeployment(String type) {
         if (this.policyPluginManager.get(type) == null || !this.policyPluginManager.get(type).deployed()) {
-            LOGGER.debug("Plugin {} not deployed", type);
+            log.debug("Plugin {} not deployed", type);
             return Completable.error(PluginNotDeployedException.forType(type));
         }
         return Completable.complete();

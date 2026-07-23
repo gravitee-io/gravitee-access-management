@@ -27,22 +27,21 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginFormHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginFormHandler.class);
 
     private final UserAuthProvider authProvider;
 
@@ -64,10 +63,10 @@ public class LoginFormHandler implements Handler<RoutingContext> {
             String password = params.get(PASSWORD_PARAM_KEY);
             String clientId = params.get(Parameters.CLIENT_ID);
             if (username == null || password == null) {
-                logger.warn("No username or password provided in form - did you forget to include a BodyHandler?");
+                log.warn("No username or password provided in form - did you forget to include a BodyHandler?");
                 context.fail(400);
             } else if (clientId == null) {
-                logger.warn("No client id in form - did you forget to include client_id query parameter ?");
+                log.warn("No client id in form - did you forget to include client_id query parameter ?");
                 context.fail(400);
             } else {
                 // build authentication object with ip address and user agent
@@ -89,7 +88,7 @@ public class LoginFormHandler implements Handler<RoutingContext> {
 
                 authProvider.authenticate(context, authInfo, res -> {
                     if (res.failed()) {
-                        logger.debug("An error has occurred during the authentication process", res.cause());
+                        log.debug("An error has occurred during the authentication process", res.cause());
                         context.fail(res.cause());
                         return;
                     }

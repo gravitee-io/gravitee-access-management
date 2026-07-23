@@ -46,8 +46,6 @@ import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.HashMap;
@@ -58,14 +56,15 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static org.springframework.util.StringUtils.hasText;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAEnrollEndpoint.class);
 
     private final FactorManager factorManager;
     private final Domain domain;
@@ -93,13 +92,13 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private void renderPage(RoutingContext routingContext) {
         try {
             if (routingContext.user() == null) {
-                logger.warn("User must be authenticated to enroll MFA challenge.");
+                log.warn("User must be authenticated to enroll MFA challenge.");
                 routingContext.fail(401, new InvalidRequestException("Authentication required to enroll a factor"));
                 return;
             }
             var context = new MfaFilterContext(routingContext, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), factorManager, ruleEngine);
             if (context.userHasMatchingActivatedFactors()) {
-                logger.warn("User already has a factor.");
+                log.warn("User already has a factor.");
                 redirectToAuthorize(routingContext);
                 return;
             }
@@ -117,7 +116,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             factorContext.registerData(FactorContext.KEY_USER, endUser);
             load(factors, factorContext, h -> {
                 if (h.failed()) {
-                    logger.error("An error occurs while loading factor providers", h.cause());
+                    log.error("An error occurs while loading factor providers", h.cause());
                     routingContext.fail(503);
                     return;
                 }
@@ -131,10 +130,10 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, !MfaUtils.isCanSkip(routingContext, client));
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
-                this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA enroll page");
+                this.renderPage(routingContext, generateData(routingContext, domain, client), client, log, "Unable to render MFA enroll page");
             });
         } catch (Exception ex) {
-            logger.error("An error occurs while rendering MFA enroll page", ex);
+            log.error("An error occurs while rendering MFA enroll page", ex);
             routingContext.fail(503);
         }
     }

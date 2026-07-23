@@ -32,7 +32,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +50,7 @@ import java.util.Map;
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component
 public class CertificateCredentialServiceImpl implements CertificateCredentialService {
 

@@ -25,14 +25,14 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class TokenUserResolver implements TokenExchangeUserResolver {
     private final SubjectManager subjectManager;
     private final UserGatewayService userGatewayService;

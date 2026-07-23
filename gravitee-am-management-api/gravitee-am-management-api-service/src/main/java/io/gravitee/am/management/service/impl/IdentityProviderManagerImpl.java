@@ -39,8 +39,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -52,16 +50,17 @@ import java.util.concurrent.ConcurrentMap;
 
 import static io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration.MEMORY_TYPE;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager> implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
     public static final String IDP_GRAVITEE = "gravitee";
 
-    private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
     private final ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
@@ -94,14 +93,14 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for identity provider events for the management API");
+        log.info("Register event listener for identity provider events for the management API");
         eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
 
-        logger.info("Initializing user providers");
+        log.info("Initializing user providers");
 
         identityProviderService.findAll()
                 .flatMapMaybe(identityProvider -> {
-                    logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                    log.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
                     return loadUserProvider(identityProvider);
                 }).ignoreElements()
                 .andThen(Completable.defer(this::loadIdentityProviders))
@@ -114,7 +113,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         if (Objects.requireNonNull(event.type()) == IdentityProviderEvent.UNDEPLOY) {
             removeUserProvider(event.content().getId());
         } else {
-            logger.debug("{} event received for IdentityProvider {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
+            log.debug("{} event received for IdentityProvider {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
         }
     }
 
@@ -149,7 +148,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                         identityProvidersFlow = identityProvidersFlow.mergeWith(providerConfig.buildIdentityProvider());
                     }
                 } else {
-                    logger.warn("Unsupported provider with type '{}'", type);
+                    log.warn("Unsupported provider with type '{}'", type);
                 }
             }
             idx++;
@@ -204,7 +203,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     private void removeUserProvider(String identityProviderId) {
-        logger.info("Management API has received a undeploy identity provider event for {}", identityProviderId);
+        log.info("Management API has received a undeploy identity provider event for {}", identityProviderId);
         UserProvider userProvider = userProviders.remove(identityProviderId);
         identityProviders.remove(identityProviderId);
         if (userProvider != null) {
@@ -212,7 +211,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             try {
                 userProvider.stop();
             } catch (Exception e) {
-                logger.error("An error has occurred while stopping the user provider : {}", identityProviderId, e);
+                log.error("An error has occurred while stopping the user provider : {}", identityProviderId, e);
             }
         }
     }
@@ -225,10 +224,10 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 .andThen(Maybe.defer(() -> doLoadUserProvider(identityProvider)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof LicenseFeatureRequiredException) {
-                        logger.warn("Skipping user provider {} for organization {} [{}]: the plugin's feature is not included in the organization's license",
+                        log.warn("Skipping user provider {} for organization {} [{}]: the plugin's feature is not included in the organization's license",
                                 identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
                     } else {
-                        logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
+                        log.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
                     }
                     return Maybe.empty();
                 });
@@ -247,7 +246,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                         return Maybe.empty();
                     }
                 }).onErrorResumeNext(ex -> {
-                    logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
+                    log.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
                     userProviders.remove(identityProvider.getId());
                     identityProviders.remove(identityProvider.getId());
                     return Maybe.empty();
@@ -256,7 +255,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     public Completable checkPluginDeployment(String type) {
         if (!this.identityProviderPluginManager.isPluginDeployed(type)) {
-            logger.debug("Plugin {} not deployed", type);
+            log.debug("Plugin {} not deployed", type);
             return Completable.error(PluginNotDeployedException.forType(type));
         }
         return Completable.complete();

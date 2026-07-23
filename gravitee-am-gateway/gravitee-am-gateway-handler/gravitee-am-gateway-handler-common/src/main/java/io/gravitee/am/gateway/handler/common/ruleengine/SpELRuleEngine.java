@@ -16,8 +16,6 @@
 
 package io.gravitee.am.gateway.handler.common.ruleengine;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -25,15 +23,16 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import java.util.Map;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SpELRuleEngine implements RuleEngine {
 
     private static final SpelExpressionParser SPEL_EXPRESSION_PARSER = new SpelExpressionParser();
-    private static final Logger logger = LoggerFactory.getLogger(SpELRuleEngine.class);
 
     @Override
     public <E> E evaluate(String rule, Map<String, Object> parameters, Class<E> clazz, E defaultValue) {
@@ -43,7 +42,7 @@ public class SpELRuleEngine implements RuleEngine {
             evaluationContext.setVariables(parameters);
             return Optional.ofNullable(expression.getValue(evaluationContext, clazz)).orElse(defaultValue);
         } catch (ParseException | EvaluationException ex) {
-            logger.debug("Unable to evaluate the following ruleExpression : {}", rule, ex);
+            log.debug("Unable to evaluate the following ruleExpression : {}", rule, ex);
             return defaultValue;
         }
     }

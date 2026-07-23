@@ -20,18 +20,18 @@ import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvider<?, ?>> {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
 
     @Autowired
     private ApplicationContext appContext;
@@ -43,7 +43,7 @@ public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvi
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
     @Override

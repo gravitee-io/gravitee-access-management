@@ -26,13 +26,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.OPENID_SCOPE_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -41,16 +40,16 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.OPEN
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
+@CustomLog
 public class OpenIDScopeUpgrader extends AsyncUpgrader {
 
-    private final Logger logger = LoggerFactory.getLogger(OpenIDScopeUpgrader.class);
 
     private final DomainService domainService;
     private final ScopeService scopeService;
 
     @Override
     public Completable doUpgrade() {
-        logger.info("Applying OIDC scope upgrade");
+        log.info("Applying OIDC scope upgrade");
         return Completable.fromPublisher(domainService.listAll()
                 .flatMapSingle(this::createOrUpdateSystemScopes));
     }
@@ -68,7 +67,7 @@ public class OpenIDScopeUpgrader extends AsyncUpgrader {
                 .defaultIfEmpty(Optional.empty())
                 .flatMap(optScope -> {
                     if (optScope.isEmpty()) {
-                        logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain.getId());
+                        log.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain.getId());
                         NewSystemScope scope = new NewSystemScope();
                         scope.setKey(systemScope.getKey());
                         scope.setClaims(systemScope.getClaims());
@@ -77,7 +76,7 @@ public class OpenIDScopeUpgrader extends AsyncUpgrader {
                         scope.setDiscovery(systemScope.isDiscovery());
                         return scopeService.create(domain, scope);
                     } else if (shouldUpdateSystemScope(optScope, systemScope)){
-                        logger.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain.getId());
+                        log.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain.getId());
                         final Scope existingScope = optScope.get();
                         UpdateSystemScope scope = new UpdateSystemScope();
                         scope.setName(existingScope.getName() != null ? existingScope.getName() : systemScope.getLabel());

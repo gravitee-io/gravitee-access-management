@@ -25,7 +25,7 @@ import io.gravitee.cockpit.api.command.v1.organization.OrganizationReply;
 import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class OrganizationCommandHandler implements CommandHandler<OrganizationCommand, OrganizationReply> {
 
     private final OrganizationService organizationService;

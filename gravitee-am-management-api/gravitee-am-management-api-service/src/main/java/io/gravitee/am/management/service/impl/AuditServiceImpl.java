@@ -28,7 +28,7 @@ import io.gravitee.am.service.exception.AuditNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +41,7 @@ import java.util.Map;
 @Component("managementAuditService")
 public class AuditServiceImpl implements AuditService {
 
-    public static final Logger logger = LoggerFactory.getLogger(AuditServiceImpl.class);
+    public static final Logger logger = NodeLoggerFactory.getLogger(AuditServiceImpl.class);
 
     @Autowired
     private AuditReporterManager auditReporterManager;

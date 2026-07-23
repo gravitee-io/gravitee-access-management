@@ -28,7 +28,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -42,7 +42,7 @@ import java.util.Set;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public abstract class AbstractUserAction {
     protected ProvisioningUserService userService;
     protected Domain domain;

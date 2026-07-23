@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.common.plugin;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Map;
 import java.util.Optional;
 
-@Slf4j
+@CustomLog
 public record ValidationResult(boolean succeeded, String failedMessage, Map<String, Object> additionalInformation){
     public static final ValidationResult SUCCEEDED = new ValidationResult(true, null, Map.of());
     public boolean failed(){

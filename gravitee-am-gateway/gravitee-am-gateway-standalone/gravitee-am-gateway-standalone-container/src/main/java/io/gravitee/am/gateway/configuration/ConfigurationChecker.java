@@ -16,20 +16,19 @@
 package io.gravitee.am.gateway.configuration;
 
 import io.gravitee.node.api.configuration.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ConfigurationChecker implements InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationChecker.class);
 
     @Autowired
     private Configuration configuration;
@@ -37,17 +36,17 @@ public class ConfigurationChecker implements InitializingBean {
     void check() {
         //Warning if the secret is still the default one
         if (DEFAULT_JWT_OR_CSRF_SECRET.equals(csrfSecret())) {
-            LOGGER.warn("");
-            LOGGER.warn("##############################################################");
-            LOGGER.warn("#                      SECURITY WARNING                      #");
-            LOGGER.warn("##############################################################");
-            LOGGER.warn("");
-            LOGGER.warn("You still use the default CSRF secret.");
-            LOGGER.warn("This known secret can reduce the protection against cross-site request forgery attacks.");
-            LOGGER.warn("Please change this value, or ask your administrator to do it !");
-            LOGGER.warn("");
-            LOGGER.warn("##############################################################");
-            LOGGER.warn("");
+            log.warn("");
+            log.warn("##############################################################");
+            log.warn("#                      SECURITY WARNING                      #");
+            log.warn("##############################################################");
+            log.warn("");
+            log.warn("You still use the default CSRF secret.");
+            log.warn("This known secret can reduce the protection against cross-site request forgery attacks.");
+            log.warn("Please change this value, or ask your administrator to do it !");
+            log.warn("");
+            log.warn("##############################################################");
+            log.warn("");
         }
     }
 

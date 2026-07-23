@@ -21,7 +21,7 @@ import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.secrets.api.annotation.Secret;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class SecretsResolvingPluginConfigurationEvaluator implements PluginConfigurationEvaluator {
 

@@ -26,19 +26,18 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_FAILED;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserConsentFailureHandler implements Handler<RoutingContext> {
-    private static final Logger logger = LoggerFactory.getLogger(UserConsentFailureHandler.class);
 
     @Override
     public void handle(RoutingContext context) {
@@ -54,7 +53,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof OAuth2Exception oAuth2Exception) {
                 handleException(context, oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage());
             } else {
-                logger.error("An exception has occurred while handling consent request", throwable);
+                log.error("An exception has occurred while handling consent request", throwable);
                 handleException(context, "internal_server_error", "Unexpected error");
             }
         }
@@ -84,7 +83,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
-            logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);
+            log.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);
             context.fail(503);
         }
     }

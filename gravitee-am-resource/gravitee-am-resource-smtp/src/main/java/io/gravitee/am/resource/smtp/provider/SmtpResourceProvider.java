@@ -25,8 +25,6 @@ import io.gravitee.am.service.spring.email.OAuth2TokenService;
 import io.gravitee.am.service.utils.EmailSender;
 import io.reactivex.rxjava3.core.Completable;
 import org.eclipse.angus.mail.auth.OAuth2SaslClientFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
@@ -36,14 +34,15 @@ import org.springframework.util.StringUtils;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SmtpResourceProvider implements EmailSenderProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(SmtpResourceProvider.class);
     private static final String MAILAPI_PROPERTIES_PREFIX = "mail.";
 
     @Autowired
@@ -70,7 +69,7 @@ public class SmtpResourceProvider implements EmailSenderProvider {
 
         JavaMailSender javaMailSender;
         if (configuration.isOauth2Authentication()) {
-            logger.debug("OAuth2 authentication enabled for SMTP resource");
+            log.debug("OAuth2 authentication enabled for SMTP resource");
             oauth2TokenService.initialize(
                     configuration.getOauth2Configuration().getTokenEndpoint(),
                     configuration.getOauth2Configuration().getOauth2ClientId(),
@@ -81,10 +80,10 @@ public class SmtpResourceProvider implements EmailSenderProvider {
             JavaMailSenderImpl javaMailSenderImpl = createJavaMailForOAuth2();
             javaMailSender = new OAuth2JavaMailSenderWrapper(javaMailSenderImpl, oauth2TokenService);
         } else if (configuration.isBasicAuthentication()) {
-            logger.debug("Basic authentication enabled for SMTP resource");
+            log.debug("Basic authentication enabled for SMTP resource");
             javaMailSender = createJavaMailForBasic();
         } else {
-            logger.debug("No authentication for SMTP resource");
+            log.debug("No authentication for SMTP resource");
             javaMailSender = createJavaMailWithoutAuth();
         }
 

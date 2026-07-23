@@ -37,8 +37,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
@@ -55,14 +53,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_VALUE_SAML_POST;
 import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginCallbackParseHandler.class);
     private static final String RELAY_STATE_PARAM_KEY = "RelayState";
 
     private final ClientSyncService clientSyncService;
@@ -87,7 +86,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             }
 
             if (!context.get(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, true)) {
-                logger.debug("Login Callback called by IDP post logout redirection");
+                log.debug("Login Callback called by IDP post logout redirection");
                 String redirectUrl = context.get(ConstantKeys.RETURN_URL_KEY);
                 context.response()
                         .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUrl)
@@ -143,7 +142,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             }
         }
         if (state.isEmpty()) {
-            logger.error("No state or RelayState on login callback");
+            log.error("No state or RelayState on login callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing state query param")));
             return;
         }
@@ -182,7 +181,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                 .subscribe(
                         stateJwt -> handler.handle(Future.succeededFuture(true)),
                         ex -> {
-                            logger.error("An error occurs verifying state on login callback", ex);
+                            log.error("An error occurs verifying state on login callback", ex);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         });
     }
@@ -202,7 +201,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
     private void parseClient(RoutingContext context, Handler<AsyncResult<Client>> handler) {
 
         if (context.get(ConstantKeys.PARAM_CONTEXT_KEY) == null || !(context.get(ConstantKeys.PARAM_CONTEXT_KEY) instanceof MultiMap)) {
-            logger.error("Unable to restore initial client query params login callback");
+            log.error("Unable to restore initial client query params login callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing client query parameters")));
             return;
         }
@@ -212,11 +211,11 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(client)),
                         ex -> {
-                            logger.error("An error occurs while getting client {}", clientId, ex);
+                            log.error("An error occurs while getting client {}", clientId, ex);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         },
                         () -> {
-                            logger.error("Unknown client {}", clientId);
+                            log.error("Unknown client {}", clientId);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         }
                 );
@@ -227,7 +226,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
         final String providerId = context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY);
 
         if (!StringUtils.hasText(providerId)) {
-            logger.error("No provider identifier on login callback");
+            log.error("No provider identifier on login callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing provider id")));
             return;
         }
@@ -236,11 +235,11 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                 .subscribe(
                         authenticationProvider -> handler.handle(Future.succeededFuture(authenticationProvider)),
                         ex -> {
-                            logger.error("An error occurs while getting identity provider {}", providerId, ex);
+                            log.error("An error occurs while getting identity provider {}", providerId, ex);
                             handler.handle(Future.failedFuture(ex));
                         },
                         () -> {
-                            logger.error("Unknown identity provider {}", providerId);
+                            log.error("Unknown identity provider {}", providerId);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         });
     }

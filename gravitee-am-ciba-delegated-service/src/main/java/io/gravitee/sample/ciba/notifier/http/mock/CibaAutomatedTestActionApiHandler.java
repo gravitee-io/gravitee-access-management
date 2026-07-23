@@ -29,8 +29,6 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import net.minidev.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +39,7 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.CALLBACK_VALIDATE;
 import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TOPIC_NOTIFICATION_REQUEST;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
+import lombok.CustomLog;
 /**
  * Actionize handler used to accept or reject the next NotificationRequest according to the
  * action parameter (allow or deny)
@@ -49,8 +48,8 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
  * https://openid.net/certification/fapi_ciba_op_testing/
  *
  */
+@CustomLog
 public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaAutomatedTestActionApiHandler.class);
     public static final String ACTION = "action";
     public static final String ACTION_ALLOW = "allow";
     public static final String ACTION_DISPLAY = "display";
@@ -76,7 +75,7 @@ public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext
     public void handle(RoutingContext routingContext) {
         try {
             final String action = routingContext.request().getParam(ACTION);
-            LOGGER.info("Actionize received with action '{}'", action);
+            log.info("Actionize received with action '{}'", action);
 
             final NotifierRequest notificationRequest = queue.get();
             if (Objects.isNull(notificationRequest)) {
@@ -87,7 +86,7 @@ public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext
                 return;
             }
 
-            LOGGER.info("Actionize received with action '{}' for request {}", action, Json.encode(notificationRequest) );
+            log.info("Actionize received with action '{}' for request {}", action, Json.encode(notificationRequest) );
 
             if (ACTION_DISPLAY.equalsIgnoreCase(action)) {
                 routingContext.response()
@@ -122,7 +121,7 @@ public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext
                         .end("missing domain reference");
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to manage the notification request", e);
+            log.warn("Unable to manage the notification request", e);
             routingContext.fail(500, e);
         }
     }
@@ -132,7 +131,7 @@ public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext
             try {
                 // give to the AM GW enough time to update the Request external ID
                 waitBeforeNotification();
-                LOGGER.info("Callback {} for tid {} with form params {}", optCallback.getDomainCallback(), transactionId, formData);
+                log.info("Callback {} for tid {} with form params {}", optCallback.getDomainCallback(), transactionId, formData);
                 webClient
                         .postAbs(optCallback.getDomainCallback())
                         .authentication(new UsernamePasswordCredentials(
@@ -141,21 +140,21 @@ public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext
                         .sendForm(formData)
                         .onSuccess(res -> {
                             if (res.statusCode() >= 200 && res.statusCode() < 300) {
-                                LOGGER.info("Callback succeeded for tid {}", transactionId);
+                                log.info("Callback succeeded for tid {}", transactionId);
                             } else {
-                                LOGGER.error("Callback failed for tid {}. Status Code = {}", transactionId, res.statusCode());
+                                log.error("Callback failed for tid {}. Status Code = {}", transactionId, res.statusCode());
                             }
                         })
                         .onFailure(err -> {
                             if (retry) {
-                                LOGGER.info("Retry the callback for tid {} (err: {})", transactionId, err);
+                                log.info("Retry the callback for tid {} (err: {})", transactionId, err);
                                 sendResponse(transactionId, optCallback, formData, false);
                             } else {
-                                LOGGER.warn("Callback failed for tid {} : {}", transactionId, err);
+                                log.warn("Callback failed for tid {} : {}", transactionId, err);
                             }
                         });
             } catch (Exception e) {
-                LOGGER.warn("Callback request failed for tid {} : {}", transactionId, e);
+                log.warn("Callback request failed for tid {} : {}", transactionId, e);
             }
         }).start();
     }

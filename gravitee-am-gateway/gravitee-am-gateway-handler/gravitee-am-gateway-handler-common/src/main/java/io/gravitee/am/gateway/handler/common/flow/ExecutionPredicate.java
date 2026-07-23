@@ -18,19 +18,18 @@ package io.gravitee.am.gateway.handler.common.flow;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.gravitee.gateway.api.ExecutionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ExecutionPredicate {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionPredicate.class);
     private final TemplateEngine templateEngine;
 
     private final boolean value;
@@ -50,7 +49,7 @@ public class ExecutionPredicate {
             return value ||
                     (nonNull(templateEngine) && (isNullOrEmpty(expression) || templateEngine.getValue(expression, boolean.class)));
         } catch (ExpressionEvaluationException e) {
-            LOGGER.warn("Unable to evaluate the expression '{}' as a boolean value", expression, LOGGER.isDebugEnabled() ? e : null);
+            log.warn("Unable to evaluate the expression '{}' as a boolean value", expression, log.isDebugEnabled() ? e : null);
             return false;
         }
     }

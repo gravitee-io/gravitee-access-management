@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.service.i18n;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,15 +30,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FileSystemDictionaryProvider implements DictionaryProvider {
     public static final String DEFAULT_LOCALE = "default";
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Map<String, Properties> propertiesMap;
 
@@ -91,7 +90,7 @@ public class FileSystemDictionaryProvider implements DictionaryProvider {
                             }
                             return Map.of(locale, prop);
                         } catch (IOException e) {
-                            logger.debug("i18n File '{}' can't be loaded", file.getName(), e);
+                            log.debug("i18n File '{}' can't be loaded", file.getName(), e);
                             return Map.<String, Properties>of();
                         }
                     })

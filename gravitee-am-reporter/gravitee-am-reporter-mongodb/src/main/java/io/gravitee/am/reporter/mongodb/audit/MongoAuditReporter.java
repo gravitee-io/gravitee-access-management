@@ -63,8 +63,6 @@ import io.reactivex.rxjava3.processors.PublishProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -113,14 +111,15 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.MIN_READ_PREFERENCE_STALENESS;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.OLD_INDICES;
 import static java.util.stream.Collectors.toMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
 
     @Autowired
     private ConnectionProvider connectionProvider;
@@ -252,7 +251,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                 TimeUnit.SECONDS,
                 configuration.getBulkActions())
                 .flatMap(list -> bulk(list)
-                        .doOnError(throwable -> logger.error("An error occurred while inserting into the audit log.", throwable))
+                        .doOnError(throwable -> log.error("An error occurred while inserting into the audit log.", throwable))
                         .retry())
                 .subscribe();
     }
@@ -272,12 +271,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
             // we wait until the bulk processor has stopped
             while (bulkProcessor.hasSubscribers()) {
-                logger.debug("The bulk processor is processing data, wait.");
+                log.debug("The bulk processor is processing data, wait.");
             }
 
             this.clientWrapper.releaseClient();
         } catch (Exception ex) {
-            logger.error("Failed to close mongoDB client", ex);
+            log.error("Failed to close mongoDB client", ex);
         }
     }
 
@@ -289,25 +288,25 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     @Override
     public Completable purgeExpiredData(Instant deadline) {
         if (!purgeEnabled || retentionDays <= 0) {
-            logger.debug("MongoDB audit purge disabled (retention days: {} - collection: {})", retentionDays, configuration.getReportableCollection());
+            log.debug("MongoDB audit purge disabled (retention days: {} - collection: {})", retentionDays, configuration.getReportableCollection());
             return Completable.complete();
         }
 
         LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
         Date thresholdDate = Date.from(threshold.toInstant(ZoneOffset.UTC));
 
-        logger.info("Starting MongoDB audit purge for records older than {} (retention: {} days - collection: {})",
+        log.info("Starting MongoDB audit purge for records older than {} (retention: {} days - collection: {})",
                 thresholdDate, retentionDays, configuration.getReportableCollection());
         final AtomicLong totalDeleted = new AtomicLong(0);
         final int effectiveBatchSize = cappedBatchSize();
 
         return deleteInBatches(thresholdDate, deadline, effectiveBatchSize, totalDeleted)
                 .doOnComplete(() ->
-                        logger.info("MongoDB audit purge completed. Deleted {} records older than {} days (collection: {})",
+                        log.info("MongoDB audit purge completed. Deleted {} records older than {} days (collection: {})",
                                 totalDeleted.get(), retentionDays, configuration.getReportableCollection())
                 )
                 .doOnError(error ->
-                        logger.error("Error during MongoDB audit purge. Deleted {} records before error (collection: {})",
+                        log.error("Error during MongoDB audit purge. Deleted {} records before error (collection: {})",
                                 totalDeleted.get(), configuration.getReportableCollection(), error)
                 );
     }
@@ -316,7 +315,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         // the purge batch is capped independently of the (shared) cursor batchSize used for searches,
         // to bound the number of ids loaded in memory and deleted per deleteMany whatever the configuration
         if (purgeBatchSize > PURGE_MAX_BATCH_SIZE) {
-            logger.warn("Configured purge batch size {} exceeds the maximum allowed ({}), using {}",
+            log.warn("Configured purge batch size {} exceeds the maximum allowed ({}), using {}",
                     purgeBatchSize, PURGE_MAX_BATCH_SIZE, PURGE_MAX_BATCH_SIZE);
             return PURGE_MAX_BATCH_SIZE;
         }
@@ -329,7 +328,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         // The loop stops when no record is left or when the global deadline is reached.
         Single<Long> oneBatch = Single.defer(() -> {
             if (Instant.now().isAfter(deadline)) {
-                logger.warn("Global purge timeout reached, stopping MongoDB audit purge until next execution. Deleted {} records so far",
+                log.warn("Global purge timeout reached, stopping MongoDB audit purge until next execution. Deleted {} records so far",
                         totalDeleted.get());
                 return Single.just(0L);
             }
@@ -343,7 +342,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                                 .map(DeleteResult::getDeletedCount)
                                 .doOnSuccess(deleted -> {
                                     long total = totalDeleted.addAndGet(deleted);
-                                    logger.debug("Deleted {} audits (requested {} - collection: {}). Total deleted: {}",
+                                    log.debug("Deleted {} audits (requested {} - collection: {}). Total deleted: {}",
                                             deleted, ids.size(), configuration.getReportableCollection(), total);
                                 })
                                 .compose(this::waitBetweenBatches);
@@ -400,8 +399,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TIMESTAMP_NAME).background(true)));
 
             Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
-                    .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
-                    .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));
+                    .doOnComplete(() -> log.debug("{} Reporter indexes created", indexes.size()))
+                    .doOnError(throwable -> log.error("An error has occurred during creation of indexes", throwable));
 
             // process indexes
             deleteOldIndexes
@@ -688,7 +687,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         try {
             readPreferenceValue = ReadPreference.valueOf(this.readPreference);
         } catch (IllegalArgumentException ex) {
-            logger.error("Invalid read preference value: {}", this.readPreference, ex);
+            log.error("Invalid read preference value: {}", this.readPreference, ex);
             return this.reportableCollection;
         }
 

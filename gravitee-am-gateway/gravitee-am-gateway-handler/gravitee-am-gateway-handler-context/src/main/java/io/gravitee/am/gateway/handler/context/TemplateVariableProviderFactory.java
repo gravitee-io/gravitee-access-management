@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.context;
 
 import io.gravitee.el.TemplateVariableProvider;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.support.SpringFactoriesLoader;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class TemplateVariableProviderFactory {
 
     @Autowired

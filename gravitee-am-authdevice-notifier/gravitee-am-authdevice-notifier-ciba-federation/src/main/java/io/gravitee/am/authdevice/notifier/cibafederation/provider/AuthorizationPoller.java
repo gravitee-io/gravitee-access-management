@@ -18,16 +18,15 @@ package io.gravitee.am.authdevice.notifier.cibafederation.provider;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.function.LongSupplier;
+import lombok.CustomLog;
 
+@CustomLog
 public class AuthorizationPoller {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorizationPoller.class);
 
     /** RFC 8628 §3.5 / CIBA: on slow_down the client must lengthen the poll interval by 5 seconds. */
     private static final long SLOW_DOWN_BACKOFF_MS = 5_000L;
@@ -65,7 +64,7 @@ public class AuthorizationPoller {
         CibaClient cibaClient = clientsByTid.get(tid);
         if (cibaClient == null) {
             // We still hold the pending entry, so the relying client is owed a terminal answer.
-            LOGGER.error("CIBA-FED no client for tid={}; failing the transaction closed", tid);
+            log.error("CIBA-FED no client for tid={}; failing the transaction closed", tid);
             return failClosed(p, tid).andThen(Single.just(Outcome.GONE));
         }
         // If the gateway callback POST fails, postCallback emits a Completable error which propagates
@@ -84,16 +83,16 @@ public class AuthorizationPoller {
                 final boolean rarSent = p.adHashPreSend() != null;
                 final boolean witnessOk = !rarSent || CrossWitness.matchesHash(p.adHashPreSend(), res.authorizationDetails());
                 final String idToken = res.idToken();
-                LOGGER.info("CIBA-FED witness tid={} rar_sent={} cross_witness_match={} id_token_present={}",
+                log.info("CIBA-FED witness tid={} rar_sent={} cross_witness_match={} id_token_present={}",
                         tid, rarSent, witnessOk, idToken != null);
                 if (!witnessOk) {
-                    LOGGER.error("CIBA-FED consent cross-witness FAILED tid={}: OP authorization_details differ from what was relayed; failing closed", tid);
+                    log.error("CIBA-FED consent cross-witness FAILED tid={}: OP authorization_details differ from what was relayed; failing closed", tid);
                     yield failClosed(p, tid).andThen(Single.just(Outcome.DENIED));
                 }
                 if (idToken == null) {
                     // A federation notifier's contract is a federated identity assertion; a TOKEN with
                     // no id_token cannot establish identity, independent of any remote userinfo toggle.
-                    LOGGER.error("CIBA-FED TOKEN response without id_token tid={}; failing closed", tid);
+                    log.error("CIBA-FED TOKEN response without id_token tid={}; failing closed", tid);
                     yield failClosed(p, tid).andThen(Single.just(Outcome.DENIED));
                 }
                 yield callback.postCallback(callbackUrl, p.state(), tid, true, idToken, res.accessToken())
@@ -135,11 +134,11 @@ public class AuthorizationPoller {
                         err -> {
                             // Terminal upstream/discovery failure. Tell the relying client (best-effort) so it
                             // isn't left seeing authorization_pending until its own expiry, then stop.
-                            LOGGER.error("CIBA-FED poll error tid={}: {}", tid, err.getMessage(), err);
+                            log.error("CIBA-FED poll error tid={}: {}", tid, err.getMessage(), err);
                             PendingAuthStore.Pending p = store.get(tid);
                             if (p != null) {
                                 callback.postCallback(p.callbackUrl(), p.state(), tid, false, null, null)
-                                        .subscribe(() -> {}, e -> LOGGER.warn("CIBA-FED terminal callback failed tid={}: {}", tid, e.getMessage()));
+                                        .subscribe(() -> {}, e -> log.warn("CIBA-FED terminal callback failed tid={}: {}", tid, e.getMessage()));
                             }
                             cleanup(tid);
                         }));

@@ -52,8 +52,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -64,15 +62,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(HttpAuthenticationProviderConfiguration.class)
+@CustomLog
 public class HttpAuthenticationProvider implements AuthenticationProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HttpAuthenticationProvider.class);
     private static final String PRINCIPAL_CONTEXT_KEY = "principal";
     private static final String CREDENTIALS_CONTEXT_KEY = "credentials";
     private static final String AUTHENTICATION_RESPONSE_CONTEXT_KEY = "authenticationResponse";
@@ -130,11 +129,11 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                         if (ex instanceof AuthenticationException) {
                             return Maybe.error(ex);
                         }
-                        LOGGER.error("An error has occurred while calling the remote HTTP identity provider", ex);
+                        log.error("An error has occurred while calling the remote HTTP identity provider", ex);
                         return Maybe.error(new InternalAuthenticationServiceException("An error has occurred while calling the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while authenticating the user", ex);
+            log.error("An error has occurred while authenticating the user", ex);
             return Maybe.error(new InternalAuthenticationServiceException("An error has occurred while authenticating the user", ex));
         }
     }
@@ -162,12 +161,12 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         final HttpResourceConfiguration readResourceConfiguration = authResourceConfiguration.getLoadPreAuthUserResource();
 
         if (readResourceConfiguration.getBaseURL() == null) {
-            LOGGER.warn("Missing pre-authenticated user resource base URL");
+            log.warn("Missing pre-authenticated user resource base URL");
             return Maybe.empty();
         }
 
         if (readResourceConfiguration.getHttpMethod() == null) {
-            LOGGER.warn("Missing pre-authenticated user resource HTTP method");
+            log.warn("Missing pre-authenticated user resource HTTP method");
             return Maybe.empty();
         }
 
@@ -194,11 +193,11 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                         if (ex instanceof AbstractManagementException) {
                             return Maybe.error(ex);
                         }
-                        LOGGER.error("An error has occurred when loading pre-authenticated user {} from the remote HTTP identity provider", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+                        log.error("An error has occurred when loading pre-authenticated user {} from the remote HTTP identity provider", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
                         return Maybe.error(new TechnicalManagementException("An error has occurred when loading pre-authenticated user from the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred when loading pre-authenticated user {}", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+            log.error("An error has occurred when loading pre-authenticated user {}", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
             return Maybe.error(new TechnicalManagementException("An error has occurred when when loading pre-authenticated user", ex));
         }
     }

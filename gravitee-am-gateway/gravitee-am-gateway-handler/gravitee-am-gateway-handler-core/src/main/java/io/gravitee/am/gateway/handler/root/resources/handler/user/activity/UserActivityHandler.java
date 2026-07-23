@@ -24,8 +24,6 @@ import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
@@ -34,14 +32,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserActivityHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserActivityHandler.class);
     private final UserActivityGatewayService userActivityService;
     private final Domain domain;
 
@@ -70,8 +69,8 @@ public class UserActivityHandler implements Handler<RoutingContext> {
         addLoginAttempt(context, data);
 
         userActivityService.save(domain, user.getId(), Type.LOGIN, data)
-                .doOnComplete(() -> logger.debug("User Activity saved successfully"))
-                .doOnError(err -> logger.error("An unexpected error has occurred '{}'", err.getMessage(), err))
+                .doOnComplete(() -> log.debug("User Activity saved successfully"))
+                .doOnError(err -> log.error("An unexpected error has occurred '{}'", err.getMessage(), err))
                 .doFinally(context::next)
                 .subscribe();
     }

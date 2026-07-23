@@ -61,8 +61,6 @@ import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Date;
@@ -90,9 +88,10 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.ge
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
+@CustomLog
 public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
-    private static final Logger logger = LoggerFactory.getLogger(MFAChallengePostEndpoint.class);
 
     private static final String REMEMBER_DEVICE_CONSENT = "rememberDeviceConsent";
     public static final String REMEMBER_DEVICE_CONSENT_ON = "on";
@@ -141,7 +140,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
         final User endUser = user(routingContext);
 
         if (endUser == null) {
-            logger.warn("User must be authenticated to submit MFA challenge.");
+            log.warn("User must be authenticated to submit MFA challenge.");
             routingContext.fail(401);
             return;
         }
@@ -151,12 +150,12 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
         final String code = params.get("code");
         final String factorId = params.get("factorId");
         if (code == null) {
-            logger.warn("No code in form - did you forget to include code value ?");
+            log.warn("No code in form - did you forget to include code value ?");
             routingContext.fail(400);
             return;
         }
         if (factorId == null) {
-            logger.warn("No factor id in form - did you forget to include factor id value ?");
+            log.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(400);
             return;
         }
@@ -197,10 +196,10 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }
                                 updateAuditLog(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
-                                logger.warn("MFA verification limit reached for the user: {}", endUser.getUsername());
+                                log.warn("MFA verification limit reached for the user: {}", endUser.getUsername());
                                 handleException(routingContext, VERIFY_ATTEMPT_ERROR_PARAM_KEY, "maximum_verify_limit");
                             } else {
-                                logger.error("Could not check verify attempts", error);
+                                log.error("Could not check verify attempts", error);
                                 routingContext.fail(401);
                             }
                         });
@@ -235,7 +234,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
-                        logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
+                        log.error("An error occurs while saving enrolled factor for the current user", fh.cause());
                         updateAuditLog(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, fh.cause());
                         handleException(routingContext, ERROR_PARAM_KEY, MFA_CHALLENGE_FAILED);
                         return;
@@ -252,7 +251,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                 updateStrongAuthStatus(routingContext);
                 saveDeviceAndContinue(routingContext, client, endUser);
             }
-            logger.debug("User {} strongly authenticated", endUser.getId());
+            log.debug("User {} strongly authenticated", endUser.getId());
         };
     }
 
@@ -265,7 +264,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
             final String auditLogType = isEnrolling(enrolledFactor) ? MFA_ENROLLMENT : MFA_CHALLENGE;
             if (ch.failed()) {
                 final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-                logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
+                log.error("An error has occurred while updating credential for the user {}", username, h.cause());
                 updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, h.cause());
                 routingContext.fail(401);
                 return;
@@ -274,7 +273,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
 
             updateStrongAuthStatus(routingContext);
             updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, null);
-            logger.debug("User {} strongly authenticated", endUser.getId());
+            log.debug("User {} strongly authenticated", endUser.getId());
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
             final Credential credential = ch.result();
@@ -293,7 +292,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                     saveDeviceAndContinue(routingContext, client, endUser);
                                 },
                                 error -> {
-                                    logger.error("Could not update user profile with FIDO2 factor detail", error);
+                                    log.error("Could not update user profile with FIDO2 factor detail", error);
                                     routingContext.fail(401);
                                 }
                         );
@@ -309,20 +308,20 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                             if (verifyAttempt.isPresent()) {
                                 verifyAttemptService.delete(verifyAttempt.get().getId()).subscribe(
                                         () -> handler.handle(Future.succeededFuture()),
-                                        error -> logger.warn("Could not delete verify attempt", error)
+                                        error -> log.warn("Could not delete verify attempt", error)
                                 );
                             } else {
                                 handler.handle(Future.succeededFuture());
                             }
                         },
                         error -> {
-                            logger.debug("Challenge failed for user {}", factorContext.getUser().getId());
+                            log.debug("Challenge failed for user {}", factorContext.getUser().getId());
                             final EnrolledFactor enrolledFactor = (EnrolledFactor) factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR);
                             verifyAttemptService.incrementAttempt(factorContext.getUser().getId(), enrolledFactor.getFactorId(),
                                     factorContext.getClient(), domainDataPlane.getDomain(), verifyAttempt).subscribe(
                                     () -> handler.handle(Future.failedFuture(error)),
                                     verificationFailedError -> {
-                                        logger.error("Could not updated verification failed status", verificationFailedError);
+                                        log.error("Could not updated verification failed status", verificationFailedError);
                                         handler.handle(Future.failedFuture(verificationFailedError));
                                     }
                             );

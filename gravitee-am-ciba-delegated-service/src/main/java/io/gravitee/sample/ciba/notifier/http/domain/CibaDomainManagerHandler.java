@@ -19,12 +19,11 @@ import io.gravitee.sample.ciba.notifier.http.model.DomainReference;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 
+@CustomLog
 public class CibaDomainManagerHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaDomainManagerHandler.class);
 
     private final CibaDomainManager manager;
 
@@ -44,11 +43,11 @@ public class CibaDomainManagerHandler implements Handler<RoutingContext> {
                         routingContext.response().setStatusCode(200).end();
                     })
                     .onFailure(err -> {
-                        LOGGER.warn("Unable to register the domain reference", err);
+                        log.warn("Unable to register the domain reference", err);
                         routingContext.response().setStatusCode(500).end();
                     });
         } catch (Exception e) {
-            LOGGER.warn("Unable to register the domain", e);
+            log.warn("Unable to register the domain", e);
             routingContext.fail(500, e);
         }
 

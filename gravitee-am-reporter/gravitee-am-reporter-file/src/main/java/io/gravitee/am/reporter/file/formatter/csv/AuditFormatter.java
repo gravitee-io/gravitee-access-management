@@ -22,13 +22,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.gravitee.am.reporter.file.audit.AuditEntry;
 import io.vertx.core.buffer.Buffer;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class AuditFormatter extends SingleValueFormatter<AuditEntry> {
 
     private final ObjectMapper mapper = new ObjectMapper();

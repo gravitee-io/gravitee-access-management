@@ -31,7 +31,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,7 +50,7 @@ import static com.mongodb.client.model.Filters.in;
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository implements EmailStagingRepository {
 
     private static final Long DEFAULT_MAX_READ_PREFERENCE_STALENESS = 90000L;

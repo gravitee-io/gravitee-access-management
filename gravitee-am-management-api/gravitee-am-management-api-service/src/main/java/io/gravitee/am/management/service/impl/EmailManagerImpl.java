@@ -31,8 +31,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -43,15 +41,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.String.format;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class EmailManagerImpl extends AbstractService<EmailManager> implements EmailManager, EventListener<EmailEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailManagerImpl.class);
     private static final String TEMPLATE_SUFFIX = ".html";
     private ConcurrentMap<String, Email> emailTemplates = new ConcurrentHashMap<>();
 
@@ -77,10 +76,10 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for email events for the management API");
+        log.info("Register event listener for email events for the management API");
         eventManager.subscribeForEvents(this, EmailEvent.class);
 
-        logger.info("Initializing emails");
+        log.info("Initializing emails");
         emailTemplateService.findAll()
                 .filter(Email::isEnabled)
                 .blockingIterable()
@@ -92,7 +91,7 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
         if (Objects.requireNonNull(event.type()) == EmailEvent.UNDEPLOY) {
             removeEmail(event.content().getId());
         } else {
-            logger.debug("{} event received for EmailTemplate {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
+            log.debug("{} event received for EmailTemplate {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
         }
     }
 
@@ -127,7 +126,7 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
     }
 
     private void removeEmail(String email) {
-        logger.info("Management API has received a undeploy email event for {}", email);
+        log.info("Management API has received a undeploy email event for {}", email);
         Optional<Email> emailOptional = emailTemplates.values().stream().filter(email1 -> email.equals(email1.getId())).findFirst();
         if (emailOptional.isPresent()) {
             Email emailToRemove = emailOptional.get();

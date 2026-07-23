@@ -20,8 +20,7 @@ import io.gravitee.am.gateway.handler.uma.exception.UMAProtectionApiForbiddenExc
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * <pre>
@@ -32,9 +31,9 @@ import org.slf4j.LoggerFactory;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UMAProtectionApiAccessHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UMAProtectionApiAccessHandler.class);
     private Domain domain;
     private OAuth2AuthHandler oAuth2AuthHandler;
 
@@ -46,7 +45,7 @@ public class UMAProtectionApiAccessHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         if(domain.getUma()==null || !domain.getUma().isEnabled()) {
-            LOGGER.debug("UMA 2.0 Resource registration is disabled");
+            log.debug("UMA 2.0 Resource registration is disabled");
             context.fail(new UMAProtectionApiForbiddenException());
             return;
         }

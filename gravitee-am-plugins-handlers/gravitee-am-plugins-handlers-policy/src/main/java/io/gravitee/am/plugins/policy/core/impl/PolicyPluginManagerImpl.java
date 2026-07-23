@@ -31,8 +31,6 @@ import io.gravitee.policy.api.PolicyConfiguration;
 import io.gravitee.policy.api.PolicyContext;
 import io.gravitee.policy.api.PolicyContextProviderAware;
 import org.reflections.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.ClassUtils;
@@ -50,14 +48,15 @@ import java.util.Set;
 
 import static org.reflections.ReflectionUtils.withModifier;
 import static org.reflections.ReflectionUtils.withParametersCount;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PolicyPluginManagerImpl implements PolicyPluginManager {
 
-    private final Logger logger = LoggerFactory.getLogger(PolicyPluginManagerImpl.class);
 
     /**
      * Cache of constructor by policy
@@ -103,7 +102,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
 
     @Override
     public Policy create(String type, String condition, String configuration) {
-        logger.debug("Creating a policy for [{}]", type);
+        log.debug("Creating a policy for [{}]", type);
         PolicyPlugin policyPlugin = pluginManager.get(type);
 
         if (policyPlugin != null) {
@@ -164,15 +163,15 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                                     .build();
                         }
                     } catch (IllegalAccessException | InstantiationException | InvocationTargetException ex) {
-                        logger.error("Unable to instantiate policy {}", policyMetadata.policy().getName(), ex);
+                        log.error("Unable to instantiate policy {}", policyMetadata.policy().getName(), ex);
                     }
 
                 }
             } catch (Exception ex) {
-                logger.error("An unexpected error occurs while loading policy", ex);
+                log.error("An unexpected error occurs while loading policy", ex);
             }
         } else {
-            logger.error("No policy is registered for type {}", type);
+            log.error("No policy is registered for type {}", type);
             throw new IllegalStateException("No policy is registered for type " + type);
         }
         return null;
@@ -181,7 +180,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     private Constructor<?> lookingForConstructor(Class<?> policyClass) {
         Constructor constructor = constructors.get(policyClass);
         if (constructor == null) {
-            logger.debug("Looking for a constructor to inject policy configuration");
+            log.debug("Looking for a constructor to inject policy configuration");
 
             Set<Constructor> policyConstructors =
                     ReflectionUtils.getConstructors(policyClass,
@@ -190,17 +189,17 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                             withParametersCount(1));
 
             if (policyConstructors.isEmpty()) {
-                logger.debug("No configuration can be injected for {} because there is no valid constructor. " +
+                log.debug("No configuration can be injected for {} because there is no valid constructor. " +
                         "Using default empty constructor.", policyClass.getName());
                 try {
                     constructor = policyClass.getConstructor();
                 } catch (NoSuchMethodException nsme) {
-                    logger.error("Unable to find default empty constructor for {}", policyClass.getName(), nsme);
+                    log.error("Unable to find default empty constructor for {}", policyClass.getName(), nsme);
                 }
             } else if (policyConstructors.size() == 1) {
                 constructor = policyConstructors.iterator().next();
             } else {
-                logger.info("Too much constructors to instantiate policy {}", policyClass.getName());
+                log.info("Too much constructors to instantiate policy {}", policyClass.getName());
             }
 
             constructors.put(policyClass, constructor);

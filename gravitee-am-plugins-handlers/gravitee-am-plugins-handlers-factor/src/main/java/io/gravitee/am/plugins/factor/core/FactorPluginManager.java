@@ -24,21 +24,20 @@ import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FactorPluginManager
         extends ProviderPluginManager<Factor<?, FactorProvider>, FactorProvider, ProviderConfiguration>
         implements AmPluginManager<Factor<?, FactorProvider>> {
 
-    private final Logger logger = LoggerFactory.getLogger(FactorPluginManager.class);
     private final ConfigurationFactory<FactorConfiguration> configurationFactory;
 
     public FactorPluginManager(
@@ -51,9 +50,9 @@ public class FactorPluginManager
 
     @Override
     public FactorProvider create(ProviderConfiguration providerConfig) {
-        logger.debug("Looking for a factor for [{}]", providerConfig.getType());
+        log.debug("Looking for a factor for [{}]", providerConfig.getType());
         var factor = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No factor is registered for type {}", providerConfig.getType());
+            log.error("No factor is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No factor is registered for type " + providerConfig.getType());
         });
 

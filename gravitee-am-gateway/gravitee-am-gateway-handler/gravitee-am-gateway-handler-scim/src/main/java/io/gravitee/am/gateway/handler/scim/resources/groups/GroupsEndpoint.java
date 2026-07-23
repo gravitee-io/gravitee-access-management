@@ -31,7 +31,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.DecodeException;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Optional;
 
@@ -39,7 +39,7 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class GroupsEndpoint extends AbstractGroupEndpoint {
 
     private static final int MAX_ITEMS_PER_PAGE = 100;

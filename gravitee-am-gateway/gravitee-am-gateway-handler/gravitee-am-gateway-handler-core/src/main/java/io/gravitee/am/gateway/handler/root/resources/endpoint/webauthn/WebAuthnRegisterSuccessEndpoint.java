@@ -33,8 +33,6 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -42,14 +40,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterSuccessEndpoint.class);
 
     public WebAuthnRegisterSuccessEndpoint(TemplateEngine templateEngine,
                                            CredentialGatewayService credentialService,
@@ -79,7 +78,7 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
             // control that a WebAuthn Credential has been registered
             final String credentialId = routingContext.session().get(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
             if (credentialId == null) {
-                logger.error("No WebAuthn credential has been registered");
+                log.error("No WebAuthn credential has been registered");
                 routingContext.fail(400);
                 return;
             }
@@ -97,9 +96,9 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             data.put(ConstantKeys.ACTION_KEY, action);
             // render the page
-            renderPage(routingContext, data, client, logger, "Unable to render WebAuthn register success page");
+            renderPage(routingContext, data, client, log, "Unable to render WebAuthn register success page");
         } catch (Exception ex) {
-            logger.error("An error has occurred when rendering WebAuthn register success page", ex);
+            log.error("An error has occurred when rendering WebAuthn register success page", ex);
             routingContext.fail(503);
         }
     }
@@ -108,18 +107,18 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
         final String deviceName = routingContext.request().getParam(ConstantKeys.PASSWORDLESS_DEVICE_NAME);
         final String credentialId = routingContext.session().get(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
         if (credentialId == null) {
-            logger.error("No WebAuthn credential has been registered");
+            log.error("No WebAuthn credential has been registered");
             routingContext.fail(400);
             return;
         }
         if (StringUtils.isBlank(deviceName)) {
-            logger.debug("Request missing deviceName field");
+            log.debug("Request missing deviceName field");
             routingContext.fail(400);
             return;
         }
 
         if (deviceName.length() > 64) {
-            logger.debug("deviceName must be below 64 characters");
+            log.debug("deviceName must be below 64 characters");
             routingContext.fail(400);
             return;
         }
@@ -143,7 +142,7 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
                                     .end();
                         },
                         error -> {
-                            logger.error("An error has occurred when updating the webauthn credential {}", credentialId, error);
+                            log.error("An error has occurred when updating the webauthn credential {}", credentialId, error);
                             routingContext.fail(error);
                         });
     }

@@ -24,7 +24,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -38,7 +38,7 @@ import static java.util.Optional.ofNullable;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class ClientSyncServiceImpl implements ClientSyncService {
 
     @Autowired

@@ -39,8 +39,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -51,14 +49,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CertificateManagerImpl extends AbstractService implements CertificateManager, EventListener<CertificateEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
 
     @Autowired
     private Domain domain;
@@ -121,18 +120,18 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         initialize();
 
-        logger.info("Register event listener for certificate events for domain {}", domain.getName());
+        log.info("Register event listener for certificate events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, CertificateEvent.class, domain.getId());
 
-        logger.info("Register event listener for certificate settings events for domain {}", domain.getName());
+        log.info("Register event listener for certificate settings events for domain {}", domain.getName());
         eventManager.subscribeForEvents(certificateSettingsListener, DomainCertificateSettingsEvent.class, domain.getId());
     }
 
     private void initialize() throws Exception {
-        logger.info("Initializing certificate settings for domain {}", domain.getName());
+        log.info("Initializing certificate settings for domain {}", domain.getName());
         initCertificateSettings();
 
-        logger.info("Initializing certificates for domain {}", domain.getName());
+        log.info("Initializing certificates for domain {}", domain.getName());
         certificateRepository.findByDomain(domain.getId())
                 .observeOn(Schedulers.io())
                 .subscribe(
@@ -143,11 +142,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                             }
                             certificateProviderManager.create(certificate);
                             certificates.put(certificate.getId(), certificate);
-                            logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
+                            log.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), certificate.getId());
                         },
                         error -> {
-                            logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error);
+                            log.error("An error has occurred when loading certificates for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.CERTIFICATE.name(), error.getMessage());
                         }
                 );
@@ -157,10 +156,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
+        log.info("Dispose event listener for certificate events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
 
-        logger.info("Dispose event listener for certificate settings events for domain {}", domain.getName());
+        log.info("Dispose event listener for certificate settings events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(certificateSettingsListener, DomainCertificateSettingsEvent.class, domain.getId());
 
         for (Map.Entry<String, Certificate> entry: certificates.entrySet()) {
@@ -241,7 +240,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     private void deployCertificate(String certificateId) {
-        logger.info("Deploying certificate {} for domain {}", certificateId, domain.getName());
+        log.info("Deploying certificate {} for domain {}", certificateId, domain.getName());
         domainReadinessService.initPluginSync(domain.getId(), certificateId, Type.CERTIFICATE.name());
         certificateRepository.findById(certificateId)
                 .observeOn(Schedulers.io())
@@ -254,20 +253,20 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                                 }
                                 certificateProviderManager.create(certificate);
                                 certificates.put(certificateId, certificate);
-                                logger.info("Certificate {} loaded for domain {}", certificateId, domain.getName());
+                                log.info("Certificate {} loaded for domain {}", certificateId, domain.getName());
                                 domainReadinessService.pluginLoaded(domain.getId(), certificateId);
                                 reloadIdentityProviders(certificate);
                             } catch (Exception ex) {
-                                logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
+                                log.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
                                 certificates.remove(certificateId, certificate);
                                 domainReadinessService.pluginFailed(domain.getId(), certificateId, ex.getMessage());
                             }
                         },
                         error -> {
-                            logger.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error);
+                            log.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), certificateId, error.getMessage());
                         },
-                        () -> logger.error("No certificate found with id {}", certificateId));
+                        () -> log.error("No certificate found with id {}", certificateId));
     }
 
     private boolean belongsToCurrentDomain(CertificateProvider certificateProvider) {
@@ -286,14 +285,14 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     private void removeCertificate(String certificateId) {
-        logger.info("Removing certificate {} for domain {}", certificateId, domain.getName());
+        log.info("Removing certificate {} for domain {}", certificateId, domain.getName());
         Certificate deletedCertificate = certificates.remove(certificateId);
         certificateProviderManager.delete(certificateId);
         domainReadinessService.pluginUnloaded(domain.getId(), certificateId);
         if (deletedCertificate != null) {
-            logger.info("Certificate {} has been removed for domain {}", certificateId, domain.getName());
+            log.info("Certificate {} has been removed for domain {}", certificateId, domain.getName());
         } else {
-            logger.info("Certificate {} was not loaded for domain {}", certificateId, domain.getName());
+            log.info("Certificate {} was not loaded for domain {}", certificateId, domain.getName());
         }
     }
 
@@ -313,15 +312,15 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         }
 
         private void updateCertificateSettings() {
-            logger.info("Updating certificate settings for domain {}", domain.getName());
+            log.info("Updating certificate settings for domain {}", domain.getName());
             domainRepository.findById(domain.getId())
                     .observeOn(Schedulers.io())
                     .subscribe(
                             updatedDomain -> {
                                 certificateSettings.set(updatedDomain.getCertificateSettings());
-                                logger.info("Certificate settings updated for domain {}", domain.getName());
+                                log.info("Certificate settings updated for domain {}", domain.getName());
                             },
-                            error -> logger.error("An error has occurred when updating certificate settings for domain {}", domain.getName(), error)
+                            error -> log.error("An error has occurred when updating certificate settings for domain {}", domain.getName(), error)
                     );
         }
     }

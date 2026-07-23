@@ -42,19 +42,18 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Tags({@Tag(name= "user notifications")})
+@CustomLog
 public class UserNotificationsResource extends AbstractResource {
-    private final Logger logger = LoggerFactory.getLogger(UserNotificationsResource.class);
 
     @Autowired
     private UserNotificationService notificationService;
@@ -93,7 +92,7 @@ public class UserNotificationsResource extends AbstractResource {
             filteredNotification.setTitle(content.get("title"));
             filteredNotification.setMessage(content.get("message"));
         } catch (JsonProcessingException e) {
-            logger.warn("Unable to read message for user notification '{}' : {}", notification.getId(), e.getMessage());
+            log.warn("Unable to read message for user notification '{}' : {}", notification.getId(), e.getMessage());
         }
         return filteredNotification;
     }

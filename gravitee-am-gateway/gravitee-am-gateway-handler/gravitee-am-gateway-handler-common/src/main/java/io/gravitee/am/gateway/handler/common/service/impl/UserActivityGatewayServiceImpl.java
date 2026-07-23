@@ -26,7 +26,7 @@ import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivity
 import io.gravitee.am.service.dataplane.user.activity.utils.UserActivityFunctions;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -39,7 +39,7 @@ import static io.gravitee.am.service.dataplane.user.activity.utils.UserActivityF
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class UserActivityGatewayServiceImpl implements UserActivityGatewayService {
 
     private final UserActivityConfiguration configuration;

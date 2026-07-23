@@ -23,13 +23,12 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
+import lombok.CustomLog;
 
 /**
  * WebAuthn cookie service used mainly to determine if the device is already enrolled or not,
@@ -38,9 +37,9 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SES
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnCookieService implements InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthnCookieService.class);
     private static final String DEFAULT_COOKIE_NAME = "GRAVITEE_AM_DEVICE_RECOGNITION";
     private static final long DEFAULT_SESSION_TIMEOUT = (long) 365 * 24 * 60 * 60 * 1000; // a year
     static final String USER_ID = "userId";
@@ -78,7 +77,7 @@ public class WebAuthnCookieService implements InitializingBean {
         return decodeAndVerify(cookieValue)
                 .map(jwt -> (String) jwt.get(USER_ID))
                 .doOnError(throwable -> {
-                    LOGGER.error("An error has occurred when parsing WebAuthn cookie {}", cookieValue, throwable);
+                    log.error("An error has occurred when parsing WebAuthn cookie {}", cookieValue, throwable);
                 });
     }
 

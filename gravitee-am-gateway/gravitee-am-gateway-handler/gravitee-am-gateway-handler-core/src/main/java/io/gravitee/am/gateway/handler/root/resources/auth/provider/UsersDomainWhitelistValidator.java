@@ -18,14 +18,13 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
 import io.gravitee.am.identityprovider.api.User;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import lombok.CustomLog;
 
+@CustomLog
 class UsersDomainWhitelistValidator {
 
-    private static final Logger logger = LoggerFactory.getLogger(UsersDomainWhitelistValidator.class);
 
     Single<User> checkDomainWhitelist(User endUser, List<String> domainWhitelist) {
         // No whitelist means we let everyone, so we reject the connection if neither the username nor the email are allowed
@@ -47,13 +46,13 @@ class UsersDomainWhitelistValidator {
         var domainName = identifier.split("@");
         // identifier is not an email, fail
         if (domainName.length < 2) {
-            logger.debug("Identifier [{}] is not an email", identifier);
+            log.debug("Identifier [{}] is not an email", identifier);
             return true;
         }
 
         // RFC 4343: DNS labels are case-insensitive, so domain comparison must be too
         if (domainWhitelist.stream().noneMatch(domainName[1].trim()::equalsIgnoreCase)) {
-            logger.debug("Identifier [{}] does not match domainWhitelist", identifier);
+            log.debug("Identifier [{}] does not match domainWhitelist", identifier);
             return true;
         }
         return false;

@@ -24,8 +24,6 @@ import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_SCOPE_SETTINGS_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -40,12 +39,12 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPL
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "scope_settings_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Settings for Application Scopes can't be upgraded, other instance may process them or an upgrader has failed previously";
 
-    private final Logger logger = LoggerFactory.getLogger(ApplicationScopeSettingsUpgrader.class);
 
     public ApplicationScopeSettingsUpgrader(@Lazy SystemTaskRepository systemTaskRepository, ApplicationService applicationService) {
         super(systemTaskRepository);
@@ -85,12 +84,12 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
         return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
-                    logger.debug("Process application '{}'", app.getId());
+                    log.debug("Process application '{}'", app.getId());
                     if (app.getSettings() != null && app.getSettings().getOauth() != null) {
                         final ApplicationOAuthSettings oauthSettings = app.getSettings().getOauth();
                         List<ApplicationScopeSettings> scopeSettings = new ArrayList<>();
                         if (oauthSettings.getScopes() != null && !oauthSettings.getScopes().isEmpty()) {
-                            logger.debug("Process scope options for application '{}'", app.getId());
+                            log.debug("Process scope options for application '{}'", app.getId());
                             for (String scope : oauthSettings.getScopes()) {
                                 ApplicationScopeSettings setting = new ApplicationScopeSettings();
                                 setting.setScope(scope);
@@ -108,13 +107,13 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
                             oauthSettings.setDefaultScopes(null);
                             oauthSettings.setScopeApprovals(null);
 
-                            logger.debug("Update settings for application '{}'", app.getId());
+                            log.debug("Update settings for application '{}'", app.getId());
                             return applicationService.update(app);
                         } else {
-                            logger.debug("No scope to process for application '{}'", app.getId());
+                            log.debug("No scope to process for application '{}'", app.getId());
                         }
                     } else {
-                        logger.debug("No scope to process for application '{}'", app.getId());
+                        log.debug("No scope to process for application '{}'", app.getId());
                     }
                     return Single.just(app);
                 }).ignoreElements()
@@ -122,11 +121,11 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
                         .onErrorResumeNext(err -> {
-                            logger.error("Unable to update status for migrate scope options task: {}", err.getMessage());
+                            log.error("Unable to update status for migrate scope options task: {}", err.getMessage());
                             return Single.just(false);
                         }))
                 .onErrorResumeNext(err -> {
-                    logger.error("Unable to migrate scope options for applications: {}", err.getMessage());
+                    log.error("Unable to migrate scope options for applications: {}", err.getMessage());
                     return Single.just(false);
                 });
     }

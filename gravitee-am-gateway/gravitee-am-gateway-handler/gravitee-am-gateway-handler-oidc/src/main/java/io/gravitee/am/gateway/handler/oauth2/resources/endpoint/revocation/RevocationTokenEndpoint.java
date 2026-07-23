@@ -24,8 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationT
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * OAuth 2.0 Token Revocation
@@ -35,9 +34,9 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RevocationTokenEndpoint implements Handler<RoutingContext> {
 
-    private final static Logger logger = LoggerFactory.getLogger(RevocationTokenEndpoint.class);
     private OAuthRevocationTokenService revocationTokenService;
 
     public RevocationTokenEndpoint() {
@@ -80,7 +79,7 @@ public class RevocationTokenEndpoint implements Handler<RoutingContext> {
             } catch (IllegalArgumentException iae) {
                 // If the server is unable to locate the token using the given hint,
                 // it MUST extend its search across all of its supported token types.
-                logger.debug("Invalid token type hint : " + tokenTypeHint);
+                log.debug("Invalid token type hint : " + tokenTypeHint);
             }
         }
 

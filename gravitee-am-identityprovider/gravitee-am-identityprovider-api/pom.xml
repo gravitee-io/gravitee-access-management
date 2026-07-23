@@ -68,12 +68,5 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
-
-        <!-- Test -->
-        <dependency>
-            <groupId>io.gravitee.node</groupId>
-            <artifactId>gravitee-node-logging</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

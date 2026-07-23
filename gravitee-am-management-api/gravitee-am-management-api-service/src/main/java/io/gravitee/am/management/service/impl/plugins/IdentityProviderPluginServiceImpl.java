@@ -24,11 +24,11 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,12 +36,12 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class IdentityProviderPluginServiceImpl extends AbstractPluginService implements IdentityProviderPluginService {
 
     /**
      * Logger.
      */
-    private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginServiceImpl.class);
 
     private IdentityProviderPluginManager identityProviderPluginManager;
 
@@ -63,20 +63,20 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Single<List<IdentityProviderPlugin>> findAll(Boolean external, List<String> expand) {
-        LOGGER.debug("List all identity provider plugins");
+        log.debug("List all identity provider plugins");
         return Observable.fromIterable(identityProviderPluginManager.findAll(true))
             .filter(idp -> (external != null && external) == idp.external())
             .map(idp -> convert(idp, expand))
             .toList()
             .onErrorResumeNext(ex -> {
-                LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
+                log.error("An error occurs while trying to list all identity provider plugins", ex);
                 return Single.error(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
             });
     }
 
     @Override
     public Maybe<IdentityProviderPlugin> findById(String identityProviderId) {
-        LOGGER.debug("Find identity provider plugin by ID: {}", identityProviderId);
+        log.debug("Find identity provider plugin by ID: {}", identityProviderId);
         return Maybe.create(emitter -> {
             try {
                 Plugin identityProvider = identityProviderPluginManager.findById(identityProviderId);
@@ -86,7 +86,7 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get identity provider plugin : {}", identityProviderId, ex);
+                log.error("An error occurs while trying to get identity provider plugin : {}", identityProviderId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get identity provider plugin : " + identityProviderId, ex));
             }
         });
@@ -94,7 +94,7 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Maybe<String> getSchema(String identityProviderId) {
-        LOGGER.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
+        log.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
         return Maybe.create(emitter -> {
             try {
                 String schema = identityProviderPluginManager.getSchema(identityProviderId);
@@ -104,7 +104,7 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for identity provider plugin {}", identityProviderId, e);
+                log.error("An error occurs while trying to get schema for identity provider plugin {}", identityProviderId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for identity provider plugin " + identityProviderId, e));
             }
         });
@@ -112,7 +112,7 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Maybe<String> getIcon(String identityProviderId) {
-        LOGGER.debug("Find identity provider icon by ID: {}", identityProviderId);
+        log.debug("Find identity provider icon by ID: {}", identityProviderId);
         return Maybe.create(emitter -> {
             try {
                 String icon = identityProviderPluginManager.getIcon(identityProviderId, true);
@@ -122,7 +122,7 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get icon for identity provider plugin {}", identityProviderId, e);
+                log.error("An error occurs while trying to get icon for identity provider plugin {}", identityProviderId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for identity provider plugin " + identityProviderId, e));
             }
         });

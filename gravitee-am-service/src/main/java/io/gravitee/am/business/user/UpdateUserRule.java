@@ -24,7 +24,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Date;
 import java.util.function.BiFunction;
@@ -34,7 +34,7 @@ import java.util.function.BiFunction;
  * @author GraviteeSource Team
  */
 @AllArgsConstructor
-@Slf4j
+@CustomLog
 public class UpdateUserRule {
     protected final UserValidator validator;
     private BiFunction<User, UpdateActions, Single<User>> userUpdater;

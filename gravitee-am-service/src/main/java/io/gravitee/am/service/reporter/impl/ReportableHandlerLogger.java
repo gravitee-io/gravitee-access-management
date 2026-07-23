@@ -18,9 +18,9 @@ package io.gravitee.am.service.reporter.impl;
 import io.gravitee.am.reporter.api.Reportable;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.eventbus.Message;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
-@Slf4j
+@CustomLog
 public class ReportableHandlerLogger<T> implements Handler<Message<T>> {
 
     @Override

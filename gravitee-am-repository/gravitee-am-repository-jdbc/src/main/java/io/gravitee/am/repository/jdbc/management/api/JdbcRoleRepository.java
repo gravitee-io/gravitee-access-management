@@ -42,8 +42,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -61,15 +59,16 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Repository
+@CustomLog
 public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRepository, InitializingBean {
 
-    private static final Logger log = LoggerFactory.getLogger(JdbcRoleRepository.class);
     private static final Set<String> LOGGED_PERMISSION_FILTER_IDS = ConcurrentHashMap.newKeySet();
     private static final Set<String> VALID_PERMISSION_KEYS = Set.of(Permission.values()).stream().map(Enum::name).collect(Collectors.toSet());
     private static final ObjectMapper PERMISSION_OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

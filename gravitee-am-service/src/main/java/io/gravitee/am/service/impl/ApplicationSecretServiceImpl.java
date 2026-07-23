@@ -48,7 +48,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -60,7 +60,7 @@ import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRE
 import static java.util.Optional.ofNullable;
 
 @Component
-@Slf4j
+@CustomLog
 public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     @Value("${applications.secretsMax:10}")

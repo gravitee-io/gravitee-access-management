@@ -21,12 +21,12 @@ import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginManager;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
-@Slf4j
+@CustomLog
 public class DataPlanePluginHandler extends AbstractPluginHandler {
     private static final String PLUGIN_TYPE = "data-plane";
 

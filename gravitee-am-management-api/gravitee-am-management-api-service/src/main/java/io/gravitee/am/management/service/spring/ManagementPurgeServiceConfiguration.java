@@ -19,7 +19,7 @@ import io.gravitee.am.management.service.purge.ManagementExpiredDataSweeperProvi
 import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.service.purge.ScheduledPurgeService;
 import io.gravitee.am.service.purge.ScheduledPurgeServiceFactory;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +32,7 @@ import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.cimd_me
 import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.events;
 
 @Configuration
-@Slf4j
+@CustomLog
 public class ManagementPurgeServiceConfiguration {
     private final ScheduledPurgeServiceFactory factory = new ScheduledPurgeServiceFactory(List.of(events, audits, cimd_metadata_documents));
 

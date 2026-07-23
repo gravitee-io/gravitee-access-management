@@ -38,7 +38,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.processors.PublishProcessor;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.reactivestreams.Publisher;
 
 import java.util.Set;
@@ -57,7 +57,7 @@ import static org.springframework.util.StringUtils.hasText;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class BulkServiceImpl implements BulkService {
     public static final Set<HttpMethod> ALLOWED_METHODS = Set.of(DELETE, POST, PATCH, PUT);

@@ -19,11 +19,10 @@ import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.service.InstallationService;
 import io.gravitee.node.api.upgrader.Upgrader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.INSTALLATION_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -31,9 +30,9 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.INST
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class InstallationUpgrader implements Upgrader {
 
-    private final Logger logger = LoggerFactory.getLogger(InstallationUpgrader.class);
 
     private final InstallationService installationService;
 
@@ -44,7 +43,7 @@ public class InstallationUpgrader implements Upgrader {
     @Override
     public boolean upgrade() {
         final Installation installation = installationService.getOrInitialize().blockingGet();
-        logger.info("Current installation id is [{}]", installation.getId());
+        log.info("Current installation id is [{}]", installation.getId());
         return true;
     }
 

@@ -50,7 +50,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
@@ -66,7 +66,7 @@ import static java.util.Comparator.nullsLast;
  * @author GraviteeSource Team
  */
 @Tag(name = "Password Policy")
-@Slf4j
+@CustomLog
 public class PasswordPoliciesResource extends AbstractDomainResource {
 
     @Autowired

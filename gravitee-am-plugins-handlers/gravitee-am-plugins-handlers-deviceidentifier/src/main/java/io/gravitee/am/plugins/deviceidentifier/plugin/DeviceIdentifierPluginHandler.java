@@ -19,15 +19,15 @@ import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentifier<?, ?>> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginHandler.class);
     public static final String PLUGIN_TYPE_DEVICE_IDENTIFIER = "DEVICE_IDENTIFIER";
 
     @Override
@@ -37,7 +37,7 @@ public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentif
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
     @Override

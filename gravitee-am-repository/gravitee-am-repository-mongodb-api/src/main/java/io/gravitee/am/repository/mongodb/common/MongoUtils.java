@@ -31,8 +31,6 @@ import io.reactivex.rxjava3.functions.Predicate;
 import lombok.experimental.UtilityClass;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -49,15 +47,16 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
 import static java.util.Objects.requireNonNullElse;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @UtilityClass
+@CustomLog
 public final class MongoUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoUtils.class);
 
     public static final String FIELD_ID = "_id";
     public static final String FIELD_DOMAIN = "domain";
@@ -79,8 +78,8 @@ public final class MongoUtils {
     public static void init(MongoCollection<?> collection) {
         Completable.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
                 .subscribe(
-                        () -> logger.debug("Index {} of collection {} created", FIELD_ID, collection.getNamespace().getCollectionName()),
-                        throwable -> logger.error("Error occurred during creation of id index of {}", collection.getNamespace().getCollectionName(), throwable)
+                        () -> log.debug("Index {} of collection {} created", FIELD_ID, collection.getNamespace().getCollectionName()),
+                        throwable -> log.error("Error occurred during creation of id index of {}", collection.getNamespace().getCollectionName(), throwable)
                 );
     }
 
@@ -94,12 +93,12 @@ public final class MongoUtils {
                     .retryWhen(th -> th
                             .zipWith(Flowable.range(1, 3), (error, attempt) -> attempt) // 3 attempts
                             .flatMap(attempt -> {
-                                logger.debug("Retrying index creation for {}, attempt={}/3", collection.getNamespace().getCollectionName(), attempt);
+                                log.debug("Retrying index creation for {}, attempt={}/3", collection.getNamespace().getCollectionName(), attempt);
                                 return Flowable.timer(attempt, TimeUnit.SECONDS); // delayed backoff
                             }))
                     .subscribe(
-                            () -> logger.debug("{} indexes created", collection.getNamespace().getCollectionName()),
-                            throwable -> logger.error("Error occurred during indexes creation for {}", collection.getNamespace().getCollectionName(), throwable)
+                            () -> log.debug("{} indexes created", collection.getNamespace().getCollectionName()),
+                            throwable -> log.error("Error occurred during indexes creation for {}", collection.getNamespace().getCollectionName(), throwable)
                     );
 
         }
@@ -132,16 +131,16 @@ public final class MongoUtils {
     }
 
     public static Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
-        logger.debug("Dropping indexes for collection {}", collection.getNamespace().getCollectionName());
+        log.debug("Dropping indexes for collection {}", collection.getNamespace().getCollectionName());
         return Observable.fromPublisher(collection.listIndexes())
                 .map(document -> document.getString("name"))
                 .filter(nameMatcher)
-                .doOnNext(indexName -> logger.debug("Found index to drop: {}", indexName))
+                .doOnNext(indexName -> log.debug("Found index to drop: {}", indexName))
                 .flatMapCompletable(indexName -> Completable
                         .fromPublisher(collection.dropIndex(indexName))
                         .onErrorResumeNext(error -> {
                             if (error instanceof MongoCommandException mongoError && mongoError.getErrorCode() == 27) {
-                                logger.debug("Index {} was already deleted by another process", indexName);
+                                log.debug("Index {} was already deleted by another process", indexName);
                                 return Completable.complete();
                             }
                             return Completable.error(error);
@@ -151,18 +150,18 @@ public final class MongoUtils {
                                 .flatMap(context -> {
                                     if (context.error() instanceof MongoCommandException mongoError && 
                                         mongoError.getErrorCode() == 12587) {
-                                        logger.debug("Retrying index deletion for {} due to background operation, attempt={}/3", 
+                                        log.debug("Retrying index deletion for {} due to background operation, attempt={}/3", 
                                                    collection.getNamespace().getCollectionName(), context.attempt());
                                         return Flowable.timer(context.attempt() * 2, TimeUnit.SECONDS); // exponential backoff
                                     }
                                     return Flowable.error(context.error());
                                 }))
-                        .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e))
-                        .doOnComplete(() -> logger.debug("Successfully deleted index {}", indexName)))
+                        .doOnError(e -> log.error("An error has occurred while deleting index {}", indexName, e))
+                        .doOnComplete(() -> log.debug("Successfully deleted index {}", indexName)))
                 .toFlowable()
                 .defaultIfEmpty(Completable.complete())
                 .ignoreElements()
-                .doOnComplete(() -> logger.debug("Index drop operation completed for collection {}", collection.getNamespace().getCollectionName()));
+                .doOnComplete(() -> log.debug("Index drop operation completed for collection {}", collection.getNamespace().getCollectionName()));
     }
 
     public static Bson toBsonFilter(String name, Optional<?> optional) {

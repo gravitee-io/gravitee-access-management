@@ -21,7 +21,7 @@ import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.rxjava3.core.Flowable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ import java.util.List;
 @Component
 @Qualifier("OrganizationUserEnhancer")
 public class OrganizationUserEnhancer extends BaseUserEnhancer {
-    protected final Logger LOGGER = LoggerFactory.getLogger(OrganizationUserEnhancer.class);
+    protected final Logger LOGGER = NodeLoggerFactory.getLogger(OrganizationUserEnhancer.class);
 
     @Autowired
     private OrganizationGroupService groupService;

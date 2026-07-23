@@ -24,7 +24,7 @@ import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import io.gravitee.am.model.CimdClientState;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -70,7 +70,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
+@CustomLog
 public class CimdMetadataServiceImpl implements CimdMetadataService {
 
     private static final Pattern CACHE_CONTROL_MAX_AGE = Pattern.compile("(?:^|,)\\s*max-age\\s*=\\s*(\\d+)", Pattern.CASE_INSENSITIVE);

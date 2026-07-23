@@ -56,7 +56,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -77,7 +77,7 @@ import static org.springframework.util.StringUtils.hasText;
  * @author GraviteeSource Team
  */
 @Component("managementOrganizationUserService")
-@Slf4j
+@CustomLog
 public class OrganizationUserServiceImpl implements OrganizationUserService {
 
     public static final BCryptPasswordEncoder PWD_ENCODER = new BCryptPasswordEncoder();

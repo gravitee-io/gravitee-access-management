@@ -25,13 +25,13 @@ import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -39,19 +39,19 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class DomainUpgrader extends AsyncUpgrader {
 
     /**
      * Logger.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(DomainUpgrader.class);
 
     @Autowired
     private DomainService domainService;
 
     @Override
     public Completable doUpgrade() {
-        LOGGER.info("Applying domain upgrade");
+        log.info("Applying domain upgrade");
         return Completable.fromPublisher(domainService.listAll()
                 .flatMapSingle(this::upgradeDomain));
 

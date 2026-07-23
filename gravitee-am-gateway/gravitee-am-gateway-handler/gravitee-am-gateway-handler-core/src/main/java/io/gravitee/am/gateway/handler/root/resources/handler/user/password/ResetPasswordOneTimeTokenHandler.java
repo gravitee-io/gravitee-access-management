@@ -23,21 +23,20 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
 
-    private final static Logger logger = LoggerFactory.getLogger(ResetPasswordOneTimeTokenHandler.class);
 
     @Override
     public void handle(RoutingContext context) {
@@ -63,7 +62,7 @@ public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
         // the current token has already been used for the action
         // redirect user to the reset password page with an error
         if (Instant.ofEpochSecond(jwt.getIat()).isBefore(user.getLastPasswordReset().toInstant())) {
-            logger.debug("Token has already been used for reset password action, skip it.");
+            log.debug("Token has already been used for reset password action, skip it.");
             queryParams.set(ConstantKeys.ERROR_PARAM_KEY, INVALID_TOKEN);
             if(context.session()!=null){
                 context.session().put(ERROR_HASH, HashUtil.generateSHA256(INVALID_TOKEN));

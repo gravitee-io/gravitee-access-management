@@ -26,21 +26,20 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class I18nDictionaryManager extends AbstractService implements InitializingBean, EventListener<I18nDictionaryEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(I18nDictionaryManager.class);
     private ConcurrentMap<String, I18nDictionary> i18nDictionaries = new ConcurrentHashMap<>();
 
     @Autowired
@@ -57,21 +56,21 @@ public class I18nDictionaryManager extends AbstractService implements Initializi
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("Initializing i18n dictionaries for domain {}", domain.getName());
+        log.info("Initializing i18n dictionaries for domain {}", domain.getName());
         i18nDictionaryRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
                         i18nDictionary -> {
                             update(i18nDictionary);
-                            logger.info("I18n dictionary {} loaded for domain {}", i18nDictionary.getId(), domain.getName());
+                            log.info("I18n dictionary {} loaded for domain {}", i18nDictionary.getId(), domain.getName());
                         },
-                        error -> logger.error("Unable to initialize i18n dictionaries for domain {}", domain.getName(), error));
+                        error -> log.error("Unable to initialize i18n dictionaries for domain {}", domain.getName(), error));
     }
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for i18n dictionary events for domain {}", domain.getName());
+        log.info("Register event listener for i18n dictionary events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, I18nDictionaryEvent.class, domain.getId());
     }
 
@@ -79,7 +78,7 @@ public class I18nDictionaryManager extends AbstractService implements Initializi
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for i18n dictionary events for domain {}", domain.getName());
+        log.info("Dispose event listener for i18n dictionary events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, I18nDictionaryEvent.class, domain.getId());
     }
 
@@ -101,15 +100,15 @@ public class I18nDictionaryManager extends AbstractService implements Initializi
 
     private void update(String id, I18nDictionaryEvent event) {
         final String eventType = event.toString().toLowerCase();
-        logger.info("Domain {} has received {} i18n dictionary event for {}", domain.getName(), eventType, id);
+        log.info("Domain {} has received {} i18n dictionary event for {}", domain.getName(), eventType, id);
         i18nDictionaryRepository.findById(id)
                 .subscribe(
                         i18nDictionary -> {
                             update(i18nDictionary);
-                            logger.info("I18n dictionary {} {}d for domain {}", id, eventType, domain.getName());
+                            log.info("I18n dictionary {} {}d for domain {}", id, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to {} i18n dictionary for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No i18n dictionary found with id {}", id));
+                        error -> log.error("Unable to {} i18n dictionary for domain {}", eventType, domain.getName(), error),
+                        () -> log.error("No i18n dictionary found with id {}", id));
     }
 
     private void update(I18nDictionary i18nDictionary) {
@@ -118,7 +117,7 @@ public class I18nDictionaryManager extends AbstractService implements Initializi
     }
 
     private void remove(String id) {
-        logger.info("Domain {} has received i18n dictionary event, delete i18n dictionary {}", domain.getName(), id);
+        log.info("Domain {} has received i18n dictionary event, delete i18n dictionary {}", domain.getName(), id);
         I18nDictionary deletedI18nDictionary = i18nDictionaries.remove(id);
         if (deletedI18nDictionary != null) {
             graviteeMessageResolver.removeDictionary(deletedI18nDictionary.getLocale());

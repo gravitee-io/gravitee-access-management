@@ -24,8 +24,6 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
@@ -44,14 +42,15 @@ import static io.vertx.core.http.HttpMethod.GET;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RegisterVerifyEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterVerifyEndpoint.class);
 
     private static final String TEMPLATE_ERROR_MESSAGE = "Unable to render registration verify page";
     private final Domain domain;
@@ -95,7 +94,7 @@ public class RegisterVerifyEndpoint extends AbstractEndpoint implements Handler<
         var loginAction = getLoginPath(routingContext, client);
         routingContext.put(LOGIN_ACTION_KEY, resolveProxyRequest(routingContext.request(), loginAction, queryParams, true));
 
-        this.renderPage(routingContext, generateData(routingContext, domain, client), client, LOGGER, TEMPLATE_ERROR_MESSAGE);
+        this.renderPage(routingContext, generateData(routingContext, domain, client), client, log, TEMPLATE_ERROR_MESSAGE);
     }
 
     private String getLoginPath(RoutingContext routingContext, Client client) {

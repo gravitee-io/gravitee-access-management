@@ -28,8 +28,6 @@ import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.glassfish.jersey.servlet.ServletContainer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -42,6 +40,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import lombok.CustomLog;
 
 /**
  * Configures and starts the Management API server.
@@ -53,9 +52,9 @@ import java.util.EnumSet;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ManagementApiServer extends JettyHttpServer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManagementApiServer.class);
 
     @Value("${http.api.entrypoint:/management}")
     private String entrypoint;
@@ -77,7 +76,7 @@ public class ManagementApiServer extends JettyHttpServer {
         var contexts = new ArrayList<ContextHandler>();
 
         if (startAutomationAPI) {
-            LOGGER.info("Automation API is enabled, registering at {}", automationEntrypoint);
+            log.info("Automation API is enabled, registering at {}", automationEntrypoint);
             contexts.add(configureAutomationAPI());
         }
 

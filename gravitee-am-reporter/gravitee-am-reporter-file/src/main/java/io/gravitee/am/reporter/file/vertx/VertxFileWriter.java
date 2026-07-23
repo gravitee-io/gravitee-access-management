@@ -23,8 +23,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,14 +34,15 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Pattern;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class VertxFileWriter<T extends ReportEntry> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VertxFileWriter.class);
 
     /**
      * {@code \u000a} linefeed LF ('\n').
@@ -136,7 +135,7 @@ public class VertxFileWriter<T extends ReportEntry> {
     }
 
     public Future<Void> initialize() {
-        LOGGER.debug("Initializing file reporter, retainDays: {}", retainDays);
+        log.debug("Initializing file reporter, retainDays: {}", retainDays);
         // Calculate Today's Midnight, based on Configured TimeZone (will be in past, even if by a few milliseconds)
         ZonedDateTime now = timeProvider.now(TimeZone.getDefault());
 
@@ -161,7 +160,7 @@ public class VertxFileWriter<T extends ReportEntry> {
                 file = new File(filename);
                 File dir = new File(file.getParent());
                 if (!dir.isDirectory() || !dir.canWrite()) {
-                    LOGGER.error("Cannot write reporter data to directory {}", dir);
+                    log.error("Cannot write reporter data to directory {}", dir);
                     promise.fail(new IOException("Cannot write reporter data to directory " + dir));
                     return promise.future();
                 }
@@ -170,7 +169,7 @@ public class VertxFileWriter<T extends ReportEntry> {
                 filename = dir.getAbsolutePath() + File.separatorChar + 
                           templateFilename.replaceFirst("(?i)" + YYYY_MM_DD, newDate);
 
-                LOGGER.info("Initializing file reporter to write into file: {}", filename);
+                log.info("Initializing file reporter to write into file: {}", filename);
 
                 AsyncFile oldAsyncFile = asyncFile;
 
@@ -185,14 +184,14 @@ public class VertxFileWriter<T extends ReportEntry> {
                                 // Close previous file safely using the Future-based close()
                                 oldAsyncFile.close()
                                         .onFailure(throwable -> {
-                                            LOGGER.error("An error occurs while closing file writer [{}]", this.filename, throwable);
+                                            log.error("An error occurs while closing file writer [{}]", this.filename, throwable);
                                         });
                             }
 
                             promise.complete();
                         })
                         .onFailure(throwable -> {
-                            LOGGER.error("An error occurs while starting file writer [{}]", this.filename, throwable);
+                            log.error("An error occurs while starting file writer [{}]", this.filename, throwable);
                             promise.fail(throwable);
                         });
             } catch (IOException ioe) {
@@ -220,7 +219,7 @@ public class VertxFileWriter<T extends ReportEntry> {
 
         // Schedule next rollover event to occur, based on local machine's Unix Epoch milliseconds
         long delay = midnight.toInstant().toEpochMilli() - now.toInstant().toEpochMilli();
-        LOGGER.debug("Scheduling next rollover for {} in {} milliseconds", midnight, delay);
+        log.debug("Scheduling next rollover for {} in {} milliseconds", midnight, delay);
         synchronized (VertxFileWriter.class) {
             __rollover.schedule(rollTask, delay);
         }
@@ -245,14 +244,14 @@ public class VertxFileWriter<T extends ReportEntry> {
                 VertxFileWriter.this.scheduleNextRollover(now);
                 VertxFileWriter.this.removeOldFiles();
             } catch (Throwable t) {
-                LOGGER.error("Unexpected error while moving to a new reporter file", t);
+                log.error("Unexpected error while moving to a new reporter file", t);
             }
         }
     }
 
     protected void removeOldFiles() {
         if (retainDays <= 0) {
-            LOGGER.debug("No file retention configured");
+            log.debug("No file retention configured");
             return;
         }
 
@@ -271,20 +270,20 @@ public class VertxFileWriter<T extends ReportEntry> {
         }
 
         for (String fn : logList) {
-            LOGGER.debug("Checking file [{}]", fn);
+            log.debug("Checking file [{}]", fn);
             if (rolloverFiles.matcher(fn).matches()) {
                 File f = new File(dir, fn);
                 if (shouldDeleteFile(f, now)) {
-                    LOGGER.debug("File [{}] should be removed", fn);
+                    log.debug("File [{}] should be removed", fn);
                     boolean fileDeleted = f.delete();
                     if (!fileDeleted) {
-                        LOGGER.warn("File [{}] has not been removed", fn);
+                        log.warn("File [{}] has not been removed", fn);
                     }
                 } else {
-                    LOGGER.debug("File [{}] should not be removed", fn);
+                    log.debug("File [{}] should not be removed", fn);
                 }
             } else {
-                LOGGER.debug("File [{}] does not match the rollover pattern", fn);
+                log.debug("File [{}] does not match the rollover pattern", fn);
             }
         }
     }

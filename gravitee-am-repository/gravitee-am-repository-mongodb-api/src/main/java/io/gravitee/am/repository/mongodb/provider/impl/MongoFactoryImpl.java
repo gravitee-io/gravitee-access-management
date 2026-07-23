@@ -35,7 +35,7 @@ import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnection
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.FactoryBean;
@@ -64,7 +64,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component("mongoFactory")
 public class MongoFactoryImpl implements MongoFactory {
     private static final String PASSWORD = "password";

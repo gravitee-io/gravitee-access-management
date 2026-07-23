@@ -21,9 +21,8 @@ import io.gravitee.am.service.model.UpdateReporter;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * @author Islem TRIKI (islem.triki at graviteesource.com)
@@ -31,19 +30,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@CustomLog
 public class DefaultReporterUpgrader implements SystemUpgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultReporterUpgrader.class);
 
     private final ReporterService reporterService;
 
     @Override
     public Completable upgrade() {
-        logger.info("Applying domain reporter upgrade");
+        log.info("Applying domain reporter upgrade");
         return Completable.fromPublisher(reporterService.findAll()
                 .filter(Reporter::isSystem)
                 .flatMapSingle(this::updateDefaultReporter)
-                .doOnNext(reporter -> logger.info("updated reporter: id={}", reporter.getId())));
+                .doOnNext(reporter -> log.info("updated reporter: id={}", reporter.getId())));
     }
 
     private Single<Reporter> updateDefaultReporter(Reporter reporter) {

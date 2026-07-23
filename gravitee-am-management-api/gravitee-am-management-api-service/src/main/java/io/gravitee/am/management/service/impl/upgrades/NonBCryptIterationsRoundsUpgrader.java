@@ -27,8 +27,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -37,11 +35,12 @@ import java.util.Map;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_IDP_UPGRADER;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class NonBCryptIterationsRoundsUpgrader extends SystemTaskUpgrader {
-    private static final Logger log = LoggerFactory.getLogger(NonBCryptIterationsRoundsUpgrader.class);
 
     private static final String TASK_ID = "non_bcrypt_iterations_rounds_remove_migration";
 

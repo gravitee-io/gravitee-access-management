@@ -30,7 +30,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,7 +43,7 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.ReturnDocument.AFTER;
 
 @Component
-@Slf4j
+@CustomLog
 public class RateLimitObjectRepository extends AbstractMongoRepository implements RateLimitRepository<RateLimit> {
 
     private static final String RATE_LIMIT_API = "ratelimit_api";

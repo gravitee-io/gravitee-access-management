@@ -27,8 +27,6 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.cli.CommandLine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.sample.ciba.notifier.http.Constants.BEARER;
 import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_EXPIRE;
@@ -38,9 +36,10 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_SUBJECT;
 import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TOPIC_NOTIFICATION_REQUEST;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
+import lombok.CustomLog;
 
+@CustomLog
 public class CibaNotifierApiHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaNotifierApiHandler.class);
 
     private final EventBus eventBus;
     private final String authBearer;
@@ -73,7 +72,7 @@ public class CibaNotifierApiHandler implements Handler<RoutingContext> {
             notifierRequest.setExpiresIn(Integer.parseInt(httpRequest.getFormAttribute(PARAM_EXPIRE)));
             notifierRequest.setScopes(httpRequest.formAttributes().getAll(PARAM_SCOPE));
 
-           LOGGER.info("Notification received : {}", Json.encode(notifierRequest));
+           log.info("Notification received : {}", Json.encode(notifierRequest));
 
             eventBus.publish(TOPIC_NOTIFICATION_REQUEST, Json.encode(notifierRequest));
 
@@ -82,7 +81,7 @@ public class CibaNotifierApiHandler implements Handler<RoutingContext> {
                     .setStatusCode(200)
                     .end(Json.encode(new NotifierResponse(httpRequest.getFormAttribute(TRANSACTION_ID), httpRequest.getFormAttribute(STATE))));
         } catch (Exception e) {
-            LOGGER.warn("Unable to manage the notification request", e);
+            log.warn("Unable to manage the notification request", e);
             routingContext.fail(500, e);
         }
     }

@@ -37,7 +37,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -53,7 +53,7 @@ import java.util.Properties;
  * @author Florent Amaridon
  * @author Visiativ
  */
-@Slf4j
+@CustomLog
 public class KafkaAuditReporter extends AbstractService<Reporter> implements AuditReporter {
 
     private final Vertx vertx;

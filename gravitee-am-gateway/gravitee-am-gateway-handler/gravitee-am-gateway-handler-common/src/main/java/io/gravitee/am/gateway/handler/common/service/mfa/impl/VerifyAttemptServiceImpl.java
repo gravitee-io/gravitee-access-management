@@ -27,7 +27,7 @@ import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
@@ -38,7 +38,7 @@ import java.util.Optional;
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class VerifyAttemptServiceImpl implements VerifyAttemptService {
 
     @Lazy

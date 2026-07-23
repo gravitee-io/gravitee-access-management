@@ -43,13 +43,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,9 +56,9 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class EmailTemplateServiceImpl implements EmailTemplateService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(EmailTemplateServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -73,30 +72,30 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     @Override
     public Flowable<Email> findAll(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find all emails for {} {}", referenceType, referenceId);
+        log.debug("Find all emails for {} {}", referenceType, referenceId);
         return emailRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all emails for {} {}", referenceType, referenceId, ex);
+                    log.error("An error occurs while trying to find all emails for {} {}", referenceType, referenceId, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find a all emails for %s %s", referenceType, referenceId), ex));
                 });
     }
 
     @Override
     public Flowable<Email> findAll() {
-        LOGGER.debug("Find all emails");
+        log.debug("Find all emails");
         return emailRepository.findAll()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all emails", ex);
+                    log.error("An error occurs while trying to find all emails", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find a all emails", ex));
                 });
     }
 
     @Override
     public Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client) {
-        LOGGER.debug("Find email by {} {} and client {}", referenceType, referenceId, client);
+        log.debug("Find email by {} {} and client {}", referenceType, referenceId, client);
         return emailRepository.findByClient(referenceType, referenceId, client)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its {} {} and its client {}", referenceType, referenceId, client, ex);
+                    log.error("An error occurs while trying to find a email using its {} {} and its client {}", referenceType, referenceId, client, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its %s %s and its client %s", referenceType, referenceId, client), ex));
                 });
@@ -104,10 +103,10 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     @Override
     public Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
-        LOGGER.debug("Find email by {} {} and template {}", referenceType, referenceId, template);
+        log.debug("Find email by {} {} and template {}", referenceType, referenceId, template);
         return emailRepository.findByTemplate(referenceType, referenceId, template)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its {} {} and template {}", referenceType, referenceId, template, ex);
+                    log.error("An error occurs while trying to find a email using its {} {} and template {}", referenceType, referenceId, template, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its %s %s and template %s", referenceType, referenceId, template), ex));
                 });
@@ -121,10 +120,10 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     @Override
     public Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
-        LOGGER.debug("Find email by {} {}, client {} and template {}", referenceType, referenceId, client, template);
+        log.debug("Find email by {} {}, client {} and template {}", referenceType, referenceId, client, template);
         return emailRepository.findByClientAndTemplate(referenceType, referenceId, client, template)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its {} {} its client {} and template {}", referenceType, referenceId, client, template, ex);
+                    log.error("An error occurs while trying to find a email using its {} {} its client {} and template {}", referenceType, referenceId, client, template, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its %s %s its client %s and template %s", referenceType, referenceId, client, template), ex));
                 });
@@ -137,10 +136,10 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     @Override
     public Maybe<Email> findById(String id) {
-        LOGGER.debug("Find email by id {}", id);
+        log.debug("Find email by id {}", id);
         return emailRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its id {}", id, ex);
+                    log.error("An error occurs while trying to find a email using its id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its id %s", id), ex));
                 });
@@ -164,31 +163,31 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     @Override
     public Single<Email> create(Domain domain, NewEmail newEmail, User principal) {
-        LOGGER.debug("Create a new email {} for {} {}", newEmail, ReferenceType.DOMAIN, domain.getId());
+        log.debug("Create a new email {} for {} {}", newEmail, ReferenceType.DOMAIN, domain.getId());
         return create0(domain, null, newEmail, principal);
     }
 
     @Override
     public Single<Email> create(Domain domain, String client, NewEmail newEmail, User principal) {
-        LOGGER.debug("Create a new email {} for {} {} and client {}", newEmail, ReferenceType.DOMAIN, domain.getId(), client);
+        log.debug("Create a new email {} for {} {} and client {}", newEmail, ReferenceType.DOMAIN, domain.getId(), client);
         return create0(domain, client, newEmail, principal);
     }
 
     @Override
     public Single<Email> update(Domain domain, String id, UpdateEmail updateEmail, User principal) {
-        LOGGER.debug("Update an email {} for domain {}", id, domain.getId());
+        log.debug("Update an email {} for domain {}", id, domain.getId());
         return update0(domain, id, updateEmail, principal);
     }
 
     @Override
     public Single<Email> update(Domain domain, String client, String id, UpdateEmail updateEmail, User principal) {
-        LOGGER.debug("Update an email {} for domain {} and client {}", id, domain.getId(), client);
+        log.debug("Update an email {} for domain {} and client {}", id, domain.getId(), client);
         return update0(domain, id, updateEmail, principal);
     }
 
     @Override
     public Completable delete(String emailId, User principal) {
-        LOGGER.debug("Delete email {}", emailId);
+        log.debug("Delete email {}", emailId);
         return Completable.fromMaybe(emailRepository.findById(emailId)
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
                 .flatMapSingle(email -> {
@@ -204,7 +203,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                         return Maybe.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete email: {}", emailId, ex);
+                    log.error("An error occurs while trying to delete email: {}", emailId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete email: %s", emailId), ex));
                 }));
@@ -243,7 +242,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a email", ex);
+                    log.error("An error occurs while trying to create a email", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a email", ex));
                 })
                 .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).email(email)))
@@ -277,7 +276,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a email", ex);
+                    log.error("An error occurs while trying to update a email", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a email", ex));
                 });
     }

@@ -30,8 +30,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +40,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.springframework.util.StringUtils.isEmpty;
+import lombok.CustomLog;
 
 /**
  * Strategy for CIBA (Client Initiated Backchannel Authentication) Grant.
@@ -50,9 +49,9 @@ import static org.springframework.util.StringUtils.isEmpty;
  * @see <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html">CIBA Core</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CibaStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaStrategy.class);
 
     private final AuthenticationRequestService authenticationRequestService;
     private final UserAuthenticationManager userAuthenticationManager;
@@ -71,7 +70,7 @@ public class CibaStrategy implements GrantStrategy {
         }
 
         if (!client.hasGrantType(GrantType.CIBA_GRANT_TYPE)) {
-            LOGGER.debug("Client {} does not support CIBA grant type", client.getClientId());
+            log.debug("Client {} does not support CIBA grant type", client.getClientId());
             return false;
         }
 
@@ -80,7 +79,7 @@ public class CibaStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing CIBA token request for client: {}", client.getClientId());
+        log.debug("Processing CIBA token request for client: {}", client.getClientId());
 
         MultiValueMap<String, String> parameters = request.parameters();
         String authReqId = parameters.getFirst(Parameters.AUTH_REQ_ID);
@@ -102,7 +101,7 @@ public class CibaStrategy implements GrantStrategy {
 
         // Validate client ownership of the authentication request
         if (!cibaRequest.getClientId().equals(client.getClientId())) {
-            LOGGER.warn("client_id '{}' requests token using not owned authentication request '{}'",
+            log.warn("client_id '{}' requests token using not owned authentication request '{}'",
                     client.getClientId(), authReqId);
             return Single.error(new InvalidGrantException("Authentication request not found"));
         }

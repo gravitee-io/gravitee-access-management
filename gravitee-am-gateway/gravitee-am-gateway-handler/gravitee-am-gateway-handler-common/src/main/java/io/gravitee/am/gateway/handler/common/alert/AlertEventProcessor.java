@@ -31,8 +31,6 @@ import io.gravitee.plugin.alert.AlertEventProducer;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.functions.Consumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
@@ -40,14 +38,15 @@ import java.util.Map;
 
 import static io.gravitee.am.common.event.AlertEventKeys.*;
 import static io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent.SUCCESS;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AlertEventProcessor extends AbstractService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AlertEventProcessor.class);
 
     @Autowired
     private EventManager eventManager;
@@ -80,9 +79,9 @@ public class AlertEventProcessor extends AbstractService {
                     this.organizationId = domainEnv.getOrganizationId();
                     return domainEnv;
                 })
-                .doOnError(error -> logger.warn("The domain [{}] seems not attached to any environment or organization. Alert events may not be accurate.", domain.getName()))
+                .doOnError(error -> log.warn("The domain [{}] seems not attached to any environment or organization. Alert events may not be accurate.", domain.getName()))
                 .doFinally(() -> {
-                    logger.info("Register event listener for all events for domain {}", domain.getName());
+                    log.info("Register event listener for all events for domain {}", domain.getName());
                     eventManager.subscribeForEvents(authenticationEventListener, AuthenticationEvent.class, domain.getId());
                 })
                 .subscribe();
@@ -92,7 +91,7 @@ public class AlertEventProcessor extends AbstractService {
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for all events for domain {}", domain.getName());
+        log.info("Dispose event listener for all events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(authenticationEventListener, AuthenticationEvent.class, domain.getId());
     }
 
@@ -149,10 +148,10 @@ public class AlertEventProcessor extends AbstractService {
 
     private void sendEvent(io.gravitee.alert.api.event.Event event) {
         try {
-            logger.debug("Send event to alert engine");
+            log.debug("Send event to alert engine");
             eventProducer.send(event);
         } catch (Exception e) {
-            logger.error("An error occurs while sending event to alert engine", e);
+            log.error("An error occurs while sending event to alert engine", e);
         }
     }
 }

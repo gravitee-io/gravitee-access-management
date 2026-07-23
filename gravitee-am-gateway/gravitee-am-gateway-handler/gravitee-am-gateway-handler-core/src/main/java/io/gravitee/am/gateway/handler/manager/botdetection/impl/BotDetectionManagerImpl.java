@@ -41,8 +41,6 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -53,14 +51,15 @@ import java.util.concurrent.ConcurrentMap;
 
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class BotDetectionManagerImpl extends AbstractService implements BotDetectionManager, InitializingBean,EventListener<BotDetectionEvent, Payload> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BotDetectionManagerImpl.class);
 
     public static final String TEMPLATE_KEY_BOT_DETECTION_ENABLED = "bot_detection_enabled";
 
@@ -94,15 +93,15 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
 
     @Override
     public void afterPropertiesSet() {
-        LOGGER.info("Initializing bot detections for domain {}", domain.getName());
+        log.info("Initializing bot detections for domain {}", domain.getName());
         botDetectionService.findByDomain(domain.getId())
                 .subscribe(
                         detection -> {
                             updateBotDetection(detection);
-                            LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
+                            log.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
                         },
                         error -> {
-                            LOGGER.error("Unable to initialize bot detections for domain {}", domain.getName(), error);
+                            log.error("Unable to initialize bot detections for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.BOT_DETECTION.name(), error.getMessage());
                         });
     }
@@ -111,7 +110,7 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
     protected void doStart() throws Exception {
         super.doStart();
 
-        LOGGER.info("Register event listener for bot detections events for domain {}", domain.getName());
+        log.info("Register event listener for bot detections events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, BotDetectionEvent.class, domain.getId());
     }
 
@@ -119,7 +118,7 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
     protected void doStop() throws Exception {
         super.doStop();
 
-        LOGGER.info("Dispose event listener for bot detection events for domain {}", domain.getName());
+        log.info("Dispose event listener for bot detection events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, BotDetectionEvent.class, domain.getId());
     }
 
@@ -144,7 +143,7 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         if (botDetectionProvider != null) {
             return botDetectionProvider.validate(context);
         } else {
-            LOGGER.error("No BotDetectionProvider matches the pluginId '{}'", context.getPluginId());
+            log.error("No BotDetectionProvider matches the pluginId '{}'", context.getPluginId());
             return Single.just(false);
         }
     }
@@ -156,14 +155,14 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         variables.put(TEMPLATE_KEY_BOT_DETECTION_ENABLED, accountSettings != null && accountSettings.isUseBotDetection() && accountSettings.getBotDetectionPlugin() != null);
         if (accountSettings != null && accountSettings.isUseBotDetection()) {
             if (accountSettings.getBotDetectionPlugin() == null) {
-                LOGGER.warn("Bot Detection enabled but plugin reference isn't defined in settings");
+                log.warn("Bot Detection enabled but plugin reference isn't defined in settings");
             } else {
                 final BotDetection botDetection = this.botDetections.get(accountSettings.getBotDetectionPlugin());
                 variables.put(TEMPLATE_KEY_BOT_DETECTION_PLUGIN, botDetection.getType());
                 try {
                     variables.put(TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, objectMapper.readValue(botDetection.getConfiguration(), HashMap.class));
                 } catch (JsonProcessingException e) {
-                    LOGGER.error("Unable to read the configuration for bot detection '{}'", botDetection.getId(), e);
+                    log.error("Unable to read the configuration for bot detection '{}'", botDetection.getId(), e);
                     throw new TechnicalManagementException("Unable to read configuration");
                 }
             }
@@ -173,22 +172,22 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
 
     private void updateBotDetection(String pluginId, BotDetectionEvent event) {
         final String eventType = event.toString().toLowerCase();
-        LOGGER.info("Domain {} has received {} bot detection event for {}", domain.getName(), eventType, pluginId);
+        log.info("Domain {} has received {} bot detection event for {}", domain.getName(), eventType, pluginId);
         botDetectionService.findById(pluginId)
                 .subscribe(
                         this::updateBotDetection,
                         error -> {
-                            LOGGER.error("Unable to load bot detection for domain {}", domain.getName(), error);
+                            log.error("Unable to load bot detection for domain {}", domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), pluginId, error.getMessage());
                         },
                         () -> {
-                            LOGGER.error("No bot detection found with id {}", pluginId);
+                            log.error("No bot detection found with id {}", pluginId);
                             domainReadinessService.pluginFailed(domain.getId(), pluginId, "No bot detection found with id " + pluginId);
                         });
     }
 
     private void removeBotDetection(String pluginId) {
-        LOGGER.info("Domain {} has received event, remove bot detection {}", domain.getName(), pluginId);
+        log.info("Domain {} has received event, remove bot detection {}", domain.getName(), pluginId);
         final BotDetectionProvider previousProvider = providers.remove(pluginId);
         botDetections.remove(pluginId);
         stopBotDetectionProvider(previousProvider);
@@ -210,15 +209,15 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
                 stopBotDetectionProvider(previousProvider);
                 this.botDetections.put(detection.getId(), detection);
 
-                LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
+                log.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             } else {
-                LOGGER.info("Bot detection {} already loaded for domain {}", detection.getName(), domain.getName());
+                log.info("Bot detection {} already loaded for domain {}", detection.getName(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             }
         } catch (Exception ex) {
             this.providers.remove(detection.getId());
-            LOGGER.error("Unable to create bot detection provider for domain {}", domain.getName(), ex);
+            log.error("Unable to create bot detection provider for domain {}", domain.getName(), ex);
             domainReadinessService.pluginFailed(domain.getId(), detection.getId(), ex.getMessage());
         }
     }
@@ -229,7 +228,7 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
                 previousProvider.stop();
             }
         } catch (Exception e) {
-            LOGGER.error("Unable to stop bot detection provider for domain {}", domain.getName(), e);
+            log.error("Unable to stop bot detection provider for domain {}", domain.getName(), e);
         }
     }
 

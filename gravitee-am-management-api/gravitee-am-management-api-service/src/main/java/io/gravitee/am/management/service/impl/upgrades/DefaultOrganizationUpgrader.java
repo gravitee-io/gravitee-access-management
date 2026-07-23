@@ -40,8 +40,6 @@ import io.gravitee.am.service.model.PatchOrganization;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.node.api.upgrader.Upgrader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -49,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -56,9 +55,9 @@ import java.util.Optional;
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class DefaultOrganizationUpgrader implements Upgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultOrganizationUpgrader.class);
     private static final String ADMIN_DOMAIN = "admin";
     private static final int PAGE_SIZE = 10;
     public static String ADMIN_USERNAME = "admin";
@@ -121,7 +120,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
             // Get organization with fresh data.
             organization = organizationService.findById(Organization.DEFAULT).blockingGet();
 
-            logger.info("Check if default organization is up to date");
+            log.info("Check if default organization is up to date");
 
             if (useDefaultAdmin) {
                 initializeDefaultAdminUser(organization);
@@ -130,7 +129,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
             // The primary owner of the default organization must be considered as platform admin.
             membershipHelper.setPlatformAdminRole();
         } catch (Exception e) {
-            logger.error("An error occurred trying to initialize default organization", e);
+            log.error("An error occurred trying to initialize default organization", e);
             return false;
         }
 
@@ -138,7 +137,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
     }
 
     private void initializeDefaultOrganization(Organization organization) {
-        logger.info("Default organization successfully created");
+        log.info("Default organization successfully created");
 
         // check if old domain admin exists
         Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
@@ -196,7 +195,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
 
     private IdentityProvider createInlineProvider() {
         // Create an inline identity provider
-        logger.info("Create an user-inline provider");
+        log.info("Create an user-inline provider");
         NewIdentityProvider adminIdentityProvider = new NewIdentityProvider();
         adminIdentityProvider.setType("inline-am-idp");
         adminIdentityProvider.setName("Inline users");
@@ -204,7 +203,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
 
         IdentityProvider createdIdentityProvider = identityProviderService.create(ReferenceType.ORGANIZATION, Organization.DEFAULT, adminIdentityProvider, null, false).blockingGet();
 
-        logger.info("Associate user-inline provider to default organization");
+        log.info("Associate user-inline provider to default organization");
         PatchOrganization patchOrganization = new PatchOrganization();
         patchOrganization.setIdentities(Collections.singletonList(createdIdentityProvider.getId()));
         organizationService.update(Organization.DEFAULT, patchOrganization, null).blockingGet();

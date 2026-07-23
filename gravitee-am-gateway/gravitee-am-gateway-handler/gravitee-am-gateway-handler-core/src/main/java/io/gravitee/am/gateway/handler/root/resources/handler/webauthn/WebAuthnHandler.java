@@ -50,8 +50,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
@@ -68,14 +66,15 @@ import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.Web
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class WebAuthnHandler extends AbstractEndpoint implements Handler<RoutingContext> {
     private static final String DEFAULT_ORIGIN = "http://localhost:8092";
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
     private UserService userService;
     protected CredentialGatewayService credentialService;
@@ -166,7 +165,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                             ctx.next();
                         },
                         error -> {
-                            logger.error("Could not update user profile with FIDO2 factor detail", error);
+                            log.error("Could not update user profile with FIDO2 factor detail", error);
                             ctx.fail(401);
                         }
                 );
@@ -270,11 +269,11 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .map(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User::new)
                 .doOnError(error -> {
                     if (error instanceof AccountEnforcePasswordException) {
-                        logger.debug("Password required for user '{}': {}", username, error.getMessage());
+                        log.debug("Password required for user '{}': {}", username, error.getMessage());
                     } else if (error instanceof AccountStatusException) {
-                        logger.warn("Invalid user status for user '{}': {}", username, error.getMessage());
+                        log.warn("Invalid user status for user '{}': {}", username, error.getMessage());
                     } else {
-                        logger.error("An error has occurred while authenticating user: {}", username, error);
+                        log.error("An error has occurred while authenticating user: {}", username, error);
                     }
                 });
     }
@@ -326,7 +325,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .flatMapSingle(credential -> credentialService.update(domainDataPlane.getDomain(), credentialId, credential))
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
-                .doOnError(error -> logger.error("An error has occurred while updating user {} webauthn credential", userId, error));
+                .doOnError(error -> log.error("An error has occurred while updating user {} webauthn credential", userId, error));
     }
 
 }

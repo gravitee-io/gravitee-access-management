@@ -41,8 +41,6 @@ import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
 import java.time.Instant;
@@ -53,14 +51,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnLoginHandler extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginHandler.class);
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -96,10 +95,10 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
             // nominal case
             authenticateV1(ctx);
         } catch (IllegalArgumentException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(400);
         } catch (RuntimeException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(e);
         }
     }
@@ -110,14 +109,14 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
 
         // input validation
         if (isEmptyString(webauthnLogin, "name")) {
-            logger.debug("Request missing username field");
+            log.debug("Request missing username field");
             ctx.fail(400);
             return;
         }
 
         // session validation
         if (session == null) {
-            logger.warn("No session or session handler is missing.");
+            log.warn("No session or session handler is missing.");
             ctx.fail(500);
             return;
         }
@@ -136,7 +135,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             ctx.next();
                         },
                         throwable -> {
-                            logger.error("Unexpected exception", throwable);
+                            log.error("Unexpected exception", throwable);
                             ctx.fail(throwable.getCause());
                         }
                 );
@@ -145,7 +144,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
     private void authenticateV1(RoutingContext ctx) {
         final String assertion = ctx.request().getParam("assertion");
         if (StringUtils.isEmpty(assertion)) {
-            logger.debug("Request missing assertion field");
+            log.debug("Request missing assertion field");
             ctx.fail(400);
             return;
         }
@@ -157,7 +156,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                 isEmptyObject(webauthnResp, "response") ||
                 isEmptyString(webauthnResp, "type") ||
                 !"public-key".equals(webauthnResp.getString("type"))) {
-            logger.debug("Assertion missing one or more of id/rawId/response/type fields, or type is not public-key");
+            log.debug("Assertion missing one or more of id/rawId/response/type fields, or type is not public-key");
             ctx.fail(400);
             return;
         }
@@ -165,7 +164,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         // session validation
         final Session session = ctx.session();
         if (ctx.session() == null) {
-            logger.error("No session or session handler is missing.");
+            log.error("No session or session handler is missing.");
             ctx.fail(500);
             return;
         }
@@ -184,7 +183,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                                 .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
                                 .setWebauthn(webauthnResp)).toCompletionStage()).onErrorResumeNext(throwable -> {
                                     if (throwable.getCause() != null) {
-                                        logger.error("Unexpected exception", throwable.getCause());
+                                        log.error("Unexpected exception", throwable.getCause());
                                         return Single.error(throwable.getCause());
                                     } else {
                                         return Single.error(throwable);
@@ -234,7 +233,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         // max Age is not defined, continue
         final Integer maxAge = webAuthnSettings.getEnforceAuthenticatorIntegrityMaxAge();
         if (maxAge == null) {
-            logger.warn("WebAuthn enforce authenticator integrity is enabled but max age has not been set");
+            log.warn("WebAuthn enforce authenticator integrity is enabled but max age has not been set");
             return Completable.complete();
         }
 
@@ -254,11 +253,11 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                         AttestationCertificates attestationCertificates = new AttestationCertificates(jsonObject);
                         // if no certificate chain, skip the verification
                         if (attestationCertificates.getX5c() == null || attestationCertificates.getX5c().isEmpty()) {
-                            logger.debug("No certificate chain has been found for credential {}", credentialId);
+                            log.debug("No certificate chain has been found for credential {}", credentialId);
                             return false;
                         }
                     } catch (Exception ex) {
-                        logger.error("Unable to decode credential attestation statement for credential {}", credentialId, ex);
+                        log.error("Unable to decode credential attestation statement for credential {}", credentialId, ex);
                         return false;
                     }
                     // check only credential with elapsed last checked date
@@ -282,7 +281,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                 })
                 .ignoreElement()
                 .onErrorResumeNext(error -> {
-                    logger.error("User {} webauthn authenticator {} has not been trusted", username, credentialId, error);
+                    log.error("User {} webauthn authenticator {} has not been trusted", username, credentialId, error);
                     return Completable.error(new AccountDeviceIntegrityException("Invalid user webauthn authenticator"));
                 });
     }

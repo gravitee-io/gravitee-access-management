@@ -36,8 +36,6 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.FactorService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +46,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPL
 import static java.lang.Boolean.FALSE;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -55,13 +54,13 @@ import static org.springframework.util.StringUtils.hasLength;
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "application_factor_settings_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Settings for Application Factors can't be upgraded, other instance may process them or an upgrader has failed previously";
 
-    private final Logger logger = LoggerFactory.getLogger(ApplicationFactorSettingsUpgrader.class);
 
     private final ApplicationService applicationService;
     private final FactorService factorService;
@@ -90,7 +89,7 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
         return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
-                    logger.debug("Process application '{}'", app.getId());
+                    log.debug("Process application '{}'", app.getId());
                     if (!isEmpty(app.getFactors())) {
                         return factorService.findByDomain(app.getDomain())
                                 .filter(factor -> factor.getFactorType().equals(FactorType.RECOVERY_CODE))
@@ -98,7 +97,7 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
                                 .toList()
                                 .flatMap(recoveryCodeIds -> {
                                     if (app.getSettings() == null) {
-                                        logger.warn("Application '{}' enables factor but there is no settings set," +
+                                        log.warn("Application '{}' enables factor but there is no settings set," +
                                                 " migrate factor settings but leave MFA settings empty", app.getId());
                                         app.setSettings(buildEmptySettings());
                                     } else if (app.getSettings().getMfa() != null) {
@@ -111,11 +110,11 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
                                     // consider the first factor of the list as the default one.
                                     moveFactorIdsIntoFactorSettings(app, recoveryCodeIds);
 
-                                    logger.debug("Update factor settings for application '{}'", app.getId());
+                                    log.debug("Update factor settings for application '{}'", app.getId());
                                     return applicationService.update(app);
                                 });
                     } else {
-                        logger.debug("No factor to process for application '{}'", app.getId());
+                        log.debug("No factor to process for application '{}'", app.getId());
                     }
                     return Single.just(app);
                 }).ignoreElements()
@@ -123,11 +122,11 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
                         .onErrorResumeNext(err -> {
-                            logger.error("Unable to update status for task {}: {}", TASK_ID, err.getMessage());
+                            log.error("Unable to update status for task {}: {}", TASK_ID, err.getMessage());
                             return Single.just(false);
                         }))
                 .onErrorResumeNext(err -> {
-                    logger.error("Unable to migrate factor settings for applications: {}", err.getMessage());
+                    log.error("Unable to migrate factor settings for applications: {}", err.getMessage());
                     return Single.just(false);
                 });
     }

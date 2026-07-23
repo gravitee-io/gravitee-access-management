@@ -46,7 +46,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -55,18 +54,19 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
     /**
      * Logger.
      */
-    private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -86,10 +86,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
     @Override
     public Maybe<ExtensionGrant> findById(String id) {
-        LOGGER.debug("Find extension grant by ID: {}", id);
+        log.debug("Find extension grant by ID: {}", id);
         return extensionGrantRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an extension grant using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find an extension grant using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an extension grant using its ID: %s", id), ex));
                 });
@@ -97,17 +97,17 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
     @Override
     public Flowable<ExtensionGrant> findByDomain(String domain) {
-        LOGGER.debug("Find extension grants by domain: {}", domain);
+        log.debug("Find extension grants by domain: {}", domain);
         return extensionGrantRepository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find extension grants by domain", ex);
+                    log.error("An error occurs while trying to find extension grants by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex));
                 });
     }
 
     @Override
     public Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant, User principal) {
-        LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain.getId());
+        log.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain.getId());
 
         return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_EXTENSION_GRANT, newExtensionGrant.getType())
                 .andThen(Single.defer(() -> extensionGrantRepository.findByDomainAndName(domain.getId(), newExtensionGrant.getName())
@@ -144,7 +144,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a extension grant", ex);
+                    log.error("An error occurs while trying to create a extension grant", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a extension grant", ex));
                 })
                 .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_CREATED).extensionGrant(extensionGrant)))
@@ -153,7 +153,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
     @Override
     public Single<ExtensionGrant> update(Domain domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal) {
-        LOGGER.debug("Update a extension grant {} for domain {}", id, domain.getId());
+        log.debug("Update a extension grant {} for domain {}", id, domain.getId());
 
         return extensionGrantRepository.findById(id)
                 .switchIfEmpty(Single.error(new ExtensionGrantNotFoundException(id)))
@@ -192,14 +192,14 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a extension grant", ex);
+                    log.error("An error occurs while trying to update a extension grant", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a extension grant", ex));
                 });
     }
 
     @Override
     public Completable delete(String domain, String extensionGrantId, User principal) {
-        LOGGER.debug("Delete extension grant {}", extensionGrantId);
+        log.debug("Delete extension grant {}", extensionGrantId);
         return extensionGrantRepository.findById(extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
                 // check for clients using this extension grant
@@ -238,7 +238,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to extension grant: {}", extensionGrantId, ex);
+                    log.error("An error occurs while trying to extension grant: {}", extensionGrantId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete extension grant: %s", extensionGrantId), ex));
                 });

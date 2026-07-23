@@ -18,8 +18,6 @@ package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.impl.jose.JWS;
 import io.vertx.ext.auth.webauthn.WebAuthnOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -27,13 +25,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GraviteeWebAuthnOptions extends WebAuthnOptions {
-    private static Logger LOGGER = LoggerFactory.getLogger(GraviteeWebAuthnOptions.class);
 
     /* Android Keystore Root is not published anywhere.
      * This certificate was extracted from one of the attestations
@@ -220,10 +219,10 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
         try {
             return super.putRootCertificate(key, value);
         } catch (IllegalArgumentException e) {
-            if(LOGGER.isDebugEnabled()){
-                LOGGER.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage(), e);
+            if(log.isDebugEnabled()){
+                log.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage(), e);
             } else {
-                LOGGER.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage());
+                log.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage());
             }
             return this;
         }
@@ -249,10 +248,10 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
             this.additionalRootCertificates.putIfAbsent(key, new ArrayList<>());
             this.additionalRootCertificates.get(key).add(cert);
         } catch (CertificateException e) {
-            if(LOGGER.isDebugEnabled()){
-                LOGGER.warn("Invalid additional root certificate for {}", key, e);
+            if(log.isDebugEnabled()){
+                log.warn("Invalid additional root certificate for {}", key, e);
             } else {
-                LOGGER.warn("Invalid additional root certificate for {}", key);
+                log.warn("Invalid additional root certificate for {}", key);
             }
         }
         return this;

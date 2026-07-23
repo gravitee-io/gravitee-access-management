@@ -24,20 +24,19 @@ import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DeviceIdentifierPluginManager
         extends ProviderPluginManager<DeviceIdentifier<?, DeviceIdentifierProvider>, DeviceIdentifierProvider, ProviderConfiguration>
         implements AmPluginManager<DeviceIdentifier<?, DeviceIdentifierProvider>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(DeviceIdentifierPluginManager.class);
     private final ConfigurationFactory<DeviceIdentifierConfiguration> configurationFactory;
 
     public DeviceIdentifierPluginManager(
@@ -49,9 +48,9 @@ public class DeviceIdentifierPluginManager
 
     @Override
     public DeviceIdentifierProvider create(ProviderConfiguration providerConfig) {
-        logger.debug("Looking for a device identifier for [{}]", providerConfig.getType());
+        log.debug("Looking for a device identifier for [{}]", providerConfig.getType());
         var deviceIdentifier = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No device identifier is registered for type {}", providerConfig.getType());
+            log.error("No device identifier is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No device identifier is registered for type " + providerConfig.getType());
         });
 

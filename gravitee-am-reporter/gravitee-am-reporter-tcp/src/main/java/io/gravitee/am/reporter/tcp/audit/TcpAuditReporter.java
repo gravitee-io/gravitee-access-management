@@ -48,7 +48,7 @@ import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
 import io.vertx.core.net.PfxOptions;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,7 +100,7 @@ import java.util.zip.GZIPOutputStream;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Import(TcpReporterSpringConfiguration.class)
 public class TcpAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 

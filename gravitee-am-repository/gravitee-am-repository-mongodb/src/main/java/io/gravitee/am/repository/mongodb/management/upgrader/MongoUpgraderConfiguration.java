@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.upgrader;
 
 import io.gravitee.node.api.upgrader.Upgrader;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Optional;
 
 @Configuration
-@Slf4j
+@CustomLog
 public class MongoUpgraderConfiguration {
     public MongoUpgraderConfiguration(Optional<io.gravitee.node.api.configuration.Configuration> config,
                                       ApplicationContext pluginApplicationContext) {

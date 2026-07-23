@@ -17,22 +17,21 @@ package io.gravitee.am.service.authentication.crypto.password;
 
 import io.gravitee.am.common.password.PasswordSaltFormat;
 import org.apache.commons.codec.binary.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MessageDigestPasswordEncoder.class);
     private static final String PREFIX = "{";
     private static final String SUFFIX = "}";
     private static final String MATCH_ERROR = "An error has occurred when performing password match operation";
@@ -127,7 +126,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             final String rawPasswordEncoded = salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));
             return encodedPassword.equals(rawPasswordEncoded);
         } catch (Exception ex) {
-            LOGGER.error(MATCH_ERROR, ex);
+            log.error(MATCH_ERROR, ex);
             return false;
         }
     }
@@ -141,7 +140,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             final String presentedPassword = encode(rawPassword, salt);
             return encodedPassword.equals(presentedPassword);
         } catch (Exception ex) {
-            LOGGER.error(MATCH_ERROR, ex);
+            log.error(MATCH_ERROR, ex);
             return false;
         }
     }
@@ -162,7 +161,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             final String rawPasswordEncoded = encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest);
             return encodedPassword.equals(rawPasswordEncoded);
         } catch (Exception ex) {
-            LOGGER.error(MATCH_ERROR, ex);
+            log.error(MATCH_ERROR, ex);
             return false;
         }
     }

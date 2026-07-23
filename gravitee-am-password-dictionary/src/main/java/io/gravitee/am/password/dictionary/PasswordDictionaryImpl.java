@@ -16,8 +16,6 @@
 
 package io.gravitee.am.password.dictionary;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,11 +38,13 @@ import java.util.concurrent.TimeUnit;
 import static com.sun.nio.file.SensitivityWatchEventModifier.HIGH;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PasswordDictionaryImpl implements PasswordDictionary, Runnable {
 
     /**
@@ -71,7 +71,6 @@ public class PasswordDictionaryImpl implements PasswordDictionary, Runnable {
      */
     private static final String DEFAULT_DICTIONARY_PATH = "/dictionaries/10k-most-common.txt";
 
-    private static final Logger LOG = LoggerFactory.getLogger(PasswordDictionaryImpl.class);
     private static final ExecutorService executor = Executors.newFixedThreadPool(2);
 
 
@@ -128,27 +127,27 @@ public class PasswordDictionaryImpl implements PasswordDictionary, Runnable {
                 }
             }
         } catch (Exception e) {
-            LOG.error("Password dictionary watcher stopped. Reason:", e);
+            log.error("Password dictionary watcher stopped. Reason:", e);
         }
     }
 
     private void safeReadFile(String filename) {
         try {
-            LOG.info("Loading password dictionary");
+            log.info("Loading password dictionary");
             readStream(new FileInputStream(filename));
-            LOG.info("Password dictionary loaded");
+            log.info("Password dictionary loaded");
         } catch (Exception e) {
-            LOG.warn("Password dictionary file could not be loaded, reason:", e);
+            log.warn("Password dictionary file could not be loaded, reason:", e);
         }
     }
 
     private void safeReadEmbeddedFile() {
         try {
-            LOG.info("Loading embedded password dictionary");
+            log.info("Loading embedded password dictionary");
             readStream(this.getClass().getResourceAsStream(DEFAULT_DICTIONARY_PATH));
-            LOG.info("Embedded password dictionary loaded");
+            log.info("Embedded password dictionary loaded");
         } catch (Exception e) {
-            LOG.warn("Embedded password dictionary could not be loaded, reason:", e);
+            log.warn("Embedded password dictionary could not be loaded, reason:", e);
         }
     }
 

@@ -25,7 +25,7 @@ import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -40,7 +40,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.*;
 
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
     private final Domain domain;
 

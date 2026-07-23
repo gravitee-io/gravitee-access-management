@@ -16,7 +16,7 @@
 package io.gravitee.am.common.crypto;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -36,7 +36,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import java.util.UUID;
 
-@Slf4j
+@CustomLog
 public class CryptoUtils {
 
     private final static String CIPHER = "AES/GCM/NoPadding";

@@ -20,21 +20,20 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DefaultSecurityDomainManager implements SecurityDomainManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultSecurityDomainManager.class);
 
     @Autowired
     private EventManager eventManager;
@@ -44,26 +43,26 @@ public class DefaultSecurityDomainManager implements SecurityDomainManager {
 
     @Override
     public void deploy(Domain domain) {
-        logger.info("Deployment of {}", domain.getId());
+        log.info("Deployment of {}", domain.getId());
 
         if (domain.isEnabled()) {
             eventManager.publishEvent(DomainEvent.DEPLOY, domain);
             domains.put(domain.getId(), domain);
         } else {
-            logger.info("{} is not enabled. Skip deployment.", domain.getId());
+            log.info("{} is not enabled. Skip deployment.", domain.getId());
         }
     }
 
     @Override
     public void update(Domain domain) {
-        logger.info("Updating {}", domain.getId());
+        log.info("Updating {}", domain.getId());
         if (domain.isEnabled()) {
             domains.put(domain.getId(), domain);
             eventManager.publishEvent(DomainEvent.UPDATE, domain);
         } else {
             // domain has been disabled, undeploy
             if (domains.containsKey(domain.getId())) {
-                logger.info("{} has been disabled.", domain.getId());
+                log.info("{} has been disabled.", domain.getId());
                 undeploy(domain.getId());
             }
         }
@@ -73,10 +72,10 @@ public class DefaultSecurityDomainManager implements SecurityDomainManager {
     public void undeploy(String domainId) {
         Domain currentDomain = domains.remove(domainId);
         if (currentDomain != null) {
-            logger.info("Undeployment of {}", currentDomain.getId());
+            log.info("Undeployment of {}", currentDomain.getId());
 
             eventManager.publishEvent(DomainEvent.UNDEPLOY, currentDomain);
-            logger.info("{} has been undeployed", domainId);
+            log.info("{} has been undeployed", domainId);
         }
     }
 

@@ -31,8 +31,6 @@ import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
@@ -49,14 +47,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARA
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAChallengeGetEndpoint.class);
 
     public MFAChallengeGetEndpoint(FactorManager factorManager,
                                    TemplateEngine engine,
@@ -77,7 +76,7 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final User endUser = user(routingContext);
             if (endUser == null) {
-                logger.warn("User must be authenticated to request MFA challenge.");
+                log.warn("User must be authenticated to request MFA challenge.");
                 routingContext.fail(401);
                 return;
             }
@@ -130,7 +129,7 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
 
             sendMfaChallenge(factorProvider, routingContext, factor, endUser, false, false, resChallenge -> {
                 if (resChallenge.failed() && error == null) {
-                    logger.error("An error has occurred when sending MFA challenge", resChallenge.cause());
+                    log.error("An error has occurred when sending MFA challenge", resChallenge.cause());
                     routingContext.fail(resChallenge.cause());
                     return;
                 }
@@ -139,10 +138,10 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
                 if (resChallenge.result() != null) {
                     templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(resChallenge.result()));
                 }
-                this.renderPage(routingContext, templateData, client, logger, "Unable to render MFA challenge page");
+                this.renderPage(routingContext, templateData, client, log, "Unable to render MFA challenge page");
             });
         } catch (Exception ex) {
-            logger.error("An error has occurred when rendering MFA challenge page", ex);
+            log.error("An error has occurred when rendering MFA challenge page", ex);
             routingContext.fail(503);
         }
     }

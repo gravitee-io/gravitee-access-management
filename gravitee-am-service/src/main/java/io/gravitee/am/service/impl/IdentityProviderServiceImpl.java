@@ -67,10 +67,10 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -79,12 +79,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Primary
+@CustomLog
 public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     /**
      * Logger.
      */
-    private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderServiceImpl.class);
 
     private final IdentityProviderRepository identityProviderRepository;
     private final ApplicationService applicationService;
@@ -115,20 +115,20 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Flowable<IdentityProvider> findAll() {
-        LOGGER.debug("Find all identity providers");
+        log.debug("Find all identity providers");
         return identityProviderRepository.findAll()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all identity providers", ex);
+                    log.error("An error occurs while trying to find all identity providers", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all identity providers", ex));
                 });
     }
 
     @Override
     public Single<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("Find identity provider by ID: {}", id);
+        log.debug("Find identity provider by ID: {}", id);
         return identityProviderRepository.findById(referenceType, referenceId, id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex));
                 })
@@ -137,10 +137,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Maybe<IdentityProvider> findById(String id) {
-        LOGGER.debug("Find identity provider by ID: {}", id);
+        log.debug("Find identity provider by ID: {}", id);
         return identityProviderRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex));
                 });
@@ -148,17 +148,17 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find identity providers by {}: {}", referenceType, referenceId);
+        log.debug("Find identity providers by {}: {}", referenceType, referenceId);
         return identityProviderRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
+                    log.error("An error occurs while trying to find identity providers by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find identity providers by " + referenceType.name(), ex));
                 });
     }
 
     @Override
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
-        LOGGER.debug("Find identity providers by type {}", referenceType);
+        log.debug("Find identity providers by type {}", referenceType);
         return identityProviderRepository.findAll(referenceType);
     }
 
@@ -169,7 +169,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
-        LOGGER.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
+        log.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
         var identityProvider = prepareIdp(newIdentityProvider, referenceType, referenceId, system);
         return checkLicense(new Reference(referenceType, referenceId), newIdentityProvider.getType(), system)
                 .andThen(validateConfiguration(identityProvider, system))
@@ -178,7 +178,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
-        LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain.getId());
+        log.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain.getId());
 
         var identityProvider = prepareIdp(newIdentityProvider, ReferenceType.DOMAIN, domain.getId(), system);
         identityProvider.setDataPlaneId(domain.getDataPlaneId());
@@ -214,7 +214,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create an identity provider", ex);
+                    log.error("An error occurs while trying to create an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
                 });
     }
@@ -241,7 +241,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
-        LOGGER.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
+        log.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
 
         return identityProviderRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
@@ -262,7 +262,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update an identity provider", ex);
+                    log.error("An error occurs while trying to update an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
                 });
     }
@@ -297,7 +297,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Single<IdentityProvider> assignDataPlane(IdentityProvider identityProvider, String dataPlaneId) {
-        LOGGER.debug("Assign dataPlaneId {} to identity provider {}", dataPlaneId, identityProvider.getId());
+        log.debug("Assign dataPlaneId {} to identity provider {}", dataPlaneId, identityProvider.getId());
 
 
         IdentityProvider identityToUpdate = new IdentityProvider(identityProvider);
@@ -320,7 +320,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update an identity provider", ex);
+                    log.error("An error occurs while trying to update an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
                 })
                 .doOnSuccess((updatedIdp) -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(identityProvider).identityProvider(updatedIdp)))
@@ -330,7 +330,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal) {
-        LOGGER.debug("Delete identity provider {}", identityProviderId);
+        log.debug("Delete identity provider {}", identityProviderId);
 
         return identityProviderRepository.findById(referenceType, referenceId, identityProviderId)
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProviderId)))
@@ -357,7 +357,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
+                    log.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex));
                 });
@@ -365,17 +365,17 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
-        LOGGER.debug("Find identity provider with assigned password policy: {}", passwordPolicy);
+        log.debug("Find identity provider with assigned password policy: {}", passwordPolicy);
         return identityProviderRepository.findAllByPasswordPolicy(referenceType, referenceId, passwordPolicy)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find identity providers by password policy: {}", passwordPolicy, ex);
+                    log.error("An error occurs while trying to find identity providers by password policy: {}", passwordPolicy, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find identity providers by password policy: %s", passwordPolicy), ex));
                 });
     }
 
     @Override
     public Single<IdentityProvider> updatePasswordPolicy(String domain, String id, AssignPasswordPolicy assignPasswordPolicy) {
-        LOGGER.debug("Assigning Password Policy {} to IdentityProvider {} for domain {}", assignPasswordPolicy.getPasswordPolicy(), id, domain);
+        log.debug("Assigning Password Policy {} to IdentityProvider {} for domain {}", assignPasswordPolicy.getPasswordPolicy(), id, domain);
 
         return identityProviderRepository.findById(ReferenceType.DOMAIN, domain, id)
                 .switchIfEmpty(Single.error(() -> new IdentityProviderNotFoundException(id)))
@@ -395,7 +395,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to assign password policy to identity provider", ex);
+                    log.error("An error occurs while trying to assign password policy to identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to assign password policy to identity provider", ex));
                 });
     }

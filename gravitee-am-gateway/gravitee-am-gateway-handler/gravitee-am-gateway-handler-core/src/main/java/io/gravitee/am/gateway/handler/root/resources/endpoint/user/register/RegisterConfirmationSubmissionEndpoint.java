@@ -30,20 +30,19 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
 
     public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
-    private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationSubmissionEndpoint.class);
 
     private final UserService userService;
     private final boolean keepParams;
@@ -72,7 +71,7 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
 
             // if failure, return to the registration confirmation page with an error
             if (h.failed()) {
-                logger.error("An error occurs while ending user registration", h.cause());
+                log.error("An error occurs while ending user registration", h.cause());
                 queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
                 redirectToPage(context, queryParams, h.cause());
                 return;

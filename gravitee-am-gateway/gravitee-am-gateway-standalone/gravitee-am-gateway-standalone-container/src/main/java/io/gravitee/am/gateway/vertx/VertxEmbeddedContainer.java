@@ -21,18 +21,17 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.VertxOptions;
 import io.vertx.rxjava3.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class VertxEmbeddedContainer extends AbstractLifecycleComponent<VertxEmbeddedContainer> {
 
-    private final Logger logger = LoggerFactory.getLogger(VertxEmbeddedContainer.class);
 
     @Value("${http.instances:0}")
     private int instances;
@@ -45,7 +44,7 @@ public class VertxEmbeddedContainer extends AbstractLifecycleComponent<VertxEmbe
     @Override
     protected void doStart() {
         instances = (instances < 1) ? VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE : instances;
-        logger.info("Starting Vertx container and deploy Gateway Verticles [{} instance(s)]", instances);
+        log.info("Starting Vertx container and deploy Gateway Verticles [{} instance(s)]", instances);
 
         DeploymentOptions options = new DeploymentOptions().setInstances(instances);
 
@@ -56,7 +55,7 @@ public class VertxEmbeddedContainer extends AbstractLifecycleComponent<VertxEmbe
             deploymentId = id;
         }, err -> {
             // Could not deploy
-            logger.error("Unable to start HTTP server", err.getCause());
+            log.error("Unable to start HTTP server", err.getCause());
 
             // HTTP Server is a required component. Shutdown if not available
             Runtime.getRuntime().exit(1);

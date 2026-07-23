@@ -30,8 +30,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,14 +39,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginEndpoint.class);
     private final Domain domain;
     private final DeviceIdentifierManager deviceIdentifierManager;
     private final UserActivityGatewayService userActivityService;
@@ -97,9 +96,9 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
             // render the webauthn login page
             final Map<String, Object> data = generateData(routingContext, domain, client);
             data.putAll(deviceIdentifierManager.getTemplateVariables(client));
-            renderPage(routingContext, data, client, logger, "Unable to render WebAuthn login page");
+            renderPage(routingContext, data, client, log, "Unable to render WebAuthn login page");
         } catch (Exception ex) {
-            logger.error("An error occurs while rendering WebAuthn login page", ex);
+            log.error("An error occurs while rendering WebAuthn login page", ex);
             routingContext.fail(503);
         }
     }

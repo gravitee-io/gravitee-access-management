@@ -21,32 +21,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.deviceidentifier.fingerprintjs.FingerprintJsV3Pro;
 import io.gravitee.am.deviceidentifier.fingerprintjs.FingerprintJsV3ProConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY;
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FingerprintJsV3ProProvider implements DeviceIdentifierProvider {
 
     private static final String FPJS_PRO_BROWSER_TOKEN = "fingerprint_js_v3_pro_browser_token";
     private static final String FPJS_PRO_REGION = "fingerprint_js_v3_pro_region";
 
 
-    private final Logger LOGGER = LoggerFactory.getLogger(FingerprintJsV3ProProvider.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void addConfigurationVariables(Map<String, Object> variables, String configuration) {
         try {
-            LOGGER.debug("fingerprintJsV3ProProvider.addConfigurationVariables");
+            log.debug("fingerprintJsV3ProProvider.addConfigurationVariables");
             if (nonNull(variables) && !isNullOrEmpty(configuration) && !configuration.isBlank()) {
                 variables.put(DEVICE_IDENTIFIER_PROVIDER_KEY, FingerprintJsV3Pro.class.getSimpleName());
                 var config = objectMapper.readValue(configuration, FingerprintJsV3ProConfiguration.class);
@@ -54,7 +53,7 @@ public class FingerprintJsV3ProProvider implements DeviceIdentifierProvider {
                 variables.put(FPJS_PRO_REGION, config.getRegion());
             }
         } catch (JsonProcessingException e) {
-            LOGGER.error("An unexpected error has occurred while trying to apply FingerprintJsV3Pro configuration", e);
+            log.error("An unexpected error has occurred while trying to apply FingerprintJsV3Pro configuration", e);
         }
     }
 }

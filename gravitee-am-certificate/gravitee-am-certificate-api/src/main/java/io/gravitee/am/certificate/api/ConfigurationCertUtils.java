@@ -18,7 +18,7 @@ package io.gravitee.am.certificate.api;
 import com.nimbusds.jose.util.JSONObjectUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.text.ParseException;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 
-@Slf4j
+@CustomLog
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ConfigurationCertUtils {
 

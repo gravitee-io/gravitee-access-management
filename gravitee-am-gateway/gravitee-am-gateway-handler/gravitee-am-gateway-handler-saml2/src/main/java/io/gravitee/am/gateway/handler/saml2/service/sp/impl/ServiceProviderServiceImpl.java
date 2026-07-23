@@ -21,17 +21,16 @@ import io.gravitee.am.identityprovider.api.Metadata;
 import io.gravitee.am.service.exception.IdentityProviderMetadataNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ServiceProviderServiceImpl implements ServiceProviderService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ServiceProviderServiceImpl.class);
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -43,7 +42,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .map(authenticationProvider -> {
                     Metadata metadata = authenticationProvider.metadata(idpUrl);
                     if (metadata == null) {
-                        logger.debug("No metadata found for identity provider : {}", providerId);
+                        log.debug("No metadata found for identity provider : {}", providerId);
                         throw new IdentityProviderMetadataNotFoundException(providerId);
                     }
                     return metadata;

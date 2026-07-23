@@ -20,20 +20,19 @@ import io.gravitee.common.http.HttpStatusCode;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Provider
+@CustomLog
 public class ThrowableMapper extends AbstractExceptionMapper<Throwable> {
-    private static Logger LOGGER = LoggerFactory.getLogger(ThrowableMapper.class);
 
     @Override
     public Response toResponse(Throwable e) {
-        LOGGER.error("Internal error", e);
+        log.error("Internal error", e);
         return Response
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .type(MediaType.APPLICATION_JSON_TYPE)

@@ -23,24 +23,24 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ExtensionGrantPluginServiceImpl extends AbstractPluginService implements ExtensionGrantPluginService {
 
     /**
      * Logger.
      */
-    private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantPluginServiceImpl.class);
 
     private ExtensionGrantPluginManager extensionGrantPluginManager;
 
@@ -52,7 +52,7 @@ public class ExtensionGrantPluginServiceImpl extends AbstractPluginService imple
 
     @Override
     public Single<Set<ExtensionGrantPlugin>> findAll() {
-        LOGGER.debug("List all extension grant plugins");
+        log.debug("List all extension grant plugins");
         return Single.create(emitter -> {
             try {
                 emitter.onSuccess(extensionGrantPluginManager.findAll(true)
@@ -60,7 +60,7 @@ public class ExtensionGrantPluginServiceImpl extends AbstractPluginService imple
                         .map(this::convert)
                         .collect(Collectors.toSet()));
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to list all extension grant plugins", ex);
+                log.error("An error occurs while trying to list all extension grant plugins", ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to list all extension grant plugins", ex));
             }
         });
@@ -68,7 +68,7 @@ public class ExtensionGrantPluginServiceImpl extends AbstractPluginService imple
 
     @Override
     public Maybe<ExtensionGrantPlugin> findById(String extensionGrantPluginId) {
-        LOGGER.debug("Find extension grant plugin by ID: {}", extensionGrantPluginId);
+        log.debug("Find extension grant plugin by ID: {}", extensionGrantPluginId);
         return Maybe.create(emitter -> {
             try {
                 Plugin extensionGrant = extensionGrantPluginManager.findById(extensionGrantPluginId);
@@ -78,7 +78,7 @@ public class ExtensionGrantPluginServiceImpl extends AbstractPluginService imple
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get extension grant plugin : {}", extensionGrantPluginId, ex);
+                log.error("An error occurs while trying to get extension grant plugin : {}", extensionGrantPluginId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get extension grant plugin : " + extensionGrantPluginId, ex));
             }
         });
@@ -86,7 +86,7 @@ public class ExtensionGrantPluginServiceImpl extends AbstractPluginService imple
 
     @Override
     public Maybe<String> getSchema(String extensionGrantPluginId) {
-        LOGGER.debug("Find extension grant plugin schema by ID: {}", extensionGrantPluginId);
+        log.debug("Find extension grant plugin schema by ID: {}", extensionGrantPluginId);
         return Maybe.create(emitter -> {
             try {
                 String schema = extensionGrantPluginManager.getSchema(extensionGrantPluginId);
@@ -96,7 +96,7 @@ public class ExtensionGrantPluginServiceImpl extends AbstractPluginService imple
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for extension grant plugin {}", extensionGrantPluginId, e);
+                log.error("An error occurs while trying to get schema for extension grant plugin {}", extensionGrantPluginId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for extension grant plugin " + extensionGrantPluginId, e));
             }
         });

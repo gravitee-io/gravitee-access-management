@@ -32,8 +32,6 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -42,14 +40,15 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MFAChallengeAlternativesEndpoint extends MFAEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAChallengeAlternativesEndpoint.class);
     private final FactorManager factorManager;
     private final Domain domain;
 
@@ -83,13 +82,13 @@ public class MFAChallengeAlternativesEndpoint extends MFAEndpoint {
     private void get(RoutingContext routingContext) {
         final User endUser = user(routingContext);
         if (endUser == null) {
-            logger.warn("User must be authenticated to access MFA challenge alternatives page.");
+            log.warn("User must be authenticated to access MFA challenge alternatives page.");
             routingContext.fail(new HttpException(401, "User must be authenticated to access MFA challenge alternatives page."));
             return;
         }
 
         if (endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
-            logger.warn("User must have at least two enrolled factors to access MFA challenge alternatives page.");
+            log.warn("User must have at least two enrolled factors to access MFA challenge alternatives page.");
             routingContext.fail(new HttpException(400, "User must have at least two enrolled factors to access MFA challenge alternatives page."));
             return;
         }
@@ -104,14 +103,14 @@ public class MFAChallengeAlternativesEndpoint extends MFAEndpoint {
 
         // render the mfa challenge alternatives page
         final Map<String, Object> data = generateData(routingContext, domain, client);
-        this.renderPage(routingContext, data, client, logger, "Unable to render MFA challenge alternatives page");
+        this.renderPage(routingContext, data, client, log, "Unable to render MFA challenge alternatives page");
     }
 
     private void post(RoutingContext routingContext) {
         final User endUser = user(routingContext);
 
         if (endUser == null) {
-            logger.warn("User must be authenticated to submit MFA challenge alternate choice.");
+            log.warn("User must be authenticated to submit MFA challenge alternate choice.");
             routingContext.fail(new HttpException(401, "User must be authenticated to submit MFA challenge alternate choice."));
             return;
         }
@@ -120,7 +119,7 @@ public class MFAChallengeAlternativesEndpoint extends MFAEndpoint {
         final String factorId = params.get("factorId");
 
         if (factorId == null) {
-            logger.warn("No factor id in form - did you forget to include factor id value ?");
+            log.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(new HttpException(400, "No factor id in form - did you forget to include factor id value ?"));
             return;
         }

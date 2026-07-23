@@ -19,25 +19,24 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static jakarta.ws.rs.core.Response.Status.Family.familyOf;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Provider
+@CustomLog
 public class ManagementExceptionMapper extends AbstractExceptionMapper<AbstractManagementException> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ManagementExceptionMapper.class);
 
     @Override
     public Response toResponse(AbstractManagementException mex) {
 
         if (familyOf(mex.getHttpStatusCode()) == Response.Status.Family.SERVER_ERROR) {
-            LOGGER.error("Unexpected error occurred", mex);
+            log.error("Unexpected error occurred", mex);
         }
 
         return Response

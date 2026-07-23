@@ -44,22 +44,21 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.rxjava3.core.RxHelper;
 import io.vertx.rxjava3.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GatewayAuditReporterManager extends AbstractService<AuditReporterManager> implements AuditReporterManager, DomainAwareListener<ReporterEvent, Payload>, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(GatewayAuditReporterManager.class);
     private String deploymentId;
 
     private String organizationId;
@@ -92,8 +91,8 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("Initializing reporters for domain {}", domain.getName());
-        logger.info("\t Starting reporter verticle for domain {}", domain.getName());
+        log.info("Initializing reporters for domain {}", domain.getName());
+        log.info("\t Starting reporter verticle for domain {}", domain.getName());
 
         Single<String> deployment = RxHelper.deployVerticle(vertx, applicationContext.getBean(AuditReporterVerticle.class));
         deployment.subscribe(id -> {
@@ -110,17 +109,17 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                                     this.organizationId = tupleReportersContext.getT2().getOrganizationId();
                                     tupleReportersContext.getT1().forEach(reporter -> startReporterProvider(reporter, tupleReportersContext.getT2()));
 
-                                    logger.info("Reporters loaded for domain {}", domain.getName());
+                                    log.info("Reporters loaded for domain {}", domain.getName());
                                 } else {
-                                    logger.info("\tThere is no reporter to start");
+                                    log.info("\tThere is no reporter to start");
                                 }
                             },
                             err -> {
-                                logger.error("Reporter service can not be started", err);
+                                log.error("Reporter service can not be started", err);
                             });
         }, err -> {
             // Could not deploy
-            logger.error("Reporter service can not be started", err);
+            log.error("Reporter service can not be started", err);
             domainReadinessService.pluginInitFailed(domain.getId(), Type.REPORTER.name(), err.getMessage());
         });
     }
@@ -159,7 +158,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for reporter events for domain {}", domain.getName());
+        log.info("Register event listener for reporter events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ReporterEvent.class, domain.getId());
     }
 
@@ -167,7 +166,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for reporter events for domain {}", domain.getName());
+        log.info("Dispose event listener for reporter events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ReporterEvent.class, domain.getId());
 
         if (deploymentId != null) {
@@ -175,10 +174,10 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                     .doFinally(() -> {
                         for (io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
                             try {
-                                logger.info("Stopping reporter: {}", reporter);
+                                log.info("Stopping reporter: {}", reporter);
                                 reporter.stop();
                             } catch (Exception ex) {
-                                logger.error("Unexpected error while stopping reporter", ex);
+                                log.error("Unexpected error while stopping reporter", ex);
                             }
                         }
                     })
@@ -188,7 +187,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     private void updateReporter(String reporterId, ReporterEvent reporterEvent) {
         final String eventType = reporterEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} reporter event for {}", domain.getName(), eventType, reporterId);
+        log.info("Domain {} has received {} reporter event for {}", domain.getName(), eventType, reporterId);
         reporterRepository.findById(reporterId)
                 .flatMapSingle(reporter ->
                         environmentService
@@ -199,14 +198,14 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 .subscribe(
                         tupleReporterContext -> {
                             updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
-                            logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
+                            log.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
+                        error -> log.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
     }
 
     private void deployReporter(String reporterId, ReporterEvent reporterEvent) {
         final String eventType = reporterEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} reporter event for {}", domain.getName(), eventType, reporterId);
+        log.info("Domain {} has received {} reporter event for {}", domain.getName(), eventType, reporterId);
         reporterRepository.findById(reporterId)
                 .flatMapSingle(reporter ->
                         environmentService
@@ -220,14 +219,14 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                                     updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2()):
                                     startReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
                             if(loaded) {
-                                logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
+                                log.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                             }
                         },
-                        error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
+                        error -> log.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
     }
 
     private void removeReporter(String reporterId) {
-        logger.info("Domain {} has received reporter event, delete reporter {}", domain.getName(), reporterId);
+        log.info("Domain {} has received reporter event, delete reporter {}", domain.getName(), reporterId);
         reporters.remove(reporterId);
         io.gravitee.am.reporter.api.provider.Reporter reporter = reporterPlugins.remove(reporterId);
         stopReporterProvider(reporterId, reporter);
@@ -235,19 +234,19 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     private boolean startReporterProvider(Reporter reporter, GraviteeContext context) {
         if (!reporter.isEnabled()) {
-            logger.info("\tReporter disabled: {} [{}]", reporter.getName(), reporter.getType());
+            log.info("\tReporter disabled: {} [{}]", reporter.getName(), reporter.getType());
             return false;
         }
         if (!needDeployment(reporter)) {
-            logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            log.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
             domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             return false;
         }
         if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
-            logger.info("Reporter {} [{}] is linked to the organization {} but is not inherited, won't be started", reporter.getId(), reporter.getType(), organizationId);
+            log.info("Reporter {} [{}] is linked to the organization {} but is not inherited, won't be started", reporter.getId(), reporter.getType(), organizationId);
             return false;
         }
-        logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
+        log.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
         domainReadinessService.initPluginSync(domain.getId(), reporter.getId(), io.gravitee.am.common.event.Type.REPORTER.name());
         if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_REPORTER, reporter.getType(), reporter.getId())) {
             return false;
@@ -257,14 +256,14 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
         if (reporterProvider != null) {
             try {
-                logger.info("Starting reporter: {}", reporter.getName());
+                log.info("Starting reporter: {}", reporter.getName());
                 io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporterProvider, Reference.domain(domain.getId()));
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);
                 reporterPlugins.put(reporter.getId(), eventBusReporter);
                 domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             } catch (Exception ex) {
-                logger.error("Unexpected error while starting reporter", ex);
+                log.error("Unexpected error while starting reporter", ex);
                 domainReadinessService.pluginFailed(domain.getId(), reporter.getId(), ex.getMessage());
                 return false;
             }
@@ -278,7 +277,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             try {
                 reporter.stop();
             } catch (Exception ex) {
-                logger.error("Unable to stop reporter: {}", reporterId, ex);
+                log.error("Unable to stop reporter: {}", reporterId, ex);
             }
         }
     }
@@ -288,7 +287,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             stopReporterProvider(reporter.getId(), reporterPlugins.get(reporter.getId()));
             return startReporterProvider(reporter, context);
         } else {
-            logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            log.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
             domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             return false;
         }

@@ -23,11 +23,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.IdentityProviderService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+@CustomLog
 @Component
 public class IdentityProviderDataPlaneUpgrader extends AsyncUpgrader{
 

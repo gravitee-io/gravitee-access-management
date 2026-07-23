@@ -25,8 +25,6 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -39,15 +37,16 @@ import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.Prop
 import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.PBKDF2_ROUNDS;
 import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.PBKDF2_SALT;
 import static java.util.Objects.isNull;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class SecretService {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Map<String, PasswordEncoder> encoders = new ConcurrentHashMap<>();
 
@@ -58,15 +57,15 @@ public class SecretService {
     public PasswordEncoder getOrCreatePasswordEncoder(ApplicationSecretSettings settings) {
         var pwdEncoder = NoOpPasswordEncoder.getInstance();
         if (isNull(settings)) {
-            logger.trace("SecretSettings are null, return NoOp encoder");
+            log.trace("SecretSettings are null, return NoOp encoder");
             return pwdEncoder;
         }
 
         if (encoders.containsKey(settings.getId())) {
-            logger.trace("SecretSettings {} found", settings.getId());
+            log.trace("SecretSettings {} found", settings.getId());
             pwdEncoder = encoders.get(settings.getId());
         } else {
-            logger.trace("SecretSettings {} not found, generate new instance of {} encoder", settings.getId(), settings.getAlgorithm());
+            log.trace("SecretSettings {} not found, generate new instance of {} encoder", settings.getId(), settings.getAlgorithm());
             var algorithm = SecretHashAlgorithm.valueOf(settings.getAlgorithm());
             switch (algorithm) {
                 case BCRYPT:
@@ -81,7 +80,7 @@ public class SecretService {
                     pwdEncoder = new SHAPasswordEncoder(algorithm.getAlgorithm());
                     break;
                 default:
-                    logger.debug("No PasswordEncoder with id '{}' found to decode client secret, fallback to NoOpEncoder", settings.getId());
+                    log.debug("No PasswordEncoder with id '{}' found to decode client secret, fallback to NoOpEncoder", settings.getId());
             }
             this.encoders.put(settings.getId(), pwdEncoder);
         }

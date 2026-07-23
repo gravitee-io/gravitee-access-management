@@ -24,18 +24,17 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CrossDomainManagerImpl extends AbstractService implements CrossDomainManager, InitializingBean, EventListener<DomainEvent, Domain> {
 
-    private static Logger logger = LoggerFactory.getLogger(CrossDomainManagerImpl.class);
 
     @Autowired
     private Domain domain;
@@ -64,7 +63,7 @@ public class CrossDomainManagerImpl extends AbstractService implements CrossDoma
     protected void doStart() throws Exception {
         super.doStart();
         if (domain.isMaster()) {
-            logger.info("Register event listener for cross domain events for domain {}", domain.getName());
+            log.info("Register event listener for cross domain events for domain {}", domain.getName());
             eventManager.subscribeForEvents(this, DomainEvent.class);
         }
     }

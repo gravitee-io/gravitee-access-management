@@ -82,8 +82,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
 import io.vertx.core.MultiMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
@@ -112,14 +110,15 @@ import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserServiceImpl implements UserService {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private UserGatewayService userService;
@@ -465,7 +464,7 @@ public class UserServiceImpl implements UserService {
                         return tokenService.deleteByUser(user1)
                                 .toSingleDefault(user1)
                                 .onErrorResumeNext(err -> {
-                                    logger.warn("Tokens not invalidated for user {} due to : {}", user1.getId(), err.getMessage());
+                                    log.warn("Tokens not invalidated for user {} due to : {}", user1.getId(), err.getMessage());
                                     return Single.just(user1);
                                 });
                     }
@@ -819,8 +818,8 @@ public class UserServiceImpl implements UserService {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         passwordHistoryService
                 .addPasswordToHistory(domain, user, rawPassword, principal, getPasswordPolicy(provider))
-                .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
-                        throwable -> logger.debug("Failed to create password history", throwable));
+                .subscribe(passwordHistory -> log.debug("Created password history for user {}", user.getUsername()),
+                        throwable -> log.debug("Failed to create password history", throwable));
         return Single.just(user);
     }
 

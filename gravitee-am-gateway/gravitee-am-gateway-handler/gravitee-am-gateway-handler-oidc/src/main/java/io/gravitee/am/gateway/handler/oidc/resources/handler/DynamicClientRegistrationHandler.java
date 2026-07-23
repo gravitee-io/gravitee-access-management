@@ -20,8 +20,7 @@ import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbidden
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Dynamic Client Registration is a protocol that allows OAuth client applications to register with an OAuth server.
@@ -34,12 +33,12 @@ import org.slf4j.LoggerFactory;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DynamicClientRegistrationHandler implements Handler<RoutingContext> {
 
     private Domain domain;
     private OAuth2AuthHandler oAuth2AuthHandler;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationHandler.class);
 
     public DynamicClientRegistrationHandler(Domain domain, OAuth2AuthHandler oAuth2AuthHandler) {
         this.domain = domain;
@@ -51,14 +50,14 @@ public class DynamicClientRegistrationHandler implements Handler<RoutingContext>
 
         //Do not apply security check if open dynamic client registration is enabled.
         if(domain.isOpenDynamicClientRegistrationEnabled()) {
-            LOGGER.debug("Open Dynamic client registration is enabled - no security will be performed.");
+            log.debug("Open Dynamic client registration is enabled - no security will be performed.");
             context.next();
             return;
         }
 
         //1st check if dynamic client registration is enabled.
         if(!domain.isDynamicClientRegistrationEnabled()) {
-            LOGGER.debug("Dynamic client registration is disabled");
+            log.debug("Dynamic client registration is disabled");
             context.fail(new ClientRegistrationForbiddenException());
             return;
         }

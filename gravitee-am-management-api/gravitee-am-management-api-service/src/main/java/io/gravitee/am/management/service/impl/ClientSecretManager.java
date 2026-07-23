@@ -27,14 +27,13 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class ClientSecretManager extends AbstractService<ClientSecretManager> implements EventListener<ApplicationSecretEvent, Payload> {
-    private static final Logger logger = LoggerFactory.getLogger(ClientSecretManager.class);
 
     @Autowired
     private ApplicationService applicationService;
@@ -52,11 +51,11 @@ public class ClientSecretManager extends AbstractService<ClientSecretManager> im
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for application events for the management API");
+        log.info("Register event listener for application events for the management API");
         eventManager.subscribeForEvents(this, ApplicationSecretEvent.class);
 
         applicationService.findAll()
-                .doOnNext(application -> logger.info("Initializing client secrets notifications for applicationId={}", application.getId()))
+                .doOnNext(application -> log.info("Initializing client secrets notifications for applicationId={}", application.getId()))
                 .flatMapCompletable(this::initClientSecretNotifications)
                 .subscribe();
     }

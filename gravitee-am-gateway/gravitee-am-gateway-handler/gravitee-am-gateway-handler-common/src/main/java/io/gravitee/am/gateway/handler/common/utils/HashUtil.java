@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
-@Slf4j
+@CustomLog
 public class HashUtil {
     public static String generateSHA256(String input) {
         try {

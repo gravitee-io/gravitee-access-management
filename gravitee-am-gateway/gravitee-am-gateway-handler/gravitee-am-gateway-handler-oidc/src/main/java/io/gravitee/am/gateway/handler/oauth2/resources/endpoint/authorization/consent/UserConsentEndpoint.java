@@ -33,8 +33,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,13 +41,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserConsentEndpoint implements Handler<RoutingContext> {
-    private static final Logger logger = LoggerFactory.getLogger(UserConsentEndpoint.class);
 
     private final UserConsentService userConsentService;
     private final ThymeleafTemplateEngine engine;
@@ -95,7 +94,7 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
                                 routingContext.response().end(buffer);
                             },
                             throwable -> {
-                                logger.error("Unable to render user consent page", throwable);
+                                log.error("Unable to render user consent page", throwable);
                                 routingContext.fail(throwable.getCause());
                             }
                     );

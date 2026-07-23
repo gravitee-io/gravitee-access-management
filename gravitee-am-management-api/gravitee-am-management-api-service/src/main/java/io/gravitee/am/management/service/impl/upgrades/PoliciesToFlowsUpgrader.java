@@ -28,8 +28,6 @@ import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.model.plugin.PolicyPlugin;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -41,6 +39,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.POLICY_FLOW_UPGRADER;
 import static java.util.function.Function.identity;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -48,9 +47,9 @@ import static java.util.function.Function.identity;
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class PoliciesToFlowsUpgrader extends AsyncUpgrader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PoliciesToFlowsUpgrader.class);
 
     private final PolicyRepository policyRepository;
     private final FlowService flowService;
@@ -70,7 +69,7 @@ public class PoliciesToFlowsUpgrader extends AsyncUpgrader {
         return policyRepository.collectionExists()
                 .flatMapCompletable(collectionExists -> {
                     if (collectionExists) {
-                        LOGGER.info("Policies collection exists, upgrading policies to flows");
+                        log.info("Policies collection exists, upgrading policies to flows");
                         return policyRepository.findAll()
                                 .groupBy(Policy::getDomain)
                                 .flatMapCompletable(policiesPerDomain -> {
@@ -79,16 +78,16 @@ public class PoliciesToFlowsUpgrader extends AsyncUpgrader {
                                 })
                                 .andThen(policyRepository.deleteCollection());
                     } else {
-                        LOGGER.info("Policies collection doesn't exist, skip upgrade");
+                        log.info("Policies collection doesn't exist, skip upgrade");
                         return Completable.complete();
                     }
                 })
-                .doOnComplete(() -> LOGGER.info("Policies to flows upgrade, done."))
-                .doOnError(error -> LOGGER.error("An error occurs while updating policies to flows", error));
+                .doOnComplete(() -> log.info("Policies to flows upgrade, done."))
+                .doOnError(error -> log.error("An error occurs while updating policies to flows", error));
     }
 
     private Completable migrateToFlows(List<Policy> policies, String domain) {
-        LOGGER.info("Migrate {} policies to flows for domain {}", policies.size(), domain);
+        log.info("Migrate {} policies to flows for domain {}", policies.size(), domain);
 
         // Only ROOT, PreConsent & PostConsent are available before 3.5
         Map<ExtensionPoint, List<Policy>> policiesPerExtPoint = policies.stream().collect(Collectors.groupingBy(Policy::getExtensionPoint));
@@ -108,14 +107,14 @@ public class PoliciesToFlowsUpgrader extends AsyncUpgrader {
                     flows.get(Type.CONSENT).setPost(epPolicies.getValue().stream().map(this::createStep).toList());
                     break;
                 default:
-                    LOGGER.info("ExtensionPoint '{}' shouldn't be present before version 3.5, ignore it", epPolicies.getKey());
+                    log.info("ExtensionPoint '{}' shouldn't be present before version 3.5, ignore it", epPolicies.getKey());
             }
         }
 
         return Observable.fromIterable(flows.values())
                 .flatMapCompletable(flow -> flowService.create(ReferenceType.DOMAIN, domain, flow).ignoreElement())
-                .doOnComplete(() -> LOGGER.info("Policies migrated to flows for domain {}", domain))
-                .doOnError(error -> LOGGER.info("Error during policies migration for domain {}", domain, error));
+                .doOnComplete(() -> log.info("Policies migrated to flows for domain {}", domain))
+                .doOnError(error -> log.info("Error during policies migration for domain {}", domain, error));
     }
 
     private Step createStep(Policy policy) {

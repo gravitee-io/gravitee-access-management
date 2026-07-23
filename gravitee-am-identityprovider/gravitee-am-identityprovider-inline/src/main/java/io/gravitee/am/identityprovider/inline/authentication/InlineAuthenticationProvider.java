@@ -30,8 +30,6 @@ import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguratio
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -40,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -47,9 +46,9 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Import(InlineAuthenticationProviderConfiguration.class)
+@CustomLog
 public class InlineAuthenticationProvider implements AuthenticationProvider, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InlineAuthenticationProvider.class);
 
     @Autowired
     private InlineIdentityProviderConfiguration configuration;
@@ -73,7 +72,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
     public void afterPropertiesSet() {
         if (configuration.getUsers() != null) {
             for (io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
-                LOGGER.debug("Add an inline user: {}", user);
+                log.debug("Add an inline user: {}", user);
                 userDetailsService.createUser(user);
             }
         }

@@ -25,14 +25,13 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
+import lombok.CustomLog;
 
 /**
  * Silent Re-authentication of subject with ID Token.
@@ -53,9 +52,9 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationRequestParseIdTokenHintHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseIdTokenHintHandler.class);
     private final IDTokenService idTokenService;
 
     public AuthorizationRequestParseIdTokenHintHandler(IDTokenService idTokenService) {
@@ -96,7 +95,7 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
         extractUser(idTokenHint, client, h -> {
             if (h.failed()) {
                 // if no user, continue
-                logger.debug("An error has occurred when extracting user from the ID token", h.cause());
+                log.debug("An error has occurred when extracting user from the ID token", h.cause());
                 routingContext.next();
                 return;
             }
@@ -112,7 +111,7 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
             // if current user is not the same as the id token one, return login_required error
             io.gravitee.am.model.User loggedInUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             if (!loggedInUser.getId().equals(endUser.getId())) {
-                logger.debug("The End-User identified by the ID Token is not the same as the logged in End-User.");
+                log.debug("The End-User identified by the ID Token is not the same as the logged in End-User.");
                 routingContext.fail(new LoginRequiredException("Login required"));
             } else {
                 succeeded(routingContext);

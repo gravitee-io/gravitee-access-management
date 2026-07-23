@@ -25,7 +25,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.rxjava3.core.Flowable;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -37,7 +37,7 @@ import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Filters.in;
 
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 @Component
 @ManagementRepositoryScope
 public class DataPlanePermissionMongoUpgrader implements Upgrader {

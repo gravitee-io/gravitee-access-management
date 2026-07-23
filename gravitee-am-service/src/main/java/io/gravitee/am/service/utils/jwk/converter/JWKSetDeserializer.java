@@ -21,21 +21,20 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet>> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(JWKSetDeserializer.class);
     public final static String PARSE_ERROR_MESSAGE = "Unable to parse jwks content: ";
 
     @Override
@@ -67,7 +66,7 @@ public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet
             result.setKeys(jwkList);
             return Optional.of(result);
         } catch (ParseException ex) {
-            LOGGER.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
             throw new InvalidClientMetadataException(PARSE_ERROR_MESSAGE+ex.getMessage());
         }
     }

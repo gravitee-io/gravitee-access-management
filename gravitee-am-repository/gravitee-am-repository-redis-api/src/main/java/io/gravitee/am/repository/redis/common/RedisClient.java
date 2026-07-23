@@ -20,7 +20,7 @@ import io.vertx.core.Vertx;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
 import io.vertx.redis.client.RedisOptions;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class RedisClient {
 
     private static final String SCRIPT_LOAD_COMMAND = "LOAD";

@@ -47,8 +47,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -62,15 +60,16 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import({HttpUserProviderConfiguration.class})
+@CustomLog
 public class HttpUserProvider implements UserProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HttpUserProvider.class);
     private static final String USER_CONTEXT_KEY = "user";
     private static final String USER_API_RESPONSE_CONTEXT_KEY = "usersResponse";
 
@@ -141,11 +140,11 @@ public class HttpUserProvider implements UserProvider {
                         if (ex instanceof AbstractManagementException) {
                             return Single.error(ex);
                         }
-                        LOGGER.error("An error has occurred while creating user {} from the remote HTTP identity provider", user.getUsername(), ex);
+                        log.error("An error has occurred while creating user {} from the remote HTTP identity provider", user.getUsername(), ex);
                         return Single.error(new TechnicalManagementException("An error has occurred while creating user from the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while creating the user {}", user.getUsername(), ex);
+            log.error("An error has occurred while creating the user {}", user.getUsername(), ex);
             return Single.error(new TechnicalManagementException("An error has occurred while creating the user", ex));
         }
     }
@@ -184,11 +183,11 @@ public class HttpUserProvider implements UserProvider {
                         if (ex instanceof AbstractManagementException) {
                             return Single.error(ex);
                         }
-                        LOGGER.error("An error has occurred while updating user {} from the remote HTTP identity provider", updateUser.getUsername(), ex);
+                        log.error("An error has occurred while updating user {} from the remote HTTP identity provider", updateUser.getUsername(), ex);
                         return Single.error(new TechnicalManagementException("An error has occurred while updating user from the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while updating the user {}", updateUser.getUsername(), ex);
+            log.error("An error has occurred while updating the user {}", updateUser.getUsername(), ex);
             return Single.error(new TechnicalManagementException("An error has occurred while updating the user", ex));
         }
     }
@@ -226,11 +225,11 @@ public class HttpUserProvider implements UserProvider {
                         if (ex instanceof AbstractManagementException) {
                             return Completable.error(ex);
                         }
-                        LOGGER.error("An error has occurred while deleting user {} from the remote HTTP identity provider", id, ex);
+                        log.error("An error has occurred while deleting user {} from the remote HTTP identity provider", id, ex);
                         return Completable.error(new TechnicalManagementException("An error has occurred while deleting user from the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while deleting the user {}", id, ex);
+            log.error("An error has occurred while deleting the user {}", id, ex);
             return Completable.error(new TechnicalManagementException("An error has occurred while deleting the user", ex));
         }
     }
@@ -262,11 +261,11 @@ public class HttpUserProvider implements UserProvider {
                         if (ex instanceof AbstractManagementException) {
                             return Maybe.error(ex);
                         }
-                        LOGGER.error("An error has occurred while searching user {} from the remote HTTP identity provider", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+                        log.error("An error has occurred while searching user {} from the remote HTTP identity provider", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
                         return Maybe.error(new TechnicalManagementException("An error has occurred while searching user from the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while searching the user {}", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+            log.error("An error has occurred while searching the user {}", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
             return Maybe.error(new TechnicalManagementException("An error has occurred while searching the user", ex));
         }
     }

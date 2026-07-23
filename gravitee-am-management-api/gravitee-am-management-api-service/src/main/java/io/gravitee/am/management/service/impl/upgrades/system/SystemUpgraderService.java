@@ -20,7 +20,7 @@ import io.gravitee.am.management.service.impl.upgrades.system.upgraders.SystemUp
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.Node;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * For example, to be sure that the DB settings associated to the default IDP is updated if the DB parameters changes into the gravitee.yaml
  */
 @Component
-@Slf4j
+@CustomLog
 public class SystemUpgraderService extends AbstractService<SystemUpgraderService> implements LifecycleComponent<SystemUpgraderService> {
 
     @Override

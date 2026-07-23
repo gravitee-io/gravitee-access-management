@@ -22,18 +22,17 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProviderConfigurationEndpoint.class);
     private DiscoveryService discoveryService;
 
     @Override
@@ -42,7 +41,7 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
         try {
             basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
         } catch (Exception e) {
-            logger.error("Unable to resolve Discovery provider configuration endpoint", e);
+            log.error("Unable to resolve Discovery provider configuration endpoint", e);
         }
 
         context.response()

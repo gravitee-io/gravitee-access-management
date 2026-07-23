@@ -27,8 +27,6 @@ import liquibase.exception.ValidationErrors;
 import liquibase.resource.ResourceAccessor;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.UpdateStatement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,21 +36,22 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UsernameUniquenessMigration implements CustomSqlChange {
     public static final String TABLE_USERS = "users";
     public static final String TABLE_ORGANIZATION_USERS = "organization_users";
     public static final String USERNAME = "username";
-    private final Logger logger = LoggerFactory.getLogger(UsernameUniquenessMigration.class);
     private final  ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
-        logger.debug("Starting username migration...");
+        log.debug("Starting username migration...");
         // Statement accumulator to provide to Liquibase the statements to execute
         List<SqlStatement> statements = new ArrayList<>();
 
@@ -73,7 +72,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                 searchIdentityProviderStmt.setString(1, referenceUser.getSource());
                 ResultSet idpResult = searchIdentityProviderStmt.executeQuery();
                 if (!idpResult.next()) {
-                    logger.error("Username '{}' can't be processed due to unknown identity provider with id '{}'",
+                    log.error("Username '{}' can't be processed due to unknown identity provider with id '{}'",
                             referenceUser.getUsername(),
                             referenceUser.getSource());
                     needToFail = true;
@@ -87,7 +86,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                     Boolean autoProvisioned = (Boolean)idpConfig.get("autoProvisioning");
                     if (!autoProvisioned) {
                         // we can't process automatically IDP table that are not "auto provisioned" as they may be defined in another DB
-                        logger.error("Duplicate user detected in IdentityProvider different from the default one for username '{}' and idp '{}'",
+                        log.error("Duplicate user detected in IdentityProvider different from the default one for username '{}' and idp '{}'",
                                 referenceUser.getUsername(),
                                 referenceUser.getSource());
                         needToFail = true;
@@ -106,7 +105,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                 User referenceUser = duplicates.get(0);
 
                 if (!referenceUser.getSource().equalsIgnoreCase("gravitee") && !referenceUser.getSource().equalsIgnoreCase("cockpit")) {
-                    logger.error("Organization Username '{}' migration only manages gravitee & cockpit identity providers but source {}",
+                    log.error("Organization Username '{}' migration only manages gravitee & cockpit identity providers but source {}",
                             referenceUser.getUsername(),
                             referenceUser.getSource());
                     needToFail = true;
@@ -121,7 +120,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
 
             return statements.toArray(new SqlStatement[statements.size()]);
         } catch (JacksonException | SQLException | DatabaseException e) {
-            logger.error("Unable to apply username migration changes", e);
+            log.error("Unable to apply username migration changes", e);
             throw new CustomChangeException(e);
         }
     }
@@ -131,7 +130,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         for (int i = 1; i < duplicates.size(); ++i) {
             final User duplicateToUpdate = duplicates.get(i);
             final String updatedUsername =  duplicateToUpdate.getUsername()+"_"+i+"_TO_RENAME_OR_DELETE";
-            logger.info("Renaming organization username '{}' to '{}' into tables '" + TABLE_ORGANIZATION_USERS + "' (user_id: {})",
+            log.info("Renaming organization username '{}' to '{}' into tables '" + TABLE_ORGANIZATION_USERS + "' (user_id: {})",
                     duplicateToUpdate.getUsername(),
                     updatedUsername,
                     duplicateToUpdate.getId());
@@ -150,7 +149,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         for (int i = 1; i < duplicates.size(); ++i) {
             final User duplicateToUpdate = duplicates.get(i);
             final String updatedUsername =  duplicateToUpdate.getUsername()+"_"+i+"_TO_RENAME_OR_DELETE";
-            logger.info("Renaming username '{}' to '{}' into tables 'users' and '{}' (user_id: {}, external_id: {})",
+            log.info("Renaming username '{}' to '{}' into tables 'users' and '{}' (user_id: {}, external_id: {})",
                     duplicateToUpdate.getUsername(),
                     updatedUsername,
                     idpTable,
@@ -208,7 +207,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         duplicateUsers.close();
         searchDuplicates.close();
 
-        logger.info("{} duplicate usernames found into {} table", userCounter, table);
+        log.info("{} duplicate usernames found into {} table", userCounter, table);
 
         return duplicatesUsersGroupByUsernameAndSource;
     }

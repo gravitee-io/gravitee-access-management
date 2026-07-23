@@ -33,8 +33,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
@@ -46,6 +44,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelp
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 import static java.util.Objects.nonNull;
 import static java.util.function.Predicate.not;
+import lombok.CustomLog;
 
 /**
  * Session handler based on minimalistic jwt Cookie.
@@ -55,10 +54,10 @@ import static java.util.function.Predicate.not;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CookieSessionHandler implements Handler<RoutingContext> {
 
     private static final String DEFAULT_SESSION_COOKIE_NAME = "GRAVITEE_IO_AM_SESSION";
-    private static final Logger logger = LoggerFactory.getLogger(CookieSessionHandler.class);
 
     final static String USER_ID_KEY = "userId";
 
@@ -99,10 +98,10 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        if (logger.isDebugEnabled()) {
+        if (log.isDebugEnabled()) {
             String uri = context.request().absoluteURI();
             if (!uri.startsWith("https:")) {
-                logger.debug("Using session cookies without https could make you susceptible to session hijacking: {}", uri);
+                log.debug("Using session cookies without https could make you susceptible to session hijacking: {}", uri);
             }
         }
 
@@ -145,13 +144,13 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         sessionObs
                 .doFinally(context::next)
                 .subscribe(
-                        success -> logger.trace("Session restored successfully"),
+                        success -> log.trace("Session restored successfully"),
                         error -> {
                             final Throwable cause = error.getCause();
                             if (cause instanceof PrematureJWTException | error instanceof ExpiredJWTException) {
-                                logger.info("Unable to restore the session: {}", cause.getMessage());
+                                log.info("Unable to restore the session: {}", cause.getMessage());
                             } else {
-                                logger.warn("Unable to restore the session: {}", cause.getMessage());
+                                log.warn("Unable to restore the session: {}", cause.getMessage());
                             }
                         }
                 );

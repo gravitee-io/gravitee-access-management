@@ -28,8 +28,6 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,15 +35,16 @@ import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitScopes;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public final class TokenRequestFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(TokenRequestFactory.class);
 
     public TokenRequest create(RoutingContext context) {
         HttpServerRequest request = context.request();
@@ -105,7 +104,7 @@ public final class TokenRequestFactory {
         try {
             basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
         } catch (Exception e) {
-            logger.error("Unable to resolve OAuth 2.0 Token Request origin uri", e);
+            log.error("Unable to resolve OAuth 2.0 Token Request origin uri", e);
         }
         return basePath;
     }

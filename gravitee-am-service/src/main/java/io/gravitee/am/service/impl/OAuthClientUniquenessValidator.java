@@ -21,15 +21,14 @@ import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class OAuthClientUniquenessValidator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OAuthClientUniquenessValidator.class);
 
     @Autowired
     @Lazy
@@ -50,12 +49,12 @@ public class OAuthClientUniquenessValidator {
     }
 
     private Single<Boolean> findByDomainAndClientId(String domain, String clientId) {
-        LOGGER.debug("Find application/resource by domain: {} and client_id {}", domain, clientId);
+        log.debug("Find application/resource by domain: {} and client_id {}", domain, clientId);
         return applicationRepository.findByDomainAndClientId(domain, clientId).map(found -> true)
                 .switchIfEmpty(protectedResourceRepository.findByDomainAndClient(domain, clientId).map(found -> true))
                 .switchIfEmpty(Single.just(false))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an application/resource using its domain: {} and client_id : {}", domain, clientId, ex);
+                    log.error("An error occurs while trying to find an application/resource using its domain: {} and client_id : {}", domain, clientId, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an application/resource using its domain: %s, and client_id %s", domain, clientId), ex));
                 });

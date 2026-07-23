@@ -30,7 +30,7 @@ import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfigur
 import io.gravitee.common.http.HttpMethod;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -44,7 +44,7 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdentityProviderConfiguration> implements SocialAuthenticationProvider {
 
     public static final String ACCESS_TOKEN_PARAMETER = "access_token";

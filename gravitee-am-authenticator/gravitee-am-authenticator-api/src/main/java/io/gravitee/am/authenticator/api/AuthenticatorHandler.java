@@ -21,11 +21,11 @@ import io.gravitee.am.service.AuditService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class AuthenticatorHandler implements Handler<RoutingContext> {
 

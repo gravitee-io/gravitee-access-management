@@ -32,21 +32,20 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AbstractUserEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractUserEndpoint.class);
     protected ProvisioningUserService userService;
     protected ObjectMapper objectMapper;
     private Domain domain;
@@ -88,7 +87,7 @@ public class AbstractUserEndpoint {
                 authenticationContext.attributes().putAll(context.data());
                 return authenticationContext.getTemplateEngine().getValue(domain.getScim().getIdpSelectionRule(), String.class);
             } catch (Exception ex) {
-                logger.error("An error has occurred when evaluating IdP selection rule", ex);
+                log.error("An error has occurred when evaluating IdP selection rule", ex);
             }
         }
         return null;

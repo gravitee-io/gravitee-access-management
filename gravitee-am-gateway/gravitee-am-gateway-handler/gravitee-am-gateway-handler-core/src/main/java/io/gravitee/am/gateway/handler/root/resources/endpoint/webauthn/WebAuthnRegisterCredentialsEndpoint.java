@@ -27,8 +27,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * This endpoint returns the WebAuthn credential creation options for the current user.
@@ -40,9 +39,9 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterCredentialsEndpoint.class);
     private final WebAuthn webAuthn;
 
     public WebAuthnRegisterCredentialsEndpoint(DomainDataPlane domainDataPlane, WebAuthn webAuthn) {
@@ -68,13 +67,13 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
 
             // session validation
             if (session == null) {
-                logger.warn("No session or session handler is missing.");
+                log.warn("No session or session handler is missing.");
                 ctx.fail(500);
                 return;
             }
 
             if (ctx.user() == null) {
-                logger.warn("User must be authenticated to register WebAuthn credentials.");
+                log.warn("User must be authenticated to register WebAuthn credentials.");
                 ctx.fail(401);
                 return;
             }
@@ -115,7 +114,7 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
         } catch (IllegalArgumentException e) {
             ctx.fail(400);
         } catch (RuntimeException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(e);
         }
     }

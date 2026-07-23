@@ -52,8 +52,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.processors.PublishProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -98,15 +96,16 @@ import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(JdbcReporterSpringConfiguration.class)
+@CustomLog
 public class JdbcAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcAuditReporter.class);
     public static final String REPORTER_AUTO_PROVISIONING = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.reporter.provisioning";
     public static final String AUDIT_FIELD_ACTOR = "actor";
     public static final String AUDIT_FIELD_TARGET = "target";
@@ -228,29 +227,29 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     @Override
     public Completable purgeExpiredData(Instant deadline) {
         if (!purgeEnabled || retentionDays <= 0 || !ready) {
-            LOGGER.debug("JDBC audit purge disabled (enabled: {}, retention days: {}, ready: {})",
+            log.debug("JDBC audit purge disabled (enabled: {}, retention days: {}, ready: {})",
                     purgeEnabled, retentionDays, ready);
             return Completable.complete();
         }
 
         LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
 
-        LOGGER.info("Starting JDBC audit purge for records older than {} (retention: {} days - tableSuffix: {})",
+        log.info("Starting JDBC audit purge for records older than {} (retention: {} days - tableSuffix: {})",
                 threshold, retentionDays, configuration.getTableSuffix());
 
         final AtomicLong totalDeleted = new AtomicLong(0);
         final int effectiveBatchSize = cappedBatchSize();
 
         return deleteInBatches(threshold, deadline, effectiveBatchSize, totalDeleted)
-                .doOnComplete(() -> LOGGER.info("JDBC audit purge completed. Deleted {} records older than {} days (tableSuffix: {})",
+                .doOnComplete(() -> log.info("JDBC audit purge completed. Deleted {} records older than {} days (tableSuffix: {})",
                         totalDeleted.get(), retentionDays, configuration.getTableSuffix()))
-                .doOnError(error -> LOGGER.error("Error during JDBC audit purge. Deleted {} records before error (tableSuffix: {})",
+                .doOnError(error -> log.error("Error during JDBC audit purge. Deleted {} records before error (tableSuffix: {})",
                         totalDeleted.get(), configuration.getTableSuffix(), error));
     }
 
     private int cappedBatchSize() {
         if (batchSize > PURGE_MAX_BATCH_SIZE) {
-            LOGGER.warn("Configured purge batch size {} exceeds the maximum allowed ({}), using {}",
+            log.warn("Configured purge batch size {} exceeds the maximum allowed ({}), using {}",
                     batchSize, PURGE_MAX_BATCH_SIZE, PURGE_MAX_BATCH_SIZE);
             return PURGE_MAX_BATCH_SIZE;
         }
@@ -265,7 +264,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         // record is left or when the global deadline is reached (purge resumes on the next execution).
         Mono<Long> oneBatch = Mono.defer(() -> {
             if (Instant.now().isAfter(deadline)) {
-                LOGGER.warn("Global purge timeout reached, stopping JDBC audit purge until next execution. Deleted {} records so far",
+                log.warn("Global purge timeout reached, stopping JDBC audit purge until next execution. Deleted {} records so far",
                         totalDeleted.get());
                 return Mono.just(0L);
             }
@@ -273,18 +272,18 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             return findAuditIdsToDelete(threshold, batchSize)
                     .flatMap(ids -> {
                         if (ids.isEmpty()) {
-                            LOGGER.debug("No more audit records to purge");
+                            log.debug("No more audit records to purge");
                             return Mono.just(0L);
                         }
 
-                        LOGGER.debug("Deleting batch of {} audit records (CASCADE will delete child records - tableSuffix: {})", ids.size(), configuration.getTableSuffix());
+                        log.debug("Deleting batch of {} audit records (CASCADE will delete child records - tableSuffix: {})", ids.size(), configuration.getTableSuffix());
 
                         // DELETE parent audits - CASCADE will automatically delete child records
                         // from auditEntitiesTable, auditOutcomesTable, and auditAccessPointsTable
                         Mono<Long> deleteBatch = trx.transactional(deleteAuditsByIds(ids))
                                 .doOnSuccess(deleted -> {
                                     long total = totalDeleted.addAndGet(deleted);
-                                    LOGGER.debug("Deleted {} audit records (requested {} - tableSuffix: {}). Total deleted: {}",
+                                    log.debug("Deleted {} audit records (requested {} - tableSuffix: {}). Total deleted: {}",
                                             deleted, ids.size(), configuration.getTableSuffix(), total);
                                 });
                         return batchDelayMs > 0 ? deleteBatch.delayElement(Duration.ofMillis(batchDelayMs)) : deleteBatch;
@@ -343,9 +342,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
-        LOGGER.debug("search on ({}, {})", referenceType, referenceType);
+        log.debug("search on ({}, {})", referenceType, referenceType);
         if (!ready) {
-            LOGGER.debug(NOT_BOOTSTRAPPED);
+            log.debug(NOT_BOOTSTRAPPED);
             return Single.just(new Page<>(Collections.emptyList(), page, size));
         }
 
@@ -368,14 +367,14 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 .concatMap(this::fillWithOutcomes))
                 .toList()
                 .flatMap(content -> monoToSingle(total).map(value -> new Page<>(content, page, value)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve reports for referenceType {} and referenceId {}",
+                .doOnError(error -> log.error("Unable to retrieve reports for referenceType {} and referenceId {}",
                         referenceType, referenceId, error))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, Type analyticsType) {
-        LOGGER.debug("aggregate on ({}, {}) with type {}", referenceType, referenceType, analyticsType);
+        log.debug("aggregate on ({}, {}) with type {}", referenceType, referenceType, analyticsType);
 
         switch (analyticsType) {
             case DATE_HISTO:
@@ -403,7 +402,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         }
 
         if (!ready) {
-            LOGGER.debug(NOT_BOOTSTRAPPED);
+            log.debug(NOT_BOOTSTRAPPED);
             return Single.just(types.entrySet().stream().collect(toMap(Map.Entry::getKey, e->new ArrayList<>(intervals.values()))));
         }
 
@@ -435,7 +434,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
      */
     private Single<Map<Object, Object>> executeCount(SearchQuery searchQuery) {
         if (!ready) {
-            LOGGER.debug(NOT_BOOTSTRAPPED);
+            log.debug(NOT_BOOTSTRAPPED);
             return Single.just(Collections.singletonMap("data", 0l));
         }
         DatabaseClient.GenericExecuteSpec count = template.getDatabaseClient().sql(searchQuery.getCount());
@@ -455,7 +454,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
      */
     private Single<Map<Object, Object>> executeGroupBy(SearchQuery searchQuery, AuditReportableCriteria criteria) {
         if (!ready) {
-            LOGGER.debug(NOT_BOOTSTRAPPED);
+            log.debug(NOT_BOOTSTRAPPED);
             return Single.just(Collections.emptyMap());
         }
         DatabaseClient.GenericExecuteSpec groupBy = template.getDatabaseClient().sql(searchQuery.getQuery());
@@ -478,9 +477,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Override
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("findById({},{},{})", referenceType, referenceId, id);
+        log.debug("findById({},{},{})", referenceType, referenceId, id);
         if (!ready) {
-            LOGGER.debug(NOT_BOOTSTRAPPED);
+            log.debug(NOT_BOOTSTRAPPED);
             return Maybe.empty();
         }
 
@@ -496,7 +495,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 .flatMap(this::fillWithOutcomes);
 
         return monoToMaybe(auditMono)
-                .doOnError(error -> LOGGER.error("Unable to retrieve the Report with referenceType {}, referenceId {} and id {}",
+                .doOnError(error -> log.error("Unable to retrieve the Report with referenceType {}, referenceId {} and id {}",
                         referenceType, referenceId, id, error))
                 .observeOn(Schedulers.computation());
     }
@@ -587,7 +586,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Override
     public void report(Reportable reportable) {
-        LOGGER.debug("Push reportable {} in bulk processor", reportable);
+        log.debug("Push reportable {} in bulk processor", reportable);
         bulkProcessor.onNext((Audit) reportable);
     }
 
@@ -597,7 +596,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         }
 
         return Flowable.fromPublisher(Flux.just(audits).concatMap(this::bulkInsertReport))
-                .doOnError(error -> LOGGER.error("Error during bulk loading", error));
+                .doOnError(error -> log.error("Error during bulk loading", error));
     }
 
 
@@ -681,21 +680,21 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     private Mono<Boolean> checkForeignKeyExists(String tableName, String constraintName, String schema) {
         String sql = dialectHelper.checkForeignKeyExists(tableName, constraintName, schema);
-        LOGGER.debug("Checking FK existence with SQL: {}", sql);
+        log.debug("Checking FK existence with SQL: {}", sql);
 
         return template.getDatabaseClient()
                 .sql(sql)
                 .map((row, metadata) -> {
                     Number count = row.get("count", Number.class);
                     boolean exists = count != null && count.longValue() > 0;
-                    LOGGER.debug("FK check for constraint {} on table {}: count={}, exists={}",
+                    log.debug("FK check for constraint {} on table {}: count={}, exists={}",
                             constraintName, tableName, count, exists);
                     return exists;
                 })
                 .first()
                 .defaultIfEmpty(false)
-                .doOnNext(exists -> LOGGER.debug("Final FK check result for {}: {}", constraintName, exists))
-                .doOnError(error -> LOGGER.error("FK check query failed for constraint {} on table {}: {}",
+                .doOnNext(exists -> log.debug("Final FK check result for {}: {}", constraintName, exists))
+                .doOnError(error -> log.error("FK check query failed for constraint {} on table {}: {}",
                         constraintName, tableName, error.getMessage(), error))
                 .onErrorReturn(false);
     }
@@ -706,8 +705,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return template.getDatabaseClient()
                 .sql(sql)
                 .then()
-                .doOnSuccess(v -> LOGGER.info("Successfully added FK constraint {} to {}", constraintName, childTable))
-                .doOnError(error -> LOGGER.error("Failed to add FK constraint {} to {}: {}",
+                .doOnSuccess(v -> log.info("Successfully added FK constraint {} to {}", constraintName, childTable))
+                .doOnError(error -> log.error("Failed to add FK constraint {} to {}: {}",
                         constraintName, childTable, error.getMessage()));
     }
 
@@ -715,15 +714,15 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return checkForeignKeyExists(childTable, constraintName, schema)
                 .flatMap(exists -> {
                     if (exists) {
-                        LOGGER.debug("FK constraint {} already exists on {}", constraintName, childTable);
+                        log.debug("FK constraint {} already exists on {}", constraintName, childTable);
                         return Mono.empty();
                     }
 
-                    LOGGER.info("Creating FK constraint {} for table {}", constraintName, childTable);
+                    log.info("Creating FK constraint {} for table {}", constraintName, childTable);
                     return addForeignKey(childTable, constraintName);
                 })
                 .onErrorResume(error -> {
-                    LOGGER.error("FK creation failed for {}: {}", childTable, error.getMessage());
+                    log.error("FK creation failed for {}: {}", childTable, error.getMessage());
                     return Mono.empty();
                 })
                 .then();
@@ -770,7 +769,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                         .first(0L)
                         .flatMapPublisher(total -> {
                             if (total == 0) {
-                                LOGGER.debug("SQL datatable {} doest not exists, initialize all audit tables for the reporter.", auditsTable);
+                                log.debug("SQL datatable {} doest not exists, initialize all audit tables for the reporter.", auditsTable);
                                 try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(sqlScript);
                                      BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
 
@@ -780,19 +779,19 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                                             .map(line -> {
                                                 // update table & index names
                                                 String finalLine = pattern.matcher(line).replaceAll(tableSuffix);
-                                                LOGGER.debug("Statement to execute: {}", finalLine);
+                                                log.debug("Statement to execute: {}", finalLine);
                                                 return finalLine;
                                             })
                                             .distinct()
                                             .toList();
 
-                                    LOGGER.debug("Found {} statements to execute", sqlStatements.size());
+                                    log.debug("Found {} statements to execute", sqlStatements.size());
                                     return Flowable.fromIterable(sqlStatements)
                                             .flatMap(statement -> Flowable.fromPublisher(connection.createStatement(statement).execute()))
                                             .flatMap(Result::getRowsUpdated);
 
                                 } catch (Exception e) {
-                                    LOGGER.error("Unable to initialize the reporter schema", e);
+                                    log.error("Unable to initialize the reporter schema", e);
                                     return Flowable.error(e);
                                 }
                             } else {
@@ -803,21 +802,21 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
             // Initialize schema and bulk processor
             template.getDatabaseClient().inConnection(resultFunction)
-                    .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
+                    .doOnError(error -> log.error("Unable to initialize Database", error))
                     .doOnSuccess(rowsUpdated -> {
 
                         initializeBulkProcessor();
 
                         // Create FK constraints if purge is enabled (CASCADE DELETE needed for purging)
                         if (purgeEnabled && retentionDays > 0) {
-                            LOGGER.debug("Purge enabled (retention: {} days), ensuring FK constraints with CASCADE DELETE exist", retentionDays);
+                            log.debug("Purge enabled (retention: {} days), ensuring FK constraints with CASCADE DELETE exist", retentionDays);
                             createForeignKeys(schemaOpt.orElse("public"), tableSuffix)
                                     .subscribe(
-                                            v -> LOGGER.debug("FK constraints check/creation completed successfully"),
-                                            error -> LOGGER.warn("FK constraints check/creation failed: {}", error.getMessage())
+                                            v -> log.debug("FK constraints check/creation completed successfully"),
+                                            error -> log.warn("FK constraints check/creation failed: {}", error.getMessage())
                                     );
                         } else {
-                            LOGGER.debug("Purge disabled (enabled: {}, retention: {} days), skipping FK creation",
+                            log.debug("Purge disabled (enabled: {}, retention: {} days), skipping FK creation",
                                     purgeEnabled, retentionDays);
                         }
                     })
@@ -835,7 +834,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                     TimeUnit.SECONDS,
                     configuration.getBulkActions())
                     .flatMap(list -> bulk(list)
-                            .doOnError(error -> LOGGER.error("An error occurred while inserting into report_audits_{} table of {} database",
+                            .doOnError(error -> log.error("An error occurred while inserting into report_audits_{} table of {} database",
                                     configuration.getTableSuffix(), configuration.getDatabase(), error))
                             .retry()
                     )
@@ -862,7 +861,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             // we wait until the bulk processor has stopped
             if (bulkProcessor != null) {
                 while (bulkProcessor.hasSubscribers()) {
-                    LOGGER.debug("The bulk processor is processing data, wait.");
+                    log.debug("The bulk processor is processing data, wait.");
                 }
             }
 
@@ -872,7 +871,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 }
 
         } catch (Exception ex) {
-            LOGGER.error("Failed to close JDBC client", ex);
+            log.error("Failed to close JDBC client", ex);
         }
     }
 }

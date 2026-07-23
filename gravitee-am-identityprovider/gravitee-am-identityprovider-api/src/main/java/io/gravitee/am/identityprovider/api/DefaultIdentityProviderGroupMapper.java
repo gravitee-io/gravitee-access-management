@@ -16,12 +16,12 @@
 package io.gravitee.am.identityprovider.api;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 import java.util.Map;
 
 public class DefaultIdentityProviderGroupMapper extends IdentityProviderArrayPropertyMapper implements IdentityProviderGroupMapper {
-    public static final Logger LOGGER = LoggerFactory.getLogger(DefaultIdentityProviderGroupMapper.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(DefaultIdentityProviderGroupMapper.class);
 
 
     @Override

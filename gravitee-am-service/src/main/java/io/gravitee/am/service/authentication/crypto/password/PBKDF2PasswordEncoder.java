@@ -17,8 +17,6 @@
 package io.gravitee.am.service.authentication.crypto.password;
 
 import org.apache.commons.codec.binary.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.util.EncodingUtils;
@@ -27,14 +25,15 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PBKDF2PasswordEncoder implements PasswordEncoder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PBKDF2PasswordEncoder.class);
     public static final int DEFAULT_ROUNDS = 600_000;
     public static final int DEFAULT_SALT_SIZE = 16;
     private static final String MATCH_ERROR = "An error has occurred when performing password match operation";
@@ -96,7 +95,7 @@ public class PBKDF2PasswordEncoder implements PasswordEncoder {
                     b64enc.encodeToString(encode0(rawPassword, decodedSalt)) : Hex.encodeHexString(encode0(rawPassword, decodedSalt));
             return encodedRawPassword.equals(encodedPassword);
         } catch (Exception ex) {
-            LOGGER.error(MATCH_ERROR, ex);
+            log.error(MATCH_ERROR, ex);
             return false;
         }
     }

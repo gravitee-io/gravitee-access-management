@@ -39,8 +39,6 @@ import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,12 +66,14 @@ import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SyncManager implements InitializingBean, DisposableBean {
 
     /**
@@ -82,7 +82,6 @@ public class SyncManager implements InitializingBean, DisposableBean {
     public static final int TIMEFRAME_BEFORE_DELAY = 30000;
     public static final int TIMEFRAME_AFTER_DELAY = 30000;
 
-    private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
     private static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
     private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
@@ -162,18 +161,18 @@ public class SyncManager implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Starting gateway tags initialization ...");
+        log.info("Starting gateway tags initialization ...");
         this.initShardingTags();
         this.initEnvironments();
         if (deployParallelism <= 0) {
             deployParallelism = 2 * Runtime.getRuntime().availableProcessors();
         }
-        logger.info("Gateway has been loaded with the following information :");
-        logger.info("\t\t - Sharding tags : {}", shardingTags.isPresent() ? shardingTags.get() : "[]");
-        logger.info("\t\t - Organizations : {}", organizations.isPresent() ? organizations.get() : "[]");
-        logger.info("\t\t - Environments : {}", environments.isPresent() ? environments.get() : "[]");
-        logger.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
-        logger.info("\t\t - Domain deployment parallelism : {}", deployParallelism);
+        log.info("Gateway has been loaded with the following information :");
+        log.info("\t\t - Sharding tags : {}", shardingTags.isPresent() ? shardingTags.get() : "[]");
+        log.info("\t\t - Organizations : {}", organizations.isPresent() ? organizations.get() : "[]");
+        log.info("\t\t - Environments : {}", environments.isPresent() ? environments.get() : "[]");
+        log.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
+        log.info("\t\t - Domain deployment parallelism : {}", deployParallelism);
         AtomicInteger threadIndex = new AtomicInteger(0);
         // Assign the GatewayClassloader to the scheduler to make sure that the thread
         // executing the domain loading action has access to the class definitions.
@@ -204,24 +203,24 @@ public class SyncManager implements InitializingBean, DisposableBean {
 
     public void refresh() {
         if (!defaultReactor.isStarted()) {
-            logger.info("No domain listener, rescheduling initial synchronization process");
+            log.info("No domain listener, rescheduling initial synchronization process");
             return;
         }
         if (!syncInProgress.compareAndSet(false, true)) {
-            logger.debug("Sync already in progress, skipping");
+            log.debug("Sync already in progress, skipping");
             return;
         }
 
-        logger.debug("Refreshing sync state...");
+        log.debug("Refreshing sync state...");
         final long nextLastRefreshAt = System.currentTimeMillis();
 
         if (lastRefreshAt == -1) {
-            logger.debug("Initial synchronization");
+            log.debug("Initial synchronization");
             executeSync(
                     deployDomains().doOnComplete(() -> allSecurityDomainsSync = true),
                     nextLastRefreshAt);
         } else {
-            logger.debug("Events synchronization");
+            log.debug("Events synchronization");
             final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
             final long to = nextLastRefreshAt + timeframeAfterDelay;
             executeSync(processEvents(from, to), nextLastRefreshAt);
@@ -238,16 +237,16 @@ public class SyncManager implements InitializingBean, DisposableBean {
                 .subscribe(
                         () -> {},
                         ex -> {
-                            if (logger.isDebugEnabled()) {
-                                logger.error("Synchronization failed", ex);
+                            if (log.isDebugEnabled()) {
+                                log.error("Synchronization failed", ex);
                             } else {
-                                logger.error("Synchronization failed, ex={}", ex.toString());
+                                log.error("Synchronization failed, ex={}", ex.toString());
                             }
                         });
     }
 
     private Completable deployDomains() {
-        logger.info("Starting security domains initialization ...");
+        log.info("Starting security domains initialization ...");
         Completable deployAll = domainRepository.findAll()
                 .filter(Domain::isEnabled)
                 .filter(this::canHandle)
@@ -257,13 +256,13 @@ public class SyncManager implements InitializingBean, DisposableBean {
                                 .flatMapCompletable(domain -> deployOne(domain)
                                                 .subscribeOn(deploymentScheduler)
                                                 .doOnComplete(() -> domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED))
-                                                .doOnError(ex -> logger.error("Unable to deploy security domain {}", domain.getId(), ex))
+                                                .doOnError(ex -> log.error("Unable to deploy security domain {}", domain.getId(), ex))
                                                 .onErrorComplete(),
                                         false, deployParallelism));
         if (initDomainTimeOut > 0) {
             deployAll = deployAll.timeout(initDomainTimeOut, TimeUnit.MILLISECONDS);
         }
-        return deployAll.doOnComplete(() -> logger.info("Security domains initialization done"));
+        return deployAll.doOnComplete(() -> log.info("Security domains initialization done"));
     }
 
     private Completable deployOne(Domain domain) {
@@ -297,7 +296,7 @@ public class SyncManager implements InitializingBean, DisposableBean {
     }
 
     private Completable computeEvent(Event event) {
-        logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+        log.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
         if (Objects.requireNonNull(event.getType()) == Type.DOMAIN) {
             return synchronizeDomain(event);
         }
@@ -306,7 +305,7 @@ public class SyncManager implements InitializingBean, DisposableBean {
             if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                 publishEventTypeSafe(eventManager, io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
             } else {
-                logger.debug("Event id {} already processed", eventId);
+                log.debug("Event id {} already processed", eventId);
             }
         });
     }
@@ -370,7 +369,7 @@ public class SyncManager implements InitializingBean, DisposableBean {
 
         final List<String> tagList = shardingTags.get();
         if (domain.getTags() == null || domain.getTags().isEmpty()) {
-            logger.debug("Tags {} are configured on gateway instance but not found on the security domain {}", tagList, domain.getName());
+            log.debug("Tags {} are configured on gateway instance but not found on the security domain {}", tagList, domain.getName());
             return false;
         }
 
@@ -383,7 +382,7 @@ public class SyncManager implements InitializingBean, DisposableBean {
 
         final boolean hasMatchingTags = hasMatchingElements(inclusionTags, exclusionTags, domain.getTags());
         if (!hasMatchingTags) {
-            logger.debug("The security domain {} has been ignored because not in configured tags {}", domain.getName(), tagList);
+            log.debug("The security domain {} has been ignored because not in configured tags {}", domain.getName(), tagList);
         }
         return hasMatchingTags;
     }

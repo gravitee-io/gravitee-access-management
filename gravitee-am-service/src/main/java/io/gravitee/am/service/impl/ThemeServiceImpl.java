@@ -41,8 +41,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.text.StringEscapeUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -51,15 +49,16 @@ import java.util.Date;
 import java.util.Objects;
 
 import static io.gravitee.am.common.event.Type.THEME;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ThemeServiceImpl implements ThemeService {
 
-    private final Logger logger = LoggerFactory.getLogger(ThemeServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -78,7 +77,7 @@ public class ThemeServiceImpl implements ThemeService {
     public Maybe<Theme> findByReference(ReferenceType referenceType, String referenceId) {
         return this.themeRepository.findByReference(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
-                    logger.error("An error occurs while trying to find the theme linked to {}/{}", referenceType, referenceId, ex);
+                    log.error("An error occurs while trying to find the theme linked to {}/{}", referenceType, referenceId, ex);
                     return Maybe.error(new TechnicalManagementException("An error occurs while trying to find the theme", ex));
                 });
     }
@@ -123,7 +122,7 @@ public class ThemeServiceImpl implements ThemeService {
                                             })
                                             .onErrorResumeNext(ex -> {
                                                 String msg = "An error occurred while trying to create a theme";
-                                                logger.error(msg, ex);
+                                                log.error(msg, ex);
                                                 return Single.error(new TechnicalManagementException(msg, ex));
                                             })
                                             .doOnSuccess(dictionary -> auditService.report(AuditBuilder
@@ -176,7 +175,7 @@ public class ThemeServiceImpl implements ThemeService {
                             })
                             .onErrorResumeNext(ex -> {
                                 String msg = "An error occurred while trying to update a theme";
-                                logger.error(msg, ex);
+                                log.error(msg, ex);
                                 return Single.error(new TechnicalManagementException(msg, ex));
                             })
                             .doOnSuccess(dictionary -> auditService.report(AuditBuilder
@@ -200,7 +199,7 @@ public class ThemeServiceImpl implements ThemeService {
     public Completable delete(Domain domain, String themeId, User principal) {
         return this.themeRepository.findById(themeId).flatMapCompletable(theme -> {
             if (!(ReferenceType.DOMAIN.equals(theme.getReferenceType()) && domain.getId().equals(theme.getReferenceId()))) {
-                logger.warn("Delete theme '{}' received on wrong domain, delete skipped", themeId);
+                log.warn("Delete theme '{}' received on wrong domain, delete skipped", themeId);
                 return Completable.error(new InvalidThemeException("Theme isn't linked to the domain " + domain.getId()));
             }
 
@@ -218,7 +217,7 @@ public class ThemeServiceImpl implements ThemeService {
                     })
                     .onErrorResumeNext(ex -> {
                         String msg = "An error occurred while trying to delete a theme";
-                        logger.error(msg, ex);
+                        log.error(msg, ex);
                         auditService.report(AuditBuilder
                                 .builder(ThemeAuditBuilder.class)
                                 .principal(principal)

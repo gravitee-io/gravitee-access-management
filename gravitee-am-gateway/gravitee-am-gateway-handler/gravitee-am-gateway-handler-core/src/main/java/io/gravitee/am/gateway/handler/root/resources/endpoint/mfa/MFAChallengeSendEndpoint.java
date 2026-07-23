@@ -32,11 +32,10 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import lombok.CustomLog;
 
 /**
  * Resends an MFA challenge code (SMS, email, call, etc.)
@@ -44,9 +43,9 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAChallengeSendEndpoint.class);
     private static final String SEND_CHALLENGE_FAILED = "send_challenge_failed";
     private static final String SEND_CHALLENGE_FAILED_DESCRIPTION = "Unable to send a new code, please try again later";
     private static final String SEND_CALL_CHALLENGE_FAILED_DESCRIPTION = "Unable to make a call, please try again later";
@@ -70,7 +69,7 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final User endUser = user(routingContext);
             if (endUser == null) {
-                logger.warn("User must be authenticated to resend MFA challenge.");
+                log.warn("User must be authenticated to resend MFA challenge.");
                 respondJsonChallengeFailure(routingContext, SEND_CHALLENGE_FAILED, "User must be authenticated", HttpStatusCode.UNAUTHORIZED_401);
                 return;
             }
@@ -83,14 +82,14 @@ public class MFAChallengeSendEndpoint extends MFAChallengeEndpoint {
 
             sendMfaChallenge(factorProvider, routingContext, factor, endUser, true, true, resChallenge -> {
                 if (resChallenge.failed()) {
-                    logger.error("An error has occurred when resending MFA challenge", resChallenge.cause());
+                    log.error("An error has occurred when resending MFA challenge", resChallenge.cause());
                     respondJsonChallengeFailure(routingContext, SEND_CHALLENGE_FAILED, sendChallengeFailedDescription(factor), HttpStatusCode.SERVICE_UNAVAILABLE_503);
                     return;
                 }
                 respondJsonChallengeSuccess(routingContext);
             });
         } catch (Exception ex) {
-            logger.error("An error has occurred when resending MFA challenge", ex);
+            log.error("An error has occurred when resending MFA challenge", ex);
             respondJsonChallengeFailure(routingContext, SEND_CHALLENGE_FAILED, "Unexpected error occurred", HttpStatusCode.SERVICE_UNAVAILABLE_503);
         }
     }

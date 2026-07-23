@@ -22,7 +22,7 @@ import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 import java.util.Collection;
 
@@ -55,7 +55,7 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
                 .switchIfEmpty(Maybe.defer(() ->
                         fallbackCertificateProvider()
                                 .doOnSuccess(fallback -> {
-                                    Logger logger = LoggerFactory.getLogger(this.getClass());
+                                    Logger logger = NodeLoggerFactory.getLogger(this.getClass());
                                     String fallbackCertificateId = fallback.getCertificateInfo().certificateId();
                                     logger.warn("Certificate: {} not loaded, using: {} as fallback", certificateId, fallbackCertificateId);
                                 })
@@ -65,7 +65,7 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
                                                 ? Maybe.just(defaultCertificateProvider())
                                                 : Maybe.empty()
                                     ).doOnSuccess(defaultCertificateProvider -> {
-                                        Logger logger = LoggerFactory.getLogger(this.getClass());
+                                        Logger logger = NodeLoggerFactory.getLogger(this.getClass());
                                         logger.warn("Certificate: {} not loaded, using default certificate as fallback", certificateId);
                                     })
                                 )

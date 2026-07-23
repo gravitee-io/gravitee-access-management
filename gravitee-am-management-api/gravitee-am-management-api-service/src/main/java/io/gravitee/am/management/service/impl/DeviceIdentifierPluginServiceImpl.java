@@ -25,22 +25,21 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService implements DeviceIdentifierPluginService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginServiceImpl.class);
 
     private DeviceIdentifierPluginManager deviceIdentifierPluginManager;
 
@@ -52,7 +51,7 @@ public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Single<List<DeviceIdentifierPlugin>> findAll() {
-        LOGGER.debug("List all Device Identifier plugins");
+        log.debug("List all Device Identifier plugins");
         return Observable.fromIterable(deviceIdentifierPluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
@@ -60,7 +59,7 @@ public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Maybe<DeviceIdentifierPlugin> findById(String deviceIdentifierId) {
-        LOGGER.debug("Find device identifier plugin by ID: {}", deviceIdentifierId);
+        log.debug("Find device identifier plugin by ID: {}", deviceIdentifierId);
         return Maybe.create(emitter -> {
             try {
                 var deviceIdentifierPlugin = deviceIdentifierPluginManager.findById(deviceIdentifierId);
@@ -69,7 +68,7 @@ public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService imp
                         emitter::onComplete
                 );
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get device identifier plugin : {}", deviceIdentifierId, ex);
+                log.error("An error occurs while trying to get device identifier plugin : {}", deviceIdentifierId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get factor plugin : " + deviceIdentifierId, ex));
             }
         });
@@ -77,7 +76,7 @@ public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Maybe<String> getSchema(String factorId) {
-        LOGGER.debug("Find device identifier plugin schema by ID: {}", factorId);
+        log.debug("Find device identifier plugin schema by ID: {}", factorId);
         return Maybe.create(emitter -> {
             try {
                 var schema = deviceIdentifierPluginManager.getSchema(factorId);
@@ -86,7 +85,7 @@ public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService imp
                         emitter::onComplete
                 );
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for device identifier plugin {}", factorId, e);
+                log.error("An error occurs while trying to get schema for device identifier plugin {}", factorId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for device identifier plugin " + factorId, e));
             }
         });

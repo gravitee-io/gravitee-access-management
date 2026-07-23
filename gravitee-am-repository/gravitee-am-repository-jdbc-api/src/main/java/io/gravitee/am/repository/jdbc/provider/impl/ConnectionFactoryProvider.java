@@ -32,8 +32,6 @@ import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import io.r2dbc.spi.ValidationDepth;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
@@ -47,13 +45,14 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ConnectionFactoryProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionFactoryProvider.class);
     public static final String TAG_SOURCE = "pool";
     public static final String TAG_PREFER_CURSORED_EXECUTION = "preferCursoredExecution";
     public static final String TAG_CURRENT_SCHEMA = "currentSchema";
@@ -81,7 +80,7 @@ public class ConnectionFactoryProvider {
     }
 
     public static ConnectionFactory createClient(R2DBCConnectionConfiguration configuration) {
-        LOGGER.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+        log.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
         ConnectionFactoryOptions.Builder builder = ConnectionFactoryOptions.builder()
                 .option(DRIVER, "pool")
                 .option(PROTOCOL, configuration.getProtocol())
@@ -116,7 +115,7 @@ public class ConnectionFactoryProvider {
         });
 
         ConnectionPool connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
-        LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+        log.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
 
         final Tags tags = Tags.of(
                 Tag.of(TAG_SOURCE, "idp-r2dbc"),
@@ -130,7 +129,7 @@ public class ConnectionFactoryProvider {
     }
 
     public ConnectionFactory factory() {
-        LOGGER.info("Initializing connection pool for {} database", prefix);
+        log.info("Initializing connection pool for {} database", prefix);
         ConnectionFactory connectionPool;
         String uri = environment.getProperty(prefix+"uri");
         if (uri != null) {
@@ -146,7 +145,7 @@ public class ConnectionFactoryProvider {
             var jdbcSchema = getJdbcSchema();
 
             if (driver == null || host == null) {
-                LOGGER.error("Missing one of connection parameters 'driver', 'host' or 'port' for {} database", prefix);
+                log.error("Missing one of connection parameters 'driver', 'host' or 'port' for {} database", prefix);
                 throw new IllegalArgumentException("Missing properties for '" + prefix + "' database");
             }
 
@@ -188,7 +187,7 @@ public class ConnectionFactoryProvider {
                 if(SchemaSupport.supportsSchema(driver)){
                     builder.option(Option.valueOf(TAG_CURRENT_SCHEMA), currentSchema);
                 } else {
-                    LOGGER.warn("Schema parameter '{}' detected for {} driver. Note: {} does not support schemas. This parameter will be ignored.", currentSchema, driver, driver);
+                    log.warn("Schema parameter '{}' detected for {} driver. Note: {} does not support schemas. This parameter will be ignored.", currentSchema, driver, driver);
                 }
             }
 
@@ -200,7 +199,7 @@ public class ConnectionFactoryProvider {
             connectionPool = ConnectionFactories.get(builder.build());
         }
 
-        LOGGER.info("Connection pool created for {} database", prefix);
+        log.info("Connection pool created for {} database", prefix);
 
         if (connectionPool instanceof ConnectionPool connection) {
             final Tags tags = Tags.of(

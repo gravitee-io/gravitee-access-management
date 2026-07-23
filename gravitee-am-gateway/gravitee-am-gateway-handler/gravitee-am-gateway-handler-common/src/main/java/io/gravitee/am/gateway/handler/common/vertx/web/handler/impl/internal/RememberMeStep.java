@@ -23,20 +23,19 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import lombok.CustomLog;
 
 /**
  * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RememberMeStep extends AuthenticationFlowStep {
 
-    private static final Logger logger = LoggerFactory.getLogger(RememberMeStep.class);
 
     private final JWTService jwtService;
     private final UserGatewayService userService;
@@ -72,7 +71,7 @@ public class RememberMeStep extends AuthenticationFlowStep {
                             flow.exit(this);
                         },
                         throwable -> {
-                            logger.warn("An error has occurred when parsing RememberMe cookie", throwable);
+                            log.warn("An error has occurred when parsing RememberMe cookie", throwable);
                             routingContext.response().removeCookie(cookieName);
                             flow.doNext(routingContext);
                         }

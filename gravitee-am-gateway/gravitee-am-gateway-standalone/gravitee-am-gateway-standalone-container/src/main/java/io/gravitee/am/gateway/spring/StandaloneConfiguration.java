@@ -83,8 +83,6 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.rxjava3.RxHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -95,6 +93,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -124,9 +123,9 @@ import java.util.List;
         PasswordDictionaryConfiguration.class,
         AuthenticationDeviceNotifierSpringConfiguration.class,
 })
+@CustomLog
 public class StandaloneConfiguration {
 
-    private static final Logger log = LoggerFactory.getLogger(StandaloneConfiguration.class);
     public static final String JWT_EXECUTOR_THREADS = "jwt.executor.threads";
     public static final String SMTP_BULK_EXECUTOR_THREADS = "email.bulk.executor.threads";
     public static final int DEFAULT_JWT_EXECUTOR_THREADS = 20;

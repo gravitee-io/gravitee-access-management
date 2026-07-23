@@ -25,8 +25,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +32,7 @@ import java.util.Map;
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static java.lang.Boolean.TRUE;
+import lombok.CustomLog;
 
 /**
  * Handler to fetch the device ID for a social / OpenID authentication
@@ -42,9 +41,9 @@ import static java.lang.Boolean.TRUE;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginCallbackDeviceIdHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginCallbackDeviceIdHandler.class);
     private final ThymeleafTemplateEngine engine;
     private final DeviceIdentifierManager deviceIdentifierManager;
 
@@ -75,7 +74,7 @@ public class LoginCallbackDeviceIdHandler implements Handler<RoutingContext> {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                     routingContext.response().end(buffer);
                 }, error -> {
-                    logger.error("Unable to render login callback device identifier page", error);
+                    log.error("Unable to render login callback device identifier page", error);
                     routingContext.fail(error);
                 });
     }

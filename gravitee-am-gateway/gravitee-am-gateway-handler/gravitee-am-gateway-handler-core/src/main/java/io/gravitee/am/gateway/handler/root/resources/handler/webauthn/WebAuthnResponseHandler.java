@@ -31,11 +31,10 @@ import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import lombok.CustomLog;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
@@ -46,9 +45,9 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelp
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnResponseHandler extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnResponseHandler.class);
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -78,7 +77,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                     isEmptyObject(webauthnResp, "response") ||
                     isEmptyString(webauthnResp, "type") ||
                     !"public-key".equals(webauthnResp.getString("type"))) {
-                logger.debug("Response missing one or more of id/rawId/response/type fields, or type is not public-key");
+                log.debug("Response missing one or more of id/rawId/response/type fields, or type is not public-key");
                 ctx.fail(400);
                 return;
             }
@@ -86,7 +85,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
             // session validation
             final Session session = ctx.session();
             if (ctx.session() == null) {
-                logger.error("No session or session handler is missing.");
+                log.error("No session or session handler is missing.");
                 ctx.fail(500);
                 return;
             }
@@ -115,7 +114,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                 // authenticate the user
                                 authenticateUser(client, authenticationContext, username, credentialId, h -> {
                                     if (h.failed()) {
-                                        logger.error("An error has occurred while authenticating user {}", username, h.cause());
+                                        log.error("An error has occurred while authenticating user {}", username, h.cause());
                                         ctx.fail(401);
                                         return;
                                     }
@@ -131,7 +130,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                     // update the credential
                                     updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
                                         if (credentialHandler.failed()) {
-                                            logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
+                                            log.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
                                             ctx.fail(401);
                                             return;
                                         }
@@ -145,15 +144,15 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                 });
                             },
                             throwable -> {
-                                logger.error("Unexpected exception", throwable);
+                                log.error("Unexpected exception", throwable);
                                 ctx.fail(throwable.getCause());
                             }
                     );
         } catch (IllegalArgumentException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(400);
         } catch (RuntimeException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(e);
         }
     }

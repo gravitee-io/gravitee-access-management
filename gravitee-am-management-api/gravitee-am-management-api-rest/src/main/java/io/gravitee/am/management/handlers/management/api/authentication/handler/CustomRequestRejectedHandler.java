@@ -19,8 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.firewall.HttpStatusRequestRejectedHandler;
@@ -29,22 +27,23 @@ import org.springframework.security.web.firewall.RequestRejectedException;
 import java.io.IOException;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CustomRequestRejectedHandler extends HttpStatusRequestRejectedHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(CustomRequestRejectedHandler.class);
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, RequestRejectedException requestRejectedException) throws IOException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Rejecting request due to: {}", requestRejectedException.getMessage(), requestRejectedException);
+        if (log.isDebugEnabled()) {
+            log.debug("Rejecting request due to: {}", requestRejectedException.getMessage(), requestRejectedException);
         }
         response.setStatus(SC_BAD_REQUEST);
         response.setContentType(MediaType.APPLICATION_JSON.toString());

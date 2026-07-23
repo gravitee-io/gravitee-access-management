@@ -18,16 +18,16 @@ package io.gravitee.am.plugins.authdevice.notifier.plugin;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifier;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationDeviceNotifierPluginHandler extends AmPluginHandler<AuthenticationDeviceNotifier<?, ?>> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginHandler.class);
     public static final String PLUGIN_TYPE_AUTHDEVICE_NOTIFIER = "authdevice-notifier";
 
     @Override
@@ -38,7 +38,7 @@ public class AuthenticationDeviceNotifierPluginHandler extends AmPluginHandler<A
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
 }

@@ -66,8 +66,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -78,15 +76,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AccountServiceImpl implements AccountService, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountServiceImpl.class);
 
     @Autowired
     private Domain domain;
@@ -161,14 +160,14 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                 return result;
             });
         } catch (Exception ex) {
-            LOGGER.error("An error occurs during audits search for {}}: {}", ReferenceType.DOMAIN, user.getReferenceId(), ex);
+            log.error("An error occurs during audits search for {}}: {}", ReferenceType.DOMAIN, user.getReferenceId(), ex);
             return Single.error(ex);
         }
     }
 
     @Override
     public Single<User> update(User user) {
-        LOGGER.debug("Update a user {} for domain {}", user.getUsername(), domain.getName());
+        log.debug("Update a user {} for domain {}", user.getUsername(), domain.getName());
 
         return userValidator.validate(user).andThen(identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
@@ -279,7 +278,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
         return credentialService.findById(domain, id)
                 .flatMapCompletable(credential -> {
                     if (!userId.equals(credential.getUserId())) {
-                        LOGGER.debug("Webauthn credential ID {} does not belong to the user ID {}, skip delete action", id, userId);
+                        log.debug("Webauthn credential ID {} does not belong to the user ID {}, skip delete action", id, userId);
                         return Completable.complete();
                     }
                     return credentialService.delete(domain, id)
@@ -294,7 +293,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
                 .flatMap(credential -> {
                     if (!userId.equals(credential.getUserId())) {
-                        LOGGER.debug("Webauthn credential ID {} does not belong to the user ID {}, skip update action", id, userId);
+                        log.debug("Webauthn credential ID {} does not belong to the user ID {}, skip update action", id, userId);
                         return Single.just(credential);
                     }
                     credential.setDeviceName(deviceName);

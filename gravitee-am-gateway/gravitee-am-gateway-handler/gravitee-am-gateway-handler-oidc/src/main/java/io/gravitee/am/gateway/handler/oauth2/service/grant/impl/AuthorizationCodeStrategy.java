@@ -36,8 +36,6 @@ import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +43,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import lombok.CustomLog;
 
 /**
  * Strategy for OAuth 2.0 Authorization Code Grant.
@@ -53,9 +52,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.1">RFC 6749 Section 4.1</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationCodeStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorizationCodeStrategy.class);
 
     private final AuthorizationCodeService authorizationCodeService;
     private final UserAuthenticationManager userAuthenticationManager;
@@ -83,7 +82,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
         }
 
         if (!client.hasGrantType(GrantType.AUTHORIZATION_CODE)) {
-            LOGGER.debug("Client {} does not support authorization_code grant type", client.getClientId());
+            log.debug("Client {} does not support authorization_code grant type", client.getClientId());
             return false;
         }
 
@@ -92,7 +91,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing authorization code request for client: {}", client.getClientId());
+        log.debug("Processing authorization code request for client: {}", client.getClientId());
 
         MultiValueMap<String, String> parameters = request.parameters();
         String code = parameters.getFirst(Parameters.CODE);
@@ -215,7 +214,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
                 CodeChallengeMethod.PLAIN);
 
         if (codeChallenge != null && codeVerifier == null) {
-            LOGGER.debug("PKCE code_verifier parameter is missing, even if a code_challenge was initially defined");
+            log.debug("PKCE code_verifier parameter is missing, even if a code_challenge was initially defined");
             throw new InvalidGrantException("Missing parameter: code_verifier");
         }
 
@@ -225,7 +224,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
 
         // Check that code verifier is valid
         if (!PKCEUtils.validCodeVerifier(codeVerifier)) {
-            LOGGER.debug("PKCE code_verifier is not valid");
+            log.debug("PKCE code_verifier is not valid");
             throw new InvalidGrantException("Invalid parameter: code_verifier");
         }
 
@@ -239,7 +238,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
         try {
             return codeChallengeMethod.getChallenge(codeVerifier);
         } catch (Exception ex) {
-            LOGGER.error("Not able to generate the codeChallenge from the given code verifier according to {} algorithm",
+            log.error("Not able to generate the codeChallenge from the given code verifier according to {} algorithm",
                     codeChallengeMethod, ex);
             throw new InvalidGrantException("Not supported algorithm");
         }

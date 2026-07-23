@@ -20,9 +20,8 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.CustomLog;
 
 /**
  * Domain-scoped runtime license gate for plugin loading.
@@ -37,9 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DomainPluginLicenseGate {
 
-    private static final Logger logger = LoggerFactory.getLogger(DomainPluginLicenseGate.class);
 
     @Autowired
     private Domain domain;
@@ -66,11 +65,11 @@ public class DomainPluginLicenseGate {
             pluginLicenseGate.check(Reference.domain(domain.getId()), pluginType, pluginId).blockingAwait();
             return true;
         } catch (LicenseFeatureRequiredException e) {
-            logger.warn("Skipping {} '{}' [{}] for domain {}: {}", pluginType, instanceId, pluginId, domain.getId(), e.getMessage());
+            log.warn("Skipping {} '{}' [{}] for domain {}: {}", pluginType, instanceId, pluginId, domain.getId(), e.getMessage());
             domainReadinessService.pluginUnlicensed(domain.getId(), instanceId, e.getMessage());
             return false;
         } catch (Exception e) {
-            logger.error("Unexpected error while checking the license for {} '{}' [{}] for domain {}; loading the plugin anyway", pluginType, instanceId, pluginId, domain.getId(), e);
+            log.error("Unexpected error while checking the license for {} '{}' [{}] for domain {}; loading the plugin anyway", pluginType, instanceId, pluginId, domain.getId(), e);
             return true;
         }
     }

@@ -30,7 +30,7 @@ import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -49,7 +49,7 @@ import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils
  * the CIMD-aware client lookup), {@code sub} identifies the agent instance,
  * and the signature is verified against the blueprint's JWKS.
  */
-@Slf4j
+@CustomLog
 public class AgentJwtBearerClientAssertionValidator implements ClientAssertionValidator {
 
     private final ClientLookupService clientLookupService;

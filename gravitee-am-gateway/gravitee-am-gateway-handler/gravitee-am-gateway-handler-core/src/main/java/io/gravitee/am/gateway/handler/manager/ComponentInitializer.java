@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.manager;
 import io.gravitee.common.component.LifecycleComponent;
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Builder
-@Slf4j
+@CustomLog
 public class ComponentInitializer {
     @Default private List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
     private final ApplicationContext applicationContext;

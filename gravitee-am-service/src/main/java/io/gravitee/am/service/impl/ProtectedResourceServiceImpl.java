@@ -60,8 +60,6 @@ import org.apache.commons.lang3.StringUtils;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -79,10 +77,11 @@ import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
 import static java.lang.String.format;
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class ProtectedResourceServiceImpl implements ProtectedResourceService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProtectedResourceServiceImpl.class);
 
     @Value("${applications.secretsMax:10}")
     private int secretsMax;
@@ -119,10 +118,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Maybe<ProtectedResource> findById(String id) {
-        LOGGER.debug("Find protected resources by id={}",  id);
+        log.debug("Find protected resources by id={}",  id);
         return repository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find protected resource by and id={}", id, ex);
+                    log.error("An error occurs while trying to find protected resource by and id={}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             format("An error occurs while trying to find protected resources by  and id=%s", id), ex));
                 });
@@ -130,7 +129,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Completable delete(Domain domain, String id, ProtectedResource.Type expectedType, User principal) {
-        LOGGER.debug("Delete protected resource {} with domain/type validation", id);
+        log.debug("Delete protected resource {} with domain/type validation", id);
         return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .flatMapCompletable(resource -> {
@@ -150,7 +149,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to delete protected resource: {}", id, ex);
+                    log.error("An error occurs while trying to delete protected resource: {}", id, ex);
                     return Completable.error(new TechnicalManagementException(
                             format("An error occurs while trying to delete protected resource: %s", id), ex));
                 });
@@ -158,7 +157,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Single<ProtectedResourceSecret> create(Domain domain, User principal, NewProtectedResource newProtectedResource) {
-        LOGGER.debug("Create ProtectedResource {}", newProtectedResource);
+        log.debug("Create ProtectedResource {}", newProtectedResource);
         ProtectedResource toCreate = new ProtectedResource();
         toCreate.setCreatedAt(new Date());
         toCreate.setUpdatedAt(toCreate.getCreatedAt());
@@ -212,7 +211,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Single<ProtectedResourcePrimaryData> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
-        LOGGER.debug("Update ProtectedResource {} for domain {}", id, domain.getId());
+        log.debug("Update ProtectedResource {} for domain {}", id, domain.getId());
 
         return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
@@ -248,7 +247,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Single<ProtectedResourcePrimaryData> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal) {
-        LOGGER.debug("Patch ProtectedResource {} for domain {}", id, domain.getId());
+        log.debug("Patch ProtectedResource {} for domain {}", id, domain.getId());
 
         return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
@@ -275,7 +274,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
             return Single.error(ex);
         }
-        LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
+        log.error("An error occurs while trying to update protected resource {}", id, ex);
         return Single.error(new TechnicalManagementException(
                 format("An error occurs while trying to update protected resource %s", id), ex));
     }
@@ -455,7 +454,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .filter(cert -> cert.getDomain().equals(resource.getDomainId()))
                 .switchIfEmpty(Maybe.error(() -> {
                     final var msg = format("Certificate %s not found", resource.getCertificate());
-                    LOGGER.error(msg);
+                    log.error(msg);
                     return new InvalidProtectedResourceException(msg);
                 }))
                 .ignoreElement();
@@ -481,10 +480,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, ProtectedResource.Type type, PageSortRequest pageSortRequest) {
-        LOGGER.debug("Find protected resources by domainId={}, type={}", domain, type);
+        log.debug("Find protected resources by domainId={}, type={}", domain, type);
         return repository.findByDomainAndType(domain, type, pageSortRequest)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
+                    log.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
@@ -492,10 +491,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, ProtectedResource.Type type, List<String> ids, PageSortRequest pageSortRequest) {
-        LOGGER.debug("Find protected resources by domainId={}, type={}, ids={}", domain, type, ids);
+        log.debug("Find protected resources by domainId={}, type={}, ids={}", domain, type, ids);
         return repository.findByDomainAndTypeAndIds(domain, type, ids, pageSortRequest)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find protected resources by domainId={} and type={}", domain, type, ex);
+                    log.error("An error occurs while trying to find protected resources by domainId={} and type={}", domain, type, ex);
                     return Single.error(new TechnicalManagementException(
                             format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
@@ -503,10 +502,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest) {
-        LOGGER.debug("Search protected resources by domainId={}, query={}", domain, query);
+        log.debug("Search protected resources by domainId={}, query={}", domain, query);
         return repository.search(domain, query, pageSortRequest)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search protected resources by domain {}", domain, ex);
+                    log.error("An error occurs while trying to search protected resources by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             format("An error occurs while trying to search protected resources by domain %s", domain), ex));
                 });
@@ -514,20 +513,20 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Flowable<ProtectedResource> findAll() {
-        LOGGER.debug("Find all protected resources");
+        log.debug("Find all protected resources");
         return repository.findAll()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all protected resources", ex);
+                    log.error("An error occurs while trying to find all protected resources", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all protected resources", ex));
                 });
     }
 
     @Override
     public Flowable<ProtectedResource> findByDomain(String domain) {
-        LOGGER.debug("Find protected resources by domainId={}", domain);
+        log.debug("Find protected resources by domainId={}", domain);
         return repository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
+                    log.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
                     return Flowable.error(new TechnicalManagementException(
                             format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
@@ -535,10 +534,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Override
     public Flowable<ProtectedResource> findByCertificate(String certificateId) {
-        LOGGER.debug("Find protected resources by certificateId={}", certificateId);
+        log.debug("Find protected resources by certificateId={}", certificateId);
         return repository.findByCertificate(certificateId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find protected resources by certificate {}", certificateId, ex);
+                    log.error("An error occurs while trying to find protected resources by certificate {}", certificateId, ex);
                     return Flowable.error(new TechnicalManagementException(
                             format("An error occurs while trying to find protected resources by certificate %s", certificateId), ex));
                 });
@@ -592,7 +591,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create secret for protected resource {}", id, ex);
+                    log.error("An error occurs while trying to create secret for protected resource {}", id, ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create secret for protected resource", ex));
                 });
     }
@@ -651,7 +650,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                      if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to renew secret for protected resource {}", id, ex);
+                    log.error("An error occurs while trying to renew secret for protected resource {}", id, ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to renew secret for protected resource", ex));
                 });
     }
@@ -698,7 +697,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to delete secret for protected resource {}", id, ex);
+                    log.error("An error occurs while trying to delete secret for protected resource {}", id, ex);
                     return Completable.error(new TechnicalManagementException("An error occurs while trying to delete secret for protected resource", ex));
                 });
     }

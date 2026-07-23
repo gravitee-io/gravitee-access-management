@@ -28,7 +28,7 @@ import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -62,7 +62,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
     public static final String DIALECT_HELPER_MARIADB = "MariadbHelper";
     public static final String DIALECT_HELPER_SQLSERVER = "MsSqlHelper";
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
+    protected final Logger LOGGER = NodeLoggerFactory.getLogger(getClass());
 
     @Autowired
     protected RepositoriesEnvironment environment;

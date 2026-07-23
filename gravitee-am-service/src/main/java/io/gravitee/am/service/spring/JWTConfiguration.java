@@ -29,7 +29,7 @@ import io.gravitee.am.service.jwk.impl.CachedJWKSetFetcher;
 import io.gravitee.am.service.jwk.impl.WebClientJWKSetFetcher;
 import io.gravitee.am.service.nimbusds.WebClientResourceRetriever;
 import io.vertx.rxjava3.core.Vertx;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -46,7 +46,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRE
  * @author GraviteeSource Team
  */
 @Configuration
-@Slf4j
+@CustomLog
 public class JWTConfiguration {
     public enum RetrieverType {
         JOSE,

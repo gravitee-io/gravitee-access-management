@@ -24,7 +24,7 @@ import io.gravitee.common.service.Service;
 import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class DataPlanePluginManager extends AbstractConfigurablePluginManager<DataPlane> {
     public static final String PLUGIN_ID_PREFIX = "dataplane-am-";

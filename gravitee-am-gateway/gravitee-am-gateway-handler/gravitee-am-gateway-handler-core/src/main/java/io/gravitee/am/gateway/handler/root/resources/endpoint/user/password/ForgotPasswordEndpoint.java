@@ -31,8 +31,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,14 +39,15 @@ import java.util.Map;
 import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordEndpoint.class);
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
 
@@ -102,7 +101,7 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
 
-        this.renderPage(routingContext, data, client, logger, "Unable to render forgot password page");
+        this.renderPage(routingContext, data, client, log, "Unable to render forgot password page");
     }
 
     @Override

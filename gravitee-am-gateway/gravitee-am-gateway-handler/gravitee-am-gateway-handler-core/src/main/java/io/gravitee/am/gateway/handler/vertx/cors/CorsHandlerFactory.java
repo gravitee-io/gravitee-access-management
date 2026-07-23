@@ -20,8 +20,6 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -33,11 +31,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     protected static final String DEFAULT_ORIGIN_KEY = "http.cors.allow-origin";
     protected static final String DEFAULT_ALLOWED_HEADERS_KEY = "http.cors.allow-headers";
@@ -52,7 +52,6 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     protected static final boolean DEFAULT_ALLOW_CREDENTIAL_VALUE = false;
     private static final String DENY_ALL_ORIGIN_PATTERN = "^$";
 
-    private static final Logger logger = LoggerFactory.getLogger(CorsHandlerFactory.class);
 
     @Autowired
     private Environment environment;
@@ -67,14 +66,14 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
                 case DISABLED -> createDeniedCorsHandler();
                 case ENABLED -> createCorsHandler(resolveDomainCorsSettings());
                 case INHERIT -> {
-                    logger.debug("Using gravitee.yml CORS configuration for domain: {}", domain.getName());
+                    log.debug("Using gravitee.yml CORS configuration for domain: {}", domain.getName());
                     yield createCorsHandler(createDefaultCorsSettings());
                 }
             };
         } catch (Exception ex) {
-            logger.error("Could not create CORS handler with given settings", ex);
+            log.error("Could not create CORS handler with given settings", ex);
             final CorsSettings defaultSettings = createDefaultCorsSettings();
-            logger.info("Creating CORS Handler for Domain: {} with default CORS settings: {} ", domain.getName(), defaultSettings);
+            log.info("Creating CORS Handler for Domain: {} with default CORS settings: {} ", domain.getName(), defaultSettings);
             return createCorsHandler(defaultSettings);
         }
     }
@@ -123,7 +122,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     }
 
     private CorsHandler createCorsHandler(CorsSettings settings) {
-        logger.info("Creating CORS Handler for Domain: {} with CORS settings: {} ", domain.getName(), settings);
+        log.info("Creating CORS Handler for Domain: {} with CORS settings: {} ", domain.getName(), settings);
         return CorsHandler
                 .newInstance(io.vertx.ext.web.handler.CorsHandler
                         .create()

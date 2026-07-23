@@ -36,22 +36,21 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class AlertTriggerManager extends AbstractService<CertificateManager> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertTriggerManager.class);
 
     private final TriggerProvider triggerProvider;
     private final AlertTriggerService alertTriggerService;
@@ -89,18 +88,18 @@ public class AlertTriggerManager extends AbstractService<CertificateManager> {
     }
 
     void doOnConnect() {
-        LOGGER.info("Connected to alerting system. Sync alert triggers...");
+        log.info("Connected to alerting system. Sync alert triggers...");
         domainService.findAllByCriteria(new DomainCriteria())
-                .doOnNext(domain -> LOGGER.info("Sending alert triggers for domain {}", domain.getName()))
+                .doOnNext(domain -> log.info("Sending alert triggers for domain {}", domain.getName()))
                 .flatMap(this::prepareAETriggers)
                 .flatMapSingle(this::registerAETrigger)
                 .count()
-                .subscribe(count -> LOGGER.info("{} alert triggers synchronized with the alerting system.", count),
-                        throwable -> LOGGER.error("An error occurred when trying to synchronize alert triggers with alerting system", throwable));
+                .subscribe(count -> log.info("{} alert triggers synchronized with the alerting system.", count),
+                        throwable -> log.error("An error occurred when trying to synchronize alert triggers with alerting system", throwable));
     }
 
     void doOnDisconnect() {
-        LOGGER.warn("Connection with the alerting system has been lost.");
+        log.warn("Connection with the alerting system has been lost.");
     }
 
     void onDomainEvent(Event<DomainEvent, ?> event) {
@@ -110,25 +109,25 @@ public class AlertTriggerManager extends AbstractService<CertificateManager> {
                 .flatMapPublisher(this::prepareAETriggers)
                 .flatMapSingle(this::registerAETrigger)
                 .count()
-                .subscribe(count -> LOGGER.info("{} alert triggers synchronized with the alerting system for domain [{}].", count, payload.getReferenceId()),
-                        throwable -> LOGGER.error("An error occurred when trying to synchronize alert triggers with alerting system for domain [{}]", payload.getReferenceId(), throwable));
+                .subscribe(count -> log.info("{} alert triggers synchronized with the alerting system for domain [{}].", count, payload.getReferenceId()),
+                        throwable -> log.error("An error occurred when trying to synchronize alert triggers with alerting system for domain [{}]", payload.getReferenceId(), throwable));
     }
 
     void onAlertTriggerEvent(Event<AlertTriggerEvent, ?> event) {
-        LOGGER.debug("Received alert trigger event {}", event);
+        log.debug("Received alert trigger event {}", event);
         final Payload payload = (Payload) event.content();
         domainService.findById(payload.getReferenceId())
                 .flatMapPublisher(domain -> alertTriggerService.getById(payload.getId())
                         .flatMapPublisher(alertTrigger -> this.prepareAETrigger(domain, alertTrigger))
                         .flatMapSingle(this::registerAETrigger))
                 .subscribe(
-                        aeTrigger -> LOGGER.info("Alert trigger [{}] synchronized with the alerting system.", aeTrigger.getId()),
-                        throwable -> LOGGER.error("An error occurred when trying to synchronize alert trigger [{}] with alerting system", payload.getId(), throwable)
+                        aeTrigger -> log.info("Alert trigger [{}] synchronized with the alerting system.", aeTrigger.getId()),
+                        throwable -> log.error("An error occurred when trying to synchronize alert trigger [{}] with alerting system", payload.getId(), throwable)
                 );
     }
 
     void onAlertNotifierEvent(Event<AlertNotifierEvent, ?> event) {
-        LOGGER.debug("Received alert notifier event {}", event);
+        log.debug("Received alert notifier event {}", event);
 
         final Payload payload = (Payload) event.content();
         final AlertTriggerCriteria alertTriggerCriteria = new AlertTriggerCriteria();
@@ -141,14 +140,14 @@ public class AlertTriggerManager extends AbstractService<CertificateManager> {
                         .flatMap(alertTrigger -> prepareAETrigger(domain, alertTrigger))
                         .flatMapSingle(this::registerAETrigger))
                 .count()
-                .subscribe(count -> LOGGER.info("{} alert triggers synchronized with the alerting system for domain [{}] after the update of alert notifier [{}].", count, payload.getReferenceId(), payload.getId()),
-                        throwable -> LOGGER.error("An error occurred when trying to synchronize alert triggers with alerting system for domain [{}] after the alert notifier {} event [{}].", payload.getReferenceId(), event.type().name().toLowerCase(), payload.getId(), throwable));
+                .subscribe(count -> log.info("{} alert triggers synchronized with the alerting system for domain [{}] after the update of alert notifier [{}].", count, payload.getReferenceId(), payload.getId()),
+                        throwable -> log.error("An error occurred when trying to synchronize alert triggers with alerting system for domain [{}] after the alert notifier {} event [{}].", payload.getReferenceId(), event.type().name().toLowerCase(), payload.getId(), throwable));
     }
 
     private Single<Trigger> registerAETrigger(Trigger trigger) {
         return Single.defer(() -> {
             triggerProvider.register(trigger);
-            LOGGER.debug("Alert trigger [{}] has been pushed to alert system.", trigger.getId());
+            log.debug("Alert trigger [{}] has been pushed to alert system.", trigger.getId());
             return Single.just(trigger);
         });
     }

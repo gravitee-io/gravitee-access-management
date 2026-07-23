@@ -35,8 +35,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,15 +47,16 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(IdentifierFirstLoginEndpoint.class);
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
@@ -131,7 +130,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
-        this.renderPage(routingContext, data, client, logger, "Unable to render Identifier-first login page");
+        this.renderPage(routingContext, data, client, log, "Unable to render Identifier-first login page");
     }
 
     private void redirect(RoutingContext routingContext) {

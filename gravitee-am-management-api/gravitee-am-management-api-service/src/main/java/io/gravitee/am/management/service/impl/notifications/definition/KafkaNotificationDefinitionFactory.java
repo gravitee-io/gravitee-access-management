@@ -24,17 +24,16 @@ import io.reactivex.rxjava3.core.Maybe;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_KAFKA_NOTIFIER;
+import lombok.CustomLog;
 
 @RequiredArgsConstructor
+@CustomLog
 public class KafkaNotificationDefinitionFactory<T extends NotifierSubject> implements NotificationDefinitionFactory<T> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaNotificationDefinitionFactory.class);
 
     private final ObjectMapper mapper;
     private final KafkaNotifierConfiguration kafkaNotifierConfiguration;
@@ -59,7 +58,7 @@ public class KafkaNotificationDefinitionFactory<T extends NotifierSubject> imple
 
             return Maybe.just(definition);
         } catch (IOException e) {
-            LOGGER.warn("Unable to generate Kafka configuration for {}", object.getResourceType(), e);
+            log.warn("Unable to generate Kafka configuration for {}", object.getResourceType(), e);
             return Maybe.error(e);
         }
     }

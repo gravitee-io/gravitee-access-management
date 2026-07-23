@@ -29,7 +29,7 @@ import io.gravitee.am.service.ApplicationSearcher;
 import io.gravitee.am.service.model.ApplicationFilter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
+@CustomLog
 @Component
 public class ApplicationSearcherImpl implements ApplicationSearcher {
 

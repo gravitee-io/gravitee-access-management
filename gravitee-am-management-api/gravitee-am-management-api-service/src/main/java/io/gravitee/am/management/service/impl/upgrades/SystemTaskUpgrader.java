@@ -27,23 +27,22 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class SystemTaskUpgrader implements Upgrader {
 
-    private final Logger logger = LoggerFactory.getLogger(SystemTaskUpgrader.class);
 
     protected final SystemTaskRepository systemTaskRepository;
 
@@ -101,7 +100,7 @@ public abstract class SystemTaskUpgrader implements Upgrader {
         systemTask.setUpdatedAt(systemTask.getCreatedAt());
         systemTask.setOperationId(operationId);
         return systemTaskRepository.create(systemTask).onErrorResumeNext(err -> {
-            logger.warn("SystemTask {} can't be created due to '{}'", taskId, err.getMessage());
+            log.warn("SystemTask {} can't be created due to '{}'", taskId, err.getMessage());
             // if the creation fails, try to find the task, this will allow to manage the retry properly
             return systemTaskRepository.findById(systemTask.getId()).toSingle();
         });

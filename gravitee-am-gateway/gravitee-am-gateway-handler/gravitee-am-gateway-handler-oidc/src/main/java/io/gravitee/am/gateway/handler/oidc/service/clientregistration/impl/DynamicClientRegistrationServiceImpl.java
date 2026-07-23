@@ -62,8 +62,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import net.minidev.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
@@ -85,14 +83,15 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isContentEncCompliantWithFapiBrazil;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isKeyEncCompliantWithFapiBrazil;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
+import lombok.CustomLog;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DynamicClientRegistrationServiceImpl implements DynamicClientRegistrationService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationServiceImpl.class);
     public static final int FIVE_MINUTES_IN_SEC = 300;
     public static final String FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI = "openid.fapi.openbanking.brazil.directory.jwks_uri";
     public static final String OPENID_DCR_ACCESS_TOKEN_VALIDITY = "openid.dcr.access_token.validity";
@@ -368,12 +367,12 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @param request DynamicClientRegistrationRequest
      */
     private Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request) {
-        LOGGER.debug("Validating dynamic client registration payload");
+        log.debug("Validating dynamic client registration payload");
         return this.validateClientRegistrationRequest(request, false);
     }
 
     private Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
-        LOGGER.debug("Validating dynamic client registration payload : patch");
+        log.debug("Validating dynamic client registration payload : patch");
         //redirect_uri is mandatory in the request, but in case of patch we may omit it...
         return this.validateClientRegistrationRequest(request, true);
     }
@@ -426,7 +425,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                             .filter(jwk -> jwsService.isValidSignature(signedJWT, jwk))
                             .switchIfEmpty(Single.error(new InvalidClientMetadataException("Invalid signature for software_statement")))
                             .map(__ -> {
-                                LOGGER.debug("software_statement is valid, check claims regarding the registration request information");
+                                log.debug("software_statement is valid, check claims regarding the registration request information");
                                 JSONObject softwareStatement = new JSONObject(signedJWT.getPayload().toJSONObject());
                                 final Number iat = softwareStatement.getAsNumber("iat");
                                 if (iat == null || (Instant.now().getEpochSecond() - (iat.longValue())) > FIVE_MINUTES_IN_SEC) {

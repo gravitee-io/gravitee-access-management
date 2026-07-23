@@ -22,7 +22,7 @@ import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.management.api.ServiceResourceRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -34,7 +34,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.EMAI
 
 @Component
 @ManagementRepositoryScope
-@Slf4j
+@CustomLog
 public class EmailConfigurationUpgrader extends AsyncUpgrader {
 
     private static final String SMTP_RESOURCE_NAME = "smtp-am-resource";

@@ -36,8 +36,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -56,14 +54,15 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_NAME;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import lombok.CustomLog;
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(MongoRoleRepository.class);
     private static final String FIELD_SCOPE = "scope";
     private static final String FIELD_ASSIGNABLE_TYPE = "assignableType";
     private MongoCollection<RoleMongo> rolesCollection;

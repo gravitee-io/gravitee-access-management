@@ -29,8 +29,6 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,14 +39,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ScopeManagerImpl extends AbstractService implements ScopeManager, InitializingBean, EventListener<ScopeEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ScopeManagerImpl.class);
     private ConcurrentMap<String, Scope> scopes = new ConcurrentHashMap<>();
 
     @Autowired
@@ -69,16 +68,16 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Initializing scopes for domain {}", domain.getName());
+        log.info("Initializing scopes for domain {}", domain.getName());
         scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
                 .subscribe(
                         s -> {
                             updateScopes(s);
-                            logger.info("Scopes loaded for domain {}", domain.getName());
+                            log.info("Scopes loaded for domain {}", domain.getName());
                         },
-                        error -> logger.error("Unable to initialize scopes for domain {}", domain.getName(), error));
+                        error -> log.error("Unable to initialize scopes for domain {}", domain.getName(), error));
 
-        logger.info("Register event listener for scopes events for domain {}", domain.getName());
+        log.info("Register event listener for scopes events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ScopeEvent.class, domain.getId());
 
     }
@@ -87,7 +86,7 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for scopes events for domain {}", domain.getName());
+        log.info("Dispose event listener for scopes events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ScopeEvent.class, domain.getId());
     }
 
@@ -121,7 +120,7 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
                 .stream()
                 .forEach(scope -> {
                     this.scopes.put(scope.getKey(), scope);
-                    logger.info("Scope {} loaded for domain {}", scope.getKey(), domain.getName());
+                    log.info("Scope {} loaded for domain {}", scope.getKey(), domain.getName());
                 });
     }
 
@@ -130,33 +129,33 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
                 .stream()
                 .forEach(scope -> {
                     this.scopes.put(scope.getKey(), scope);
-                    logger.info("Scope {} loaded for domain {}", scope.getKey(), domain.getName());
+                    log.info("Scope {} loaded for domain {}", scope.getKey(), domain.getName());
                 });
     }
 
     private void updateScope(String scopeId, ScopeEvent scopeEvent) {
         final String eventType = scopeEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} scope event for {}", domain.getName(), eventType, scopeId);
+        log.info("Domain {} has received {} scope event for {}", domain.getName(), eventType, scopeId);
         domainReadinessService.initPluginSync(domain.getId(), scopeId, Type.SCOPE.name());
         scopeService.findById(scopeId)
                 .subscribe(
                         scope -> {
                             updateScopes(Collections.singleton(scope));
-                            logger.info("Scope {} {}d for domain {}", scopeId, eventType, domain.getName());
+                            log.info("Scope {} {}d for domain {}", scopeId, eventType, domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), scopeId);
                         },
                         error -> {
-                            logger.error("Unable to {} scope for domain {}", eventType, domain.getName(), error);
+                            log.error("Unable to {} scope for domain {}", eventType, domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), scopeId, error.getMessage());
                         },
                         () -> {
-                            logger.error("No scope found with id {}", scopeId);
+                            log.error("No scope found with id {}", scopeId);
                             domainReadinessService.pluginUnloaded(domain.getId(), scopeId);
                         });
     }
 
     private void removeScope(String scopeId) {
-        logger.info("Domain {} has received scope event, delete scope {}", domain.getName(), scopeId);
+        log.info("Domain {} has received scope event, delete scope {}", domain.getName(), scopeId);
         scopes.values().removeIf(scope -> scopeId.equals(scope.getId()));
         domainReadinessService.pluginUnloaded(domain.getId(), scopeId);
     }

@@ -26,8 +26,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -35,15 +33,16 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GeoIpHandler implements Handler<RoutingContext> {
 
     private static final String GEOIP_SERVICE = "service:geoip";
-    private final Logger logger = LoggerFactory.getLogger(GeoIpHandler.class);
     private final EventBus eventBus;
     private final UserActivityGatewayService userActivityService;
 
@@ -77,7 +76,7 @@ public class GeoIpHandler implements Handler<RoutingContext> {
     private void getGeoIpData(RoutingContext routingContext, String ip) {
         eventBus.<JsonObject>request(GEOIP_SERVICE, ip)
                 .doOnSuccess(jsonObjectMessage -> routingContext.data().put(GEOIP_KEY, jsonObjectMessage.body().getMap()))
-                .doOnError(error -> logger.debug("Plugin GeoIp is not available, message: {}", error.getMessage()))
+                .doOnError(error -> log.debug("Plugin GeoIp is not available, message: {}", error.getMessage()))
                 .onErrorComplete()
                 .doFinally(routingContext::next)
                 .subscribe();

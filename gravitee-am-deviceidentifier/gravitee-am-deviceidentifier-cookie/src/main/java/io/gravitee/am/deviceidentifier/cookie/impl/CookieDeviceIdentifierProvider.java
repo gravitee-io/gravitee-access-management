@@ -19,24 +19,23 @@ package io.gravitee.am.deviceidentifier.cookie.impl;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.deviceidentifier.cookie.CookieDeviceIdentifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CookieDeviceIdentifierProvider implements DeviceIdentifierProvider {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(CookieDeviceIdentifierProvider.class);
 
     @Override
     public void addConfigurationVariables(Map<String, Object> variables, String configuration) {
-        LOGGER.debug("CookieDeviceIdentifierProvider.addConfigurationVariables");
+        log.debug("CookieDeviceIdentifierProvider.addConfigurationVariables");
         if (nonNull(variables)) {
             variables.put(ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY, CookieDeviceIdentifier.class.getSimpleName());
             variables.put("cookieDeviceIdentifier", UUID.randomUUID().toString());

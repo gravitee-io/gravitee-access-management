@@ -17,31 +17,30 @@ package io.gravitee.am.plugins.idp.core.impl;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.plugins.idp.core.IdentityProviderMapperFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class IdentityProviderMapperFactoryImpl implements IdentityProviderMapperFactory {
 
-    private final Logger logger = LoggerFactory.getLogger(IdentityProviderMapperFactoryImpl.class);
 
     @Override
     public <T extends IdentityProviderMapper> T create(Class<T> clazz, Map<String, String> mappers) {
         if (clazz != null) {
-            logger.debug("Create a new instance of identity provider mapper for class: {}", clazz.getName());
+            log.debug("Create a new instance of identity provider mapper for class: {}", clazz.getName());
             try {
                 T identityProviderMapper = clazz.getDeclaredConstructor().newInstance();
                 identityProviderMapper.setMappers(mappers);
 
                 return identityProviderMapper;
             } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
-                logger.error("Unable to create an identity provider mapper", ex);
+                log.error("Unable to create an identity provider mapper", ex);
             }
         }
         return null;

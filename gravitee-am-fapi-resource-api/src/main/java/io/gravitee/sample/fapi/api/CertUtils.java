@@ -16,8 +16,6 @@
 package io.gravitee.sample.fapi.api;
 
 import io.vertx.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
@@ -29,27 +27,28 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CertUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CertUtils.class);
     public static String certHeader;
 
     public static Optional<X509Certificate> extractPeerCertificate(RoutingContext routingContext) throws SSLPeerUnverifiedException {
         Optional<X509Certificate> certificate = Optional.empty();
 
         String certHeaderValue = (certHeader == null || certHeader.isEmpty()) ? null : routingContext.request().getHeader(certHeader);
-        LOGGER.debug("Certificate: header={} | cert={}", certHeader, certHeaderValue);
+        log.debug("Certificate: header={} | cert={}", certHeader, certHeaderValue);
         if (certHeaderValue != null) {
             try {
                 certHeaderValue = URLDecoder.decode(certHeaderValue.replaceAll("\t", "\n"), Charset.defaultCharset());
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 certificate = Optional.ofNullable((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(certHeaderValue.getBytes())));
             } catch (CertificateException e) {
-                LOGGER.error("CERT READ from Header:" + e.getMessage(), e);
+                log.error("CERT READ from Header:" + e.getMessage(), e);
                 // maybe not an error, try the SSLSession
             }
         }

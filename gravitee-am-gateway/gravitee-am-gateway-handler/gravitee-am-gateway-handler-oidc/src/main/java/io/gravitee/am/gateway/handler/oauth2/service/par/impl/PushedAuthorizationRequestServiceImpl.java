@@ -44,8 +44,6 @@ import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
@@ -58,13 +56,14 @@ import java.util.List;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizationRequestService {
-    private static Logger LOGGER = LoggerFactory.getLogger(PushedAuthorizationRequestServiceImpl.class);
 
     /**
      * Validity in millis for the request_uri
@@ -173,7 +172,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
         try {
             return JWTParser.parse(par.getParameters().getFirst(Parameters.CLIENT_ASSERTION)).getJWTClaimsSet().getSubject();
         } catch (ParseException e) {
-            LOGGER.warn("Unable to parse the Client Assertion to extract the sub claim");
+            log.warn("Unable to parse the Client Assertion to extract the sub claim");
             return null;
         }
     }
@@ -184,7 +183,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
                     if (ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.debug("JWT invalid for the request parameter", ex);
+                    log.debug("JWT invalid for the request parameter", ex);
                     return Single.error(new InvalidRequestObjectException());
                 })
                 .map(jwt -> checkRequestObjectClaims(jwt))
@@ -200,7 +199,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
             }
             return jwt;
         } catch (ParseException e) {
-            LOGGER.warn("request object received in PAR request is malformed: {}", e.getMessage());
+            log.warn("request object received in PAR request is malformed: {}", e.getMessage());
             throw new InvalidRequestObjectException();
         }
     }
@@ -268,7 +267,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
 
     @Override
     public Completable deleteRequestUri(String uriIdentifier) {
-        LOGGER.debug("Delete Pushed Authorization Request with id '{}'", uriIdentifier);
+        log.debug("Delete Pushed Authorization Request with id '{}'", uriIdentifier);
         if (StringUtils.isEmpty(uriIdentifier)) {
             // if the identifier is null or empty, return successful operation.
             return Completable.complete();

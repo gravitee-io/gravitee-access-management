@@ -19,7 +19,7 @@ import io.gravitee.am.repository.common.ExpiredDataSweeper.Target;
 import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.service.purge.ScheduledPurgeService;
 import io.gravitee.am.service.purge.ScheduledPurgeServiceFactory;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +30,7 @@ import java.util.List;
 import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.*;
 
 @Configuration
-@Slf4j
+@CustomLog
 public class GatewayPurgeServiceConfiguration {
     private static final List<Target> GATEWAY_PURGE_TARGETS = List.of(
             access_tokens,

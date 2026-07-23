@@ -25,24 +25,23 @@ import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ExtensionGrantPluginManager
         extends ProviderPluginManager<ExtensionGrant<?, ExtensionGrantProvider>, ExtensionGrantProvider, ExtensionGrantProviderConfiguration>
         implements AmPluginManager<ExtensionGrant<?, ExtensionGrantProvider>> {
 
-    private final Logger logger = LoggerFactory.getLogger(ExtensionGrantPluginManager.class);
     private final ConfigurationFactory<ExtensionGrantConfiguration> configurationFactory;
 
     public ExtensionGrantPluginManager(PluginContextFactory pluginContextFactory,
@@ -53,9 +52,9 @@ public class ExtensionGrantPluginManager
 
     @Override
     public ExtensionGrantProvider create(ExtensionGrantProviderConfiguration providerConfig) {
-        logger.debug("Looking for an extension grant provider for [{}]", providerConfig.getType());
+        log.debug("Looking for an extension grant provider for [{}]", providerConfig.getType());
         var extensionGrant = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No extension grant provider is registered for type {}", providerConfig.getType());
+            log.error("No extension grant provider is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No extension grant provider is registered for type " + providerConfig.getType());
         });
 

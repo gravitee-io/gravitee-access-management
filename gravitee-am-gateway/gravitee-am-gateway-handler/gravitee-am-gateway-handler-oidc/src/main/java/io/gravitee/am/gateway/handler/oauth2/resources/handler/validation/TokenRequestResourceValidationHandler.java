@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 /**
  * Handler for validating resource parameters in OAuth2 token requests according to RFC 8707.
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class TokenRequestResourceValidationHandler implements Handler<RoutingContext> {
 
 	private final ResourceValidationService resourceValidationService;

@@ -19,20 +19,20 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrant;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ExtensionGrantPluginHandler extends AmPluginHandler<ExtensionGrant<?, ?>> {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantPluginHandler.class);
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
     @Override

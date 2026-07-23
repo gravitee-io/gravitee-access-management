@@ -50,7 +50,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -63,7 +63,7 @@ import static java.util.Objects.isNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class LogoutEndpoint extends AbstractLogoutEndpoint {
     private final IdentityProviderManager identityProviderManager;
     private final CertificateManager certificateManager;

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.validation.impl;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -36,7 +36,7 @@ import java.util.Set;
  *
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component
 public class ResourceConsistencyValidationServiceImpl implements ResourceConsistencyValidationService {
 

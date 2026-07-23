@@ -45,8 +45,6 @@ import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.gateway.handler.manager.ComponentInitializer;
 import io.gravitee.common.component.LifecycleComponent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -59,14 +57,15 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SecurityDomainRouterFactory {
 
-    private final Logger logger = LoggerFactory.getLogger(SecurityDomainRouterFactory.class);
 
     @Autowired
     private ApplicationContext gatewayApplicationContext;
@@ -81,7 +80,7 @@ public class SecurityDomainRouterFactory {
             VertxSecurityDomainHandler handler = internalApplicationContext.getBean(VertxSecurityDomainHandler.class);
             return handler;
         } else {
-            logger.warn("Domain is disabled !");
+            log.warn("Domain is disabled !");
             return null;
         }
     }

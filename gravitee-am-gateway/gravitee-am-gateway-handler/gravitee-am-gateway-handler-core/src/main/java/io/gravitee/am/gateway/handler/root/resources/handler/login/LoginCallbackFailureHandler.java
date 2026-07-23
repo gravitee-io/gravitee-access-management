@@ -47,8 +47,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -72,14 +70,15 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginCallbackFailureHandler.class);
     private final Domain domain;
     private final AuthenticationFlowContextService authenticationFlowContextService;
     private final IdentityProviderManager identityProviderManager;
@@ -106,10 +105,10 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                     || throwable instanceof AbstractManagementException
                     || throwable instanceof AuthenticationException
                     || throwable instanceof PolicyChainException) {
-                logger.debug(throwable.getMessage(), throwable);
+                log.debug(throwable.getMessage(), throwable);
                 redirect(routingContext, throwable);
             } else {
-                logger.error(throwable.getMessage(), throwable);
+                log.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {
                     routingContext
                             .response()
@@ -192,7 +191,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
             }
 
         } catch (Exception ex) {
-            logger.error("An error has occurred while redirecting to the login page", ex);
+            log.error("An error has occurred while redirecting to the login page", ex);
             context
                     .response()
                     .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
@@ -204,7 +203,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         if (clearAuthFlow) {
             // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
             authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                    .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                    .doOnError((error) -> log.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
         }
         context.userContext().clear();

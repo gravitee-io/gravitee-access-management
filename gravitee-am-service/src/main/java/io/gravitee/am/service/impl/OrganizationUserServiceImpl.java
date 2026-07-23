@@ -56,7 +56,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -79,7 +79,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayN
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 public class OrganizationUserServiceImpl implements OrganizationUserService {
     private static final String CREATE_USER_ERROR = "An error occurs while trying to create a user";
 

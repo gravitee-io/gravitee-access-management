@@ -26,16 +26,15 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SendEmailPolicy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SendEmailPolicy.class);
 
     private SendEmailPolicyConfiguration configuration;
 
@@ -45,7 +44,7 @@ public class SendEmailPolicy {
 
     @OnRequest
     public void onRequest(Request request, Response response, ExecutionContext context, PolicyChain policyChain) {
-        LOGGER.debug("Start SendEmail.onRequest");
+        log.debug("Start SendEmail.onRequest");
         Completable.defer(() -> {
             try {
                 EmailService emailService = context.getComponent(EmailService.class);
@@ -64,7 +63,7 @@ public class SendEmailPolicy {
                 return Completable.error(ex);
             }
         })
-        .doOnError(e -> LOGGER.error("An error has occurred when sending an email via the SendEmail policy", e))
+        .doOnError(e -> log.error("An error has occurred when sending an email via the SendEmail policy", e))
         .subscribeOn(Schedulers.io())
         .subscribe();
 

@@ -26,7 +26,7 @@ import io.gravitee.am.repository.provider.ConnectionProvider;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ import static io.gravitee.am.repository.Scope.RATE_LIMIT;
  */
 // Need to name this component to end with Repository on in order to make it injectable
 // as the Repository plugin only scan beanName ending with Repository or TransactionManager
-@Slf4j
+@CustomLog
 @Component("ConnectionProviderFromRepository")
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 

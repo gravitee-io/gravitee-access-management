@@ -38,7 +38,7 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -56,7 +56,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * signature verified against the client's JWKS (private_key_jwt) or a shared
  * secret (client_secret_jwt).
  */
-@Slf4j
+@CustomLog
 public class JwtBearerClientAssertionValidator implements ClientAssertionValidator {
 
     private final ClientLookupService clientLookupService;

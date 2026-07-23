@@ -23,7 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 public class LoginAttemptManagementServiceImpl implements LoginAttemptManagementService {
 
     @Autowired

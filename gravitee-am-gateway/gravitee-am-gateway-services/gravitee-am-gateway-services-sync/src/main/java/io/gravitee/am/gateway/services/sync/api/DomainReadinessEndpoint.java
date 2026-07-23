@@ -28,7 +28,7 @@ import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import io.gravitee.node.management.http.endpoint.ManagementEndpoint;
@@ -38,7 +38,7 @@ import java.util.concurrent.CompletionStage;
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class DomainReadinessEndpoint implements ManagementEndpoint, Probe {
 
     @Autowired

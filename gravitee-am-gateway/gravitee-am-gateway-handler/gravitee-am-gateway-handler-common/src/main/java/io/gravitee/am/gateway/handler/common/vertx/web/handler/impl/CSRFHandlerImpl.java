@@ -31,7 +31,7 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.CSRFHandler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -50,7 +50,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class CSRFHandlerImpl implements CSRFHandler {
 
     private static final Base64.Encoder BASE64 = Base64.getMimeEncoder();

@@ -17,7 +17,7 @@ package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.el.TemplateEngine;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_
 import static java.util.function.Predicate.not;
 
 abstract class IdentityProviderArrayPropertyMapper {
-    public static final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderArrayPropertyMapper.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(IdentityProviderArrayPropertyMapper.class);
 
     protected Map<String, String[]> properties;
 

@@ -19,8 +19,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xframe.NoXFr
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xframe.XFrameHandlerImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.webprotection.XFrameSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -28,14 +26,15 @@ import org.springframework.core.env.Environment;
 import java.util.Locale;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class XFrameHandlerFactory implements FactoryBean<XFrameHandler> {
 
-    private static final Logger logger = LoggerFactory.getLogger(XFrameHandlerFactory.class);
     private static final String HTTP_XFRAME_ACTION = "http.xframe.action";
 
     @Autowired
@@ -61,7 +60,7 @@ public class XFrameHandlerFactory implements FactoryBean<XFrameHandler> {
     }
 
     private XFrameHandler createFromEnvironment() {
-        logger.debug("Using gravitee.yml X-Frame-Options configuration for domain: {}", domain.getName());
+        log.debug("Using gravitee.yml X-Frame-Options configuration for domain: {}", domain.getName());
         var action = environment.getProperty(HTTP_XFRAME_ACTION, String.class, "DENY");
         if (isNullOrEmpty(action)) {
             return new NoXFrameHandler();

@@ -35,8 +35,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -44,15 +42,16 @@ import org.springframework.stereotype.Component;
 import java.text.Normalizer;
 import java.util.Date;
 import java.util.regex.Pattern;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class TagServiceImpl implements TagService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(TagServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -66,10 +65,10 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public Maybe<Tag> findById(String id, String organizationId) {
-        LOGGER.debug("Find tag by ID: {}", id);
+        log.debug("Find tag by ID: {}", id);
         return tagRepository.findById(id, organizationId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a tag using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a tag using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a tag using its ID: %s", id), ex));
                 });
@@ -77,17 +76,17 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
-        LOGGER.debug("Find all tags");
+        log.debug("Find all tags");
         return tagRepository.findAll(organizationId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all tags", ex);
+                    log.error("An error occurs while trying to find all tags", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all tags", ex));
                 });
     }
 
     @Override
     public Single<Tag> create(NewTag newTag, String organizationId, User principal) {
-        LOGGER.debug("Create a new tag: {}", newTag);
+        log.debug("Create a new tag: {}", newTag);
         String id = humanReadableId(newTag.getName());
 
         return tagRepository.findById(id, organizationId)
@@ -111,7 +110,7 @@ public class TagServiceImpl implements TagService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a tag", ex);
+                    log.error("An error occurs while trying to create a tag", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a tag", ex));
                 })
                 .doOnSuccess(tag -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).tag(tag).principal(principal).type(EventType.TAG_CREATED)))
@@ -120,7 +119,7 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public Single<Tag> update(String tagId, String organizationId, UpdateTag updateTag, User principal) {
-        LOGGER.debug("Update an existing tag: {}", updateTag);
+        log.debug("Update an existing tag: {}", updateTag);
         return tagRepository.findById(tagId, organizationId)
                 .switchIfEmpty(Single.error(new TagNotFoundException(tagId)))
                 .flatMap(oldTag -> {
@@ -141,14 +140,14 @@ public class TagServiceImpl implements TagService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a tag", ex);
+                    log.error("An error occurs while trying to update a tag", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a tag", ex));
                 });
     }
 
     @Override
     public Completable delete(String tagId, String organizationId, User principal) {
-        LOGGER.debug("Delete tag {}", tagId);
+        log.debug("Delete tag {}", tagId);
         return tagRepository.findById(tagId, organizationId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
                 .flatMapCompletable(tag -> removeTagsFromDomains(tagId)
@@ -168,7 +167,7 @@ public class TagServiceImpl implements TagService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete tag {}", tagId, ex);
+                    log.error("An error occurs while trying to delete tag {}", tagId, ex);
                     return Completable.error(new TechnicalManagementException("An error occurs while trying to delete tag " + tagId, ex));
                 });
     }
@@ -180,8 +179,8 @@ public class TagServiceImpl implements TagService {
                 .flatMapCompletable(domain -> {
                     domain.getTags().remove(tagId);
                     return Completable.fromSingle(domainService.update(domain.getId(), domain)
-                            .doOnSuccess(d -> LOGGER.info("Removed tag {} from domain {}", tagId, domain.getName()))
-                            .doOnError(ex -> LOGGER.error("An error occurs while trying to delete tag {} from domain {}", tagId, domain.getName())));
+                            .doOnSuccess(d -> log.info("Removed tag {} from domain {}", tagId, domain.getName()))
+                            .doOnError(ex -> log.error("An error occurs while trying to delete tag {} from domain {}", tagId, domain.getName())));
                 });
     }
 

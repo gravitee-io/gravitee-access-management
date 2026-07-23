@@ -18,9 +18,9 @@ package io.gravitee.am.repository.redis;
 import io.gravitee.am.repository.redis.ratelimit.RateLimitRepositoryConfiguration;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.Scope;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
-@Slf4j
+@CustomLog
 public class RedisRepositoryProvider implements RepositoryProvider {
 
     @Override

@@ -32,8 +32,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import java.time.Instant;
@@ -43,14 +41,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 abstract class BaseIntrospectionTokenService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BaseIntrospectionTokenService.class);
     static final String LEGACY_RFC8707_ENABLED = "legacy.rfc8707.enabled";
     static final String OFFLINE_VERIFICATION_TIMER_SECONDS_KEY = "handlers.oauth2.introspect.offlineVerificationTimerSeconds";
 
@@ -100,26 +99,26 @@ abstract class BaseIntrospectionTokenService {
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof JWTException) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.warn("An error occurs while decoding JWT access token : {}", token, ex);
+                        if (log.isDebugEnabled()) {
+                            log.warn("An error occurs while decoding JWT access token : {}", token, ex);
                         } else {
-                            LOGGER.warn("An error occurs while decoding JWT access token", ex);
+                            log.warn("An error occurs while decoding JWT access token", ex);
                         }
                         return Maybe.error(new InvalidTokenException(ex.getMessage(), ex));
                     } else if (ex instanceof InvalidTokenException invalidTokenException) {
                         String details = invalidTokenException.getDetails();
                         JWT jwt = invalidTokenException.getJwt();
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.warn("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
+                        if (log.isDebugEnabled()) {
+                            log.warn("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
                                     token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
                         } else {
-                            LOGGER.warn("An error occurs while checking JWT access token validity, msg={}", invalidTokenException.getMessage());
+                            log.warn("An error occurs while checking JWT access token validity, msg={}", invalidTokenException.getMessage());
                         }
                     } else {
-                        if ( LOGGER.isDebugEnabled()) {
-                            LOGGER.warn("An unexpected error occurred while introspecting JWT access token: {}", token, ex);
+                        if ( log.isDebugEnabled()) {
+                            log.warn("An unexpected error occurred while introspecting JWT access token: {}", token, ex);
                         } else {
-                            LOGGER.warn("An unexpected error occurred while introspecting JWT access token, msg={}", ex.getMessage());
+                            log.warn("An unexpected error occurred while introspecting JWT access token, msg={}", ex.getMessage());
                         }
                     }
                     return Maybe.error(ex);
@@ -143,7 +142,7 @@ abstract class BaseIntrospectionTokenService {
         return clientLookupService.findByDomainAndClientId(domain, audience)
                 .onErrorResumeNext(err -> {
                     if (err instanceof InvalidClientMetadataException) {
-                        LOGGER.debug("Introspection: audience [{}] could not be resolved as a client ({}); falling back to protected-resource validation",
+                        log.debug("Introspection: audience [{}] could not be resolved as a client ({}); falling back to protected-resource validation",
                                 audience, err.getMessage());
                         return Maybe.empty();
                     }

@@ -21,7 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.webprotection.CspSettings;
 import io.gravitee.am.model.webprotection.WebProtectionResolution;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -40,7 +40,7 @@ import static java.util.Objects.isNull;
  * @author GraviteeSource Team
  */
 public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
-    public final Logger logger = LoggerFactory.getLogger(this.getClass());
+    public final Logger logger = NodeLoggerFactory.getLogger(this.getClass());
 
     private static final String HTTP_CSP_ENABLED = "http.csp.enabled";
     private static final String HTTP_CSP_REPORT_ONLY = "http.csp.reportOnly";

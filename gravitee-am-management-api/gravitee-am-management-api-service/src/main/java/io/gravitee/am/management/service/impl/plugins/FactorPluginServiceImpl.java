@@ -23,20 +23,19 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class FactorPluginServiceImpl extends AbstractPluginService implements FactorPluginService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(FactorPluginServiceImpl.class);
 
     private FactorPluginManager factorPluginManager;
 
@@ -47,7 +46,7 @@ public class FactorPluginServiceImpl extends AbstractPluginService implements Fa
 
     @Override
     public Single<List<FactorPlugin>> findAll() {
-        LOGGER.debug("List all factor plugins");
+        log.debug("List all factor plugins");
         return Observable.fromIterable(factorPluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
@@ -55,7 +54,7 @@ public class FactorPluginServiceImpl extends AbstractPluginService implements Fa
 
     @Override
     public Maybe<FactorPlugin> findById(String factorId) {
-        LOGGER.debug("Find factor plugin by ID: {}", factorId);
+        log.debug("Find factor plugin by ID: {}", factorId);
         return Maybe.create(emitter -> {
             try {
                 Plugin authenticator = factorPluginManager.findById(factorId);
@@ -65,7 +64,7 @@ public class FactorPluginServiceImpl extends AbstractPluginService implements Fa
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get factor plugin : {}", factorId, ex);
+                log.error("An error occurs while trying to get factor plugin : {}", factorId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get factor plugin : " + factorId, ex));
             }
         });
@@ -73,7 +72,7 @@ public class FactorPluginServiceImpl extends AbstractPluginService implements Fa
 
     @Override
     public Maybe<String> getSchema(String factorId) {
-        LOGGER.debug("Find factor plugin schema by ID: {}", factorId);
+        log.debug("Find factor plugin schema by ID: {}", factorId);
         return Maybe.create(emitter -> {
             try {
                 String schema = factorPluginManager.getSchema(factorId);
@@ -83,7 +82,7 @@ public class FactorPluginServiceImpl extends AbstractPluginService implements Fa
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for factor plugin {}", factorId, e);
+                log.error("An error occurs while trying to get schema for factor plugin {}", factorId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for factor plugin " + factorId, e));
             }
         });

@@ -17,30 +17,29 @@ package io.gravitee.am.plugins.idp.core.impl;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class IdentityProviderRoleMapperFactoryImpl implements IdentityProviderRoleMapperFactory {
 
-    private final Logger logger = LoggerFactory.getLogger(IdentityProviderRoleMapperFactoryImpl.class);
 
     @Override
     public <T extends IdentityProviderRoleMapper> T create(Class<T> clazz, Map<String, String[]> roles) {
         if (clazz != null) {
-            logger.debug("Create a new instance of identity provider roles for class: {}", clazz.getName());
+            log.debug("Create a new instance of identity provider roles for class: {}", clazz.getName());
             try {
                 T identityProviderRoleMapper = clazz.newInstance();
                 identityProviderRoleMapper.setRoles(roles);
 
                 return identityProviderRoleMapper;
             } catch (InstantiationException | IllegalAccessException ex) {
-                logger.error("Unable to create an identity provider roles", ex);
+                log.error("Unable to create an identity provider roles", ex);
             }
         }
         return null;

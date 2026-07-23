@@ -26,8 +26,6 @@ import jakarta.mail.internet.MimeMessage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.MailException;
@@ -44,6 +42,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * Utility class created to avoid duplication between {@link io.gravitee.am.service.impl.EmailServiceImpl} and the SmtpResourceProvider
@@ -51,9 +50,9 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EmailSender {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
 
     private final JavaMailSender mailSender;
 
@@ -69,7 +68,7 @@ public class EmailSender {
             final MimeMessageHelper mailMessage = prepareMimeMessage(email);
             mailSender.send(mailMessage.getMimeMessage());
         } catch (final Exception ex) {
-            LOGGER.error("Error while creating email", ex);
+            log.error("Error while creating email", ex);
             throw new TechnicalManagementException("Error while creating email", ex);
         }
     }
@@ -93,7 +92,7 @@ public class EmailSender {
                     try {
                         return ((MimeMessage)mimeMsg).getRecipients(Message.RecipientType.TO)[0];
                     } catch (MessagingException e) {
-                        LOGGER.warn("Unable to extract emailAddress from the exception, ignore it in the batch audits", e);
+                        log.warn("Unable to extract emailAddress from the exception, ignore it in the batch audits", e);
                         return null;
                     }
                 })
@@ -104,7 +103,7 @@ public class EmailSender {
                 throw new BatchEmailException("Error while creating emails", extractEmailAddress(emails));
             }
         } catch (final Exception ex) {
-            LOGGER.error("Error while creating email", ex);
+            log.error("Error while creating email", ex);
             throw new BatchEmailException("Error while creating email", extractEmailAddress(emails));
         }
     }
@@ -131,7 +130,7 @@ public class EmailSender {
         mailMessage.setSubject(subject);
 
         final String html = addResourcesInMessage(mailMessage, content);
-        LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
+        log.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
         return mailMessage;
     }
 
@@ -165,7 +164,7 @@ public class EmailSender {
                     final FileSystemResource templateResource = new FileSystemResource(file);
                     mailMessage.addInline(res, templateResource, getContentTypeByFileName(res));
                 } else {
-                    LOGGER.warn("Resource path invalid : {}", file.getPath());
+                    log.warn("Resource path invalid : {}", file.getPath());
                 }
             }
         }

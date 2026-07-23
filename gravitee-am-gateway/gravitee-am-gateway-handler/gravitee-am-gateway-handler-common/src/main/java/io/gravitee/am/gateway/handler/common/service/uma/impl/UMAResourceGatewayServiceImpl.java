@@ -39,7 +39,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.net.MalformedURLException;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class UMAResourceGatewayServiceImpl implements UMAResourceGatewayService, InitializingBean {
 
     private final Domain domain;

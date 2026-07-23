@@ -23,20 +23,19 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Islem TRIKI (islem.triki at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultIdentityProviderUpgrader.class);
 
     private final IdentityProviderService identityProviderService;
     private final DefaultIdentityProviderService defaultIdentityProviderService;
@@ -54,7 +53,7 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
         return Completable.fromPublisher(identityProviderService.findAll()
                 .filter(IdentityProvider::isSystem)
                 .flatMapSingle(this::updateDefaultIdp)
-                .doOnNext(idp -> logger.info("updated IDP: id={}", idp.getId())));
+                .doOnNext(idp -> log.info("updated IDP: id={}", idp.getId())));
 
     }
 

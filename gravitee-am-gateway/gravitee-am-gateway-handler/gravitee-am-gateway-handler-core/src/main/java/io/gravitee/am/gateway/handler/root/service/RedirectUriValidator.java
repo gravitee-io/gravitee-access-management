@@ -22,7 +22,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.oidc.Client;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -39,7 +39,7 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  * @author GraviteeSource Team
  */
 
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class RedirectUriValidator {
     private final CheckMethod checkMethod;

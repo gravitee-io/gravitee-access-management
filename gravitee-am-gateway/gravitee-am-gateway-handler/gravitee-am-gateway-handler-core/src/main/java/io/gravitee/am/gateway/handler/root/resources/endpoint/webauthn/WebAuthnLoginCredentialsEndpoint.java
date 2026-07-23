@@ -25,8 +25,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * This endpoint returns the WebAuthn credential request options for the current user.
@@ -40,9 +39,9 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginCredentialsEndpoint.class);
     private final WebAuthn webAuthn;
 
     public WebAuthnLoginCredentialsEndpoint(WebAuthn webAuthn) {
@@ -69,14 +68,14 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
 
             // input validation
             if (isEmptyString(webauthnLogin, "name")) {
-                logger.debug("Request missing username field");
+                log.debug("Request missing username field");
                 ctx.fail(400);
                 return;
             }
 
             // session validation
             if (session == null) {
-                logger.warn("No session or session handler is missing.");
+                log.warn("No session or session handler is missing.");
                 ctx.fail(500);
                 return;
             }
@@ -96,15 +95,15 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
                                         .end(Json.encodePrettily(entries));
                             },
                             throwable -> {
-                                logger.error("Unexpected exception", throwable);
+                                log.error("Unexpected exception", throwable);
                                 ctx.fail(throwable.getCause());
                             }
                     );
         } catch (IllegalArgumentException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(400);
         } catch (RuntimeException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(e);
         }
     }

@@ -25,22 +25,21 @@ import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ReporterPluginManager
         extends ProviderPluginManager<Reporter<?, AuditReporter>, AuditReporter, ReporterProviderConfiguration>
         implements AmPluginManager<Reporter<?, AuditReporter>> {
 
-    private final Logger logger = LoggerFactory.getLogger(ReporterPluginManager.class);
 
     private final ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory;
     private final WriteStreamRegistry writeStreamRegistry;
@@ -57,9 +56,9 @@ public class ReporterPluginManager
 
     @Override
     public AuditReporter create(ReporterProviderConfiguration providerConfig) {
-        logger.debug("Looking for an reporter provider for [{}]", providerConfig.getType());
+        log.debug("Looking for an reporter provider for [{}]", providerConfig.getType());
         Reporter<?, AuditReporter> reporter = ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No reporter provider is registered for type {}", providerConfig.getType());
+            log.error("No reporter provider is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No reporter provider is registered for type " + providerConfig.getType());
         });
 

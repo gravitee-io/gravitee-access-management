@@ -32,21 +32,20 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static java.util.function.Predicate.not;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterVerifyRequestParseHandler.class);
     public static final String REGISTRATION_VERIFY_LINK_EXPIRED = "registration_verify_link_expired";
     public static final String UNEXPECTED_ERROR = "unexpected_error";
     private final Domain domain;
@@ -66,7 +65,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
                 }
                 context.put(ConstantKeys.ERROR_PARAM_KEY, errorKey);
                 if (UNEXPECTED_ERROR.equals(errorKey)) {
-                    LOGGER.error("An unexpected error has occurred", handler.cause());
+                    log.error("An unexpected error has occurred", handler.cause());
                 }
             }
 

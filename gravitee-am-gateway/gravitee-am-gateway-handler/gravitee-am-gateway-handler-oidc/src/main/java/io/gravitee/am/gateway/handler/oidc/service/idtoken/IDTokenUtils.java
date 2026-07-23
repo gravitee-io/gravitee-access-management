@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.service.idtoken;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.Base64;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class IDTokenUtils {
 

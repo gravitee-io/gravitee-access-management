@@ -39,7 +39,7 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -58,7 +58,7 @@ import java.util.function.BiFunction;
 @AllArgsConstructor
 public class ScopeApprovalServiceImpl implements ScopeApprovalService {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(ScopeApprovalServiceImpl.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(ScopeApprovalServiceImpl.class);
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;

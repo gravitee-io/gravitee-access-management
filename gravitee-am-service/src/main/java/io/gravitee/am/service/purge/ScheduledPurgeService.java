@@ -21,7 +21,7 @@ import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 
@@ -31,7 +31,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class ScheduledPurgeService extends AbstractService implements Runnable {
     private final AtomicLong counter = new AtomicLong(0);
 

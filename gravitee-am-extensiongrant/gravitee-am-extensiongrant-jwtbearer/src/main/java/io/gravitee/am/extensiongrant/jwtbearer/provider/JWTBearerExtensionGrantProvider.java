@@ -42,9 +42,7 @@ import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
@@ -80,10 +78,9 @@ import static java.util.Objects.nonNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
     private static final String ASSERTION_QUERY_PARAM = "assertion";
     static final Pattern SSH_PUB_KEY = Pattern.compile("((ecdsa)(.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?");
     private static final int OPENSSH_KEY_HEADER_LENGTH = 39;
@@ -128,10 +125,10 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
                 return createUser(claimsSet);
             } catch (MalformedJWTException | ExpiredJWTException | PrematureJWTException | SignatureException |
                      com.nimbusds.jwt.proc.ExpiredJWTException ex) {
-                LOGGER.debug(ex.getMessage(), ex.getCause());
+                log.debug(ex.getMessage(), ex.getCause());
                 throw new InvalidGrantException(ex.getMessage(), ex);
             } catch (Exception ex) {
-                LOGGER.error(ex.getMessage(), ex.getCause());
+                log.error(ex.getMessage(), ex.getCause());
                 throw new InvalidGrantException(ex.getMessage(), ex);
             }
         })
@@ -173,11 +170,11 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
         try {
             signatureAlgorithm = SignatureAlgorithm.valueOf(extractAlgorithmFromJWT(assertion));
             if(!Arrays.asList(ALLOWED_SIGNATURE_ALGORITHMS).contains(signatureAlgorithm)) {
-                LOGGER.warn("Algorithm [{}] is not supported. List of Supported Algorithms: {}", signatureAlgorithm, Arrays.asList(ALLOWED_SIGNATURE_ALGORITHMS));
+                log.warn("Algorithm [{}] is not supported. List of Supported Algorithms: {}", signatureAlgorithm, Arrays.asList(ALLOWED_SIGNATURE_ALGORITHMS));
                 throw new InvalidGrantException("Algorithm [" + signatureAlgorithm + "] is not supported");
             }
         }catch (Exception e){
-            LOGGER.error("Error extracting signature algorithm", e);
+            log.error("Error extracting signature algorithm", e);
             throw new InvalidGrantException("Error extracting signature algorithm");
         }
 
@@ -237,7 +234,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
         if (matcher.find()) {
             return matcher.group(1);
         } else {
-            LOGGER.warn("Failed to extract algorithm from JWT header");
+            log.warn("Failed to extract algorithm from JWT header");
             throw new IllegalArgumentException("Algorithm not found in JWT header");
         }
     }

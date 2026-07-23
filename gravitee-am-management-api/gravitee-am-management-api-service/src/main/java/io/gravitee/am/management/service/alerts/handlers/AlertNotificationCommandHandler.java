@@ -18,25 +18,24 @@ package io.gravitee.am.management.service.alerts.handlers;
 import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.alert.api.trigger.command.AlertNotificationCommand;
 import io.gravitee.alert.api.trigger.command.Command;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class AlertNotificationCommandHandler implements TriggerProvider.OnCommandListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertNotificationCommandHandler.class);
 
     @Override
     public void doOnCommand(Command command) {
         if (command instanceof AlertNotificationCommand alertCommand) {
-            LOGGER.info("Received a notification from alert engine: {}", alertCommand.getMessage());
+            log.info("Received a notification from alert engine: {}", alertCommand.getMessage());
         } else {
-            LOGGER.warn("Unknown alert command: {}", command);
+            log.warn("Unknown alert command: {}", command);
         }
     }
 }

@@ -33,8 +33,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -45,14 +43,15 @@ import java.util.List;
 import static java.lang.Boolean.FALSE;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.isNull;
+import lombok.CustomLog;
 
 /**
  * Service providing password history.
  */
 @Component
+@CustomLog
 public class PasswordHistoryService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PasswordHistoryService.class);
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
     private final DataPlaneRegistry dataPlaneRegistry;
@@ -76,9 +75,9 @@ public class PasswordHistoryService {
      * @return Single containing {@link PasswordHistory} or an error if the password was already in the history.
      */
     public Maybe<PasswordHistory> addPasswordToHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, User principal, PasswordPolicy passwordPolicy) {
-        LOGGER.debug("Adding password history entry for user {}", user);
+        log.debug("Adding password history entry for user {}", user);
         if (rawPassword == null || passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
-            LOGGER.debug("Password history not added for user {} due to null password or settings, or because paswword history is disabled.", user.getUsername());
+            log.debug("Password history not added for user {} due to null password or settings, or because paswword history is disabled.", user.getUsername());
             return Maybe.empty();
         }
         final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
@@ -119,7 +118,7 @@ public class PasswordHistoryService {
      * @return Single containing a {@link Boolean} {@code true} if the password is already present the allotted number of previous passwords.
      */
     public Single<Boolean> passwordAlreadyUsed(Domain domain, String userId, String password, PasswordPolicy passwordPolicy) {
-        LOGGER.debug("Checking password history for user {}", userId);
+        log.debug("Checking password history for user {}", userId);
         if (passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
             return Single.just(false);
         }
@@ -148,11 +147,11 @@ public class PasswordHistoryService {
      * @return Flowable containing password histories, if any, for the referenced entity.
      */
     public Flowable<PasswordHistory> findByReference(Domain domain) {
-        LOGGER.debug("Find password histories by domain id {}", domain.getId());
+        log.debug("Find password histories by domain id {}", domain.getId());
         final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
         return repository.findByReference(domain.asReference())
                          .onErrorResumeNext(ex -> {
-                             LOGGER.error("Error finding password histories by domain id {}", domain.getId(), ex);
+                             log.error("Error finding password histories by domain id {}", domain.getId(), ex);
                              return Flowable.error(new TechnicalManagementException(
                                      String.format("Error finding password histories by domain id %s", domain.getId()), ex));
                          });

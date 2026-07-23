@@ -24,23 +24,22 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class EventServiceImpl implements EventService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(EventServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -64,7 +63,7 @@ public class EventServiceImpl implements EventService {
                         return event;
                     })
                     .switchIfEmpty(Single.fromCallable(() -> {
-                        LOGGER.warn("Domain not found for referenceId: {}", event.getPayload().getReferenceId());
+                        log.warn("Domain not found for referenceId: {}", event.getPayload().getReferenceId());
                         return event;
                     })).flatMap(this::eventCreation);
         } else {
@@ -80,7 +79,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Single<Event> eventCreation(Event event) {
-        LOGGER.debug("Create a new event {}", event);
+        log.debug("Create a new event {}", event);
 
         event.setCreatedAt(new Date());
         event.setUpdatedAt(event.getCreatedAt());
@@ -90,7 +89,7 @@ public class EventServiceImpl implements EventService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create an event", ex);
+                    log.error("An error occurs while trying to create an event", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an event", ex));
                 });
     }
@@ -98,14 +97,14 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Single<List<Event>> findByTimeFrame(long from, long to) {
-        LOGGER.debug("Find events with time frame {} and {}", from, to);
+        log.debug("Find events with time frame {} and {}", from, to);
         return eventRepository.findByTimeFrame(from, to)
                 .toList()
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to find events by time frame", ex);
+                    log.error("An error occurs while trying to find events by time frame", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find events by time frame", ex));
                 });
     }

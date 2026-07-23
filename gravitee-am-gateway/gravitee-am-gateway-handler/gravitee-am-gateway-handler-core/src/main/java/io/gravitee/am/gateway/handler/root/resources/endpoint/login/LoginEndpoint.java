@@ -34,8 +34,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -47,13 +45,14 @@ import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.ge
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
-    private static final Logger logger = LoggerFactory.getLogger(LoginEndpoint.class);
     public static final String REMEMBER_ME_ON = "on";
 
     private final Domain domain;
@@ -159,7 +158,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
             final Map<String, Object> data = generateData(routingContext, domain, client);
             data.putAll(botDetectionManager.getTemplateVariables(domain, client));
             data.putAll(deviceIdentifierManager.getTemplateVariables(client));
-            renderPage(routingContext, data, client, logger, "Unable to render login page");
+            renderPage(routingContext, data, client, log, "Unable to render login page");
         }
     }
 

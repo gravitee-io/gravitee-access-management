@@ -34,22 +34,21 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class OrganizationServiceImpl implements OrganizationService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationServiceImpl.class);
 
     private final OrganizationRepository organizationRepository;
 
@@ -75,7 +74,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public Single<Organization> findById(String id) {
-        LOGGER.debug("Find organization by id: {}", id);
+        log.debug("Find organization by id: {}", id);
         return organizationRepository.findById(id)
                 .switchIfEmpty(Single.error(new OrganizationNotFoundException(id)));
     }

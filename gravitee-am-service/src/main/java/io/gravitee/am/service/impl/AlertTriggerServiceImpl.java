@@ -36,21 +36,20 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class AlertTriggerServiceImpl implements io.gravitee.am.service.AlertTriggerService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertTriggerServiceImpl.class);
 
     private final AlertTriggerRepository alertTriggerRepository;
     private final AuditService auditService;
@@ -70,7 +69,7 @@ public class AlertTriggerServiceImpl implements io.gravitee.am.service.AlertTrig
      */
     @Override
     public Single<AlertTrigger> getById(String id) {
-        LOGGER.debug("Find alert trigger by id: {}", id);
+        log.debug("Find alert trigger by id: {}", id);
 
         return alertTriggerRepository.findById(id)
                 .switchIfEmpty(Single.error(new AlertTriggerNotFoundException(id)));
@@ -87,7 +86,7 @@ public class AlertTriggerServiceImpl implements io.gravitee.am.service.AlertTrig
      */
     @Override
     public Single<AlertTrigger> getById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("Find alert trigger by id: {}", id);
+        log.debug("Find alert trigger by id: {}", id);
 
         return alertTriggerRepository.findById(id)
                 .filter(alertTrigger -> alertTrigger.getReferenceType().equals(referenceType) && alertTrigger.getReferenceId().equals(referenceId))
@@ -103,7 +102,7 @@ public class AlertTriggerServiceImpl implements io.gravitee.am.service.AlertTrig
      */
     @Override
     public Flowable<AlertTrigger> findByDomainAndCriteria(String domainId, AlertTriggerCriteria criteria) {
-        LOGGER.debug("Find alert trigger by domain {} and criteria: {}", domainId, criteria);
+        log.debug("Find alert trigger by domain {} and criteria: {}", domainId, criteria);
 
         return alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, domainId, criteria);
     }
@@ -120,7 +119,7 @@ public class AlertTriggerServiceImpl implements io.gravitee.am.service.AlertTrig
      */
     @Override
     public Single<AlertTrigger> createOrUpdate(ReferenceType referenceType, String referenceId, PatchAlertTrigger patchAlertTrigger, User byUser) {
-        LOGGER.debug("Create or update alert trigger for {} {}: {}", referenceType, referenceId, patchAlertTrigger);
+        log.debug("Create or update alert trigger for {} {}: {}", referenceType, referenceId, patchAlertTrigger);
 
         final AlertTriggerCriteria criteria = new AlertTriggerCriteria();
         criteria.setType(patchAlertTrigger.getType());

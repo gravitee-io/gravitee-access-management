@@ -33,8 +33,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +43,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CON
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
+import lombok.CustomLog;
 
 /**
  * Once the End-User is authenticated, the Authorization Server MUST obtain an authorization decision before releasing information to the Relying Party.
@@ -55,9 +54,9 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationRequestEndUserConsentHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestEndUserConsentHandler.class);
     private static final String CONSENT_PAGE_PATH = "/oauth/consent";
 
     private final UserConsentService userConsentService;
@@ -177,7 +176,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
                     .setStatusCode(302)
                     .end();
         } catch (Exception e) {
-            logger.warn("Failed to decode consent redirect url", e);
+            log.warn("Failed to decode consent redirect url", e);
             request.response()
                     .putHeader(HttpHeaders.LOCATION, consentPageURL)
                     .setStatusCode(302)

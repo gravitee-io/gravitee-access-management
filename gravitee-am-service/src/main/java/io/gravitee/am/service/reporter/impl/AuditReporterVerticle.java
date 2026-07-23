@@ -22,7 +22,7 @@ import io.gravitee.node.reporter.vertx.eventbus.ReportableMessageCodec;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.rxjava3.core.AbstractVerticle;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuditReporterVerticle extends AbstractVerticle implements AuditReporterService {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(AuditReporterVerticle.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(AuditReporterVerticle.class);
     public static final String EVENT_BUS_ADDRESS = "node:audits";
     public static final String EVENT_BUS_ADDRESS_PREFIX = "node:audits.";
 

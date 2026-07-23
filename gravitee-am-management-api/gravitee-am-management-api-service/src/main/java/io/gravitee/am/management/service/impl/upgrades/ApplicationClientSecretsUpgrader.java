@@ -27,8 +27,6 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -39,18 +37,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_CLIENT_SECRETS_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "client_secrets_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Application client secrets can't be upgraded, other instance may process them or an upgrader has failed previously";
 
-    private final Logger logger = LoggerFactory.getLogger(ApplicationClientSecretsUpgrader.class);
 
     private final ApplicationService applicationService;
 
@@ -81,7 +80,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
         return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
-                    logger.debug("Process application '{}' for client secret migration", app.getId());
+                    log.debug("Process application '{}' for client secret migration", app.getId());
 
                     final var existingSecretSettings = app.getSecretSettings();
                     final var maybeExistingSettings = Optional.ofNullable(existingSecretSettings)
@@ -89,7 +88,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
 
                     final ApplicationSecretSettings selectedSettings = maybeExistingSettings.orElseGet(() -> {
                         var defaultSecretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
-                        logger.debug("Create default application secret settings for application '{}' ({})", app.getId(), defaultSecretSettings.getId());
+                        log.debug("Create default application secret settings for application '{}' ({})", app.getId(), defaultSecretSettings.getId());
                         app.setSecretSettings(List.of(defaultSecretSettings));
                         return defaultSecretSettings;
                     });
@@ -108,7 +107,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
 
                         // If there is not a historical secret, we can skip this application
                         if (clientSecret != null && maybeExistingSettings.isEmpty()) {
-                            logger.debug("Migrating client secret for application '{}'", app.getId());
+                            log.debug("Migrating client secret for application '{}'", app.getId());
                             // migrate the client secret into the new list of secrets
                             ClientSecret newSecret = new ClientSecret();
                             newSecret.setId(UUID.randomUUID().toString());
@@ -122,17 +121,17 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                             app.getSecrets().add(newSecret);
 
                             // Remove the client secret from the application settings
-                            logger.debug("Removing client secret from application oauth settings for application '{}'", app.getId());
+                            log.debug("Removing client secret from application oauth settings for application '{}'", app.getId());
                             oauthSettings.setClientSecret(null);
                             oauthSettings.setClientSecretExpiresAt(null);
                             updateRequired = true;
                         } else {
-                            logger.debug("No client secret to migrate for application '{}'", app.getId());
+                            log.debug("No client secret to migrate for application '{}'", app.getId());
                         }
                     }
 
                     if (updateRequired) {
-                        logger.debug("Update client secret settings for application '{}'", app.getId());
+                        log.debug("Update client secret settings for application '{}'", app.getId());
                         return applicationService.update(app);
                     }
 
@@ -141,7 +140,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                 .ignoreElements()
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId()).map(t -> true))
                 .onErrorResumeNext(err -> {
-                    logger.error("Unable to migrate client secret for applications: {}", err.getMessage());
+                    log.error("Unable to migrate client secret for applications: {}", err.getMessage());
                     return updateSystemTask(task, SystemTaskStatus.FAILURE, task.getOperationId()).map(t -> false);
                 });
     }

@@ -17,25 +17,24 @@ package io.gravitee.am.plugins.idp.core.impl;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.plugins.idp.core.IdentityProviderGroupMapperFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import lombok.CustomLog;
 
+@CustomLog
 public class IdentityProviderGroupMapperFactoryImpl implements IdentityProviderGroupMapperFactory {
-    private final Logger logger = LoggerFactory.getLogger(IdentityProviderGroupMapperFactoryImpl.class);
 
     @Override
     public <T extends IdentityProviderGroupMapper> T create(Class<T> clazz, Map<String, String[]> groups) {
         if (clazz != null) {
-            logger.debug("Create a new instance of identity provider groups for class: {}", clazz.getName());
+            log.debug("Create a new instance of identity provider groups for class: {}", clazz.getName());
             try {
                 T identityProviderRoleMapper = clazz.newInstance();
                 identityProviderRoleMapper.setGroups(groups);
 
                 return identityProviderRoleMapper;
             } catch (InstantiationException | IllegalAccessException ex) {
-                logger.error("Unable to create an identity provider groups", ex);
+                log.error("Unable to create an identity provider groups", ex);
             }
         }
         return null;

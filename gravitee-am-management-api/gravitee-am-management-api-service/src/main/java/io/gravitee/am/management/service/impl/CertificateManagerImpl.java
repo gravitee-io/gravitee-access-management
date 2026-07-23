@@ -29,8 +29,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -38,15 +36,16 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class CertificateManagerImpl extends AbstractService<CertificateManager> implements CertificateManager, EventListener<CertificateEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
     private static final long RETRY_TIMEOUT = 10000;
     public static final String DELETE_NOTIFICATION_ERROR = "Unable to delete notification acknowledge for certificate {} due to: {}";
     private final ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
@@ -67,12 +66,12 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for certificate events for the management API");
+        log.info("Register event listener for certificate events for the management API");
         eventManager.subscribeForEvents(this, CertificateEvent.class);
 
-        logger.info("Initializing certificate providers");
+        log.info("Initializing certificate providers");
         certificateService.findAll().blockingIterable().forEach(certificate -> {
-            logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
+            log.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
             loadCertificate(certificate);
         });
     }
@@ -118,35 +117,35 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
             }
             return certificateProvider == null ? Maybe.empty() : Maybe.just(certificateProvider);
         } catch (Exception ex) {
-            logger.error("An error has occurred while fetching certificate with id {}", certificateId, ex);
+            log.error("An error has occurred while fetching certificate with id {}", certificateId, ex);
             throw new IllegalStateException(ex);
         }
     }
 
     private void deployCertificate(String certificateId) {
-        logger.info("Management API has received a deploy certificate event for {}", certificateId);
+        log.info("Management API has received a deploy certificate event for {}", certificateId);
         certificateService.findById(certificateId)
                 .subscribe(
                         this::loadCertificate,
-                        error -> logger.error("Unable to deploy certificate {}", certificateId, error),
-                        () -> logger.error("No certificate found with id {}", certificateId));
+                        error -> log.error("Unable to deploy certificate {}", certificateId, error),
+                        () -> log.error("No certificate found with id {}", certificateId));
     }
 
     private void updateCertificate(String domainId, String certificateId) {
-        logger.info("Management API has received a deploy certificate event for {}", certificateId);
+        log.info("Management API has received a deploy certificate event for {}", certificateId);
         certificateNotifierService.unregisterCertificateExpiration(domainId, certificateId);
         certificateNotifierService.deleteCertificateExpirationAcknowledgement(certificateId)
-                .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
+                .doOnError(err -> log.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
                 .subscribe();
         deployCertificate(certificateId);
     }
 
     private void removeCertificate(String domainId, String certificateId) {
-        logger.info("Management API has received a undeploy certificate event for {}", certificateId);
+        log.info("Management API has received a undeploy certificate event for {}", certificateId);
         undeploy(certificateId);
         certificateNotifierService.unregisterCertificateExpiration(domainId, certificateId);
         certificateNotifierService.deleteCertificateExpirationAcknowledgement(certificateId)
-                .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
+                .doOnError(err -> log.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
                 .subscribe();
     }
 
@@ -165,7 +164,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                     // the notification registration
                     if (certificate.getExpiresAt() == null || !certificate.getExpiresAt().equals(expiresAt)) {
                         certificateService.updateExpirationDate(certificate.getId(), expiresAt)
-                                .doOnError(err -> logger.warn("Unable to update expiration date for certificate {} due to: {}", certificate.getId(), err.getMessage()))
+                                .doOnError(err -> log.warn("Unable to update expiration date for certificate {} due to: {}", certificate.getId(), err.getMessage()))
                                 .subscribe();
                     }
                     certificate.setExpiresAt(expiresAt);
@@ -174,12 +173,12 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
             } else {
                 certificateNotifierService.unregisterCertificateExpiration(certificate.getDomain(), certificate.getId());
                 certificateNotifierService.deleteCertificateExpirationAcknowledgement(certificate.getId())
-                        .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificate.getId(), err.getMessage()))
+                        .doOnError(err -> log.warn(DELETE_NOTIFICATION_ERROR, certificate.getId(), err.getMessage()))
                         .subscribe();
                 undeploy(certificate.getId());
             }
         } catch (Exception ex) {
-            logger.error("An error has occurred while loading certificate: {} [{}]", certificate.getName(), certificate.getType(), ex);
+            log.error("An error has occurred while loading certificate: {} [{}]", certificate.getName(), certificate.getType(), ex);
             undeploy(certificate.getId());
         }
     }

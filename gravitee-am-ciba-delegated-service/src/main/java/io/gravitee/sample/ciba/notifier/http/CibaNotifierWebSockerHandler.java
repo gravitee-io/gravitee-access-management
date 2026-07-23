@@ -30,8 +30,6 @@ import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import net.minidev.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -48,13 +46,14 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_SUBJECT;
 import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TOPIC_NOTIFICATION_REQUEST;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaNotifierWebSockerHandler.class);
 
     private final WebClient webClient;
     private final CibaDomainManager domainManager;
@@ -79,7 +78,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
     @Override
     public void handle(ServerWebSocket ws) {
         ws.textMessageHandler(msg -> {
-            LOGGER.debug("Received user message: {}", msg);
+            log.debug("Received user message: {}", msg);
             final JsonObject jsonMsg = (JsonObject)Json.decodeValue(msg);
 
             final String action = jsonMsg.getString(ACTION);
@@ -91,7 +90,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
 
                 // clean the map on final event
                 ws.endHandler((__) -> {
-                    LOGGER.debug("Connection closed by subject {}", subject);
+                    log.debug("Connection closed by subject {}", subject);
                     this.serverWebSocket.remove(subject);
                 });
 
@@ -124,13 +123,13 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
                                 optCallback.get().getClientId(),
                                 optCallback.get().getClientSecret()))
                         .sendForm(formData)
-                        .onSuccess(res -> LOGGER.info("Callback succeeded for tid {}", transactionId))
-                        .onFailure(err -> LOGGER.warn("Callback failed for tid {}", transactionId, err));
+                        .onSuccess(res -> log.info("Callback succeeded for tid {}", transactionId))
+                        .onFailure(err -> log.warn("Callback failed for tid {}", transactionId, err));
             } else {
-                LOGGER.warn("Missing domain reference for domainId {}", domainId);
+                log.warn("Missing domain reference for domainId {}", domainId);
             }
         } catch (ParseException ex) {
-            LOGGER.warn("Unable to parse the state {} for transactionId {}", state, transactionId, ex);
+            log.warn("Unable to parse the state {} for transactionId {}", state, transactionId, ex);
         }
     }
 }

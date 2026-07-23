@@ -23,8 +23,6 @@ import io.gravitee.common.util.EnvironmentUtils;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.stereotype.Component;
@@ -32,10 +30,11 @@ import org.springframework.stereotype.Component;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.Objects;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class DatasourceValidatorImpl implements DatasourceValidator {
-    private static final Logger logger = LoggerFactory.getLogger(DatasourceValidatorImpl.class);
 
     public static final String DATASOURCE_ID_KEY = "datasourceId";
 
@@ -50,7 +49,7 @@ public class DatasourceValidatorImpl implements DatasourceValidator {
                 .flatMapCompletable(this::validateDatasourceId)
                 .onErrorResumeNext(throwable -> {
                     if (throwable instanceof ParseException) {
-                        logger.warn("Unable to parse configuration for identity provider", throwable);
+                        log.warn("Unable to parse configuration for identity provider", throwable);
                         return Completable.complete();
                     }
                     return Completable.error(throwable);
@@ -63,7 +62,7 @@ public class DatasourceValidatorImpl implements DatasourceValidator {
     }
 
     private Completable validateDatasourceId(String datasourceId) {
-        logger.debug("validating datasource ID: {}", datasourceId);
+        log.debug("validating datasource ID: {}", datasourceId);
         if (dataSourcesConfiguration.getDataSourceKeyById(datasourceId) == null) {
             throw new InvalidDataSourceException("Could not find datasource with id: " + datasourceId);
         }

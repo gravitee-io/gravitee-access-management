@@ -17,18 +17,17 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class AlertService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertService.class);
 
     private final AlertTriggerProviderManager triggerProviderManager;
 
@@ -43,7 +42,7 @@ public class AlertService {
      * @return <code>true</code> if the alerting feature is available, <code>false</code> else.
      */
     public Single<Boolean> isAlertingAvailable() {
-        LOGGER.debug("Get alert available status");
+        log.debug("Get alert available status");
 
         return Single.just(!this.triggerProviderManager.findAll().isEmpty());
     }

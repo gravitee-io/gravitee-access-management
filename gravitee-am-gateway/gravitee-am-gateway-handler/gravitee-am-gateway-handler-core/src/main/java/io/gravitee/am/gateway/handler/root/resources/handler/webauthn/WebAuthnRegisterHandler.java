@@ -34,21 +34,20 @@ import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterHandler.class);
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -81,10 +80,10 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
             // nominal case
             registerV1(ctx);
         } catch (IllegalArgumentException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(400);
         } catch (RuntimeException e) {
-            logger.error("Unexpected exception", e);
+            log.error("Unexpected exception", e);
             ctx.fail(e);
         }
     }
@@ -95,13 +94,13 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
         // session validation
         if (session == null) {
-            logger.warn("No session or session handler is missing.");
+            log.warn("No session or session handler is missing.");
             ctx.fail(500);
             return;
         }
 
         if (ctx.user() == null) {
-            logger.warn("User must be authenticated to register WebAuthn credentials.");
+            log.warn("User must be authenticated to register WebAuthn credentials.");
             ctx.fail(401);
             return;
         }
@@ -109,7 +108,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         // input validation
         if (isEmptyString(webauthnRegister, "name") ||
                 isEmptyString(webauthnRegister, "displayName")) {
-            logger.debug("Request missing name or displayName field");
+            log.debug("Request missing name or displayName field");
             ctx.fail(400);
             return;
         }
@@ -144,7 +143,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
     private void registerV1(RoutingContext ctx) {
         final String assertion = ctx.request().getParam("assertion");
         if (StringUtils.isEmpty(assertion)) {
-            logger.debug("Request missing assertion field");
+            log.debug("Request missing assertion field");
             ctx.fail(400);
             return;
         }
@@ -156,7 +155,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                 isEmptyObject(webauthnResp, "response") ||
                 isEmptyString(webauthnResp, "type") ||
                 !"public-key".equals(webauthnResp.getString("type"))) {
-            logger.debug("Assertion missing one or more of id/rawId/response/type fields, or type is not public-key");
+            log.debug("Assertion missing one or more of id/rawId/response/type fields, or type is not public-key");
             ctx.fail(400);
             return;
         }
@@ -164,13 +163,13 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         // session validation
         final Session session = ctx.session();
         if (ctx.session() == null) {
-            logger.error("No session or session handler is missing.");
+            log.error("No session or session handler is missing.");
             ctx.fail(500);
             return;
         }
 
         if (ctx.user() == null) {
-            logger.warn("User must be authenticated to register WebAuthn credentials.");
+            log.warn("User must be authenticated to register WebAuthn credentials.");
             ctx.fail(401);
             return;
         }
@@ -200,7 +199,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                             // update the credential
                             updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
                                 if (credentialHandler.failed()) {
-                                    logger.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
+                                    log.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
                                     ctx.fail(401);
                                     return;
                                 }
@@ -217,7 +216,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                             });
                         },
                         throwable -> {
-                            logger.error("Unexpected exception", throwable);
+                            log.error("Unexpected exception", throwable);
                             ctx.fail(throwable.getCause());
                         }
                 );

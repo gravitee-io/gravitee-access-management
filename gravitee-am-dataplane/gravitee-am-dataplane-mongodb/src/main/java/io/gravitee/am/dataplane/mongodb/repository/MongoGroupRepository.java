@@ -37,8 +37,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -56,14 +54,15 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.dropIndexes;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MongoGroupRepository extends AbstractDataPlaneMongoRepository implements GroupRepository {
-    private final static Logger LOGGER = LoggerFactory.getLogger(MongoGroupRepository.class);
     private static final String FIELD_MEMBERS = "members";
     private static final String FIELD_NAME = "name";
     private static final String DISPLAY_NAME = "displayName";
@@ -126,7 +125,7 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
             }
-            LOGGER.error("An error has occurred while searching groups with criteria {}", criteria, ex);
+            log.error("An error has occurred while searching groups with criteria {}", criteria, ex);
             return Single.error(new DataPlaneTechnicalException("An error has occurred while searching groups with filter criteria", ex));
         }
     }

@@ -21,17 +21,16 @@ import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSe
 import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
+import lombok.CustomLog;
 
 @RequiredArgsConstructor
+@CustomLog
 public class UiNotificationDefinitionFactory<T extends NotifierSubject> implements NotificationDefinitionFactory<T> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UiNotificationDefinitionFactory.class);
 
     private final ObjectMapper mapper;
     private final NotifierSettings notifierSettings;
@@ -52,7 +51,7 @@ public class UiNotificationDefinitionFactory<T extends NotifierSubject> implemen
 
             return Maybe.just(definition);
         } catch (IOException e) {
-            LOGGER.warn("Unable to generate ui notification def for {}", object.getResourceType(), e);
+            log.warn("Unable to generate ui notification def for {}", object.getResourceType(), e);
             return Maybe.error(e);
         }
     }

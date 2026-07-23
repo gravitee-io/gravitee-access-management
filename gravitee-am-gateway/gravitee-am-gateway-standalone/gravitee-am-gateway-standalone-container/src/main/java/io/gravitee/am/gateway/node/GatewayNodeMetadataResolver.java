@@ -20,8 +20,6 @@ import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.node.api.NodeMetadataResolver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
@@ -38,14 +36,15 @@ import java.util.stream.Collectors;
 import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
 import static io.gravitee.node.api.Node.META_INSTALLATION;
 import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GatewayNodeMetadataResolver implements NodeMetadataResolver {
 
-    private final Logger logger = LoggerFactory.getLogger(GatewayNodeMetadataResolver.class);
 
     protected static final String SEPARATOR = ",";
     protected static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
@@ -88,10 +87,10 @@ public class GatewayNodeMetadataResolver implements NodeMetadataResolver {
             if (installation != null) {
                 installationId = installation.getId();
             } else {
-                logger.debug("No installation found");
+                log.debug("No installation found");
             }
         } catch (Exception e) {
-            logger.warn("Unable to load installation id", e);
+            log.warn("Unable to load installation id", e);
         }
         return installationId;
     }

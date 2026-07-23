@@ -23,7 +23,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.provider
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -40,7 +40,7 @@ import java.util.UUID;
  * @author Titouan COMPIEGNE (titouan.compiegne at gravitesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class CookieCsrfSignedTokenRepository implements CsrfTokenRepository {
 
     public static final String TOKEN_CLAIM = "token";

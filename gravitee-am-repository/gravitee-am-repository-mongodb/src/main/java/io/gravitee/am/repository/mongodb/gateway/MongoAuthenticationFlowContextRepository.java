@@ -31,7 +31,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -52,7 +52,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMongoRepository implements AuthenticationFlowContextRepository {
 
     private static final String FIELD_TRANSACTION_ID = "transactionId";

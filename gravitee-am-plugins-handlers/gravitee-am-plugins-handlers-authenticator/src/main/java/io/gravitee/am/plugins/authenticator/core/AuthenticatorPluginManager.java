@@ -22,8 +22,6 @@ import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
@@ -35,12 +33,13 @@ import org.springframework.core.env.Environment;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import lombok.CustomLog;
 
+@CustomLog
 public class AuthenticatorPluginManager extends
         ProviderPluginManager<AuthenticatorPlugin<?, AuthenticatorProvider>, AuthenticatorProvider, AuthenticatorProviderConfiguration>
         implements AmPluginManager<AuthenticatorPlugin<?, AuthenticatorProvider>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticatorPluginManager.class);
     private final PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
     public AuthenticatorPluginManager(
@@ -63,16 +62,16 @@ public class AuthenticatorPluginManager extends
 
     @Override
     public AuthenticatorProvider create(AuthenticatorProviderConfiguration providerConfig) {
-        logger.debug("Looking for an authenticator provider for [{}]", providerConfig.getType());
+        log.debug("Looking for an authenticator provider for [{}]", providerConfig.getType());
         var authenticator = get(providerConfig.getType());
         if (authenticator != null) {
             try {
                 return create(authenticator, providerConfig.getApplicationContext()).orElse(null);
             } catch (Exception ex) {
-                logger.error("An unexpected error occurs while loading authenticator", ex);
+                log.error("An unexpected error occurs while loading authenticator", ex);
             }
         } else {
-            logger.info("No authenticator provider is registered for type {}", providerConfig.getType());
+            log.info("No authenticator provider is registered for type {}", providerConfig.getType());
         }
         return null;
     }
@@ -105,7 +104,7 @@ public class AuthenticatorPluginManager extends
                 }
                 return Optional.of(authenticatorProvider);
             } catch (Exception ex) {
-                logger.error("An unexpected error occurs while loading authenticator", ex);
+                log.error("An unexpected error occurs while loading authenticator", ex);
             }
             return Optional.empty();
     }

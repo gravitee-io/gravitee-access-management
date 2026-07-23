@@ -37,7 +37,7 @@ import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.text.ParseException;
 import java.util.Optional;
@@ -53,7 +53,7 @@ import static io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.JwtAs
  * (CIMD-style). The trust domain is derived from the SPIFFE ID and the bundle
  * keys are fetched via {@link TrustBundleService}.
  */
-@Slf4j
+@CustomLog
 public class SpiffeClientAssertionValidator implements ClientAssertionValidator {
 
     private final ClientLookupService clientLookupService;

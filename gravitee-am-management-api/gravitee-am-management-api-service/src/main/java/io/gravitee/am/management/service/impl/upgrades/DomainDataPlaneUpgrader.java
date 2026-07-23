@@ -20,13 +20,13 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_DATA_PLANE_UPGRADER;
 
-@Slf4j
+@CustomLog
 @Component
 @ManagementRepositoryScope
 public class DomainDataPlaneUpgrader extends AsyncUpgrader{

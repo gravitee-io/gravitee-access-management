@@ -28,10 +28,9 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import lombok.CustomLog;
 
 /**
  * Accepts same-origin client-reported failures from {@code navigator.credentials.get} / {@code create} for logging.
@@ -42,12 +41,12 @@ import java.time.Instant;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebauthnErrorEndpoint implements Handler<RoutingContext> {
 
     /** Default request header carrying the gateway transaction id; must match reactor {@code TransactionHandler} configuration. */
     public static final String DEFAULT_TRANSACTION_ID_HTTP_HEADER = "X-Gravitee-Transaction-Id";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebauthnErrorEndpoint.class);
 
     private static final int MAX_ERROR_NAME = 128;
     private static final int MAX_ERROR_MESSAGE = 512;
@@ -91,7 +90,7 @@ public class WebauthnErrorEndpoint implements Handler<RoutingContext> {
         try {
             body = ctx.body().asJsonObject();
         } catch (Exception e) {
-            LOGGER.debug("WebAuthn client error: invalid JSON body");
+            log.debug("WebAuthn client error: invalid JSON body");
             ctx.response().setStatusCode(400).end();
             return;
         }
@@ -136,7 +135,7 @@ public class WebauthnErrorEndpoint implements Handler<RoutingContext> {
             userAgentForLog = ua != null ? ua : "";
         }
 
-        LOGGER.debug(
+        log.debug(
                 "WebAuthn client error: category={} phase={} operation={} technicalError={} technicalMessage={} "
                         + "domainId={} clientId={} correlationId={} username={} rpId={} clientTimestamp={} "
                         + "serverTimestamp={} remoteAddress={} userAgent={}",
@@ -189,7 +188,7 @@ public class WebauthnErrorEndpoint implements Handler<RoutingContext> {
                                     clientTimestamp,
                                     correlationId));
         } catch (Exception e) {
-            LOGGER.debug("WebAuthn client error: audit report failed: {}", e.toString());
+            log.debug("WebAuthn client error: audit report failed: {}", e.toString());
         }
     }
 

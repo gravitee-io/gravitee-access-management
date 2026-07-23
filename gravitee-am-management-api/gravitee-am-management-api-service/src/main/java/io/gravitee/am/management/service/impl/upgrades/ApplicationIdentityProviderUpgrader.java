@@ -27,8 +27,6 @@ import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +34,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPL
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -43,11 +42,11 @@ import static java.util.stream.Collectors.joining;
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "application_identity_provider_migration";
 
-    private final Logger logger = LoggerFactory.getLogger(ApplicationIdentityProviderUpgrader.class);
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Settings for Application Identity Providers can't be upgraded, other instance may process them or an upgrader has failed previously";
 
@@ -84,22 +83,22 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
                         .onErrorResumeNext(err -> {
-                            logger.error("Unable to update application identityProviders options task: {}", err.getMessage(), err);
+                            log.error("Unable to update application identityProviders options task: {}", err.getMessage(), err);
                             return Single.just(false);
                         }))
                 .onErrorResumeNext(err -> {
-                    logger.error("Unable to migrate application identityProvider options for applications: {}", err.getMessage(), err);
+                    log.error("Unable to migrate application identityProvider options for applications: {}", err.getMessage(), err);
                     return Single.just(false);
                 });
     }
 
     private Single<Application> addRuleInApplicationIdentityProvider(Application application) {
-        logger.debug("Process application '{}'", application.getId());
+        log.debug("Process application '{}'", application.getId());
         return identityProviderRepository.findAll(DOMAIN, application.getDomain())
                 .toMap(IdentityProvider::getId)
                 .flatMap(identities -> {
                     if (identities.isEmpty()) {
-                        logger.debug("Application '{}' processed", application.getId());
+                        log.debug("Application '{}' processed", application.getId());
                         return Single.just(application);
                     }
                     boolean modified = false;
@@ -112,16 +111,16 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
                                         .map(pattern -> format("#request.params['username'] matches '.+@%s$'", pattern))
                                         .collect(joining(" || "));
                                 appIdp.setSelectionRule("{" + selectionRule + "}");
-                                logger.debug("Rule '{}' added to application '{}' for identityProvider '{}'",
+                                log.debug("Rule '{}' added to application '{}' for identityProvider '{}'",
                                         appIdp.getSelectionRule(), application.getId(), appIdp.getIdentity());
                                 modified = true;
                             }
                         }
                     }
-                    logger.debug("Application '{}' processed", application.getId());
+                    log.debug("Application '{}' processed", application.getId());
                     return modified ? applicationRepository.update(application) : Single.just(application);
                 }).onErrorResumeNext(err -> {
-                    logger.error("Unable to update application identityProvider options for applications: {}", err.getMessage(), err);
+                    log.error("Unable to update application identityProvider options for applications: {}", err.getMessage(), err);
                     return Single.just(application);
                 });
     }

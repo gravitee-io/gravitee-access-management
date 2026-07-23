@@ -16,19 +16,18 @@
 package io.gravitee.am.service.tasks;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
 
 import java.time.Instant;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class AbstractTask<Def extends TaskDefinition> implements Task {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @JsonIgnore
     private TaskScheduler scheduler;
@@ -49,7 +48,7 @@ public abstract class AbstractTask<Def extends TaskDefinition> implements Task {
             var def = this.getDefinition();
             this.scheduler.schedule(this, Instant.now().plus(def.getDelay(), def.getUnit().toChronoUnit()));
         } else {
-            logger.warn("Trying to schedule a {} task before the registration of the TaskScheduler", this.kind());
+            log.warn("Trying to schedule a {} task before the registration of the TaskScheduler", this.kind());
         }
     }
 

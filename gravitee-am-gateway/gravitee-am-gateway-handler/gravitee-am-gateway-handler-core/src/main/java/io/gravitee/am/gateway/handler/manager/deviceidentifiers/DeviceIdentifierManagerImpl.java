@@ -35,8 +35,6 @@ import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -50,14 +48,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DeviceIdentifierManagerImpl extends AbstractService implements DeviceIdentifierManager, InitializingBean, EventListener<DeviceIdentifierEvent, Payload> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierManagerImpl.class);
     private final ConcurrentMap<String, DeviceIdentifierProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, DeviceIdentifier> deviceIdentifiers = new ConcurrentHashMap<>();
 
@@ -88,16 +87,16 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
 
     @Override
     public void afterPropertiesSet() {
-        LOGGER.info("Initializing device identifiers for domain {}", domain.getName());
+        log.info("Initializing device identifiers for domain {}", domain.getName());
         deviceIdentifierService.findByDomain(domain.getId())
                 .subscribe(
                         remeberDevice -> {
                             updateDeviceIdentifier(remeberDevice);
-                            LOGGER.info("Device identifier {} loaded for domain {}", remeberDevice.getName(), domain.getName());
+                            log.info("Device identifier {} loaded for domain {}", remeberDevice.getName(), domain.getName());
                         },
                         error ->
                         {
-                            LOGGER.error("Unable to initialize device identifiers for domain {}", domain.getName(), error);
+                            log.error("Unable to initialize device identifiers for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.DEVICE_IDENTIFIER.name(), error.getMessage());
                         });
     }
@@ -106,7 +105,7 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     protected void doStart() throws Exception {
         super.doStart();
 
-        LOGGER.info("Register event listener for device identifiers events for domain {}", domain.getName());
+        log.info("Register event listener for device identifiers events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, DeviceIdentifierEvent.class, domain.getId());
     }
 
@@ -114,7 +113,7 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     protected void doStop() throws Exception {
         super.doStop();
 
-        LOGGER.info("Dispose event listener for Device identifier events for domain {}", domain.getName());
+        log.info("Dispose event listener for Device identifier events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, DeviceIdentifierEvent.class, domain.getId());
     }
 
@@ -135,15 +134,15 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
 
     private void updateDeviceIdentifier(String deviceIdentifierId, DeviceIdentifierEvent event) {
         final String eventType = event.toString().toLowerCase();
-        LOGGER.info("Domain {} has received {} Device identifier event for {}", domain.getName(), eventType, deviceIdentifierId);
+        log.info("Domain {} has received {} Device identifier event for {}", domain.getName(), eventType, deviceIdentifierId);
         deviceIdentifierService.findById(deviceIdentifierId).subscribe(
                 this::updateDeviceIdentifier,
-                error -> LOGGER.error("Unable to load Device identifier for domain {}", domain.getName(), error),
-                () -> LOGGER.error("No Device identifier found with id {}", deviceIdentifierId));
+                error -> log.error("Unable to load Device identifier for domain {}", domain.getName(), error),
+                () -> log.error("No Device identifier found with id {}", deviceIdentifierId));
     }
 
     private void removeDeviceIdentifier(String pluginId) {
-        LOGGER.info("Domain {} has received event, remove Device identifier {}", domain.getName(), pluginId);
+        log.info("Domain {} has received event, remove Device identifier {}", domain.getName(), pluginId);
         deviceIdentifiers.remove(pluginId);
         providers.remove(pluginId);
         domainReadinessService.pluginUnloaded(domain.getId(), pluginId);
@@ -162,15 +161,15 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
                 var provider = deviceIdentifierPluginManager.create(providerConfig);
                 this.deviceIdentifiers.put(detection.getId(), detection);
                 this.providers.put(detection.getId(), provider);
-                LOGGER.info("Device identifier {} loaded for domain {}", detection.getName(), domain.getName());
+                log.info("Device identifier {} loaded for domain {}", detection.getName(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             } else {
-                LOGGER.info("Device identifier {} already loaded for domain {}", detection.getName(), domain.getName());
+                log.info("Device identifier {} already loaded for domain {}", detection.getName(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             }
         } catch (Exception ex) {
             this.providers.remove(detection.getId());
-            LOGGER.error("Unable to create Device identifier provider for domain {}", domain.getName(), ex);
+            log.error("Unable to create Device identifier provider for domain {}", domain.getName(), ex);
             domainReadinessService.pluginFailed(domain.getId(), detection.getId(), ex.getMessage());
         }
     }

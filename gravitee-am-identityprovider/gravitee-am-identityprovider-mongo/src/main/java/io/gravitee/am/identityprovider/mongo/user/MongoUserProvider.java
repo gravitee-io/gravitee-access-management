@@ -37,8 +37,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
@@ -49,14 +47,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.client.model.Filters.eq;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
+@CustomLog
 public class MongoUserProvider extends MongoAbstractProvider implements UserProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MongoUserProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
@@ -303,8 +302,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
             getUserNameIndex()
                     .andThen(Completable.fromPublisher(usersCollection.createIndex(new Document(configuration.getUsernameField(), 1), new IndexOptions().name(INDEX_USERNAME_UNIQUE).unique(true))))
                     .subscribe(
-                            () -> LOGGER.debug("Unique index on username created"),
-                            err -> LOGGER.error("An error occurred while creating index {} with unique constraints", INDEX_USERNAME_UNIQUE, err));
+                            () -> log.debug("Unique index on username created"),
+                            err -> log.error("An error occurred while creating index {} with unique constraints", INDEX_USERNAME_UNIQUE, err));
         }
     }
 

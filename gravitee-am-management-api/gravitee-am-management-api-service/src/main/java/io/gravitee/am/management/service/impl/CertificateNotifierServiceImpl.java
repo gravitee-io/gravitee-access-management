@@ -29,21 +29,20 @@ import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class CertificateNotifierServiceImpl implements CertificateNotifierService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateNotifierServiceImpl.class);
 
     @Autowired
     private NotifierService notifierService;
@@ -94,7 +93,7 @@ public class CertificateNotifierServiceImpl implements CertificateNotifierServic
     @Override
     public Completable deleteCertificateExpirationAcknowledgement(String certificateId) {
         if (certificateNotifierSettings.enabled()) {
-            LOGGER.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
+            log.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
             return this.notifierService.deleteAcknowledge(certificateId, CertificateNotifierSubject.RESOURCE_TYPE);
         } else {
             return Completable.complete();

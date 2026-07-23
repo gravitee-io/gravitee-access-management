@@ -37,8 +37,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -46,14 +44,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_FORCE_ENROLLMENT;
 import static io.gravitee.am.common.utils.ConstantKeys.POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(PolicyChainHandlerImpl.class);
     private final FlowManager flowManager;
     private final PolicyChainProcessorFactory policyChainProcessorFactory;
     private final ExecutionContextFactory executionContextFactory;
@@ -85,7 +84,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
         prepareContext(context, contextHandler -> {
 
             if (contextHandler.failed()) {
-                logger.error("An error occurs while preparing execution context", contextHandler.cause());
+                log.error("An error occurs while preparing execution context", contextHandler.cause());
                 context.fail(contextHandler.cause());
                 return;
             }
@@ -94,7 +93,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
             ExecutionContext executionContext = contextHandler.result();
             resolve(executionContext, handler -> {
                 if (handler.failed()) {
-                    logger.error("An error occurs while resolving policies", handler.cause());
+                    log.error("An error occurs while resolving policies", handler.cause());
                     context.fail(handler.cause());
                     return;
                 }
@@ -110,7 +109,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                 executePolicyChain(policies, executionContext, policyChainHandler -> {
                     if (policyChainHandler.failed()) {
                         Throwable failureCause = policyChainHandler.cause();
-                        logger.debug("An error occurs while executing the policy chain", failureCause);
+                        log.debug("An error occurs while executing the policy chain", failureCause);
 
                         if (failureCause instanceof PolicyChainException policyChainException
                                 && POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR.equals(((PolicyChainException) failureCause).key())) {

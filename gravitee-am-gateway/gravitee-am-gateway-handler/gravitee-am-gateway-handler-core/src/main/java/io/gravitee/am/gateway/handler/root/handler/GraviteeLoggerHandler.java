@@ -25,7 +25,7 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.impl.Utils;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.Environment;
 
 import java.net.URLDecoder;
@@ -39,7 +39,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class GraviteeLoggerHandler implements Handler<RoutingContext> {
 
     final boolean includeUriParameter;

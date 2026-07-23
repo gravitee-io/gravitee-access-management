@@ -23,7 +23,7 @@ import io.gravitee.exchange.api.command.CommandStatus;
 import io.gravitee.exchange.api.command.ReplyAdapter;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class HelloReplyAdapter implements ReplyAdapter<HelloReply, io.gravitee.exchange.api.command.hello.HelloReply> {
 
     private final InstallationService installationService;
