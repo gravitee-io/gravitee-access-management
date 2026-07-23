@@ -35,7 +35,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   domain: any = {};
   entrypoint: any;
   readonly = false;
-  cloudModeEnabled = false;
+  isCloudMode = false;
   switchModeLabel: string;
   domainRestrictions: string[];
   domainRegexList: RegExp[] = [];
@@ -59,7 +59,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
 
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => {
-      this.cloudModeEnabled = enabled;
+      this.isCloudMode = enabled;
       this.readonly = this.readonly || enabled;
     });
     this.changeSwitchModeLabel();

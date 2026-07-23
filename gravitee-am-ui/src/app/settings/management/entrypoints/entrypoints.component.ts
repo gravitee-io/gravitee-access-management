@@ -32,7 +32,7 @@ import { EnvironmentService } from '../../../services/environment.service';
 })
 export class EntrypointsComponent implements OnInit {
   public entrypoints: any[];
-  public cloudModeEnabled = false;
+  public isCloudMode = false;
   private environmentNameById: { [id: string]: string } = {};
 
   constructor(
@@ -47,7 +47,7 @@ export class EntrypointsComponent implements OnInit {
 
   ngOnInit() {
     this.entrypoints = this.route.snapshot.data['entrypoints'];
-    this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => (this.cloudModeEnabled = enabled));
+    this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => (this.isCloudMode = enabled));
     this.environmentService.getAllEnvironments().subscribe((environments) => {
       this.environmentNameById = (environments || []).reduce((acc, environment) => {
         acc[environment.id] = environment.name;
@@ -84,10 +84,10 @@ export class EntrypointsComponent implements OnInit {
   }
 
   canDelete(entrypoint) {
-    return !this.cloudModeEnabled && !entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
+    return !this.isCloudMode && !entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
   }
 
   canEdit(): boolean {
-    return !this.cloudModeEnabled;
+    return !this.isCloudMode;
   }
 }

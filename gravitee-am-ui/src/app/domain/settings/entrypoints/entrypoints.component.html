@@ -17,7 +17,7 @@
 -->
 <div class="gv-page-container">
   <h1 class="entrypoints-title">Entrypoints</h1>
-  <a *ngIf="!cloudModeEnabled" (click)="switchMode()" class="switch-mode">Switch to {{ switchModeLabel }} mode</a>
+  <a *ngIf="!isCloudMode" (click)="switchMode()" class="switch-mode">Switch to {{ switchModeLabel }} mode</a>
   <div class="gv-page-content">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
@@ -58,7 +58,7 @@
         <div class="gv-form-section" *ngIf="domain.vhostMode">
           <div class="entrypoints-actions">
             <span>Virtual hosts</span>
-            <ng-container *ngIf="!cloudModeEnabled">
+            <ng-container *ngIf="!isCloudMode">
               <button (click)="addVhost(); $event.preventDefault()" mat-button *hasPermission="['domain_settings_update']">
                 <mat-icon>add_circle_outline</mat-icon>
               </button>
@@ -66,7 +66,7 @@
           </div>
           <ng-container *ngFor="let vhost of domain.vhosts; let i = index">
             <div fxLayout="row" style="padding-bottom: 40px" fxLayoutAlign="center start">
-              <ng-container *ngIf="!cloudModeEnabled">
+              <ng-container *ngIf="!isCloudMode">
                 <button (click)="remove(vhost); $event.preventDefault()" mat-button *hasPermission="['domain_settings_update']">
                   <mat-icon>remove_circle_outline</mat-icon>
                 </button>
@@ -126,7 +126,7 @@
           </ng-container>
         </div>
 
-        <ng-container *ngIf="!cloudModeEnabled">
+        <ng-container *ngIf="!isCloudMode">
           <div *hasPermission="['domain_settings_update']">
             <button mat-raised-button color="primary" [disabled]="!domainForm.valid || !formChanged" type="submit">SAVE</button>
           </div>
@@ -143,11 +143,11 @@
         </p>
         <p>The current access url is :</p>
         <pre>{{ entrypoint.url }}{{ domain.path }}</pre>
-        <p *ngIf="!cloudModeEnabled">
+        <p *ngIf="!isCloudMode">
           Notice that, in context-path mode, you can't use <code>'/'</code> path. However, it is possible to use <code>'/'</code> if you
           <a (click)="switchMode()">Switch to {{ switchModeLabel }} mode</a>
         </p>
-        <p *ngIf="!cloudModeEnabled">
+        <p *ngIf="!isCloudMode">
           <small
             ><strong>Warning</strong>: changing the security domain's path involve to change endpoint URLs in your current
             applications.</small

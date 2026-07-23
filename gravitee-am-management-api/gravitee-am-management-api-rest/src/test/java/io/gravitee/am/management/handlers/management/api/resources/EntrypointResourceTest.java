@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Entrypoint;
@@ -52,7 +53,7 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
     private void enableCloudMode() {
         System.setProperty("cloud.enabled", "true");
-        System.setProperty("installation.type", "managed");
+        System.setProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED);
     }
 
     @Test

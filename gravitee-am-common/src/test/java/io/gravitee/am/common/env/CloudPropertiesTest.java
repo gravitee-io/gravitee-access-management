@@ -42,21 +42,21 @@ class CloudPropertiesTest {
 
     @Test
     void managedInstallationAloneIsNotEnough() {
-        assertFalse(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of("installation.type", "managed"))));
+        assertFalse(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED))));
     }
 
     @Test
     void requiresBothCloudEnabledAndManagedInstallation() {
         assertTrue(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of(
                 "cloud.enabled", "true",
-                "installation.type", "managed"))));
+                "installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED))));
     }
 
     @Test
     void fallsBackToLegacyCockpitEnabled() {
         assertTrue(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of(
                 "cockpit.enabled", "true",
-                "installation.type", "managed"))));
+                "installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED))));
     }
 
     @Test
@@ -64,21 +64,21 @@ class CloudPropertiesTest {
         assertFalse(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of(
                 "cloud.enabled", "false",
                 "cockpit.enabled", "true",
-                "installation.type", "managed"))));
+                "installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED))));
     }
 
     @Test
     void installationTypeIsCaseInsensitive() {
         assertTrue(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of(
                 "cloud.enabled", "true",
-                "installation.type", "MANAGED"))));
+                "installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED.toUpperCase()))));
     }
 
     @Test
     void standaloneInstallationIsNotManaged() {
         assertFalse(CloudProperties.isManagedCloudEnabled(environmentWith(Map.of(
                 "cloud.enabled", "true",
-                "installation.type", "standalone"))));
+                "installation.type", CloudProperties.INSTALLATION_TYPE_STANDALONE))));
     }
 
     private static Environment environmentWith(Map<String, Object> properties) {
