@@ -29,8 +29,8 @@ export class CloudModeService {
 
   isCloudModeEnabled(): Observable<boolean> {
     if (!this.isCloudModeEnabled$) {
-      this.isCloudModeEnabled$ = this.http.get<any>(this.platformURL + '/configuration/deployment').pipe(
-        map((response) => response.managed),
+      this.isCloudModeEnabled$ = this.http.get<any>(this.platformURL + '/configuration/installation').pipe(
+        map((response) => response.type === 'managed'),
         shareReplay({ bufferSize: 1, refCount: true }),
       );
     }

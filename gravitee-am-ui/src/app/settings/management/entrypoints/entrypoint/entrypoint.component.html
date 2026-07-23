@@ -97,7 +97,7 @@
           </mat-form-field>
         </div>
 
-        <ng-container *ngIf="!cloudModeEnabled">
+        <ng-container *ngIf="!isCloudMode">
           <div fxLayout="row" *hasPermission="['organization_entrypoint_update']">
             <button
               mat-raised-button

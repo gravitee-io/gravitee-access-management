@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Reference;
@@ -99,7 +100,7 @@ class PluginLicenseGateImplTest {
 
     private PluginLicenseGateImpl cloudGate() {
         return new PluginLicenseGateImpl(pluginRegistry, licenseManager, licenseService, licenseFactory, domainReadService, environmentService,
-                new MockEnvironment().withProperty("cloud.enabled", "true").withProperty("installation.type", "managed"));
+                new MockEnvironment().withProperty("cloud.enabled", "true").withProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED));
     }
 
     @Test

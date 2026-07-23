@@ -104,14 +104,15 @@ public class ConfigurationResource {
     }
 
     @GET
-    @Path("deployment")
+    @Path("installation")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "getDeploymentConfiguration",
-            summary = "Get the deployment configuration of this instance",
+            operationId = "getInstallationConfiguration",
+            summary = "Get the installation type of this instance",
             description = "There is no particular permission needed. User must be authenticated.")
-    public void getDeployment(@Suspended final AsyncResponse response) {
-        response.resume(Map.of("managed", CloudProperties.isManagedCloudEnabled(environment)));
+    public void getInstallation(@Suspended final AsyncResponse response) {
+        var type = CloudProperties.isManagedCloudEnabled(environment) ? CloudProperties.INSTALLATION_TYPE_MANAGED : CloudProperties.INSTALLATION_TYPE_STANDALONE;
+        response.resume(Map.of("type", type));
     }
 
 }

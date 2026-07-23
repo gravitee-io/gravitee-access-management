@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.commands;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -131,7 +132,7 @@ class EnvironmentCommandHandlerTest {
 
     private void enableCloudMode() {
         springEnvironment.setProperty("cloud.enabled", "true");
-        springEnvironment.setProperty("installation.type", "managed");
+        springEnvironment.setProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED);
     }
 
     @Test

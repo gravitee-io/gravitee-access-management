@@ -39,7 +39,7 @@ export class EntrypointComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;
   formChanged = false;
   readonly: boolean;
-  cloudModeEnabled = false;
+  isCloudMode = false;
   tags: Tag[];
   selectedTags: Tag[];
 
@@ -57,7 +57,7 @@ export class EntrypointComponent implements OnInit {
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.readonly = !this.authService.hasPermissions(['organization_entrypoint_update']);
     this.cloudModeService.isCloudModeEnabled().subscribe((enabled) => {
-      this.cloudModeEnabled = enabled;
+      this.isCloudMode = enabled;
       this.readonly = this.readonly || enabled;
     });
     this.initTags();
@@ -110,8 +110,6 @@ export class EntrypointComponent implements OnInit {
   }
 
   canDelete() {
-    return (
-      !this.cloudModeEnabled && !this.entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete'])
-    );
+    return !this.isCloudMode && !this.entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
   }
 }

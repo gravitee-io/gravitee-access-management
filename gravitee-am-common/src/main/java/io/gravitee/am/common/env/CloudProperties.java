@@ -23,6 +23,8 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 public final class CloudProperties {
+    public static final String INSTALLATION_TYPE_STANDALONE = "standalone";
+    public static final String INSTALLATION_TYPE_MANAGED = "managed";
 
     private CloudProperties() {
     }
@@ -43,6 +45,6 @@ public final class CloudProperties {
     }
 
     private static boolean isManagedInstallation(Environment environment) {
-        return "managed".equalsIgnoreCase(environment.getProperty("installation.type", "standalone"));
+        return INSTALLATION_TYPE_MANAGED.equalsIgnoreCase(environment.getProperty("installation.type", INSTALLATION_TYPE_STANDALONE));
     }
 }
