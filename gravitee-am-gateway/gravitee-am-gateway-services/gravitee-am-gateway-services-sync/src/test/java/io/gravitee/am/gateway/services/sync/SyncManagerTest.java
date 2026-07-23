@@ -316,6 +316,31 @@ public class SyncManagerTest {
     }
 
     @Test
+    public void shouldPropagateAllRevokeTokenEvents() {
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        syncManager.refresh();
+
+        // REVOKE_TOKEN payloads carry no id: two concurrent events must not be collapsed into one
+        Event revoke1 = new Event();
+        revoke1.setId(UUID.randomUUID().toString());
+        revoke1.setType(Type.REVOKE_TOKEN);
+        revoke1.setCreatedAt(new Date());
+        revoke1.setPayload(new Payload(null, ReferenceType.DOMAIN, "domain-1", Action.DELETE));
+
+        Event revoke2 = new Event();
+        revoke2.setId(UUID.randomUUID().toString());
+        revoke2.setType(Type.REVOKE_TOKEN);
+        revoke2.setCreatedAt(new Date());
+        revoke2.setPayload(new Payload(null, ReferenceType.DOMAIN, "domain-2", Action.DELETE));
+
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.just(revoke1, revoke2, revoke2));
+
+        syncManager.refresh();
+
+        verify(eventManager, times(2)).publishEvent(any(), any());
+    }
+
+    @Test
     public void shouldSyncEventsOnlyForDataPlane(){
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
         syncManager.refresh();
