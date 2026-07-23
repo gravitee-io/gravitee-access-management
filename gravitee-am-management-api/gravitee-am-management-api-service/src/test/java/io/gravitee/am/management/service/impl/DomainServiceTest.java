@@ -1888,7 +1888,7 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_synthesizesGatewayUrl() {
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_fallsBackToOrgEntrypointWithGatewayUrl() {
         enableCloudMode();
 
         final Domain mockDomain = cloudDomain();
@@ -1896,8 +1896,15 @@ public class DomainServiceTest {
         when(dataPlaneRegistry.getDescription(mockDomain))
                 .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", "http://gateway:8092"));
 
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setUrl("https://default.gravitee.io");
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        doReturn(Flowable.just(defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
         final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
-        // Never an empty list (the UI would crash); a single entrypoint carrying the gateway URL.
+        // Never an empty list (the UI would crash); the org default entrypoint carrying the gateway URL.
         subscriber.assertValue(entrypoints -> entrypoints.size() == 1
                 && "http://gateway:8092".equals(entrypoints.get(0).getUrl()));
     }
@@ -1926,7 +1933,7 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_nullGatewayUrl_returnsNonEmpty() {
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_nullGatewayUrl_fallsBackToOrgDefaultUrl() {
         enableCloudMode();
 
         final Domain mockDomain = cloudDomain();
@@ -1934,9 +1941,17 @@ public class DomainServiceTest {
         when(dataPlaneRegistry.getDescription(mockDomain))
                 .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
 
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setUrl("https://default.gravitee.io");
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        doReturn(Flowable.just(defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
         final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
-        // Even with no gateway URL the list must never be empty (the UI dereferences the single element).
-        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 && entrypoints.get(0).getUrl() == null);
+        // Even with no data-plane gateway URL the single entrypoint keeps the org default's url — never null.
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && "https://default.gravitee.io".equals(entrypoints.get(0).getUrl()));
     }
 
     @Test
