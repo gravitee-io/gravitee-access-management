@@ -27,6 +27,7 @@ import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfigur
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.Result;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -253,9 +254,17 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                         return query(sql, args)
                                 .flatMap(Result::getRowsUpdated)
                                 .first(0L)
-                                .map(result -> user);
+                                .map(result -> user)
+                                .onErrorResumeNext(error -> isUniqueConstraintViolation(error)
+                                        ? Single.error(new UserAlreadyExistsException(user.getUsername()))
+                                        : Single.error(error));
                     }
                 });
+    }
+
+    private boolean isUniqueConstraintViolation(Throwable error) {
+        return error instanceof R2dbcDataIntegrityViolationException
+                || error.getCause() instanceof R2dbcDataIntegrityViolationException;
     }
 
     @Override
