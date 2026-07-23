@@ -40,8 +40,6 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -53,6 +51,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * SSO Session Handler to check if the user stored in the HTTP session is still "valid" upon the incoming request
@@ -63,9 +62,9 @@ import static java.util.Optional.ofNullable;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SSOSessionHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SSOSessionHandler.class);
     private ClientLookupService clientLookupService;
     private AuthenticationFlowContextService authenticationFlowContextService;
     private LoginAttemptGatewayService loginAttemptService;
@@ -89,13 +88,13 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
         authorizeUser(context, h -> {
             if (h.failed()) {
                 Throwable cause = h.cause();
-                LOGGER.debug("An error occurs while checking SSO Session upon the current user : {}", context.user().principal(), cause);
+                log.debug("An error occurs while checking SSO Session upon the current user : {}", context.user().principal(), cause);
                 if (cause instanceof AccountStatusException) {
                     // user has been disabled, invalidate session
 
                     // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
                     authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                            .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                            .doOnError((error) -> log.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                             .subscribe();
 
                     context.userContext().clear();

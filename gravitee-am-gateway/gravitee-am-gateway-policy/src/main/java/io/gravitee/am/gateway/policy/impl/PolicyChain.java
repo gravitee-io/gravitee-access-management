@@ -26,8 +26,6 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
@@ -35,14 +33,15 @@ import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PolicyChain extends AbstractProcessor<ExecutionContext> implements io.gravitee.policy.api.PolicyChain {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PolicyChain.class);
     private static final String GATEWAY_POLICY_INTERNAL_ERROR_KEY = "GATEWAY_POLICY_INTERNAL_ERROR";
     private final List<Policy> policies;
     private final Iterator<Policy> policyIterator;
@@ -78,7 +77,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
                 }
             } catch (Exception ex) {
                 final String message = "An error occurs in policy[" + policy.id() + "] error[" + Throwables.getStackTraceAsString(ex) + "]";
-                LOGGER.error(message);
+                log.error(message);
                 request.metrics().setMessage(message);
                 if (errorHandler != null) {
                     errorHandler.handle(new PolicyChainProcessorFailure(PolicyResult.failure(
@@ -105,7 +104,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
         try {
             return nonNull(templateEngine) && templateEngine.getValue(condition.trim(), Boolean.class);
         } catch (Exception e) {
-            LOGGER.warn("Could not execute rule [{}] for policy [{}]", condition, policy.id(), e);
+            log.warn("Could not execute rule [{}] for policy [{}]", condition, policy.id(), e);
             return false;
         }
     }

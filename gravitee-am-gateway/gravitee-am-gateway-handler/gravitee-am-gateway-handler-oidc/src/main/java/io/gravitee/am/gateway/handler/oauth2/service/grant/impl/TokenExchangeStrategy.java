@@ -25,11 +25,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenEx
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * Strategy for RFC 8693 OAuth 2.0 Token Exchange.
@@ -38,9 +37,9 @@ import java.util.Map;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693 - OAuth 2.0 Token Exchange</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class TokenExchangeStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeStrategy.class);
 
     private final TokenExchangeService tokenExchangeService;
 
@@ -55,12 +54,12 @@ public class TokenExchangeStrategy implements GrantStrategy {
         }
 
         if (!domain.useTokenExchange()) {
-            LOGGER.debug("Token exchange is not enabled for domain: {}", domain.getId());
+            log.debug("Token exchange is not enabled for domain: {}", domain.getId());
             return false;
         }
 
         if (!client.hasGrantType(GrantType.TOKEN_EXCHANGE)) {
-            LOGGER.debug("Client {} does not support token exchange grant type", client.getClientId());
+            log.debug("Client {} does not support token exchange grant type", client.getClientId());
             return false;
         }
 
@@ -69,10 +68,10 @@ public class TokenExchangeStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing token exchange request for client: {}", client.getClientId());
+        log.debug("Processing token exchange request for client: {}", client.getClientId());
 
         return tokenExchangeService.exchange(request, client, domain)
-                .doOnSuccess(result -> LOGGER.debug("Token exchange successful for subject: {}", result.user().getId()))
+                .doOnSuccess(result -> log.debug("Token exchange successful for subject: {}", result.user().getId()))
                 .map(result -> TokenCreationRequest.forTokenExchange(
                         request,
                         result.user(),

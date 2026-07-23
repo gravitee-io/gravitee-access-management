@@ -23,8 +23,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.node.api.configuration.Configuration;
 import jakarta.servlet.http.Cookie;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,18 +35,19 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class JWTGenerator implements InitializingBean {
 
     public static final String AM_CLAIMS_ORG = "org";
     public static final String AM_CLAIMS_LOGINS = "login_count";
     public static final String JWT_EXPIRE_AFTER_KEY = "jwt.expire-after";
 
-    private final Logger LOGGER = LoggerFactory.getLogger(JWTGenerator.class);
 
     private static final String DEFAULT_JWT_COOKIE_NAME = "Auth-Graviteeio-AM";
     private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
@@ -128,7 +127,7 @@ public class JWTGenerator implements InitializingBean {
                     .forEach(entry -> jwt.put(entry.getKey(), entry.getValue()));
             return jwtBuilder.sign(jwt);
         } catch (Exception ex) {
-            LOGGER.error("An error occurs while creating JWT token", ex);
+            log.error("An error occurs while creating JWT token", ex);
             return null;
         }
     }
@@ -148,17 +147,17 @@ public class JWTGenerator implements InitializingBean {
     public void afterPropertiesSet() {
         //Warning if the secret is still the default one
         if (DEFAULT_JWT_OR_CSRF_SECRET.equals(signingKeySecret())) {
-            LOGGER.warn("");
-            LOGGER.warn("##############################################################");
-            LOGGER.warn("#                      SECURITY WARNING                      #");
-            LOGGER.warn("##############################################################");
-            LOGGER.warn("");
-            LOGGER.warn("You still use the default jwt secret.");
-            LOGGER.warn("This known secret can be used to impersonate anyone.");
-            LOGGER.warn("Please change this value, or ask your administrator to do it !");
-            LOGGER.warn("");
-            LOGGER.warn("##############################################################");
-            LOGGER.warn("");
+            log.warn("");
+            log.warn("##############################################################");
+            log.warn("#                      SECURITY WARNING                      #");
+            log.warn("##############################################################");
+            log.warn("");
+            log.warn("You still use the default jwt secret.");
+            log.warn("This known secret can be used to impersonate anyone.");
+            log.warn("Please change this value, or ask your administrator to do it !");
+            log.warn("");
+            log.warn("##############################################################");
+            log.warn("");
         }
     }
 

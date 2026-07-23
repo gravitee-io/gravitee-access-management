@@ -21,13 +21,13 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.gateway.api.ExecutionContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import net.minidev.json.JSONArray;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 
-@Slf4j
+@CustomLog
 public class ExecutionContextTokenEnhancer {
 
     public void enhanceToken(JWT jwt, TokenTypeHint hint, List<TokenClaim> customClaims, ExecutionContext executionContext) {

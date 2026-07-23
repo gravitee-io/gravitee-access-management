@@ -40,7 +40,7 @@ import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class EnrollMfaPolicy {
 
     static final String GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY = "GATEWAY_POLICY_ENROLL_MFA_ERROR";

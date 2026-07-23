@@ -28,8 +28,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -38,14 +36,15 @@ import java.time.Duration;
 import java.util.Date;
 
 import static io.gravitee.am.common.event.Type.CIMD_METADATA;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CimdMetadataDocumentServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -58,7 +57,7 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
     public Maybe<CimdMetadataDocument> findByDomainAndClientId(String domainId, String clientId) {
         return repository.findByDomainAndClientId(domainId, clientId)
                 .onErrorResumeNext(ex -> {
-                    logger.error("Error finding CIMD document for domain {} clientId {}", domainId, clientId, ex);
+                    log.error("Error finding CIMD document for domain {} clientId {}", domainId, clientId, ex);
                     return Maybe.empty();
                 });
     }
@@ -67,7 +66,7 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
     public Flowable<CimdMetadataDocument> findByDomain(String domainId) {
         return repository.findByDomain(domainId)
                 .onErrorResumeNext(ex -> {
-                    logger.error("Error listing CIMD documents for domain {}", domainId, ex);
+                    log.error("Error listing CIMD documents for domain {}", domainId, ex);
                     return Flowable.empty();
                 });
     }
@@ -89,7 +88,7 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
                 .switchIfEmpty(Single.defer(() -> repository.create(CimdMetadataDocument.of(domain.getId(), clientId, metadataJson, ttl))
                         .flatMap(saved -> publishEvent(saved, domain, Action.CREATE))))
                 .onErrorResumeNext(ex -> {
-                    logger.error("Error upserting CIMD document for domain {} clientId {}", domain.getId(), clientId, ex);
+                    log.error("Error upserting CIMD document for domain {} clientId {}", domain.getId(), clientId, ex);
                     return Single.error(ex);
                 });
     }
@@ -105,7 +104,7 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
                 }))
                 .ignoreElement()
                 .onErrorResumeNext(ex -> {
-                    logger.error("Error deleting CIMD document for domain {} clientId {}", domainId, clientId, ex);
+                    log.error("Error deleting CIMD document for domain {} clientId {}", domainId, clientId, ex);
                     return Completable.error(ex);
                 });
     }

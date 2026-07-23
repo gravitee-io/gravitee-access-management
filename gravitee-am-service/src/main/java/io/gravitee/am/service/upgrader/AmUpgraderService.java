@@ -22,17 +22,16 @@ import io.gravitee.node.api.configuration.Configuration;
 import io.gravitee.node.api.upgrader.UpgradeRecord;
 import io.gravitee.node.api.upgrader.Upgrader;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.CustomLog;
 
+@CustomLog
 public class AmUpgraderService extends AbstractService<AmUpgraderService> implements LifecycleComponent<AmUpgraderService> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AmUpgraderService.class);
     private final boolean upgraderModeEnabled;
     private final UpgraderRepository upgraderRepository;
     private final Class<? extends Annotation> qualifier;
@@ -74,9 +73,9 @@ public class AmUpgraderService extends AbstractService<AmUpgraderService> implem
         try {
             UpgradeRecord upgradeRecord = this.upgraderRepository.findById(upgrader.identifier()).blockingGet();
             if (upgradeRecord != null) {
-                LOGGER.info("{} is already applied. it will be ignored.", name);
+                log.info("{} is already applied. it will be ignored.", name);
             } else {
-                LOGGER.info("Apply {} ...", name);
+                log.info("Apply {} ...", name);
                 if (upgrader.upgrade()) {
                     this.upgraderRepository.create(new UpgradeRecord(upgrader.identifier(), new Date())).blockingGet();
                 } else {
@@ -84,7 +83,7 @@ public class AmUpgraderService extends AbstractService<AmUpgraderService> implem
                 }
             }
         } catch (Exception var5) {
-            LOGGER.error("Unable to apply {}. Error: ", name, var5);
+            log.error("Unable to apply {}. Error: ", name, var5);
         }
         return true;
     }
@@ -95,7 +94,7 @@ public class AmUpgraderService extends AbstractService<AmUpgraderService> implem
         node.stop();
         node.postStop();
         if (error) {
-            LOGGER.error("Stopping because one of the upgrades could not be performed");
+            log.error("Stopping because one of the upgrades could not be performed");
             System.exit(1);
         } else {
             System.exit(0);

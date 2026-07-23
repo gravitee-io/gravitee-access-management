@@ -23,25 +23,25 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class CertificatePluginServiceImpl implements CertificatePluginService {
 
     /**
      * Logger.
      */
-    private final Logger LOGGER = LoggerFactory.getLogger(CertificatePluginServiceImpl.class);
 
     @Autowired
     @Qualifier("certificatePluginManager")
@@ -49,7 +49,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
 
     @Override
     public Single<Set<CertificatePlugin>> findAll() {
-        LOGGER.debug("List all certificate plugins");
+        log.debug("List all certificate plugins");
         return Single.create(emitter -> {
             try {
                 emitter.onSuccess(certificatePluginManager.findAll(true)
@@ -57,7 +57,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
                         .map(this::convert)
                         .collect(Collectors.toSet()));
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to list all certificate plugins", ex);
+                log.error("An error occurs while trying to list all certificate plugins", ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to list all certificate plugins", ex));
             }
         });
@@ -65,7 +65,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
 
     @Override
     public Maybe<CertificatePlugin> findById(String certificatePluginId) {
-        LOGGER.debug("Find certificate plugin by ID: {}", certificatePluginId);
+        log.debug("Find certificate plugin by ID: {}", certificatePluginId);
         return Maybe.create(emitter -> {
             try {
                 Plugin certificate = certificatePluginManager.findById(certificatePluginId);
@@ -75,7 +75,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get certificate plugin : {}", certificatePluginId, ex);
+                log.error("An error occurs while trying to get certificate plugin : {}", certificatePluginId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get certificate plugin : " + certificatePluginId, ex));
             }
         });
@@ -83,7 +83,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
 
     @Override
     public Maybe<String> getSchema(String certificatePluginId) {
-        LOGGER.debug("Find certificate plugin schema by ID: {}", certificatePluginId);
+        log.debug("Find certificate plugin schema by ID: {}", certificatePluginId);
         return Maybe.create(emitter -> {
             try {
                 String schema = certificatePluginManager.getSchema(certificatePluginId);
@@ -93,7 +93,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for certificate plugin {}", certificatePluginId, e);
+                log.error("An error occurs while trying to get schema for certificate plugin {}", certificatePluginId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for certificate plugin " + certificatePluginId, e));
             }
         });

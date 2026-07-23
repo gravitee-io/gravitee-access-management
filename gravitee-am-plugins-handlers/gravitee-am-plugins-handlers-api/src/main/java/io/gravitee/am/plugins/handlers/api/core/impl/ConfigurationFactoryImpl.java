@@ -20,18 +20,17 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ConfigurationFactoryImpl<CONFIGURATION> implements ConfigurationFactory<CONFIGURATION> {
 
-    private final static Logger logger = LoggerFactory.getLogger(ConfigurationFactoryImpl.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -39,12 +38,12 @@ public class ConfigurationFactoryImpl<CONFIGURATION> implements ConfigurationFac
 
     @Override
     public <T extends CONFIGURATION> T create(Class<T> clazz, String content) {
-        logger.debug("Create a new configuration for class: {}", clazz.getName());
+        log.debug("Create a new configuration for class: {}", clazz.getName());
 
         try {
             return objectMapper.readValue(content, clazz);
         } catch (IOException ioe) {
-            logger.error("Unable to create a new configuration for class {} configuration", clazz.getName(), ioe);
+            log.error("Unable to create a new configuration for class {} configuration", clazz.getName(), ioe);
             return null;
         }
     }

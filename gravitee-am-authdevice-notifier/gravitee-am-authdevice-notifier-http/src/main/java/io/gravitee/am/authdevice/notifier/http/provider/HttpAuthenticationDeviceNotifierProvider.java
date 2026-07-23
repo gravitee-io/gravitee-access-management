@@ -35,8 +35,6 @@ import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -46,6 +44,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.hasText;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -54,8 +53,8 @@ import static org.springframework.util.StringUtils.hasText;
 @Import(HttpAuthenticationDeviceProviderSpringConfiguration.class)
 @AllArgsConstructor
 @NoArgsConstructor
+@CustomLog
 public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationDeviceNotifierProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HttpAuthenticationDeviceNotifierProvider.class);
 
     public static final String TRANSACTION_ID = "tid";
     public static final String STATE = "state";
@@ -78,7 +77,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
     @Override
     public Single<ADNotificationResponse> notify(ADNotificationRequest request) {
 
-        LOGGER.debug("Call notifier service '{}' (tid: {}) ", this.configuration.getEndpoint(), request.getTransactionId());
+        log.debug("Call notifier service '{}' (tid: {}) ", this.configuration.getEndpoint(), request.getTransactionId());
 
         MultiMap formData = prepareFormData(request);
 
@@ -90,7 +89,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                     String value = request.getTemplateEngine().eval(header.getValue(), String.class).blockingGet();
                     headers.add(header.getName(), value);
                 } catch (ExpressionEvaluationException e) {
-                    LOGGER.error("Failed to evaluate header '{}'", header.getName(), e);
+                    log.error("Failed to evaluate header '{}'", header.getName(), e);
                     return Single.error(new DeviceNotificationException("Failed to evaluate header"));
                 }
             }
@@ -103,27 +102,27 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
 
         return notificationRequest
                 .rxSendForm(formData)
-                .doOnError(error -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
+                .doOnError(error -> log.warn("Unexpected error during device notification : {}", error.getMessage(), error))
                 .onErrorResumeNext(exception -> Single.error(new DeviceNotificationException("Unexpected error during device notification")))
                 .flatMap(response -> {
                     final int status = response.statusCode();
                     if (status != HttpStatusCode.OK_200) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Device notification fails on '{}' for tid '{}' with status '{}': {}",
+                        if (log.isDebugEnabled()) {
+                            log.debug("Device notification fails on '{}' for tid '{}' with status '{}': {}",
                                     this.configuration.getEndpoint(),
                                     request.getTransactionId(),
                                     status,
                                     response.bodyAsString());
                         } else {
-                            LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), status);
+                            log.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), status);
                         }
 
                         return Single.error(new DeviceNotificationException("Device notification fails"));
                     }
 
                     final JsonObject result = response.bodyAsJsonObject();
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Notifier '{}' respond with status '{}' for tid '{}': {}",
+                    if (log.isDebugEnabled()) {
+                        log.debug("Notifier '{}' respond with status '{}' for tid '{}': {}",
                                 this.configuration.getEndpoint(),
                                 status,
                                 request.getTransactionId(),
@@ -131,7 +130,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                     }
 
                     if (!request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
-                        LOGGER.warn("Device notification response contains invalid tid or state. Request {} with status {}", request.getTransactionId(), status);
+                        log.warn("Device notification response contains invalid tid or state. Request {} with status {}", request.getTransactionId(), status);
                         return Single.error(new DeviceNotificationException("Invalid device notification response"));
                     }
 
@@ -173,7 +172,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         final String state = callbackContext.getParam(STATE);
         final String tid = callbackContext.getParam(TRANSACTION_ID);
         final String validated = callbackContext.getParam(CALLBACK_VALIDATE);
-        LOGGER.debug("User response received: state={}, tid={}, validated={}", state, tid, validated);
+        log.debug("User response received: state={}, tid={}, validated={}", state, tid, validated);
         if (!hasText(state) || !hasText(tid) || !hasText(validated)) {
             return Single.just(Optional.empty());
         } else {

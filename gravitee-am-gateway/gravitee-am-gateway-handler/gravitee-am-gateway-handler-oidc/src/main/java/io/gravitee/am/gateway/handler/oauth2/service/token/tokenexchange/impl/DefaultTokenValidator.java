@@ -26,22 +26,21 @@ import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.CustomLog;
 
 /**
  * Default validator for locally issued JWT-based tokens (access, refresh, id, ...).
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DefaultTokenValidator implements TokenValidator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultTokenValidator.class);
 
     private final JWTService jwtService;
     private final JWTService.TokenType jwtTokenType;
@@ -81,7 +80,7 @@ public class DefaultTokenValidator implements TokenValidator {
                     if (error instanceof InvalidRequestException) {
                         return Single.error(error);
                     }
-                    LOGGER.debug("Failed to validate {}: {}", supportedTokenType, error.getMessage());
+                    log.debug("Failed to validate {}: {}", supportedTokenType, error.getMessage());
                     return Single.error(new TokenVerificationException("The presented token is invalid"));
                 });
     }

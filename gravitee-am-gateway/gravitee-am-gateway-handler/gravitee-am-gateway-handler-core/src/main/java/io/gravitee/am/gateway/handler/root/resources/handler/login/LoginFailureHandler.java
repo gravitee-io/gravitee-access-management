@@ -39,8 +39,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -53,13 +51,14 @@ import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginFailureHandler extends LoginAbstractHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginFailureHandler.class);
 
     private final AuthenticationFlowContextService authenticationFlowContextService;
     private final Domain domain;
@@ -130,7 +129,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
             final var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
             doRedirect(context, finalRedirectUri);
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while redirecting to the login page", ex);
+            log.error("An error has occurred while redirecting to the login page", ex);
             context
                     .response()
                     .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
@@ -205,7 +204,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         if (clearAuthFlow) {
             // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
             authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                    .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                    .doOnError((error) -> log.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
         }
         context.userContext().clear();

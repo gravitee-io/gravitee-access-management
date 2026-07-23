@@ -41,7 +41,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -67,7 +67,7 @@ import static java.util.Collections.emptyMap;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Import(TwitterAuthenticationProviderConfiguration.class)
 public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationProvider<TwitterIdentityProviderConfiguration> {
 

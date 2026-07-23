@@ -29,7 +29,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +40,7 @@ import java.util.Objects;
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component
 public class LicenseServiceImpl implements LicenseService {
 

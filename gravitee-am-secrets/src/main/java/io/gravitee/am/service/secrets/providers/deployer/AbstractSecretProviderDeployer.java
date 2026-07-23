@@ -24,12 +24,12 @@ import io.gravitee.secrets.api.plugin.SecretManagerConfiguration;
 import io.gravitee.secrets.api.plugin.SecretProvider;
 import io.gravitee.secrets.api.plugin.SecretProviderFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public abstract class AbstractSecretProviderDeployer<C> implements SecretProviderDeployer<C> {
 

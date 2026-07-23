@@ -29,8 +29,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Strategy for OAuth 2.0 Resource Owner Password Credentials Grant.
@@ -39,9 +38,9 @@ import org.slf4j.LoggerFactory;
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.3">RFC 6749 Section 4.3</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PasswordStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PasswordStrategy.class);
 
     private final UserAuthenticationManager userAuthenticationManager;
 
@@ -56,7 +55,7 @@ public class PasswordStrategy implements GrantStrategy {
         }
 
         if (!client.hasGrantType(GrantType.PASSWORD)) {
-            LOGGER.debug("Client {} does not support password grant type", client.getClientId());
+            log.debug("Client {} does not support password grant type", client.getClientId());
             return false;
         }
 
@@ -65,7 +64,7 @@ public class PasswordStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing password grant request for client: {}", client.getClientId());
+        log.debug("Processing password grant request for client: {}", client.getClientId());
 
         MultiValueMap<String, String> parameters = request.parameters();
         String username = parameters.getFirst(Parameters.USERNAME);

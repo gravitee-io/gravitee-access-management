@@ -23,8 +23,6 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
@@ -32,17 +30,18 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ProtocolPluginManager extends
         ProviderPluginManager<Protocol<?, ProtocolProvider>, ProtocolProvider, ProtocolProviderConfiguration>
         implements AmPluginManager<Protocol<?, ProtocolProvider>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProtocolPluginManager.class);
     private final PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
     public ProtocolPluginManager(
@@ -55,7 +54,7 @@ public class ProtocolPluginManager extends
 
     @Override
     public ProtocolProvider create(ProtocolProviderConfiguration providerConfig) {
-        logger.debug("Looking for an protocol provider for [{}]", providerConfig.getType());
+        log.debug("Looking for an protocol provider for [{}]", providerConfig.getType());
         var protocol = get(providerConfig.getType());
         if (protocol != null) {
             AnnotationConfigApplicationContext context = null;
@@ -92,10 +91,10 @@ public class ProtocolPluginManager extends
                 if (context != null) {
                     context.close();
                 }
-                logger.error("An unexpected error occurs while loading protocol", ex);
+                log.error("An unexpected error occurs while loading protocol", ex);
             }
         } else {
-            logger.info("No protocol provider is registered for type {}", providerConfig.getType());
+            log.info("No protocol provider is registered for type {}", providerConfig.getType());
         }
         return null;
     }

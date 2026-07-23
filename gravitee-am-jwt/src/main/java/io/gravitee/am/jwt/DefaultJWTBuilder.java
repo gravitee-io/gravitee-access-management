@@ -32,8 +32,6 @@ import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
@@ -41,14 +39,15 @@ import java.security.Key;
 import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.text.ParseException;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DefaultJWTBuilder implements JWTBuilder {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultJWTBuilder.class);
     private final JWSSigner signer;
     private final JWSHeader header;
     private String issuer;
@@ -102,13 +101,13 @@ public class DefaultJWTBuilder implements JWTBuilder {
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {
-            logger.debug("Signing JWT token: {} has failed", payload);
+            log.debug("Signing JWT token: {} has failed", payload);
             throw new MalformedJWTException("Signing JWT token has failed", ex);
         } catch (JOSEException ex) {
-            logger.debug("Signing JWT token: {} has failed", payload);
+            log.debug("Signing JWT token: {} has failed", payload);
             throw new SignatureException("Signing JWT token has failed", ex);
         } catch (Exception ex) {
-            logger.error("An error occurs while signing JWT token : {}", payload, ex);
+            log.error("An error occurs while signing JWT token : {}", payload, ex);
             throw ex;
         }
     }

@@ -20,21 +20,20 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserBodyRequestParseHandler extends UserRequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserBodyRequestParseHandler.class);
 
     private final List<String> requiredParams;
 
@@ -69,7 +68,7 @@ public class UserBodyRequestParseHandler extends UserRequestHandler {
         return requiredParams.stream().filter(param -> {
             String paramValue = params.get(param);
             if (paramValue == null) {
-                logger.warn("No {} provided in form - did you forget to include a BodyHandler?", param);
+                log.warn("No {} provided in form - did you forget to include a BodyHandler?", param);
                 return true;
             }
             return false;

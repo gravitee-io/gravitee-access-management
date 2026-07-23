@@ -26,8 +26,6 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
 import lombok.SneakyThrows;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.Key;
@@ -35,14 +33,15 @@ import java.security.KeyPair;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CertificateProviderManagerImpl implements CertificateProviderManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(CertificateProviderManagerImpl.class);
     private final ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
 
     @Autowired
@@ -99,7 +98,7 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
             certificateProvider.setJwtParser(new NoJWTParser());
             certificateProvider.setJwtBuilder(new NoJWTBuilder());
         } catch (Exception ex) {
-            logger.error("An error has occurred while creating certificate provider", ex);
+            log.error("An error has occurred while creating certificate provider", ex);
             return null;
         }
         return certificateProvider;

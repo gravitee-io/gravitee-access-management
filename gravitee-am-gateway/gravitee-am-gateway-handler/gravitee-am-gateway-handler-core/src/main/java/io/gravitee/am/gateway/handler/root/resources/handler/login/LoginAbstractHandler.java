@@ -24,20 +24,19 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static org.springframework.util.StringUtils.hasLength;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class LoginAbstractHandler implements Handler<RoutingContext> {
 
-    private static Logger logger = LoggerFactory.getLogger(LoginAbstractHandler.class);
 
     protected boolean evaluateIdPSelectionRule(ApplicationIdentityProvider appIdp,
                                  IdentityProvider identityProvider,
@@ -57,8 +56,8 @@ public abstract class LoginAbstractHandler implements Handler<RoutingContext> {
             }
             return templateEngine.getValue(rule.trim(), Boolean.class);
         } catch (Exception e) {
-            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
-            logger.debug("Idp selection rule evaluation has raised the following exception", e);
+            log.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            log.debug("Idp selection rule evaluation has raised the following exception", e);
             return false;
         }
     }

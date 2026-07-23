@@ -38,8 +38,6 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -58,14 +56,15 @@ import static io.gravitee.am.common.policy.ExtensionPoint.*;
 import static io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate.alwaysTrue;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FlowManagerImpl extends AbstractService implements FlowManager, InitializingBean, EventListener<FlowEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(FlowManagerImpl.class);
     private static final Map<Type, List<ExtensionPoint>> extensionPoints;
 
     static {
@@ -107,7 +106,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Initializing flows for domain {}", domain.getName());
+        log.info("Initializing flows for domain {}", domain.getName());
         loadFlows();
     }
 
@@ -115,7 +114,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for flow events for domain {}", domain.getName());
+        log.info("Register event listener for flow events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, FlowEvent.class, domain.getId());
     }
 
@@ -123,7 +122,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for flow events for domain {}", domain.getName());
+        log.info("Dispose event listener for flow events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, FlowEvent.class, domain.getId());
     }
 
@@ -180,28 +179,28 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     private void updateFlow(String flowId, FlowEvent flowEvent) {
         final String eventType = flowEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} flow event for {}", domain.getName(), eventType, flowId);
+        log.info("Domain {} has received {} flow event for {}", domain.getName(), eventType, flowId);
         domainReadinessService.initPluginSync(domain.getId(), flowId, io.gravitee.am.common.event.Type.FLOW.name());
         flowService.findById(flowId)
                 .subscribe(
                         flow -> {
                             loadFlow(flow);
                             flows.put(flow.getId(), flow);
-                            logger.info("Flow {} has been deployed for domain {}", flowId, domain.getName());
+                            log.info("Flow {} has been deployed for domain {}", flowId, domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), flowId);
                         },
                         error -> {
-                            logger.error("Unable to deploy flow {} for domain {}", flowId, domain.getName(), error);
+                            log.error("Unable to deploy flow {} for domain {}", flowId, domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), flowId, error.getMessage());
                         },
                         () -> {
-                            logger.error("No flow found with id {}", flowId);
+                            log.error("No flow found with id {}", flowId);
                             domainReadinessService.pluginUnloaded(domain.getId(), flowId);
                         });
     }
 
     private void removeFlow(String flowId) {
-        logger.info("Domain {} has received flow event, delete flow {}", domain.getName(), flowId);
+        log.info("Domain {} has received flow event, delete flow {}", domain.getName(), flowId);
         Flow deletedFlow = flows.remove(flowId);
         if (deletedFlow != null) {
             extensionPoints.get(deletedFlow.getType()).forEach(extensionPoint -> removeExecutionFlow(extensionPoint, deletedFlow.getId()));
@@ -216,16 +215,16 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                             if (needDeployment(flow)) {
                                 loadFlow(flow);
                                 flows.put(flow.getId(), flow);
-                                logger.info("Flow {} loaded for domain {}", flow.getType(), domain.getName());
+                                log.info("Flow {} loaded for domain {}", flow.getType(), domain.getName());
                             }
                         },
-                        error -> logger.error("Unable to initialize flows for domain {}", domain.getName(), error)
+                        error -> log.error("Unable to initialize flows for domain {}", domain.getName(), error)
                 );
     }
 
     private void loadFlow(Flow flow) {
         if (!flow.isEnabled()) {
-            logger.debug("Flow {} is disabled, skip process", flow.getId());
+            log.debug("Flow {} is disabled, skip process", flow.getId());
             extensionPoints.get(flow.getType()).forEach(extensionPoint -> removeExecutionFlow(extensionPoint, flow.getId()));
             return;
         }
@@ -298,9 +297,9 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_POLICY, step.getPolicy(), step.getPolicy())) {
                 return null;
             }
-            logger.info("\tInitializing policy: {} [{}]", step.getName(), step.getPolicy());
+            log.info("\tInitializing policy: {} [{}]", step.getName(), step.getPolicy());
             Policy policy = policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration());
-            logger.info("\tPolicy : {} [{}] has been loaded", step.getName(), step.getPolicy());
+            log.info("\tPolicy : {} [{}] has been loaded", step.getName(), step.getPolicy());
             policy.activate();
             return policy;
         } catch (Exception ex) {

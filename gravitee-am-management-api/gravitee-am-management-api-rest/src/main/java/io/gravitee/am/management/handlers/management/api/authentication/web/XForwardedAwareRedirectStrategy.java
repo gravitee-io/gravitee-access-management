@@ -18,21 +18,20 @@ package io.gravitee.am.management.handlers.management.api.authentication.web;
 import io.gravitee.common.http.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
 
-    private static final Logger logger = LoggerFactory.getLogger(XForwardedAwareRedirectStrategy.class);
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
     private boolean contextRelative;
 
@@ -75,8 +74,8 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
 
         redirectUrl = response.encodeRedirectURL(builder.build(false).toUriString());
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Redirecting to '{}'", redirectUrl);
+        if (log.isDebugEnabled()) {
+            log.debug("Redirecting to '{}'", redirectUrl);
         }
 
         response.sendRedirect(redirectUrl);

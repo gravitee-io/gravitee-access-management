@@ -45,8 +45,6 @@ import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.MembershipAuditBuilder;
 import io.reactivex.rxjava3.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -58,15 +56,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MembershipServiceImpl implements MembershipService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MembershipServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -89,34 +88,34 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Maybe<Membership> findById(String id) {
-        LOGGER.debug("Find membership by ID {}", id);
+        log.debug("Find membership by ID {}", id);
         return membershipRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find membership by id {}", id, ex);
+                    log.error("An error occurs while trying to find membership by id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(String.format("An error occurs while trying to find membership by ID %s", id), ex));
                 });
     }
 
     @Override
     public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
-        LOGGER.debug("Find memberships by reference type {} and referenceId {} and criteria {}", referenceType, referenceId, criteria);
+        log.debug("Find memberships by reference type {} and referenceId {} and criteria {}", referenceType, referenceId, criteria);
 
         return membershipRepository.findByCriteria(referenceType, referenceId, criteria);
     }
 
     @Override
     public Flowable<Membership> findByCriteria(ReferenceType referenceType, MembershipCriteria criteria) {
-        LOGGER.debug("Find memberships by reference type {} and criteria {}", referenceType, criteria);
+        log.debug("Find memberships by reference type {} and criteria {}", referenceType, criteria);
 
         return membershipRepository.findByCriteria(referenceType, criteria);
     }
 
     @Override
     public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
-        LOGGER.debug("Find memberships by reference id {} and reference type {}", referenceId, referenceType);
+        log.debug("Find memberships by reference id {} and reference type {}", referenceId, referenceType);
         return membershipRepository.findByReference(referenceId, referenceType)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find memberships by reference id {} and reference type {}", referenceId, referenceType, ex);
+                    log.error("An error occurs while trying to find memberships by reference id {} and reference type {}", referenceId, referenceType, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find memberships by reference id %s and reference type %s", referenceId, referenceType), ex));
                 });
@@ -124,10 +123,10 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
-        LOGGER.debug("Find memberships by member id {} and member type {}", memberId, memberType);
+        log.debug("Find memberships by member id {} and member type {}", memberId, memberType);
         return membershipRepository.findByMember(memberId, memberType)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find memberships by member id {} and member type {}", memberId, memberType, ex);
+                    log.error("An error occurs while trying to find memberships by member id {} and member type {}", memberId, memberType, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find memberships by member id %s and member type %s", memberId, memberType), ex));
                 });
@@ -135,7 +134,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal) {
-        LOGGER.debug("Add or update membership {}", membership);
+        log.debug("Add or update membership {}", membership);
 
         return checkMember(organizationId, membership)
                 .andThen(checkRole(organizationId, membership))
@@ -174,7 +173,7 @@ public class MembershipServiceImpl implements MembershipService {
                                             if (ex instanceof AbstractManagementException) {
                                                 return Single.error(ex);
                                             }
-                                            LOGGER.error("An error occurs while trying to update membership {}", oldMembership, ex);
+                                            log.error("An error occurs while trying to update membership {}", oldMembership, ex);
                                             return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to update membership %s", oldMembership), ex));
                                         })
                                         .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_UPDATED).oldValue(oldMembership).membership(membership1)))
@@ -232,7 +231,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Completable delete(Reference reference, String membershipId, User principal) {
-        LOGGER.debug("Delete membership {} and ref {}", membershipId, reference);
+        log.debug("Delete membership {} and ref {}", membershipId, reference);
 
         return membershipRepository.findById(membershipId)
                 .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
@@ -253,7 +252,7 @@ public class MembershipServiceImpl implements MembershipService {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to delete membership: {}", membershipId, ex);
+                    log.error("An error occurs while trying to delete membership: {}", membershipId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete membership: %s", membershipId), ex));
                 });
@@ -310,7 +309,7 @@ public class MembershipServiceImpl implements MembershipService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create membership {}", membership, ex);
+                    log.error("An error occurs while trying to create membership {}", membership, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to create membership %s", membership), ex));
                 })
                 .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).membership(membership1)))

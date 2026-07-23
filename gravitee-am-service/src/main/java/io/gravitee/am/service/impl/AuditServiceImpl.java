@@ -20,9 +20,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.AuditReporterService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -37,9 +35,8 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 public class AuditServiceImpl implements AuditService, InitializingBean {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuditServiceImpl.class);
     private static final String AUDIT_TO_EXCLUDE_KEY = "reporters.audits.excluded_audit_types[%d]";
     public static final String PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS = "reporters.audits.exclude.clientAuthentication.success";
 
@@ -86,7 +83,7 @@ public class AuditServiceImpl implements AuditService, InitializingBean {
         do {
             final var auditType = environment.getProperty(AUDIT_TO_EXCLUDE_KEY.formatted(i), String.class);
             if (auditType != null) {
-                LOGGER.debug("Audit type '{}' will be excluded", auditType);
+                log.debug("Audit type '{}' will be excluded", auditType);
                 auditsToExclude.add(auditType);
             }
         }

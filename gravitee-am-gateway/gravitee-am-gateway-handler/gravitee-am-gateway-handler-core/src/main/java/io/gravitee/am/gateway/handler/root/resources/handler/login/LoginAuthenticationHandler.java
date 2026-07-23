@@ -35,8 +35,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -61,6 +59,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_K
 import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.springframework.util.CollectionUtils.isEmpty;
+import lombok.CustomLog;
 
 /**
  * Fetch providers information if client using one of them
@@ -70,9 +69,9 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginAuthenticationHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginAuthenticationHandler.class);
     private static final Map<String, String> socialProviders;
     public static final String REMEMBER_ME_ON = "on";
 
@@ -110,7 +109,7 @@ public class LoginAuthenticationHandler implements Handler<RoutingContext> {
         // fetch client identity providers
         getSocialIdentityProviders(client.getIdentityProviders(), identityProvidersResultHandler -> {
             if (identityProvidersResultHandler.failed()) {
-                logger.error("Unable to fetch client social identity providers", identityProvidersResultHandler.cause());
+                log.error("Unable to fetch client social identity providers", identityProvidersResultHandler.cause());
                 routingContext.fail(new InvalidRequestException("Unable to fetch client social identity providers"));
             }
 
@@ -139,7 +138,7 @@ public class LoginAuthenticationHandler implements Handler<RoutingContext> {
             // get social identity providers information to correctly build the login page
             enhanceSocialIdentityProviders(socialIdentityProviders, routingContext, resultHandler -> {
                 if (resultHandler.failed()) {
-                    logger.error("Unable to enhance client social identity providers", resultHandler.cause());
+                    log.error("Unable to enhance client social identity providers", resultHandler.cause());
                     routingContext.fail(new InvalidRequestException("Unable to enhance client social identity providers"));
                 }
 

@@ -27,7 +27,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -39,7 +39,7 @@ import static io.gravitee.am.gateway.handler.common.user.impl.UserGatewayService
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class SubjectManagerV2 implements SubjectManager {
 

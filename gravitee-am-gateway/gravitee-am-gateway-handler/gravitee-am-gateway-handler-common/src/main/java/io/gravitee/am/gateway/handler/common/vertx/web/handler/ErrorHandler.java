@@ -27,8 +27,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Common error handler for AM errors
@@ -36,9 +35,9 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ErrorHandler implements Handler<RoutingContext> {
 
-    private static Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -62,7 +61,7 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 AuthenticationException authenticationException = (AuthenticationException) throwable;
                 handleException(routingContext, authenticationException.getHttpStatusCode(), authenticationException.getErrorCode() + " : " + authenticationException.getMessage());
             } else {
-                logger.error(throwable.getMessage(), throwable);
+                log.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {
                     routingContext
                             .response()

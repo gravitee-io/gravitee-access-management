@@ -27,7 +27,7 @@ import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextSe
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_FAILED;
@@ -37,7 +37,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class MFAChallengeFailureHandler extends AbstractErrorHandler {
     private static final String ERROR_CODE_VALUE = "send_challenge_failed";
 

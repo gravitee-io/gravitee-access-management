@@ -40,7 +40,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +55,7 @@ import static org.springframework.util.StringUtils.hasText;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class BulkEndpoint {
     private BulkEndpointConfiguration configuration;

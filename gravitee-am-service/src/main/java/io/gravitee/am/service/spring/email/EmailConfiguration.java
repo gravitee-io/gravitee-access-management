@@ -16,7 +16,7 @@
 package io.gravitee.am.service.spring.email;
 
 import io.gravitee.common.util.EnvironmentUtils;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.eclipse.angus.mail.auth.OAuth2SaslClientFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +38,7 @@ import static java.util.Objects.isNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Configuration
 public class EmailConfiguration {
 

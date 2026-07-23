@@ -30,7 +30,7 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDocumentManager>
         implements EventListener<CimdMetadataEvent, Payload>, InitializingBean {
 

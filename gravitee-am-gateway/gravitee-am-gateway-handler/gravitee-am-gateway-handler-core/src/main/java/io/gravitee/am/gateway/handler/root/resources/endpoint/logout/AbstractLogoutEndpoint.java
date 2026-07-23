@@ -44,7 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -57,7 +57,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @author GraviteeSource Team
  */
 public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> {
-    protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    protected final Logger LOGGER = NodeLoggerFactory.getLogger(this.getClass());
 
     private static final String INVALIDATE_TOKENS_PARAMETER = "invalidate_tokens";
     protected static final String LOGOUT_URL_PARAMETER = "target_url";

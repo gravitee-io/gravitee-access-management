@@ -24,8 +24,6 @@ import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.service.EventService;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,16 +38,17 @@ import java.util.function.BinaryOperator;
 import static io.gravitee.am.common.event.Event.valueOf;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SyncManager implements InitializingBean {
     public static final int TIMEFRAME_BEFORE_DELAY = 30000;
     public static final int TIMEFRAME_AFTER_DELAY = 30000;
 
-    private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
 
     @Autowired
     private EventService eventService;
@@ -82,18 +81,18 @@ public class SyncManager implements InitializingBean {
     }
 
     public void refresh() {
-        logger.debug("Refreshing sync state...");
+        log.debug("Refreshing sync state...");
         try {
             processEvents();
         } catch (Exception ex) {
-            logger.error("An error occurs while synchronizing organizations", ex);
+            log.error("An error occurs while synchronizing organizations", ex);
         }
     }
 
     private void processEvents() {
         long nextLastRefreshAt = System.currentTimeMillis();
         // search for events and compute them
-        logger.debug("Events synchronization");
+        log.debug("Events synchronization");
         final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
         final long to = nextLastRefreshAt + timeframeAfterDelay;
         Single<List<Event>> eventsProcessing = eventService.findByTimeFrame(from, to);
@@ -124,16 +123,16 @@ public class SyncManager implements InitializingBean {
         events.forEach(event -> {
             var payload = processedEventIds.getIfPresent(event.getId());
             if (payload == null || !event.getPayload().toString().equals(payload)) {
-                logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+                log.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
                 final var commonEvent = valueOf(event.getType(), event.getPayload().getAction());
                 if (commonEvent == null) {
-                    logger.debug("Cannot publish event {} as type is null", event.getId());
+                    log.debug("Cannot publish event {} as type is null", event.getId());
                 } else {
                     publishEventTypeSafe(eventManager, commonEvent, event.getPayload());
                 }
                 processedEventIds.put(event.getId(), event.getPayload().toString());
             } else {
-                logger.debug("Event id {} already processed", event.getId());
+                log.debug("Event id {} already processed", event.getId());
             }
         });
     }

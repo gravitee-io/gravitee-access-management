@@ -24,7 +24,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 import java.net.URI;
 import java.util.Map;
@@ -42,7 +42,7 @@ import static java.util.stream.Collectors.toMap;
  * @author GraviteeSource Team
  */
 public class UriBuilderRequest {
-    public static final Logger LOGGER = LoggerFactory.getLogger(UriBuilderRequest.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(UriBuilderRequest.class);
 
     public static final String CONTEXT_PATH = "contextPath";
 

@@ -22,14 +22,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.gravitee.am.reporter.tcp.formatter.AbstractFormatter;
 import io.gravitee.am.reporter.tcp.formatter.ReportEntry;
 import io.vertx.core.buffer.Buffer;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class MsgPackFormatter<T extends ReportEntry> extends AbstractFormatter<T> {
 
     private final ObjectMapper mapper = new ObjectMapper(new MessagePackFactory());

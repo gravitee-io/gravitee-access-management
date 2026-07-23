@@ -23,10 +23,10 @@ import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 @Component
 @ManagementRepositoryScope

@@ -21,8 +21,6 @@ import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -30,15 +28,16 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ReCaptchaServiceImpl implements ReCaptchaService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReCaptchaServiceImpl.class);
 
     @Autowired
     private Configuration configuration;
@@ -55,14 +54,14 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
     public Single<Boolean> isValid(String token) {
 
         if (!this.isEnabled()) {
-            logger.debug("ReCaptchaService is disabled");
+            log.debug("ReCaptchaService is disabled");
             return Single.just(true);
         }
 
-        logger.debug("ReCaptchaService is enabled");
+        log.debug("ReCaptchaService is enabled");
 
         if (token == null || "".equals(token.trim())) {
-            logger.debug("Recaptcha token is empty");
+            log.debug("Recaptcha token is empty");
             return Single.just(false);
         }
 
@@ -74,13 +73,13 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
                     Boolean success = (Boolean) res.getOrDefault("success", false);
                     Double score = (Double) res.getOrDefault("score", 0.0d);
 
-                    logger.debug("ReCaptchaService success: {} score: {}", success, score);
+                    log.debug("ReCaptchaService success: {} score: {}", success, score);
 
                     // Result should be successful and score above 0.5.
                     return (success && score >= minScore());
                 })
                 .onErrorResumeNext(throwable -> {
-                    logger.error("An error occurred when trying to validate ReCaptcha token.", throwable);
+                    log.error("An error occurred when trying to validate ReCaptcha token.", throwable);
                     return Single.just(false);
                 });
     }

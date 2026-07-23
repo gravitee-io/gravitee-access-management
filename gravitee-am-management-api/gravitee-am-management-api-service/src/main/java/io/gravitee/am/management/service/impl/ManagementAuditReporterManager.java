@@ -43,8 +43,6 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.rxjava3.core.RxHelper;
 import io.vertx.rxjava3.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,15 +53,16 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ManagementAuditReporterManager extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ManagementAuditReporterManager.class);
     private String deploymentId;
 
     @Autowired
@@ -95,29 +94,29 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for reporter events for the management API");
+        log.info("Register event listener for reporter events for the management API");
         eventManager.subscribeForEvents(this, ReporterEvent.class);
 
         // init noOpReporter
         noOpReporter = new NoOpReporter();
 
-        logger.info("Initializing audit reporters");
+        log.info("Initializing audit reporters");
         reporterService.findAll().blockingForEach(reporter -> {
-            logger.info("Initializing audit reporter : {} for {}", reporter.getName(), reporter.getReference());
+            log.info("Initializing audit reporter : {} for {}", reporter.getName(), reporter.getReference());
             try {
                 loadReporter(reporter);
             } catch (Exception ex) {
-                logger.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
+                log.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
                 removeReporter(reporter.getId());
             }
         });
 
         // init internal reporter (platform reporter)
         NewReporter newInternalReporter = reporterService.createInternal();
-        logger.info("Initializing internal {} audit reporter", newInternalReporter.getType());
+        log.info("Initializing internal {} audit reporter", newInternalReporter.getType());
         var providerConfiguration = new ReporterProviderConfiguration(newInternalReporter.getType(), newInternalReporter.getConfiguration());
         this.internalReporter = reporterPluginManager.create(providerConfiguration);
-        logger.info("Internal audit {} reporter initialized", newInternalReporter.getType());
+        log.info("Internal audit {} reporter initialized", newInternalReporter.getType());
         // deploy internal reporter verticle
         deployReporterVerticle(List.of(new EventBusReporterWrapper(vertx, this.internalReporter)));
     }
@@ -131,10 +130,10 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                     .doFinally(() -> {
                         for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
                             try {
-                                logger.info("Stopping reporter: {}", reporter);
+                                log.info("Stopping reporter: {}", reporter);
                                 reporter.stop();
                             } catch (Exception ex) {
-                                logger.error("Unexpected error while stopping reporter", ex);
+                                log.error("Unexpected error while stopping reporter", ex);
                             }
                         }
                     })
@@ -193,35 +192,35 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 .toList()
                 .flatMapMaybe(reporterConfigs -> {
                     if (reporterConfigs.isEmpty()) {
-                        logger.warn("No reporter exists for {}", reference);
+                        log.warn("No reporter exists for {}", reference);
                         return Maybe.empty();
                     }
-                    logger.warn("Reporter for domain {} isn't bootstrapped yet", reference);
+                    log.warn("Reporter for domain {} isn't bootstrapped yet", reference);
                     return Maybe.just(noOpReporter);
                 })
                 .onErrorResumeNext(error -> {
-                    logger.error("Error occurred when fetching reporter for domain {}", reference, error);
+                    log.error("Error occurred when fetching reporter for domain {}", reference, error);
                     return Maybe.empty();
                 }));
     }
 
     private void deployReporter(String reporterId) {
-        logger.info("Management API has received a deploy reporter event for {}", reporterId);
+        log.info("Management API has received a deploy reporter event for {}", reporterId);
         reporterService.findById(reporterId)
                 .subscribe(
                         reporter -> {
                             if (needDeployment(reporter)) {
                                 loadReporter(reporter);
                             } else {
-                                logger.info("Reporter already deployed event for {} ignored", reporterId);
+                                log.info("Reporter already deployed event for {} ignored", reporterId);
                             }
                         },
-                        error -> logger.error("Unable to deploy reporter {}", reporterId, error),
-                        () -> logger.error("No reporter found with id {}", reporterId));
+                        error -> log.error("Unable to deploy reporter {}", reporterId, error),
+                        () -> log.error("No reporter found with id {}", reporterId));
     }
 
     private void reloadReporter(String reporterId, EventBusReporterWrapper.ChildReporterAction referenceChange) {
-        logger.info("Management API has received an update reporter event for {}", reporterId);
+        log.info("Management API has received an update reporter event for {}", reporterId);
         reporterService.findById(reporterId)
                 .subscribe(reporter -> {
                             if (needDeployment(reporter)) {
@@ -230,12 +229,12 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                                 updateReferences(referenceChange, reporter);
                             }
                         },
-                        error -> logger.error("Unable to reload reporter {}", reporterId, error),
-                        () -> logger.error("No reporter found with id {}", reporterId));
+                        error -> log.error("Unable to reload reporter {}", reporterId, error),
+                        () -> log.error("No reporter found with id {}", reporterId));
     }
 
     private void reloadWithNewConfig(io.gravitee.am.model.Reporter reporter) {
-        logger.debug("Reload reporter: {} after configuration update", reporter.getName());
+        log.debug("Reload reporter: {} after configuration update", reporter.getName());
         getReporterInstanceById(reporter.getId())
                 .ifPresentOrElse(auditReporter -> {
                             try {
@@ -245,7 +244,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                                     auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
                                     loadReporter(reporter);
                                 } else {
-                                    logger.info("Reporter: {} has been disabled", reporter.getName());
+                                    log.info("Reporter: {} has been disabled", reporter.getName());
                                     // unregister event bus consumer
                                     // we do not stop the underlying reporter if it manages search because it can be used to fetch reportable
                                     ((EventBusReporterWrapper) auditReporter).unregister();
@@ -254,24 +253,24 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                                     }
                                 }
                             } catch (Exception e) {
-                                logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
+                                log.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
                             }
                         },
-                        () -> logger.info("There is no reporter to reload"));
+                        () -> log.info("There is no reporter to reload"));
     }
 
     private void updateReferences(EventBusReporterWrapper.ChildReporterAction referenceChange, io.gravitee.am.model.Reporter reporter) {
-        logger.debug("Update references for reporter: {}", reporter.getName());
+        log.debug("Update references for reporter: {}", reporter.getName());
         getReporterInstanceById(reporter.getId())
                 .ifPresentOrElse(auditReporter -> {
                             if (auditReporter instanceof EventBusReporterWrapper<?, ?> wrapper) {
                                 wrapper.updateReferences(referenceChange);
                             } else {
                                 // this should never happen, so let's have a warning if it does
-                                logger.warn("Reporter {} doesn't support updating references", auditReporter);
+                                log.warn("Reporter {} doesn't support updating references", auditReporter);
                             }
                         },
-                        () -> logger.info("There is no reporter to reload"));
+                        () -> log.info("There is no reporter to reload"));
     }
 
     private void loadReporter(io.gravitee.am.model.Reporter reporter) {
@@ -312,7 +311,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
     }
 
     private static void logUnableToLoad(io.gravitee.am.model.Reporter reporter, Throwable ex) {
-        logger.error("Unable to load reporter '{}'", reporter.getId(), ex);
+        log.error("Unable to load reporter '{}'", reporter.getId(), ex);
     }
 
     private Optional<Reporter> getReporterInstanceById(String reporterId) {
@@ -357,13 +356,13 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                     var providerConfig = new ReporterProviderConfiguration(reporter, graviteeContext);
                     var auditReporter = reporterPluginManager.create(providerConfig);
                     if (auditReporter == null) {
-                        logger.warn("Couldn't create a {} reporter for context {}", providerConfig.getType(), providerConfig.getGraviteeContext());
+                        log.warn("Couldn't create a {} reporter for context {}", providerConfig.getType(), providerConfig.getGraviteeContext());
                         return;
                     }
 
-                    logger.info("Initializing audit reporter: {} for {}", reporter.getName(), reporter.getReference());
+                    log.info("Initializing audit reporter: {} for {}", reporter.getName(), reporter.getReference());
                     if (reporter.isInherited()) {
-                        logger.info("{} is inheritable. It will also report events for: {}", reporter.getName(), additionalReferences);
+                        log.info("{} is inheritable. It will also report events for: {}", reporter.getName(), additionalReferences);
                     }
                     var eventBusReporter = createWrapper(auditReporter, reporter);
                     auditReporters.put(reporter, eventBusReporter);
@@ -371,7 +370,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                     try {
                         eventBusReporter.start();
                     } catch (Exception e) {
-                        logger.error("Unexpected error while loading reporter", e);
+                        log.error("Unexpected error while loading reporter", e);
                     }
                 } else {
                     // initialize NoOpReporter in order to allow to reload this reporter with valid implementation if it is enabled through the UI
@@ -402,7 +401,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 reporters.remove(reporterId);
             }
         } catch (Exception e) {
-            logger.error("Unexpected error while removing reporter", e);
+            log.error("Unexpected error while removing reporter", e);
         }
 
     }
@@ -416,18 +415,18 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                     if (!reporters.isEmpty()) {
                         for (io.gravitee.reporter.api.Reporter reporter : reporters) {
                             try {
-                                logger.info("Starting reporter: {}", reporter);
+                                log.info("Starting reporter: {}", reporter);
                                 reporter.start();
                             } catch (Exception ex) {
-                                logger.error("Unexpected error while starting reporter", ex);
+                                log.error("Unexpected error while starting reporter", ex);
                             }
                         }
                     } else {
-                        logger.info("\tThere is no reporter to start");
+                        log.info("\tThere is no reporter to start");
                     }
                 }, err ->
                         // Could not deploy
-                        logger.error("Reporter service can not be started", err)
+                        log.error("Reporter service can not be started", err)
         );
     }
 

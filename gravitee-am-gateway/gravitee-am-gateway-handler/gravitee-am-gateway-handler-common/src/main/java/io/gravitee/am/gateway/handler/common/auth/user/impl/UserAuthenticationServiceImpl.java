@@ -56,8 +56,6 @@ import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
@@ -75,16 +73,17 @@ import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KE
 import static io.gravitee.am.service.utils.UserProfileUtils.buildDisplayName;
 import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayName;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserAuthenticationServiceImpl implements UserAuthenticationService {
 
     private static final String SOURCE_FIELD = "source";
     private static final String LAST_IDENTITY_FIELD = "last_identity";
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private Domain domain;
@@ -329,7 +328,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                                 User preConnectedUser,
                                 boolean afterAuthentication,
                                 Boolean accountLinking) {
-        LOGGER.debug("Updating user: username[{}]", preConnectedUser.getUsername());
+        log.debug("Updating user: username[{}]", preConnectedUser.getUsername());
 
         var updateActions = UserRepository.UpdateActions.none();
 
@@ -408,7 +407,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
      * @return created user
      */
     private Single<User> create(User preConnectedUser) {
-        LOGGER.debug("Creating a new user: username[%s]", preConnectedUser.getUsername());
+        log.debug("Creating a new user: username[%s]", preConnectedUser.getUsername());
         return userService.create(preConnectedUser);
     }
 

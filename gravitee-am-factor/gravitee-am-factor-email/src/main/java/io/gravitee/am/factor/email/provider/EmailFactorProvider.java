@@ -37,8 +37,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.InvalidKeyException;
@@ -49,14 +47,15 @@ import java.util.Map;
 
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
 import static java.util.Arrays.asList;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EmailFactorProvider extends OTPFactorProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailFactorProvider.class);
 
     @Autowired
     private EmailFactorConfiguration configuration;
@@ -79,18 +78,18 @@ public class EmailFactorProvider extends OTPFactorProvider {
         if (factor != null) {
             EnrolledFactorSecurity securityFactor = factor.getSecurity();
             if (securityFactor == null || securityFactor.getValue() == null) {
-                logger.warn("No shared secret in form");
+                log.warn("No shared secret in form");
             } else {
                 EnrolledFactorChannel enrolledFactorChannel = factor.getChannel();
                 if (enrolledFactorChannel == null || enrolledFactorChannel.getTarget() == null) {
-                    logger.warn("No email address in form");
+                    log.warn("No email address in form");
                 } else {
                     try {
                         InternetAddress internetAddress = new InternetAddress(enrolledFactorChannel.getTarget());
                         internetAddress.validate();
                         valid = true;
                     } catch (AddressException e) {
-                        logger.warn("Email address is invalid", e);
+                        log.warn("Email address is invalid", e);
                     }
                 }
             }
@@ -116,7 +115,7 @@ public class EmailFactorProvider extends OTPFactorProvider {
     }
 
     private Completable generateCodeAndSendEmail(FactorContext context, EmailSenderProvider provider, EnrolledFactor enrolledFactor) {
-        logger.debug("Generating factor code of {} digits", configuration.getReturnDigits());
+        log.debug("Generating factor code of {} digits", configuration.getReturnDigits());
 
         try {
             UserService userService = context.getComponent(UserService.class);
@@ -146,10 +145,10 @@ public class EmailFactorProvider extends OTPFactorProvider {
                             }).ignoreElement());
 
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            logger.error("Code generation fails", e);
+            log.error("Code generation fails", e);
             return Completable.error(new TechnicalException("Code can't be sent"));
         } catch (Exception e) {
-            logger.error("Email templating fails", e);
+            log.error("Email templating fails", e);
             return Completable.error(new TechnicalException("Email can't be sent"));
         }
     }

@@ -27,14 +27,13 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
 import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.util.CollectionUtils.isEmpty;
+import lombok.CustomLog;
 
 /**
  * Client Authentication method : client_secret_basic
@@ -45,9 +44,9 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ClientBasicAuthProvider implements ClientAuthProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClientBasicAuthProvider.class);
     private static final String TYPE = "Basic";
 
     private final SecretService appSecretService;
@@ -124,7 +123,7 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
         try {
             return URLDecoder.decode(value.replace("+", "%2B"), UTF_8);
         } catch (IllegalArgumentException e) {
-            logger.debug("Basic auth credential failed URL decoding, falling back to raw value");
+            log.debug("Basic auth credential failed URL decoding, falling back to raw value");
             return value;
         }
     }

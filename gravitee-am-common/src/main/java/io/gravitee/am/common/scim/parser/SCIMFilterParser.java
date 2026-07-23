@@ -20,7 +20,7 @@ import io.gravitee.am.common.scim.filter.AttributePath;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.filter.Operator;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.Stack;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public final class SCIMFilterParser {
 
     /**

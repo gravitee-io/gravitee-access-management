@@ -28,15 +28,14 @@ import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
 import io.vertx.ext.web.client.WebClientOptions;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import java.util.Map;
+import lombok.CustomLog;
 
 @RequiredArgsConstructor
+@CustomLog
 class WebClientOptionsConfigurer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebClientOptionsConfigurer.class);
     private static final String JKS_KEYSTORE_TYPE = "jks";
     private static final String PKCS12_KEYSTORE_TYPE = "pkcs12";
     private static final String PEM_KEYSTORE_TYPE = "pem";
@@ -95,7 +94,7 @@ class WebClientOptionsConfigurer {
                     case JKS_KEYSTORE_TYPE -> setJksTrustOptions(options);
                     case PKCS12_KEYSTORE_TYPE -> setPfxTrustOptions(options);
                     case PEM_KEYSTORE_TYPE -> setPemTrustOptions(options);
-                    default -> LOGGER.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType());
+                    default -> log.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType());
                 }
             }
             if (sslKeyStoreType() != null) {
@@ -103,7 +102,7 @@ class WebClientOptionsConfigurer {
                     case JKS_KEYSTORE_TYPE -> setJksKeyOptions(options);
                     case PKCS12_KEYSTORE_TYPE -> setPfxKeyOptions(options);
                     case PEM_KEYSTORE_TYPE -> setPemKeyOptions(options);
-                    default -> LOGGER.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType());
+                    default -> log.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType());
                 }
             }
         }

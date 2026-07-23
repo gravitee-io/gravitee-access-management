@@ -40,7 +40,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -56,7 +56,7 @@ import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Import(GithubAuthenticationProviderConfiguration.class)
 public class GithubAuthenticationProvider extends AbstractSocialAuthenticationProvider<GithubIdentityProviderConfiguration> {
 

@@ -29,7 +29,7 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOpti
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -46,7 +46,7 @@ import java.util.Set;
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
 
 @Component
-@Slf4j
+@CustomLog
 public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProviderService {
 
     public static final String DEFAULT_IDP_PREFIX = "default-idp-";

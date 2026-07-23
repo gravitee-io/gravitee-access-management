@@ -26,7 +26,7 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 @ManagementRepositoryScope
 public class DomainPasswordPoliciesUpgrader extends SystemTaskUpgrader {
 

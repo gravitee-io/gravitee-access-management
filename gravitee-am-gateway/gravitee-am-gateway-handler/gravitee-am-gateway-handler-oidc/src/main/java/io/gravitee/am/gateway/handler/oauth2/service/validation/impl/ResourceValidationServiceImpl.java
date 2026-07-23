@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  *
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component
 public class ResourceValidationServiceImpl implements ResourceValidationService {
 

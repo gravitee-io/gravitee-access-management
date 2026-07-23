@@ -33,8 +33,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,6 +41,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -50,9 +49,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 @Component("managementIdentityProviderManager")
+@CustomLog
 public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload>, InMemoryIdentityProviderListener {
 
-    private final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
     @Autowired
     private IdentityProviderPluginManager identityProviderPluginManager;
@@ -88,17 +87,17 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("Register event listener for identity provider events for all organizations");
+        log.info("Register event listener for identity provider events for all organizations");
         eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
 
-        logger.info("Initializing identity providers for all organizations");
+        log.info("Initializing identity providers for all organizations");
         try {
             identityProviderService.findAll(ReferenceType.ORGANIZATION)
                     .flatMapCompletable(this::updateAuthenticationProvider)
                     .blockingAwait();
-            logger.info("Identity providers loaded for all organizations");
+            log.info("Identity providers loaded for all organizations");
         } catch (Exception e) {
-            logger.error("Unable to initialize identity providers", e);
+            log.error("Unable to initialize identity providers", e);
         }
 
         this.commonIdentityProviderManager.setListener(this);
@@ -129,19 +128,19 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     private void updateIdentityProvider(String identityProviderId, String organizationId, IdentityProviderEvent identityProviderEvent) {
         final String eventType = identityProviderEvent.toString().toLowerCase();
-        logger.info("Organization {} has received {} identity provider event for {}", organizationId, eventType, identityProviderId);
+        log.info("Organization {} has received {} identity provider event for {}", organizationId, eventType, identityProviderId);
         identityProviderService.findById(identityProviderId)
                 .flatMap(identityProvider -> updateAuthenticationProvider(identityProvider)
                         .andThen(Maybe.just(identityProvider)))
                 .subscribe(
-                        identityProvider -> logger.info("Identity provider {} {}d for organization {}", identityProviderId, eventType, organizationId),
-                        error -> logger.error("Unable to {} identity provider for organization {}", eventType, organizationId, error),
-                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+                        identityProvider -> log.info("Identity provider {} {}d for organization {}", identityProviderId, eventType, organizationId),
+                        error -> log.error("Unable to {} identity provider for organization {}", eventType, organizationId, error),
+                        () -> log.error("No identity provider found with id {}", identityProviderId));
     }
 
     private Completable updateAuthenticationProvider(IdentityProvider identityProvider) {
         if (!needDeployment(identityProvider)) {
-            logger.info("\tIdentity provider already initialized: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
+            log.info("\tIdentity provider already initialized: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
             return Completable.complete();
         }
         return pluginLicenseGate.checkPersisted(
@@ -151,10 +150,10 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
                 .andThen(Completable.fromAction(() -> doUpdateAuthenticationProvider(identityProvider)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof LicenseFeatureRequiredException) {
-                        logger.warn("Skipping identity provider {} for organization {} [{}]: the plugin's feature is not included in the organization's license",
+                        log.warn("Skipping identity provider {} for organization {} [{}]: the plugin's feature is not included in the organization's license",
                                 identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
                     } else {
-                        logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), ex);
+                        log.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), ex);
                     }
                     clearProvider(identityProvider.getId());
                     return Completable.complete();
@@ -162,7 +161,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     }
 
     private void doUpdateAuthenticationProvider(IdentityProvider identityProvider) throws Exception {
-        logger.info("\tInitializing identity provider: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
+        log.info("\tInitializing identity provider: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
         // stop existing provider, if any
         clearProvider(identityProvider.getId());
         // create and start the new provider
@@ -178,7 +177,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     }
 
     private void removeIdentityProvider(String identityProviderId) {
-        logger.info("Received identity provider event, delete identity provider {}", identityProviderId);
+        log.info("Received identity provider event, delete identity provider {}", identityProviderId);
         clearProvider(identityProviderId);
     }
 
@@ -189,7 +188,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
             try {
                 authenticationProvider.stop();
             } catch (Exception e) {
-                logger.error("An error occurs while stopping the identity provider : {}", identityProviderId, e);
+                log.error("An error occurs while stopping the identity provider : {}", identityProviderId, e);
             }
         }
         identities.remove(identityProviderId);

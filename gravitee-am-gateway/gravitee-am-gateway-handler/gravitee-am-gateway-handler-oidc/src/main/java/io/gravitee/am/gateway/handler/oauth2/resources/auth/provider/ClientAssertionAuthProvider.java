@@ -28,8 +28,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Client Authentication method : private_key_jwt
@@ -56,9 +55,9 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ClientAssertionAuthProvider implements ClientAuthProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClientAssertionAuthProvider.class);
     private ClientAssertionService clientAssertionService;
 
     public ClientAssertionAuthProvider() { }
@@ -103,10 +102,10 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
                         client1 -> handler.handle(Future.succeededFuture(client1)),
                         throwable -> {
                             if (throwable instanceof InvalidClientException) {
-                                logger.debug("Failed to authenticate client with assertion method", throwable);
+                                log.debug("Failed to authenticate client with assertion method", throwable);
                                 handler.handle(Future.failedFuture(throwable));
                             } else {
-                                logger.error("Failed to authenticate client with assertion method", throwable);
+                                log.error("Failed to authenticate client with assertion method", throwable);
                                 handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: Failed to authenticate client with assertion method", throwable)));
                             }
                         },

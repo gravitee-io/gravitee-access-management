@@ -23,7 +23,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.http.MediaType;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -39,7 +39,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class RecaptchaFilter extends GenericFilterBean {
     public static final String DEFAULT_RECAPTCHA_HEADER_NAME = "X-Recaptcha-Token";
     private static final Set<String> RESTRICTED_PATHS = new HashSet<>(Arrays.asList("POST /login"));

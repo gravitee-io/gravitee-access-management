@@ -17,23 +17,22 @@ package io.gravitee.am.management.service.impl.notifications.notifiers;
 
 import io.gravitee.notifier.api.Notification;
 import io.gravitee.notifier.api.Notifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import lombok.CustomLog;
 
 
 @Component
+@CustomLog
 public class LoggerNotifier implements Notifier {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public static final String NOTIFIER_DATA_MSG = "msg";
 
     @Override
     public CompletableFuture<Void> send(Notification notification, Map<String, Object> map) {
         final String message = ((String) map.get(NOTIFIER_DATA_MSG));
-        logger.warn(message);
+        log.warn(message);
 
         return CompletableFuture.completedFuture(null);
     }

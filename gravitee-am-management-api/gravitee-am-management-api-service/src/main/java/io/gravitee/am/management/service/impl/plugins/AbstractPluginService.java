@@ -18,13 +18,13 @@ package io.gravitee.am.management.service.impl.plugins;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class AbstractPluginService {
     protected AmPluginManager pluginManager;
 

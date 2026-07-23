@@ -16,7 +16,7 @@
 package io.gravitee.am.identityprovider.api;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 import java.util.Map;
 
@@ -25,7 +25,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class DefaultIdentityProviderRoleMapper extends IdentityProviderArrayPropertyMapper implements IdentityProviderRoleMapper {
-    public static final Logger LOGGER = LoggerFactory.getLogger(DefaultIdentityProviderRoleMapper.class);
+    public static final Logger LOGGER = NodeLoggerFactory.getLogger(DefaultIdentityProviderRoleMapper.class);
 
     @Override
     public Map<String, String[]> getRoles() {

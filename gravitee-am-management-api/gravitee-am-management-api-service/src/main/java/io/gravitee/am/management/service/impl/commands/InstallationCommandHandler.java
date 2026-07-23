@@ -24,7 +24,7 @@ import io.gravitee.cockpit.api.command.v1.installation.InstallationReply;
 import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -35,7 +35,7 @@ import java.util.Optional;
  */
 @RequiredArgsConstructor
 @Component
-@Slf4j
+@CustomLog
 public class InstallationCommandHandler implements CommandHandler<InstallationCommand, InstallationReply> {
 
     private final InstallationService installationService;

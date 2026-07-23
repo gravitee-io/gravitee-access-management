@@ -34,9 +34,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
-@Slf4j
+@CustomLog
 public class RedisRateLimitRepository implements RateLimitRepository<RateLimit> {
 
     private static final String REDIS_KEY_PREFIX = "ratelimit:";

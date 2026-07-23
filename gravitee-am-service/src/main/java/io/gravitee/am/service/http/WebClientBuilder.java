@@ -24,8 +24,6 @@ import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -36,14 +34,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebClientBuilder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebClientBuilder.class);
     private static final String HTTPS_SCHEME = "https";
     private static final Pattern WILDCARD_PATTERN = Pattern.compile("\\*\\.");
 
@@ -141,11 +140,11 @@ public class WebClientBuilder {
             options.setAlpnVersions(Arrays.asList(HttpVersion.HTTP_2, HttpVersion.HTTP_1_1));
             options.setHttp2ConnectionWindowSize(http2ConnectionWindowSize());
             options.setHttp2KeepAliveTimeout(http2KeepAliveTimeout());
-            LOGGER.debug("HTTP/2 enabled with ALPN protocol negotiation");
+            log.debug("HTTP/2 enabled with ALPN protocol negotiation");
         } else {
             options.setUseAlpn(false);
             options.setHttp2ClearTextUpgrade(false);
-            LOGGER.debug("HTTP/1.1 enforced");
+            log.debug("HTTP/1.1 enforced");
         }
     }
 
@@ -177,7 +176,7 @@ public class WebClientBuilder {
                 }
             });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred when calculating proxy excluded hosts", ex);
+            log.error("An error has occurred when calculating proxy excluded hosts", ex);
             return false;
         }
     }

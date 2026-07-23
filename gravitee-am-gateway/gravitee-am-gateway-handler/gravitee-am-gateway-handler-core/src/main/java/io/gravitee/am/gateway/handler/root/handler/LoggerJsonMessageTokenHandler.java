@@ -26,7 +26,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.Environment;
 
 import java.net.URLDecoder;
@@ -43,7 +43,7 @@ import static java.util.Optional.ofNullable;
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class LoggerJsonMessageTokenHandler implements Handler<RoutingContext> {
     public static final String PROPERTY_HANDLERS_REQUEST_LOGGER_JSON_MESSAGE_HEADERS = "handlers.request.logger.jsonMessage.allowedHeaders";
     public static final String PROPERTY_REQUEST_JSON_LOGGER_ENABLED = "handlers.request.logger.jsonMessage.enabled";

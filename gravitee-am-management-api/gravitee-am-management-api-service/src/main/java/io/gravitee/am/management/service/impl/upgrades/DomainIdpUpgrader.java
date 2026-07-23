@@ -24,12 +24,11 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import static io.gravitee.am.management.service.impl.DefaultIdentityProviderServiceImpl.DEFAULT_IDP_PREFIX;
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_IDP_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * Create default mongo IDP for each domain for user management
@@ -40,9 +39,9 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
+@CustomLog
 public class DomainIdpUpgrader extends AsyncUpgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DomainIdpUpgrader.class);
 
     private final DomainService domainService;
     private final IdentityProviderService identityProviderService;
@@ -50,7 +49,7 @@ public class DomainIdpUpgrader extends AsyncUpgrader {
 
     @Override
     public Completable doUpgrade() {
-        logger.info("Applying domain idp upgrade");
+        log.info("Applying domain idp upgrade");
         return Completable.fromPublisher(domainService.listAll()
                 .flatMapSingle(this::updateDefaultIdp));
 
@@ -62,7 +61,7 @@ public class DomainIdpUpgrader extends AsyncUpgrader {
                 .flatMap
                         (isEmpty -> {
                     if (isEmpty) {
-                        logger.info("No default idp found for domain {}, update domain", domain.getName());
+                        log.info("No default idp found for domain {}, update domain", domain.getName());
                         return defaultIdentityProviderService.create(domain);
                     }
                     return Single.just(new IdentityProvider());

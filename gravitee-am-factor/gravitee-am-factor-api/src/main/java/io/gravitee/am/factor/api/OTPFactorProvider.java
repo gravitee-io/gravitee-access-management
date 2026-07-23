@@ -22,7 +22,7 @@ import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -34,7 +34,7 @@ import java.time.Instant;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public abstract class OTPFactorProvider implements FactorProvider {
 
     @Override

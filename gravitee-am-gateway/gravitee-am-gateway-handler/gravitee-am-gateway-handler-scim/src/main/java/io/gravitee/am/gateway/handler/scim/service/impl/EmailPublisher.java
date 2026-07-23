@@ -19,14 +19,14 @@ import io.gravitee.am.gateway.handler.common.email.EmailContainer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.core.FlowableOnSubscribe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.util.StringUtils;
 
 /**
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class EmailPublisher implements FlowableOnSubscribe<EmailContainer> {
 
     private FlowableEmitter<EmailContainer> emitter;

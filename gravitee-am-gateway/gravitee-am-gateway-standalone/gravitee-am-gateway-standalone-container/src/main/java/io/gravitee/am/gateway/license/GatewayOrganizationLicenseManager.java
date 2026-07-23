@@ -34,11 +34,10 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import lombok.CustomLog;
 
 /**
  * Feeds the node {@link LicenseManager} with the organization licenses persisted by the cockpit/cloud
@@ -49,9 +48,9 @@ import java.util.concurrent.Executors;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOrganizationLicenseManager> implements EventListener<LicenseEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(GatewayOrganizationLicenseManager.class);
 
     private final LicenseService licenseService;
     private final LicenseFactory licenseFactory;
@@ -85,11 +84,11 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
         super.doStart();
 
         if (!managedCloudEnabled) {
-            logger.debug("Not a managed cloud deployment, skipping organization license management");
+            log.debug("Not a managed cloud deployment, skipping organization license management");
             return;
         }
 
-        logger.info("Register event listener for license events for the gateway");
+        log.info("Register event listener for license events for the gateway");
         eventManager.subscribeForEvents(this, LicenseEvent.class);
 
         // set up a single thread for redeploying domains
@@ -106,16 +105,16 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
         try {
             licenseService.findAll()
                     .filter(license -> license.getReferenceType() == ReferenceType.ORGANIZATION)
-                    .doOnNext(license -> logger.info("Initializing license for organization={}", license.getReferenceId()))
+                    .doOnNext(license -> log.info("Initializing license for organization={}", license.getReferenceId()))
                     .blockingForEach(license -> register(license.getReferenceId(), license.getLicense()));
         } catch (Exception e) {
             // Degrade to OSS: domains deploy without EE plugins and the next license event heals it.
-            logger.error("An error occurred while loading organization licenses", e);
+            log.error("An error occurred while loading organization licenses", e);
         }
 
         licenseManager.onLicenseExpires(license -> {
             if (License.REFERENCE_TYPE_ORGANIZATION.equals(license.getReferenceType())) {
-                logger.info("License of organization={} has expired", license.getReferenceId());
+                log.info("License of organization={} has expired", license.getReferenceId());
                 redeployOrganizationDomains(license.getReferenceId());
             }
         });
@@ -147,7 +146,7 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
                             register(organizationId, license.getLicense());
                             redeployOrganizationDomains(organizationId);
                         },
-                        ex -> logger.error("An error occurred while loading license for organization={}", organizationId, ex),
+                        ex -> log.error("An error occurred while loading license for organization={}", organizationId, ex),
                         () -> undeploy(organizationId));
     }
 
@@ -163,28 +162,28 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
             licenseManager.registerOrganizationLicense(organizationId,
                     licenseFactory.create(ReferenceType.ORGANIZATION.name(), organizationId, rawLicense));
         } catch (Exception e) {
-            logger.warn("License cannot be registered for organization={}", organizationId, e);
+            log.warn("License cannot be registered for organization={}", organizationId, e);
         }
     }
 
     private void redeployOrganizationDomains(String organizationId) {
-        logger.info("Redeploying domains of organization={} following a license change", organizationId);
+        log.info("Redeploying domains of organization={} following a license change", organizationId);
         Flowable.fromIterable(securityDomainManager.domains())
                 .flatMapMaybe(domain -> environmentService.findById(domain.getReferenceId())
                         .map(Environment::getOrganizationId)
                         .filter(organizationId::equals)
                         .map(orgId -> domain)
                         .onErrorResumeNext(ex -> {
-                            logger.warn("Cannot resolve the organization of domain={}, skipping its redeployment", domain.getId(), ex);
+                            log.warn("Cannot resolve the organization of domain={}, skipping its redeployment", domain.getId(), ex);
                             return Maybe.empty();
                         }))
                 .observeOn(redeployScheduler)
                 // A concurrent sync cycle may update the same domain; worst case is a redundant rebuild.
                 .concatMapCompletable(domain -> securityDomainManager.updateReactive(domain)
-                        .doOnError(ex -> logger.error("Unable to redeploy domain={} following a license change", domain.getId(), ex))
+                        .doOnError(ex -> log.error("Unable to redeploy domain={} following a license change", domain.getId(), ex))
                         .onErrorComplete())
                 .subscribe(
-                        () -> logger.debug("Domains of organization={} redeployed", organizationId),
-                        ex -> logger.error("An error occurred while redeploying domains of organization={}", organizationId, ex));
+                        () -> log.debug("Domains of organization={} redeployed", organizationId),
+                        ex -> log.error("An error occurred while redeploying domains of organization={}", organizationId, ex));
     }
 }

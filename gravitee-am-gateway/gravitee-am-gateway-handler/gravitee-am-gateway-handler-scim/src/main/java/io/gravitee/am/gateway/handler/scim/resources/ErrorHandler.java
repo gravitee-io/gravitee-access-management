@@ -25,10 +25,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * The SCIM protocol uses the HTTP response status codes defined in
@@ -56,9 +55,9 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 @RequiredArgsConstructor
+@CustomLog
 public class ErrorHandler implements Handler<RoutingContext> {
 
-    private static Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
     private final ScimErrorMapper scimErrorMapper;
 
     @Override
@@ -84,7 +83,7 @@ public class ErrorHandler implements Handler<RoutingContext> {
     }
 
     private void handleUnknownError(RoutingContext routingContext, Throwable throwable) {
-        logger.error(throwable.getMessage(), throwable);
+        log.error(throwable.getMessage(), throwable);
         if (routingContext.statusCode() != -1) {
             routingContext
                     .response()

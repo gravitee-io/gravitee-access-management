@@ -20,16 +20,15 @@ import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.Node;
 import io.gravitee.node.api.upgrader.UpgradeRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import lombok.CustomLog;
 
+@CustomLog
 public class DataPlaneUpgraderService extends AbstractService<DataPlaneUpgraderService> implements LifecycleComponent<DataPlaneUpgraderService> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataPlaneUpgraderService.class);
     private final boolean upgraderModeEnabled;
     private final Supplier<List<DataPlaneProvider>> dataPlanesSupplier;
     private final DataPlaneUpgraderRegistry upgraderRegistry = new DataPlaneUpgraderRegistry();
@@ -76,9 +75,9 @@ public class DataPlaneUpgraderService extends AbstractService<DataPlaneUpgraderS
             String identifier = upgrader.identifier(dataPlaneProvider.getDataPlaneDescription());
             UpgradeRecord upgradeRecord = dataPlaneProvider.getUpgraderRepository().findById(identifier).blockingGet();
             if (upgradeRecord != null) {
-                LOGGER.info("{} is already applied. it will be ignored.", name);
+                log.info("{} is already applied. it will be ignored.", name);
             } else {
-                LOGGER.info("Apply {} ...", name);
+                log.info("Apply {} ...", name);
                 if (upgrader.upgrade(dataPlaneProvider)) {
                     dataPlaneProvider.getUpgraderRepository().create(new UpgradeRecord(identifier, new Date())).blockingGet();
                 } else {
@@ -86,7 +85,7 @@ public class DataPlaneUpgraderService extends AbstractService<DataPlaneUpgraderS
                 }
             }
         } catch (Exception var5) {
-            LOGGER.error("Unable to apply {}. Error: ", name, var5);
+            log.error("Unable to apply {}. Error: ", name, var5);
         }
         return true;
     }
@@ -97,7 +96,7 @@ public class DataPlaneUpgraderService extends AbstractService<DataPlaneUpgraderS
         node.stop();
         node.postStop();
         if (error) {
-            LOGGER.error("Stopping because one of the upgrades could not be performed");
+            log.error("Stopping because one of the upgrades could not be performed");
             System.exit(1);
         } else {
             System.exit(0);

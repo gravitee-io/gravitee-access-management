@@ -26,7 +26,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Date;
 import java.util.Optional;
@@ -37,7 +37,7 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class DeviceGatewayServiceImpl implements DeviceGatewayService {
     //Ten hours

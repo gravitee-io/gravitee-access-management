@@ -22,12 +22,11 @@ import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.management.service.DomainService;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SYSTEM_CERTIFICATE_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,12 +34,12 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SYST
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class SystemCertificateUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "system_certificates_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "System Certificates can't be upgraded, other instance may process them or an upgrader has failed previously";
     public static final int ONE_MINUTE = 60_000;
-    private final Logger logger = LoggerFactory.getLogger(SystemCertificateUpgrader.class);
 
     private final DomainService domainService;
 
@@ -101,11 +100,11 @@ public class SystemCertificateUpgrader extends SystemTaskUpgrader {
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
                         .onErrorResumeNext(err -> {
-                            logger.error("Unable to update status for system certificates task: {}", err.getMessage());
+                            log.error("Unable to update status for system certificates task: {}", err.getMessage());
                             return Single.just(false);
                         }))
                 .onErrorResumeNext(err -> {
-                    logger.error("Unable to migrate system certificates: {}", err.getMessage());
+                    log.error("Unable to migrate system certificates: {}", err.getMessage());
                     return Single.just(false);
                 });
     }

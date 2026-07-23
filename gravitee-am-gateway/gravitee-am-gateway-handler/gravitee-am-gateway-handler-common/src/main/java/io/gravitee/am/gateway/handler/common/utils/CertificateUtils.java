@@ -19,8 +19,6 @@ import io.gravitee.am.certificate.api.X509CertUtils;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -31,15 +29,16 @@ import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@CustomLog
 public class CertificateUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtils.class);
 
     public static boolean hasPeerCertificate(RoutingContext routingContext, String certHeader) {
         String certHeaderValue = StringUtils.hasText(certHeader) ? routingContext.request().getHeader(certHeader) : null;
@@ -72,7 +71,7 @@ public class CertificateUtils {
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 certificate = Optional.ofNullable((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(certHeaderValue.getBytes())));
             } catch (CertificateException e) {
-                LOGGER.debug("Peer Certificate header is present but certificate can't be read, try with the sslSession (cause: {})", e.getMessage());
+                log.debug("Peer Certificate header is present but certificate can't be read, try with the sslSession (cause: {})", e.getMessage());
             }
         }
 

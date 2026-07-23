@@ -31,7 +31,7 @@ import io.gravitee.node.api.configuration.Configuration;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -46,7 +46,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.HashMap;
-@Slf4j
+@CustomLog
 public class CockpitAuthenticationFilter extends GenericFilterBean {
 
     private static final String COCKPIT_SOURCE = "cockpit";

@@ -26,7 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -48,7 +48,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-@Slf4j
+@CustomLog
 public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implements ScopeApprovalRepository {
 
     public static final String DOMAIN = "domain";

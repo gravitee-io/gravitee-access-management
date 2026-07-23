@@ -27,21 +27,20 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions.none;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EnrichProfilePolicy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EnrichProfilePolicy.class);
     private static final String GATEWAY_POLICY_ENRICH_PROFILE_ERROR_KEY = "GATEWAY_POLICY_ENRICH_PROFILE_ERROR";
 
     public static final String ERROR_MESSAGE = "Unable to update user profile with context information";
@@ -54,21 +53,21 @@ public class EnrichProfilePolicy {
 
     @OnRequest
     public void onRequest(Request request, Response response, ExecutionContext context, PolicyChain policyChain) {
-        LOGGER.debug("Start EnrichProfilePolicy.onRequest");
+        log.debug("Start EnrichProfilePolicy.onRequest");
         try {
             if (prepareUserProfile(context)) {
                 enrichProfile(context)
                         .subscribe(
                                 user -> {
-                                    LOGGER.debug("User profile updated {}", user.getId());
+                                    log.debug("User profile updated {}", user.getId());
                                     policyChain.doNext(request, response);
                                 },
                                 error -> {
                                     if (configuration.isExitOnError()) {
-                                        LOGGER.warn("Update of user profile failed! {}", error.getMessage());
+                                        log.warn("Update of user profile failed! {}", error.getMessage());
                                         policyChain.failWith(PolicyResult.failure(ERROR_MESSAGE));
                                     } else {
-                                        LOGGER.info("Update of user profile failed! {}", error.getMessage());
+                                        log.info("Update of user profile failed! {}", error.getMessage());
                                         policyChain.doNext(request, response);
                                     }
                                 });
@@ -77,10 +76,10 @@ public class EnrichProfilePolicy {
             }
         } catch (Exception e) {
             if (configuration.isExitOnError()) {
-                LOGGER.warn(ERROR_MESSAGE, e);
+                log.warn(ERROR_MESSAGE, e);
                 policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENRICH_PROFILE_ERROR_KEY, ERROR_MESSAGE));
             } else {
-                LOGGER.info(ERROR_MESSAGE, e);
+                log.info(ERROR_MESSAGE, e);
                 policyChain.doNext(request, response);
             }
         }
@@ -97,7 +96,7 @@ public class EnrichProfilePolicy {
         if (!(configuration.getProperties() == null || configuration.getProperties().isEmpty())) {
             User user = (User)context.getAttribute("user");
             if (user != null) {
-                LOGGER.debug("Enrich profile for user '{}'", user.getId());
+                log.debug("Enrich profile for user '{}'", user.getId());
                 Map<String, Object> additionalInformation = user.getAdditionalInformation();
                 if (additionalInformation == null) {
                     additionalInformation = new HashMap<>();
@@ -118,10 +117,10 @@ public class EnrichProfilePolicy {
 
                 needUpdate = true;
             } else {
-                LOGGER.debug("User is missing from the execution context, ignore this policy");
+                log.debug("User is missing from the execution context, ignore this policy");
             }
         } else {
-            LOGGER.debug("No properties found in policy configuration, ignore this policy");
+            log.debug("No properties found in policy configuration, ignore this policy");
         }
         return needUpdate;
     }

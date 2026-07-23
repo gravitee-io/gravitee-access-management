@@ -29,8 +29,6 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.exception.UserInvalidException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -46,12 +44,14 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@CustomLog
 public class UserMapper {
 
     public static final String LAST_PASSWORD_RESET_KEY = "lastPasswordReset";
@@ -59,7 +59,6 @@ public class UserMapper {
     public static final String FORCE_RESET_PASSWORD_KEY = "forceResetPassword";
     public static final String CLIENT_KEY = "client";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserMapper.class);
 
     public static User convert(io.gravitee.am.model.User user, String baseUrl, boolean listing) {
         Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? user.getAdditionalInformation() : Collections.emptyMap();
@@ -210,16 +209,16 @@ public class UserMapper {
                         var lastPasswordReset = Instant.parse(lastResetIso8601);
                         var now = Instant.now();
                         if (lastPasswordReset.isAfter(now)) {
-                            LOGGER.error("Invalid lastPasswordReset - timestamp is in the future. Got {} which is {} ahead of the current time ({})", lastPasswordReset, Duration.between(lastPasswordReset, now), now);
+                            log.error("Invalid lastPasswordReset - timestamp is in the future. Got {} which is {} ahead of the current time ({})", lastPasswordReset, Duration.between(lastPasswordReset, now), now);
                             throw new UserInvalidException("lastPasswordReset cannot be in the future");
                         }
                         user.setLastPasswordReset(Date.from(lastPasswordReset));
                     } catch (DateTimeParseException e) {
-                        LOGGER.error("Cannot parse lastPasswordReset. Be sure it is in ISO 8601 format.", e);
+                        log.error("Cannot parse lastPasswordReset. Be sure it is in ISO 8601 format.", e);
                         throw new UserInvalidException("Unable to parse lastPasswordReset date. Be sure it is in ISO 8601 format.", e);
                     }
                 } else {
-                    LOGGER.error("lastPasswordReset must be in ISO 8601 format");
+                    log.error("lastPasswordReset must be in ISO 8601 format");
                     throw new UserInvalidException("Unable to parse lastPasswordReset. lastPasswordReset must be in ISO 8601 format.");
                 }
             }
@@ -230,7 +229,7 @@ public class UserMapper {
                     user.setPassword(null);//user will receive email to set password.
                     graviteeUser.getAdditionalInformation().remove(PRE_REGISTRATION_KEY);
                 } else {
-                    LOGGER.error("preRegistration must be boolean");
+                    log.error("preRegistration must be boolean");
                     throw new UserInvalidException("Unable to parse preRegistration. preRegistration must be boolean.");
                 }
             }
@@ -241,7 +240,7 @@ public class UserMapper {
                     user.setForceResetPassword((Boolean) forceResetPassword);
                     graviteeUser.getAdditionalInformation().remove(FORCE_RESET_PASSWORD_KEY);
                 } else {
-                    LOGGER.error("forceResetPassword must be boolean");
+                    log.error("forceResetPassword must be boolean");
                     throw new UserInvalidException("Unable to parse forceResetPassword. forceResetPassword must be boolean.");
                 }
             }
@@ -252,7 +251,7 @@ public class UserMapper {
                     user.setClient((String) client);
                     graviteeUser.getAdditionalInformation().remove(CLIENT_KEY);
                 } else {
-                    LOGGER.error("client must be string");
+                    log.error("client must be string");
                     throw new UserInvalidException("Unable to parse client. client must be string.");
                 }
             }
@@ -270,7 +269,7 @@ public class UserMapper {
         try {
             return (T) additionalInformation.get(key);
         } catch (ClassCastException e) {
-            LOGGER.debug("An error occurs while retrieving {} information from user", key, e);
+            log.debug("An error occurs while retrieving {} information from user", key, e);
             return null;
         }
     }

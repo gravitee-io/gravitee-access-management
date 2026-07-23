@@ -18,17 +18,15 @@ package io.gravitee.am.plugins.authorizationengine.plugin;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngine;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 /**
  * @author GraviteeSource Team
  */
-@Slf4j
 public class AuthorizationEnginePluginHandler extends AmPluginHandler<AuthorizationEngine<?, ?>>  {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationEngine.class);
+    private final Logger LOGGER = NodeLoggerFactory.getLogger(AuthorizationEngine.class);
 
     private static final String PLUGIN_TYPE = "authorization-engine";
 

@@ -29,19 +29,18 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ExceptionHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
     public static final String NO_CACHE = "no-cache";
     public static final String NO_STORE = "no-store";
 
@@ -88,7 +87,7 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .setStatusCode(((HttpException) throwable).getStatusCode())
                         .end();
             } else {
-                logger.error("An exception occurs while handling incoming request", throwable);
+                log.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {
                     routingContext
                             .response()

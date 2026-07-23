@@ -23,22 +23,21 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ResourcePluginServiceImpl extends AbstractPluginService implements ResourcePluginService {
 
     private static final String MANIFEST_KEY_CATEGORIES_SEPARATOR = ",";
-    private final Logger LOGGER = LoggerFactory.getLogger(ResourcePluginServiceImpl.class);
 
     private ResourcePluginManager resourcePluginManager;
 
@@ -50,7 +49,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
 
     @Override
     public Single<List<ResourcePlugin>> findAll(List<String> expand) {
-        LOGGER.debug("List all resource plugins");
+        log.debug("List all resource plugins");
         return Observable.fromIterable(resourcePluginManager.findAll(true))
                 .map(plugin -> convert(plugin, expand))
                 .toList();
@@ -58,7 +57,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
 
     @Override
     public Maybe<ResourcePlugin> findById(String resourceId) {
-        LOGGER.debug("Find resource plugin by ID: {}", resourceId);
+        log.debug("Find resource plugin by ID: {}", resourceId);
         return Maybe.create(emitter -> {
             try {
                 Plugin resource = resourcePluginManager.findById(resourceId);
@@ -68,7 +67,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get resource plugin : {}", resourceId, ex);
+                log.error("An error occurs while trying to get resource plugin : {}", resourceId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get resource plugin : " + resourceId, ex));
             }
         });
@@ -76,7 +75,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
 
     @Override
     public Maybe<String> getSchema(String resourceId) {
-        LOGGER.debug("Find resource plugin schema by ID: {}", resourceId);
+        log.debug("Find resource plugin schema by ID: {}", resourceId);
         return Maybe.create(emitter -> {
             try {
                 String schema = resourcePluginManager.getSchema(resourceId);
@@ -86,7 +85,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for resource plugin {}", resourceId, e);
+                log.error("An error occurs while trying to get schema for resource plugin {}", resourceId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for resource plugin " + resourceId, e));
             }
         });
@@ -94,7 +93,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
 
     @Override
     public Maybe<String> getIcon(String resourceId) {
-        LOGGER.debug("Find resource plugin icon by ID: {}", resourceId);
+        log.debug("Find resource plugin icon by ID: {}", resourceId);
         return Maybe.create(emitter -> {
             try {
                 String icon = resourcePluginManager.getIcon(resourceId);
@@ -104,7 +103,7 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error has occurred when trying to get icon for resource plugin {}", resourceId, e);
+                log.error("An error has occurred when trying to get icon for resource plugin {}", resourceId, e);
                 emitter.onError(new TechnicalManagementException("An error has occurred when trying to get icon for resource plugin " + resourceId, e));
             }
         });

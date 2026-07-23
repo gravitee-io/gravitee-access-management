@@ -32,21 +32,20 @@ import io.vertx.core.MultiMap;
 import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.jsoup.internal.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
     public static final String GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS = "legacy.resetPassword.keepParams";
-    private static final Logger logger = LoggerFactory.getLogger(ResetPasswordSubmissionEndpoint.class);
     private final UserService userService;
 
     private final boolean keepParams;
@@ -75,7 +74,7 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
             // if failure, return to the reset password page with an error
             if (h.failed()) {
-                logger.error("An error occurs while ending user reset password process", h.cause());
+                log.error("An error occurs while ending user reset password process", h.cause());
                 queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "reset_password_failed");
                 redirectToPage(context, queryParams, h.cause());
                 return;

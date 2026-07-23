@@ -47,8 +47,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -68,17 +66,18 @@ import static com.mongodb.client.model.Filters.regex;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MongoOrganizationUserRepository extends AbstractManagementMongoRepository implements OrganizationUserRepository {
 
     public static final String IDP_GRAVITEE = "gravitee";
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_DISPLAY_NAME = "displayName";
     private static final String FIELD_FIRST_NAME = "firstName";
@@ -190,7 +189,7 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
             }
-            logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
+            log.error("An error has occurred while searching users with criteria {}", criteria, ex);
             return Single.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
 
@@ -212,7 +211,7 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
             if (ex instanceof IllegalArgumentException) {
                 return Flowable.error(ex);
             }
-            logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
+            log.error("An error has occurred while searching users with criteria {}", criteria, ex);
             return Flowable.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
 
@@ -658,7 +657,7 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
                             super.createIndex(usersCollection, Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
                                     new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true)));
                         } catch (Exception e) {
-                            logger.error("An error has occurred while creating index {} with unique constraints", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE, e);
+                            log.error("An error has occurred while creating index {} with unique constraints", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE, e);
                         }
                     })
                     .subscribe();

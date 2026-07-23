@@ -25,8 +25,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -39,14 +37,15 @@ import java.util.List;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
 @Repository
+@CustomLog
 public class JdbcLicenseRepository extends AbstractJdbcRepository implements LicenseRepository, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcLicenseRepository.class);
 
     private static final String TABLE = "licenses";
     private static final String COL_REFERENCE_ID = "reference_id";
@@ -76,7 +75,7 @@ public class JdbcLicenseRepository extends AbstractJdbcRepository implements Lic
 
     @Override
     public Flowable<License> findAll() {
-        LOGGER.debug("findAll()");
+        log.debug("findAll()");
         return findAll(Query.empty(), JdbcLicense.class)
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
@@ -84,7 +83,7 @@ public class JdbcLicenseRepository extends AbstractJdbcRepository implements Lic
 
     @Override
     public Maybe<License> findById(String referenceId, ReferenceType referenceType) {
-        LOGGER.debug("findById({}, {})", referenceId, referenceType);
+        log.debug("findById({}, {})", referenceId, referenceType);
         return findOne(Query.query(where(COL_REFERENCE_ID).is(referenceId)
                         .and(where(COL_REFERENCE_TYPE).is(referenceType.name()))), JdbcLicense.class)
                 .map(this::toEntity)
@@ -93,7 +92,7 @@ public class JdbcLicenseRepository extends AbstractJdbcRepository implements Lic
 
     @Override
     public Single<License> create(License item) {
-        LOGGER.debug("create license for {} {}", item.getReferenceType(), item.getReferenceId());
+        log.debug("create license for {} {}", item.getReferenceType(), item.getReferenceId());
 
         DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
         insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
@@ -110,7 +109,7 @@ public class JdbcLicenseRepository extends AbstractJdbcRepository implements Lic
 
     @Override
     public Single<License> update(License item) {
-        LOGGER.debug("update license for {} {}", item.getReferenceType(), item.getReferenceId());
+        log.debug("update license for {} {}", item.getReferenceType(), item.getReferenceId());
 
         DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
         update = addQuotedField(update, COL_LICENSE, item.getLicense(), String.class);
@@ -126,7 +125,7 @@ public class JdbcLicenseRepository extends AbstractJdbcRepository implements Lic
 
     @Override
     public Completable delete(String referenceId, ReferenceType referenceType) {
-        LOGGER.debug("delete license for {} {}", referenceType, referenceId);
+        log.debug("delete license for {} {}", referenceType, referenceId);
         Mono<Long> delete = getTemplate().delete(JdbcLicense.class)
                 .matching(Query.query(where(COL_REFERENCE_ID).is(referenceId)
                         .and(where(COL_REFERENCE_TYPE).is(referenceType.name()))))

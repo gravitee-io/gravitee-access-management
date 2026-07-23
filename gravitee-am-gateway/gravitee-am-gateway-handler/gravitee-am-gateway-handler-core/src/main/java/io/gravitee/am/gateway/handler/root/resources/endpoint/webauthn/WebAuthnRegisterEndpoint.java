@@ -33,20 +33,19 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterEndpoint.class);
     private static final String SKIP_WEBAUTHN_PARAM_KEY = "skipWebAuthN";
 
     public WebAuthnRegisterEndpoint(TemplateEngine templateEngine,
@@ -65,13 +64,13 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
         try {
             // session validation
             if (routingContext.session() == null) {
-                logger.warn("No session or session handler is missing.");
+                log.warn("No session or session handler is missing.");
                 routingContext.fail(500);
                 return;
             }
 
             if (routingContext.user() == null) {
-                logger.warn("User must be authenticated to register WebAuthn credentials.");
+                log.warn("User must be authenticated to register WebAuthn credentials.");
                 routingContext.fail(401);
                 return;
             }
@@ -111,9 +110,9 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             }
 
             // render the webauthn register page
-            this.renderPage(routingContext, generateData(routingContext, domainDataPlane.getDomain(), client), client, logger, "Unable to render WebAuthn register page");
+            this.renderPage(routingContext, generateData(routingContext, domainDataPlane.getDomain(), client), client, log, "Unable to render WebAuthn register page");
         } catch (Exception ex) {
-            logger.error("An error has occurred while rendering WebAuthn register page", ex);
+            log.error("An error has occurred while rendering WebAuthn register page", ex);
             routingContext.fail(503);
         }
     }

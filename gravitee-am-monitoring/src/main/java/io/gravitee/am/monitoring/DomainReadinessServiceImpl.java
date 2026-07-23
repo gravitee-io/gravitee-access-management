@@ -15,40 +15,39 @@
  */
 package io.gravitee.am.monitoring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DomainReadinessServiceImpl implements DomainReadinessService {
 
-    private final Logger logger = LoggerFactory.getLogger(DomainReadinessServiceImpl.class);
 
     private final Map<String, DomainState> domainStates = new ConcurrentHashMap<>();
 
     @Override
     public DomainState getDomainState(String domainId) {
         // Trace level as this might be called frequently by health checks
-        logger.debug("[Domain: {}] Retrieved domain state", domainId);
+        log.debug("[Domain: {}] Retrieved domain state", domainId);
         return domainStates.get(domainId);
     }
 
     @Override
     public void initPluginSync(String domainId, String pluginId, String pluginType) {
         if (domainId == null) {
-            logger.warn("Received initPluginSync for null domainId. Plugin: {}, Type: {}", pluginId, pluginType);
+            log.warn("Received initPluginSync for null domainId. Plugin: {}, Type: {}", pluginId, pluginType);
             return;
         }
 
-        logger.debug("[Domain: {}] Initializing synchronization for Plugin: {} [{}]", domainId, pluginId, pluginType);
+        log.debug("[Domain: {}] Initializing synchronization for Plugin: {} [{}]", domainId, pluginId, pluginType);
         domainStates.computeIfAbsent(domainId, k -> {
-            logger.debug("[Domain: {}] Creating new DomainState during initPluginSync", domainId);
+            log.debug("[Domain: {}] Creating new DomainState during initPluginSync", domainId);
             return new DomainState();
         })
         .initPluginSync(pluginId, pluginType);
@@ -59,23 +58,23 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void pluginLoaded(String domainId, String pluginId) {
         if (domainId == null) {
-            logger.warn("Received pluginLoaded for null domainId. Plugin: {}", pluginId);
+            log.warn("Received pluginLoaded for null domainId. Plugin: {}", pluginId);
             return;
         }
 
         DomainState domainState = domainStates.get(domainId);
         if (domainState == null) {
-            logger.warn("[Domain: {}] Plugin {} loaded, but DomainState does not exist.", domainId, pluginId);
+            log.warn("[Domain: {}] Plugin {} loaded, but DomainState does not exist.", domainId, pluginId);
             return;
         }
 
         if (!domainState.getCreationState().containsKey(pluginId)) {
-            logger.warn("[Domain: {}] Plugin {} loaded, but plugin was not marked for initialization.", domainId, pluginId);
+            log.warn("[Domain: {}] Plugin {} loaded, but plugin was not marked for initialization.", domainId, pluginId);
             return;
         }
 
         String pluginType = domainState.getCreationState().get(pluginId).getType();
-        logger.debug("[Domain: {}] Plugin Loaded: {} [{}]", domainId, pluginId, pluginType);
+        log.debug("[Domain: {}] Plugin Loaded: {} [{}]", domainId, pluginId, pluginType);
 
         updatePluginStatus(domainId, pluginId, true, null);
     }
@@ -83,23 +82,23 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void pluginFailed(String domainId, String pluginId, String message) {
         if (domainId == null) {
-            logger.error("Received pluginFailed for null domainId. Plugin: {}, Error: {}", pluginId, message);
+            log.error("Received pluginFailed for null domainId. Plugin: {}, Error: {}", pluginId, message);
             return;
         }
 
         DomainState domainState = domainStates.get(domainId);
         if (domainState == null) {
-            logger.error("[Domain: {}] Plugin {} failed to load, but DomainState is missing. Error: {}", domainId, pluginId, message);
+            log.error("[Domain: {}] Plugin {} failed to load, but DomainState is missing. Error: {}", domainId, pluginId, message);
             return;
         }
 
         if (!domainState.getCreationState().containsKey(pluginId)) {
-            logger.error("[Domain: {}] Plugin {} failed to load, but was not initialized. Error: {}", domainId, pluginId, message);
+            log.error("[Domain: {}] Plugin {} failed to load, but was not initialized. Error: {}", domainId, pluginId, message);
             return;
         }
 
         String pluginType = domainState.getCreationState().get(pluginId).getType();
-        logger.error("[Domain: {}] Plugin Failed: {} [{}] - Error: {}", domainId, pluginId, pluginType, message);
+        log.error("[Domain: {}] Plugin Failed: {} [{}] - Error: {}", domainId, pluginId, pluginType, message);
 
         updatePluginStatus(domainId, pluginId, false, message);
     }
@@ -113,11 +112,11 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void pluginUnlicensed(String domainId, String pluginId, String message) {
         if (domainId == null) {
-            logger.warn("Received pluginUnlicensed for null domainId. Plugin: {}, Reason: {}", pluginId, message);
+            log.warn("Received pluginUnlicensed for null domainId. Plugin: {}, Reason: {}", pluginId, message);
             return;
         }
 
-        logger.info("[Domain: {}] Plugin not licensed: {} - {}", domainId, pluginId, message);
+        log.info("[Domain: {}] Plugin not licensed: {} - {}", domainId, pluginId, message);
 
         initPluginSync(domainId, pluginId, null);
         // success=true: a licensing decision must not make the domain unstable or the readiness probe unhealthy.
@@ -127,7 +126,7 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void pluginUnloaded(String domainId, String pluginId) {
         if (domainId == null) {
-            logger.warn("Received pluginUnloaded for null domainId. Plugin: {}", pluginId);
+            log.warn("Received pluginUnloaded for null domainId. Plugin: {}", pluginId);
             return;
         }
 
@@ -138,11 +137,11 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
             pluginType = domainState.getCreationState().get(pluginId).getType();
         }
 
-        logger.debug("[Domain: {}] Unloading Plugin: {} [{}]", domainId, pluginId, pluginType);
+        log.debug("[Domain: {}] Unloading Plugin: {} [{}]", domainId, pluginId, pluginType);
 
         domainStates.compute(domainId, (key, state) -> {
             if (state == null) {
-                logger.debug("[Domain: {}] Attempted to unload plugin {}, but DomainState was null. Creating new state to safely remove.", domainId, pluginId);
+                log.debug("[Domain: {}] Attempted to unload plugin {}, but DomainState was null. Creating new state to safely remove.", domainId, pluginId);
                 state = new DomainState();
             }
             state.removePlugin(pluginId);
@@ -154,20 +153,20 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void updateDomainStatus(String domainId, DomainState.Status status) {
         if (domainId == null) {
-            logger.warn("Received updateDomainStatus for null domainId. Status: {}", status);
+            log.warn("Received updateDomainStatus for null domainId. Status: {}", status);
             return;
         }
 
-        logger.debug("[Domain: {}] Updating Status to: {}", domainId, status);
+        log.debug("[Domain: {}] Updating Status to: {}", domainId, status);
 
         DomainState domainState = domainStates.get(domainId);
         if (domainState != null && domainState.getStatus() == status) {
-            logger.debug("[Domain: {}] DomainState already in desired state. Skipping update.", domainId);
+            log.debug("[Domain: {}] DomainState already in desired state. Skipping update.", domainId);
             return;
         }
 
         domainStates.computeIfAbsent(domainId, k -> {
-            logger.debug("[Domain: {}] Creating new DomainState during updateDomainStatus", domainId);
+            log.debug("[Domain: {}] Creating new DomainState during updateDomainStatus", domainId);
             return new DomainState();
         }).setStatus(status).setLastSync(System.currentTimeMillis());
     }
@@ -175,35 +174,35 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void removeDomain(String domainId) {
         if (domainId == null) {
-            logger.warn("Received removeDomain for null domainId");
+            log.warn("Received removeDomain for null domainId");
             return;
         }
 
-        logger.debug("[Domain: {}] Removing domain state", domainId);
+        log.debug("[Domain: {}] Removing domain state", domainId);
         DomainState removed = domainStates.remove(domainId);
 
         if (removed == null) {
-            logger.debug("[Domain: {}] removeDomain called, but domain was not present in map.", domainId);
+            log.debug("[Domain: {}] removeDomain called, but domain was not present in map.", domainId);
         }
     }
 
     @Override
     public boolean isAllDomainsReady() {
         if (domainStates.isEmpty()) {
-            logger.trace("isAllDomainsReady: True (No domains registered)");
+            log.trace("isAllDomainsReady: True (No domains registered)");
             return true;
         }
 
         boolean allReady = domainStates.values().stream().allMatch(ds -> ds.isStable() && ds.isSynchronized());
 
-        if (!allReady && logger.isDebugEnabled()) {
+        if (!allReady && log.isDebugEnabled()) {
             // If not ready, log exactly which domains are holding us back
             String unstableDomains = domainStates.entrySet().stream()
                     .filter(entry -> !entry.getValue().isStable() || !entry.getValue().isSynchronized())
                     .map(Map.Entry::getKey)
                     .collect(Collectors.joining(", "));
 
-            logger.debug("isAllDomainsReady: False. Unstable/Unsynchronized domains: [{}]", unstableDomains);
+            log.debug("isAllDomainsReady: False. Unstable/Unsynchronized domains: [{}]", unstableDomains);
         }
 
         return allReady;
@@ -212,13 +211,13 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     @Override
     public void updateJtiCacheState(String domainId, long currentSize, long maxSize, double hitRate, double missRate) {
         if (domainId == null) {
-            logger.warn("Received updateJtiCacheState for null domainId");
+            log.warn("Received updateJtiCacheState for null domainId");
             return;
         }
 
         DomainState domainState = domainStates.get(domainId);
         if (domainState == null) {
-            logger.debug("[Domain: {}] Domain not found.", domainId);
+            log.debug("[Domain: {}] Domain not found.", domainId);
             return;
         }
 
@@ -236,7 +235,7 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     private void updatePluginStatus(String domainId, String pluginId, boolean success, String message) {
-        logger.debug("[Domain: {}] Internal updatePluginStatus -> Plugin: {}, Success: {}, Message: {}", domainId, pluginId, success, message);
+        log.debug("[Domain: {}] Internal updatePluginStatus -> Plugin: {}, Success: {}, Message: {}", domainId, pluginId, success, message);
         domainStates.computeIfAbsent(domainId, k -> new DomainState()).updatePluginState(pluginId, success, message);
         updateDomainStatus(domainId, success ? DomainState.Status.DEPLOYED : DomainState.Status.ERROR);
     }

@@ -23,7 +23,7 @@ import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.streams.WriteStream;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class TcpWriteStream implements WriteStream<Buffer> {
 
     private final Vertx vertx;

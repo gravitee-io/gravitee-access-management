@@ -21,15 +21,14 @@ import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationRequestCallbackHandler implements Handler<RoutingContext> {
-    private static Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestCallbackHandler.class);
 
     private final AuthenticationRequestService authRequestService;
 
@@ -46,7 +45,7 @@ public class AuthenticationRequestCallbackHandler implements Handler<RoutingCont
                 .subscribe(
                     () -> context.response().setStatusCode(HttpStatusCode.OK_200).end(),
                     error -> {
-                        LOGGER.warn("Authentication Request validation can't be processed", error);
+                        log.warn("Authentication Request validation can't be processed", error);
                         if (error instanceof OAuth2Exception) {
                             context.fail(HttpStatusCode.BAD_REQUEST_400, error);
                         } else {

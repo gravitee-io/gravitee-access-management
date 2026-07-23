@@ -42,14 +42,13 @@ import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * Strategy for OAuth 2.0 Extension Grants.
@@ -59,9 +58,9 @@ import java.util.Optional;
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.5">RFC 6749 Section 4.5</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ExtensionGrantStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantStrategy.class);
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
 
     private final ExtensionGrantProvider extensionGrantProvider;
@@ -138,7 +137,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing extension grant request for client: {}, grant type: {}",
+        log.debug("Processing extension grant request for client: {}, grant type: {}",
                 client.getClientId(), extensionGrant.getGrantType());
 
         return resolveResourceOwner(request, client)
@@ -218,7 +217,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         return identityProviderManager.get(extensionGrant.getIdentityProvider())
                 .flatMap(provider -> retrieveUserByUsernameFromIdp(provider, tokenRequest, convertToAmUser(endUser))
                         .switchIfEmpty(Maybe.defer(() -> {
-                            LOGGER.debug("User name '{}' not found, try as the userId", endUser.getUsername());
+                            log.debug("User name '{}' not found, try as the userId", endUser.getUsername());
                             if (endUser.getId() != null) {
                                 return findUserByIdFromIdp(endUser, tokenRequest, provider);
                             }
@@ -251,7 +250,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
             return subjectManager.findUserBySub(jwt)
                     .onErrorResumeNext(e -> {
                         if (e instanceof IllegalArgumentException) {
-                            LOGGER.debug("Subject Manager can't retrieve the profile as sub is invalid, fall back to userService.findById", e);
+                            log.debug("Subject Manager can't retrieve the profile as sub is invalid, fall back to userService.findById", e);
                             return Maybe.empty();
                         } else {
                             return Maybe.error(e);

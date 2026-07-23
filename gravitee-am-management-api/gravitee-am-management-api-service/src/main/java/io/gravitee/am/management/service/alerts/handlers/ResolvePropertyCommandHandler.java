@@ -22,23 +22,22 @@ import io.gravitee.alert.api.trigger.command.ResolvePropertyCommand;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.management.service.DomainService;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ResolvePropertyCommandHandler implements TriggerProvider.OnCommandResultListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResolvePropertyCommandHandler.class);
     private static final String RESOLVE_DOMAIN_PROPERTIES_KEY = "domain";
     private static final String RESOLVE_APPLICATION_PROPERTIES_KEY = "application";
 
@@ -52,12 +51,12 @@ public class ResolvePropertyCommandHandler implements TriggerProvider.OnCommandR
 
     @Override
     public <T> void doOnCommand(Command command, Handler<T> resultHandler) {
-        LOGGER.debug("Received a command from alert engine {}.", command);
+        log.debug("Received a command from alert engine {}.", command);
         if (command instanceof ResolvePropertyCommand resolvePropertyCommand) {
             resolveProperties(resolvePropertyCommand)
                     .subscribe(result -> resultHandler.handle((T) result), error -> resultHandler.handle(null));
         } else {
-            LOGGER.warn("Unknown alert command: {}", command);
+            log.warn("Unknown alert command: {}", command);
             resultHandler.handle(null);
         }
     }

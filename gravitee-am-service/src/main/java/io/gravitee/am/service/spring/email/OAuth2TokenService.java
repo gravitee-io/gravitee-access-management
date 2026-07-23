@@ -22,8 +22,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.validation.constraints.NotBlank;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +31,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
+import lombok.CustomLog;
 
 /**
  * Service for managing OAuth2 access tokens for email authentication.
@@ -46,9 +45,9 @@ import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
  * @author GraviteeSource Team
  */
 @Service
+@CustomLog
 public class OAuth2TokenService {
 
-    private static final Logger logger = LoggerFactory.getLogger(OAuth2TokenService.class);
     private static final int TOKEN_EXPIRY_BUFFER_SECONDS = 30; // Refresh 30 seconds before expiry
 
     private final ObjectMapper objectMapper;
@@ -92,7 +91,7 @@ public class OAuth2TokenService {
         lock.lock();
         try {
             if (isTokenExpired()) {
-                logger.debug("Access token expired or missing, refreshing...");
+                log.debug("Access token expired or missing, refreshing...");
                 refreshAccessToken();
             }
             return cachedAccessToken;
@@ -110,7 +109,7 @@ public class OAuth2TokenService {
 
     private void refreshAccessToken() {
         try {
-            logger.debug("Calling token endpoint to refresh access token");
+            log.debug("Calling token endpoint to refresh access token");
 
             URI uri = new URI(tokenEndpoint);
             String path = uri.getPath();
@@ -141,18 +140,18 @@ public class OAuth2TokenService {
 
             if (tokenResponse.getRefreshToken() != null) {
                 refreshToken = tokenResponse.getRefreshToken();
-                logger.debug("Refresh token updated by provider");
+                log.debug("Refresh token updated by provider");
             }
 
             if (tokenResponse.getExpiresIn() != null) {
                 tokenExpiryTime = Instant.now().plusSeconds(tokenResponse.getExpiresIn());
-                logger.debug("Access token refreshed, expires at: {}", tokenExpiryTime);
+                log.debug("Access token refreshed, expires at: {}", tokenExpiryTime);
             } else {
                 tokenExpiryTime = null;
             }
 
         } catch (Exception e) {
-            logger.error("Failed to refresh access token", e);
+            log.error("Failed to refresh access token", e);
             throw new RuntimeException("Failed to refresh OAuth2 access token", e);
         }
     }

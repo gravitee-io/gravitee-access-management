@@ -22,15 +22,14 @@ import io.vertx.ext.auth.webauthn.impl.AuthData;
 import io.vertx.ext.auth.webauthn.impl.attestation.Attestation;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
 import io.vertx.ext.auth.webauthn.impl.metadata.MetaData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GraviteeNoneAttestation implements Attestation {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public String fmt() {
         return "none";
@@ -40,7 +39,7 @@ public class GraviteeNoneAttestation implements Attestation {
         if (!"00000000-0000-0000-0000-000000000000".equals(authData.getAaguidString())) {
             // Some browsers don't respect the need to send 16 zero bytes values
             // we only log in debug this fact, and we just check that the attStmt is empty
-            logger.debug("AAGUID is not 00000000-0000-0000-0000-000000000000 for None attestation (provided AAGUID : {})", authData.getAaguidString());
+            log.debug("AAGUID is not 00000000-0000-0000-0000-000000000000 for None attestation (provided AAGUID : {})", authData.getAaguidString());
         }
 
         if (attestation.containsKey("attStmt") && !attestation.getJsonObject("attStmt").isEmpty()) {

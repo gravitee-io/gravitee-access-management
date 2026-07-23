@@ -29,7 +29,7 @@ import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @RequiredArgsConstructor
 @Component
-@Slf4j
+@CustomLog
 public class EnvironmentCommandHandler implements CommandHandler<EnvironmentCommand, EnvironmentReply> {
 
 

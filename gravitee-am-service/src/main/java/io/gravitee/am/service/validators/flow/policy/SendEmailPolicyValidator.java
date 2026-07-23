@@ -20,20 +20,19 @@ import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.EmailFromAware;
 import io.gravitee.am.service.validators.email.EmailDomainValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class SendEmailPolicyValidator extends EmailFromAware implements PolicyValidator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SendEmailPolicyValidator.class);
     public static final String POLICY_AM_SEND_EMAIL = "policy-am-send-email";
     public static final String UNEXPECTED_MESSAGE = "An unexpected error has occurred while trying to validate step [%s], [%s]";
     public static final String INVALID_FROM = "Step email from [%s] from step [%s] - [%s] is invalid";
@@ -51,7 +50,7 @@ public class SendEmailPolicyValidator extends EmailFromAware implements PolicyVa
                         new InvalidParameterException(String.format(INVALID_FROM, from, element.getPolicy(), element.getName()))
                 );
             } catch (Exception e) {
-                LOGGER.warn("An unexpected error has occurred", e);
+                log.warn("An unexpected error has occurred", e);
                 return Optional.of(
                         new InvalidParameterException(String.format(UNEXPECTED_MESSAGE, element.getPolicy(), element.getName()))
                 );

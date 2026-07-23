@@ -40,8 +40,6 @@ import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -53,10 +51,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.CustomLog;
 
+@CustomLog
 public class TokenExchangeServiceImpl implements TokenExchangeService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeServiceImpl.class);
 
     private final List<TokenValidator> validators;
     private final ProtectedResourceManager protectedResourceManager;
@@ -233,8 +232,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
         TokenValidator validator = findValidator(tokenType);
         return validator.validate(token, settings, domain, client)
-                .doOnSuccess(t -> LOGGER.debug("Subject token validated for subject: {}", t.getSubject()))
-                .doOnError(error -> LOGGER.debug("Subject token validation failed: {}", error.getMessage()));
+                .doOnSuccess(t -> log.debug("Subject token validated for subject: {}", t.getSubject()))
+                .doOnError(error -> log.debug("Subject token validation failed: {}", error.getMessage()));
     }
 
     private Single<ValidatedToken> validateActorToken(String token, String tokenType, Domain domain, Client client) {
@@ -245,10 +244,10 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                     if (StringUtils.isEmpty(t.getSubject())) {
                         return Single.error(new InvalidRequestException("Actor token must contain a 'sub' claim"));
                     }
-                    LOGGER.debug("Actor token validated for subject: {}", t.getSubject());
+                    log.debug("Actor token validated for subject: {}", t.getSubject());
                     return Single.just(t);
                 })
-                .doOnError(error -> LOGGER.debug("Actor token validation failed: {}", error.getMessage()));
+                .doOnError(error -> log.debug("Actor token validation failed: {}", error.getMessage()));
     }
 
     private TokenValidator findValidator(String tokenType) {
@@ -256,7 +255,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 .filter(v -> v.supports(tokenType))
                 .findFirst()
                 .orElseThrow(() -> {
-                    LOGGER.error("No validator registered for token type '{}'", tokenType);
+                    log.error("No validator registered for token type '{}'", tokenType);
                     return new InvalidRequestException("No validator registered for token type: " + tokenType);
                 });
     }

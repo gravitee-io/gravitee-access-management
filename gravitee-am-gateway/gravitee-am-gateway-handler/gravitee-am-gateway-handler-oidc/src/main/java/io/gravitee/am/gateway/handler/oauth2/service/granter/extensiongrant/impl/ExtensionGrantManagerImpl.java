@@ -50,8 +50,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,14 +59,15 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private final ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ExtensionGrantStrategy> extensionGrantStrategies = new ConcurrentHashMap<>();
@@ -121,7 +120,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Initializing extension grants for domain {}", domain.getName());
+        log.info("Initializing extension grants for domain {}", domain.getName());
         this.tokenRequestResolver.setManagers(this.scopeManager, this.protectedResourceManager);
         extensionGrantRepository.findByDomain(domain.getId())
                 .concatMapCompletable(extensionGrant -> {
@@ -133,15 +132,15 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     }
                     return updateExtensionGrantProvider(extensionGrant);
                 })
-                .doOnComplete(() -> logger.info("Extension grants loaded for domain {}", domain.getName()))
+                .doOnComplete(() -> log.info("Extension grants loaded for domain {}", domain.getName()))
                 .subscribe(
                         () -> {},
                         error -> {
-                            logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error);
+                            log.error("Unable to initialize extension grants for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.EXTENSION_GRANT.name(), error.getMessage());
                         });
 
-        logger.info("Register event listener for extension grant events for domain {}", domain.getName());
+        log.info("Register event listener for extension grant events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ExtensionGrantEvent.class, domain.getId());
     }
 
@@ -149,7 +148,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for extension grant events for domain {}", domain.getName());
+        log.info("Dispose event listener for extension grant events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ExtensionGrantEvent.class, domain.getId());
     }
 
@@ -171,7 +170,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     private void updateExtensionGrant(String extensionGrantId, ExtensionGrantEvent extensionGrantEvent) {
         final String eventType = extensionGrantEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} extension grant event for {}", domain.getName(), eventType, extensionGrantId);
+        log.info("Domain {} has received {} extension grant event for {}", domain.getName(), eventType, extensionGrantId);
         extensionGrantRepository.findById(extensionGrantId)
                 .subscribe(
                         extensionGrant -> {
@@ -180,14 +179,14 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                                 minDate = extensionGrant.getCreatedAt();
                             }
                             updateExtensionGrantProvider(extensionGrant)
-                                    .subscribe(() -> logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName()));
+                                    .subscribe(() -> log.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName()));
                         },
-                        error -> logger.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No extension grant found with id {}", extensionGrantId));
+                        error -> log.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
+                        () -> log.error("No extension grant found with id {}", extensionGrantId));
     }
 
     private void removeExtensionGrant(String extensionGrantId) {
-        logger.info("Domain {} has received extension grant event, delete extension grant {}", domain.getName(), extensionGrantId);
+        log.info("Domain {} has received extension grant event, delete extension grant {}", domain.getName(), extensionGrantId);
         ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
         extensionGrants.remove(extensionGrantId);
         extensionGrantStrategies.remove(extensionGrantId);
@@ -201,7 +200,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     private Completable updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
         domainReadinessService.initPluginSync(domain.getId(), extensionGrant.getId(), Type.EXTENSION_GRANT.name());
         if (!needDeployment(extensionGrant)) {
-            logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
+            log.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
             domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
             return Completable.complete();
         }
@@ -212,9 +211,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
         Single<Optional<AuthenticationProvider>> authProviderSingle;
         if (extensionGrant.getIdentityProvider() != null) {
-            logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
+            log.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
             authProviderSingle = identityProviderManager.get(extensionGrant.getIdentityProvider())
-                    .doOnSuccess(ap -> logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider()))
+                    .doOnSuccess(ap -> log.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider()))
                     .map(Optional::of)
                     .switchIfEmpty(Single.just(Optional.empty()));
         } else {
@@ -238,7 +237,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
                 }))
                 .doOnError(ex -> {
-                    logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
+                    log.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
                     removeExtensionGrant(extensionGrant.getId());
                     domainReadinessService.pluginFailed(domain.getId(), extensionGrant.getId(), ex.getMessage());
                 })

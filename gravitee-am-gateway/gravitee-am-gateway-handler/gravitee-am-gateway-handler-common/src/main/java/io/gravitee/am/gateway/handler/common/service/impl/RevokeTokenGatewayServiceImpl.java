@@ -35,7 +35,7 @@ import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
@@ -43,7 +43,7 @@ import org.springframework.context.annotation.Lazy;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class RevokeTokenGatewayServiceImpl extends AbstractService implements RevokeTokenGatewayService {
 
     @Lazy

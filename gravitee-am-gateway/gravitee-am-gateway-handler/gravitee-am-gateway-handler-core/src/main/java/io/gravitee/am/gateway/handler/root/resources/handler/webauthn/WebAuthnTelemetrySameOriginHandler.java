@@ -19,8 +19,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Ensures the {@code Origin} header matches the gateway's public origin so browser telemetry cannot be posted
@@ -29,15 +28,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnTelemetrySameOriginHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthnTelemetrySameOriginHandler.class);
 
     @Override
     public void handle(RoutingContext ctx) {
         String origin = ctx.request().getHeader(HttpHeaders.ORIGIN);
         if (!UriBuilderRequest.isRequestOriginAllowed(ctx.request(), origin)) {
-            LOGGER.warn("Rejected WebAuthn client telemetry: disallowed or missing Origin");
+            log.warn("Rejected WebAuthn client telemetry: disallowed or missing Origin");
             ctx.response().setStatusCode(403).end();
             return;
         }

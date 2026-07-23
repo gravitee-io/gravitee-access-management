@@ -24,19 +24,18 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.vertx.rxjava3.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
+import lombok.CustomLog;
 
 /**
  * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserRememberMeRequestHandler extends UserRequestHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UserRememberMeRequestHandler.class);
     private static final String REMEMBER_ME_ON = "on";
 
     private final JWTService jwtService;
@@ -83,7 +82,7 @@ public class UserRememberMeRequestHandler extends UserRequestHandler {
                                 routingContext.next();
                             },
                             throwable -> {
-                                logger.warn("Error during remember me cookie creation", throwable);
+                                log.warn("Error during remember me cookie creation", throwable);
                                 routingContext.fail(500);
                             }
                     );

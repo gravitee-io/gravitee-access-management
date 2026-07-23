@@ -25,7 +25,7 @@ import io.gravitee.cockpit.api.command.v1.user.UserCommandPayload;
 import io.gravitee.cockpit.api.command.v1.user.UserReply;
 import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Named;
@@ -37,7 +37,7 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 @Component
-@Slf4j
+@CustomLog
 public class UserCommandHandler implements CommandHandler<UserCommand, UserReply> {
 
     public static final String COCKPIT_SOURCE = "cockpit";

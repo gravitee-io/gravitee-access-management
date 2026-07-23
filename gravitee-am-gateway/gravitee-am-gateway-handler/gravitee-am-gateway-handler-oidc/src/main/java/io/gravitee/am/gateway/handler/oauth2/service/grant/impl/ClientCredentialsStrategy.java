@@ -22,8 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Strategy for OAuth 2.0 Client Credentials Grant.
@@ -32,9 +31,9 @@ import org.slf4j.LoggerFactory;
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">RFC 6749 Section 4.4</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ClientCredentialsStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientCredentialsStrategy.class);
 
     @Override
     public boolean supports(String grantType, Client client, Domain domain) {
@@ -43,7 +42,7 @@ public class ClientCredentialsStrategy implements GrantStrategy {
         }
 
         if (!client.hasGrantType(GrantType.CLIENT_CREDENTIALS)) {
-            LOGGER.debug("Client {} does not support client_credentials grant type", client.getClientId());
+            log.debug("Client {} does not support client_credentials grant type", client.getClientId());
             return false;
         }
 
@@ -52,7 +51,7 @@ public class ClientCredentialsStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing client credentials request for client: {}", client.getClientId());
+        log.debug("Processing client credentials request for client: {}", client.getClientId());
 
         // Client credentials does NOT support refresh tokens per RFC 6749 Section 4.4.3
         // "A refresh token SHOULD NOT be included"

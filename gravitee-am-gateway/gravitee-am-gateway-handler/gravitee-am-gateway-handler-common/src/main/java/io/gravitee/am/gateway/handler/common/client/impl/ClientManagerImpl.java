@@ -33,22 +33,21 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ClientManagerImpl extends AbstractService implements ClientManager, EventListener<ApplicationEvent, Payload>, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClientManagerImpl.class);
 
     @Autowired
     private Domain domain;
@@ -71,7 +70,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("Initializing applications for domain {}", domain.getName());
+        log.info("Initializing applications for domain {}", domain.getName());
         Flowable<Application> applicationsSource = domain.isMaster() ? applicationRepository.findAll() : applicationRepository.findByDomain(domain.getId());
         applicationsSource
                 .filter(app -> app.getType() != null)
@@ -83,11 +82,11 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                             domainReadinessService.initPluginSync(domain.getId(), client.getId(), Type.APPLICATION.name());
                             gatewayMetricProvider.incrementApp();
                             clients.put(client.getId(), client);
-                            logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
+                            log.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), client.getId());
                         },
                         error -> {
-                            logger.error("An error has occurred when loading applications for domain {}", domain.getName(), error);
+                            log.error("An error has occurred when loading applications for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.APPLICATION.name(), error.getMessage());
                         }
                 );
@@ -120,7 +119,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for application events for domain {}", domain.getName());
+        log.info("Register event listener for application events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ApplicationEvent.class, domain.getId());
     }
 
@@ -128,7 +127,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for application events for domain {}", domain.getName());
+        log.info("Dispose event listener for application events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ApplicationEvent.class, domain.getId());
         if (domain.isMaster()) {
             domains.keySet().forEach(d -> eventManager.unsubscribeForCrossEvents(this, ApplicationEvent.class, d));
@@ -168,7 +167,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
     }
 
     private void deployClient(String applicationId) {
-        logger.info("Deploying application {} for domain {}", applicationId, domain.getName());
+        log.info("Deploying application {} for domain {}", applicationId, domain.getName());
         applicationRepository.findById(applicationId)
                 .map(Application::toClient)
                 .subscribeOn(Schedulers.io())
@@ -179,28 +178,28 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                             } else {
                                 domainReadinessService.initPluginSync(domain.getId(), client.getId(), io.gravitee.am.common.event.Type.APPLICATION.name());
                                 clients.put(client.getId(), client);
-                                logger.info("Application {} loaded for domain {}", applicationId, domain.getName());
+                                log.info("Application {} loaded for domain {}", applicationId, domain.getName());
                                 domainReadinessService.pluginLoaded(domain.getId(), client.getId());
                             }
                         },
                         error -> {
-                            logger.error("An error has occurred when loading application {} for domain {}", applicationId, domain.getName(), error);
+                            log.error("An error has occurred when loading application {} for domain {}", applicationId, domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), applicationId, error.getMessage());
                         },
                         () -> {
-                            logger.error("No application found with id {}", applicationId);
+                            log.error("No application found with id {}", applicationId);
                             domainReadinessService.pluginUnloaded(domain.getId(), applicationId);
                         });
     }
 
     private void removeClient(String applicationId) {
-        logger.info("Removing application {} for domain {}", applicationId, domain.getName());
+        log.info("Removing application {} for domain {}", applicationId, domain.getName());
         Client deletedClient = clients.remove(applicationId);
         if (deletedClient != null) {
             domainReadinessService.pluginUnloaded(domain.getId(), applicationId);
-            logger.info("Application {} has been removed for domain {}", applicationId, domain.getName());
+            log.info("Application {} has been removed for domain {}", applicationId, domain.getName());
         } else {
-            logger.info("Application {} was not loaded for domain {}", applicationId, domain.getName());
+            log.info("Application {} was not loaded for domain {}", applicationId, domain.getName());
         }
     }
 

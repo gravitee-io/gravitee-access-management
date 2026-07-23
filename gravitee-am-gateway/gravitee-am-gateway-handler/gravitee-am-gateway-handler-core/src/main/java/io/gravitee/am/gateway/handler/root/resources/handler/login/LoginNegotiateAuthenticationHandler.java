@@ -30,8 +30,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ASK_FOR_NEGOTIATE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.AUTH_NEGOTIATE_KEY;
@@ -43,13 +41,14 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelp
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static io.gravitee.common.http.HttpStatusCode.UNAUTHORIZED_401;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginNegotiateAuthenticationHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginNegotiateAuthenticationHandler.class);
 
     private final UserAuthProvider authProvider;
     private final ThymeleafTemplateEngine engine;
@@ -67,7 +66,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
             MultiMap params = context.request().params();
             String clientId = params.get(Parameters.CLIENT_ID);
             if (clientId == null) {
-                LOGGER.warn("No client id - did you forget to include client_id query parameter ?");
+                log.warn("No client id - did you forget to include client_id query parameter ?");
                 context.fail(400);
                 return;
             }
@@ -90,7 +89,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
 
             authProvider.authenticate(context, authInfo, res -> {
                 if (res.failed()) {
-                    LOGGER.debug("SPNEGO token is invalid, continue flow to display login form");
+                    log.debug("SPNEGO token is invalid, continue flow to display login form");
                     if (res.cause() instanceof NegotiateContinueException) {
                         // mutual authentication is requested by client,
                         // update the context with the challenge token
@@ -118,7 +117,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                 context.next();
             });
         } else {
-            LOGGER.debug("SPNEGO token is missing, continue flow to display login form");
+            log.debug("SPNEGO token is missing, continue flow to display login form");
 
             // create post action url.
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request()).add(ASK_FOR_NEGOTIATE_KEY, "true");
@@ -137,7 +136,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                                 context.response().end(buffer);
                             },
                             throwable -> {
-                                LOGGER.error("Unable to render Login SSO SPNEGO page", throwable);
+                                log.error("Unable to render Login SSO SPNEGO page", throwable);
                                 context.fail(throwable.getCause());
                             }
                     );

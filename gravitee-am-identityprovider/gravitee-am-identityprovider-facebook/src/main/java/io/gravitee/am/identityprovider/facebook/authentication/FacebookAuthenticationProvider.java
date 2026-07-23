@@ -37,7 +37,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -59,7 +59,7 @@ import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.OTHER_
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Import(FacebookAuthenticationProviderConfiguration.class)
 public class FacebookAuthenticationProvider extends AbstractSocialAuthenticationProvider<FacebookIdentityProviderConfiguration> {
 

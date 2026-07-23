@@ -55,8 +55,6 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Comparator;
@@ -83,11 +81,12 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.lang.Boolean.TRUE;
+import lombok.CustomLog;
 
 
+@CustomLog
 abstract class MFAChallengeEndpoint extends MFAEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
 
     public static final String PREVIOUS_TRANSACTION_ID_KEY = "prev-tid";
 
@@ -193,7 +192,7 @@ abstract class MFAChallengeEndpoint extends MFAEndpoint {
                                      Factor factor,
                                      Handler<AsyncResult<EnrolledFactor>> handler) {
         factorProvider.sendChallenge(factorContext)
-                .doOnComplete(() -> logger.debug("Challenge sent to user {}", factorContext.getUser().getId()))
+                .doOnComplete(() -> log.debug("Challenge sent to user {}", factorContext.getUser().getId()))
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         () -> {

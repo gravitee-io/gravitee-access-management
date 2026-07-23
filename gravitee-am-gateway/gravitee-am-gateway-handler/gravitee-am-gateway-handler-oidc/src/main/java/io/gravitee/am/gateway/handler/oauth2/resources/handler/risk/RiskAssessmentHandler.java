@@ -45,8 +45,6 @@ import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,14 +55,15 @@ import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RiskAssessmentHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RiskAssessmentHandler.class);
     private static final String RISK_ASSESSMENT_SERVICE = "service:risk-assessment";
     private final DeviceGatewayService deviceService;
     private final ObjectMapper objectMapper;
@@ -108,7 +107,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
                 .flatMap(buildIpReputationMessage(context.request()))
                 .flatMap(buildGeoVelocityMessage(domain, user.getId()))
                 .subscribe(message -> decorateWithRiskAssessment(context, message), throwable -> {
-                    logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable);
+                    log.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable);
                     context.next();
                 });
     }
@@ -125,7 +124,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
             var deviceAssessment = ofNullable(riskAssessment.getDeviceAssessment()).orElse(new AssessmentSettings());
 
             if (deviceAssessment.isEnabled() && rememberDevice.isActive()) {
-                logger.debug("Decorating assessment with devices");
+                log.debug("Decorating assessment with devices");
                 return deviceService.findByDomainAndUser(domain, userId)
                         .map(Device::getDeviceId)
                         .toList().flatMap(deviceIds -> {
@@ -145,7 +144,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
             var settings = assessmentMessage.getSettings();
             var ipReputationAssessment = ofNullable(settings.getIpReputationAssessment()).orElse(new AssessmentSettings());
             if (ipReputationAssessment.isEnabled()) {
-                logger.debug("Decorating assessment with IP reputation");
+                log.debug("Decorating assessment with IP reputation");
                 var ip = remoteAddress(request);
                 assessmentMessage.getData().setCurrentIp(ip);
             }
@@ -185,8 +184,8 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
                         stringMessage -> routingContext.session().put(ConstantKeys.RISK_ASSESSMENT_KEY, extractMessageResult(stringMessage)),
                         throwable -> {
                             var cause = ofNullable(throwable.getCause()).orElse(throwable);
-                            logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, cause.getMessage());
-                            logger.debug("", cause);
+                            log.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, cause.getMessage());
+                            log.debug("", cause);
                         });
     }
 
@@ -194,7 +193,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         try {
             return objectMapper.readValue(response.body(), AssessmentMessageResult.class);
         } catch (JsonProcessingException e) {
-            logger.error("An unexpected error has occurred: ", e);
+            log.error("An unexpected error has occurred: ", e);
             return new AssessmentMessageResult()
                     .setDevices(new AssessmentResult<Double>().setAssessment(NONE))
                     .setGeoVelocity(new AssessmentResult<Double>().setAssessment(NONE))

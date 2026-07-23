@@ -24,21 +24,20 @@ import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Rémi SULTAN (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationDeviceNotifierPluginManager
         extends ProviderPluginManager<AuthenticationDeviceNotifier<?, AuthenticationDeviceNotifierProvider>, AuthenticationDeviceNotifierProvider, ProviderConfiguration>
         implements AmPluginManager<AuthenticationDeviceNotifier<?, AuthenticationDeviceNotifierProvider>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginManager.class);
     private final ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> configurationFactory;
 
     public AuthenticationDeviceNotifierPluginManager(
@@ -51,10 +50,10 @@ public class AuthenticationDeviceNotifierPluginManager
 
     @Override
     public AuthenticationDeviceNotifierProvider create(ProviderConfiguration providerConfig) {
-        logger.debug("Looking for an authentication device notifier for [{}]", providerConfig.getType());
+        log.debug("Looking for an authentication device notifier for [{}]", providerConfig.getType());
 
         var authDeviceNotifier = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No authentication device notifier is registered for type {}", providerConfig.getType());
+            log.error("No authentication device notifier is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No authentication device notifier is registered for type " + providerConfig.getType());
         });
 

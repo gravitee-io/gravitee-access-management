@@ -18,12 +18,12 @@ package io.gravitee.am.service.purge;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.scheduling.TaskScheduler;
 
 import java.util.List;
 
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class ScheduledPurgeServiceFactory {
     private final List<ExpiredDataSweeper.Target> supportedPurgeTargets;

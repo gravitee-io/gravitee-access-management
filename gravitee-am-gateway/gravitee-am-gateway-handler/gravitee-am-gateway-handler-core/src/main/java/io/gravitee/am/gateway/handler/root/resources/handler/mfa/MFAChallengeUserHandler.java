@@ -19,11 +19,10 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_INIT_REGISTRATION;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
+import lombok.CustomLog;
 
 /**
  * Handler to retrieve the user from the context
@@ -35,9 +34,9 @@ import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MFAChallengeUserHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MFAChallengeUserHandler.class);
 
     private final UserService userService;
 
@@ -73,11 +72,11 @@ public class MFAChallengeUserHandler implements Handler<RoutingContext> {
                             routingContext.next();
                         },
                         error -> {
-                            LOGGER.error("Unable to extract user from the token", error);
+                            log.error("Unable to extract user from the token", error);
                             routingContext.next();
                         },
                         () -> {
-                            LOGGER.error("No user found from the token");
+                            log.error("No user found from the token");
                             routingContext.next();
                         }
                 );

@@ -30,8 +30,6 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,14 +39,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_VALIDATION;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ResetPasswordEndpoint.class);
 
     private final Domain domain;
 
@@ -101,7 +100,7 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         // render the reset password page
         final var data = generateData(routingContext, domain, client);
         data.putAll(deviceIdentifierManager.getTemplateVariables(client));
-        this.renderPage(routingContext, data, client, logger, "Unable to render reset password page");
+        this.renderPage(routingContext, data, client, log, "Unable to render reset password page");
     }
 
 

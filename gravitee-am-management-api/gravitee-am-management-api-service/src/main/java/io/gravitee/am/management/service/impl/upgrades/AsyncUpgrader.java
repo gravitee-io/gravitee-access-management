@@ -17,12 +17,12 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 /**
  * Adapts async upgraders to the sync {@link Upgrader} interface in a consistent way.
  */
-@Slf4j
+@CustomLog
 public abstract class AsyncUpgrader implements Upgrader {
     @Override
     public final boolean upgrade() {

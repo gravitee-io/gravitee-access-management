@@ -35,8 +35,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleEmitter;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
@@ -52,15 +50,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class JWTServiceImpl implements JWTService {
 
-    private static final Logger logger = LoggerFactory.getLogger(JWTServiceImpl.class);
 
     private final CertificateManager certificateManager;
     private final ObjectMapper objectMapper;
@@ -169,7 +168,7 @@ public class JWTServiceImpl implements JWTService {
         try {
             return Optional.of(SignedJWT.parse(jwt));
         } catch (ParseException e) {
-            logger.debug("Unable to parse JWT to verify it", e);
+            log.debug("Unable to parse JWT to verify it", e);
             return Optional.empty();
         }
     }
@@ -200,7 +199,7 @@ public class JWTServiceImpl implements JWTService {
         try {
             return jwt.getJWTClaimsSet().getStringClaim("domain");
         } catch (ParseException e) {
-            logger.debug("Unable to parse JWT claims to extract domain", e);
+            log.debug("Unable to parse JWT claims to extract domain", e);
             return null;
         }
     }
@@ -227,7 +226,7 @@ public class JWTServiceImpl implements JWTService {
                 String json = new String(Base64.getUrlDecoder().decode(jwt.split("\\.")[1]), StandardCharsets.UTF_8);
                 emitter.onSuccess(objectMapper.readValue(json, JWT.class));
             } catch (Exception ex) {
-                logger.debug("Failed to decode {} JWT", tokenType, ex);
+                log.debug("Failed to decode {} JWT", tokenType, ex);
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
         });
@@ -275,7 +274,7 @@ public class JWTServiceImpl implements JWTService {
                 String encodedToken = certificateProvider.getJwtBuilder().sign(jwt);
                 emitter.onSuccess(encodedToken);
             } catch (Exception ex) {
-                logger.error("Failed to sign JWT", ex);
+                log.error("Failed to sign JWT", ex);
                 emitter.onError(new InvalidTokenException("The JWT token couldn't be signed", ex));
             }
         });
@@ -293,7 +292,7 @@ public class JWTServiceImpl implements JWTService {
                 Map<String, Object> decodedPayload = certificateProvider.getJwtParser().parse(payload);
                 emitter.onSuccess(decodedPayload);
             } catch (Exception ex) {
-                logger.debug("Failed to decode {} JWT", tokenType, ex);
+                log.debug("Failed to decode {} JWT", tokenType, ex);
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
         });
@@ -306,7 +305,7 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private static void onFallbackUsed(CertificateProvider originalCertificateProvider, CertificateProvider fallback) {
-        logger.warn("Failed to sign JWT with certificate: {}, attempting fallback using: {}",
+        log.warn("Failed to sign JWT with certificate: {}, attempting fallback using: {}",
                 originalCertificateProvider.getCertificateInfo().certificateId(),
                 fallback.getCertificateInfo().certificateId());
     }

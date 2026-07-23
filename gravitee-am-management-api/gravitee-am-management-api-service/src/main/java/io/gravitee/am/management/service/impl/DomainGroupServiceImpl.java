@@ -41,8 +41,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -52,15 +50,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class DomainGroupServiceImpl implements DomainGroupService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(DomainGroupServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -74,33 +73,33 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Override
     public Single<Page<Group>> findAll(Domain domain, int page, int size) {
-        LOGGER.debug("Find groups by domain: {}", domain.getId());
+        log.debug("Find groups by domain: {}", domain.getId());
         return dataPlaneRegistry.getGroupRepository(domain)
                 .findAll(ReferenceType.DOMAIN, domain.getId(), page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find groups for domain {}", domain.getId(), ex);
+                    log.error("An error occurs while trying to find groups for domain {}", domain.getId(), ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s", domain.getId()), ex));
                 });
     }
 
     @Override
     public Flowable<Group> findAll(Domain domain) {
-        LOGGER.debug("Find groups by domain: {}", domain.getId());
+        log.debug("Find groups by domain: {}", domain.getId());
         return dataPlaneRegistry.getGroupRepository(domain)
                 .findAll(ReferenceType.DOMAIN, domain.getId())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find groups for domain {}", domain.getId(), ex);
+                    log.error("An error occurs while trying to find groups for domain {}", domain.getId(), ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s", domain.getId()), ex));
                 });
     }
 
     @Override
     public Maybe<Group> findByName(Domain domain, String groupName) {
-        LOGGER.debug("Find group by domain and name: {} {}", domain.getId(), groupName);
+        log.debug("Find group by domain and name: {} {}", domain.getId(), groupName);
         return dataPlaneRegistry.getGroupRepository(domain)
                 .findByName(ReferenceType.DOMAIN, domain.getId(), groupName)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using its name: {} for the domain {}", groupName, domain.getId(), ex);
+                    log.error("An error occurs while trying to find a group using its name: {} for the domain {}", groupName, domain.getId(), ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using its name: %s for the domain %s", groupName, domain.getId()), ex));
                 });
@@ -108,11 +107,11 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Override
     public Single<Group> findById(Domain domain, String id) {
-        LOGGER.debug("Find group by id : {}", id);
+        log.debug("Find group by id : {}", id);
         return dataPlaneRegistry.getGroupRepository(domain)
                 .findById(ReferenceType.DOMAIN, domain.getId(), id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using its id {}", id, ex);
+                    log.error("An error occurs while trying to find a group using its id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a group using its id: %s", id), ex));
                 })
@@ -121,7 +120,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Override
     public Single<Page<User>> findMembers(Domain domain, String groupId, int page, int size) {
-        LOGGER.debug("Find members for group : {}", groupId);
+        log.debug("Find members for group : {}", groupId);
         return findById(domain, groupId)
                 .flatMap(group -> {
                     if (group.getMembers() == null || group.getMembers().isEmpty()) {
@@ -139,11 +138,11 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Override
     public Flowable<Group> findByIdIn(Domain domain, List<String> ids) {
-        LOGGER.debug("Find groups for ids : {}", ids);
+        log.debug("Find groups for ids : {}", ids);
         return dataPlaneRegistry.getGroupRepository(domain)
                 .findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using ids {}", ids, ex);
+                    log.error("An error occurs while trying to find a group using ids {}", ids, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a group using ids: %s", ids), ex));
                 });
@@ -151,7 +150,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Override
     public Single<Group> create(Domain domain, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Create a new group {} for domain {}", newGroup.getName(), domain.getId());
+        log.debug("Create a new group {} for domain {}", newGroup.getName(), domain.getId());
 
         return findByName(domain, newGroup.getName())
                 .isEmpty()
@@ -178,7 +177,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error occurs while trying to create a group", ex);
+                        log.error("An error occurs while trying to create a group", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to create a group", ex));
                     }
                 })
@@ -188,7 +187,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Override
     public Single<Group> update(Domain domain, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Update a group {} for domain {}", id, domain.getId());
+        log.debug("Update a group {} for domain {}", id, domain.getId());
 
         return findById(domain, id)
                 // check uniqueness
@@ -221,14 +220,14 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a group", ex);
+                    log.error("An error occurs while trying to update a group", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a group", ex));
                 });
     }
 
     @Override
     public Completable delete(Domain domain, String groupId, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Delete group {}", groupId);
+        log.debug("Delete group {}", groupId);
 
         return findById(domain, groupId)
                 .flatMapCompletable(group -> dataPlaneRegistry.getGroupRepository(domain).delete(groupId)
@@ -239,7 +238,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to delete group: {}", groupId, ex);
+                    log.error("An error occurs while trying to delete group: {}", groupId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete group: %s", groupId), ex));
                 });

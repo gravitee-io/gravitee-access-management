@@ -38,7 +38,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function3;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Date;
 import java.util.Optional;
@@ -51,7 +51,7 @@ import java.util.function.Supplier;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class UpdateUsernameDomainRule extends UpdateUserRule {
     private Function3<Reference, String, String, Maybe<User>> findUserByUsernameAndSource;
     private BiFunction<Domain, LoginAttemptCriteria , Completable> resetLoginAttempts;

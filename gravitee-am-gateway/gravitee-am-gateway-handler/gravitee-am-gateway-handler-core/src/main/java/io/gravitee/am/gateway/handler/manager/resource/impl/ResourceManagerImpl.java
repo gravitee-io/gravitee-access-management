@@ -34,8 +34,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,14 +41,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ResourceManagerImpl extends AbstractService implements ResourceManager, EventListener<ResourceEvent, Payload>, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(ResourceManagerImpl.class);
 
     @Autowired
     private ResourcePluginManager resourcePluginManager;
@@ -74,7 +73,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for resource events for domain {}", domain.getName());
+        log.info("Register event listener for resource events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ResourceEvent.class, domain.getId());
     }
 
@@ -82,7 +81,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for resource events for domain {}", domain.getName());
+        log.info("Dispose event listener for resource events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ResourceEvent.class, domain.getId());
         // stop providers and remove them from the local cache
         Set<String> resourceIds = new HashSet<>(this.resourceProviders.keySet());
@@ -104,12 +103,12 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                                 ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
                                 resourceProviders.put(res.getId(), provider);
                                 resources.put(res.getId(), res);
-                                logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
+                                log.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
                             } catch (Exception e) {
-                                logger.error("Resource {} not loaded for domain {} due to: {}", res.getName(), domain.getName(), e.getMessage());
+                                log.error("Resource {} not loaded for domain {} due to: {}", res.getName(), domain.getName(), e.getMessage());
                             }
                         },
-                        error -> logger.error("Unable to initialize resources for domain {}", domain.getName(), error)
+                        error -> log.error("Unable to initialize resources for domain {}", domain.getName(), error)
                 );
     }
 
@@ -149,9 +148,9 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                     return res;
                 })
                 .subscribe(
-                        provider -> logger.debug("Initialization of resource provider '{}' successful", resourceId),
-                        error -> logger.error("Initialization of resource provider '{}' failed", resourceId, error),
-                        ()-> logger.debug("Initialization of resource provider provider '{}' already done", resourceId)
+                        provider -> log.debug("Initialization of resource provider '{}' successful", resourceId),
+                        error -> log.error("Initialization of resource provider '{}' failed", resourceId, error),
+                        ()-> log.debug("Initialization of resource provider provider '{}' already done", resourceId)
                 );
     }
 
@@ -164,7 +163,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 this.resourceProviders.remove(resourceId);
             }
         } catch (Exception e) {
-            logger.error("Resource '{}' stopped with error", resourceId, e);
+            log.error("Resource '{}' stopped with error", resourceId, e);
         }
     }
 

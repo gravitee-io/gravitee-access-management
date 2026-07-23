@@ -31,8 +31,6 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -41,14 +39,15 @@ import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.JARM;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ErrorEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ErrorEndpoint.class);
     private static final String ERROR_PARAM = "error";
     private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private static final String PARAM_CONTEXT_KEY = "param";
@@ -80,7 +79,7 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
                 // an error occurs while fetching the client
                 // we will display the domain error page
                 // log this error for the prosperity
-                logger.debug("An error occurs while fetching client {}", clientId, handler.cause());
+                log.debug("An error occurs while fetching client {}", clientId, handler.cause());
                 renderErrorPage(routingContext, null);
                 return;
             }

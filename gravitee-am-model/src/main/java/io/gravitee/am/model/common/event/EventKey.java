@@ -18,14 +18,14 @@ package io.gravitee.am.model.common.event;
 import io.gravitee.am.common.event.Type;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 @EqualsAndHashCode
-@Slf4j
+@CustomLog
 @Getter
 public class EventKey {
     private final Type type;

@@ -74,7 +74,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -115,7 +115,7 @@ import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigu
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component
 @Primary
 public class CertificateServiceImpl implements CertificateService {

@@ -28,8 +28,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,6 +45,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_PARAMETERS_KEY;
 import static java.util.Objects.nonNull;
+import lombok.CustomLog;
 
 /**
  * This utility class is used to extract OAuth parameters either from the query parameters
@@ -56,8 +55,8 @@ import static java.util.Objects.nonNull;
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@CustomLog
 public class ParamUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
 
     public static Set<String> splitScopes(String scope) {
         if (scope == null || scope.isBlank()) {
@@ -84,7 +83,7 @@ public class ParamUtils {
                 final Object claim = requestObject.getJWTClaimsSet().getClaim(paramName);
                 value = extractParamFromRequestObject(paramName, claim);
             } catch (ParseException e) {
-                LOGGER.warn("Unable to extract parameter '{}' from RequestObject", paramName);
+                log.warn("Unable to extract parameter '{}' from RequestObject", paramName);
             }
         } else if (authFlowContext != null && authFlowContext.getData().containsKey(REQUEST_PARAMETERS_KEY)) {
             // if parameter have been provided using PAR, then we may have to go into the AuthenticationFlowContext
@@ -157,7 +156,7 @@ public class ParamUtils {
                 }
             }
         } catch (MalformedURLException e) {
-            LOGGER.debug("An unexpected error has occurred", e);
+            log.debug("An unexpected error has occurred", e);
         }
         return Objects.equals(requestedRedirect, registeredClientUri);
     }
@@ -181,7 +180,7 @@ public class ParamUtils {
 
             return uriBuilder.buildString();
         } catch (Exception e) {
-            LOGGER.warn("Unable to append parameters to {} due to : {}", redirectTo, e.getMessage());
+            log.warn("Unable to append parameters to {} due to : {}", redirectTo, e.getMessage());
         }
         return redirectTo;
     }

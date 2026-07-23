@@ -28,8 +28,6 @@ import io.gravitee.am.repository.management.api.UserNotificationRepository;
 import io.gravitee.notifier.api.Notification;
 import io.gravitee.notifier.api.Notifier;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -38,15 +36,16 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class UINotifier implements Notifier {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     @Lazy
@@ -67,7 +66,7 @@ public class UINotifier implements Notifier {
         final DomainProperties domain = (DomainProperties) param.get(NotifierSubject.NOTIFIER_DATA_DOMAIN);
         if (audience == null || domain == null) {
 
-            logger.warn("Receive notification to store in database without user or domain, ignore it.");
+            log.warn("Receive notification to store in database without user or domain, ignore it.");
             future.complete(null);
 
         } else {
@@ -87,15 +86,15 @@ public class UINotifier implements Notifier {
                 userNotif.setReferenceType(ReferenceType.DOMAIN);
                 userNotif.setAudienceId(audience.getId());
 
-                logger.debug("Receive notification to store in database for user '{}'", audience.getId());
+                log.debug("Receive notification to store in database for user '{}'", audience.getId());
 
                 notificationRepository.create(userNotif).observeOn(Schedulers.io()).subscribe(createdNotif -> {
-                    logger.debug("Notification stored: {}", createdNotif);
+                    log.debug("Notification stored: {}", createdNotif);
                     future.complete(null); // CompletableStage use the Void type. So it requires null to be mapped properly in the NotificationTrigger
                 }, future::completeExceptionally);
 
             } catch (Exception e) {
-                logger.warn("Unable to deserialize ManagementUI Notifier configuration : {}", e.getMessage());
+                log.warn("Unable to deserialize ManagementUI Notifier configuration : {}", e.getMessage());
                 future.completeExceptionally(e);
             }
         }

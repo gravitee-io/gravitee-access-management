@@ -23,19 +23,18 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class WebAuthnEnforcePasswordHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthnEnforcePasswordHandler.class);
 
     private final Domain domain;
     private final WebAuthnCookieService webAuthnCookieService;
@@ -76,7 +75,7 @@ public class WebAuthnEnforcePasswordHandler implements Handler<RoutingContext> {
                             routingContext.next();
                         },
                         error -> {
-                            LOGGER.error("Unable to extract the user information from the remember device cookie", error);
+                            log.error("Unable to extract the user information from the remember device cookie", error);
                             routingContext.next();
                         });
     }

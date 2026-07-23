@@ -30,7 +30,7 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-@Slf4j
+@CustomLog
 public class InMemoryRoleManager extends AbstractService implements Service, InitializingBean, RoleManager, EventListener<RoleEvent, Payload> {
 
     private final ConcurrentMap<String, Role> roles = new ConcurrentHashMap<>();

@@ -25,10 +25,9 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.license.LicenseFactory;
 import io.gravitee.node.api.license.LicenseManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * Feeds the node {@link LicenseManager} with the organization licenses persisted by the cockpit/cloud command flow,
@@ -37,9 +36,9 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class OrganizationLicenseManager extends AbstractService<OrganizationLicenseManager> implements EventListener<LicenseEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(OrganizationLicenseManager.class);
 
     @Autowired
     private LicenseService licenseService;
@@ -57,14 +56,14 @@ public class OrganizationLicenseManager extends AbstractService<OrganizationLice
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for license events for the management API");
+        log.info("Register event listener for license events for the management API");
         eventManager.subscribeForEvents(this, LicenseEvent.class);
 
         licenseService.findAll()
                 .filter(license -> license.getReferenceType() == ReferenceType.ORGANIZATION)
-                .doOnNext(license -> logger.info("Initializing license for organization={}", license.getReferenceId()))
+                .doOnNext(license -> log.info("Initializing license for organization={}", license.getReferenceId()))
                 .subscribe(license -> register(license.getReferenceId(), license.getLicense()),
-                        ex -> logger.error("An error occurred while loading organization licenses", ex));
+                        ex -> log.error("An error occurred while loading organization licenses", ex));
     }
 
     @Override
@@ -80,7 +79,7 @@ public class OrganizationLicenseManager extends AbstractService<OrganizationLice
     private void deploy(String organizationId) {
         licenseService.findByReference(ReferenceType.ORGANIZATION, organizationId)
                 .subscribe(license -> register(organizationId, license.getLicense()),
-                        ex -> logger.error("An error occurred while loading license for organization={}", organizationId, ex),
+                        ex -> log.error("An error occurred while loading license for organization={}", organizationId, ex),
                         () -> undeploy(organizationId));
     }
 
@@ -95,7 +94,7 @@ public class OrganizationLicenseManager extends AbstractService<OrganizationLice
             licenseManager.registerOrganizationLicense(organizationId,
                     licenseFactory.create(ReferenceType.ORGANIZATION.name(), organizationId, rawLicense));
         } catch (Exception e) {
-            logger.warn("License cannot be registered for organization={}", organizationId, e);
+            log.warn("License cannot be registered for organization={}", organizationId, e);
         }
     }
 }

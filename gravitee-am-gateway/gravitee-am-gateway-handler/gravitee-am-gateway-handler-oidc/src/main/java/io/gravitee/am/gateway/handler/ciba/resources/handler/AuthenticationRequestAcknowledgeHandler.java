@@ -44,8 +44,6 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import io.reactivex.rxjava3.core.Single;
@@ -58,13 +56,14 @@ import java.util.Map;
 import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestAcknowledgeHandler.class);
 
     private AuthenticationRequestService authRequestService;
 
@@ -98,7 +97,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
             final List<CIBASettingNotifier> deviceNotifiers = this.domain.getOidc().getCibaSettings().getDeviceNotifiers();
             if (CollectionUtils.isEmpty(deviceNotifiers)) {
-                LOGGER.warn("CIBA Authentication Request can't be processed without device notifier configured");
+                log.warn("CIBA Authentication Request can't be processed without device notifier configured");
                 context.fail(new InvalidRequestException("No Device notifier configure for the domain"));
                 return;
             }
@@ -222,13 +221,13 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                                 .end(Json.encodePrettily(response));
 
                     }, error -> {
-                        LOGGER.error("Unable to persist CIBA AuthenticationRequest object", error);
+                        log.error("Unable to persist CIBA AuthenticationRequest object", error);
                         context.fail(error);
                     });
 
             return;
         } else {
-            LOGGER.error("CIBA Authentication Request object is null");
+            log.error("CIBA Authentication Request object is null");
             context.fail(new InvalidRequestException("Missing authentication request"));
         }
     }

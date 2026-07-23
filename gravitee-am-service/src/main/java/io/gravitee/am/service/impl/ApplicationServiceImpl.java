@@ -91,8 +91,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -111,15 +109,16 @@ import static java.util.Objects.nonNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ApplicationServiceImpl implements ApplicationService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationServiceImpl.class);
     private static final ObjectMapper CIMD_MAPPER = new ObjectMapper();
 
     /**
@@ -213,26 +212,26 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Flowable<Application> findAll() {
-        LOGGER.debug("Find applications");
+        log.debug("Find applications");
         return applicationRepository.findAll();
     }
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
-        LOGGER.debug("Find applications");
+        log.debug("Find applications");
         return applicationRepository.findAll(page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications", ex);
+                    log.error("An error occurs while trying to find applications", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find applications", ex));
                 });
     }
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, ApplicationType type, int page, int size) {
-        LOGGER.debug("Find applications by domain {} and type {}", domain, type);
+        log.debug("Find applications by domain {} and type {}", domain, type);
         return applicationRepository.findByDomain(domain, type, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
+                    log.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find applications by domain %s", domain), ex));
                 });
@@ -240,10 +239,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, ApplicationType type, int page, int size) {
-        LOGGER.debug("Find applications by domain {}, type {} and appIds {}", domain, type, applicationIds);
+        log.debug("Find applications by domain {}, type {} and appIds {}", domain, type, applicationIds);
         return applicationRepository.findByDomain(domain, applicationIds, type, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
+                    log.error("An error occurs while trying to find applications by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find applications by domain %s", domain), ex));
                 });
@@ -251,10 +250,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {} and type {}", query, domain, type);
+        log.debug("Search applications with query {} for domain {} and type {}", query, domain, type);
         return applicationRepository.search(domain, query, type, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
+                    log.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
                 });
@@ -262,11 +261,11 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, String organizationId, ApplicationFilter filter, int page, int size) {
-        LOGGER.debug("Find applications by domain {} with filter", domain);
+        log.debug("Find applications by domain {} with filter", domain);
         return buildCriteria(filter, organizationId)
                 .flatMap(criteria ->applicationRepository.findByDomain(domain, criteria, page, size))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by domain {} with filter", domain, ex);
+                    log.error("An error occurs while trying to find applications by domain {} with filter", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find applications by domain %s with filter", domain), ex));
                 });
@@ -274,11 +273,11 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Page<Application>> search(String domain, String organizationId, ApplicationFilter filter, String query, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {} with filter", query, domain);
+        log.debug("Search applications with query {} for domain {} with filter", query, domain);
         return buildCriteria(filter, organizationId)
                 .flatMap(criteria -> applicationRepository.search(domain, criteria, query, page, size))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {} with filter", query, domain, ex);
+                    log.error("An error occurs while trying to search applications with query {} for domain {} with filter", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s for domain %s with filter", query, domain), ex));
                 });
@@ -319,10 +318,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, ApplicationType type, int page, int size) {
-        LOGGER.debug("Search applications with query {} for domain {}, type {} and appIds={}", query, domain, type, applicationIds);
+        log.debug("Search applications with query {} for domain {}, type {} and appIds={}", query, domain, type, applicationIds);
         return applicationRepository.search(domain, applicationIds, query, type, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
+                    log.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
                 });
@@ -330,61 +329,61 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Flowable<Application> findByCertificate(String certificate) {
-        LOGGER.debug("Find applications by certificate : {}", certificate);
+        log.debug("Find applications by certificate : {}", certificate);
         return applicationRepository.findByCertificate(certificate)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by certificate", ex);
+                    log.error("An error occurs while trying to find applications by certificate", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by certificate", ex));
                 });
     }
 
     @Override
     public Flowable<Application> findByIdentityProvider(String identityProvider) {
-        LOGGER.debug("Find applications by identity provider : {}", identityProvider);
+        log.debug("Find applications by identity provider : {}", identityProvider);
         return applicationRepository.findByIdentityProvider(identityProvider)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by identity provider", ex);
+                    log.error("An error occurs while trying to find applications by identity provider", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by identity provider", ex));
                 });
     }
 
     @Override
     public Flowable<Application> findByFactor(String factor) {
-        LOGGER.debug("Find applications by factor : {}", factor);
+        log.debug("Find applications by factor : {}", factor);
         return applicationRepository.findByFactor(factor)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by factor", ex);
+                    log.error("An error occurs while trying to find applications by factor", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by factor", ex));
                 });
     }
 
     @Override
     public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
-        LOGGER.debug("Find applications by domain {} and extension grant : {}", domain, extensionGrant);
+        log.debug("Find applications by domain {} and extension grant : {}", domain, extensionGrant);
         return applicationRepository.findByDomainAndExtensionGrant(domain, extensionGrant)
                 .collect(() -> (Set<Application>) new HashSet(), Set::add) // TODO CHECK IF FLOWABLE is useful...
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by extension grant", ex);
+                    log.error("An error occurs while trying to find applications by extension grant", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by extension grant", ex));
                 });
     }
 
     @Override
     public Flowable<Application> findByIdIn(List<String> ids) {
-        LOGGER.debug("Find applications by ids : {}", ids);
+        log.debug("Find applications by ids : {}", ids);
         return applicationRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find applications by ids {}", ids, ex);
+                    log.error("An error occurs while trying to find applications by ids {}", ids, ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by ids", ex));
                 });
     }
 
     @Override
     public Maybe<Application> findById(String id) {
-        LOGGER.debug("Find application by ID: {}", id);
+        log.debug("Find application by ID: {}", id);
         return applicationRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an application using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find an application using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an application using its ID: %s", id), ex));
                 });
@@ -392,10 +391,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
-        LOGGER.debug("Find application by domain: {} and client_id {}", domain, clientId);
+        log.debug("Find application by domain: {} and client_id {}", domain, clientId);
         return applicationRepository.findByDomainAndClientId(domain, clientId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an application using its domain: {} and client_id : {}", domain, clientId, ex);
+                    log.error("An error occurs while trying to find an application using its domain: {} and client_id : {}", domain, clientId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an application using its domain: %s, and client_id %s", domain, clientId), ex));
                 });
@@ -403,7 +402,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
-        LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
+        log.debug("Create a new application {} for domain {}", newApplication, domain);
 
         Application application = new Application();
         application.setId(RandomString.generate());
@@ -434,7 +433,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             } catch (Exception ex) {
                 // silent exception
                 // redirect_uri can use custom URI (especially for mobile deep links)
-                LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
+                log.debug("An error has occurred when generating SAML attribute consume service url", ex);
             }
         }
 
@@ -453,14 +452,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error(ERROR_ON_CREATE, ex);
+                    log.error(ERROR_ON_CREATE, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
                 });
     }
 
     @Override
     public Single<Application> create(Domain domain, Application application) {
-        LOGGER.debug("Create a new application {} ", application);
+        log.debug("Create a new application {} ", application);
 
         if (application.getDomain() == null || application.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on application"));
@@ -471,14 +470,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error(ERROR_ON_CREATE, ex);
+                    log.error(ERROR_ON_CREATE, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
                 });
     }
 
     @Override
     public Single<Application> createFromCimd(Domain domain, NewCimdApplication newApplication, User principal) {
-        LOGGER.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
+        log.debug("Create a new CIMD-bootstrapped application {} for domain {}", newApplication.getName(), domain.getId());
         return cimdMetadataFetcher.fetchAndValidate(domain, newApplication.getCimdUrl())
                 .flatMap(preview -> resolveCimdTemplateScopeSettings(domain)
                         .map(templateScopes -> buildCimdApplication(domain, newApplication, preview, templateScopes))
@@ -487,7 +486,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .upsert(domain, preview.url(), preview.metadataJson(), preview.ttl())
                                 .map(doc -> created)
                                 .onErrorResumeNext(ex -> {
-                                    LOGGER.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
+                                    log.warn("Application {} created from CIMD url {} but metadata document upsert failed: {}",
                                             created.getId(), preview.url(), ex.getMessage());
                                     return Single.just(created);
                                 })))
@@ -495,7 +494,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error(ERROR_ON_CREATE, ex);
+                    log.error(ERROR_ON_CREATE, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
                 });
     }
@@ -595,7 +594,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 applicationSettings.setSaml(samlSettings);
             } catch (Exception ex) {
                 // redirect_uri may use a custom scheme (e.g. mobile deep link); leave SAML unset.
-                LOGGER.debug("Could not generate SAML attribute consume service url from CIMD redirect_uri", ex);
+                log.debug("Could not generate SAML attribute consume service url from CIMD redirect_uri", ex);
             }
         }
 
@@ -620,9 +619,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         final List<String> kept = new ArrayList<>(preview.grantTypes().size());
         for (String grantType : preview.grantTypes()) {
             if (isUnsupportedDeviceCodeGrant(grantType)) {
-                LOGGER.warn("Ignoring unsupported grant_type '{}' from CIMD metadata at {}: device_code is not supported", grantType, preview.url());
+                log.warn("Ignoring unsupported grant_type '{}' from CIMD metadata at {}: device_code is not supported", grantType, preview.url());
             } else if (isAgent && AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES.contains(grantType)) {
-                LOGGER.warn("Ignoring grant_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", grantType, preview.url());
+                log.warn("Ignoring grant_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", grantType, preview.url());
             } else {
                 kept.add(grantType);
             }
@@ -637,7 +636,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         final List<String> kept = new ArrayList<>(preview.responseTypes().size());
         for (String responseType : preview.responseTypes()) {
             if (AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES.contains(responseType)) {
-                LOGGER.warn("Ignoring response_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", responseType, preview.url());
+                log.warn("Ignoring response_type '{}' from CIMD metadata at {}: not allowed for AGENT applications", responseType, preview.url());
             } else {
                 kept.add(responseType);
             }
@@ -745,7 +744,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Application> update(Application application) {
-        LOGGER.debug("Update an application {} ", application);
+        log.debug("Update an application {} ", application);
 
         if (application.getDomain() == null || application.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on application"));
@@ -758,14 +757,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to update an application", ex);
+                    log.error("An error occurs while trying to update an application", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update an application", ex));
                 });
     }
 
     @Override
     public Single<Application> updateType(String domain, String id, ApplicationType type, User principal) {
-        LOGGER.debug("Update application {} type to {} for domain {}", id, type, domain);
+        log.debug("Update application {} type to {} for domain {}", id, type, domain);
 
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
@@ -779,14 +778,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error(ERROR_ON_PATCH, ex);
+                    log.error(ERROR_ON_PATCH, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_PATCH, ex));
                 });
     }
 
     @Override
     public Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
-        LOGGER.debug("Patch an application {} for domain {}", id, domain);
+        log.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
@@ -833,7 +832,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error(ERROR_ON_PATCH, ex);
+                    log.error(ERROR_ON_PATCH, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_PATCH, ex));
                 });
     }
@@ -856,7 +855,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Completable delete(String id, User principal, Domain domain) {
-        LOGGER.debug("Delete application {}", id);
+        log.debug("Delete application {}", id);
         return applicationRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
                 .flatMapCompletable(application -> {
@@ -895,7 +894,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete application: {}", id, ex);
+                    log.error("An error occurs while trying to delete application: {}", id, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete application: %s", id), ex));
                 });
@@ -903,26 +902,26 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Single<Long> count() {
-        LOGGER.debug("Count applications");
+        log.debug("Count applications");
         return applicationRepository.count()
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to count applications", ex);
+                    log.error("An error occurs while trying to count applications", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to count applications", ex));
                 });
     }
 
     @Override
     public Single<Long> countByDomain(String domainId) {
-        LOGGER.debug("Count applications for domain {}", domainId);
+        log.debug("Count applications for domain {}", domainId);
         return applicationRepository.countByDomain(domainId)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to count applications for domain {}", domainId, ex);
+                    log.error("An error occurs while trying to count applications for domain {}", domainId, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to count applications for domain %s", domainId), ex));
                 });
@@ -961,7 +960,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (app.getSettings() != null && app.getSettings().getOauth() != null) {
                         app.getSettings().getOauth().setClientSecret(rawSecret);
                     } else {
-                        LOGGER.warn("Unable to restore the clientSecret into the application settings, settings are null.");
+                        log.warn("Unable to restore the clientSecret into the application settings, settings are null.");
                     }
                     return app;
                 })
@@ -1078,7 +1077,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Single<Application> validateApplicationAuthMethodUpdate(Application toUpdateApp, Application existingApplication) {
         if (isNotUsingClientSecretJwt(existingApplication) && clientSecretJwtWithHashedSecret(toUpdateApp)) {
-            LOGGER.debug("tokenEndpointAuthMethod can't be {} if the client secret is hashed", CLIENT_SECRET_JWT);
+            log.debug("tokenEndpointAuthMethod can't be {} if the client secret is hashed", CLIENT_SECRET_JWT);
             return Single.error(new InvalidClientMetadataException("client_secret_jwt can't be used by this application"));
         }
 
@@ -1100,7 +1099,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Single<Application> validateApplicationAuthMethod(Application app) {
         if (clientSecretJwtWithHashedSecret(app)) {
-            LOGGER.debug("tokenEndpointAuthMethod can't be {} if the client secret is hashed", CLIENT_SECRET_JWT);
+            log.debug("tokenEndpointAuthMethod can't be {} if the client secret is hashed", CLIENT_SECRET_JWT);
             return Single.error(new InvalidClientMetadataException("client_secret_jwt can't be used by this application"));
         }
 

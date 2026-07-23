@@ -19,21 +19,20 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xss.NoXSSHan
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xss.XSSHandlerImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.webprotection.XssProtectionSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class XSSHandlerFactory implements FactoryBean<XSSHandler> {
 
-    private static final Logger logger = LoggerFactory.getLogger(XSSHandlerFactory.class);
     private static final String HTTP_XSS_ENABLED = "http.xss.enabled";
     private static final String HTTP_XSS_ACTION = "http.xss.action";
 
@@ -60,7 +59,7 @@ public class XSSHandlerFactory implements FactoryBean<XSSHandler> {
     }
 
     private XSSHandler createFromEnvironment() {
-        logger.debug("Using gravitee.yml X-XSS-Protection configuration for domain: {}", domain.getName());
+        log.debug("Using gravitee.yml X-XSS-Protection configuration for domain: {}", domain.getName());
         var action = environment.getProperty(HTTP_XSS_ACTION, String.class, "1; mode=block");
         final boolean notEnabled = !environment.getProperty(HTTP_XSS_ENABLED, Boolean.class, true);
         if (isNullOrEmpty(action) || notEnabled) {

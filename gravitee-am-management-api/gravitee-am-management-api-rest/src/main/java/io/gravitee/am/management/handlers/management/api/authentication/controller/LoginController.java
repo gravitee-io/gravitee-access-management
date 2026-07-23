@@ -29,8 +29,6 @@ import io.gravitee.am.service.ReCaptchaService;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +51,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator.DEFAULT_REDIRECT_COOKIE_NAME;
 import static java.util.Collections.emptyList;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -60,11 +59,11 @@ import static java.util.Collections.emptyList;
  * @author GraviteeSource Team
  */
 @Controller
+@CustomLog
 public class LoginController {
 
     public static final String ORGANIZATION_PARAMETER_NAME = "org";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
     private static final Map<String, String> socialProviderTypes = Map.of(
             "github-am-idp", "github",
@@ -119,7 +118,7 @@ public class LoginController {
                     .filter(IdentityProvider::isExternal)
                     .toList();
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while loading the organization social providers. It probably means that a social provider is not well started", ex);
+            log.error("An error has occurred while loading the organization social providers. It probably means that a social provider is not well started", ex);
         }
 
         // enhance social providers data

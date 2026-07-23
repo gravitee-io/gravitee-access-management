@@ -19,11 +19,11 @@ import io.gravitee.am.authenticator.api.AuthenticatorPlugin;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
+import lombok.CustomLog;
 
+@CustomLog
 public class AuthenticatorPluginHandler extends AmPluginHandler<AuthenticatorPlugin<?, ?>> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticatorPluginHandler.class);
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -32,7 +32,7 @@ public class AuthenticatorPluginHandler extends AmPluginHandler<AuthenticatorPlu
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
     @Override

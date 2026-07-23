@@ -36,8 +36,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,14 +45,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_VALIDATION;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationEndpoint.class);
 
     private final ThymeleafTemplateEngine engine;
     private final Domain domain;
@@ -137,7 +136,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
                             routingContext.response().end(buffer);
                         },
                         throwable -> {
-                            logger.error("Unable to render registration confirmation page", throwable);
+                            log.error("Unable to render registration confirmation page", throwable);
                             routingContext.fail(throwable.getCause());
                         }
                 );

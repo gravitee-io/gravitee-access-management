@@ -24,7 +24,7 @@ import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
@@ -34,7 +34,7 @@ import java.util.function.Function;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class CreateUserRule {
     public static final String CREATE_USER_ERROR = "An error occurs while trying to create a user";

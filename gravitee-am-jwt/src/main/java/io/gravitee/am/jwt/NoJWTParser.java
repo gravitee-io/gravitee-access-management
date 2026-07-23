@@ -17,23 +17,22 @@ package io.gravitee.am.jwt;
 
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.jwt.JWT;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class NoJWTParser implements JWTParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(NoJWTParser.class);
 
     @Override
     public JWT parse(String payload) {
         try {
             return new JWT(com.nimbusds.jwt.JWTParser.parse(payload).getJWTClaimsSet().getClaims());
         } catch (Exception e) {
-            logger.debug("The following JWT token : {} is malformed", payload);
+            log.debug("The following JWT token : {} is malformed", payload);
             throw new MalformedJWTException("Token is malformed", e);
         }
     }

@@ -20,19 +20,18 @@ import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.TaskManager;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AssignSystemCertificate extends AbstractTask<AssignSystemCertificateDefinition> {
 
-    private final Logger logger = LoggerFactory.getLogger(AssignSystemCertificate.class);
 
     private final ApplicationService applicationService;
 
@@ -77,7 +76,7 @@ public class AssignSystemCertificate extends AbstractTask<AssignSystemCertificat
         final var domainId = this.configuration.getDomainId();
         final var renewedCertificate = this.configuration.getRenewedCertificate();
         final var deprecatedCertificate = this.configuration.getDeprecatedCertificate();
-        this.logger.debug("Start assign system certificate for domain {}. (deprecated certificate: {} / new certificate: {})",
+        this.log.debug("Start assign system certificate for domain {}. (deprecated certificate: {} / new certificate: {})",
                 domainId, deprecatedCertificate, renewedCertificate);
 
         this.taskManager.isActiveTask(getId())
@@ -98,7 +97,7 @@ public class AssignSystemCertificate extends AbstractTask<AssignSystemCertificat
                                                         })
                                                         .count();
                                             } else {
-                                                logger.warn("System certificate {} doesn't exist, unable to assigne it to applications of domain {}", renewedCertificate, domainId);
+                                                log.warn("System certificate {} doesn't exist, unable to assigne it to applications of domain {}", renewedCertificate, domainId);
                                                 return Single.just(0L);
                                             }
                                         });
@@ -109,23 +108,23 @@ public class AssignSystemCertificate extends AbstractTask<AssignSystemCertificat
                 )
                 .subscribe(apps -> {
                             if (apps >= 0) {
-                                this.logger.info("System certificate {} assigned to {} applications of domain {}", renewedCertificate, apps, domainId);
+                                this.log.info("System certificate {} assigned to {} applications of domain {}", renewedCertificate, apps, domainId);
                                 this.taskManager.remove(this.getId())
-                                        .doOnError(error -> logger.warn("Unable to delete task {}", this.getId(), error))
+                                        .doOnError(error -> log.warn("Unable to delete task {}", this.getId(), error))
                                         .subscribe();
                             } else {
-                                this.logger.debug("Task already executed to assign system certificate for domain {}. (deprecated certificate: {} / new certificate: {})",
+                                this.log.debug("Task already executed to assign system certificate for domain {}. (deprecated certificate: {} / new certificate: {})",
                                         domainId, deprecatedCertificate, renewedCertificate);
                             }
                         },
                         error -> {
-                            logger.warn("System certificate {} can't be assigned to applications of domain {}: {}", renewedCertificate, domainId, error.getMessage());
+                            log.warn("System certificate {} can't be assigned to applications of domain {}: {}", renewedCertificate, domainId, error.getMessage());
                             if (rescheduledOnError()) {
-                                logger.info("Reschedule task {} to assign system certificate {}", getId(), renewedCertificate);
+                                log.info("Reschedule task {} to assign system certificate {}", getId(), renewedCertificate);
                                 this.schedule();
                             } else {
                                 this.taskManager.markAsError(this.getId())
-                                        .doOnError(e -> logger.warn("Unable to register error status for task {}", this.getId(), e))
+                                        .doOnError(e -> log.warn("Unable to register error status for task {}", this.getId(), e))
                                         .subscribe();
                             }
                         });

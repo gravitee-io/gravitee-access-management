@@ -33,7 +33,7 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +54,7 @@ import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.address
  */
 public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCriteria> implements Reporter<R, C>, Handler<Message<Reportable>> {
 
-    public static final Logger logger = LoggerFactory.getLogger(EventBusReporterWrapper.class);
+    public static final Logger logger = NodeLoggerFactory.getLogger(EventBusReporterWrapper.class);
     private final Vertx vertx;
     private final Reporter<R,C> reporter;
     private final List<MessageConsumer<Reportable>> messageConsumers = Collections.synchronizedList(new ArrayList<>());

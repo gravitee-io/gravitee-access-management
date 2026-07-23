@@ -47,8 +47,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -59,14 +57,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.hasText;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScimGroupServiceImpl.class);
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
@@ -93,7 +92,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
 
     @Override
     public Single<ListResponse<Group>> list(Filter filter, int startIndex, int size, String baseUrl) {
-        LOGGER.debug("Find groups by domain : {}", domain.getId());
+        log.debug("Find groups by domain : {}", domain.getId());
 
         Single<Page<io.gravitee.am.model.Group>> groupResult = filter != null ?
                 groupRepository.searchScim(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), startIndex, size) :
@@ -116,19 +115,19 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find groups by domain {}", domain, ex);
+                    log.error("An error occurs while trying to find groups by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find groups by domain %s", domain), ex));
                 });
     }
 
     @Override
     public Flowable<Group> findByMember(String memberId) {
-        LOGGER.debug("Find groups by member : {}", memberId);
+        log.debug("Find groups by member : {}", memberId);
         return groupRepository
                 .findByMember(memberId)
                 .map(group -> convert(group, null, true))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a groups using member ", memberId, ex);
+                    log.error("An error occurs while trying to find a groups using member ", memberId, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using member: %s", memberId), ex));
                 });
@@ -136,14 +135,14 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
 
     @Override
     public Maybe<Group> get(String groupId, String baseUrl) {
-        LOGGER.debug("Find group by id : {}", groupId);
+        log.debug("Find group by id : {}", groupId);
         return groupRepository
                 .findById(groupId)
                 .map(group -> convert(group, baseUrl, false))
                 // set members
                 .flatMap(group -> setMembers(group, baseUrl).toMaybe())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using its ID", groupId, ex);
+                    log.error("An error occurs while trying to find a group using its ID", groupId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using its ID: %s", groupId), ex));
                 });
@@ -151,7 +150,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
 
     @Override
     public Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Create a new group {} for domain {}", group.getDisplayName(), domain.getName());
+        log.debug("Create a new group {} for domain {}", group.getDisplayName(), domain.getName());
 
         io.gravitee.am.model.Group groupModel = convert(group);
         // set technical ID
@@ -184,7 +183,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                     if (ex instanceof SCIMException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error occurs while trying to router a group", ex);
+                        log.error("An error occurs while trying to router a group", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to router a group", ex));
                     }
                 })
@@ -193,7 +192,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
 
     @Override
     public Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
+        log.debug("Update a group {} for domain {}", groupId, domain.getName());
         return groupRepository
                 .findById(groupId)
                 .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
@@ -229,7 +228,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                     if (ex instanceof AbstractManagementException || ex instanceof SCIMException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error occurs while trying to update a group", ex);
+                        log.error("An error occurs while trying to update a group", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to update a group", ex));
                     }
                 });
@@ -237,7 +236,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
 
     @Override
     public Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Patch a group {} for domain {}", groupId, domain.getName());
+        log.debug("Patch a group {} for domain {}", groupId, domain.getName());
         return get(groupId, baseUrl)
                 .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
                 .flatMap(group -> {
@@ -249,7 +248,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error has occurred when trying to delete group: {}", groupId, ex);
+                        log.error("An error has occurred when trying to delete group: {}", groupId, ex);
                         return Single.error(new TechnicalManagementException(
                                 String.format("An error has occurred when trying to delete group: %s", groupId), ex));
                     }
@@ -258,7 +257,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
 
     @Override
     public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Delete group {}", groupId);
+        log.debug("Delete group {}", groupId);
         return groupRepository
                 .findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
@@ -275,7 +274,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     } else {
-                        LOGGER.error("An error occurs while trying to delete group: {}", groupId, ex);
+                        log.error("An error occurs while trying to delete group: {}", groupId, ex);
                         return Completable.error(new TechnicalManagementException(
                                 String.format("An error occurs while trying to delete group: %s", groupId), ex));
                     }

@@ -34,8 +34,6 @@ import io.gravitee.am.model.jose.KeyType;
 import io.gravitee.am.model.jose.OCTKey;
 import io.gravitee.am.model.jose.OKPKey;
 import io.gravitee.am.model.jose.RSAKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
@@ -51,14 +49,15 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
+import lombok.CustomLog;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class JWSServiceImpl implements JWSService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JWSServiceImpl.class);
 
 
     @Override
@@ -67,7 +66,7 @@ public class JWSServiceImpl implements JWSService {
             SignedJWT signedJwt = (SignedJWT)jwt;
             return signedJwt.verify(this.verifier(jwk));
         } catch (ClassCastException | JOSEException ex) {
-            LOGGER.error(ex.getMessage(),ex);
+            log.error(ex.getMessage(),ex);
             return false;
         }
     }
@@ -101,7 +100,7 @@ public class JWSServiceImpl implements JWSService {
             return new RSASSAVerifier((RSAPublicKey) factory.generatePublic(spec));
         }
         catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
-            LOGGER.error("Unable to build Signature Verifier from RSA key",ex);
+            log.error("Unable to build Signature Verifier from RSA key",ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }
@@ -125,7 +124,7 @@ public class JWSServiceImpl implements JWSService {
             return new ECDSAVerifier(ecPublicKey);
         }
         catch (NoSuchAlgorithmException | InvalidParameterSpecException | InvalidKeySpecException | JOSEException ex) {
-            LOGGER.error("Unable to build Verifier from Elliptic Curve (EC) key",ex);
+            log.error("Unable to build Verifier from Elliptic Curve (EC) key",ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }
@@ -136,7 +135,7 @@ public class JWSServiceImpl implements JWSService {
             return new MACVerifier(jwk);
         }
         catch (JOSEException ex) {
-            LOGGER.error("Unable to build Verifier from Edwards Curve (OKP) key",ex);
+            log.error("Unable to build Verifier from Edwards Curve (OKP) key",ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }
@@ -151,7 +150,7 @@ public class JWSServiceImpl implements JWSService {
             return new Ed25519Verifier(jwk);
         }
         catch (JOSEException ex) {
-            LOGGER.error("Unable to build Verifier from Message Authentication Code (MAC) key",ex);
+            log.error("Unable to build Verifier from Message Authentication Code (MAC) key",ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }

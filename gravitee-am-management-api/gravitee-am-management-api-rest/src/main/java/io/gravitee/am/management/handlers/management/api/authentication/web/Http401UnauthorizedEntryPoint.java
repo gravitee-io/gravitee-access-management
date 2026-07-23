@@ -20,8 +20,6 @@ import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.MediaType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -29,15 +27,16 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class Http401UnauthorizedEntryPoint implements AuthenticationEntryPoint {
 
-    private final Logger logger = LoggerFactory.getLogger(Http401UnauthorizedEntryPoint.class);
 
     private final ObjectMapper objectMapper;
 
@@ -50,7 +49,7 @@ public class Http401UnauthorizedEntryPoint implements AuthenticationEntryPoint {
      */
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException e) throws IOException {
-        logger.debug("Pre-authenticated entry point called. Rejecting access");
+        log.debug("Pre-authenticated entry point called. Rejecting access");
 
         final ErrorEntity error = new ErrorEntity();
 

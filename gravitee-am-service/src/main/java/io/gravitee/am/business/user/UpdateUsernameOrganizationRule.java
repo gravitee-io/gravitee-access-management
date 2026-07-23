@@ -32,7 +32,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function3;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -42,7 +42,7 @@ import java.util.function.Supplier;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class UpdateUsernameOrganizationRule {
     private UserValidator validator;

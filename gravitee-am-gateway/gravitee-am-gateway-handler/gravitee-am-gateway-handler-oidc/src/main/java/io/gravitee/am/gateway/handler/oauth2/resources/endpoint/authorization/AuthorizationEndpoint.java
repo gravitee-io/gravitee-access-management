@@ -33,10 +33,9 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import lombok.CustomLog;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -48,9 +47,9 @@ import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpoint.class);
     private static final String FORM_PARAMETERS = "parameters";
     private final Flow flow;
     private final ThymeleafTemplateEngine engine;
@@ -82,7 +81,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
         final String uriIdentifier = context.get(ConstantKeys.REQUEST_URI_ID_KEY);
         parService.deleteRequestUri(uriIdentifier).onErrorResumeNext((err) -> {
-                    logger.warn("Deletion of Pushed Authorization Request with id '{}' failed", uriIdentifier, err);
+                    log.warn("Deletion of Pushed Authorization Request with id '{}' failed", uriIdentifier, err);
                     return Completable.complete();
                 })
                 .andThen(flow.run(request, client, endUser))
@@ -93,7 +92,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                                 cleanSession(context);
                                 doRedirect(context, request, authorizationResponse);
                             } catch (Exception e) {
-                                logger.error("Unable to redirect to client redirect_uri", e);
+                                log.error("Unable to redirect to client redirect_uri", e);
                                 context.fail(new ServerErrorException());
                             }
                         }, context::fail);
@@ -131,12 +130,12 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                                         .end(buffer);
                             },
                             throwable -> {
-                                logger.error("Unable to render Authorization form_post page", throwable);
+                                log.error("Unable to render Authorization form_post page", throwable);
                                 context.fail(throwable.getCause());
                             }
                     );
         } catch (Exception e) {
-            logger.error("Unable to redirect to client redirect_uri", e);
+            log.error("Unable to redirect to client redirect_uri", e);
             context.fail(new ServerErrorException());
         }
     }

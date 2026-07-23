@@ -29,8 +29,6 @@ import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * Decorator that adds trusted issuer fallback validation to a {@link TokenValidator}.
@@ -52,9 +51,9 @@ import java.util.stream.Collectors;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class TrustedIssuerTokenValidator implements TokenValidator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrustedIssuerTokenValidator.class);
 
     private final TokenValidator delegate;
     private final TrustedIssuerResolver trustedIssuerResolver;
@@ -84,7 +83,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
         return delegate.validate(token, settings, domain, client)
                 .onErrorResumeNext(error -> {
                     if (error instanceof TokenVerificationException && hasTrustedIssuers(settings)) {
-                        LOGGER.debug("Domain cert validation failed, trying trusted issuers: {}",
+                        log.debug("Domain cert validation failed, trying trusted issuers: {}",
                                 error.getMessage());
                         return validateWithTrustedIssuer(token, settings, domain);
                     }
@@ -114,7 +113,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                     if (error instanceof InvalidRequestException) {
                         return Single.error(error);
                     }
-                    LOGGER.debug("Failed to decode JWT for trusted issuer validation: {}", error.getMessage());
+                    log.debug("Failed to decode JWT for trusted issuer validation: {}", error.getMessage());
                     return Single.error(new TokenVerificationException("The presented token is invalid"));
                 });
     }

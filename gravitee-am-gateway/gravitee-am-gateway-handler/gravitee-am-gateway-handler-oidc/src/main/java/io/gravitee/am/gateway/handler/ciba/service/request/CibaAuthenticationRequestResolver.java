@@ -33,8 +33,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Single;
 import net.minidev.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
@@ -42,13 +40,14 @@ import java.time.Instant;
 import java.util.Date;
 
 import static io.gravitee.am.jwt.DefaultJWTParser.evaluateExp;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<CibaAuthenticationRequest> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaAuthenticationRequestResolver.class);
 
     private final Domain domain;
     private final JWSService jwsService;
@@ -119,7 +118,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                         if (users.isEmpty() && isFederatedHintResolutionEnabled()) {
                             return authRequest;
                         }
-                        LOGGER.warn("login_hint match multiple users or no one");
+                        log.warn("login_hint match multiple users or no one");
                         throw new InvalidRequestException("Invalid hint");
                     }
                     authRequest.setUser(users.getFirst());
@@ -237,7 +236,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                     if (users.isEmpty() && isFederatedHintResolutionEnabled()) {
                         return Single.just(authRequest);
                     }
-                    LOGGER.warn("login_hint_token match multiple users or no one");
+                    log.warn("login_hint_token match multiple users or no one");
                     return Single.error(new InvalidRequestException("Invalid hint"));
                 }
                 authRequest.setUser(users.getFirst());
@@ -249,7 +248,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
             return Single.error(new ExpiredLoginHintTokenException("login_token_hint expired"));
         } catch (ParseException e) {
             // should never happen
-            LOGGER.warn("login_hint_token can't be read", e);
+            log.warn("login_hint_token can't be read", e);
             return Single.error(new ExpiredLoginHintTokenException("invalid login_token_hint"));
         }
     }

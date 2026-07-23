@@ -18,21 +18,20 @@ package io.gravitee.am.authdevice.notifier.cibafederation.provider;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
+import lombok.CustomLog;
 
 /**
  * Resolves an OpenID Provider's CIBA endpoints from its discovery document and caches them per
  * well-known URL with a refresh TTL. Fail-closed: any resolution failure errors the call — the
  * caller must NOT fall back to guessed endpoints.
  */
+@CustomLog
 public class OidcDiscoveryResolver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OidcDiscoveryResolver.class);
     private static final String GENERIC_ERROR = "CIBA federation: could not resolve the identity provider's OIDC discovery document";
 
     private record Cached(ProviderMetadata metadata, long expiresAtMillis) {}
@@ -64,27 +63,27 @@ public class OidcDiscoveryResolver {
             // The wellKnownUri is an internal configuration detail — log it server-side, but keep it
             // out of the thrown message that can surface toward the relying client.
             if (resp.statusCode() != 200) {
-                LOGGER.warn("CIBA-FED discovery failed (status={}) for {}", resp.statusCode(), wellKnownUri);
+                log.warn("CIBA-FED discovery failed (status={}) for {}", resp.statusCode(), wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
             JsonObject body = resp.bodyAsJsonObject();
             if (body == null) {
-                LOGGER.warn("CIBA-FED discovery returned a non-JSON document for {}", wellKnownUri);
+                log.warn("CIBA-FED discovery returned a non-JSON document for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
             String issuer = body.getString("issuer");
             String bc = body.getString("backchannel_authentication_endpoint");
             String token = body.getString("token_endpoint");
             if (issuer == null || issuer.isBlank()) {
-                LOGGER.warn("CIBA-FED discovery omits issuer for {}", wellKnownUri);
+                log.warn("CIBA-FED discovery omits issuer for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
             if (bc == null || bc.isBlank()) {
-                LOGGER.warn("CIBA-FED discovery omits backchannel_authentication_endpoint for {}", wellKnownUri);
+                log.warn("CIBA-FED discovery omits backchannel_authentication_endpoint for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
             if (token == null || token.isBlank()) {
-                LOGGER.warn("CIBA-FED discovery omits token_endpoint for {}", wellKnownUri);
+                log.warn("CIBA-FED discovery omits token_endpoint for {}", wellKnownUri);
                 throw new IllegalStateException(GENERIC_ERROR);
             }
             ProviderMetadata ep = new ProviderMetadata(issuer, bc, token);

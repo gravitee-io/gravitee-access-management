@@ -25,22 +25,21 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FormManagerImpl implements FormManager, InitializingBean, EventListener<FormEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(FormManagerImpl.class);
     private ConcurrentMap<String, Form> forms = new ConcurrentHashMap<>();
 
     @Autowired
@@ -54,18 +53,18 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Register event listener for form events");
+        log.info("Register event listener for form events");
         eventManager.subscribeForEvents(this, FormEvent.class);
 
-        logger.info("Initializing forms");
+        log.info("Initializing forms");
 
         formService.findAll(ReferenceType.ORGANIZATION)
                 .subscribe(
                         form -> {
                             updateForm(form);
-                            logger.info("Forms loaded");
+                            log.info("Forms loaded");
                         },
-                        error -> logger.error("Unable to initialize forms", error));
+                        error -> log.error("Unable to initialize forms", error));
     }
 
     @Override
@@ -82,7 +81,7 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
 
     private void updateForm(String formId, FormEvent formEvent) {
         final String eventType = formEvent.toString().toLowerCase();
-        logger.info("Received {} form event for {}", eventType, formId);
+        log.info("Received {} form event for {}", eventType, formId);
         formService.findById(formId)
                 .subscribe(
                         form -> {
@@ -94,14 +93,14 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
                                     updateForm(form);
                                 }
                             }
-                            logger.info("Form {} {}d", formId, eventType);
+                            log.info("Form {} {}d", formId, eventType);
                         },
-                        error -> logger.error("Unable to {} form {}", eventType, formId, error),
-                        () -> logger.error("No form found with id {}", formId));
+                        error -> log.error("Unable to {} form {}", eventType, formId, error),
+                        () -> log.error("No form found with id {}", formId));
     }
 
     private void removeForm(String formId) {
-        logger.info("Received form event, delete form {}", formId);
+        log.info("Received form event, delete form {}", formId);
         Form deletedForm = forms.remove(formId);
         if (deletedForm != null) {
             templateResolver.removeForm(deletedForm);
@@ -112,7 +111,7 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
         if (form.getReferenceType() == ReferenceType.ORGANIZATION && form.isEnabled()) {
             this.forms.put(form.getId(), form);
             templateResolver.addForm(form);
-            logger.info("Form {} loaded", form.getId());
+            log.info("Form {} loaded", form.getId());
         }
     }
 

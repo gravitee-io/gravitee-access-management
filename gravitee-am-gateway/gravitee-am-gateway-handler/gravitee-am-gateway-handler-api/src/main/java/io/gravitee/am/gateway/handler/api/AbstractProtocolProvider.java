@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.api;
 
 import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.Closeable;
@@ -28,7 +28,7 @@ import java.io.Closeable;
  */
 public abstract class AbstractProtocolProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = NodeLoggerFactory.getLogger(this.getClass());
 
     /**
      * Returns the path suitable for mounting a sub router (must end with /*).

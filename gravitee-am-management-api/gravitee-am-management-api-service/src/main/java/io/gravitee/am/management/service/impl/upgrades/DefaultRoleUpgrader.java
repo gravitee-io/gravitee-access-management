@@ -19,9 +19,8 @@ import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.node.api.upgrader.Upgrader;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,9 +29,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
+@CustomLog
 public class DefaultRoleUpgrader implements Upgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultRoleUpgrader.class);
 
     private final RoleService roleService;
 
@@ -41,13 +40,13 @@ public class DefaultRoleUpgrader implements Upgrader {
 
     @Override
     public boolean upgrade() {
-        logger.info("Applying default roles upgrade");
+        log.info("Applying default roles upgrade");
         try {
             // create or update system roles
             roleService.createOrUpdateSystemRoles().blockingAwait();
-            logger.info("Default roles upgrade, done.");
+            log.info("Default roles upgrade, done.");
         } catch (Throwable e) {
-            logger.error("An error occurs while updating default roles", e);
+            log.error("An error occurs while updating default roles", e);
             return false;
         }
 

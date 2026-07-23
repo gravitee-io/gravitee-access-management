@@ -33,8 +33,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -43,6 +41,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import lombok.CustomLog;
 
 /**
  * Strategy for OAuth 2.0 Refresh Token Grant.
@@ -51,9 +50,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-6">RFC 6749 Section 6</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RefreshTokenStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RefreshTokenStrategy.class);
 
     private final TokenService tokenService;
     private final UserAuthenticationManager userAuthenticationManager;
@@ -75,7 +74,7 @@ public class RefreshTokenStrategy implements GrantStrategy {
         }
 
         if (!client.hasGrantType(GrantType.REFRESH_TOKEN)) {
-            LOGGER.debug("Client {} does not support refresh_token grant type", client.getClientId());
+            log.debug("Client {} does not support refresh_token grant type", client.getClientId());
             return false;
         }
 
@@ -84,7 +83,7 @@ public class RefreshTokenStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing refresh token request for client: {}", client.getClientId());
+        log.debug("Processing refresh token request for client: {}", client.getClientId());
 
         String refreshTokenValue = request.parameters().getFirst(Parameters.REFRESH_TOKEN);
 

@@ -26,14 +26,14 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class WebClientJWKSetFetcher implements JWKSetFetcher {
     private final WebClient client;
 

@@ -24,23 +24,22 @@ import io.gravitee.common.service.Service;
 import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
 import java.util.List;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDER>, PROVIDER extends AmPluginProvider, PROVIDER_CONFIG extends ProviderConfiguration>
         extends AbstractConfigurablePluginManager<INSTANCE> {
 
-    private final static Logger logger = LoggerFactory.getLogger(ProviderPluginManager.class);
 
     protected final PluginContextFactory pluginContextFactory;
 
@@ -74,7 +73,7 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
         try (var provider = createProvider(plugin, postProcessors)) {
             return provider.validate();
         } catch (Exception e) {
-            logger.error("Plugin configuration error", e);
+            log.error("Plugin configuration error", e);
             return ValidationResult.invalid("The configuration details entered are incorrect. Please check those and try again.");
         }
     }
@@ -96,7 +95,7 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
 
             return provider;
         } catch (Exception ex) {
-            logger.error("An unexpected error occurs while loading", ex);
+            log.error("An unexpected error occurs while loading", ex);
             return null;
         }
     }
@@ -105,7 +104,7 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
         try {
             return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
-            logger.error("Unable to instantiate class: {}", clazz.getName(), ex);
+            log.error("Unable to instantiate class: {}", clazz.getName(), ex);
             throw ex;
         }
     }
@@ -115,10 +114,10 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
     }
 
     protected INSTANCE getOrThrow(PROVIDER_CONFIG providerConfig) {
-        logger.debug("Looking for a provider for [{}]", providerConfig.getType());
+        log.debug("Looking for a provider for [{}]", providerConfig.getType());
 
         return ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No plugin is registered for type {}", providerConfig.getType());
+            log.error("No plugin is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No plugin is registered for type " + providerConfig.getType());
         });
     }

@@ -29,8 +29,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,14 +37,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class UserRequestHandler extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserRequestHandler.class);
 
     @Override
     public abstract void handle(RoutingContext event);
@@ -54,12 +53,12 @@ public abstract class UserRequestHandler extends AbstractEndpoint implements Han
     protected void redirectToPage(RoutingContext context, MultiMap queryParams, Throwable... exceptions) {
         try {
             if (exceptions != null && exceptions.length > 0) {
-                logger.debug("Error user actions : {}", queryParams.get(ERROR_PARAM_KEY), exceptions[0]);
+                log.debug("Error user actions : {}", queryParams.get(ERROR_PARAM_KEY), exceptions[0]);
             }
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
-            logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);
+            log.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);
             context.fail(503);
         }
     }

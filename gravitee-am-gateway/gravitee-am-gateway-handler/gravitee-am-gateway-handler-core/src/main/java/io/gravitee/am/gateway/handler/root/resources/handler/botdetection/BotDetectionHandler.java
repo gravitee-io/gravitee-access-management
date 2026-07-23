@@ -25,20 +25,19 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.common.http.HttpStatusCode.BAD_REQUEST_400;
 import static io.gravitee.common.http.HttpStatusCode.INTERNAL_SERVER_ERROR_500;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class BotDetectionHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BotDetectionHandler.class);
     public static final String DEFAULT_ERROR_MSG = "Something goes wrong. Please try again.";
 
     private final Domain domain;
@@ -61,7 +60,7 @@ public class BotDetectionHandler implements Handler<RoutingContext> {
         }
 
         if (StringUtils.isEmpty(accountSettings.getBotDetectionPlugin())) {
-            LOGGER.error("Bot Detection enable without plugin identifier for domain '{}' and application '{}'", domain.getId(), client.getId());
+            log.error("Bot Detection enable without plugin identifier for domain '{}' and application '{}'", domain.getId(), client.getId());
             routingContext.fail(INTERNAL_SERVER_ERROR_500, new TechnicalManagementException(DEFAULT_ERROR_MSG));
             return;
         }
@@ -75,15 +74,15 @@ public class BotDetectionHandler implements Handler<RoutingContext> {
                 .subscribe(
                         (isValid) -> {
                             if (isValid) {
-                                LOGGER.debug("No bot detected for domain '{}' and client '{}'", domain.getId(), client.getId());
+                                log.debug("No bot detected for domain '{}' and client '{}'", domain.getId(), client.getId());
                                 routingContext.next();
                             } else {
-                                LOGGER.warn("Bot detected for domain '{}' and client '{}'", domain.getId(), client.getId());
+                                log.warn("Bot detected for domain '{}' and client '{}'", domain.getId(), client.getId());
                                 routingContext.fail(BAD_REQUEST_400, new BotDetectedException(DEFAULT_ERROR_MSG));
                             }
                         },
                         (error) -> {
-                            LOGGER.error("BotDetection failed for domain '{}' and client '{}'", domain.getId(), client.getId(), error);
+                            log.error("BotDetection failed for domain '{}' and client '{}'", domain.getId(), client.getId(), error);
                             routingContext.fail(INTERNAL_SERVER_ERROR_500, new TechnicalManagementException(DEFAULT_ERROR_MSG));
                         });
     }

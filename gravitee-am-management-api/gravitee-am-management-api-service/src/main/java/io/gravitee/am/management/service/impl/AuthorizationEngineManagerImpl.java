@@ -28,22 +28,21 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class AuthorizationEngineManagerImpl extends AbstractService<AuthorizationEngineManager> implements AuthorizationEngineManager, EventListener<AuthorizationEngineEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationEngineManagerImpl.class);
 
     private final ConcurrentMap<String, CachedAuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
 
@@ -60,18 +59,18 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.debug("Register event listener for authorization engine events for the management API");
+        log.debug("Register event listener for authorization engine events for the management API");
         eventManager.subscribeForEvents(this, AuthorizationEngineEvent.class);
 
-        logger.info("Initializing authorization engine manager");
+        log.info("Initializing authorization engine manager");
         authorizationEngineService.findAll()
                 .flatMapMaybe(engine -> loadProvider(engine)
                         .doOnError(error ->
-                                logger.error("Error loading authorization engine {}", engine.getName(), error)
+                                log.error("Error loading authorization engine {}", engine.getName(), error)
                         )
                         .onErrorComplete()
                 )
-                .subscribe(provider -> logger.debug("Authorization engine provider loaded successfully"));
+                .subscribe(provider -> log.debug("Authorization engine provider loaded successfully"));
     }
 
     @Override
@@ -107,20 +106,20 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
     }
 
     private void removeProvider(String authorizationEngineId) {
-        logger.info("Removing authorization engine provider for {}", authorizationEngineId);
+        log.info("Removing authorization engine provider for {}", authorizationEngineId);
         CachedAuthorizationEngineProvider cachedProvider = providers.remove(authorizationEngineId);
 
         if (cachedProvider != null && cachedProvider.provider != null) {
             try {
                 cachedProvider.provider.stop();
             } catch (Exception e) {
-                logger.error("An error has occurred while stopping the authorization engine provider: {}", authorizationEngineId, e);
+                log.error("An error has occurred while stopping the authorization engine provider: {}", authorizationEngineId, e);
             }
         }
     }
 
     private Maybe<AuthorizationEngineProvider> loadProvider(AuthorizationEngine authorizationEngine) {
-        logger.info("Loading authorization engine provider: {} [{}]", authorizationEngine.getName(), authorizationEngine.getType());
+        log.info("Loading authorization engine provider: {} [{}]", authorizationEngine.getName(), authorizationEngine.getType());
         var engineId = authorizationEngine.getId();
 
         try {
@@ -130,15 +129,15 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
             removeProvider(engineId);
             if (provider != null) {
                 providers.put(engineId, new CachedAuthorizationEngineProvider(provider, authorizationEngine.getUpdatedAt()));
-                logger.info("Provider for {} successfully loaded", authorizationEngine.getName());
+                log.info("Provider for {} successfully loaded", authorizationEngine.getName());
                 return Maybe.just(provider);
             } else {
-                logger.warn("Provider for {} returned null", authorizationEngine.getName());
+                log.warn("Provider for {} returned null", authorizationEngine.getName());
                 return Maybe.empty();
             }
 
         } catch (Exception ex) {
-            logger.error("An error occurred while loading authorization engine provider: {} [{}]",
+            log.error("An error occurred while loading authorization engine provider: {} [{}]",
                     authorizationEngine.getName(), authorizationEngine.getType(), ex);
             removeProvider(engineId);
             return Maybe.error(ex);
@@ -147,17 +146,17 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
 
 
     private void deployAuthorizationEngine(String authorizationEngineId, AuthorizationEngineEvent eventType) {
-        logger.info("Received {} authorization engine event for {}", eventType.name().toLowerCase(), authorizationEngineId);
+        log.info("Received {} authorization engine event for {}", eventType.name().toLowerCase(), authorizationEngineId);
         authorizationEngineService.findById(authorizationEngineId)
                 .flatMap(this::loadProvider)
                 .subscribe(
-                        provider -> logger.debug("Authorization engine provider for {} successfully deployed/updated", authorizationEngineId),
-                        error -> logger.error("Unable to {} authorization engine {}", eventType.name().toLowerCase(), authorizationEngineId, error)
+                        provider -> log.debug("Authorization engine provider for {} successfully deployed/updated", authorizationEngineId),
+                        error -> log.error("Unable to {} authorization engine {}", eventType.name().toLowerCase(), authorizationEngineId, error)
                 );
     }
 
     private void removeAuthorizationEngine(String authorizationEngineId) {
-        logger.info("Received an undeploy authorization engine event for {}", authorizationEngineId);
+        log.info("Received an undeploy authorization engine event for {}", authorizationEngineId);
         removeProvider(authorizationEngineId);
     }
 

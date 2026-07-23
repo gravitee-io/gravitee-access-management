@@ -29,8 +29,6 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Flowable;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.util.List;
@@ -39,10 +37,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
+import lombok.CustomLog;
 
 @AllArgsConstructor
+@CustomLog
 public class InMemoryGroupManager extends AbstractService implements Service, InitializingBean, GroupManager, EventListener<GroupEvent, Payload> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryGroupManager.class);
 
     Domain domain;
 
@@ -57,7 +56,7 @@ public class InMemoryGroupManager extends AbstractService implements Service, In
         groupRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
                         group -> groups.put(group.getId(), group),
-                        error -> LOGGER.error("Unable to initialize groups for domain {}", domain.getName(), error)
+                        error -> log.error("Unable to initialize groups for domain {}", domain.getName(), error)
                 );
     }
 
@@ -86,10 +85,10 @@ public class InMemoryGroupManager extends AbstractService implements Service, In
 
     private void deploy(String groupId) {
         groupRepository.findById(groupId)
-                .doOnComplete(() -> LOGGER.info("Deployed group id={}", groupId))
+                .doOnComplete(() -> log.info("Deployed group id={}", groupId))
                 .subscribe(
                         group -> groups.put(groupId, group),
-                        ex -> LOGGER.error("Unable to deploy group id={}", groupId));
+                        ex -> log.error("Unable to deploy group id={}", groupId));
     }
 
     private void undeploy(String groupId){

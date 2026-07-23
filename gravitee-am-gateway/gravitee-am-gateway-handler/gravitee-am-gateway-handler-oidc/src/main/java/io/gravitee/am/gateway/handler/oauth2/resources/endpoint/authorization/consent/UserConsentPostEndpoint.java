@@ -21,18 +21,17 @@ import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserConsentPostEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserConsentPostEndpoint.class);
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -42,7 +41,7 @@ public class UserConsentPostEndpoint implements Handler<RoutingContext> {
                     routingContext.get(CONTEXT_PATH) + "/oauth/authorize", RequestUtils.getCleanedQueryParams(routingContext.request()), true);
             doRedirect(routingContext.response(), authorizationRequestUrl);
         } catch (Exception e) {
-            logger.error("An error occurs while handling authorization approval request", e);
+            log.error("An error occurs while handling authorization approval request", e);
             routingContext.fail(503);
         }
     }

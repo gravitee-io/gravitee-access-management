@@ -38,8 +38,6 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.HttpException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -57,14 +55,15 @@ import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayN
 import static io.gravitee.common.http.HttpStatusCode.FORBIDDEN_403;
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
+import lombok.CustomLog;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AccountEndpointHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountEndpointHandler.class);
     private static final String PASSWORD_KEY = "password";
     private static final String OLD_PASSWORD_KEY = "oldPassword";
     public static final String ERROR_MSG_ACCESS_TOKEN_TOO_OLD = "Access token does not conform with expiration period. Please generate a new token.";
@@ -84,7 +83,7 @@ public class AccountEndpointHandler {
                     routingContext.next();
                 },
                 error -> {
-                    LOGGER.error("Unable to retrieve user for Id {}", token.getSub());
+                    log.error("Unable to retrieve user for Id {}", token.getSub());
                     routingContext.fail(error);
                 },
                 () -> routingContext.fail(new UserNotFoundException(token.getSub()))

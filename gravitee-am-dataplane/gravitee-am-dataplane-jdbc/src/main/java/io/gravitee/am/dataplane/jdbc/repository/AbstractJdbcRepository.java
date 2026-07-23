@@ -27,7 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.Getter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -60,7 +60,7 @@ public abstract class AbstractJdbcRepository {
 
     protected static final UserIdFields DEFAULT_USER_ID_FIELDS = new UserIdFields(USER_ID_FIELD, USER_SOURCE_FIELD, USER_EXTERNAL_ID_FIELD);
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
+    protected final Logger LOGGER = NodeLoggerFactory.getLogger(getClass());
 
     @Autowired
     @Getter

@@ -23,21 +23,20 @@ import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY;
 import static java.util.Objects.requireNonNullElseGet;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationFlowContextHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFlowContextHandler.class);
 
     private final AuthenticationFlowContextService authenticationFlowContextService;
 
@@ -63,7 +62,7 @@ public class AuthenticationFlowContextHandler implements Handler<RoutingContext>
                             context.next();
                         },
                         error -> {
-                            LOGGER.warn("AuthenticationFlowContext can't be loaded", error);
+                            log.warn("AuthenticationFlowContext can't be loaded", error);
                             if (exitOnError) {
                                 context.fail(error);
                             } else {

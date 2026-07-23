@@ -55,8 +55,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -66,15 +64,16 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDomainHandler> {
 
-    private static final Logger logger = LoggerFactory.getLogger(VertxSecurityDomainHandler.class);
     private static final List<String> PROTOCOLS = Arrays.asList("discovery", "openid-connect", "scim", "users", "saml2", "account", "saml2-idp", "authzen", "cimd");
     private List<ProtocolProvider> protocolProviders = new ArrayList<>();
     private List<AuthenticatorProvider> authenticatorProviders = new ArrayList<>();
@@ -108,7 +107,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         super.doStart();
 
         if(removeXForwardedHeaders){
-            logger.info("Adding XForwardedHeadersSanitizer handler, headers will be removed from incoming requests");
+            log.info("Adding XForwardedHeadersSanitizer handler, headers will be removed from incoming requests");
             router.route().handler(new XForwardedHeadersSanitizer());
         }
 
@@ -126,7 +125,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     @Override
     protected void doStop() throws Exception {
-        logger.info("Security domain [" + domain.getName() + "] handler is now stopping, closing context...");
+        log.info("Security domain [" + domain.getName() + "] handler is now stopping, closing context...");
 
 
         stopComponents();
@@ -137,7 +136,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
         stopApplicationContext();
 
-        logger.info("Security domain [" + domain.getName() + "] handler is now stopped", domain);
+        log.info("Security domain [" + domain.getName() + "] handler is now stopped", domain);
     }
 
     private void stopApplicationContext() {
@@ -145,7 +144,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
             try {
                 confCtx.close();
             } catch (Exception e) {
-                logger.error("\t An error occurs while stopping the application context", e);
+                log.error("\t An error occurs while stopping the application context", e);
             }
         }
     }
@@ -159,21 +158,21 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     }
 
     private void startRootProtocol() {
-        logger.info("Start security domain root protocol");
+        log.info("Start security domain root protocol");
 
         try {
             ProtocolProvider protocolProvider = applicationContext.getBean(RootProvider.class);
             protocolProvider.start();
             protocolProviders.add(protocolProvider);
-            logger.info("\t Protocol root loaded");
+            log.info("\t Protocol root loaded");
         } catch (Exception e) {
-            logger.error("\t An error occurs while loading root protocol", e);
+            log.error("\t An error occurs while loading root protocol", e);
             throw new IllegalStateException(e);
         }
     }
 
     private void startSecurityDomainProtocols() {
-        logger.info("Start security domain protocols");
+        log.info("Start security domain protocols");
 
         PROTOCOLS.forEach(protocol -> {
             try {
@@ -185,25 +184,25 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
                 if (protocolProvider != null) {
                     protocolProvider.start();
                     protocolProviders.add(protocolProvider);
-                    logger.info("\t Protocol {} loaded", protocol);
+                    log.info("\t Protocol {} loaded", protocol);
                 }
             } catch (Exception e) {
-                logger.error("\t An error occurs while loading {} protocol", protocol, e);
+                log.error("\t An error occurs while loading {} protocol", protocol, e);
             }
         });
     }
 
     private void startSecurityDomainAuthenticators() {
-        logger.info("Start security domain authenticators");
+        log.info("Start security domain authenticators");
         List<AuthenticatorProvider> providers = authenticatorPluginManager.createAll(applicationContext,
                 pluginId -> domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHENTICATOR, pluginId, pluginId));
         providers.forEach(provider -> {
             try {
                 provider.start();
                 authenticatorProviders.add(provider);
-                logger.info("\t Authenticator {} loaded", provider.name());
+                log.info("\t Authenticator {} loaded", provider.name());
             } catch (Exception e) {
-                logger.error("\t An error occurs while loading {} authenticator", provider.name(), e);
+                log.error("\t An error occurs while loading {} authenticator", provider.name(), e);
             }
         });
     }
@@ -212,9 +211,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         protocolProviders.forEach(protocolProvider -> {
             try {
                 protocolProvider.stop();
-                logger.info("\t Protocol {} stopped", protocolProvider.path());
+                log.info("\t Protocol {} stopped", protocolProvider.path());
             } catch (Exception e) {
-                logger.error("\t An error occurs while stopping {} protocol", protocolProvider.path(), e);
+                log.error("\t An error occurs while stopping {} protocol", protocolProvider.path(), e);
             }
         });
     }
@@ -223,9 +222,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         authenticatorProviders.forEach(authenticatorProvider -> {
             try {
                 authenticatorProvider.stop();
-                logger.info("\t Authenticator {} stopped", authenticatorProvider.name());
+                log.info("\t Authenticator {} stopped", authenticatorProvider.name());
             } catch (Exception e) {
-                logger.error("\t An error occurs while stopping {} authenticator", authenticatorProvider.name(), e);
+                log.error("\t An error occurs while stopping {} authenticator", authenticatorProvider.name(), e);
             }
         });
     }
@@ -261,7 +260,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
             try {
                 lifecyclecomponent.stop();
             } catch (Exception e) {
-                logger.error("An error occurs while stopping component {}", componentClass.getSimpleName(), e);
+                log.error("An error occurs while stopping component {}", componentClass.getSimpleName(), e);
             }
         });
     }

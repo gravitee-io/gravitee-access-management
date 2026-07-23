@@ -28,8 +28,6 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import java.time.Instant;
@@ -37,13 +35,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EnrichAuthFlowPolicy {
-    private static Logger LOGGER = LoggerFactory.getLogger(EnrichAuthFlowPolicy.class);
     private static final String GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR_KEY = "GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR";
 
     private final EnrichAuthFlowPolicyConfiguration configuration;
@@ -54,7 +53,7 @@ public class EnrichAuthFlowPolicy {
 
     @OnRequest
     public void onRequest(Request request, Response response, ExecutionContext context, PolicyChain policyChain) {
-        LOGGER.debug("Start enrich authentication flow policy");
+        log.debug("Start enrich authentication flow policy");
 
         if (configuration.getProperties() != null && !configuration.getProperties().isEmpty()) {
 
@@ -63,7 +62,7 @@ public class EnrichAuthFlowPolicy {
                 // this should never happen because a default GraviteeContext with AuthFlowContext is generated
                 // when there are no data into the repository. This case may happen if the GraviteeContextHandler
                 // is not register on the route calling this policy in this case log a WARN but continue to process the chain
-                LOGGER.warn("Enrich Authentication Flow policy required a valid GraviteeContext");
+                log.warn("Enrich Authentication Flow policy required a valid GraviteeContext");
                 policyChain.doNext(request, response);
 
             } else {
@@ -72,14 +71,14 @@ public class EnrichAuthFlowPolicy {
                         .subscribe(
                                 success -> policyChain.doNext(request, response),
                                 error -> {
-                                    LOGGER.warn("An error occurs while enriching authentication flow context", error);
+                                    log.warn("An error occurs while enriching authentication flow context", error);
                                     policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR_KEY, error.getMessage()));
                                 }
                         );
             }
         } else {
 
-            LOGGER.debug("No properties configured for the Enrich Authentication Flow policy");
+            log.debug("No properties configured for the Enrich Authentication Flow policy");
             policyChain.doNext(request, response);
         }
     }

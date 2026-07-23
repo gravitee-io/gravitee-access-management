@@ -18,22 +18,22 @@ package io.gravitee.am.plugins.botdetection.plugin;
 import io.gravitee.am.botdetection.api.BotDetection;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class BotDetectionPluginHandler extends AmPluginHandler<BotDetection<?, ?>> {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginHandler.class);
 
     public static final String PLUGIN_TYPE_BOT_DETECTION = "BOT_DETECTION";
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
     @Override

@@ -34,19 +34,18 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
     private static final String BEARER = "Bearer";
     private static final String REALM = "gravitee-io";
     private static final String ACCESS_TOKEN = "access_token";
-    private static final Logger log = LoggerFactory.getLogger(OAuth2AuthHandlerImpl.class);
     private final OAuth2AuthProvider oAuth2AuthProvider;
     private String requiredScope;
     private boolean extractRawToken;

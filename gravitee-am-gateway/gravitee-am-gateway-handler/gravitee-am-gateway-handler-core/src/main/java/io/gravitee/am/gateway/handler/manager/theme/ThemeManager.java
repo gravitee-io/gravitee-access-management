@@ -26,21 +26,20 @@ import io.gravitee.am.repository.management.api.ThemeRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ThemeManager extends AbstractService<ThemeManager> implements InitializingBean, EventListener<ThemeEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ThemeManager.class);
     private ConcurrentMap<String, Theme> domainThemes = new ConcurrentHashMap<>();
 
     @Autowired
@@ -57,22 +56,22 @@ public class ThemeManager extends AbstractService<ThemeManager> implements Initi
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("Initializing themes for domain {}", domain.getName());
+        log.info("Initializing themes for domain {}", domain.getName());
         themeRepository.findByReference(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
                         theme -> {
                             update(theme);
-                            logger.info("Theme {} loaded for domain {}", theme.getId(), domain.getName());
+                            log.info("Theme {} loaded for domain {}", theme.getId(), domain.getName());
                         },
-                        error -> logger.error("Unable to initialize themes for domain {}", domain.getName(), error),
-                        () -> logger.debug("No theme found for domain {}", domain.getName()));
+                        error -> log.error("Unable to initialize themes for domain {}", domain.getName(), error),
+                        () -> log.debug("No theme found for domain {}", domain.getName()));
     }
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for theme events for domain {}", domain.getName());
+        log.info("Register event listener for theme events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ThemeEvent.class, domain.getId());
     }
 
@@ -80,7 +79,7 @@ public class ThemeManager extends AbstractService<ThemeManager> implements Initi
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for theme events for domain {}", domain.getName());
+        log.info("Dispose event listener for theme events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ThemeEvent.class, domain.getId());
     }
 
@@ -102,15 +101,15 @@ public class ThemeManager extends AbstractService<ThemeManager> implements Initi
 
     private void update(String id, ThemeEvent event) {
         final String eventType = event.toString().toLowerCase();
-        logger.info("Domain {} has received {} theme event for {}", domain.getName(), eventType, id);
+        log.info("Domain {} has received {} theme event for {}", domain.getName(), eventType, id);
         themeRepository.findById(id)
                 .subscribe(
                         theme -> {
                             update(theme);
-                            logger.info("Theme {} {}d for domain {}", id, eventType, domain.getName());
+                            log.info("Theme {} {}d for domain {}", id, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to {} theme for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No theme found with id {}", id));
+                        error -> log.error("Unable to {} theme for domain {}", eventType, domain.getName(), error),
+                        () -> log.error("No theme found with id {}", id));
     }
 
     private void update(Theme theme) {
@@ -119,7 +118,7 @@ public class ThemeManager extends AbstractService<ThemeManager> implements Initi
     }
 
     private void remove(String id) {
-        logger.info("Domain {} has received theme event, delete theme {}", domain.getName(), id);
+        log.info("Domain {} has received theme event, delete theme {}", domain.getName(), id);
         Theme deletedTheme = domainThemes.remove(id);
         if (deletedTheme != null) {
             domainBasedThemeResolver.removeTheme(deletedTheme.getReferenceId());

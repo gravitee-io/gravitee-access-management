@@ -20,7 +20,7 @@ import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
-@Slf4j
+@CustomLog
 public class ReporterAuditSweeper implements ExpiredDataSweeper {
 
     public static final String LEASE_ACTION_AUDIT_SWEEPER = "auditSweeper";

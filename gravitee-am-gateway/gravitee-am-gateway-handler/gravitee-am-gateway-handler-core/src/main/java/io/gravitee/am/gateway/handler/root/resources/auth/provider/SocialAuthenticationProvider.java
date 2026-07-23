@@ -47,8 +47,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,14 +66,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class SocialAuthenticationProvider implements UserAuthProvider {
-    private static final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
     private final UserAuthenticationManager userAuthenticationManager;
     private final EventManager eventManager;
     private final IdentityProviderManager identityProviderManager;
@@ -104,7 +103,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
         final String username = authInfo.getString(USERNAME_PARAM_KEY);
         final String password = authInfo.getString(PASSWORD_PARAM_KEY);
 
-        logger.debug("Authentication attempt using social identity provider {}", authProvider);
+        log.debug("Authentication attempt using social identity provider {}", authProvider);
 
         // create authentication context
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
@@ -130,7 +129,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
             final var error = context.request().getParam(ERROR_PARAM_KEY);
             if (error != null) {
                 final var errorDescription = context.request().getParam(ERROR_DESCRIPTION_PARAM_KEY);
-                logger.debug("Authentication attempt using social identity provider {} failed with error {} (description: {})", authProvider, error, errorDescription);
+                log.debug("Authentication attempt using social identity provider {} failed with error {} (description: {})", authProvider, error, errorDescription);
                 var provider = identityProviderManager.getIdentityProvider(authProvider);
                 if ("access_denied".equals(error) && "User auth aborted".equals(errorDescription) && "franceconnect-am-idp".equals(provider.getType())) {
                     throw new UserAuthenticationAbortedException(error, errorDescription);
@@ -166,7 +165,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
                     // If id_token is present and SSO is enabled we add the id_token in profile
                     if (client.isSingleSignOut() && idToken.isPresent()) {
-                        logger.debug("Single SignOut enable for client '{}' store the id_token coming from the provider {} as additional information", client.getId(), authProvider);
+                        log.debug("Single SignOut enable for client '{}' store the id_token coming from the provider {} as additional information", client.getId(), authProvider);
                         additionalInformation.put(OIDC_PROVIDER_ID_TOKEN_KEY, idToken.get());
                     }
 
@@ -186,9 +185,9 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                 }, error -> {
                     if (error instanceof UserAuthenticationAbortedException) {
-                        logger.debug("Social provider authentication aborted", error);
+                        log.debug("Social provider authentication aborted", error);
                     } else {
-                        logger.error("Unable to authenticate social provider", error);
+                        log.error("Unable to authenticate social provider", error);
                     }
                     gatewayMetricProvider.incrementFailedAuth(true);
                     eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(endUserAuthentication, domain, client, error));

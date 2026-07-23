@@ -25,8 +25,6 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -44,14 +42,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ManagementAuthenticationProvider implements AuthenticationProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(ManagementAuthenticationProvider.class);
 
     /**
      * Constant to use when setting identity provider used to authenticate a user
@@ -143,7 +142,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
                 if (ex instanceof UsernameNotFoundException) {
                     userNotFoundException ++;
                 }
-                logger.info("Unable to authenticate user {} with provider {}", authentication.getName(), provider, ex);
+                log.info("Unable to authenticate user {} with provider {}", authentication.getName(), provider, ex);
                 lastException = new BadCredentialsException(ex.getMessage(), ex);
             }
         }

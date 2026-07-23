@@ -37,8 +37,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -47,14 +45,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationDeviceNotifierManagerImpl extends AbstractService implements AuthenticationDeviceNotifierManager, EventListener<AuthenticationDeviceNotifierEvent, Payload>, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationDeviceNotifierManagerImpl.class);
 
     @Autowired
     private AuthenticationDeviceNotifierPluginManager deviceNotifierPluginManager;
@@ -81,7 +80,7 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for authentication device notifier events for domain {}", domain.getName());
+        log.info("Register event listener for authentication device notifier events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, AuthenticationDeviceNotifierEvent.class, domain.getId());
     }
 
@@ -89,7 +88,7 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for authentication device notifier events for domain {}", domain.getName());
+        log.info("Dispose event listener for authentication device notifier events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, AuthenticationDeviceNotifierEvent.class, domain.getId());
         // stop providers and remove them from the local cache
         Set<String> providerIds = new HashSet<>(this.deviceNotifierProviders.keySet());
@@ -112,11 +111,11 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                             provider.start();
                             deviceNotifiers.put(notifier.getId(), notifier);
                             deviceNotifierProviders.put(notifier.getId(), provider);
-                            logger.info("Authentication Device Notifier {} loaded for domain {}", notifier.getName(), domain.getName());
+                            log.info("Authentication Device Notifier {} loaded for domain {}", notifier.getName(), domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), notifier.getId());
                         },
                         error -> {
-                            logger.error("Unable to initialize Authentication Device Notifiers for domain {}", domain.getName(), error);
+                            log.error("Unable to initialize Authentication Device Notifiers for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.AUTH_DEVICE_NOTIFIER.name(), error.getMessage());
                         }
                 );
@@ -166,12 +165,12 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                     return notifier;
                 })
                 .subscribe(
-                        provider -> logger.debug("Initialization of Authentication Device Notifier provider '{}' successful", notifierId),
+                        provider -> log.debug("Initialization of Authentication Device Notifier provider '{}' successful", notifierId),
                         error -> {
-                            logger.error("Initialization of Authentication Device Notifier provider '{}' failed", notifierId, error);
+                            log.error("Initialization of Authentication Device Notifier provider '{}' failed", notifierId, error);
                             domainReadinessService.pluginFailed(domain.getId(), notifierId, error.getMessage());
                         },
-                        ()-> logger.debug("Initialization of Authentication Device Notifier provider '{}' already done", notifierId)
+                        ()-> log.debug("Initialization of Authentication Device Notifier provider '{}' already done", notifierId)
                 );
     }
 
@@ -185,7 +184,7 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                 domainReadinessService.pluginUnloaded(domain.getId(), notifierId);
             }
         } catch (Exception e) {
-            logger.error("Authentication Device Notifier '{}' stopped with error", notifierId, e);
+            log.error("Authentication Device Notifier '{}' stopped with error", notifierId, e);
         }
     }
 

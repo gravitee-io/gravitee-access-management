@@ -25,12 +25,11 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * Initiating MFA Registration via OpenID Connect 1.0
@@ -44,9 +43,9 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationRequestMFAPromptHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestMFAPromptHandler.class);
     private static final String MFA_ENROLL_PATH = "/mfa/enroll";
     private static final String MFA_CHALLENGE_PATH = "/mfa/challenge";
 
@@ -88,7 +87,7 @@ public class AuthorizationRequestMFAPromptHandler implements Handler<RoutingCont
                     .setStatusCode(302)
                     .end();
         } catch (Exception e) {
-            logger.warn("Failed to decode MFA redirect url", e);
+            log.warn("Failed to decode MFA redirect url", e);
             request.response()
                     .putHeader(HttpHeaders.LOCATION, mfaPage)
                     .setStatusCode(302)

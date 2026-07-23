@@ -30,19 +30,18 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  */
+@CustomLog
 public class FapiApi {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FapiApi.class);
 
     public static final String CONF_HOST = "host";
     public static final String CONF_PORT = "port";
@@ -83,7 +82,7 @@ public class FapiApi {
         server.requestHandler(router)
 
                 .listen();
-        LOGGER.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, "9443"));
+        log.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, "9443"));
     }
 
     private static HttpServerOptions buildHttpOptions(CommandLine cmd) {

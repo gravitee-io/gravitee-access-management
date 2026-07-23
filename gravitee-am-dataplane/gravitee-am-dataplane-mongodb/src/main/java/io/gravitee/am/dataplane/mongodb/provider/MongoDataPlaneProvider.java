@@ -36,13 +36,13 @@ import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-@Slf4j
+@CustomLog
 @Getter
 @Import({MongoDataPlaneSpringConfiguration.class})
 public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBean {

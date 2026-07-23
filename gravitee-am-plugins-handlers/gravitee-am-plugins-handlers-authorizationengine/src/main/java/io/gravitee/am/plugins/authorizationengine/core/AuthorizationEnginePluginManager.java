@@ -25,20 +25,19 @@ import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationEnginePluginManager
         extends ProviderPluginManager<AuthorizationEngine<?, AuthorizationEngineProvider>, AuthorizationEngineProvider, ProviderConfiguration>
         implements AmPluginManager<AuthorizationEngine<?, AuthorizationEngineProvider>> {
 
-    private final Logger logger = LoggerFactory.getLogger(AuthorizationEnginePluginManager.class);
     private final ConfigurationFactory<AuthorizationEngineConfiguration> configurationFactory;
 
     public AuthorizationEnginePluginManager(
@@ -65,7 +64,7 @@ public class AuthorizationEnginePluginManager
     }
 
     private AuthorizationEngine<?, AuthorizationEngineProvider> getAuthorizationEngineOrThrow(String providerType) {
-        logger.debug("Looking for an authorization engine for [{}]", providerType);
+        log.debug("Looking for an authorization engine for [{}]", providerType);
         return Optional.ofNullable(get(providerType))
                 .orElseThrow(() -> new IllegalStateException("No authorization engine is registered for type " + providerType));
     }

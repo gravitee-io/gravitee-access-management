@@ -33,7 +33,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.Closeable;
@@ -45,7 +45,7 @@ import java.util.Map;
  */
 public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends AbstractService<T>  {
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(JdbcAbstractProvider.class);
+    protected static final Logger LOGGER = NodeLoggerFactory.getLogger(JdbcAbstractProvider.class);
 
     @Autowired
     protected JdbcIdentityProviderConfiguration configuration;

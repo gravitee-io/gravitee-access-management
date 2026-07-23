@@ -20,14 +20,13 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import lombok.CustomLog;
 
+@CustomLog
 public class CibaClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaClient.class);
 
     private static final String CIBA_GRANT = "urn:openid:params:grant-type:ciba";
 
@@ -75,7 +74,7 @@ public class CibaClient {
                 JsonObject errBody = resp.bodyAsJsonObject();
                 String err = errBody != null ? errBody.getString("error", String.valueOf(resp.statusCode()))
                                              : String.valueOf(resp.statusCode());
-                LOGGER.warn("CIBA-FED bc-authorize failed: status={} error={}", resp.statusCode(), err);
+                log.warn("CIBA-FED bc-authorize failed: status={} error={}", resp.statusCode(), err);
                 throw new IllegalStateException("CIBA federation: back-channel authorization request was rejected by the identity provider");
             }
             JsonObject body = resp.bodyAsJsonObject();

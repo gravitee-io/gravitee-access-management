@@ -26,8 +26,6 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.impl.SimpleEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static org.springframework.util.CollectionUtils.isEmpty;
+import lombok.CustomLog;
 
 /**
  * Override default event manager to enable concurrent access
@@ -45,9 +44,9 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EventManagerImpl implements EventManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(io.gravitee.common.event.impl.EventManagerImpl.class);
 
     private ConcurrentMap<ComparableEventType, List<EventListenerWrapper>> listenersMap = new ConcurrentHashMap<>();
 
@@ -59,16 +58,16 @@ public class EventManagerImpl implements EventManager {
     @Override
     public <T extends Enum<T>, S> void publishEvent(Event<T, S> event) {
         if(event == null){
-            LOGGER.debug("Cannot publish event with event null");
+            log.debug("Cannot publish event with event null");
             return;
         }
 
         if(event.type() == null){
-            LOGGER.debug("Cannot publish event with event.type() null");
+            log.debug("Cannot publish event with event.type() null");
             return;
         }
 
-        LOGGER.debug("Publish event {} - {}", event.type(), event.content());
+        log.debug("Publish event {} - {}", event.type(), event.content());
 
         String domain = null;
         if (event.content() != null) {
@@ -87,7 +86,7 @@ public class EventManagerImpl implements EventManager {
         List<EventListenerWrapper> safeConcurrentListeners = new ArrayList<>(listeners);
 
         if (isEmpty(safeConcurrentListeners)) {
-            LOGGER.warn("Event received but no listeners available (Domain: {}, contentClass: {}, eventType: {})",
+            log.warn("Event received but no listeners available (Domain: {}, contentClass: {}, eventType: {})",
                     domain,
                     ofNullable(event.content()).map(obj -> obj.getClass().getSimpleName()).orElse("null content"),
                     event.type());
@@ -161,7 +160,7 @@ public class EventManagerImpl implements EventManager {
     }
 
     private <T extends Enum<T>> void addEventListener(EventListener<T, ?> eventListener, Class<T> enumClass, Collection<T> events, String domain) {
-        LOGGER.info("Register new listener {} for event type {}", eventListener.getClass().getSimpleName(), enumClass);
+        log.info("Register new listener {} for event type {}", eventListener.getClass().getSimpleName(), enumClass);
 
         List<EventListenerWrapper> listeners = getEventListeners(enumClass, domain);
         listeners.add(new EventListenerWrapper(eventListener, events));

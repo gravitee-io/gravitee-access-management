@@ -29,17 +29,16 @@ import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Optional;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class ProtectedResourceSecretManager extends AbstractService<ProtectedResourceSecretManager> implements EventListener<ProtectedResourceSecretEvent, Payload> {
-    private static final Logger logger = LoggerFactory.getLogger(ProtectedResourceSecretManager.class);
 
     @Autowired
     private ProtectedResourceService protectedResourceService;
@@ -54,12 +53,12 @@ public class ProtectedResourceSecretManager extends AbstractService<ProtectedRes
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for protected resource secret events for the management API");
+        log.info("Register event listener for protected resource secret events for the management API");
         eventManager.subscribeForEvents(this, ProtectedResourceSecretEvent.class);
 
         protectedResourceService.findAll()
                 .doOnNext(resource ->
-                        logger.info("Initializing client secrets notifications for protected resource={}, domain={}", resource.getId(), resource.getDomainId()))
+                        log.info("Initializing client secrets notifications for protected resource={}, domain={}", resource.getId(), resource.getDomainId()))
                 .flatMapCompletable(this::initClientSecretNotifications)
                 .subscribe();
     }

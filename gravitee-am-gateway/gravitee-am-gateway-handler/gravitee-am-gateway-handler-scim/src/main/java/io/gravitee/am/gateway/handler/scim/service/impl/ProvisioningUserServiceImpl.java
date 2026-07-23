@@ -91,8 +91,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,14 +107,15 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean {
     private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProvisioningUserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     public static final String FIELD_PASSWORD_IS_INVALID = "The provided password does not meet the password policy requirements.";
 
@@ -207,7 +206,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
-        LOGGER.debug("Find users by domain: {}", domain.getId());
+        log.debug("Find users by domain: {}", domain.getId());
         Single<Page<io.gravitee.am.model.User>> findUsers = filter != null ?
                 userRepository.searchScim(domain.asReference(), FilterCriteria.convert(filter), startIndex, size) :
                 userRepository.findAllScim(domain.asReference(), startIndex, size);
@@ -229,7 +228,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find users for the security domain {}", domain.getName(), ex);
+                    log.error("An error occurs while trying to find users for the security domain {}", domain.getName(), ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users the security domain %s", domain.getName()), ex));
                 });
     }
@@ -240,12 +239,12 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     }
 
     public Maybe<UserContainer> innerGet(String userId, String baseUrl) {
-        LOGGER.debug("Find user by id : {}", userId);
+        log.debug("Find user by id : {}", userId);
         return userRepository.findById(userId)
                 .map(user1 -> new UserContainer(UserMapper.convert(user1, baseUrl, false), user1))
                 .flatMap(containerUser -> setGroups(containerUser.getScimUser()).map(containerUser::replaceScimUserWith).toMaybe())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its ID {}", userId, ex);
+                    log.error("An error occurs while trying to find a user using its ID {}", userId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using its ID: %s", userId), ex));
                 });
@@ -253,7 +252,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Override
     public Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
-        LOGGER.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
+        log.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
         if (StringUtils.isBlank(user.getUserName())) {
             return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
@@ -378,7 +377,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a user", ex);
+                    log.error("An error occurs while trying to create a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
                 });
     }
@@ -391,7 +390,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         .linear()
                         .build())
                 .onErrorComplete(error -> {
-                    LOGGER.warn("The email cannot be push on staging on domain {} for user {}",
+                    log.warn("The email cannot be push on staging on domain {} for user {}",
                             domain.getName(), user1.getUsername(), error);
                     emailService.traceEmailEviction(user1, resolvedClient, Template.REGISTRATION_CONFIRMATION);
                     gatewayMetricProvider.incrementDroppedEmails();
@@ -404,7 +403,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Override
     public Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
-        LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
+        log.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
@@ -502,7 +501,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a user", ex);
+                    log.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 });
     }
@@ -510,8 +509,8 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     protected void publishUserUpdateEvent(Domain domain, io.gravitee.am.model.User user) {
         Event event = new Event(Type.USER, new Payload(user.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
         eventService.create(event, domain).ignoreElement()
-                .doOnError(err -> LOGGER.warn("Unable to publish user update event for user {}", user.getId(), err))
-                .doOnComplete(() -> LOGGER.debug("User update event published for user {}", user.getId()))
+                .doOnError(err -> log.warn("Unable to publish user update event for user {}", user.getId(), err))
+                .doOnComplete(() -> log.debug("User update event published for user {}", user.getId()))
                 .onErrorComplete()
                 .subscribe();
     }
@@ -523,7 +522,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Override
     public Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
-        LOGGER.debug("Patch user {}", userId);
+        log.debug("Patch user {}", userId);
         return innerGet(userId, baseUrl)
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
                 .flatMap(userContainer -> {
@@ -547,7 +546,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
                         return innerUpdate(userContainer.getAmUser(), scimUser, idp, baseUrl, principal, client);
                     } catch (JacksonException e) {
-                        LOGGER.debug("JacksonException received during scim Patch operation", e);
+                        log.debug("JacksonException received during scim Patch operation", e);
                         return Single.error(new InvalidValueException(e.getMessage()));
                     }
                 })
@@ -555,7 +554,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     if (ex instanceof AbstractManagementException || ex instanceof SCIMException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error has occurred when trying to patch user: {}", userId, ex);
+                        log.error("An error has occurred when trying to patch user: {}", userId, ex);
                         return Single.error(new TechnicalManagementException(
                                 String.format("An error has occurred when trying to patch user: %s", userId), ex));
                     }
@@ -564,7 +563,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Override
     public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Delete user {}", userId);
+        log.debug("Delete user {}", userId);
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
@@ -577,7 +576,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                             } else if (ex instanceof AbstractManagementException) {
                                 return Completable.error(ex);
                             } else {
-                                LOGGER.error("An error has occurred when trying to delete user: {}", userId, ex);
+                                log.error("An error has occurred when trying to delete user: {}", userId, ex);
                                 return Completable.error(new TechnicalManagementException(
                                         String.format("An error has occurred when trying to delete user: %s", userId), ex));
                             }

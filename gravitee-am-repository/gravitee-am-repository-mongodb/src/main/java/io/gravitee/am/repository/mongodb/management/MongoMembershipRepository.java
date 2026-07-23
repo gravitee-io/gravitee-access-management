@@ -34,8 +34,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -47,14 +45,15 @@ import static com.mongodb.client.model.Filters.in;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import lombok.CustomLog;
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MongoMembershipRepository extends AbstractManagementMongoRepository implements MembershipRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(MongoMembershipRepository.class);
     private static final String FIELD_MEMBER_ID = "memberId";
     private static final String FIELD_MEMBER_TYPE = "memberType";
     private static final String FIELD_ROLE = "role";

@@ -28,7 +28,7 @@ import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,7 +43,7 @@ import static java.util.Optional.ofNullable;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class PasswordPolicyManagerImpl extends AbstractService implements PasswordPolicyManager, EventListener<PasswordPolicyEvent, Payload>, InitializingBean {
 
     @Autowired

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.standalone.server;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.server.Context;
 import org.eclipse.jetty.server.Request;
@@ -37,7 +37,7 @@ import org.eclipse.jetty.server.Request;
  *
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 class SafeClassLoaderServletContextHandler extends ServletContextHandler {
 
     SafeClassLoaderServletContextHandler(String contextPath, int options) {

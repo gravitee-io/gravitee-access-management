@@ -53,8 +53,6 @@ import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -62,6 +60,7 @@ import org.springframework.core.env.Environment;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * Composite TokenGranter that uses the Strategy pattern for standard grant types.
@@ -70,9 +69,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CompositeTokenGranter.class);
 
     private final ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
@@ -157,12 +156,12 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         Objects.requireNonNull(tokenGranterId);
         Objects.requireNonNull(tokenGranter);
         tokenGranters.put(tokenGranterId, tokenGranter);
-        LOGGER.debug("Added token granter: {}", tokenGranterId);
+        log.debug("Added token granter: {}", tokenGranterId);
     }
 
     public void removeTokenGranter(String tokenGranterId) {
         tokenGranters.remove(tokenGranterId);
-        LOGGER.debug("Removed token granter: {}", tokenGranterId);
+        log.debug("Removed token granter: {}", tokenGranterId);
     }
 
     @Override
@@ -172,7 +171,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        LOGGER.info("Initializing grant strategies for domain: {}", domain.getName());
+        log.info("Initializing grant strategies for domain: {}", domain.getName());
         tokenRequestResolver.setManagers(scopeManager, protectedResourceManager);
 
         // Register Client Credentials strategy
@@ -218,7 +217,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 executionContextFactory
         ));
 
-        LOGGER.info("Grant strategies initialized for domain: {}", domain.getName());
+        log.info("Grant strategies initialized for domain: {}", domain.getName());
     }
 
     private void registerStrategy(String grantType, GrantStrategy strategy) {

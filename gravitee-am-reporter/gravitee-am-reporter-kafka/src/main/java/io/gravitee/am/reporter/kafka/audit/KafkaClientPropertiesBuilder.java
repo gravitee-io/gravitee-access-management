@@ -18,7 +18,7 @@ package io.gravitee.am.reporter.kafka.audit;
 import io.gravitee.am.reporter.kafka.KafkaReporterConfiguration;
 import io.gravitee.am.reporter.kafka.kafka.JacksonSerializer;
 import io.gravitee.am.reporter.kafka.kafka.KafkaJsonSerializer;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
-@Slf4j
+@CustomLog
 class KafkaClientPropertiesBuilder {
     private static final String SCHEMA_REGISTRY_URL_KEY = "schema.registry.url";
     private static final String SASL_JAAS_CONFIG_PLACEHOLDER = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";";

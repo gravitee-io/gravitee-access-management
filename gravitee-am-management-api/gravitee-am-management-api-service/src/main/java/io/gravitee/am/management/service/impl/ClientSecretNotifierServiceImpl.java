@@ -31,17 +31,16 @@ import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class ClientSecretNotifierServiceImpl implements ClientSecretNotifierService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientSecretNotifierServiceImpl.class);
 
     @Autowired
     @Qualifier("clientSecretNotifierSettings")
@@ -111,7 +110,7 @@ public class ClientSecretNotifierServiceImpl implements ClientSecretNotifierServ
     @Override
     public Completable deleteClientSecretExpirationAcknowledgement(String clientSecretId) {
         if (clientSecretNotifierSettings.enabled()) {
-            LOGGER.debug("Remove All NotificationAcknowledge for the client secret {}", clientSecretId);
+            log.debug("Remove All NotificationAcknowledge for the client secret {}", clientSecretId);
             return this.notifierService.deleteAcknowledge(clientSecretId, ClientSecretNotifierSubject.RESOURCE_TYPE);
         } else {
             return Completable.complete();

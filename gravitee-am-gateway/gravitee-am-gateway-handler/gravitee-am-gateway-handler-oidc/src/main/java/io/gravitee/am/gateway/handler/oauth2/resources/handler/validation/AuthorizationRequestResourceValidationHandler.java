@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationReques
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
 
@@ -29,7 +29,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CON
  *
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class AuthorizationRequestResourceValidationHandler implements Handler<RoutingContext> {
 
     private final ResourceValidationService resourceValidationService;

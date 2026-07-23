@@ -30,8 +30,6 @@ import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -39,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * Shared logic for the entrypoint cache: loads entrypoints on startup (scoped to the
@@ -50,9 +49,9 @@ import java.util.stream.Collectors;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public abstract class AbstractEntryPointManager extends AbstractService<EntryPointManager> implements EntryPointManager, EventListener<EntrypointEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractEntryPointManager.class);
 
     private final ConcurrentMap<String, Entrypoint> entrypoints = new ConcurrentHashMap<>();
 
@@ -83,12 +82,12 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for entrypoint events");
+        log.info("Register event listener for entrypoint events");
         eventManager.subscribeForEvents(this, EntrypointEvent.class);
 
-        logger.info("Initializing entrypoints cache");
+        log.info("Initializing entrypoints cache");
         loadEntrypoints().blockingAwait();
-        logger.debug("Entrypoints cache initialized with {} entrypoint(s)", entrypoints.size());
+        log.debug("Entrypoints cache initialized with {} entrypoint(s)", entrypoints.size());
     }
 
     @Override
@@ -118,7 +117,7 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
         switch (event.type()) {
             case UNDEPLOY -> {
                 entrypoints.remove(entrypointId);
-                logger.debug("Entrypoint {} undeployed - cache now holds {} entrypoint(s)", entrypointId, entrypoints.size());
+                log.debug("Entrypoint {} undeployed - cache now holds {} entrypoint(s)", entrypointId, entrypoints.size());
             }
             case DEPLOY, UPDATE -> reload(entrypointId, payload.getReferenceType(), payload.getReferenceId());
         }
@@ -129,13 +128,13 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
                 entrypoint -> {
                     if (isInScope(entrypoint)) {
                         entrypoints.put(entrypointId, entrypoint);
-                        logger.debug("Entrypoint {} cached - cache now holds {} entrypoint(s)", entrypointId, entrypoints.size());
+                        log.debug("Entrypoint {} cached - cache now holds {} entrypoint(s)", entrypointId, entrypoints.size());
                     } else {
                         entrypoints.remove(entrypointId);
-                        logger.debug("Entrypoint {} is out of scope for this instance", entrypointId);
+                        log.debug("Entrypoint {} is out of scope for this instance", entrypointId);
                     }
                 },
-                error -> logger.error("Unable to reload entrypoint {}", entrypointId, error),
+                error -> log.error("Unable to reload entrypoint {}", entrypointId, error),
                 () -> entrypoints.remove(entrypointId));
     }
 

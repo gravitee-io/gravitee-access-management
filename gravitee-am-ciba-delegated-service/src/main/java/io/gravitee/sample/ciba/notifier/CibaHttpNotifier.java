@@ -38,19 +38,18 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
 import static io.vertx.core.http.HttpMethod.POST;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class CibaHttpNotifier {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaHttpNotifier.class);
 
     public static final String CONF_HOST = "host";
     public static final String CONF_PORT = "port";
@@ -125,7 +124,7 @@ public class CibaHttpNotifier {
         server.requestHandler(router)
                 .listen();
 
-        LOGGER.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, DEFAULT_LISTENING_PORT));
+        log.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, DEFAULT_LISTENING_PORT));
     }
 
     private static HttpServerOptions buildHttpOptions(CommandLine cmd) {

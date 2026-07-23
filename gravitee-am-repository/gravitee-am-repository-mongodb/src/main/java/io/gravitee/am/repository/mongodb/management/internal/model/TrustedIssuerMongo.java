@@ -20,11 +20,10 @@ import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.repository.common.EnumParsingUtils;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * MongoDB representation of TrustedIssuer.
@@ -33,9 +32,9 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@CustomLog
 public class TrustedIssuerMongo {
 
-    private static final Logger log = LoggerFactory.getLogger(TrustedIssuerMongo.class);
 
     private String issuer;
     private String keyResolutionMethod;

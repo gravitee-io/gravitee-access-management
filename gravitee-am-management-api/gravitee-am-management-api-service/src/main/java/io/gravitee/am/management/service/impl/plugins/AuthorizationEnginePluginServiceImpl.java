@@ -23,19 +23,18 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService implements AuthorizationEnginePluginService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationEnginePluginServiceImpl.class);
 
     private final AuthorizationEnginePluginManager authorizationEnginePluginManager;
 
@@ -46,7 +45,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
 
     @Override
     public Single<List<AuthorizationEnginePlugin>> findAll(List<String> expand) {
-        LOGGER.debug("List all authorization engine plugins");
+        log.debug("List all authorization engine plugins");
         return Observable.fromIterable(authorizationEnginePluginManager.findAll(true))
                 .flatMapSingle(plugin -> convert(plugin, expand))
                 .toList();
@@ -54,7 +53,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
 
     @Override
     public Maybe<AuthorizationEnginePlugin> findById(String authorizationEngineId) {
-        LOGGER.debug("Find authorization engine plugin by ID: {}", authorizationEngineId);
+        log.debug("Find authorization engine plugin by ID: {}", authorizationEngineId);
         return Maybe.defer(() -> {
             try {
                 Plugin plugin = authorizationEnginePluginManager.findById(authorizationEngineId);
@@ -63,7 +62,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
                 }
                 return convert(plugin, null).toMaybe();
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get authorization engine plugin: {}", authorizationEngineId, ex);
+                log.error("An error occurs while trying to get authorization engine plugin: {}", authorizationEngineId, ex);
                 return Maybe.error(new TechnicalManagementException(
                         "An error occurs while trying to get authorization engine plugin: " + authorizationEngineId, ex
                 ));
@@ -73,7 +72,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
 
     @Override
     public Maybe<String> getSchema(String authorizationEngineId) {
-        LOGGER.debug("Find authorization engine plugin schema by ID: {}", authorizationEngineId);
+        log.debug("Find authorization engine plugin schema by ID: {}", authorizationEngineId);
         return Maybe.create(emitter -> {
             try {
                 String schema = authorizationEnginePluginManager.getSchema(authorizationEngineId);
@@ -83,7 +82,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for authorization engine plugin {}", authorizationEngineId, e);
+                log.error("An error occurs while trying to get schema for authorization engine plugin {}", authorizationEngineId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for authorization engine plugin " + authorizationEngineId, e));
             }
         });
@@ -91,7 +90,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
 
     @Override
     public Maybe<String> getIcon(String authorizationEngineId) {
-        LOGGER.debug("Find authorization engine plugin icon by ID: {}", authorizationEngineId);
+        log.debug("Find authorization engine plugin icon by ID: {}", authorizationEngineId);
         return Maybe.create(emitter -> {
             try {
                 String icon = authorizationEnginePluginManager.getIcon(authorizationEngineId, true);
@@ -101,7 +100,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get icon for authorization engine plugin {}", authorizationEngineId, e);
+                log.error("An error occurs while trying to get icon for authorization engine plugin {}", authorizationEngineId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for authorization engine plugin " + authorizationEngineId, e));
             }
         });

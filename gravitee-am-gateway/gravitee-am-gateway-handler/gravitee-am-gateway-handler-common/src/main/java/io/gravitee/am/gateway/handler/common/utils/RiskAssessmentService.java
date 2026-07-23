@@ -39,8 +39,6 @@ import io.reactivex.rxjava3.functions.Function;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -50,6 +48,7 @@ import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author Michael CARTER (michael.carter at graviteesource.com)
@@ -57,9 +56,9 @@ import static java.util.stream.Collectors.toList;
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class RiskAssessmentService {
 
-    private static final Logger logger = LoggerFactory.getLogger(RiskAssessmentService.class);
     private static final String RISK_ASSESSMENT_SERVICE = "service:risk-assessment";
 
     private final DeviceGatewayService deviceService;
@@ -92,7 +91,7 @@ public class RiskAssessmentService {
                     .flatMap(buildIpReputationMessage(authenticationDetails))
                     .flatMap(buildGeoVelocityMessage(domain, user))
                     .flatMapMaybe(this::consumeRiskAssessmentResult)
-                    .doOnError(throwable -> logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable));
+                    .doOnError(throwable -> log.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable));
         }
         return Maybe.empty();
     }
@@ -104,7 +103,7 @@ public class RiskAssessmentService {
         return assessmentMessage -> {
             var deviceAssessment = ofNullable(riskAssessmentSettings.getDeviceAssessment()).orElse(new AssessmentSettings());
             if (deviceAssessment.isEnabled()) {
-                logger.debug("Decorating assessment with devices");
+                log.debug("Decorating assessment with devices");
                 return deviceService.findByDomainAndUser(domain, user.getFullId())
                         .map(Device::getDeviceId)
                         .toList().flatMap(deviceIds -> {
@@ -123,7 +122,7 @@ public class RiskAssessmentService {
         return assessmentMessage -> {
             var ipReputationAssessment = ofNullable(riskAssessmentSettings.getIpReputationAssessment()).orElse(new AssessmentSettings());
             if (ipReputationAssessment.isEnabled()) {
-                logger.debug("Decorating assessment with IP reputation");
+                log.debug("Decorating assessment with IP reputation");
                 String ip = (String) authDetails.getPrincipal().getContext().get(Claims.IP_ADDRESS);
                 assessmentMessage.getData().setCurrentIp(ip);
             }
@@ -160,8 +159,8 @@ public class RiskAssessmentService {
                 .flatMapMaybe(stringMessage -> Maybe.just(extractMessageResult(stringMessage)))
                 .onErrorResumeNext(throwable -> {
                     final Throwable cause = ofNullable(throwable.getCause()).orElse(throwable);
-                    logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, cause.getMessage());
-                    logger.debug("", cause);
+                    log.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, cause.getMessage());
+                    log.debug("", cause);
                     return Maybe.empty();
                 });
     }
@@ -170,7 +169,7 @@ public class RiskAssessmentService {
         try {
             return objectMapper.readValue(response.body(), AssessmentMessageResult.class);
         } catch (JsonProcessingException e) {
-            logger.error("An unexpected error has occurred: ", e);
+            log.error("An unexpected error has occurred: ", e);
             return new AssessmentMessageResult()
                     .setDevices(new AssessmentResult<Double>().setAssessment(NONE))
                     .setGeoVelocity(new AssessmentResult<Double>().setAssessment(NONE))

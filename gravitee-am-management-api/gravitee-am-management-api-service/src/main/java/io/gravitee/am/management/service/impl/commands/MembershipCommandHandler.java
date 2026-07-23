@@ -33,7 +33,7 @@ import io.gravitee.cockpit.api.command.v1.membership.MembershipReply;
 import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -46,7 +46,7 @@ import static io.gravitee.am.management.service.impl.commands.UserCommandHandler
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class MembershipCommandHandler implements CommandHandler<MembershipCommand, MembershipReply> {
 
     private final OrganizationUserService userService;

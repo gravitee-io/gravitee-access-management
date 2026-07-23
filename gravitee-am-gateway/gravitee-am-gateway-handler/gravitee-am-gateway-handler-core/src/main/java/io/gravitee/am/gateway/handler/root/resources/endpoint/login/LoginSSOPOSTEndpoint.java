@@ -23,19 +23,18 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginSSOPOSTEndpoint.class);
     private static final String FORM_PARAMETERS = "parameters";
 
     private final ThymeleafTemplateEngine engine;
@@ -66,7 +65,7 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
                             routingContext.response().end(buffer);
                         },
                         throwable -> {
-                            logger.error("Unable to render Login SSO POST page", throwable);
+                            log.error("Unable to render Login SSO POST page", throwable);
                             routingContext.fail(throwable.getCause());
                         }
                 );

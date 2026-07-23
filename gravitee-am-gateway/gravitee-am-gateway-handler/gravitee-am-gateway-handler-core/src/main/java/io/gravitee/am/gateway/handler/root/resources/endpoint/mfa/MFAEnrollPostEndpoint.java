@@ -42,8 +42,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -52,10 +50,11 @@ import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+import lombok.CustomLog;
 
+@CustomLog
 public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAEnrollPostEndpoint.class);
 
     private final FactorManager factorManager;
     private final UserService userService;
@@ -109,7 +108,7 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
                                 .subscribe(
                                         () -> manageEnrolledFactors(routingContext, optFactor, params),
                                         throwable -> {
-                                            logger.error("Failed to remove stale pending factor for user {}",
+                                            log.error("Failed to remove stale pending factor for user {}",
                                                     ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser().getId(), throwable);
                                             routingContext.fail(throwable);
                                         }));
@@ -118,7 +117,7 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
 
     private Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> getValidFactor(RoutingContext routingContext, String factorId, Client client) {
         if (factorId == null) {
-            logger.warn("No factor id in form - did you forget to include factor id value ?");
+            log.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(400);
             return Optional.empty();
         }
@@ -126,20 +125,20 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
         final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
         Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> optFactor = factors.entrySet().stream().filter(factor -> factorId.equals(factor.getKey().getId())).findFirst();
         if (optFactor.isEmpty()) {
-            logger.warn("Factor not found - did you send a valid factor id ?");
+            log.warn("Factor not found - did you send a valid factor id ?");
             routingContext.fail(400);
             return Optional.empty();
         }
 
         if (routingContext.user() == null) {
-            logger.warn("User must be authenticated to enroll MFA challenge.");
+            log.warn("User must be authenticated to enroll MFA challenge.");
             routingContext.fail(401);
             return Optional.empty();
         }
 
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         if (userAlreadyHasFactor(endUser, client, routingContext.session())) {
-            logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
+            log.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
             routingContext.fail(new InvalidRequestException("factor already enrolled"));
             return Optional.empty();
         }
@@ -156,7 +155,7 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
         if (provider.checkSecurityFactor(enrolledFactor)) {
             // save enrolled factor for the current user and continue
             routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, optFactor.getKey().getId());
-            logger.debug("Factor {} selected", optFactor.getKey().getId());
+            log.debug("Factor {} selected", optFactor.getKey().getId());
 
             if (sharedSecret != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);

@@ -28,7 +28,7 @@ import io.gravitee.exchange.api.command.CommandAdapter;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +41,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class HelloCommandAdapter implements CommandAdapter<io.gravitee.exchange.api.command.hello.HelloCommand, HelloCommand, HelloReply> {
 
     private static final String API_URL = "API_URL";

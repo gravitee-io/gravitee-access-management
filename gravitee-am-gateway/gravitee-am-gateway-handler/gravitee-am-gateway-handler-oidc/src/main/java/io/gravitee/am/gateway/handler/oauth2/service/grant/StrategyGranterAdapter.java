@@ -36,13 +36,12 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.CustomLog;
 
 /**
  * Adapter that wraps a GrantStrategy as a TokenGranter.
@@ -51,9 +50,9 @@ import java.util.Set;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class StrategyGranterAdapter implements TokenGranter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StrategyGranterAdapter.class);
     private static final Set<String> SCOPE_RESOLUTION_EXCLUDED = Set.of(
             GrantType.TOKEN_EXCHANGE,
             GrantType.AUTHORIZATION_CODE,
@@ -94,7 +93,7 @@ public class StrategyGranterAdapter implements TokenGranter {
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
-        LOGGER.debug("Processing grant via strategy adapter for client: {}, grant type: {}",
+        log.debug("Processing grant via strategy adapter for client: {}, grant type: {}",
                 client.getClientId(), tokenRequest.getGrantType());
 
         return strategy.process(tokenRequest, client, domain)

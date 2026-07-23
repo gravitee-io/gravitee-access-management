@@ -26,7 +26,7 @@ import io.vertx.core.net.PfxOptions;
 import io.vertx.redis.client.RedisClientType;
 import io.vertx.redis.client.RedisOptions;
 import io.vertx.redis.client.RedisRole;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class RedisConnectionFactory {
 
     private final Environment environment;

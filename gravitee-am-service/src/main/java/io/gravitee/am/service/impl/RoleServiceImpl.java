@@ -51,8 +51,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -72,17 +70,18 @@ import static io.gravitee.am.model.Acl.DELETE;
 import static io.gravitee.am.model.Acl.LIST;
 import static io.gravitee.am.model.Acl.READ;
 import static io.gravitee.am.model.Acl.UPDATE;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class RoleServiceImpl implements RoleService {
 
     public static final String CREATE_ERROR = "An error occurs while trying to create a role";
     public static final String UPDATE_ERROR = "An error occurs while trying to update a role";
-    private final Logger LOGGER = LoggerFactory.getLogger(RoleServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -96,13 +95,13 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Flowable<Role> findAllAssignable(ReferenceType referenceType, String referenceId, ReferenceType assignableType) {
-        LOGGER.debug("Find roles by {}: {} assignable to {}", referenceType, referenceId, assignableType);
+        log.debug("Find roles by {}: {} assignable to {}", referenceType, referenceId, assignableType);
 
         // Organization roles must be zipped with system roles to get a complete list of all roles.
         return Flowable.merge(findAllSystem(assignableType), roleRepository.findAll(referenceType, referenceId))
                 .filter(role -> assignableType == null || assignableType == role.getAssignableType())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find roles by {}: {} assignable to {}", referenceType, referenceId, assignableType, ex);
+                    log.error("An error occurs while trying to find roles by {}: {} assignable to {}", referenceType, referenceId, assignableType, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find roles by %s %s assignable to %s", referenceType, referenceId, assignableType), ex));
                 });
     }
@@ -125,11 +124,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Single<Role> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("Find role by ID: {}", id);
+        log.debug("Find role by ID: {}", id);
 
         return roleRepository.findById(referenceType, referenceId, id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a role using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a role using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a role using its ID: %s", id), ex));
                 })
@@ -138,10 +137,10 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Maybe<Role> findById(String id) {
-        LOGGER.debug("Find role by ID: {}", id);
+        log.debug("Find role by ID: {}", id);
         return roleRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a role using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a role using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a role using its ID: %s", id), ex));
                 });
@@ -149,11 +148,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Maybe<Role> findSystemRole(SystemRole systemRole, ReferenceType assignableType) {
-        LOGGER.debug("Find system role : {} for the type : {}", systemRole.name(), assignableType);
+        log.debug("Find system role : {} for the type : {}", systemRole.name(), assignableType);
         return roleRepository.findByNameAndAssignableType(ReferenceType.PLATFORM, Platform.DEFAULT, systemRole.name(), assignableType)
                 .filter(Role::isSystem)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find system role : {} for type : {}", systemRole.name(), assignableType, ex);
+                    log.error("An error occurs while trying to find system role : {} for type : {}", systemRole.name(), assignableType, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find system role : %s for type : %s", systemRole.name(), assignableType), ex));
                 });
@@ -164,7 +163,7 @@ public class RoleServiceImpl implements RoleService {
         return roleRepository.findByNamesAndAssignableType(referenceType, referenceId, roleNames, assignableType)
                 .onErrorResumeNext(ex -> {
                     String joinedRoles = roleNames.stream().collect(Collectors.joining(", "));
-                    LOGGER.error("An error occurs while trying to find roles : {}", joinedRoles, ex);
+                    log.error("An error occurs while trying to find roles : {}", joinedRoles, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find roles : %s", joinedRoles), ex));
                 });
@@ -172,11 +171,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Maybe<Role> findDefaultRole(String organizationId, DefaultRole defaultRole, ReferenceType assignableType) {
-        LOGGER.debug("Find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType);
+        log.debug("Find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType);
         return roleRepository.findByNameAndAssignableType(ReferenceType.ORGANIZATION, organizationId, defaultRole.name(), assignableType)
                 .filter(Role::isDefaultRole)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType, ex);
+                    log.error("An error occurs while trying to find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find default role %s of organization %s for type %s", defaultRole.name(), organizationId, assignableType), ex));
                 });
@@ -184,17 +183,17 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Single<Set<Role>> findByIdIn(List<String> ids) {
-        LOGGER.debug("Find roles by ids: {}", ids);
+        log.debug("Find roles by ids: {}", ids);
         return roleRepository.findByIdIn(ids).collect(() -> (Set<Role>)new HashSet<Role>(), Set::add)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find roles by ids", ex);
+                    log.error("An error occurs while trying to find roles by ids", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find roles by ids", ex));
                 });
     }
 
     @Override
     public Single<Role> create(ReferenceType referenceType, String referenceId, NewRole newRole, User principal) {
-        LOGGER.debug("Create a new role {} for {} {}", newRole, referenceType, referenceId);
+        log.debug("Create a new role {} for {} {}", newRole, referenceType, referenceId);
 
         String roleId = RandomString.generate();
 
@@ -224,7 +223,7 @@ public class RoleServiceImpl implements RoleService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error(CREATE_ERROR, ex);
+                    log.error(CREATE_ERROR, ex);
                     return Single.error(new TechnicalManagementException(CREATE_ERROR, ex));
                 })
                 .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).role(role)))
@@ -239,7 +238,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Single<Role> update(ReferenceType referenceType, String referenceId, String id, UpdateRole updateRole, User principal) {
-        LOGGER.debug("Update a role {} for {} {}", id, referenceType, referenceId);
+        log.debug("Update a role {} for {} {}", id, referenceType, referenceId);
 
         return findById(referenceType, referenceId, id)
                 .flatMap(role -> {
@@ -278,7 +277,7 @@ public class RoleServiceImpl implements RoleService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error(UPDATE_ERROR, ex);
+                    log.error(UPDATE_ERROR, ex);
                     return Single.error(new TechnicalManagementException(UPDATE_ERROR, ex));
                 });
     }
@@ -291,7 +290,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String roleId, User principal) {
-        LOGGER.debug("Delete role {}", roleId);
+        log.debug("Delete role {}", roleId);
         return roleRepository.findById(referenceType, referenceId, roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
                 .map(role -> {
@@ -310,7 +309,7 @@ public class RoleServiceImpl implements RoleService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete role: {}", roleId, ex);
+                    log.error("An error occurs while trying to delete role: {}", roleId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete role: %s", roleId), ex));
                 });
@@ -341,7 +340,7 @@ public class RoleServiceImpl implements RoleService {
                 .defaultIfEmpty(Optional.empty())
                 .flatMapCompletable(optRole -> {
                     if (!optRole.isPresent()) {
-                        LOGGER.debug("Create a system role {}", role.getAssignableType() + ":" + role.getName());
+                        log.debug("Create a system role {}", role.getAssignableType() + ":" + role.getName());
                         role.setCreatedAt(new Date());
                         role.setUpdatedAt(role.getCreatedAt());
                         return Completable.fromSingle(roleRepository.create(role)
@@ -353,7 +352,7 @@ public class RoleServiceImpl implements RoleService {
                                     if (ex instanceof AbstractManagementException) {
                                         return Single.error(ex);
                                     }
-                                    LOGGER.error("An error occurs while trying to create a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
+                                    log.error("An error occurs while trying to create a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
                                     return Single.error(new TechnicalManagementException(CREATE_ERROR, ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
@@ -364,7 +363,7 @@ public class RoleServiceImpl implements RoleService {
                         if (permissionsAreEquals(currentRole, role)) {
                             return Completable.complete();
                         }
-                        LOGGER.debug("Update a system role {}", role.getAssignableType() + ":" + role.getName());
+                        log.debug("Update a system role {}", role.getAssignableType() + ":" + role.getName());
                         // update the role
                         role.setId(currentRole.getId());
                         role.setPermissionAcls(role.getPermissionAcls());
@@ -378,7 +377,7 @@ public class RoleServiceImpl implements RoleService {
                                     if (ex instanceof AbstractManagementException) {
                                         return Single.error(ex);
                                     }
-                                    LOGGER.error("An error occurs while trying to update a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
+                                    log.error("An error occurs while trying to update a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
                                     return Single.error(new TechnicalManagementException(UPDATE_ERROR, ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).oldValue(currentRole).role(role1)))
@@ -408,7 +407,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private Flowable<Role> findAllSystem(ReferenceType assignableType) {
-        LOGGER.debug("Find all global system roles");
+        log.debug("Find all global system roles");
 
         // Exclude roles internal only and non assignable roles.
         return roleRepository.findAll(ReferenceType.PLATFORM, Platform.DEFAULT)

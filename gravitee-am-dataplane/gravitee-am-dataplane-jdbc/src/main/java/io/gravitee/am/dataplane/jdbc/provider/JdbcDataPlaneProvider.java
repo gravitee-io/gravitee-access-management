@@ -37,13 +37,13 @@ import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-@Slf4j
+@CustomLog
 @Import({JdbcDataPlaneSpringConfiguration.class})
 @Getter
 public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBean {

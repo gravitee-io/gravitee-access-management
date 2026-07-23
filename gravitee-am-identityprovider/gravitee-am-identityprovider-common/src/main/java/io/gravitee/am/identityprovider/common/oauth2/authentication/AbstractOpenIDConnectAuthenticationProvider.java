@@ -60,7 +60,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
@@ -86,7 +86,7 @@ import static java.util.function.Predicate.not;
  */
 public abstract class AbstractOpenIDConnectAuthenticationProvider extends AbstractSocialAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
+    protected final Logger LOGGER = NodeLoggerFactory.getLogger(getClass());
 
     public static final String ID_TOKEN_PARAMETER = "id_token";
 

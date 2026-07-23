@@ -35,20 +35,19 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UserAuthProviderImpl implements UserAuthProvider {
 
-    private final static Logger logger = LoggerFactory.getLogger(UserAuthProviderImpl.class);
     private final static String USERNAME_PARAMETER = "username";
     private final static String PASSWORD_PARAMETER = "password";
 
@@ -72,7 +71,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
 
         parseClient(clientId, parseClientHandler -> {
             if (parseClientHandler.failed()) {
-                logger.error("Authentication failure: unable to retrieve client " + clientId, parseClientHandler.cause());
+                log.error("Authentication failure: unable to retrieve client " + clientId, parseClientHandler.cause());
                 handler.handle(Future.failedFuture(parseClientHandler.cause()));
                 return;
             }
@@ -101,7 +100,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
     }
 
     private void parseClient(String clientId, Handler<AsyncResult<Client>> authHandler) {
-        logger.debug("Attempt authentication with client " + clientId);
+        log.debug("Attempt authentication with client " + clientId);
 
         clientLookupService
                 .findByClientId(clientId)

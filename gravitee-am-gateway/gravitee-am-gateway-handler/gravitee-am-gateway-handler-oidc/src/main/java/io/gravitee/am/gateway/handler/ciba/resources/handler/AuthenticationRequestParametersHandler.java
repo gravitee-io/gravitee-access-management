@@ -39,8 +39,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
@@ -55,13 +53,14 @@ import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT
 import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationRequestParametersHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestParametersHandler.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final TypeReference<List<Map<String, Object>>> AUTHORIZATION_DETAILS_TYPE = new TypeReference<>() { };
 
@@ -121,7 +120,7 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
                     }, context::fail);
 
         } catch (Exception e) {
-            LOGGER.debug("CIBA Authentication Request parameter validation fails due to : {}", e.getMessage());
+            log.debug("CIBA Authentication Request parameter validation fails due to : {}", e.getMessage());
             context.fail(e);
         }
     }

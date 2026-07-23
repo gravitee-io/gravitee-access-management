@@ -22,13 +22,13 @@ import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSe
 import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Map;
 
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
 
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class EmailNotificationDefinitionFactory<T extends NotifierSubject> implements NotificationDefinitionFactory<T> {
 

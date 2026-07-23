@@ -28,7 +28,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -37,6 +36,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOPE_UPGRADER;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,12 +46,12 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOP
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
+@CustomLog
 public class ScopeUpgrader extends AsyncUpgrader {
 
     /**
      * Logger.
      */
-    private final Logger logger = LoggerFactory.getLogger(ScopeUpgrader.class);
 
     private final DomainService domainService;
     private final ScopeService scopeService;
@@ -60,21 +60,21 @@ public class ScopeUpgrader extends AsyncUpgrader {
 
     @Override
     public Completable doUpgrade() {
-        logger.info("Applying scope upgrade");
+        log.info("Applying scope upgrade");
         return Completable.fromPublisher(domainService.listAll()
                 .flatMapSingle(this::upgradeDomain));
     }
 
     private Single<List<Scope>> upgradeDomain(Domain domain) {
-        logger.info("Looking for scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
+        log.info("Looking for scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
         return scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
                 .flatMap(scopes -> {
                     if (scopes.getData().isEmpty()) {
-                        logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
+                        log.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
                         return createAppScopes(domain)
                                 .flatMap(irrelevant -> createRoleScopes(domain));
                     }
-                    logger.info("No scope to update, skip upgrade");
+                    log.info("No scope to update, skip upgrade");
                     return Single.just(new ArrayList<>(scopes.getData()));
                 });
     }
@@ -104,7 +104,7 @@ public class ScopeUpgrader extends AsyncUpgrader {
                 .flatMap(scopes -> {
                     Optional<Scope> optScope = scopes.getData().stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
                     if (optScope.isEmpty()) {
-                        logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
+                        log.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
                         NewScope scope = new NewScope();
                         scope.setKey(scopeKey);
                         scope.setName(Character.toUpperCase(scopeKey.charAt(0)) + scopeKey.substring(1));

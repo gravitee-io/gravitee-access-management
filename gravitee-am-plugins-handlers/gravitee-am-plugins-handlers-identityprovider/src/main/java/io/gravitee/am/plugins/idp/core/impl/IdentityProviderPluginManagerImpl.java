@@ -31,8 +31,6 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
 import java.util.List;
@@ -44,15 +42,16 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginManager {
 
-    private final Logger logger = LoggerFactory.getLogger(IdentityProviderPluginManagerImpl.class);
 
     private final ConfigurationFactory<IdentityProviderConfiguration> configurationFactory;
     private final IdentityProviderMapperFactory mapperFactory;
@@ -80,15 +79,15 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
 
     @Override
     public boolean hasUserProvider(String pluginType) {
-        logger.debug("Looking for an user provider for [{}]", pluginType);
+        log.debug("Looking for an user provider for [{}]", pluginType);
         return ofNullable(get(pluginType)).map(IdentityProvider::userProvider).isPresent();
     }
 
     @Override
     public AuthenticationProvider create(AuthenticationProviderConfiguration providerConfig) {
-        logger.debug("Looking for an authentication provider for [{}]", providerConfig.getType());
+        log.debug("Looking for an authentication provider for [{}]", providerConfig.getType());
         var identityProvider = ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No identity provider is registered for type {}", providerConfig.getType());
+            log.error("No identity provider is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No identity provider is registered for type " + providerConfig.getType());
         });
 
@@ -122,7 +121,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
 
     @Override
     public Single<Optional<UserProvider>> create(String type, String configuration, io.gravitee.am.model.IdentityProvider identityProviderEntity) {
-        logger.debug("Looking for an user provider for [{}]", type);
+        log.debug("Looking for an user provider for [{}]", type);
         var providerConfig = new ProviderConfiguration(type, configuration);
         var identityProvider = get(providerConfig.getType());
 
@@ -130,7 +129,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
             var identityProviderConfiguration = configurationFactory.create(identityProvider.configuration(), providerConfig.getConfiguration());
 
             if (isNull(identityProvider.userProvider())|| !identityProviderConfiguration.userProvider()) {
-                logger.info("No user provider is registered for type {}", providerConfig.getType());
+                log.info("No user provider is registered for type {}", providerConfig.getType());
                 return Single.just(Optional.empty());
             }
 
@@ -149,11 +148,11 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
                         ))
                 ).map(Optional::of);
             } catch (Exception ex) {
-                logger.error("An unexpected error occurs while loading", ex);
+                log.error("An unexpected error occurs while loading", ex);
                 return Single.error(ex);
             }
         } else {
-            logger.error("No identity provider is registered for type {}", providerConfig.getType());
+            log.error("No identity provider is registered for type {}", providerConfig.getType());
             return Single.error(new IllegalStateException("No identity provider is registered for type " + providerConfig.getType()));
         }
     }

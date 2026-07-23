@@ -43,22 +43,21 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
 @Component
 @Primary
+@CustomLog
 public class AuthorizationEngineServiceImpl implements AuthorizationEngineService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationEngineServiceImpl.class);
 
     private final AuthorizationEngineRepository authorizationEngineRepository;
     private final EventService eventService;
@@ -77,10 +76,10 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
 
     @Override
     public Maybe<AuthorizationEngine> findById(String id) {
-        LOGGER.debug("Find authorization engine by ID: {}", id);
+        log.debug("Find authorization engine by ID: {}", id);
         return authorizationEngineRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an authorization engine using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find an authorization engine using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an authorization engine using its ID: %s", id), ex));
                 });
@@ -88,27 +87,27 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
 
     @Override
     public Flowable<AuthorizationEngine> findAll() {
-        LOGGER.debug("Find all authorization engines");
+        log.debug("Find all authorization engines");
         return authorizationEngineRepository.findAll()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find authorization engines", ex);
+                    log.error("An error occurs while trying to find authorization engines", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find authorization engines", ex));
                 });
     }
 
     @Override
     public Flowable<AuthorizationEngine> findByDomain(String domain) {
-        LOGGER.debug("Find authorization engines by domain: {}", domain);
+        log.debug("Find authorization engines by domain: {}", domain);
         return authorizationEngineRepository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find authorization engines by domain", ex);
+                    log.error("An error occurs while trying to find authorization engines by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find authorization engines by domain " + domain, ex));
                 });
     }
 
     @Override
     public Single<AuthorizationEngine> create(Domain domain, NewAuthorizationEngine newAuthorizationEngine, User principal) {
-        LOGGER.debug("Create a new authorization engine {} for domain {}", newAuthorizationEngine, domain.getId());
+        log.debug("Create a new authorization engine {} for domain {}", newAuthorizationEngine, domain.getId());
 
         return pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_AUTHORIZATION_ENGINE, newAuthorizationEngine.getType())
                 // Check if authorization engine of this type already exists in the domain
@@ -143,14 +142,14 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create an authorization engine", ex);
+                    log.error("An error occurs while trying to create an authorization engine", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an authorization engine", ex));
                 });
     }
 
     @Override
     public Single<AuthorizationEngine> update(Domain domain, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal) {
-        LOGGER.debug("Update an authorization engine {} for domain {}", id, domain.getId());
+        log.debug("Update an authorization engine {} for domain {}", id, domain.getId());
 
         return authorizationEngineRepository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Single.error(new AuthorizationEngineNotFoundException(id)))
@@ -174,14 +173,14 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update an authorization engine", ex);
+                    log.error("An error occurs while trying to update an authorization engine", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update an authorization engine", ex));
                 });
     }
 
     @Override
     public Completable delete(Domain domain, String authorizationEngineId, User principal) {
-        LOGGER.debug("Delete authorization engine {}", authorizationEngineId);
+        log.debug("Delete authorization engine {}", authorizationEngineId);
 
         return authorizationEngineRepository.findByDomainAndId(domain.getId(), authorizationEngineId)
                 .switchIfEmpty(Maybe.error(new AuthorizationEngineNotFoundException(authorizationEngineId)))
@@ -198,7 +197,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete authorization engine: {}", authorizationEngineId, ex);
+                    log.error("An error occurs while trying to delete authorization engine: {}", authorizationEngineId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete authorization engine: %s", authorizationEngineId), ex));
                 });
@@ -206,10 +205,10 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
 
     @Override
     public Completable deleteByDomain(String domainId) {
-        LOGGER.debug("Delete authorization engines by domain {}", domainId);
+        log.debug("Delete authorization engines by domain {}", domainId);
         return authorizationEngineRepository.deleteByDomain(domainId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to delete authorization engines for domain: {}", domainId, ex);
+                    log.error("An error occurs while trying to delete authorization engines for domain: {}", domainId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete authorization engines for domain: %s", domainId), ex));
                 });
@@ -219,7 +218,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
         return Completable.fromAction(() -> {
                     ValidationResult validationResult = authorizationEnginePluginManager.validate(new ProviderConfiguration(type, configuration));
                     if (validationResult.failed()) {
-                        LOGGER.warn("An error occurs while validating the authorization engine configuration. Failed message: {}", validationResult.failedMessage());
+                        log.warn("An error occurs while validating the authorization engine configuration. Failed message: {}", validationResult.failedMessage());
                         throw new AuthorizationEngineInvalidConfigurationException(validationResult.failedMessage());
                     }
                 })
@@ -227,7 +226,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to validate authorization engine configuration", ex);
+                    log.error("An error occurs while trying to validate authorization engine configuration", ex);
                     return Completable.error(new TechnicalManagementException("An error occurs while trying to validate authorization engine configuration", ex));
                 });
     }

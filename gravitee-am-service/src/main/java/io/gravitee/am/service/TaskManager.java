@@ -24,23 +24,22 @@ import io.gravitee.am.service.tasks.Task;
 import io.gravitee.am.service.tasks.TaskDefinition;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class TaskManager {
 
-    private final Logger logger = LoggerFactory.getLogger(TaskManager.class);
 
     @Autowired
     private ObjectMapper mapper;
@@ -52,7 +51,7 @@ public class TaskManager {
     private TaskScheduler scheduler;
 
     public void schedule(Task<? extends TaskDefinition> task) {
-        logger.debug("schedule {} task of type {}", task.type(), task.kind());
+        log.debug("schedule {} task of type {}", task.type(), task.kind());
 
         try {
             final var systemTask = new SystemTask();
@@ -69,19 +68,19 @@ public class TaskManager {
             // if the management restart before the task execution
             this.taskRepository.create(systemTask)
                     .subscribe(
-                            createdTask -> logger.debug("Task {} of type {} persisted", createdTask.getId(), task.kind()),
-                            error -> logger.warn("Task of type {} can't be persisted", task.kind(), error)
+                            createdTask -> log.debug("Task {} of type {} persisted", createdTask.getId(), task.kind()),
+                            error -> log.warn("Task of type {} can't be persisted", task.kind(), error)
                             );
 
             task.registerScheduler(this.scheduler);
             task.schedule();
-            logger.debug("{} task of type {} with id {} scheduled: {}", task.type(), task.kind(), systemTask.getId(), task.getDefinition());
+            log.debug("{} task of type {} with id {} scheduled: {}", task.type(), task.kind(), systemTask.getId(), task.getDefinition());
 
         } catch (JsonProcessingException e) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to schedule the task {} with definition {} due to: ", task.getId(), task.getDefinition(), e);
+            if (log.isDebugEnabled()) {
+                log.debug("Unable to schedule the task {} with definition {} due to: ", task.getId(), task.getDefinition(), e);
             } else {
-                logger.error("Unable to schedule the task {} with definition {} due to : {}", task.getId(), task.getDefinition(), e.getMessage());
+                log.error("Unable to schedule the task {} with definition {} due to : {}", task.getId(), task.getDefinition(), e.getMessage());
             }
         }
     }

@@ -44,7 +44,7 @@ import io.vertx.ext.auth.webauthn.impl.attestation.Attestation;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
 import io.vertx.ext.auth.webauthn.impl.metadata.MetaData;
 import io.vertx.ext.auth.webauthn.impl.metadata.MetaDataException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.security.*;
 import java.security.cert.*;
@@ -78,7 +78,7 @@ import static io.vertx.ext.auth.webauthn.impl.metadata.MetaData.*;
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class GraviteeAndroidKeyAttestation implements Attestation {
 
     private static final JsonArray EMPTY = new JsonArray(Collections.emptyList());

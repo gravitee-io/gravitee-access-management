@@ -47,8 +47,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,14 +58,15 @@ import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationRequestServiceImpl implements AuthenticationRequestService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestServiceImpl.class);
 
     @Autowired
     private CibaAuthRequestRepository authRequestRepository;
@@ -131,14 +130,14 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
             entity.getExternalInformation().put(ACR_VALUES, request.getAcrValues());
         }
 
-        LOGGER.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds for client {}", entity.getId(), ttl, client.getClientId());
+        log.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds for client {}", entity.getId(), ttl, client.getClientId());
 
         return authRequestRepository.create(entity);
     }
 
     @Override
     public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client) {
-        LOGGER.debug("Search for authentication request with id {} for client {}", authReqId, client.getClientId());
+        log.debug("Search for authentication request with id {} for client {}", authReqId, client.getClientId());
         return this.authRequestRepository.findById(authReqId)
                 .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
                 .flatMap(request -> {
@@ -169,7 +168,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
 
     @Override
     public Single<CibaAuthRequest> updateAuthDeviceInformation(CibaAuthRequest request) {
-        LOGGER.debug("Update authentication request '{}' with AuthenticationDeviceNotifier information", request.getId());
+        log.debug("Update authentication request '{}' with AuthenticationDeviceNotifier information", request.getId());
         return this.authRequestRepository.findById(request.getId())
                 .switchIfEmpty(Single.error(() -> new AuthenticationRequestNotFoundException(request.getId())))
                 .flatMap(existingReq -> {
@@ -219,7 +218,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                     }
                     // Log the real cause (key rotation / clock skew / decode failure) but keep the
                     // generic client-facing message on this security-critical state check.
-                    LOGGER.warn("CIBA state verification failed for tid={}: {}", userResponse.getTid(), error.getMessage(), error);
+                    log.warn("CIBA state verification failed for tid={}: {}", userResponse.getTid(), error.getMessage(), error);
                     return Single.error(new InvalidRequestException("Invalid CIBA State"));
                 });
     }

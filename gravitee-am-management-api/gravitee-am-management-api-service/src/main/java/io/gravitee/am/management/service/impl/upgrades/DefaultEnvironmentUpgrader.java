@@ -20,9 +20,8 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.node.api.upgrader.Upgrader;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -31,9 +30,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
+@CustomLog
 public class DefaultEnvironmentUpgrader implements Upgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultEnvironmentUpgrader.class);
 
     private final EnvironmentService environmentService;
 
@@ -44,12 +43,12 @@ public class DefaultEnvironmentUpgrader implements Upgrader {
             Environment environment = environmentService.createDefault().blockingGet();
 
             if (environment != null) {
-                logger.info("Default environment successfully created");
+                log.info("Default environment successfully created");
             } else {
-                logger.info("One or more environments already exist. Skip");
+                log.info("One or more environments already exist. Skip");
             }
         } catch (Exception e) {
-            logger.error("An error occurred trying to initialize default environment", e);
+            log.error("An error occurred trying to initialize default environment", e);
             return false;
         }
 

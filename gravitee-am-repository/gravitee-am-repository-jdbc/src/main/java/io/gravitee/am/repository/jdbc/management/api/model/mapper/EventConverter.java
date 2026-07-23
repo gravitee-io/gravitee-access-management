@@ -22,21 +22,20 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.repository.common.RevokeTokenConverter.toRevokeToken;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EventConverter extends DozerConverter<Event, JdbcEvent> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventConverter.class);
     private static final LocalDateConverter dateConverter = new LocalDateConverter();
 
     public EventConverter() {
@@ -79,7 +78,7 @@ public class EventConverter extends DozerConverter<Event, JdbcEvent> {
             try {
                 result.setType(jdbcEvent.getType() == null ? null : Type.valueOf(jdbcEvent.getType()));
             } catch (IllegalArgumentException e) {
-                LOGGER.info("Invalid event type '{}', the event will be ignored by synchronization process.", jdbcEvent.getType());
+                log.info("Invalid event type '{}', the event will be ignored by synchronization process.", jdbcEvent.getType());
                 result.setType(Type.UNKNOWN);
             }
             result.setDataPlaneId(jdbcEvent.getDataPlaneId());

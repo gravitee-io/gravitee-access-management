@@ -21,23 +21,22 @@ import freemarker.cache.StringTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
 import java.io.IOException;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
+@CustomLog
 public class FreemarkerConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FreemarkerConfiguration.class);
 
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
@@ -53,7 +52,7 @@ public class FreemarkerConfiguration {
             TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
             configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
         } catch (final IOException e) {
-            LOGGER.warn("Error occurred while trying to read email templates", e);
+            log.warn("Error occurred while trying to read email templates", e);
         }
         return configuration;
     }

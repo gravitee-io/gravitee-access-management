@@ -62,7 +62,7 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -99,7 +99,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.userIdMatches;
  */
 @Component
 public class MongoUserRepository extends AbstractDataPlaneMongoRepository implements UserRepository {
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = NodeLoggerFactory.getLogger(this.getClass());
 
     private static final String FIELD_PRE_REGISTRATION = "preRegistration";
     private static final String TOTAL = "total";

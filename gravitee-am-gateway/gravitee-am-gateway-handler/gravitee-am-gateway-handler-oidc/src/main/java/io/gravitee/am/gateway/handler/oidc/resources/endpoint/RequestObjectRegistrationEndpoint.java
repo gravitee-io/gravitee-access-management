@@ -28,11 +28,10 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * See <a href="https://openid.net/specs/openid-financial-api-part-2.html#request-object-endpoint">7.  Request object endpoint</a>
@@ -43,9 +42,9 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author GraviteeSource Team
  */
 @Deprecated
+@CustomLog
 public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RequestObjectRegistrationEndpoint.class);
 
     private final RequestObjectService requestObjectService;
 
@@ -89,7 +88,7 @@ public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext
         try {
             basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
         } catch (Exception e) {
-            LOGGER.error("Unable to resolve OAuth 2.0 Authorization Request origin uri", e);
+            log.error("Unable to resolve OAuth 2.0 Authorization Request origin uri", e);
         }
         return basePath;
     }

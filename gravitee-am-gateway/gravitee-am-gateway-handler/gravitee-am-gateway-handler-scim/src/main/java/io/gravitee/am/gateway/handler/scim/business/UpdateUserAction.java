@@ -25,7 +25,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.Map;
 
@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class UpdateUserAction extends AbstractUserAction {
 
     public UpdateUserAction(ProvisioningUserService userService, Domain domain, Client client) {

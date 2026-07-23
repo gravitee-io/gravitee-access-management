@@ -27,17 +27,16 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenService {
 
-    private static final Logger logger = LoggerFactory.getLogger(OAuthRevocationTokenServiceImpl.class);
 
     @Autowired
     private TokenService tokenService;
@@ -66,7 +65,7 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                         // is already achieved.
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
-                            logger.debug("No refresh token {} found in the token store.", token);
+                            log.debug("No refresh token {} found in the token store.", token);
                         }
 
                         // fallback to access token
@@ -79,7 +78,7 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                         // is already achieved.
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
-                            logger.debug("No access token {} found in the token store.", token);
+                            log.debug("No access token {} found in the token store.", token);
                             auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
                             return Completable.complete();
                         }
@@ -107,7 +106,7 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                     // is already achieved.
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
-                        logger.debug("No access token {} found in the token store.", token);
+                        log.debug("No access token {} found in the token store.", token);
                     }
 
                     // fallback to refresh token
@@ -120,7 +119,7 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                     // is already achieved.
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
-                        logger.debug("No refresh token {} found in the token store.", token);
+                        log.debug("No refresh token {} found in the token store.", token);
                         auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
                         return Completable.complete();
                     }
@@ -138,7 +137,7 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                 .flatMapCompletable(accessToken -> {
                     String tokenClientId = accessToken.getClientId();
                     if (!client.getClientId().equals(tokenClientId)) {
-                        logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
+                        log.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
 
@@ -157,7 +156,7 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                 .flatMapCompletable(refreshToken -> {
                     String tokenClientId = refreshToken.getClientId();
                     if (!client.getClientId().equals(tokenClientId)) {
-                        logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
+                        log.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
                     return tokenService.deleteRefreshToken(refreshToken.getValue())

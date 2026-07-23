@@ -20,22 +20,21 @@ import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.model.Domain;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandlerRegistry {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultSecurityDomainHandlerRegistry.class);
     private final ConcurrentMap<String, VertxSecurityDomainHandler> handlers = new ConcurrentHashMap<>();
 
     @Autowired
@@ -48,9 +47,9 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
     public void create(Domain domain) {
 
         if(domain.isVhostMode()) {
-            logger.info("Register a new domain [{}] on vhosts [{}]", domain.getId(), domain.getVhosts());
+            log.info("Register a new domain [{}] on vhosts [{}]", domain.getId(), domain.getVhosts());
         } else {
-            logger.info("Register a new domain [{}] on path [{}]", domain.getId(), domain.getPath());
+            log.info("Register a new domain [{}] on path [{}]", domain.getId(), domain.getPath());
         }
 
         VertxSecurityDomainHandler handler = create0(domain);
@@ -60,7 +59,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 handlers.putIfAbsent(domain.getId(), handler);
                 reactor.mountDomain(handler);
             } catch (Exception ex) {
-                logger.error("Unable to register handler", ex);
+                log.error("Unable to register handler", ex);
             }
         }
     }
@@ -88,9 +87,9 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 handler.stop();
                 handlers.remove(domain.getId());
                 reactor.unMountDomain(handler);
-                logger.info("Security Domain has been unregistered");
+                log.info("Security Domain has been unregistered");
             } catch (Exception e) {
-                logger.error("Unable to un-register handler", e);
+                log.error("Unable to un-register handler", e);
             }
         }
     }
@@ -102,7 +101,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 handler.stop();
                 handlers.remove(handler.getDomain().getId());
             } catch (Exception e) {
-                logger.error("Unable to un-register handler", e);
+                log.error("Unable to un-register handler", e);
             }
         });
     }

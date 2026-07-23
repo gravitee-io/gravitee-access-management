@@ -29,8 +29,6 @@ import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.PrematureJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.JWT;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
@@ -42,14 +40,15 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DefaultJWTParser implements JWTParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultJWTParser.class);
     public static final String NO_MATCHING_JWT_PARSER_FOR_KEY = "No matching JWT parser for key : ";
     private JWSVerifier verifier;
 
@@ -115,19 +114,19 @@ public class DefaultJWTParser implements JWTParser {
             evaluateNbf(jwt.getNbf(), now, allowedClockSkewMillis);
             return jwt;
         } catch (ParseException ex) {
-            logger.debug("The following JWT token : {} is malformed", payload);
+            log.debug("The following JWT token : {} is malformed", payload);
             throw new MalformedJWTException("Token is malformed", ex);
         } catch (ExpiredJWTException ex) {
-            logger.debug("The following JWT token : {} is expired", payload);
+            log.debug("The following JWT token : {} is expired", payload);
             throw new ExpiredJWTException("Token is expired", ex);
         } catch (PrematureJWTException ex) {
-            logger.debug("The following JWT token : {} must not be accepted (nbf)", payload);
+            log.debug("The following JWT token : {} must not be accepted (nbf)", payload);
             throw new PrematureJWTException("Token must not be accepted (nbf)", ex);
         } catch (JOSEException ex) {
-            logger.debug("Verifying JWT token signature : {} has failed", payload);
+            log.debug("Verifying JWT token signature : {} has failed", payload);
             throw new SignatureException("Token's signature is invalid", ex);
         } catch (Exception ex) {
-            logger.error("An error occurs while parsing JWT token : {}", payload, ex);
+            log.error("An error occurs while parsing JWT token : {}", payload, ex);
             throw ex;
         }
     }

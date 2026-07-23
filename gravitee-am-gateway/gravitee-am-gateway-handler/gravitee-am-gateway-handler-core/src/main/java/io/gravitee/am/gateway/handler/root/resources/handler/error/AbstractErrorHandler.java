@@ -28,7 +28,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.node.logging.NodeLoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
@@ -41,7 +41,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  */
 public abstract class AbstractErrorHandler implements Handler<RoutingContext> {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = NodeLoggerFactory.getLogger(this.getClass());
     protected final String errorPage;
 
     protected AbstractErrorHandler(String errorPage) {

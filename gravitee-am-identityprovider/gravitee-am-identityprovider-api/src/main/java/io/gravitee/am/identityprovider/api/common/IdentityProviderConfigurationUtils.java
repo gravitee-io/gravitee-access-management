@@ -17,7 +17,7 @@ package io.gravitee.am.identityprovider.api.common;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
 import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.text.ParseException;
 import java.util.Map;
@@ -26,7 +26,7 @@ import java.util.Optional;
 import static com.nimbusds.jose.util.JSONObjectUtils.getString;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.TLS_CLIENT_AUTH;
 
-@Slf4j
+@CustomLog
 @UtilityClass
 public final class IdentityProviderConfigurationUtils {
 

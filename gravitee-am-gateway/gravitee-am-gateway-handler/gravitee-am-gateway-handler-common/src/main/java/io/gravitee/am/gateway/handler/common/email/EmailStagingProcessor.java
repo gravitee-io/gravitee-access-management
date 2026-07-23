@@ -28,7 +28,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class EmailStagingProcessor implements InitializingBean, DisposableBean {
 
     public static final int DEFAULT_BATCH_SIZE = 100;

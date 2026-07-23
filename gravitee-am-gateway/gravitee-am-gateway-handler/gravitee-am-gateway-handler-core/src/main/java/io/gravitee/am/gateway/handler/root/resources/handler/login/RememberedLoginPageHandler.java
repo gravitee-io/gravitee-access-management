@@ -25,20 +25,19 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RememberedLoginPageHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RememberedLoginPageHandler.class);
 
     private final ThymeleafTemplateEngine engine;
     private final DeviceIdentifierManager deviceIdentifierManager;
@@ -64,7 +63,7 @@ public class RememberedLoginPageHandler implements Handler<RoutingContext> {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                     routingContext.response().end(buffer);
                 }, error -> {
-                    logger.error("Unable to render remembered login page", error);
+                    log.error("Unable to render remembered login page", error);
                     routingContext.fail(error);
                 });
     }

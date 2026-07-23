@@ -17,12 +17,12 @@ package io.gravitee.am.service.validators.email;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
+@CustomLog
 public
 class UserEmailConstraintValidator implements ConstraintValidator<UserEmail, String> {
 

@@ -24,7 +24,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.streams.WriteStream;
 import io.vertx.rxjava3.ext.web.codec.BodyCodec;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.net.URI;
 import java.util.Optional;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeoutException;
  * Fetches CIMD client logos with the same trust and size bounds as metadata pre-fetch, and stores
  * them in {@link CimdMetadataDocumentManager}.
  */
-@Slf4j
+@CustomLog
 public class CimdLogoCacheService {
 
     private static final int FETCH_RETRY_ATTEMPTS = 3;

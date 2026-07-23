@@ -20,16 +20,16 @@ import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ProtocolPluginHandler extends AmPluginHandler<Protocol<?, ?>> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProtocolPluginHandler.class);
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -38,7 +38,7 @@ public class ProtocolPluginHandler extends AmPluginHandler<Protocol<?, ?>> {
 
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        return log;
     }
 
     @Override

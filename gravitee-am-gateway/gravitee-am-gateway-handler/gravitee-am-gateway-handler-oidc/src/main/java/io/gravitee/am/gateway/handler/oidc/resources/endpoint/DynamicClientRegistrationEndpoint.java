@@ -30,8 +30,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * Dynamic Client Registration is a protocol that allows OAuth client applications to register with an OAuth server.
@@ -44,12 +43,12 @@ import org.slf4j.LoggerFactory;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext> {
 
     protected ClientSyncService clientSyncService;
     protected DynamicClientRegistrationService dcrService;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationEndpoint.class);
 
     public DynamicClientRegistrationEndpoint(DynamicClientRegistrationService dcrService, ClientSyncService clientSyncService) {
         this.dcrService = dcrService;
@@ -62,7 +61,7 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
      */
     @Override
     public void handle(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration CREATE endpoint");
+        log.debug("Dynamic client registration CREATE endpoint");
 
         this.extractRequest(context)
                 .flatMap(request -> dcrService.create(request, UriBuilderRequest.resolveProxyRequest(context)))

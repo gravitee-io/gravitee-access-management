@@ -32,8 +32,6 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import net.minidev.json.JSONObject;
 import org.apache.commons.cli.CommandLine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -42,9 +40,10 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.BEARER;
 import static io.gravitee.sample.ciba.notifier.http.Constants.CALLBACK_VALIDATE;
 import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
 import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
+import lombok.CustomLog;
 
+@CustomLog
 public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaMockNotifierApiHandler.class);
 
     private final boolean accept;
     private final String authBearer;
@@ -101,7 +100,7 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                         .end("missing domain reference");
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to manage the notification request", e);
+            log.warn("Unable to manage the notification request", e);
             routingContext.fail(500, e);
         }
     }
@@ -119,21 +118,21 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                         .sendForm(formData)
                         .onSuccess(res -> {
                             if (res.statusCode() >= 200 && res.statusCode() < 300) {
-                                LOGGER.info("Callback succeeded for tid {}", transactionId);
+                                log.info("Callback succeeded for tid {}", transactionId);
                             } else {
-                                LOGGER.error("Callback failed for tid {}. Status Code = {}", transactionId, res.statusCode());
+                                log.error("Callback failed for tid {}. Status Code = {}", transactionId, res.statusCode());
                             }
                         })
                         .onFailure(err -> {
                             if (retry) {
-                                LOGGER.info("Retry the callback for tid {}", transactionId, err);
+                                log.info("Retry the callback for tid {}", transactionId, err);
                                 sendResponse(transactionId, optCallback, formData, false);
                             } else {
-                                LOGGER.warn("Callback failed for tid {}", transactionId, err);
+                                log.warn("Callback failed for tid {}", transactionId, err);
                             }
                         });
             } catch (Exception e) {
-                LOGGER.warn("Callback request failed for tid {}", transactionId, e);
+                log.warn("Callback request failed for tid {}", transactionId, e);
             }
         }).start();
     }

@@ -22,24 +22,23 @@ import io.gravitee.common.http.HttpStatusCode;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Lukasz GAWEL (lukasz.gawel at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Provider
+@CustomLog
 public class JacksonExceptionMapper extends AbstractExceptionMapper<JacksonException> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JacksonExceptionMapper.class);
 
     @Override
     public Response toResponse(JacksonException e) {
         if (e instanceof DatabindException) {
             // non-io errors, e.g. incorrect mapping
-            LOGGER.error("Malformed json", e);
+            log.error("Malformed json", e);
         } else {
-            LOGGER.debug("Malformed json, msg={}", e.getMessage());
+            log.debug("Malformed json, msg={}", e.getMessage());
         }
         return Response
                 .status(Response.Status.BAD_REQUEST)

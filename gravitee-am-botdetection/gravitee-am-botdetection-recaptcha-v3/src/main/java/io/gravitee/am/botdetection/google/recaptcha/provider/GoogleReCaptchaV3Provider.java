@@ -24,19 +24,18 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.net.URL;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GoogleReCaptchaV3Provider.class);
 
     @Autowired
     private Vertx vertx;
@@ -72,7 +71,7 @@ public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
         final String token = context.getHeader(configuration.getTokenParameterName()).orElse(context.getParameter(configuration.getTokenParameterName()).orElse(null));
 
         if (token == null || token.trim().isEmpty()) {
-            LOGGER.debug("Recaptcha token is empty");
+            log.debug("Recaptcha token is empty");
             return Single.just(false);
         }
 
@@ -81,7 +80,7 @@ public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
                 .map(buffer -> {
 
                     if (buffer.statusCode() != 200) {
-                        LOGGER.error("An error occurred when trying to validate ReCaptcha token. (status={}/message={})", buffer.statusCode(), buffer.statusMessage());
+                        log.error("An error occurred when trying to validate ReCaptcha token. (status={}/message={})", buffer.statusCode(), buffer.statusMessage());
                         return false;
                     }
 
@@ -90,13 +89,13 @@ public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
                     Boolean success = response.getBoolean("success", false);
                     Double score = response.getDouble("score", 0.0d);
 
-                    LOGGER.debug("ReCaptchaService success: {} score: {}", success, score);
+                    log.debug("ReCaptchaService success: {} score: {}", success, score);
 
                     // Result should be successful and score above 0.5.
                     return (success && score >= configuration.getMinScore());
                 })
                 .onErrorResumeNext(throwable -> {
-                    LOGGER.error("An error occurred when trying to validate ReCaptcha token.", throwable);
+                    log.error("An error occurred when trying to validate ReCaptcha token.", throwable);
                     return Single.just(false);
                 });
     }

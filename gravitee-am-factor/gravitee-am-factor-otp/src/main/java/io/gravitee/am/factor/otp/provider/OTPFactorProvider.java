@@ -29,8 +29,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableEmitter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.factor.otp.utils.TOTP.TIME_STEP;
@@ -38,14 +36,15 @@ import static io.gravitee.am.factor.otp.utils.TOTP.generateTOTP;
 import static io.gravitee.am.factor.utils.SharedSecret.base32Str2Hex;
 import static java.lang.System.currentTimeMillis;
 import static java.util.stream.LongStream.range;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class OTPFactorProvider implements FactorProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(OTPFactorProvider.class);
     private static final int NUMBER_OF_VALIDATIONS = 3;
 
     @Autowired
@@ -60,7 +59,7 @@ public class OTPFactorProvider implements FactorProvider {
             try {
                 tryEvaluation(code, enrolledFactor, emitter);
             } catch (Exception ex) {
-                logger.error("An error occurs while validating 2FA code", ex);
+                log.error("An error occurs while validating 2FA code", ex);
                 emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
             }
         });
@@ -122,7 +121,7 @@ public class OTPFactorProvider implements FactorProvider {
         if (factor != null) {
             EnrolledFactorSecurity securityFactor = factor.getSecurity();
             if (securityFactor == null || securityFactor.getValue() == null) {
-                logger.warn("No shared secret in form - did you forget to include shared secret value ?");
+                log.warn("No shared secret in form - did you forget to include shared secret value ?");
                 valid = false;
             }
         }

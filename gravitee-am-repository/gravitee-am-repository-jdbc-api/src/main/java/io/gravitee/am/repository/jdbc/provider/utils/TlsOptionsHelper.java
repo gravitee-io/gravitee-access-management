@@ -20,20 +20,19 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@CustomLog
 public class TlsOptionsHelper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TlsOptionsHelper.class);
     private static final String POSTGRESQL = "postgresql";
     private static final String MYSQL = "mysql";
     private static final String MARIADB = "mariadb";
@@ -62,7 +61,7 @@ public class TlsOptionsHelper {
                     builder = sqlServerOptions(builder, environment, prefix);
                     break;
                 default:
-                    LOGGER.warn("Unknown driver {}, skip SSL configuration", driver);
+                    log.warn("Unknown driver {}, skip SSL configuration", driver);
             }
         } else {
             switch (driver) {
@@ -79,7 +78,7 @@ public class TlsOptionsHelper {
                     builder.option(Option.valueOf("encrypt"), FALSE);
                     break;
                 default:
-                    LOGGER.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
+                    log.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
             }
         }
 
@@ -158,7 +157,7 @@ public class TlsOptionsHelper {
                     jdbcUrlWithSSL = sqlServerOptions(jdbcUrl, environment, prefix);
                     break;
                 default:
-                    LOGGER.warn("Unknown driver {}, skip SSL configuration for JDBC url", driver);
+                    log.warn("Unknown driver {}, skip SSL configuration for JDBC url", driver);
             }
         } else {
             switch (driver) {
@@ -175,7 +174,7 @@ public class TlsOptionsHelper {
                     jdbcUrlWithSSL = jdbcUrl + ";encrypt=false";
                     break;
                 default:
-                    LOGGER.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
+                    log.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
             }
         }
 

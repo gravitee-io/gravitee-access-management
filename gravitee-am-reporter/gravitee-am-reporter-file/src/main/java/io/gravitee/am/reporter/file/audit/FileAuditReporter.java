@@ -39,8 +39,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,19 +51,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(FileReporterSpringConfiguration.class)
+@CustomLog
 public class FileAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
     public static final String REPORTERS_FILE_ENABLED = "reporters.file.enabled";
     public static final String REPORTERS_FILE_DIRECTORY = "reporters.file.directory";
     public static final String REPORTERS_FILE_OUTPUT = "reporters.file.output";
     public static final String REPORTERS_FILE_RETAIN_DAYS = "reporters.file.retainDays";
 
-    private static Logger LOGGER = LoggerFactory.getLogger(FileAuditReporter.class);
 
     @Value("${" + REPORTERS_FILE_DIRECTORY + ":#{systemProperties['gravitee.home']}/audit-logs/}")
     private String directory;
@@ -112,16 +111,16 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Override
     public void report(Reportable reportable) {
-        LOGGER.debug("Report({})", reportable);
+        log.debug("Report({})", reportable);
         if (writer != null) {
             if (reportable instanceof Audit audit) {
                 AuditEntry entry = convert(audit);
                 writer.write(entry);
             } else {
-                LOGGER.debug("Ignore reportable of type {}", reportable.getClass().getName());
+                log.debug("Ignore reportable of type {}", reportable.getClass().getName());
             }
         } else {
-            LOGGER.debug("Writer is null, ignore reportable");
+            log.debug("Writer is null, ignore reportable");
         }
     }
 
@@ -218,9 +217,9 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
                 resolvedRetainDays);
 
         Future<Void> writerInitialization = writer.initialize();
-        writerInitialization.onComplete(success -> LOGGER.info("File reporter successfully started"));
+        writerInitialization.onComplete(success -> log.info("File reporter successfully started"));
         writerInitialization.onFailure(error -> {
-            LOGGER.warn("An error occurs while starting file reporter", error);
+            log.warn("An error occurs while starting file reporter", error);
             throw new FileReporterInitializationException("An error occurs while starting file reporter [" + filename + "]");
         });
     }

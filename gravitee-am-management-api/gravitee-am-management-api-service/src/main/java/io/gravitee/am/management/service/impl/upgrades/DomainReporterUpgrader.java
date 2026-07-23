@@ -21,10 +21,9 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import lombok.CustomLog;
 
 /**
  * Create default mongo Reporter for each domain for audit logs
@@ -34,9 +33,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagementRepositoryScope
+@CustomLog
 public class DomainReporterUpgrader extends AsyncUpgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DomainReporterUpgrader.class);
 
     @Autowired
     private DomainService domainService;
@@ -46,7 +45,7 @@ public class DomainReporterUpgrader extends AsyncUpgrader {
 
     @Override
     public Completable doUpgrade() {
-        logger.info("Applying domain reporter upgrade");
+        log.info("Applying domain reporter upgrade");
         return domainService.listAll()
                 .flatMapCompletable(this::updateDefaultReporter);
     }
@@ -56,7 +55,7 @@ public class DomainReporterUpgrader extends AsyncUpgrader {
                 .toList()
                 .flatMapCompletable(reporters -> {
                     if (reporters == null || reporters.isEmpty()) {
-                        logger.info("No default reporter found for domain {}, update domain", domain.getName());
+                        log.info("No default reporter found for domain {}, update domain", domain.getName());
                         return reporterService.createDefault(Reference.domain(domain.getId()))
                                 .ignoreElement();
                     }

@@ -18,16 +18,15 @@ package io.gravitee.am.service.utils;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.functions.Function;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
+import lombok.CustomLog;
 
+@CustomLog
 public class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RetryWithDelay.class);
 
     private static final int DEFAULT_MAX_RETRIES = 50;
     private static final long DEFAULT_INITIAL_DELAY = 1;
@@ -81,15 +80,15 @@ public class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?
             boolean limitExceeded = !unlimited && attempt >= maxRetries;
             if (limitExceeded || !retryOn.test(error)) {
                 if (limitExceeded) {
-                    LOGGER.error("Retry limit exceeded (maxRetries={})", maxRetries);
+                    log.error("Retry limit exceeded (maxRetries={})", maxRetries);
                 }
                 return Flowable.error(error);
             }
             long delay = nextDelay(attempt);
             if (unlimited) {
-                LOGGER.warn("Retry attempt {} in {} {}", attempt + 1, delay, unit.name().toLowerCase());
+                log.warn("Retry attempt {} in {} {}", attempt + 1, delay, unit.name().toLowerCase());
             } else {
-                LOGGER.warn("Retry attempt {}/{} in {} {}", attempt + 1, maxRetries, delay, unit.name().toLowerCase());
+                log.warn("Retry attempt {}/{} in {} {}", attempt + 1, maxRetries, delay, unit.name().toLowerCase());
             }
             return Flowable.timer(delay, unit);
         });

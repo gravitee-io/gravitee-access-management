@@ -23,14 +23,14 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.dataplane.user.activity.utils.UserActivityFunctions;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 @Component
 public class UserActivityManagementServiceImpl implements UserActivityManagementService {
 

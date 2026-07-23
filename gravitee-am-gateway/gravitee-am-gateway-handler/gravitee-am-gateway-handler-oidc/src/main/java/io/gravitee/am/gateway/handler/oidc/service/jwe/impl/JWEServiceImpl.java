@@ -43,7 +43,6 @@ import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.ParseException;
@@ -51,6 +50,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.*;
+import lombok.CustomLog;
 
 /**
  *
@@ -58,9 +58,9 @@ import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class JWEServiceImpl implements JWEService {
 
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JWEServiceImpl.class);
 
     @Autowired
     private JWKService jwkService;
@@ -88,7 +88,7 @@ public class JWEServiceImpl implements JWEService {
                     if(throwable instanceof OAuth2Exception) {
                         return Single.error(throwable);
                     }
-                    LOGGER.error(throwable.getMessage(), throwable);
+                    log.error(throwable.getMessage(), throwable);
                     return Single.error(new ServerErrorException("Unable to encrypt id_token"));
                 });
     }
@@ -113,7 +113,7 @@ public class JWEServiceImpl implements JWEService {
                     if(throwable instanceof OAuth2Exception) {
                         return Single.error(throwable);
                     }
-                    LOGGER.error(throwable.getMessage(), throwable);
+                    log.error(throwable.getMessage(), throwable);
                     return Single.error(new ServerErrorException("Unable to encrypt userinfo"));
                 });
     }
@@ -261,7 +261,7 @@ public class JWEServiceImpl implements JWEService {
                     if(throwable instanceof OAuth2Exception) {
                         return Single.error(throwable);
                     }
-                    LOGGER.error(throwable.getMessage(), throwable);
+                    log.error(throwable.getMessage(), throwable);
                     return Single.error(new ServerErrorException("Unable to encrypt authorization"));
                 });
     }

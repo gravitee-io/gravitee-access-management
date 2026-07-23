@@ -30,22 +30,21 @@ import io.gravitee.am.service.reporter.builder.management.EnvironmentAuditBuilde
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class EnvironmentServiceImpl implements EnvironmentService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EnvironmentServiceImpl.class);
 
     private final EnvironmentRepository environmentRepository;
 
@@ -63,14 +62,14 @@ public class EnvironmentServiceImpl implements EnvironmentService {
 
     @Override
     public Single<Environment> findById(String id, String organizationId) {
-        LOGGER.debug("Find environment by id: {}", id);
+        log.debug("Find environment by id: {}", id);
         return environmentRepository.findById(id, organizationId)
                 .switchIfEmpty(Single.error(new EnvironmentNotFoundException(id)));
     }
 
     @Override
     public Single<Environment> findById(String id) {
-        LOGGER.debug("Find environment by id: {}", id);
+        log.debug("Find environment by id: {}", id);
         return environmentRepository.findById(id)
                 .switchIfEmpty(Single.error(new EnvironmentNotFoundException(id)));
     }
@@ -78,7 +77,7 @@ public class EnvironmentServiceImpl implements EnvironmentService {
     @Override
     public Flowable<Environment> findAll(String organizationId) {
 
-        LOGGER.debug("Find environments by organizationId: {}", organizationId);
+        log.debug("Find environments by organizationId: {}", organizationId);
         return environmentRepository.findAll(organizationId);
     }
 

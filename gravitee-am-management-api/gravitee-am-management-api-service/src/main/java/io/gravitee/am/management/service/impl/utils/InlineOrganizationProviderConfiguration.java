@@ -26,8 +26,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -40,13 +38,14 @@ import java.util.Map;
 import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_OWNER;
 import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_USER;
 import static io.gravitee.am.model.permissions.SystemRole.ORGANIZATION_PRIMARY_OWNER;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class InlineOrganizationProviderConfiguration extends OrganizationProviderConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(InlineOrganizationProviderConfiguration.class);
 
     public static final String MEMORY_TYPE = "memory";
 
@@ -80,9 +79,9 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
                 user.setPassword(env.getProperty(userPropertyBase+"password"));
                 user.setRole(env.getProperty(userPropertyBase+"role"));
                 if (StringUtils.isEmpty(user.getPassword()) || StringUtils.isEmpty(user.getRole())) {
-                    LOGGER.warn("User definition ignored for '{}': missing role or password", username);
+                    log.warn("User definition ignored for '{}': missing role or password", username);
                 } else if (!authorizedRoles.contains(user.getRole())) {
-                    LOGGER.warn("User definition ignored for '{}': invalid role. (expected: \"ORGANIZATION_OWNER\", \"ORGANIZATION_USER\", \"ORGANIZATION_PRIMARY_OWNER\")", username);
+                    log.warn("User definition ignored for '{}': invalid role. (expected: \"ORGANIZATION_OWNER\", \"ORGANIZATION_USER\", \"ORGANIZATION_PRIMARY_OWNER\")", username);
                 } else {
                     this.users.put(username, user);
                 }

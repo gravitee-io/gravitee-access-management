@@ -33,8 +33,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -46,6 +44,7 @@ import java.util.function.Function;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
+import lombok.CustomLog;
 
 /**
  * The authorization server validates the request to ensure that all parameters are valid.
@@ -59,9 +58,9 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedirectUriValidationHandler.class);
 
     private final Domain domain;
     private final Function<String, Maybe<JWT>> tokenVerifier;
@@ -159,7 +158,7 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             String host = UriBuilder.fromURIString(uri).build().getHost();
             return host != null && UriBuilder.isLocalhost(host);
         } catch (URISyntaxException e) {
-            LOGGER.debug("[redirect-uri-validation] uri={} parse error: {}", uri, e.getMessage());
+            log.debug("[redirect-uri-validation] uri={} parse error: {}", uri, e.getMessage());
             return false;
         }
     }
@@ -173,7 +172,7 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private static boolean loopbackMatches(String requested, String registered) {
         if (!isLoopbackUri(registered)) {
-            LOGGER.info("[redirect-uri-validation] candidate registered={} skipped (not loopback)", registered);
+            log.info("[redirect-uri-validation] candidate registered={} skipped (not loopback)", registered);
             return false;
         }
         try {
@@ -185,7 +184,7 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             boolean portMatch = reg.getPort() == -1 || normalizePort(req) == normalizePort(reg);
             return schemeMatch && hostMatch && pathMatch && portMatch;
         } catch (URISyntaxException e) {
-            LOGGER.info("[redirect-uri-validation] candidate registered={} parse error: {}", registered, e.getMessage());
+            log.info("[redirect-uri-validation] candidate registered={} parse error: {}", registered, e.getMessage());
             return false;
         }
     }

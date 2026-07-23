@@ -29,16 +29,15 @@ import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
 import io.gravitee.am.resource.infobip.InfobipResourceConfiguration;
 import io.reactivex.rxjava3.core.Completable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.CustomLog;
 
 /**
  * @author Ruan Ferreira (ruan@incentive.me)
  * @author Incentive.me
  */
+@CustomLog
 public class InfobipResourceProvider implements MFAResourceProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(InfobipResourceProvider.class);
 
     TfaApi tfaApi;
     public static final String APPROVED = "approved";
@@ -88,11 +87,11 @@ public class InfobipResourceProvider implements MFAResourceProvider {
                 } else {
                     this.pinId = sendCodeResponse.getPinId();
 
-                    LOGGER.debug("Infobip Verification code asked with ID '{}'", sendCodeResponse.getPinId());
+                    log.debug("Infobip Verification code asked with ID '{}'", sendCodeResponse.getPinId());
                     emitter.onComplete();
                 }
             } catch (com.infobip.ApiException e) {
-                LOGGER.error("Challenge emission fails", e);
+                log.error("Challenge emission fails", e);
                 emitter.onError(new SendChallengeException("Unable to send challenge"));
             }
         });
@@ -108,7 +107,7 @@ public class InfobipResourceProvider implements MFAResourceProvider {
                 );
                 boolean verified = verifyResponse.getVerified();
 
-                LOGGER.debug(
+                log.debug(
                         "Infobip Verification code with ID '{}' verified with status '{}'",
                         this.pinId,
                         verified);
@@ -118,7 +117,7 @@ public class InfobipResourceProvider implements MFAResourceProvider {
                     emitter.onComplete();
                 }
             } catch (com.infobip.ApiException e) {
-                LOGGER.error("Challenge verification fails", e);
+                log.error("Challenge verification fails", e);
                 emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
             }
         });

@@ -39,8 +39,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -54,11 +52,12 @@ import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_UPDATED;
 import static io.gravitee.am.common.event.Action.UPDATE;
 import static io.gravitee.am.common.event.Type.I18N_DICTIONARY;
 import static io.reactivex.rxjava3.core.Completable.fromSingle;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class I18nDictionaryService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(I18nDictionaryService.class);
     private final I18nDictionaryRepository repository;
     private final EventService eventService;
     private final AuditService auditService;
@@ -100,7 +99,7 @@ public class I18nDictionaryService {
                         return Single.error(ex);
                     } else {
                         String msg = "An error occurred while trying to create an i18n dictionary";
-                        LOGGER.error(msg, ex);
+                        log.error(msg, ex);
                         return Single.error(new TechnicalManagementException(msg, ex));
                     }
                 })
@@ -118,18 +117,18 @@ public class I18nDictionaryService {
     }
 
     public Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale) {
-        LOGGER.debug("Find dictionary by {} and locale {}", referenceId, locale);
+        log.debug("Find dictionary by {} and locale {}", referenceId, locale);
         return repository.findByLocale(referenceType, referenceId, locale)
                          .onErrorResumeNext(ex -> {
                              String msg = "An error occurred while trying to find a dictionary using its locale: ? for the ? ?";
-                             LOGGER.error(msg.replace("?", "{}"), locale, referenceType, referenceId, ex);
+                             log.error(msg.replace("?", "{}"), locale, referenceType, referenceId, ex);
                              return Maybe.error(new TechnicalManagementException(
                                      String.format(msg.replace("?", "%s"), locale, referenceType, referenceId), ex));
                          });
     }
 
     public Single<I18nDictionary> update(ReferenceType referenceType, String referenceId, String id, UpdateI18nDictionary updateDictionary, User principal) {
-        LOGGER.debug("Update a dictionary {} for {} {}", id, referenceType, referenceId);
+        log.debug("Update a dictionary {} for {} {}", id, referenceType, referenceId);
         return findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new DictionaryNotFoundException(id)))
                 // check uniqueness
@@ -168,7 +167,7 @@ public class I18nDictionaryService {
                         return Single.error(ex);
                     }
                     String msg = "An error occurs while trying to update a dictionary";
-                    LOGGER.error(msg, ex);
+                    log.error(msg, ex);
                     return Single.error(new TechnicalManagementException(msg, ex));
                 })
                 .doOnSuccess(dictionary -> auditService.report(AuditBuilder
@@ -185,7 +184,7 @@ public class I18nDictionaryService {
     }
 
     public Single<I18nDictionary> updateEntries(ReferenceType referenceType, String referenceId, String id, Map<String, String> entries, User principal) {
-        LOGGER.debug("Update entries for dictionary {} for {} {}", id, referenceType, referenceId);
+        log.debug("Update entries for dictionary {} for {} {}", id, referenceType, referenceId);
         return findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new DictionaryNotFoundException(id)))
                 .flatMap(oldDictionary -> {
@@ -204,7 +203,7 @@ public class I18nDictionaryService {
                         return Single.error(ex);
                     }
                     String msg = "An error occurs while trying to update a dictionary";
-                    LOGGER.error(msg, ex);
+                    log.error(msg, ex);
                     return Single.error(new TechnicalManagementException(msg, ex));
                 })
                 .doOnSuccess(dictionary -> auditService.report(AuditBuilder
@@ -221,29 +220,29 @@ public class I18nDictionaryService {
     }
 
     public Maybe<I18nDictionary> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("Find dictionary by id : {}", id);
+        log.debug("Find dictionary by id : {}", id);
         return repository.findById(referenceType, referenceId, id)
                          .onErrorResumeNext(ex -> {
                              String msg = "An error occurred while trying to find a dictionary using its id ?";
-                             LOGGER.error(msg.replace("?", "{}"), id, ex);
+                             log.error(msg.replace("?", "{}"), id, ex);
                              return Maybe.error(new TechnicalManagementException(
                                      String.format(msg.replace("?", "%s"), id), ex));
                          });
     }
 
     public Flowable<I18nDictionary> findAll(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find dictionaries by {}: {}", referenceType, referenceId);
+        log.debug("Find dictionaries by {}: {}", referenceType, referenceId);
         return repository.findAll(referenceType, referenceId)
                               .onErrorResumeNext(ex -> {
                                   String msg = "An error occurred while trying to find dictionaries by ? ?";
-                                  LOGGER.error(msg.replace("?", "{}"), referenceType, referenceId, ex);
+                                  log.error(msg.replace("?", "{}"), referenceType, referenceId, ex);
                                   return Flowable.error(new TechnicalManagementException(String.format(msg.replace("?", "%s"), referenceType, referenceId), ex));
                               });
     }
 
 
     public Completable delete(ReferenceType referenceType, String referenceId, String dictId, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Delete dictionary {}", dictId);
+        log.debug("Delete dictionary {}", dictId);
 
         return findById(referenceType, referenceId, dictId)
                 .flatMapCompletable(dictionary ->
@@ -275,7 +274,7 @@ public class I18nDictionaryService {
                         return Completable.error(ex);
                     }
                     String msg = "An error occurred while trying to delete a dictionary: ?";
-                    LOGGER.error(msg.replace("?", "{}"), dictId, ex);
+                    log.error(msg.replace("?", "{}"), dictId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format(msg.replace("?", "%s"), dictId), ex));
                 });

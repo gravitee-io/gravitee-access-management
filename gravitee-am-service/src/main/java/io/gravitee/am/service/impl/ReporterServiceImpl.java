@@ -54,8 +54,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -73,6 +71,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -80,9 +79,9 @@ import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDat
  */
 @Component
 @Primary
+@CustomLog
 public class ReporterServiceImpl implements ReporterService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     private static final int TABLE_SUFFIX_MAX_LENGTH = 30;
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
     private static final String REPORTER_AM_FILE = "reporter-am-file";
@@ -118,37 +117,37 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Override
     public Flowable<Reporter> findAll() {
-        LOGGER.debug("Find all reporters");
+        log.debug("Find all reporters");
         return reporterRepository.findAll()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all reporter", ex);
+                    log.error("An error occurs while trying to find all reporter", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all reporters", ex));
                 });
     }
 
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
-        LOGGER.debug("Find reporters for: {}", reference);
+        log.debug("Find reporters for: {}", reference);
         return reporterRepository.findByReference(reference)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find reporters by domain: {}", reference, ex);
+                    log.error("An error occurs while trying to find reporters by domain: {}", reference, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", reference), ex));
                 });
     }
 
     @Override
     public Maybe<Reporter> findById(String id) {
-        LOGGER.debug("Find reporter by id: {}", id);
+        log.debug("Find reporter by id: {}", id);
         return reporterRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find reporters by id: {}", id, ex);
+                    log.error("An error occurs while trying to find reporters by id: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by id: %s", id), ex));
                 });
     }
 
     @Override
     public Single<Reporter> createDefault(Reference reference) {
-        LOGGER.debug("Create default reporter for  {}", reference);
+        log.debug("Create default reporter for  {}", reference);
         NewReporter newReporter = createInternal(reference);
         if (newReporter == null) {
             return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty(MANAGEMENT_TYPE) + " not found"));
@@ -158,7 +157,7 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Override
     public Single<Reporter> createSystem(Reference reference, String id, String automationKey, User principal) {
-        LOGGER.debug("Create system (Automation API) reporter for {} with key {}", reference, automationKey);
+        log.debug("Create system (Automation API) reporter for {} with key {}", reference, automationKey);
         NewReporter base = createInternal(reference);
         if (base == null) {
             return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty(MANAGEMENT_TYPE) + " not found"));
@@ -186,7 +185,7 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Override
     public Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system) {
-        LOGGER.debug("Create a new reporter {} for {}", newReporter, reference);
+        log.debug("Create a new reporter {} for {}", newReporter, reference);
 
         var now = new Date();
         if (reference.type() != ReferenceType.ORGANIZATION && newReporter.isInherited()) {
@@ -230,7 +229,7 @@ public class ReporterServiceImpl implements ReporterService {
                             return eventService.create(event).flatMap(e -> Single.just(createdReporter));
                         })
                         .onErrorResumeNext(ex -> {
-                            LOGGER.error("An error occurs while trying to create a reporter", ex);
+                            log.error("An error occurs while trying to create a reporter", ex);
                             String message = "An error occurs while trying to create a reporter. ";
                             if (ex instanceof ReporterConfigurationException) {
                                 message += ex.getMessage();
@@ -248,7 +247,7 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Override
     public Single<Reporter> update(Reference reference, String reporterId, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
-        LOGGER.debug("Update a reporter {} for {}", reporterId, reference);
+        log.debug("Update a reporter {} for {}", reporterId, reference);
 
         return reporterRepository.findById(reporterId)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(reporterId)))
@@ -264,7 +263,7 @@ public class ReporterServiceImpl implements ReporterService {
                     return licenseCheck.andThen(Single.defer(() -> doUpdate(updateReporter, oldReporter, isUpgrader)));
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to update a reporter", ex);
+                    log.error("An error occurs while trying to update a reporter", ex);
                     String message = "An error occurs while trying to update a reporter. ";
                     if (ex instanceof ReporterConfigurationException) {
                         message += ex.getMessage();
@@ -308,7 +307,7 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Override
     public Completable delete(String reporterId, User principal, boolean removeSystemReporter) {
-        LOGGER.debug("Delete reporter {}", reporterId);
+        log.debug("Delete reporter {}", reporterId);
         return reporterRepository.findById(reporterId)
                 .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                 .flatMapCompletable(reporter -> {
@@ -327,7 +326,7 @@ public class ReporterServiceImpl implements ReporterService {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to delete reporter: {}", reporterId, ex);
+                    log.error("An error occurs while trying to delete reporter: {}", reporterId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete reporter: %s", reporterId), ex));
                 });
@@ -506,7 +505,7 @@ public class ReporterServiceImpl implements ReporterService {
             return tableSuffix;
         }
         try {
-            LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
+            log.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
             byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
             return BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
         } catch (NoSuchAlgorithmException e) {
@@ -540,7 +539,7 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     private Optional<String> getMongoServers(RepositoriesEnvironment env) {
-        LOGGER.debug("Looking for MongoDB server configuration...");
+        log.debug("Looking for MongoDB server configuration...");
         boolean found = true;
         int idx = 0;
         List<String> endpoints = new ArrayList<>();

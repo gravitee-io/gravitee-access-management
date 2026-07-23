@@ -27,7 +27,7 @@ import io.gravitee.node.api.cache.CacheException;
 import io.gravitee.node.api.cache.CacheManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class UserStoreImpl implements UserStore {
 
     private final Cache<String, User> idCache;

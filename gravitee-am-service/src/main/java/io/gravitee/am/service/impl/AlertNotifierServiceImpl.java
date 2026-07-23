@@ -40,13 +40,12 @@ import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHold
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import lombok.CustomLog;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -54,9 +53,9 @@ import java.util.Date;
  */
 @Component
 @Primary
+@CustomLog
 public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNotifierService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertNotifierServiceImpl.class);
 
     private final AlertNotifierRepository alertNotifierRepository;
     private final AuditService auditService;
@@ -84,7 +83,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
      */
     @Override
     public Single<AlertNotifier> getById(ReferenceType referenceType, String referenceId, String notifierId) {
-        LOGGER.debug("Find alert notifier by id {}", notifierId);
+        log.debug("Find alert notifier by id {}", notifierId);
 
         return this.alertNotifierRepository.findById(notifierId)
                 .filter(alertNotifier -> alertNotifier.getReferenceType() == referenceType && alertNotifier.getReferenceId().equals(referenceId))
@@ -113,7 +112,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
      */
     @Override
     public Flowable<AlertNotifier> findByReferenceAndCriteria(ReferenceType referenceType, String referenceId, AlertNotifierCriteria criteria) {
-        LOGGER.debug("Find alert notifier by {} {} and criteria {}", referenceType, referenceId, criteria);
+        log.debug("Find alert notifier by {} {} and criteria {}", referenceType, referenceId, criteria);
 
         return alertNotifierRepository.findByCriteria(referenceType, referenceId, criteria);
     }
@@ -129,7 +128,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
      */
     @Override
     public Single<AlertNotifier> create(ReferenceType referenceType, String referenceId, NewAlertNotifier newAlertNotifier, User byUser) {
-        LOGGER.debug("Create alert notifier for {} {}: {}", referenceType, referenceId, newAlertNotifier);
+        log.debug("Create alert notifier for {} {}: {}", referenceType, referenceId, newAlertNotifier);
 
         final AlertNotifier alertNotifier = newAlertNotifier.toAlertNotifier(referenceType, referenceId);
         return pluginLicenseGate.check(new Reference(referenceType, referenceId), PluginLicenseGate.TYPE_NOTIFIER, alertNotifier.getType())
@@ -147,7 +146,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
      */
     @Override
     public Single<AlertNotifier> update(ReferenceType referenceType, String referenceId, String alertNotifierId, PatchAlertNotifier patchAlertNotifier, User byUser) {
-        LOGGER.debug("Update alert notifier for {}: {}", alertNotifierId, patchAlertNotifier);
+        log.debug("Update alert notifier for {}: {}", alertNotifierId, patchAlertNotifier);
 
         return this.getById(referenceType, referenceId, alertNotifierId)
                 .flatMap(alertNotifier -> {

@@ -83,7 +83,7 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -112,7 +112,7 @@ import static java.lang.Boolean.TRUE;
  * @author GraviteeSource Team
  */
 @Component("managementUserService")
-@Slf4j
+@CustomLog
 public class ManagementUserServiceImpl implements ManagementUserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";

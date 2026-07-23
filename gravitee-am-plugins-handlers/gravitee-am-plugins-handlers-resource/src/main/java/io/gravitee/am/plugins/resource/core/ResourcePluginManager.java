@@ -24,23 +24,22 @@ import io.gravitee.am.resource.api.Resource;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class ResourcePluginManager
         extends ProviderPluginManager<Resource<?, ResourceProvider>, ResourceProvider, ProviderConfiguration>
         implements AmPluginManager<Resource<?, ResourceProvider>> {
 
-    private final Logger logger = LoggerFactory.getLogger(ResourcePluginManager.class);
 
     private final ConfigurationFactory<ResourceConfiguration> configurationFactory;
     private final ExecutorService executorService;
@@ -55,9 +54,9 @@ public class ResourcePluginManager
 
     @Override
     public ResourceProvider create(ProviderConfiguration providerConfig) {
-        logger.debug("Looking for a resource for [{}]", providerConfig.getType());
+        log.debug("Looking for a resource for [{}]", providerConfig.getType());
         var resource = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No resource is registered for type {}", providerConfig.getType());
+            log.error("No resource is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No resource is registered for type " + providerConfig.getType());
         });
 

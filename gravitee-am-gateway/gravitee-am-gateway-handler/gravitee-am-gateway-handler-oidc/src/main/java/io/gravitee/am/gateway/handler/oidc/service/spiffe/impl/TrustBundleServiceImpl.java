@@ -27,13 +27,12 @@ import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.gravitee.am.service.utils.PrivateAddressGuard;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import lombok.CustomLog;
 
 /**
  * Caches JWKS bundles per trust domain. Refresh policy:
@@ -46,9 +45,9 @@ import java.util.concurrent.TimeUnit;
  *       Hard expiry (a multiple of the soft interval, ≥ 1h) bounds how long stale data is served.</li>
  * </ul>
  */
+@CustomLog
 public class TrustBundleServiceImpl implements TrustBundleService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrustBundleServiceImpl.class);
 
     /** Hard-TTL multiplier — entries this much past the soft refresh interval are not served stale. */
     private static final int HARD_TTL_MULTIPLIER = 4;
@@ -144,7 +143,7 @@ public class TrustBundleServiceImpl implements TrustBundleService {
                 .doOnSuccess(jwks -> cache.put(trustDomain.getId(), new CachedBundle(jwks, Instant.now())))
                 .onErrorResumeNext(error -> {
                     if (existing != null) {
-                        LOGGER.warn("Failed to refresh trust bundle for {} ({}); serving stale bundle from {}",
+                        log.warn("Failed to refresh trust bundle for {} ({}); serving stale bundle from {}",
                                 trustDomain.getName(), error.getMessage(), existing.fetchedAt);
                         return Maybe.just(existing.jwks);
                     }

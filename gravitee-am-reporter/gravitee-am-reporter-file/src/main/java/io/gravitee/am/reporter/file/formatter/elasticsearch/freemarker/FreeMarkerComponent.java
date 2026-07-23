@@ -21,7 +21,6 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * Utility Spring bean that encapsulates FreeMarker tools.
@@ -38,10 +38,10 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FreeMarkerComponent implements InitializingBean {
 
     /** Logger. */
-    private final Logger logger = LoggerFactory.getLogger(FreeMarkerComponent.class);
 
     /**
      * The name of the directory containing the freemarker templates.
@@ -75,7 +75,7 @@ public class FreeMarkerComponent implements InitializingBean {
             generateFromTemplate(templateName, data, output);
             return output.getBuffer().toString();
         } catch (final IOException exception) {
-            logger.error("Impossible to generate from template {}", templateName, exception);
+            log.error("Impossible to generate from template {}", templateName, exception);
             throw new IllegalArgumentException();
         }
     }
@@ -90,7 +90,7 @@ public class FreeMarkerComponent implements InitializingBean {
             final Template template = this.configuration.getTemplate(templateName);
             template.process(data, writer);
         } catch (final IOException | TemplateException exception) {
-            logger.error("Impossible to generate from template " + templateName, exception);
+            log.error("Impossible to generate from template " + templateName, exception);
             throw new IllegalArgumentException();
         }
     }

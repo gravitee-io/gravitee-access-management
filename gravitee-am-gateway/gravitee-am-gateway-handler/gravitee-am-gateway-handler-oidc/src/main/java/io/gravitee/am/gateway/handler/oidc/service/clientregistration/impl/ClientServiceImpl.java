@@ -41,8 +41,6 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -50,6 +48,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -58,10 +57,10 @@ import java.util.HashSet;
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class ClientServiceImpl implements ClientService {
 
     public static final String DEFAULT_CLIENT_NAME = "Unknown Client";
-    private final Logger LOGGER = LoggerFactory.getLogger(ClientServiceImpl.class);
 
     @Autowired
     private ApplicationService applicationService;
@@ -71,7 +70,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Maybe<Client> findById(String id) {
-        LOGGER.debug("Find client by ID: {}", id);
+        log.debug("Find client by ID: {}", id);
         return applicationService.findById(id)
                 .map(application -> {
                     Client client = application.toClient();
@@ -85,7 +84,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Single<Client> create(Domain domain, Client client) {
-        LOGGER.debug("Create a client {} for domain {}", client, client.getDomain());
+        log.debug("Create a client {} for domain {}", client, client.getDomain());
 
         if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
@@ -122,7 +121,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Single<Client> update(Client client) {
-        LOGGER.debug("Update client {} for domain {}", client.getClientId(), client.getDomain());
+        log.debug("Update client {} for domain {}", client.getClientId(), client.getDomain());
 
         if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
@@ -134,13 +133,13 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Completable delete(String clientId, User principal, Domain domain) {
-        LOGGER.debug("Delete client {}", clientId);
+        log.debug("Delete client {}", clientId);
         return applicationService.delete(clientId, principal, domain);
     }
 
     @Override
     public Single<Client> renewClientSecret(Domain domain, Client client, String clientSecretId, User principal) {
-        LOGGER.debug("Renew client secret for client {} in domain {}", client.getId(), domain);
+        log.debug("Renew client secret for client {} in domain {}", client.getId(), domain);
         return applicationSecretService.renew(domain, convert(client), clientSecretId, principal).map(Application::toClient);
     }
 

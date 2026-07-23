@@ -63,8 +63,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Setter;
 import net.minidev.json.JSONArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -81,15 +79,16 @@ import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 import static org.springframework.util.ObjectUtils.isEmpty;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class TokenServiceImpl implements TokenService {
 
-    private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private static final String PERMISSIONS = "permissions";
     private static final String AUTHORIZATION_DETAILS = "authorization_details";
 
@@ -541,7 +540,7 @@ public class TokenServiceImpl implements TokenService {
         var jsonArray = new JSONArray();
         jsonArray.addAll(resource);
 
-        logger.debug("resources: {}, JTI: {}, client ID:{}", jsonArray, jwt.getJti(), request.getClientId());
+        log.debug("resources: {}, JTI: {}, client ID:{}", jsonArray, jwt.getJti(), request.getClientId());
 
         jwt.put(Claims.AUD, jsonArray);
     }
@@ -649,9 +648,9 @@ public class TokenServiceImpl implements TokenService {
             var jsonArray = new JSONArray();
             jsonArray.addAll(origResources);
             jwt.put(Claims.ORIG_RESOURCES, jsonArray);
-            logger.debug("Refresh token {} stored: {}, JTI: {}", Claims.ORIG_RESOURCES, jsonArray, jwt.getJti());
+            log.debug("Refresh token {} stored: {}, JTI: {}", Claims.ORIG_RESOURCES, jsonArray, jwt.getJti());
         } else {
-            logger.debug("No {} to store in refresh token, JTI: {}", Claims.ORIG_RESOURCES, jwt.getJti());
+            log.debug("No {} to store in refresh token, JTI: {}", Claims.ORIG_RESOURCES, jwt.getJti());
         }
     }
 
@@ -672,13 +671,13 @@ public class TokenServiceImpl implements TokenService {
         // 2) Use original authorization resources captured on the request
         Set<String> originalAuthorizationResources = request.getOriginalAuthorizationResources();
         if (originalAuthorizationResources != null && !originalAuthorizationResources.isEmpty()) {
-            logger.debug("Using original authorization resources from request field: {}", originalAuthorizationResources);
+            log.debug("Using original authorization resources from request field: {}", originalAuthorizationResources);
             return new java.util.LinkedHashSet<>(originalAuthorizationResources);
         }
 
         // 3) Fall back to current request resources
         Set<String> originalResources = request.getResources();
-        logger.debug("Falling back to request resources: {}", originalResources);
+        log.debug("Falling back to request resources: {}", originalResources);
         return originalResources == null ? java.util.Set.of() : new java.util.LinkedHashSet<>(originalResources);
     }
 

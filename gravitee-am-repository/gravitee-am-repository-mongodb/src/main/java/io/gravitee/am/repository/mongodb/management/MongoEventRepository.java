@@ -33,8 +33,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -51,15 +49,16 @@ import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.repository.common.RevokeTokenConverter.toRevokeToken;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MongoEventRepository extends AbstractManagementMongoRepository implements EventRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(MongoEventRepository.class);
     public static final String ACTION = "action";
     public static final String DATA_PLANE_ID = "dataPlaneId";
     private MongoCollection<EventMongo> eventsCollection;

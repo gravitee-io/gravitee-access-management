@@ -35,8 +35,6 @@ import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -44,13 +42,14 @@ import org.springframework.util.CollectionUtils;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class FactorManagerImpl extends AbstractService implements FactorManager, EventListener<FactorEvent, Payload>, InitializingBean {
-    static final Logger logger = LoggerFactory.getLogger(FactorManagerImpl.class);
     private final ConcurrentMap<String, FactorProvider> factorProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Factor> factors = new ConcurrentHashMap<>();
 
@@ -74,12 +73,12 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Initializing factors for domain {}", domain.getName());
+        log.info("Initializing factors for domain {}", domain.getName());
         factorService.findByDomain(domain.getId())
                 .subscribe(
                         this::updateFactor,
                         error -> {
-                            logger.error("Unable to initialize factors for domain {}", domain.getName(), error);
+                            log.error("Unable to initialize factors for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.FACTOR.name(), error.getMessage());
                         });
     }
@@ -88,7 +87,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for factor events for domain {}", domain.getName());
+        log.info("Register event listener for factor events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, FactorEvent.class, domain.getId());
     }
 
@@ -96,7 +95,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for factor events for domain {}", domain.getName());
+        log.info("Dispose event listener for factor events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, FactorEvent.class, domain.getId());
     }
 
@@ -132,23 +131,23 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     private void updateFactor(String factorId, FactorEvent factorEvent) {
         final String eventType = factorEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);
+        log.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);
         domainReadinessService.initPluginSync(domain.getId(), factorId, Type.FACTOR.name());
         factorService.findById(factorId)
                 .subscribe(
                         this::updateFactor,
                         error -> {
-                            logger.error("Unable to load factor for domain {}", domain.getName(), error);
+                            log.error("Unable to load factor for domain {}", domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), factorId, error.getMessage());
                         },
                         () -> {
-                            logger.error("No factor found with id {}", factorId);
+                            log.error("No factor found with id {}", factorId);
                             domainReadinessService.pluginFailed(domain.getId(), factorId, "No factor found with id " + factorId);
                         });
     }
 
     private void removeFactor(String factorId) {
-        logger.info("Domain {} has received form event, remove factor {}", domain.getName(), factorId);
+        log.info("Domain {} has received form event, remove factor {}", domain.getName(), factorId);
         factorProviders.remove(factorId);
         factors.remove(factorId);
         domainReadinessService.pluginUnloaded(domain.getId(), factorId);
@@ -167,16 +166,16 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
                 var factorProvider = factorPluginManager.create(factorProviderConfig);
                 this.factorProviders.put(factor.getId(), factorProvider);
                 this.factors.put(factor.getId(), factor);
-                logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
+                log.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
             } else {
-                logger.info("Factor {} already loaded for domain {}", factor.getName(), domain.getName());
+                log.info("Factor {} already loaded for domain {}", factor.getName(), domain.getName());
             }
 
             domainReadinessService.pluginLoaded(domain.getId(), factor.getId());
         } catch (Exception ex) {
             this.factorProviders.remove(factor.getId());
             this.factors.remove(factor.getId());
-            logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
+            log.error("Unable to create factor provider for domain {}", domain.getName(), ex);
             domainReadinessService.pluginFailed(domain.getId(), factor.getId(), ex.getMessage());
         }
     }

@@ -31,12 +31,11 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.CustomLog;
 
 /**
  * Resolves an external JWT subject to a domain user using trusted issuer user binding criteria.
@@ -45,9 +44,9 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @RequiredArgsConstructor
+@CustomLog
 public class TrustedIssuerUserResolver implements TokenExchangeUserResolver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrustedIssuerUserResolver.class);
     private static final String TOKEN_VARIABLE = "token";
 
     private final UserGatewayService userGatewayService;
@@ -94,14 +93,14 @@ public class TrustedIssuerUserResolver implements TokenExchangeUserResolver {
             String attribute = c.getAttribute();
             String expression = c.getExpression();
             if (StringUtils.isBlank(attribute) || StringUtils.isBlank(expression)) {
-                LOGGER.warn("Token binding: skipping criterion with blank attribute='{}' or expression='{}'", attribute, expression);
+                log.warn("Token binding: skipping criterion with blank attribute='{}' or expression='{}'", attribute, expression);
                 continue;
             }
             Object value;
             try {
                 value = engine.getValue(expression, Object.class);
             } catch (ExpressionEvaluationException e) {
-                LOGGER.debug("Token binding: EL evaluation failed for expression '{}'", expression, e);
+                log.debug("Token binding: EL evaluation failed for expression '{}'", expression, e);
                 throw new InvalidRequestException("Token binding: expression evaluation failed: " + e.getMessage());
             }
             if (value == null) {

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.core.email.impl;
 import io.gravitee.am.gateway.core.email.EmailStagingStateProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class EmailStagingStateProviderImpl implements EmailStagingStateProvider, InitializingBean, DisposableBean {
 
     private final Map<String, Boolean> domainsToProcess = new ConcurrentHashMap<>();

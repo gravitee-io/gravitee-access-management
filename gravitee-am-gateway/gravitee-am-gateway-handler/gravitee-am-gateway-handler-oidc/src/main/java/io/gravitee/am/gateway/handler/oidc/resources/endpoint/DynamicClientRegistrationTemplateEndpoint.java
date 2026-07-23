@@ -23,18 +23,17 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DynamicClientRegistrationTemplateEndpoint implements Handler<RoutingContext> {
 
     private ClientSyncService clientSyncService;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationTemplateEndpoint.class);
 
     public DynamicClientRegistrationTemplateEndpoint(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
@@ -42,7 +41,7 @@ public class DynamicClientRegistrationTemplateEndpoint implements Handler<Routin
 
     @Override
     public void handle(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration TEMPLATE endpoint");
+        log.debug("Dynamic client registration TEMPLATE endpoint");
 
         this.clientSyncService.findTemplates()
                 .subscribe(

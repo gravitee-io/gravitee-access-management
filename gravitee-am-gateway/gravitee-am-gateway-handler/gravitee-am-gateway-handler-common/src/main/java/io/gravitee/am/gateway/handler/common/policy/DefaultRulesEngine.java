@@ -39,22 +39,21 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.impl.AsyncResultSingle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DefaultRulesEngine implements RulesEngine {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRulesEngine.class);
 
     @Autowired
     private PolicyChainProcessorFactory policyChainProcessorFactory;
@@ -71,7 +70,7 @@ public class DefaultRulesEngine implements RulesEngine {
     @Override
     public Completable fire(List<Rule> rules, ExecutionContext executionContext) {
         if (rules.isEmpty()) {
-            LOGGER.debug("No rules registered!");
+            log.debug("No rules registered!");
             return Completable.complete();
         }
 
@@ -95,7 +94,7 @@ public class DefaultRulesEngine implements RulesEngine {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
                                 if (policies.isEmpty()) {
-                                    LOGGER.debug("No policies registered for flow {}", extensionPoint.toString());
+                                    log.debug("No policies registered for flow {}", extensionPoint.toString());
                                     return Single.just(executionContext);
                                 }
                                 return rxExecutePolicyChain(policies, executionContext);

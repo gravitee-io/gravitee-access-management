@@ -43,8 +43,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -58,11 +56,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.common.event.Type.TRUST_DOMAIN;
+import lombok.CustomLog;
 
 @Component
+@CustomLog
 public class TrustDomainServiceImpl implements TrustDomainService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrustDomainServiceImpl.class);
 
     /**
      * SPIFFE trust-domain names are case-insensitive DNS-style host labels per the

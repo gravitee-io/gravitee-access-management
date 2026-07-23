@@ -28,13 +28,12 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.springframework.util.StringUtils.hasLength;
+import lombok.CustomLog;
 
 /**
  * Handle OpenID Connect response with response_type = id_token or id_token token.
@@ -43,9 +42,9 @@ import static org.springframework.util.StringUtils.hasLength;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginCallbackOpenIDConnectFlowHandler.class);
     private static final String RELAY_STATE_PARAM_KEY = "RelayState";
     private final ThymeleafTemplateEngine engine;
 
@@ -109,7 +108,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                             context.response().end(buffer);
                         },
                         throwable -> {
-                            logger.error("Unable to render login callback page", throwable);
+                            log.error("Unable to render login callback page", throwable);
                             context.fail(throwable.getCause());
                         }
                 );
@@ -134,10 +133,10 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                 }
             }
         } catch (Exception e) {
-            if(logger.isDebugEnabled()){
-                logger.warn("Unable to read client_id from state token - turn DEBUG on to get more details");
+            if(log.isDebugEnabled()){
+                log.warn("Unable to read client_id from state token - turn DEBUG on to get more details");
             } else {
-                logger.warn("Unable to read client_id from state token", e);
+                log.warn("Unable to read client_id from state token", e);
             }
         }
 

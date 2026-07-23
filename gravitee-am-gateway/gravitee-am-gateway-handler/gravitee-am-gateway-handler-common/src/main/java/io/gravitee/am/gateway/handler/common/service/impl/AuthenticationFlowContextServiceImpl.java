@@ -27,21 +27,20 @@ import io.reactivex.rxjava3.functions.Function;
 import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Publisher;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RequiredArgsConstructor
+@CustomLog
 public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowContextService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFlowContextServiceImpl.class);
 
     private final AuthenticationFlowContextRepository authContextRepository;
     private final int consistencyRetries;
@@ -67,7 +66,7 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
             return context;
         })).map(context -> {
             if (context.getVersion() > 0 && context.getVersion() < expectedVersion) {
-                LOGGER.debug("Authentication Flow Context read with version '{}' but '{}' was expected", context.getVersion(), expectedVersion);
+                log.debug("Authentication Flow Context read with version '{}' but '{}' was expected", context.getVersion(), expectedVersion);
                 throw new AuthenticationFlowConsistencyException();
             }
             return context;
@@ -87,8 +86,8 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
                     // we don't want to stop the request processing due to deletion error if context is successfully loaded
                     clearContext(transactionId)
                             .subscribe(
-                                    () -> LOGGER.debug("Deletion of Authentication Flow context '{}' succeeded after loading it", transactionId),
-                                    error -> LOGGER.warn("Deletion of Authentication Flow context '{}' failed after loading it", transactionId, error));
+                                    () -> log.debug("Deletion of Authentication Flow context '{}' succeeded after loading it", transactionId),
+                                    error -> log.warn("Deletion of Authentication Flow context '{}' failed after loading it", transactionId, error));
                 } );
     }
 

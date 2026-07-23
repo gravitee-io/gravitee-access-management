@@ -24,7 +24,7 @@ import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -37,7 +37,7 @@ import static java.util.Objects.isNull;
  * @author GraviteeSource Team
  */
 
-@Slf4j
+@CustomLog
 public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Autowired

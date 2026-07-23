@@ -17,11 +17,10 @@ package io.gravitee.am.service.utils;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import lombok.CustomLog;
 
 
 /**
@@ -29,9 +28,9 @@ import java.util.function.Consumer;
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@CustomLog
 public class SetterUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SetterUtils.class);
 
     // These values are used to manage primitive types. There's 8 primitive in Java.
     private static boolean DEFAULT_BOOLEAN;
@@ -100,7 +99,7 @@ public class SetterUtils {
             return DEFAULT_DOUBLE;
         }
 
-        LOGGER.warn("should never happen except if class is not a primitive:" + primitive.isPrimitive());
+        log.warn("should never happen except if class is not a primitive:" + primitive.isPrimitive());
         return null;
     }
 

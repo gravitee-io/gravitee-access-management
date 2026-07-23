@@ -44,8 +44,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.List;
@@ -56,14 +54,15 @@ import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import lombok.CustomLog;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFARecoveryCodeEndpoint.class);
 
     private final Domain domain;
     private final UserService userService;
@@ -119,13 +118,13 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
                                     doRedirect(routingContext);
                                 },
                                 error -> {
-                                    logger.error("Failed to generate recovery code. Continue with flow as verification is successful", error);
+                                    log.error("Failed to generate recovery code. Continue with flow as verification is successful", error);
                                     doRedirect(routingContext);
                                 }
                         );
             }
         } catch (Exception ex) {
-            logger.error("An error occurs while updating recovery code factor status", ex);
+            log.error("An error occurs while updating recovery code factor status", ex);
             routingContext.fail(503);
         }
     }
@@ -151,14 +150,14 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
                             renderRecoveryCodePage(routingContext, client, recoveryCodes);
                         },
                         error -> {
-                            logger.error("Failed to generate recovery code. Continue with flow as verification is successful", error);
+                            log.error("Failed to generate recovery code. Continue with flow as verification is successful", error);
                             doRedirect(routingContext);
                         }
                 );
             }
 
         } catch (Exception ex) {
-            logger.error("An error occurs while rendering MFA recovery code page", ex);
+            log.error("An error occurs while rendering MFA recovery code page", ex);
             routingContext.fail(503);
         }
     }
@@ -193,7 +192,7 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
 
     private boolean failIfUserIsNotPresent(RoutingContext routingContext){
         if (routingContext.user() == null) {
-            logger.warn("User must be authenticated to view recovery code.");
+            log.warn("User must be authenticated to view recovery code.");
             routingContext.fail(401);
             return true;
         }
@@ -237,6 +236,6 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
 
         routingContext.put("recoveryCodeURL", recoveryCodeUrl);
         // render the mfa recovery code page
-        this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA recovery code page");
+        this.renderPage(routingContext, generateData(routingContext, domain, client), client, log, "Unable to render MFA recovery code page");
     }
 }

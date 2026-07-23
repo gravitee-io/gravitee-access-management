@@ -38,8 +38,6 @@ import io.gravitee.am.service.theme.ThemeResolution;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.exceptions.TemplateEngineException;
 import org.thymeleaf.exceptions.TemplateInputException;
@@ -55,13 +53,14 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
+import lombok.CustomLog;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class PreviewBuilder {
-    private final Logger logger = LoggerFactory.getLogger(PreviewBuilder.class);
     public static final String EMPTY_STRING = "";
     public static final String SITE_KEY = "siteKey";
     public static final String PARAMETER_NAME = "parameterName";
@@ -149,14 +148,14 @@ public class PreviewBuilder {
             final String processedTemplate = templateEngine.process(this.templateResolver.getTemplateKey(previewForm), context);
             previewForm.setContent(convertAssertsPath(processedTemplate, baseUrl));
         } catch (TemplateInputException e) {
-            logger.debug("Preview error on domain {}", this.domain.getId(), e);
+            log.debug("Preview error on domain {}", this.domain.getId(), e);
             throw new PreviewException("Preview error, document structure maybe invalid." +
                     " (error at line: " + e.getLine() + ", col: " + e.getCol() + " )");
         } catch (TemplateProcessingException e) {
-            logger.debug("Preview error on domain {}", this.domain.getId(), e);
+            log.debug("Preview error on domain {}", this.domain.getId(), e);
             throw new PreviewException("Preview error, expression or variable maybe invalid (error at line: " + e.getLine() + ", col: " + e.getCol() + ")");
         } catch (TemplateEngineException e) {
-            logger.info("Unexpected preview error on domain {}", this.domain.getId(), e);
+            log.info("Unexpected preview error on domain {}", this.domain.getId(), e);
             throw new PreviewException("Unexpected preview error");
         } finally {
             this.templateResolver.removeForm(previewForm);

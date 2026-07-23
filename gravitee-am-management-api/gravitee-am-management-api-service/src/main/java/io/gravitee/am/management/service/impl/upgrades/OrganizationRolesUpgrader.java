@@ -21,7 +21,7 @@ import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.node.api.upgrader.Upgrader;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
-@Slf4j
+@CustomLog
 public class OrganizationRolesUpgrader implements Upgrader {
 
     private final OrganizationService organizationService;

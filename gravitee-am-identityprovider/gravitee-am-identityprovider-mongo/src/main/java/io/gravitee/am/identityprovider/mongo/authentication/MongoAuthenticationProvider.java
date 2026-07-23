@@ -38,8 +38,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -49,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,9 +55,9 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
+@CustomLog
 public class MongoAuthenticationProvider extends MongoAbstractProvider implements AuthenticationProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MongoAuthenticationProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
@@ -96,19 +95,19 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                     String presentedPassword = authentication.getCredentials().toString();
 
                     if (password == null) {
-                        LOGGER.debug("Authentication failed: password is null");
+                        log.debug("Authentication failed: password is null");
                         return new UserCredentialEvaluation<>(false, user);
                     }
 
                     if (configuration.isUseDedicatedSalt()) {
                         String hash = user.getString(configuration.getPasswordSaltAttribute());
                         if (!passwordEncoder.matches(presentedPassword, password, hash)) {
-                            LOGGER.debug("Authentication failed: password does not match stored value");
+                            log.debug("Authentication failed: password does not match stored value");
                             return new UserCredentialEvaluation<>(false, user);
                         }
                     } else {
                         if (!passwordEncoder.matches(presentedPassword, password)) {
-                            LOGGER.debug("Authentication failed: password does not match stored value");
+                            log.debug("Authentication failed: password does not match stored value");
                             return new UserCredentialEvaluation<>(false, user);
                         }
                     }
@@ -119,7 +118,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                 .flatMapMaybe(userEvaluations -> {
                     final var validUsers = userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).toList();
                     if (validUsers.size() > 1) {
-                        LOGGER.debug("Authentication failed: multiple accounts with same credentials");
+                        log.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
 

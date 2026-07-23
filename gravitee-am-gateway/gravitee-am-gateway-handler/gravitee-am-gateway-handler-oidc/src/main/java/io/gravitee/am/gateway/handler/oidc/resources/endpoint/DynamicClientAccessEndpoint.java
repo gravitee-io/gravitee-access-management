@@ -28,8 +28,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.CustomLog;
 
 /**
  * This endpoint aim to access to client-id generated through the dynamic client registration protocol.
@@ -39,9 +38,9 @@ import org.slf4j.LoggerFactory;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoint {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientAccessEndpoint.class);
     public static final String NO_CACHE = "no-cache";
     public static final String NO_STORE = "no-store";
 
@@ -57,7 +56,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * @param context the routing context
      */
     public void read(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration GET endpoint");
+        log.debug("Dynamic client registration GET endpoint");
 
         this.getClient(context)
                 .map(DynamicClientRegistrationResponse::fromClient)
@@ -83,7 +82,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * @param context the routing context
      */
     public void patch(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration PATCH endpoint");
+        log.debug("Dynamic client registration PATCH endpoint");
 
         this.getClient(context)
                 .flatMapSingle(Single::just)
@@ -107,7 +106,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * @param context the routing context
      */
     public void update(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration UPDATE endpoint");
+        log.debug("Dynamic client registration UPDATE endpoint");
 
         this.getClient(context)
                 .flatMapSingle(Single::just)
@@ -131,7 +130,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * @param context the routing context
      */
     public void delete(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration DELETE endpoint");
+        log.debug("Dynamic client registration DELETE endpoint");
 
         this.getClient(context)
                 .flatMapSingle(dcrService::delete)
@@ -147,7 +146,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * @param context the routing context
      */
     public void renewClientSecret(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration RENEW SECRET endpoint");
+        log.debug("Dynamic client registration RENEW SECRET endpoint");
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMapSingle(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.resolveProxyRequest(context)))

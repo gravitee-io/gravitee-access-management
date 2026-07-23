@@ -22,11 +22,11 @@ import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository
 import io.gravitee.am.repository.oauth2.api.*;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
-@Slf4j
+@CustomLog
 public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProvider {
 
     @Lazy

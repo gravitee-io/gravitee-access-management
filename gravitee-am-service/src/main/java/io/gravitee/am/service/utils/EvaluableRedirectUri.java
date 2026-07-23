@@ -21,13 +21,13 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
-@Slf4j
+@CustomLog
 public class EvaluableRedirectUri {
     private final String fullUri;
 

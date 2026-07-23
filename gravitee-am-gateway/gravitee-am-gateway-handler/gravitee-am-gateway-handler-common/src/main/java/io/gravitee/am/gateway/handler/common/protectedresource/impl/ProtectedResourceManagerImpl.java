@@ -33,7 +33,7 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
+@CustomLog
 public class ProtectedResourceManagerImpl extends AbstractService implements ProtectedResourceManager, InitializingBean, EventListener<ProtectedResourceEvent, Payload> {
 
     @Autowired

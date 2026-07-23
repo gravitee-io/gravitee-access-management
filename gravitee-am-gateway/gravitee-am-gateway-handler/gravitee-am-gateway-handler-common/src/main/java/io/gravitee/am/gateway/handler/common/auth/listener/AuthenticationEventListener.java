@@ -27,17 +27,16 @@ import io.gravitee.am.service.reporter.builder.AuthenticationWebAuthnAuditBuilde
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthenticationEventListener extends AbstractService<AuthenticationEventListener> implements EventListener<AuthenticationEvent, AuthenticationDetails> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationEventListener.class);
 
     @Autowired
     private EventManager eventManager;
@@ -96,7 +95,7 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for authentication events for domain {}", domain.getName());
+        log.info("Register event listener for authentication events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, AuthenticationEvent.class, domain.getId());
     }
 
@@ -104,7 +103,7 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for authentication events for domain {}", domain.getName());
+        log.info("Dispose event listener for authentication events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, AuthenticationEvent.class, domain.getId());
     }
 }

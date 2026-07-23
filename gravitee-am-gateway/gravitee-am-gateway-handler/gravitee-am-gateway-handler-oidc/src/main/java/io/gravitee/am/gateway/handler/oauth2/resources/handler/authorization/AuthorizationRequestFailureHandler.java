@@ -45,8 +45,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import java.net.URISyntaxException;
@@ -61,6 +59,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static org.springframework.util.StringUtils.hasLength;
+import lombok.CustomLog;
 
 /**
  * If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
@@ -77,9 +76,9 @@ import static org.springframework.util.StringUtils.hasLength;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationRequestFailureHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestFailureHandler.class);
     private static final String ERROR_ENDPOINT = "/oauth/error";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private final JWTService jwtService;
@@ -113,7 +112,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                     // Manage exception
                     processOAuth2Exception(request, oAuth2Exception, client, defaultErrorURL, routingContext, h -> {
                         if (h.failed()) {
-                            logger.error("An error has occurred while handling authorization error response", h.cause());
+                            log.error("An error has occurred while handling authorization error response", h.cause());
                             routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                             return;
                         }
@@ -137,7 +136,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                             .setStatusCode(policyChainException.statusCode())
                             .end(Json.encodePrettily(oAuth2ErrorResponse));
                 } else {
-                    logger.error("An exception has occurred while handling authorization request", throwable);
+                    log.error("An exception has occurred while handling authorization request", throwable);
                     cleanSession(routingContext);
                     if (routingContext.statusCode() != -1) {
                         routingContext
@@ -152,7 +151,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                     }
                 }
             } catch (Exception e) {
-                logger.error("Unable to handle authorization error response", e);
+                log.error("Unable to handle authorization error response", e);
                 doRedirect(routingContext, routingContext.get(CONTEXT_PATH) + ERROR_ENDPOINT);
             }
         }

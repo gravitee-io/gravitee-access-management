@@ -34,8 +34,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,14 +45,15 @@ import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
 import static io.gravitee.am.model.Template.LOGIN;
 import static io.gravitee.am.model.Template.REGISTRATION;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@CustomLog
 public class RegisterEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RegisterEndpoint.class);
     private static final String TEMPLATE_ERROR_MESSAGE = "Unable to render registration page";
 
     private final Domain domain;
@@ -113,7 +112,7 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
         data.putAll(deviceIdentifierManager.getTemplateVariables(client));
         // render the registration confirmation page
-        this.renderPage(routingContext, data, client, logger, TEMPLATE_ERROR_MESSAGE);
+        this.renderPage(routingContext, data, client, log, TEMPLATE_ERROR_MESSAGE);
     }
 
     @Override

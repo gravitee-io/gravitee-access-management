@@ -35,20 +35,19 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.CustomLog;
 
 /**
  * @author GraviteeSource Team
  */
+@CustomLog
 public class AuthorizationEngineManagerImpl extends AbstractService implements AuthorizationEngineManager, InitializingBean, EventListener<AuthorizationEngineEvent, Payload> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationEngineManagerImpl.class);
 
     @Autowired
     private Domain domain;
@@ -90,24 +89,24 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Initializing authorization engines for domain {}", domain.getName());
+        log.info("Initializing authorization engines for domain {}", domain.getName());
 
         authorizationEngineRepository.findByDomain(domain.getId())
                 .flatMapSingle(authorizationEngine ->
                         loadAuthorizationEngine(authorizationEngine)
                                 .doOnSuccess(ae ->
-                                        logger.info("Authorization engine {} loaded for domain {}", ae.getName(), domain.getName()))
+                                        log.info("Authorization engine {} loaded for domain {}", ae.getName(), domain.getName()))
                                 .doOnError(error ->
-                                        logger.warn("Failed to load authorization engine {} for domain {}",
+                                        log.warn("Failed to load authorization engine {} for domain {}",
                                                 authorizationEngine.getName(), domain.getName(), error))
                 )
                 .ignoreElements()
                 .doOnComplete(() ->
-                        logger.info("All authorization engines initialized for domain {}", domain.getName()))
+                        log.info("All authorization engines initialized for domain {}", domain.getName()))
                 .subscribe(
                         () -> {}, // complete handled above
                         error -> {
-                            logger.error("Unexpected error while initializing authorization engines for domain {}", domain.getName(), error);
+                            log.error("Unexpected error while initializing authorization engines for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.AUTHORIZATION_ENGINE.name(), error.getMessage());
                         }
                 );
@@ -117,7 +116,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for authorization engine events for domain {}", domain.getName());
+        log.info("Register event listener for authorization engine events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
     }
 
@@ -125,7 +124,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for authorization engine events for domain {}", domain.getName());
+        log.info("Dispose event listener for authorization engine events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
         clearProviders();
     }
@@ -144,22 +143,22 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     private Single<AuthorizationEngine> loadAuthorizationEngine(AuthorizationEngine authorizationEngine) {
-        logger.info("Loading authorization engine: {} [{}]", authorizationEngine.getName(), authorizationEngine.getType());
+        log.info("Loading authorization engine: {} [{}]", authorizationEngine.getName(), authorizationEngine.getType());
         return deployProvider(authorizationEngine);
     }
 
     private void updateAuthorizationEngine(String authorizationEngineId, AuthorizationEngineEvent authorizationEngineEvent) {
         final String eventType = authorizationEngineEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} authorization engine event for {}",
+        log.info("Domain {} has received {} authorization engine event for {}",
                 domain.getName(), eventType, authorizationEngineId);
         authorizationEngineRepository.findById(authorizationEngineId)
                 .flatMapSingle(authorizationEngine ->
                         loadAuthorizationEngine(authorizationEngine)
-                                .doOnSuccess(ae -> logger.info("Authorization engine {} {} for domain {}", authorizationEngineId, eventType, domain.getName()))
-                                .doOnError(error -> logger.error("Unable to {} authorization engine for domain {}", eventType, domain.getName(), error)))
-                .switchIfEmpty(Maybe.fromRunnable(() -> logger.error("No authorization engine found with id {}", authorizationEngineId)))
+                                .doOnSuccess(ae -> log.info("Authorization engine {} {} for domain {}", authorizationEngineId, eventType, domain.getName()))
+                                .doOnError(error -> log.error("Unable to {} authorization engine for domain {}", eventType, domain.getName(), error)))
+                .switchIfEmpty(Maybe.fromRunnable(() -> log.error("No authorization engine found with id {}", authorizationEngineId)))
                 .onErrorComplete(error -> {
-                    logger.error("An error has occurred when {} authorization engine {} for domain {}",
+                    log.error("An error has occurred when {} authorization engine {} for domain {}",
                             eventType, authorizationEngineId, domain.getName(), error);
                     return true;
                 })
@@ -168,7 +167,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     private void removeAuthorizationEngine(String authorizationEngineId) {
-        logger.info("Domain {} has received authorization engine event, delete authorization engine {}", domain.getName(), authorizationEngineId);
+        log.info("Domain {} has received authorization engine event, delete authorization engine {}", domain.getName(), authorizationEngineId);
         clearProvider(authorizationEngineId);
     }
 
@@ -186,7 +185,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
             if (provider != null) {
                 providers.put(authorizationEngine.getId(), provider);
 
-                logger.info("Authorization engine {} deployed for domain {}", authorizationEngine.getId(), domain.getName());
+                log.info("Authorization engine {} deployed for domain {}", authorizationEngine.getId(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), authorizationEngine.getId());
                 return Single.just(authorizationEngine);
             } else {
@@ -195,7 +194,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 return Single.error(new IllegalStateException(errorMsg));
             }
         } catch (Exception ex) {
-            logger.error("An error has occurred while loading authorization engine: {} [{}]",
+            log.error("An error has occurred while loading authorization engine: {} [{}]",
                     authorizationEngine.getName(), authorizationEngine.getType(), ex);
             clearProvider(authorizationEngine.getId());
             domainReadinessService.pluginFailed(domain.getId(), authorizationEngine.getId(), ex.getMessage());
@@ -219,10 +218,10 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 if (updateReadiness) {
                     domainReadinessService.pluginUnloaded(domain.getId(), authorizationEngineId);
                 }
-                logger.info("Stopping authorization engine provider: {}", authorizationEngineId);
+                log.info("Stopping authorization engine provider: {}", authorizationEngineId);
                 provider.stop();
             } catch (Exception e) {
-                logger.error("An error has occurred while stopping the authorization engine provider: {}", authorizationEngineId, e);
+                log.error("An error has occurred while stopping the authorization engine provider: {}", authorizationEngineId, e);
             }
         }
     }

@@ -21,7 +21,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jose.util.health.HealthStatus;
 import io.gravitee.am.identityprovider.api.oidc.jwt.JWKSourceResolver;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 
 import java.net.URI;
 
@@ -29,7 +29,7 @@ import java.net.URI;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
+@CustomLog
 public class RemoteJWKSourceResolver<C extends SecurityContext> implements JWKSourceResolver<C> {
 
     private final String url;

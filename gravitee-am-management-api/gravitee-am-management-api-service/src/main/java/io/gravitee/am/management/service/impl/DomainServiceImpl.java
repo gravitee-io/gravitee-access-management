@@ -118,8 +118,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -144,6 +142,7 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import lombok.CustomLog;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -154,6 +153,7 @@ import static java.util.Optional.ofNullable;
 @Primary
 @AllArgsConstructor
 @NoArgsConstructor
+@CustomLog
 public class DomainServiceImpl implements DomainService {
     /**
      * According to <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#auth_request">Auth request</a>
@@ -167,7 +167,6 @@ public class DomainServiceImpl implements DomainService {
 
     private static final Pattern HOSTNAME_PATTERN = Pattern.compile(HOSTNAME_REGEX);
 
-    private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
@@ -308,7 +307,7 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Single<Domain> findByHrid(String environmentId, String hrid) {
-        LOGGER.debug("Find domain by hrid: {}", hrid);
+        log.debug("Find domain by hrid: {}", hrid);
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(hrid)))
                 .onErrorResumeNext(ex -> {
@@ -316,7 +315,7 @@ public class DomainServiceImpl implements DomainService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error has occurred when trying to find a domain using its hrid: {}", hrid, ex);
+                    log.error("An error has occurred when trying to find a domain using its hrid: {}", hrid, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error has occurred when trying to find a domain using its hrid: %s", hrid), ex));
                 });
@@ -324,25 +323,25 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Flowable<Domain> search(String organizationId, String environmentId, String query) {
-        LOGGER.debug("Search domains with query {} for environmentId {}", query, environmentId);
+        log.debug("Search domains with query {} for environmentId {}", query, environmentId);
         return environmentService.findById(environmentId, organizationId)
                 .map(Environment::getId)
                 .flatMapPublisher(envId -> domainRepository.search(environmentId, query))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred when trying to search domains with query {} for environmentId {}", query, environmentId, ex);
+                    log.error("An error has occurred when trying to search domains with query {} for environmentId {}", query, environmentId, ex);
                     return Flowable.empty();
                 });
     }
 
     @Override
     public Flowable<Domain> findAllByEnvironment(String organizationId, String environmentId) {
-        LOGGER.debug("Find all domains of environment {} (organization {})", environmentId, organizationId);
+        log.debug("Find all domains of environment {} (organization {})", environmentId, organizationId);
 
         return environmentService.findById(environmentId, organizationId)
                 .map(Environment::getId)
                 .flatMapPublisher(envId -> domainRepository.findAllByReferenceId(envId))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred when trying to find domains by environment", ex);
+                    log.error("An error has occurred when trying to find domains by environment", ex);
                     return Flowable.empty();
                 });
     }
@@ -359,23 +358,23 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Flowable<Domain> findAllByCriteria(DomainCriteria criteria) {
-        LOGGER.debug("Find all domains by criteria");
+        log.debug("Find all domains by criteria");
         return domainRepository.findAllByCriteria(criteria);
     }
 
     @Override
     public Flowable<Domain> findByIdIn(Collection<String> ids) {
-        LOGGER.debug("Find domains by id in {}", ids);
+        log.debug("Find domains by id in {}", ids);
         return domainRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurred while trying to find domains by id in {}", ids, ex);
+                    log.error("An error occurred while trying to find domains by id in {}", ids, ex);
                     return Flowable.error(new TechnicalManagementException("An error occurred while trying to find domains by id in", ex));
                 });
     }
 
     @Override
     public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
-        LOGGER.debug("Create a new domain: {}", newDomain);
+        log.debug("Create a new domain: {}", newDomain);
         var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
         String hrid = IdGenerator.generate(newDomain.getName());
         if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
@@ -470,7 +469,7 @@ public class DomainServiceImpl implements DomainService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurred while trying to create a domain", ex);
+                    log.error("An error occurred while trying to create a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
                 })
                 .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
@@ -487,7 +486,7 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
-        LOGGER.debug("Update an existing domain: {}", domain);
+        log.debug("Update an existing domain: {}", domain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(existingDomain -> {
@@ -519,14 +518,14 @@ public class DomainServiceImpl implements DomainService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurred while trying to update a domain", ex);
+                    log.error("An error occurred while trying to update a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurred while trying to update a domain", ex));
                 });
     }
 
     @Override
     public Single<Domain> patch(GraviteeContext graviteeContext, String domainId, PatchDomain patchDomain, User principal) {
-        LOGGER.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
+        log.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(oldDomain -> {
@@ -582,7 +581,7 @@ public class DomainServiceImpl implements DomainService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurred while trying to patch a domain", ex);
+                    log.error("An error occurred while trying to patch a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurred while trying to patch a domain", ex));
                 });
     }
@@ -593,7 +592,7 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Single<Domain> updateCertificateSettings(GraviteeContext graviteeContext, String domainId, CertificateSettings certificateSettings, User principal) {
-        LOGGER.debug("Updating certificate settings for domain: {}", domainId);
+        log.debug("Updating certificate settings for domain: {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(oldDomain -> {
@@ -621,14 +620,14 @@ public class DomainServiceImpl implements DomainService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurred while trying to update certificate settings for domain", ex);
+                    log.error("An error occurred while trying to update certificate settings for domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurred while trying to update certificate settings for domain", ex));
                 });
     }
 
     @Override
     public Completable delete(GraviteeContext graviteeContext, String domainId, User principal) {
-        LOGGER.debug("Delete security domain {}", domainId);
+        log.debug("Delete security domain {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapCompletable(domain -> {
@@ -773,7 +772,7 @@ public class DomainServiceImpl implements DomainService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurred while trying to delete security domain {}", domainId, ex);
+                    log.error("An error occurred while trying to delete security domain {}", domainId, ex);
                     return Completable.error(new TechnicalManagementException("An error occurred while trying to delete security domain " + domainId, ex));
                 });
     }
@@ -828,7 +827,7 @@ public class DomainServiceImpl implements DomainService {
                     .findFirst()
                     .orElseGet(() -> {
                         if (environmentEntrypoints.size() > 1) {
-                            LOGGER.warn("Environment {} resolves to {} entrypoints and none is flagged default; using the first", domain.getReferenceId(), environmentEntrypoints.size());
+                            log.warn("Environment {} resolves to {} entrypoints and none is flagged default; using the first", domain.getReferenceId(), environmentEntrypoints.size());
                         }
                         return environmentEntrypoints.get(0);
                     });
@@ -969,9 +968,9 @@ public class DomainServiceImpl implements DomainService {
                 || isCimdRevokeOnDocumentChangeEnabled(domainAfterPatch)) {
             return Completable.complete();
         }
-        LOGGER.info("Cleaning up CIMD client state for domain {}", domainAfterPatch.getId());
+        log.info("Cleaning up CIMD client state for domain {}", domainAfterPatch.getId());
         return cimdClientStateService.deleteByDomain(domainAfterPatch)
-                .doOnError(e -> LOGGER.warn("Failed to clean up CIMD client state for domain {}: {}", domainAfterPatch.getId(), e.getMessage()))
+                .doOnError(e -> log.warn("Failed to clean up CIMD client state for domain {}: {}", domainAfterPatch.getId(), e.getMessage()))
                 .onErrorComplete();
     }
 

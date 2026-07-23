@@ -19,11 +19,11 @@ import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.repository.management.api.CimdMetadataDocumentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
-@Slf4j
+@CustomLog
 public class ManagementExpiredDataSweeperProvider implements ExpiredDataSweeperProvider {
 
     @Lazy

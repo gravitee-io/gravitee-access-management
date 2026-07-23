@@ -52,8 +52,6 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -62,6 +60,7 @@ import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oauth2.Parameters.*;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
+import lombok.CustomLog;
 
 /**
  * Strategy for UMA 2.0 (User Managed Access) Grant.
@@ -70,9 +69,9 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACC
  * @see <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html">UMA 2.0 Grant</a>
  * @author GraviteeSource Team
  */
+@CustomLog
 public class UmaStrategy implements GrantStrategy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UmaStrategy.class);
     private static final List<String> CLAIM_TOKEN_FORMAT_SUPPORTED = List.of(TokenType.ID_TOKEN);
 
     private final UserAuthenticationManager userAuthenticationManager;
@@ -108,12 +107,12 @@ public class UmaStrategy implements GrantStrategy {
 
         // Check if UMA is enabled for domain
         if (domain.getUma() == null || !domain.getUma().isEnabled()) {
-            LOGGER.debug("UMA is not enabled for domain: {}", domain.getId());
+            log.debug("UMA is not enabled for domain: {}", domain.getId());
             return false;
         }
 
         if (!client.hasGrantType(GrantType.UMA)) {
-            LOGGER.debug("Client {} does not support UMA grant type", client.getClientId());
+            log.debug("Client {} does not support UMA grant type", client.getClientId());
             return false;
         }
 
@@ -122,7 +121,7 @@ public class UmaStrategy implements GrantStrategy {
 
     @Override
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
-        LOGGER.debug("Processing UMA grant request for client: {}", client.getClientId());
+        log.debug("Processing UMA grant request for client: {}", client.getClientId());
 
         return parseRequest(request)
                 .flatMap(parsedRequest -> resolveResourceOwner(request, parsedRequest, client))
@@ -250,7 +249,7 @@ public class UmaStrategy implements GrantStrategy {
                 .collect(Collectors.toList());
 
         if (!missingResources.isEmpty()) {
-            LOGGER.debug("Permission ticket references deleted resources: {}", missingResources);
+            log.debug("Permission ticket references deleted resources: {}", missingResources);
             return Single.error(new InvalidGrantException(
                     "Permission ticket references resources that no longer exist"));
         }
