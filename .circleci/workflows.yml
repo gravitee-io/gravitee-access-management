@@ -1254,7 +1254,8 @@ jobs:
           name: "Maven verify (backend)"
           no_output_timeout: 30m
           command: |
-            mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui -Dlicense.skip=true
+            # -T 1C runs one build thread per core across the reactor; the test phase is parallel-safe now the IdP WireMock tests bind dynamic ports instead of fixed ones (AM-7323).
+            mvn -s /tmp/.gravitee.settings.xml -T 1C verify -pl \!gravitee-am-ui -Dlicense.skip=true
       - run:
           name: Save test results
           command: |
