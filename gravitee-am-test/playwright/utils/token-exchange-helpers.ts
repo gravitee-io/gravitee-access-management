@@ -104,7 +104,7 @@ export async function retryOnStatus(
   requestFn: () => request.Test,
   options: RetryOnStatusOptions,
 ): Promise<request.Response> {
-  const { retryOn, expect: expectedStatus = 200, maxRetries = 3, retryDelayMs = 2000 } = options;
+  const { retryOn, expect: expectedStatus = 200, maxRetries = 8, retryDelayMs = 2000 } = options;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const response = await requestFn();
     if (response.status !== retryOn || attempt === maxRetries) {

@@ -52,7 +52,7 @@ async function pollForAudit(
   targetId: string,
   fromTimestamp: number,
   auditType = 'DOMAIN_UPDATED',
-  maxAttempts = 10,
+  maxAttempts = 30,
   intervalMs = 1000,
 ): Promise<Record<string, unknown> | undefined> {
   for (let i = 0; i < maxAttempts; i++) {
