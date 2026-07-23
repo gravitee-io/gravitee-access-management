@@ -281,11 +281,12 @@ public class SyncManager implements InitializingBean, DisposableBean {
                 return Completable.complete();
             }
             gatewayMetricProvider.updateSyncEvents(events.size());
-            // Extract only the latest event per (type, id) pair
+            // Extract only the latest event per (type, id) pair. Command events (e.g. REVOKE_TOKEN)
+            // have no payload id: key them by event id so concurrent commands are never collapsed.
             Map<AbstractMap.SimpleEntry<Object, Object>, Event> sortedEvents = events
                     .stream()
                     .collect(toMap(
-                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId() != null ? event.getPayload().getId() : event.getId()),
                             event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
             // Subscribe on the deployment scheduler: domain deploy/update triggers a Spring child
             // context refresh which must not run on a database driver or Vert.x event-loop thread.
