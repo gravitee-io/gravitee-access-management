@@ -879,6 +879,26 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Parent pins archrules 1.0.0 (ArchUnit 1.2.1) whose ASM can't read Java 25 (class major version 69);
+                 override with a Java 25-capable ArchUnit so the rules actually analyse our bytecode -->
+            <plugin>
+                <groupId>io.gravitee.maven</groupId>
+                <artifactId>gravitee-archrules-maven-plugin</artifactId>
+                <configuration>
+                    <!-- ExecutionContextFactory is a factory, not a context; the rule's name-substring
+                         match otherwise flags it as an available ExecutionContext (false positive) -->
+                    <ignoreExecutionContextClasses>
+                        <ignoreExecutionContextClass>io.gravitee.am.gateway.handler.context.ExecutionContextFactory</ignoreExecutionContextClass>
+                    </ignoreExecutionContextClasses>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.tngtech.archunit</groupId>
+                        <artifactId>archunit</artifactId>
+                        <version>1.4.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 </project>
