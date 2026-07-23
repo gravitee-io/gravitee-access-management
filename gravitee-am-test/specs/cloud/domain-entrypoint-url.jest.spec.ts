@@ -80,19 +80,20 @@ describe('Cloud domain entrypoint URL (management API)', () => {
     expect(urls).toEqual([expectedUrl]);
   });
 
-  it('never returns an empty list when the environment has no access points', async () => {
+  it('falls back to an organization entrypoint when the environment has no access points', async () => {
     await fixture.resyncAccessPoints([]);
 
-    // Once the environment entrypoint is evicted, the endpoint must still return exactly one
-    // entrypoint (the fallback), never an empty list — an empty list would crash the UI. In managed
-    // cloud the DataPlane gatewayUrl may be absent, so the fallback entrypoint can have no url; the
-    // guarantee under test is that the list stays non-empty and is no longer an environment host.
+    // Once the environment entrypoint is evicted, the endpoint degrades to the organization
+    // resolution: still exactly one entrypoint (never an empty list — that would crash the UI),
+    // carrying the DataPlane gatewayUrl or the org default entrypoint's url. Either way the url
+    // is a real URL, never null (the UI builds links from it), and no longer an environment host.
     const urls = await retryUntil(
       () => domainEntrypointUrls(),
-      (resolved) => resolved.length === 1 && (resolved[0] == null || !resolved[0].endsWith('.example.com')),
+      (resolved) => resolved.length === 1 && resolved[0] != null && !resolved[0].endsWith('.example.com'),
       POLL,
     );
 
     expect(urls).toHaveLength(1);
+    expect(urls[0]).toMatch(/^https?:\/\//);
   });
 });
