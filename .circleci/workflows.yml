@@ -926,10 +926,18 @@ jobs:
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_jdbc
       - run:
-          name: Build
+          name: Build (parallel compile, no tests)
           command: |
-            # -T 1C runs one build thread per core across the reactor; safe here because -DskipTests means no fixed-port test collisions.
-            mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-jdbc -P << parameters.jdbcType >> -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+            # -T 1C parallelises the reactor compile. cicd-jdbc is intentionally left off here so the JDBC
+            # integration tests do NOT run under parallel load - they self-manage DB containers and flaked
+            # (async bulk-flush read 0) when 130+ other modules compiled on the other cores. See AM-7327.
+            mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -P << parameters.jdbcType >> -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+      - run:
+          name: Run JDBC testcontainer tests (sequential)
+          command: |
+            # Run only the cicd-jdbc test modules, sequentially (no -T 1C), against the << parameters.jdbcType >> container.
+            # Keep this list in sync with the modules that declare the cicd-jdbc profile.
+            mvn test -pl :gravitee-am-repository-jdbc,:gravitee-am-reporter-jdbc,:gravitee-am-dataplane-jdbc -P gio-artifactory-snapshot,cicd-jdbc -P << parameters.jdbcType >> -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_jdbc
 
