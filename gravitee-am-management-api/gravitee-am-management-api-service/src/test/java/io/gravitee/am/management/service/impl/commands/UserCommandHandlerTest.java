@@ -41,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -127,5 +128,34 @@ class UserCommandHandlerTest {
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldRejectMissingId() {
+        var command = new UserCommand(UserCommandPayload.builder()
+                .organizationId("orga#1")
+                .username("Username")
+                .build());
+
+        TestObserver<UserReply> obs = userCommandHandler.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldRejectMissingOrganizationId() {
+        var command = new UserCommand(UserCommandPayload.builder()
+                .id("user#1")
+                .username("Username")
+                .build());
+
+        TestObserver<UserReply> obs = userCommandHandler.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(userService);
     }
 }

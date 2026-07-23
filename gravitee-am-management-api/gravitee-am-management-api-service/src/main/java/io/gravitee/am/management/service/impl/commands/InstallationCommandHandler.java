@@ -27,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -46,6 +48,15 @@ public class InstallationCommandHandler implements CommandHandler<InstallationCo
     @Override
     public Single<InstallationReply> handle(InstallationCommand command) {
         InstallationCommandPayload installationPayload = command.getPayload();
+
+        Optional<String> validationError = RequiredPayloadFields.forType("Installation")
+                .string("status", installationPayload.status())
+                .validate();
+        if (validationError.isPresent()) {
+            log.warn(validationError.get());
+            return Single.just(new InstallationReply(command.getId(), validationError.get()));
+        }
+
         return installationService.getOrInitialize().map(Installation::getAdditionalInformation)
                 .doOnSuccess(additionalInfos -> additionalInfos.put(Installation.COCKPIT_INSTALLATION_STATUS, installationPayload.status()))
                 .flatMap(installationService::setAdditionalInformation)

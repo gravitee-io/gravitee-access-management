@@ -48,6 +48,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -183,6 +184,37 @@ class MembershipCommandHandlerTest {
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
 
         verify(membershipService, times(0)).addOrUpdate(any(), any());
+    }
+
+    @Test
+    void shouldRejectEmptyPayload() {
+        MembershipCommand command = new MembershipCommand(MembershipCommandPayload.builder().build());
+
+        TestObserver<MembershipReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(userService, roleService, membershipService);
+    }
+
+    @Test
+    void shouldRejectMissingUserId() {
+        MembershipCommandPayload membershipPayload = MembershipCommandPayload
+                .builder()
+                .organizationId("orga#1")
+                .referenceType(ReferenceType.ENVIRONMENT.name())
+                .referenceId("env#1")
+                .role(SystemRole.ENVIRONMENT_PRIMARY_OWNER.name())
+                .build();
+        MembershipCommand command = new MembershipCommand(membershipPayload);
+
+        TestObserver<MembershipReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(userService, roleService, membershipService);
     }
 
 }
