@@ -1295,8 +1295,10 @@ jobs:
       - mvn_git_commit_id
       - run:
           name: "Maven Package Install (no tests)"
+          # -T 1C runs one build thread per core to parallelise the wide, independent plugin subtrees.
+          # This step is -DskipTests so there is no fixed-port test collision risk from parallelism.
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean install -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -T 1C -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean install -DskipTests
       - save-maven-job-cache:
           jobName: pull_requests
       - run:
