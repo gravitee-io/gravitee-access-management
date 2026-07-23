@@ -15,24 +15,40 @@
  */
 package io.gravitee.am.identityprovider.jdbc.user;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.jdbc.configuration.JdbcAuthenticationProviderConfigurationTest;
+import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-public abstract class JdbcUserProvider_Test {
+@ContextConfiguration(classes = { JdbcAuthenticationProviderConfigurationTest.class, JdbcUserProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+public class JdbcUserProvider_Test {
 
     @Autowired
     private UserProvider userProvider;
@@ -93,6 +109,63 @@ public abstract class JdbcUserProvider_Test {
 
         testObserver.assertComplete();
         testObserver.assertValue(u -> u.getId() != null);
+    }
+
+    @Test
+    public void shouldNotCreate_duplicateUsername() {
+        DefaultUser user = new DefaultUser("duplicateUsername");
+        userProvider.create(user).blockingGet();
+
+        TestObserver<User> testObserver = userProvider.create(new DefaultUser("duplicateUsername")).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(UserAlreadyExistsException.class);
+    }
+
+    /**
+     * Reproduces the check-then-act race: N concurrent creates for the same username can all pass the
+     * {@code SELECT} uniqueness check before any {@code INSERT} commits. Exactly one insert should win the
+     * unique index, and every other request must surface as {@link UserAlreadyExistsException}, not a raw
+     * driver exception (e.g. R2dbcDataIntegrityViolationException / SQLSTATE 23505 on Postgres).
+     */
+    @Test
+    public void shouldReturnUserAlreadyExists_onConcurrentCreate() throws InterruptedException {
+        final String username = "concurrent-" + RandomString.generate();
+        final int concurrency = 10;
+
+        final CountDownLatch ready = new CountDownLatch(concurrency);
+        final CountDownLatch start = new CountDownLatch(1);
+        final CountDownLatch done = new CountDownLatch(concurrency);
+        final List<User> successes = Collections.synchronizedList(new ArrayList<>());
+        final List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+
+        ExecutorService executor = Executors.newFixedThreadPool(concurrency);
+        try {
+            for (int i = 0; i < concurrency; i++) {
+                executor.submit(() -> {
+                    ready.countDown();
+                    try {
+                        start.await();
+                        userProvider.create(new DefaultUser(username))
+                                .doFinally(done::countDown)
+                                .subscribe(successes::add, failures::add);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+            }
+
+            ready.await(10, TimeUnit.SECONDS);
+            start.countDown();
+            assertTrue("all concurrent creates should complete", done.await(10, TimeUnit.SECONDS));
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertEquals("exactly one concurrent create should win the unique index", 1, successes.size());
+        assertEquals(concurrency - 1, failures.size());
+        assertTrue("every losing create must be reported as UserAlreadyExistsException, not a raw DB error",
+                failures.stream().allMatch(UserAlreadyExistsException.class::isInstance));
     }
 
     @Test

@@ -21,11 +21,15 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
+import io.gravitee.am.identityprovider.jdbc.configuration.JdbcAuthenticationProviderConfigurationTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +42,8 @@ import static org.mockito.Mockito.mock;
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-public abstract class JdbcAuthenticationProviderTest {
+@ContextConfiguration(classes = { JdbcAuthenticationProviderConfigurationTest.class, JdbcAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+public class JdbcAuthenticationProviderTest {
 
     @Autowired
     private AuthenticationProvider authenticationProvider;
