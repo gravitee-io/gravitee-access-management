@@ -52,6 +52,29 @@ async function waitUntilWebAuthnLoginAfterDeviceRecognition(page: Page, authoriz
 }
 
 /**
+ * Poll authorize until the normal login page (with password field) is served —
+ * inverse of the helper above, for the disable direction (gateway config propagation).
+ */
+async function waitUntilNormalLoginAfterDeviceRecognitionDisabled(page: Page, authorizeUrl: string): Promise<void> {
+  const deadline = Date.now() + 30000;
+  while (true) {
+    try {
+      await page.goto(authorizeUrl);
+      await page.waitForURL(/.*login.*/i, { timeout: 15000 });
+      if (!page.url().includes('webauthn/login') && (await page.locator('#password').isVisible())) {
+        return;
+      }
+    } catch {
+      // Transient navigation/timeout — retry within the deadline
+    }
+    if (Date.now() > deadline) {
+      throw new Error('Normal login page was not served within 30s after disabling device recognition');
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
+
+/**
  * AM-5292: WebAuthn & Passwordless Device Recognition
  *
  * When passwordlessRememberDeviceEnabled is on, a returning user who has
@@ -176,8 +199,9 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
       `&scope=openid`;
 
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i, { timeout: 15000 });
+    // Poll until the redeployed gateway serves the normal login page — a single navigation can
+    // still hit the old deployment (device recognition on) and land on /webauthn/login instead
+    await waitUntilNormalLoginAfterDeviceRecognitionDisabled(page, authorizeUrl);
 
     // Should see the normal login form with both username AND password
     await expect(page.locator('#username')).toBeVisible();
