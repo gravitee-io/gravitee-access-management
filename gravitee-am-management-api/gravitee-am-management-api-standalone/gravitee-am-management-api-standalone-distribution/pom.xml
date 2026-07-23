@@ -38,6 +38,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Override the parent's provided scope so NodeLoggerFactory (used by @CustomLog) is bundled in lib/ -->
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-logging</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>io.gravitee.am.management.standalone</groupId>
             <artifactId>gravitee-am-management-api-standalone-bootstrap</artifactId>
