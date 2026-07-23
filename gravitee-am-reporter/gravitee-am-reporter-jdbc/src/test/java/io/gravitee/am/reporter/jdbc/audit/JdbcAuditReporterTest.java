@@ -439,7 +439,7 @@ public class JdbcAuditReporterTest {
     }
 
     @Test
-    public void testReporter_aggregationCount_accessPointId() {
+    public void testReporter_aggregationCount_accessPointId() throws InterruptedException {
         int loop = 10;
         int acc = 0;
 
@@ -454,15 +454,26 @@ public class JdbcAuditReporterTest {
             auditReporter.report(reportable);
         }
 
-        waitBulkLoadFlush();
-
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().accessPointId(accessPointId).build();
-        TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
-        test.awaitDone(10, TimeUnit.SECONDS);
-        test.assertNoErrors();
+        int expectedResult = acc;
+
+        // The bulk processor flushes asynchronously; under load the fixed 3s waitBulkLoadFlush() can be too
+        // short and the count comes back 0. Poll the aggregate until the flushed rows are visible.
+        TestObserver<Map<Object, Object>> test;
+        int attempt = 0;
+        while (true) {
+            test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
+            test.awaitDone(10, TimeUnit.SECONDS);
+            test.assertNoErrors();
+            Long data = (Long) test.values().get(0).get("data");
+            if ((data != null && data.intValue() == expectedResult) || ++attempt >= 30) {
+                break;
+            }
+            Thread.sleep(500);
+        }
+
         test.assertValue(map -> map.size() == 1);
         test.assertValue(map -> map.containsKey("data"));
-        int expectedResult = acc;
         test.assertValue(map -> map.get("data") != null && ((Long) map.get("data")).intValue() == expectedResult);
     }
 
