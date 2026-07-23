@@ -26,6 +26,7 @@ import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguratio
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,7 +78,15 @@ public class GithubAuthenticationProviderTest {
     private GithubIdentityProviderConfiguration configuration;
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19998));
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
+
+    @Before
+    public void setUp() {
+        String baseUrl = "http://localhost:" + wireMockRule.port();
+        configuration.setAccessTokenUri(baseUrl + "/oauth/token");
+        configuration.setUserAuthorizationUri(baseUrl + "/oauth/authorize");
+        configuration.setUserProfileUri(baseUrl + "/profile");
+    }
 
     @Test
     public void shouldLoadUserByUsername_authentication() {

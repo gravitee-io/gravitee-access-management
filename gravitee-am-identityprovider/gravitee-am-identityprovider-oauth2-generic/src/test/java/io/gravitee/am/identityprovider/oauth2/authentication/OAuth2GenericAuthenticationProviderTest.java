@@ -32,6 +32,7 @@ import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfi
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,7 +90,15 @@ public class OAuth2GenericAuthenticationProviderTest {
     private JWTProcessor jwtProcessor = mock(JWTProcessor.class);
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
+
+    @Before
+    public void setUp() {
+        String baseUrl = "http://localhost:" + wireMockRule.port();
+        configuration.setAccessTokenUri(baseUrl + "/oauth/token");
+        configuration.setUserAuthorizationUri(baseUrl + "/oauth/authorize");
+        configuration.setUserProfileUri(baseUrl + "/profile");
+    }
 
     @Test
     public void shouldLoadUserByUsername_authentication() {
@@ -134,7 +143,7 @@ public class OAuth2GenericAuthenticationProviderTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     public void shouldStopRetryingWhenProviderStopped() throws Exception {
         OAuth2GenericAuthenticationProvider provider = (OAuth2GenericAuthenticationProvider) authenticationProvider;
-        configuration.setWellKnownUri("http://localhost:19999/.well-known/openid-configuration");
+        configuration.setWellKnownUri("http://localhost:" + wireMockRule.port() + "/.well-known/openid-configuration");
         stubFor(any(urlPathEqualTo("/.well-known/openid-configuration"))
                 .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 

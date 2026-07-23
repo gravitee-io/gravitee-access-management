@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.user.spring.HttpUserProviderConfiguration;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -66,12 +67,16 @@ public class HttpUserProviderTest {
     @Autowired
     private DefaultIdentityProviderMapper mapper;
 
+    @Autowired
+    private HttpIdentityProviderConfiguration configuration;
+
     @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19998));
+    public static WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
 
     @Before
     public void init() {
         this.mapper.setMappers(Map.of());
+        this.configuration.getUsersResource().setBaseURL("http://localhost:" + wireMockRule.port() + "/api");
     }
 
     @Test
