@@ -129,20 +129,23 @@ workflows:
           name: "Standard CI"
           # On Mergify backport branches, halt before continuation while unresolved
           # conflict markers are committed in the tree; the resolution push retriggers CI.
+          # The when-condition scopes the extra checkout to those branches only.
           pre-steps:
-            - checkout
-            - run:
-                name: Halt on unresolved Mergify conflicts
-                command: |
-                  case "$CIRCLE_BRANCH" in
-                    mergify/bp/*|mergify/copy/*)
-                      # conflict marker written as a regex repetition: consecutive angle brackets break CircleCI config parsing
-                      if git grep -IlqE '^<{7} ' -- .; then
-                        echo "Unresolved Mergify conflict markers found - skipping CI until conflicts are resolved and pushed."
-                        circleci-agent step halt
-                      fi
-                      ;;
-                  esac
+            - when:
+                condition:
+                  matches:
+                    pattern: "^mergify/(bp|copy)/.*"
+                    value: << pipeline.git.branch >>
+                steps:
+                  - checkout
+                  - run:
+                      name: Halt on unresolved Mergify conflicts
+                      command: |
+                        # conflict marker written as a regex repetition: consecutive angle brackets break CircleCI config parsing
+                        if git grep -IlqE '^<{7} ' -- .; then
+                          echo "Unresolved Mergify conflict markers found - skipping CI until conflicts are resolved and pushed."
+                          circleci-agent step halt
+                        fi
           base-revision: << pipeline.git.branch >>
           config-path: .circleci/workflows.yml
           mapping: |
