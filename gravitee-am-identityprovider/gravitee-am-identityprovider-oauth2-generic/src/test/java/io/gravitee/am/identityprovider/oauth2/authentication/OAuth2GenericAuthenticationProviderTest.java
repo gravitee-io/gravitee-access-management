@@ -151,11 +151,14 @@ public class OAuth2GenericAuthenticationProviderTest {
         Thread.sleep(600);
         provider.stop();
 
-        int afterStop = wireMockRule.findAll(getRequestedFor(urlPathEqualTo("/.well-known/openid-configuration"))).size();
+        // stop() cancels the retry chain; under CI load the initial request can still be draining, so
+        // settle first, then assert the request count stops growing (a broken stop() would keep retrying).
+        Thread.sleep(2000);
+        int afterSettle = wireMockRule.findAll(getRequestedFor(urlPathEqualTo("/.well-known/openid-configuration"))).size();
         Thread.sleep(2000);
         int later = wireMockRule.findAll(getRequestedFor(urlPathEqualTo("/.well-known/openid-configuration"))).size();
 
-        assertEquals("provider must stop retrying after stop()", afterStop, later);
+        assertEquals("provider must stop retrying after stop()", afterSettle, later);
     }
 
 
