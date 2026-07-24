@@ -16,7 +16,7 @@
 import { Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
-type PickerSection = 'Current' | 'Default' | 'Pinned';
+type PickerSection = 'Current' | 'Default' | 'Pinned' | 'Results';
 
 /** Page object for the navbar domain picker (opens from the current-domain chip). */
 export class NavbarPage extends BasePage {
@@ -57,6 +57,21 @@ export class NavbarPage extends BasePage {
   /** The "All domains" link in the picker footer. */
   get allDomainsLink(): Locator {
     return this.menu.locator('.userAccountFooter__link', { hasText: /all domains/i });
+  }
+
+  /** Message shown in place of Results when the search matches no domain. */
+  get noSearchResultsMessage(): Locator {
+    return this.menu.locator('.domains_list__empty');
+  }
+
+  /** The avatar button that opens the account menu (profile/sign out) — distinct from the domain picker trigger. */
+  get accountMenuTrigger(): Locator {
+    return this.page.getByTestId('user-account-button');
+  }
+
+  /** The account menu overlay — scoped by its sign-out link since it shares a panel class with the domain picker. */
+  get accountMenu(): Locator {
+    return this.page.locator('.mat-mdc-menu-panel', { has: this.page.locator('a[routerLink="/logout"]') });
   }
 
   row(name: string): Locator {
