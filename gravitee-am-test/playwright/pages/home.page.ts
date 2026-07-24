@@ -47,6 +47,44 @@ export class HomePage extends BasePage {
     return this.page.locator('.domain-information a').filter({ hasText: name }).first();
   }
 
+  get datatable(): Locator {
+    return this.page.locator('ngx-datatable');
+  }
+
+  /** Row container for a domain in the "All domains" list, by name. */
+  domainRow(name: string): Locator {
+    return this.datatable.locator('.datatable-body-row').filter({ hasText: name });
+  }
+
+  /** Toggle the default-domain star for a row on the "All domains" list page. */
+  async toggleDefaultInList(name: string): Promise<void> {
+    await this.domainRow(name)
+      .getByRole('button')
+      .filter({ has: this.page.locator('mat-icon', { hasText: /^star/ }) })
+      .click();
+  }
+
+  /** Toggle the pin control for a row on the "All domains" list page. */
+  async togglePinInList(name: string): Promise<void> {
+    await this.domainRow(name)
+      .getByRole('button')
+      .filter({ has: this.page.locator('mat-icon', { hasText: /bookmark/ }) })
+      .click();
+  }
+
+  /** Default-domain star icon for a row on the "All domains" list page — asserts via toHaveText, not a one-shot read, since the icon updates asynchronously after the toggle click. */
+  defaultIconInList(name: string): Locator {
+    return this.domainRow(name).locator('mat-icon').filter({ hasText: /^star/ }).first();
+  }
+
+  /** Pin/bookmark icon for a row on the "All domains" list page — asserts via toHaveText, not a one-shot read, since the icon updates asynchronously after the toggle click. */
+  pinIconInList(name: string): Locator {
+    return this.domainRow(name)
+      .locator('mat-icon')
+      .filter({ hasText: /bookmark/ })
+      .first();
+  }
+
   /** Navigate to a domain's detail page via the domains list search. */
   async navigateToDomain(domainName: string): Promise<void> {
     await this.gotoDomainsList();
