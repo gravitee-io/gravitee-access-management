@@ -512,8 +512,8 @@ jobs:
             curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
             curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
       - run:
-          name: Run Gateway Jest tests (sequential)
-          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway
+          name: Run Gateway Jest tests (parallel)
+          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml RUN_SPIRE_TESTS=true npm --prefix gravitee-am-test run ci:gateway:parallel
       # capture per-suite JVM/sync metrics even when the gateway suite fails
       - store_artifacts:
           path: gravitee-am-test/jest-reports/metrics
@@ -571,8 +571,8 @@ jobs:
             curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
             curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
       - run:
-          name: Run Gateway Jest tests (sequential)
-          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+          name: Run Gateway Jest tests (parallel)
+          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway:parallel
       # capture per-suite JVM/sync metrics even when the gateway suite fails
       - store_artifacts:
           path: gravitee-am-test/jest-reports/metrics
