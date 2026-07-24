@@ -15,7 +15,7 @@
 #
 
 # --- build stage: compile TypeScript to plain JS ---
-FROM node:22-alpine AS build
+FROM node:22.23.1-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -24,7 +24,7 @@ COPY src ./src
 RUN npx tsc -p tsconfig.json --noEmit false --outDir dist
 
 # --- runtime stage: only production deps (ws) + compiled JS ---
-FROM node:22-alpine
+FROM node:22.23.1-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --chown=node:node package.json package-lock.json ./
