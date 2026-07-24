@@ -892,6 +892,8 @@
                     </ignoreExecutionContextClasses>
                 </configuration>
                 <dependencies>
+                    <!-- TODO(AM-7328): drop this override once gravitee-parent bumps
+                         gravitee-archrules-maven-plugin to a Java 25-capable ArchUnit -->
                     <dependency>
                         <groupId>com.tngtech.archunit</groupId>
                         <artifactId>archunit</artifactId>
