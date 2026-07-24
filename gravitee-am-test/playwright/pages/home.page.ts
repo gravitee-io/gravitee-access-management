@@ -51,38 +51,36 @@ export class HomePage extends BasePage {
     return this.page.locator('ngx-datatable');
   }
 
-  /** Row container for a domain in the "All domains" list, by name. */
-  domainRow(name: string): Locator {
+  /** Row container for a domain in the "All domains" list, by name — filters via the search box first, same as navigateToDomain, to avoid pagination issues when many domains exist. */
+  async domainRow(name: string): Promise<Locator> {
+    const searchInput = this.page.getByPlaceholder(/search/i).first();
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill(name);
     return this.datatable.locator('.datatable-body-row').filter({ hasText: name });
   }
 
   /** Toggle the default-domain star for a row on the "All domains" list page. */
   async toggleDefaultInList(name: string): Promise<void> {
-    await this.domainRow(name)
-      .getByRole('button')
-      .filter({ has: this.page.locator('mat-icon', { hasText: /^star/ }) })
-      .click();
+    await this.domainRow(name); // filters the datatable so the row is actually rendered first
+    await this.page.getByTestId(`domainDefaultToggle-${name}`).click();
   }
 
   /** Toggle the pin control for a row on the "All domains" list page. */
   async togglePinInList(name: string): Promise<void> {
-    await this.domainRow(name)
-      .getByRole('button')
-      .filter({ has: this.page.locator('mat-icon', { hasText: /bookmark/ }) })
-      .click();
+    await this.domainRow(name); // filters the datatable so the row is actually rendered first
+    await this.page.getByTestId(`domainPinToggle-${name}`).click();
   }
 
   /** Default-domain star icon for a row on the "All domains" list page — asserts via toHaveText, not a one-shot read, since the icon updates asynchronously after the toggle click. */
-  defaultIconInList(name: string): Locator {
-    return this.domainRow(name).locator('mat-icon').filter({ hasText: /^star/ }).first();
+  async defaultIconInList(name: string): Promise<Locator> {
+    await this.domainRow(name);
+    return this.page.getByTestId(`domainDefaultToggle-${name}`).locator('mat-icon');
   }
 
   /** Pin/bookmark icon for a row on the "All domains" list page — asserts via toHaveText, not a one-shot read, since the icon updates asynchronously after the toggle click. */
-  pinIconInList(name: string): Locator {
-    return this.domainRow(name)
-      .locator('mat-icon')
-      .filter({ hasText: /bookmark/ })
-      .first();
+  async pinIconInList(name: string): Promise<Locator> {
+    await this.domainRow(name);
+    return this.page.getByTestId(`domainPinToggle-${name}`).locator('mat-icon');
   }
 
   /** Navigate to a domain's detail page via the domains list search. */

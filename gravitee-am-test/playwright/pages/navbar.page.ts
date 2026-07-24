@@ -86,21 +86,13 @@ export class NavbarPage extends BasePage {
 
   /** Toggle the pin control on a row (controls reveal on hover). */
   async pin(name: string): Promise<void> {
-    const row = this.row(name);
-    await row.hover();
-    await row
-      .getByRole('button')
-      .filter({ has: this.page.locator('mat-icon', { hasText: /bookmark/ }) })
-      .click();
+    await this.row(name).hover();
+    await this.menu.getByTestId(`domainPinToggle-${name}`).click();
   }
 
   /** Toggle the default control on a row (controls reveal on hover). */
   async setDefault(name: string): Promise<void> {
-    const row = this.row(name);
-    await row.hover();
-    await row
-      .getByRole('button')
-      .filter({ has: this.page.locator('mat-icon', { hasText: /^star/ }) })
-      .click();
+    await this.row(name).hover();
+    await this.menu.getByTestId(`domainDefaultToggle-${name}`).click();
   }
 }

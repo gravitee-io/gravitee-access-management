@@ -20,6 +20,7 @@ import { createDomain, safeDeleteDomain } from '@management-commands/domain-mana
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
 import { performGet, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { retryUntil } from '@utils-commands/retry';
 import type { Domain } from '@management-models/Domain';
 import { setup } from '../test-fixture';
 
@@ -114,6 +115,7 @@ describe('Console user preferences', () => {
   });
 
   it('should record an audit entry when preferences are updated', async () => {
+    const beforePut = Date.now();
     const putResponse = await performPut(
       managementUrl(),
       '/user/preferences',
@@ -122,10 +124,14 @@ describe('Console user preferences', () => {
     );
     expect(putResponse.status).toBe(200);
 
-    const auditResponse = await performGet(getOrganisationManagementUrl(), '/audits?type=USER_PREFERENCES_UPDATED&size=1', authHeaders());
+    // audits are written asynchronously, and `from` excludes any USER_PREFERENCES_UPDATED
+    // entries from earlier tests in this file so this only matches the update above
+    const auditResponse = await retryUntil(
+      () => performGet(getOrganisationManagementUrl(), `/audits?type=USER_PREFERENCES_UPDATED&from=${beforePut}&size=1`, authHeaders()),
+      (response) => response.status === 200 && response.body.data.length > 0,
+      { timeoutMillis: 10_000, intervalMillis: 250 },
+    );
 
-    expect(auditResponse.status).toBe(200);
-    expect(auditResponse.body.data.length).toBeGreaterThan(0);
     expect(auditResponse.body.data[0]).toMatchObject({
       type: 'USER_PREFERENCES_UPDATED',
       outcome: { status: 'success' },

@@ -18,8 +18,10 @@ import { safeDeleteDomain } from '@management-commands/domain-management-command
 import { test, expect } from '../../fixtures/domain-picker.fixture';
 import { uniqueTestName as uniqueName } from '../../utils/fixture-helpers';
 
-// tests share the admin user's console preferences, so run them one at a time
-test.describe.configure({ mode: 'serial' });
+// tests share the admin user's console preferences, so they must run one at a time in the
+// same worker (this also overrides fullyParallel for this file) — 'default' rather than
+// 'serial' so one failing test doesn't skip every test after it
+test.describe.configure({ mode: 'default' });
 
 test.describe('Navbar domain picker', () => {
   test('opens from the domain chip and shows the current domain', async ({ homePage, navbar, currentDomain }) => {
@@ -68,33 +70,43 @@ test.describe('Navbar domain picker', () => {
     await expect(navbar.chipDefaultStar).toHaveCount(0);
   });
 
-  test('pinning a domain from search persists it under Pinned', async ({ homePage, navbar, currentDomain, extraDomains }) => {
+  test('pin, unpin, set default, and unset default all work via the picker controls', async ({
+    homePage,
+    navbar,
+    currentDomain,
+    extraDomains,
+  }) => {
     await homePage.navigateToDomain(currentDomain.name);
     await navbar.open();
 
+    // pin a domain found via search, and confirm it sticks after clearing the search
     await navbar.searchFor(extraDomains.toPin.name);
     await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
     await navbar.pin(extraDomains.toPin.name);
-
-    // clearing the search returns to the Current/Pinned view where the pin should now stick
     await navbar.searchFor('');
     await expect(navbar.sectionLabel('Pinned')).toBeVisible();
     await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
-  });
 
-  test('marks the chip with a star when the current domain is the default', async ({ homePage, navbar, currentDomain, setPreferences }) => {
-    await setPreferences({
-      defaultDomainId: currentDomain.id,
-      defaultEnvironmentId: process.env.AM_DEF_ENV_ID,
-    });
+    // unpin it again — the row disappears once the PUT resolves
+    await navbar.pin(extraDomains.toPin.name);
+    await expect(navbar.row(extraDomains.toPin.name)).toHaveCount(0);
+    await expect(navbar.sectionLabel('Pinned')).toHaveCount(0);
 
-    await homePage.navigateToDomain(currentDomain.name);
+    // set a different domain as default — it gets its own section
+    await navbar.searchFor(extraDomains.toDefault.name);
+    await navbar.setDefault(extraDomains.toDefault.name);
+    await navbar.searchFor('');
+    await expect(navbar.sectionLabel('Default')).toBeVisible();
+    await expect(navbar.row(extraDomains.toDefault.name)).toBeVisible();
 
+    // unset it again — the Default section disappears
+    await navbar.setDefault(extraDomains.toDefault.name);
+    await expect(navbar.sectionLabel('Default')).toHaveCount(0);
+
+    // setting the current domain itself as default shows a star on the chip,
+    // and folds into Current instead of a separate Default section
+    await navbar.setDefault(currentDomain.name);
     await expect(navbar.chipDefaultStar).toBeVisible();
-
-    // when current is the default it only appears under Current, never a separate Default section
-    await navbar.open();
-    await expect(navbar.sectionLabel('Current')).toBeVisible();
     await expect(navbar.sectionLabel('Default')).toHaveCount(0);
   });
 
@@ -128,15 +140,36 @@ test.describe('Navbar domain picker', () => {
     await expect(navbar.row(name)).toBeVisible();
   });
 
-  test('reload lands the user directly on their default domain', async ({ homePage, extraDomains, setPreferences }) => {
+  test('reload persists both a pin made via the picker and the saved default-domain redirect', async ({
+    homePage,
+    navbar,
+    currentDomain,
+    extraDomains,
+    setPreferences,
+  }) => {
     await setPreferences({
       defaultDomainId: extraDomains.toDefault.id,
       defaultEnvironmentId: process.env.AM_DEF_ENV_ID,
     });
 
-    await homePage.navigate('/');
+    await homePage.navigateToDomain(currentDomain.name);
+    await navbar.open();
+    await navbar.searchFor(extraDomains.toPin.name);
+    await navbar.pin(extraDomains.toPin.name);
+    await navbar.searchFor('');
+    // wait for the pin to actually land before reloading — otherwise the in-flight
+    // PUT can be cancelled by the navigation and the pin would never persist
+    await expect(navbar.sectionLabel('Pinned')).toBeVisible();
+    await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
 
+    // a full reload-equivalent navigation to root — proves the pin persisted server-side
+    // AND that the default-domain redirect fires correctly on this fresh bootstrap
+    await homePage.navigate('/');
     await homePage.expectUrlMatches(new RegExp(`/domains/${extraDomains.toDefault.id}`));
+
+    await navbar.open();
+    await expect(navbar.sectionLabel('Pinned')).toBeVisible();
+    await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
   });
 
   test('falls back gracefully when the default domain has been deleted', async ({
@@ -155,8 +188,10 @@ test.describe('Navbar domain picker', () => {
 
     await homePage.navigate('/');
 
-    // never tries to load the now-deleted domain, and no error is shown
-    expect(page.url()).not.toContain(extraDomains.toDefault.id);
+    // toDefault is deleted, so toPin is the only domain left — the fallback
+    // deterministically lands here, proving the redirect chain actually completed
+    await homePage.expectUrlMatches(new RegExp(`/domains/${extraDomains.toPin.id}`));
+    await expect(page).not.toHaveURL(new RegExp(extraDomains.toDefault.id));
     await expect(page.locator('text=/not found|error/i')).toHaveCount(0);
   });
 
@@ -167,8 +202,8 @@ test.describe('Navbar domain picker', () => {
     await homePage.toggleDefaultInList(extraDomains.toDefault.name);
 
     // toHaveText polls until the async toggle request resolves and the icon re-renders
-    await expect(homePage.pinIconInList(extraDomains.toPin.name)).toHaveText('bookmark');
-    await expect(homePage.defaultIconInList(extraDomains.toDefault.name)).toHaveText('star');
+    await expect(await homePage.pinIconInList(extraDomains.toPin.name)).toHaveText('bookmark');
+    await expect(await homePage.defaultIconInList(extraDomains.toDefault.name)).toHaveText('star');
 
     // reflected in the navbar picker
     await navbar.open();
@@ -179,8 +214,11 @@ test.describe('Navbar domain picker', () => {
 
     // and unpinning from the navbar picker is reflected back on the "All domains" list
     await navbar.pin(extraDomains.toPin.name);
+    // wait for the PUT to resolve and the row to disappear before navigating away —
+    // otherwise the in-flight request can be cancelled by the navigation
+    await expect(navbar.row(extraDomains.toPin.name)).toHaveCount(0);
     await homePage.gotoDomainsList();
-    await expect(homePage.pinIconInList(extraDomains.toPin.name)).toHaveText('bookmark_border');
+    await expect(await homePage.pinIconInList(extraDomains.toPin.name)).toHaveText('bookmark_border');
   });
 
   test('avatar opens the account menu, not the domain picker', async ({ homePage, navbar, currentDomain }) => {
@@ -192,90 +230,22 @@ test.describe('Navbar domain picker', () => {
     await expect(navbar.search).toHaveCount(0);
   });
 
-  test('a pinned domain survives a full page reload', async ({ page, homePage, navbar, currentDomain, extraDomains }) => {
-    await homePage.navigateToDomain(currentDomain.name);
-    await navbar.open();
-    await navbar.searchFor(extraDomains.toPin.name);
-    await navbar.pin(extraDomains.toPin.name);
-    await navbar.searchFor('');
-
-    await page.reload();
-    await homePage.waitForReady();
-
-    await navbar.open();
-    await expect(navbar.sectionLabel('Pinned')).toBeVisible();
-    await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
-  });
-
-  test('unpinning a domain via the picker removes it from Pinned', async ({
+  test('search filters to matching domains, and shows an empty message when nothing matches', async ({
     homePage,
     navbar,
     currentDomain,
     extraDomains,
-    setPreferences,
   }) => {
-    await setPreferences({ pinnedDomainIds: [extraDomains.toPin.id] });
-
-    await homePage.navigateToDomain(currentDomain.name);
-    await navbar.open();
-    await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
-
-    await navbar.pin(extraDomains.toPin.name);
-
-    await expect(navbar.row(extraDomains.toPin.name)).toHaveCount(0);
-    await expect(navbar.sectionLabel('Pinned')).toHaveCount(0);
-  });
-
-  test('clicking the picker star sets a domain as default', async ({ homePage, navbar, currentDomain, extraDomains }) => {
-    await homePage.navigateToDomain(currentDomain.name);
-    await navbar.open();
-    await navbar.searchFor(extraDomains.toDefault.name);
-    await navbar.setDefault(extraDomains.toDefault.name);
-    await navbar.searchFor('');
-
-    await expect(navbar.sectionLabel('Default')).toBeVisible();
-    await expect(navbar.row(extraDomains.toDefault.name)).toBeVisible();
-  });
-
-  test('clicking the picker star again unsets the default domain', async ({
-    homePage,
-    navbar,
-    currentDomain,
-    extraDomains,
-    setPreferences,
-  }) => {
-    await setPreferences({
-      defaultDomainId: extraDomains.toDefault.id,
-      defaultEnvironmentId: process.env.AM_DEF_ENV_ID,
-    });
-
-    await homePage.navigateToDomain(currentDomain.name);
-    await navbar.open();
-    await expect(navbar.sectionLabel('Default')).toBeVisible();
-
-    await navbar.setDefault(extraDomains.toDefault.name);
-
-    await expect(navbar.sectionLabel('Default')).toHaveCount(0);
-  });
-
-  test('search filters the picker to matching domains only', async ({ homePage, navbar, currentDomain, extraDomains }) => {
     await homePage.navigateToDomain(currentDomain.name);
     await navbar.open();
 
     await navbar.searchFor(extraDomains.toPin.name);
-
     await expect(navbar.sectionLabel('Results')).toBeVisible();
     await expect(navbar.row(extraDomains.toPin.name)).toBeVisible();
     await expect(navbar.row(extraDomains.toDefault.name)).toHaveCount(0);
     await expect(navbar.sectionLabel('Current')).toHaveCount(0);
-  });
-
-  test('search with no matches shows the empty message', async ({ homePage, navbar, currentDomain }) => {
-    await homePage.navigateToDomain(currentDomain.name);
-    await navbar.open();
 
     await navbar.searchFor('zz-no-such-domain-exists-xyz');
-
     await expect(navbar.noSearchResultsMessage).toHaveText(/no domains match/i);
   });
 
@@ -293,7 +263,10 @@ test.describe('Navbar domain picker', () => {
     await homePage.navigateToDomain(currentDomain.name);
     await navbar.open();
 
+    // prove the picker actually rendered before asserting the deleted domain is absent
+    await expect(navbar.sectionLabel('Current')).toBeVisible();
     await expect(navbar.row(extraDomains.toPin.name)).toHaveCount(0);
+    await expect(navbar.sectionLabel('Pinned')).toHaveCount(0);
     await expect(navbar.search).toBeVisible();
   });
 });

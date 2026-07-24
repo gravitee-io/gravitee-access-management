@@ -28,12 +28,11 @@ describe('UserPreferencesService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      teardown: { destroyAfterEach: false },
       providers: [UserPreferencesService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()],
     });
 
-    httpTestingController = TestBed.get(HttpTestingController);
-    service = TestBed.get(UserPreferencesService);
+    httpTestingController = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(UserPreferencesService);
   });
 
   afterEach(() => {
