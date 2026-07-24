@@ -24,6 +24,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { withRetry } from '@utils-commands/retry';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -136,11 +137,19 @@ const setupScimApp = async (domainId: string, accessToken: string): Promise<Appl
 };
 
 const generateScimAccessToken = async (oidc: DomainOidcConfig, scimClient: Application): Promise<string> => {
-  const response = await performPost(oidc.token_endpoint, '', 'grant_type=client_credentials', {
-    'Content-type': 'application/x-www-form-urlencoded',
-    Authorization: 'Basic ' + applicationBase64Token(scimClient),
+  const auth = 'Basic ' + applicationBase64Token(scimClient);
+  // waitForDomainStart only confirms the OIDC endpoint is up, not that the SCIM service app is
+  // synced to the gateway. Under JDBC + parallel load that sync lags, so retry the client-credentials
+  // request until it succeeds rather than silently returning an undefined token that 401s every call.
+  return withRetry(async () => {
+    const response = await performPost(oidc.token_endpoint, '', 'grant_type=client_credentials', {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: auth,
+    }).expect(200);
+    const token = response.body.access_token;
+    expect(token).toBeDefined();
+    return token;
   });
-  return response.body.access_token;
 };
 
 const confirmRegistration = async (confirmationLink: string): Promise<any> => {
