@@ -32,7 +32,6 @@ import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.license.GatewayOrganizationLicenseManager;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.node.GatewayNodeMetadataResolver;
-import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
 import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
@@ -66,7 +65,6 @@ import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.gateway.entrypoint.GatewayEntryPointManager;
 import io.gravitee.am.service.EntryPointManager;
 import org.springframework.context.annotation.Lazy;
-import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.LicenseService;
 import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
@@ -258,10 +256,8 @@ public class StandaloneConfiguration {
                                                                                LicenseFactory licenseFactory,
                                                                                LicenseManager licenseManager,
                                                                                EventManager eventManager,
-                                                                               SecurityDomainManager securityDomainManager,
-                                                                               EnvironmentService environmentService,
                                                                                Environment environment) {
         return new GatewayOrganizationLicenseManager(licenseService, licenseFactory, licenseManager,
-                eventManager, securityDomainManager, environmentService, environment);
+                eventManager, environment);
     }
 }

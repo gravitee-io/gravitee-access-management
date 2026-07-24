@@ -17,21 +17,16 @@ package io.gravitee.am.gateway.license;
 
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.LicenseEvent;
-import io.gravitee.am.gateway.reactor.SecurityDomainManager;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.License;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.LicenseService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.gravitee.node.api.license.LicenseFactory;
 import io.gravitee.node.api.license.LicenseManager;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,14 +37,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -61,9 +54,6 @@ import static org.mockito.Mockito.when;
 public class GatewayOrganizationLicenseManagerTest {
 
     private static final String ORGANIZATION_ID = "orga#1";
-    private static final String OTHER_ORGANIZATION_ID = "orga#2";
-    private static final String ENVIRONMENT_ID = "env#1";
-    private static final String OTHER_ENVIRONMENT_ID = "env#2";
 
     @Mock
     private LicenseService licenseService;
@@ -78,12 +68,6 @@ public class GatewayOrganizationLicenseManagerTest {
     private EventManager eventManager;
 
     @Mock
-    private SecurityDomainManager securityDomainManager;
-
-    @Mock
-    private EnvironmentService environmentService;
-
-    @Mock
     private Environment environment;
 
     @Mock
@@ -96,8 +80,7 @@ public class GatewayOrganizationLicenseManagerTest {
 
     @Before
     public void setUp() {
-        when(licenseService.findAll()).thenReturn(Flowable.empty());
-        when(securityDomainManager.domains()).thenReturn(List.of());
+        lenient().when(licenseService.findAll()).thenReturn(Flowable.empty());
     }
 
     @After
@@ -115,7 +98,7 @@ public class GatewayOrganizationLicenseManagerTest {
         lenient().when(environment.getProperty("cloud.enabled", Boolean.class)).thenReturn(managedCloud);
         lenient().when(environment.getProperty("installation.type", "standalone")).thenReturn(managedCloud ? "managed" : "standalone");
         manager = new GatewayOrganizationLicenseManager(licenseService, licenseFactory, licenseManager,
-                eventManager, securityDomainManager, environmentService, environment);
+                eventManager, environment);
         return manager;
     }
 
@@ -168,8 +151,7 @@ public class GatewayOrganizationLicenseManagerTest {
     }
 
     @Test
-    public void shouldRegisterLicenseAndRedeployAffectedDomainsOnDeployEvent() throws Exception {
-        givenDeployedDomains();
+    public void shouldRegisterLicenseOnDeployEvent() throws Exception {
         when(licenseService.findByReference(ReferenceType.ORGANIZATION, ORGANIZATION_ID))
                 .thenReturn(Maybe.just(license(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "license-1")));
         when(licenseFactory.create(ReferenceType.ORGANIZATION.name(), ORGANIZATION_ID, "license-1")).thenReturn(parsedLicense);
@@ -178,19 +160,14 @@ public class GatewayOrganizationLicenseManagerTest {
         manager.onEvent(new SimpleEvent<>(LicenseEvent.DEPLOY, payload(Action.CREATE)));
 
         verify(licenseManager).registerOrganizationLicense(ORGANIZATION_ID, parsedLicense);
-        verify(securityDomainManager, timeout(2000)).updateReactive(org.mockito.ArgumentMatchers.argThat(d -> d.getId().equals("domain#1")));
-        verify(securityDomainManager, never()).updateReactive(org.mockito.ArgumentMatchers.argThat(d -> d.getId().equals("domain#2")));
     }
 
     @Test
-    public void shouldDeregisterLicenseAndRedeployOnUndeployEvent() throws Exception {
-        givenDeployedDomains();
-
+    public void shouldDeregisterLicenseOnUndeployEvent() throws Exception {
         manager(true).doStart();
         manager.onEvent(new SimpleEvent<>(LicenseEvent.UNDEPLOY, payload(Action.DELETE)));
 
         verify(licenseManager).registerOrganizationLicense(ORGANIZATION_ID, null);
-        verify(securityDomainManager, timeout(2000)).updateReactive(org.mockito.ArgumentMatchers.argThat(d -> d.getId().equals("domain#1")));
     }
 
     @Test
@@ -213,18 +190,17 @@ public class GatewayOrganizationLicenseManagerTest {
     }
 
     @Test
-    public void shouldRedeployAffectedDomainsOnLicenseExpiry() throws Exception {
-        givenDeployedDomains();
-
+    public void shouldRegisterExpiryListenerForObservabilityOnly() throws Exception {
         manager(true).doStart();
 
         verify(licenseManager).onLicenseExpires(expirationListenerCaptor.capture());
         when(parsedLicense.getReferenceType()).thenReturn(io.gravitee.node.api.license.License.REFERENCE_TYPE_ORGANIZATION);
         when(parsedLicense.getReferenceId()).thenReturn(ORGANIZATION_ID);
+
         expirationListenerCaptor.getValue().accept(parsedLicense);
 
-        verify(securityDomainManager, timeout(2000)).updateReactive(org.mockito.ArgumentMatchers.argThat(d -> d.getId().equals("domain#1")));
-        verify(securityDomainManager, never()).updateReactive(org.mockito.ArgumentMatchers.argThat(d -> d.getId().equals("domain#2")));
+        verify(licenseService, never()).findByReference(any(), anyString());
+        verify(licenseManager, never()).registerOrganizationLicense(anyString(), any());
     }
 
     @Test
@@ -232,30 +208,6 @@ public class GatewayOrganizationLicenseManagerTest {
         manager(false).doStart();
 
         verifyNoInteractions(eventManager, licenseService, licenseManager);
-    }
-
-    private void givenDeployedDomains() {
-        Domain affectedDomain = domain("domain#1", ENVIRONMENT_ID);
-        Domain otherDomain = domain("domain#2", OTHER_ENVIRONMENT_ID);
-        when(securityDomainManager.domains()).thenReturn(List.of(affectedDomain, otherDomain));
-        when(securityDomainManager.updateReactive(any())).thenReturn(Completable.complete());
-        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(environment(ENVIRONMENT_ID, ORGANIZATION_ID)));
-        when(environmentService.findById(OTHER_ENVIRONMENT_ID)).thenReturn(Single.just(environment(OTHER_ENVIRONMENT_ID, OTHER_ORGANIZATION_ID)));
-    }
-
-    private static Domain domain(String id, String environmentId) {
-        Domain domain = new Domain();
-        domain.setId(id);
-        domain.setReferenceType(ReferenceType.ENVIRONMENT);
-        domain.setReferenceId(environmentId);
-        return domain;
-    }
-
-    private static io.gravitee.am.model.Environment environment(String id, String organizationId) {
-        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
-        env.setId(id);
-        env.setOrganizationId(organizationId);
-        return env;
     }
 
     private static License license(ReferenceType referenceType, String referenceId, String rawLicense) {
