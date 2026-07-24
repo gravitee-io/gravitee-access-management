@@ -832,6 +832,11 @@ jobs:
       - run:
           name: Run Postman tests (parallel)
           command: POSTMAN_CONCURRENCY=3 npm --prefix postman run test:collections:parallel
+      # capture per-collection newman logs even when a collection fails
+      - store_artifacts:
+          path: postman/logs
+          destination: postman-logs
+          when: always
       - run:
           name: Stop
           when: always
@@ -870,6 +875,11 @@ jobs:
       - run:
           name: Run Postman tests (parallel)
           command: POSTMAN_CONCURRENCY=3 npm --prefix postman run test:collections:parallel
+      # capture per-collection newman logs even when a collection fails
+      - store_artifacts:
+          path: postman/logs
+          destination: postman-logs
+          when: always
       - run:
           name: Stop
           when: always
