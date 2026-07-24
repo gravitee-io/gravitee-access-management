@@ -17,11 +17,8 @@ package io.gravitee.am.gateway.license;
 
 import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.event.LicenseEvent;
-import io.gravitee.am.gateway.reactor.SecurityDomainManager;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.LicenseService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -30,21 +27,15 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.license.License;
 import io.gravitee.node.api.license.LicenseFactory;
 import io.gravitee.node.api.license.LicenseManager;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.schedulers.Schedulers;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import lombok.CustomLog;
 
 /**
  * Feeds the node {@link LicenseManager} with the organization licenses persisted by the cockpit/cloud
  * command flow, so runtime license gating can resolve an organization's license on the gateway.
  * <p>
- * In managed cloud mode, a license change or expiry triggers a redeployment of the affected
- * organization's domains so their managers re-evaluate plugin gating against the new license.
+ * In managed cloud mode, feature gating is enforced when a domain redeploys: its plugin managers
+ * consult the in-memory license through {@code io.gravitee.am.service.PluginLicenseGate}. This manager
+ * only keeps that in-memory view current.
  *
  * @author GraviteeSource Team
  */
@@ -56,26 +47,17 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
     private final LicenseFactory licenseFactory;
     private final LicenseManager licenseManager;
     private final EventManager eventManager;
-    private final SecurityDomainManager securityDomainManager;
-    private final EnvironmentService environmentService;
     private final boolean managedCloudEnabled;
-
-    private ExecutorService redeployExecutor;
-    private Scheduler redeployScheduler;
 
     public GatewayOrganizationLicenseManager(LicenseService licenseService,
                                              LicenseFactory licenseFactory,
                                              LicenseManager licenseManager,
                                              EventManager eventManager,
-                                             SecurityDomainManager securityDomainManager,
-                                             EnvironmentService environmentService,
                                              org.springframework.core.env.Environment environment) {
         this.licenseService = licenseService;
         this.licenseFactory = licenseFactory;
         this.licenseManager = licenseManager;
         this.eventManager = eventManager;
-        this.securityDomainManager = securityDomainManager;
-        this.environmentService = environmentService;
         this.managedCloudEnabled = CloudProperties.isManagedCloudEnabled(environment);
     }
 
@@ -91,16 +73,6 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
         log.info("Register event listener for license events for the gateway");
         eventManager.subscribeForEvents(this, LicenseEvent.class);
 
-        // set up a single thread for redeploying domains
-        final ClassLoader deploymentClassLoader = SecurityDomainManager.class.getClassLoader();
-        redeployExecutor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "gio.license-redeployer");
-            t.setDaemon(true);
-            t.setContextClassLoader(deploymentClassLoader);
-            return t;
-        });
-        redeployScheduler = Schedulers.from(redeployExecutor);
-
         // block here since licenses must be registered before the Reactor starts and the first domain deploys
         try {
             licenseService.findAll()
@@ -112,10 +84,10 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
             log.error("An error occurred while loading organization licenses", e);
         }
 
+        // Log expiries for observability only. Enforcement is deferred to the next domain redeployment.
         licenseManager.onLicenseExpires(license -> {
             if (License.REFERENCE_TYPE_ORGANIZATION.equals(license.getReferenceType())) {
-                log.info("License of organization={} has expired", license.getReferenceId());
-                redeployOrganizationDomains(license.getReferenceId());
+                log.info("License of organization={} has expired; restrictions will take effect on the next domain update or restart", license.getReferenceId());
             }
         });
     }
@@ -123,9 +95,6 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
     @Override
     protected void doStop() throws Exception {
         eventManager.unsubscribeForEvents(this, LicenseEvent.class);
-        if (redeployExecutor != null) {
-            redeployExecutor.shutdown();
-        }
         super.doStop();
     }
 
@@ -142,17 +111,13 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
 
     private void deploy(String organizationId) {
         licenseService.findByReference(ReferenceType.ORGANIZATION, organizationId)
-                .subscribe(license -> {
-                            register(organizationId, license.getLicense());
-                            redeployOrganizationDomains(organizationId);
-                        },
+                .subscribe(license -> register(organizationId, license.getLicense()),
                         ex -> log.error("An error occurred while loading license for organization={}", organizationId, ex),
                         () -> undeploy(organizationId));
     }
 
     private void undeploy(String organizationId) {
         licenseManager.registerOrganizationLicense(organizationId, null);
-        redeployOrganizationDomains(organizationId);
     }
 
     private void register(String organizationId, String rawLicense) {
@@ -164,26 +129,5 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
         } catch (Exception e) {
             log.warn("License cannot be registered for organization={}", organizationId, e);
         }
-    }
-
-    private void redeployOrganizationDomains(String organizationId) {
-        log.info("Redeploying domains of organization={} following a license change", organizationId);
-        Flowable.fromIterable(securityDomainManager.domains())
-                .flatMapMaybe(domain -> environmentService.findById(domain.getReferenceId())
-                        .map(Environment::getOrganizationId)
-                        .filter(organizationId::equals)
-                        .map(orgId -> domain)
-                        .onErrorResumeNext(ex -> {
-                            log.warn("Cannot resolve the organization of domain={}, skipping its redeployment", domain.getId(), ex);
-                            return Maybe.empty();
-                        }))
-                .observeOn(redeployScheduler)
-                // A concurrent sync cycle may update the same domain; worst case is a redundant rebuild.
-                .concatMapCompletable(domain -> securityDomainManager.updateReactive(domain)
-                        .doOnError(ex -> log.error("Unable to redeploy domain={} following a license change", domain.getId(), ex))
-                        .onErrorComplete())
-                .subscribe(
-                        () -> log.debug("Domains of organization={} redeployed", organizationId),
-                        ex -> log.error("An error occurred while redeploying domains of organization={}", organizationId, ex));
     }
 }
