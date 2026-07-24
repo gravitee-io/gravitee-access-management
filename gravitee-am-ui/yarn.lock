@@ -5,9 +5,9 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@a2a-js/sdk@npm:0.3.13":
-  version: 0.3.13
-  resolution: "@a2a-js/sdk@npm:0.3.13"
+"@a2a-js/sdk@npm:0.3.14":
+  version: 0.3.14
+  resolution: "@a2a-js/sdk@npm:0.3.14"
   dependencies:
     uuid: "npm:^11.1.0"
   peerDependencies:
@@ -21,7 +21,7 @@ __metadata:
       optional: true
     express:
       optional: true
-  checksum: 10c0/066c621329c397baeedf7460c8ac74973f520f88574b65119ca0414c8f4279fa03d0875795da4e46f1ae9870142e6d1a0a0a04daabf4c8e25f52bf98e525ab9d
+  checksum: 10c0/5fce0d72c9b3d24aa1c7fd39279f15ac51a86a85f693468c8d20de23a5ae418e6aa92e787cc91ab4b3a1a5507674dd546d39d06ab38947009e12c796815ddfb7
   languageName: node
   linkType: hard
 
@@ -6903,19 +6903,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.17.1, ajv@npm:^8.9.0":
-  version: 8.20.0
-  resolution: "ajv@npm:8.20.0"
-  dependencies:
-    fast-deep-equal: "npm:^3.1.3"
-    fast-uri: "npm:^3.0.1"
-    json-schema-traverse: "npm:^1.0.0"
-    require-from-string: "npm:^2.0.2"
-  checksum: 10c0/5df9a1c8f83863cde1bd3a9ddb426f599718f88e3dc9153616c79fb28e0be455335830d7f21d745576519f057b371352daa31047b6a33d7036fe08777d60cf2a
-  languageName: node
-  linkType: hard
-
-"ajv@npm:^8.18.0":
+"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.17.1, ajv@npm:^8.18.0, ajv@npm:^8.9.0":
   version: 8.20.0
   resolution: "ajv@npm:8.20.0"
   dependencies:
@@ -10725,7 +10713,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "gravitee-am-webui@workspace:."
   dependencies:
-    "@a2a-js/sdk": "npm:0.3.13"
+    "@a2a-js/sdk": "npm:0.3.14"
     "@ajsf/core": "npm:0.8.0"
     "@ajsf/material": "npm:0.8.0"
     "@angular-builders/jest": "npm:19.0.1"
@@ -18490,16 +18478,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^2.8.0":
-  version: 2.9.0
-  resolution: "yaml@npm:2.9.0"
-  bin:
-    yaml: bin.mjs
-  checksum: 10c0/f340718df45e97a9551b9bf9dac61c80050bc464513b710debfb5067c380c8472e3b67809cffacb4ab5ffb5e66ef9310816c88b05f371cec60abfedd8c88e0a2
-  languageName: node
-  linkType: hard
-
-"yaml@npm:^2.8.2":
+"yaml@npm:^2.8.0, yaml@npm:^2.8.2":
   version: 2.9.0
   resolution: "yaml@npm:2.9.0"
   bin:
