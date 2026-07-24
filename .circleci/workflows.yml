@@ -830,8 +830,8 @@ jobs:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
-          name: Run Postman tests
-          command: npm --prefix postman run test:collections
+          name: Run Postman tests (parallel)
+          command: POSTMAN_CONCURRENCY=3 npm --prefix postman run test:collections:parallel
       - run:
           name: Stop
           when: always
@@ -868,8 +868,8 @@ jobs:
           name: Spin up stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
       - run:
-          name: Run Postman tests
-          command: npm --prefix postman run test:collections
+          name: Run Postman tests (parallel)
+          command: POSTMAN_CONCURRENCY=3 npm --prefix postman run test:collections:parallel
       - run:
           name: Stop
           when: always
