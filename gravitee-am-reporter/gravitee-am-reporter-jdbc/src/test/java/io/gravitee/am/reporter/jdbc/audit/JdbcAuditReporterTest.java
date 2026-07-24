@@ -49,11 +49,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.gravitee.am.common.audit.EventType.USER_CBA_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_MAGIC_LINK_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
+import static org.awaitility.Awaitility.await;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -439,7 +441,7 @@ public class JdbcAuditReporterTest {
     }
 
     @Test
-    public void testReporter_aggregationCount_accessPointId() throws InterruptedException {
+    public void testReporter_aggregationCount_accessPointId() {
         int loop = 10;
         int acc = 0;
 
@@ -459,18 +461,16 @@ public class JdbcAuditReporterTest {
 
         // The bulk processor flushes asynchronously; under load the fixed 3s waitBulkLoadFlush() can be too
         // short and the count comes back 0. Poll the aggregate until the flushed rows are visible.
-        TestObserver<Map<Object, Object>> test;
-        int attempt = 0;
-        while (true) {
-            test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
-            test.awaitDone(10, TimeUnit.SECONDS);
-            test.assertNoErrors();
-            Long data = (Long) test.values().get(0).get("data");
-            if ((data != null && data.intValue() == expectedResult) || ++attempt >= 30) {
-                break;
-            }
-            Thread.sleep(500);
-        }
+        AtomicReference<TestObserver<Map<Object, Object>>> lastTest = new AtomicReference<>();
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
+            TestObserver<Map<Object, Object>> probe = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
+            probe.awaitDone(10, TimeUnit.SECONDS);
+            probe.assertNoErrors();
+            lastTest.set(probe);
+            Long data = (Long) probe.values().get(0).get("data");
+            return data != null && data.intValue() == expectedResult;
+        });
+        TestObserver<Map<Object, Object>> test = lastTest.get();
 
         test.assertValue(map -> map.size() == 1);
         test.assertValue(map -> map.containsKey("data"));
