@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.util.Maps;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -32,7 +33,13 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -172,6 +179,63 @@ public class MongoUserProviderTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> assertUserMatch(user, u));
         testObserver.assertValue(u -> u.getUsername().equals(usernameWithCase));
+    }
+
+    @Test
+    public void shouldNotCreateUser_duplicateUsername() {
+        DefaultUser user = createUserBean("duplicateUsername");
+        userProvider.create(user).blockingGet();
+
+        TestObserver<User> testObserver = userProvider.create(createUserBean("duplicateUsername")).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(UserAlreadyExistsException.class);
+    }
+
+    /**
+     * Reproduces the check-then-act race: N concurrent creates for the same username can all pass the
+     * {@code findByUsername} uniqueness check before any insert commits. Exactly one insert should win the
+     * {@code u1_unique} index, and every other request must surface as {@link UserAlreadyExistsException}, not
+     * a raw driver exception (e.g. a MongoWriteException for E11000 duplicate key).
+     */
+    @Test
+    public void shouldReturnUserAlreadyExists_onConcurrentCreate() throws InterruptedException {
+        final String username = "concurrent-" + java.util.UUID.randomUUID();
+        final int concurrency = 10;
+
+        final CountDownLatch ready = new CountDownLatch(concurrency);
+        final CountDownLatch start = new CountDownLatch(1);
+        final CountDownLatch done = new CountDownLatch(concurrency);
+        final List<User> successes = Collections.synchronizedList(new ArrayList<>());
+        final List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+
+        ExecutorService executor = Executors.newFixedThreadPool(concurrency);
+        try {
+            for (int i = 0; i < concurrency; i++) {
+                executor.submit(() -> {
+                    ready.countDown();
+                    try {
+                        start.await();
+                        userProvider.create(createUserBean(username))
+                                .doFinally(done::countDown)
+                                .subscribe(successes::add, failures::add);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+            }
+
+            ready.await(10, TimeUnit.SECONDS);
+            start.countDown();
+            assertTrue("all concurrent creates should complete", done.await(10, TimeUnit.SECONDS));
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertEquals("exactly one concurrent create should win the unique index", 1, successes.size());
+        assertEquals(concurrency - 1, failures.size());
+        assertTrue("every losing create must be reported as UserAlreadyExistsException, not a raw DB error",
+                failures.stream().allMatch(UserAlreadyExistsException.class::isInstance));
     }
 
     @Test
