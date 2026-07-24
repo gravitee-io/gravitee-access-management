@@ -888,7 +888,6 @@ jobs:
       - run:
           name: Build
           command: |
-            # -T 1C runs one build thread per core across the reactor; safe here because -DskipTests means no fixed-port test collisions.
             mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_mongo
@@ -906,7 +905,6 @@ jobs:
       - run:
           name: Build
           command: |
-            # -T 1C runs one build thread per core across the reactor; safe here because -DskipTests means no fixed-port test collisions.
             mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-redis -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_redis
@@ -928,15 +926,11 @@ jobs:
       - run:
           name: Build (parallel compile, no tests)
           command: |
-            # -T 1C parallelises the reactor compile. cicd-jdbc is intentionally left off here so the JDBC
-            # integration tests do NOT run under parallel load - they self-manage DB containers and flaked
-            # (async bulk-flush read 0) when 130+ other modules compiled on the other cores. See AM-7327.
+            # cicd-jdbc deliberately excluded so the JDBC integration tests don't run under parallel load
             mvn install -T 1C -pl \!gravitee-am-ui -P gio-artifactory-snapshot -P << parameters.jdbcType >> -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - run:
           name: Run JDBC testcontainer tests (sequential)
           command: |
-            # Run only the cicd-jdbc test modules, sequentially (no -T 1C), against the << parameters.jdbcType >> container.
-            # Keep this list in sync with the modules that declare the cicd-jdbc profile.
             mvn test -pl :gravitee-am-repository-jdbc,:gravitee-am-reporter-jdbc,:gravitee-am-dataplane-jdbc -P gio-artifactory-snapshot,cicd-jdbc -P << parameters.jdbcType >> -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_jdbc
@@ -1262,7 +1256,7 @@ jobs:
           name: "Maven verify (backend)"
           no_output_timeout: 30m
           command: |
-            # -T 1C runs one build thread per core across the reactor; the test phase is parallel-safe now the IdP WireMock tests bind dynamic ports instead of fixed ones (AM-7323).
+            # test phase is parallel-safe now the IdP WireMock tests bind dynamic ports, not fixed (AM-7323)
             mvn -s /tmp/.gravitee.settings.xml -T 1C verify -pl \!gravitee-am-ui -Dlicense.skip=true
       - run:
           name: Save test results
@@ -1307,8 +1301,6 @@ jobs:
       - mvn_git_commit_id
       - run:
           name: "Maven Package Install (no tests)"
-          # -T 1C runs one build thread per core to parallelise the wide, independent plugin subtrees.
-          # This step is -DskipTests so there is no fixed-port test collision risk from parallelism.
           command: |
             mvn -s /tmp/.gravitee.settings.xml -T 1C -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean install -DskipTests
       - save-maven-job-cache:
@@ -1322,9 +1314,7 @@ jobs:
       - run:
           name: Build CIBA delegated-service image tar
           # build the CIBA image once here (reactor already warm from the install above) as a tar,
-          # so downstream jest jobs docker-load it instead of each rebuilding it from source (~90s/job).
-          # buildTar needs a single platform (amd64 = the CI executor arch) and Docker archive format so
-          # plain `docker load` tags it on any daemon (OCI-layout load needs the containerd image store).
+          # so downstream jest jobs docker-load it instead of each rebuilding it from source
           command: |
             mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -DskipTests -Djib.from.platforms=linux/amd64 -Djib.container.format=Docker -f gravitee-am-ciba-delegated-service/pom.xml package jib:buildTar
             cp ./gravitee-am-ciba-delegated-service/target/jib-image.tar ~/ciba-image.tar
