@@ -102,13 +102,13 @@ FULL=0
 DETACH=1
 LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
-WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0
+WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_ELASTICSEARCH=0
 
 want_set() { # want_set <name> <value>
   case "$1" in
     ui) WANT_UI="$2" ;; wiremock) WANT_WIREMOCK="$2" ;; ciba) WANT_CIBA="$2" ;;
     openfga) WANT_OPENFGA="$2" ;; kafka) WANT_KAFKA="$2" ;; mtls) WANT_MTLS="$2" ;;
-    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; *) return 1 ;;
+    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; elasticsearch) WANT_ELASTICSEARCH="$2" ;; *) return 1 ;;
   esac
 }
 
@@ -139,10 +139,12 @@ MODE
 SERVICES
   (default lean)       gateway, management, <db>, smtp, wiremock
   --ui                 also start the Console UI on :4200 (needed for playwright)
-  --full               UI + wiremock + ciba + openfga + kafka + mtls
+  --full               UI + wiremock + ciba + openfga + kafka + mtls + elasticsearch
                        (the union the jest gateway + playwright suites need)
   --with a,b,...       opt-in extras individually:
-                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud
+                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,elasticsearch
+                       elasticsearch also mounts the gravitee-am-reporter-elasticsearch
+                       plugin into the gateway + management-api containers
   --cloud              managed-cloud mode: start the cockpit mock and point the
                        management API at it (console/cloud command path, e.g.
                        Cockpit access points -> entrypoints)
@@ -164,6 +166,7 @@ EXAMPLES
   ./local-stack.sh up --full
   ./local-stack.sh up --db psql --ui
   ./local-stack.sh up --with ui,openfga
+  ./local-stack.sh up --with elasticsearch
   ./local-stack.sh up --version 4.12.x-latest --ui
   ./local-stack.sh down
 
@@ -171,6 +174,7 @@ URLs / credentials once up:
   Gateway        http://localhost:8092
   Management API http://localhost:8093/management
   Console UI     http://localhost:4200      (with --ui / --full)
+  Elasticsearch  http://localhost:9200      (with --with elasticsearch / --full)
   Mailbox (UI)   http://localhost:5080
   Admin login    admin / adminadmin   (org/env: DEFAULT)
 EOF
@@ -218,7 +222,7 @@ DBSVC="mongodb"; [ "$DB" = "psql" ] && DBSVC="postgres"
 
 # --full implies UI + the heavy extras
 if [ "$FULL" -eq 1 ]; then
-  WANT_UI=1; WANT_WIREMOCK=1; WANT_CIBA=1; WANT_OPENFGA=1; WANT_KAFKA=1; WANT_MTLS=1
+  WANT_UI=1; WANT_WIREMOCK=1; WANT_CIBA=1; WANT_OPENFGA=1; WANT_KAFKA=1; WANT_MTLS=1; WANT_ELASTICSEARCH=1
 fi
 
 # ---------------------------------------------------------------------------
@@ -235,6 +239,7 @@ ALL_FILES=(
   -f "$DEV/docker-compose-kerberos.yml"
   -f "$DEV/docker-compose.spire.yml"
   -f "$DEV/docker-compose.cloud.yml"
+  -f "$DEV/docker-compose.elasticsearch.yml"
   -f "$DEV/docker-compose.images.yml"
 )
 
@@ -251,6 +256,7 @@ build_compose_files() {
   if [ "$WANT_UI" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ui.yml"); fi
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
+  if [ "$WANT_ELASTICSEARCH" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.elasticsearch.yml"); fi
   if [ "$PULLED" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.images.yml"); fi
   if [ -f "$LOCAL_OVERRIDE" ]; then COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE"); fi   # per-dev overrides win
 }
@@ -268,6 +274,7 @@ build_service_list() {
   [ "$WANT_KAFKA" -eq 1 ]    && SERVICES+=(kafka)
   [ "$WANT_MTLS" -eq 1 ]     && SERVICES+=(gateway-mtls)
   [ "$WANT_CLOUD" -eq 1 ]    && SERVICES+=(cockpit-mock)
+  [ "$WANT_ELASTICSEARCH" -eq 1 ] && SERVICES+=(elasticsearch)
   if [ "$WANT_SPIRE" -eq 1 ]; then
     SERVICES+=(spire-perms-init spire-server spire-bootstrap spire-agent spire-oidc)
   fi
@@ -455,6 +462,24 @@ ensure_jdbc_drivers() {
   fi
 }
 
+# Stage the built Elasticsearch reporter plugin zip to a stable path the
+# docker-compose.elasticsearch.yml overlay mounts into the gateway/management plugins dirs.
+ES_REPORTER_TARGET="../../gravitee-am-reporter/gravitee-am-reporter-elasticsearch/target"
+ES_REPORTER_PLUGIN_DIR="$DEV/plugins/reporter-elasticsearch"
+stage_es_reporter_plugin() {
+  local src; src="$(latest "$ES_REPORTER_TARGET/gravitee-am-reporter-elasticsearch-*.zip")"
+  if [ -z "$src" ]; then
+    run_step "Maven: reporter-elasticsearch plugin" mvn_in_repo install \
+      -pl gravitee-am-reporter/gravitee-am-reporter-elasticsearch -DskipTests "${MVN_SPEED[@]}" \
+      || die "Failed to build the elasticsearch reporter plugin"
+    src="$(latest "$ES_REPORTER_TARGET/gravitee-am-reporter-elasticsearch-*.zip")"
+  fi
+  [ -n "$src" ] || die "elasticsearch reporter plugin zip not found under $ES_REPORTER_TARGET"
+  mkdir -p "$ES_REPORTER_PLUGIN_DIR"
+  cp "$src" "$ES_REPORTER_PLUGIN_DIR/reporter-am-elasticsearch.zip"
+  ok "staged $(basename "$src") -> reporter-am-elasticsearch.zip"
+}
+
 # ---------------------------------------------------------------------------
 # Pre-flight checks
 # ---------------------------------------------------------------------------
@@ -484,6 +509,7 @@ print_ready() {
   printf '  Gateway        http://localhost:8092\n'
   printf '  Management API http://localhost:8093/management\n'
   [ "$WANT_UI" -eq 1 ] && printf '  Console UI     http://localhost:4200\n'
+  [ "$WANT_ELASTICSEARCH" -eq 1 ] && printf '  Elasticsearch  http://localhost:9200   (reporter endpoint from containers: http://elasticsearch:9200)\n'
   printf '  Mailbox        http://localhost:5080\n'
   printf '  Admin login    admin / adminadmin   (org/env: DEFAULT)\n'
   printf '%s  Stop with: ./local-stack.sh down%s\n\n' "$C_DIM" "$C_RST"
@@ -517,6 +543,7 @@ cmd_up() {
       || die "Image pull failed. Check the tag/registry and 'docker login ${reg}'."
     # CIBA has no published image; build it locally if requested.
     [ "$WANT_CIBA" -eq 1 ] && ensure_ciba
+    [ "$WANT_ELASTICSEARCH" -eq 1 ] && stage_es_reporter_plugin
     log "Starting stack (no build)…"
     local up_args=(); [ "$DETACH" -eq 1 ] && up_args+=(-d); up_args+=(--no-build)
     start_stack "${up_args[@]}" ${SERVICES[@]+"${SERVICES[@]}"}
@@ -524,6 +551,7 @@ cmd_up() {
     log "Source mode: building Access Management from the current code state"
     source_build
     [ "$WANT_CIBA" -eq 1 ] && ensure_ciba
+    [ "$WANT_ELASTICSEARCH" -eq 1 ] && stage_es_reporter_plugin
     log "Building images & starting stack…"
     local up_args=(); [ "$DETACH" -eq 1 ] && up_args+=(-d); up_args+=(--build)
     start_stack "${up_args[@]}" ${SERVICES[@]+"${SERVICES[@]}"}
