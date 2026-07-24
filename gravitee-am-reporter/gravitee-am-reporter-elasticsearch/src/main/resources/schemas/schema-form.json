@@ -1,0 +1,77 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:reporter:elasticsearch:ElasticsearchReporterConfiguration",
+  "properties" : {
+    "endpoints" : {
+      "type" : "array",
+      "title": "Elasticsearch endpoints",
+      "description": "List of Elasticsearch/OpenSearch node URLs (e.g. http://localhost:9200).",
+      "items": {
+        "type": "string",
+        "title": "Endpoint URL",
+        "default": "http://localhost:9200"
+      },
+      "minItems": 1
+    },
+    "index" : {
+      "type" : "string",
+      "default": "gravitee-audit",
+      "title": "Index name",
+      "description": "Name of the index (or data stream) audit documents are written to and searched from."
+    },
+    "username" : {
+      "type" : "string",
+      "title": "Authentication user",
+      "description": "User used to authenticate against Elasticsearch (basic authentication)."
+    },
+    "password" : {
+      "type" : "string",
+      "title": "Authentication password",
+      "description": "Password used to authenticate against Elasticsearch.",
+      "widget": "password",
+      "sensitive": true
+    },
+    "requestTimeout" : {
+      "type": "number",
+      "title": "Request timeout",
+      "description": "Elasticsearch request timeout in milliseconds.",
+      "default": 30000
+    },
+    "sslKeystoreType" : {
+      "type" : "string",
+      "title": "SSL keystore type",
+      "description": "Keystore type used for TLS (jks, pkcs12 or pem). Leave empty for plain HTTP or trust-all HTTPS.",
+      "enum": [ "jks", "pkcs12", "pem" ]
+    },
+    "sslKeystorePath" : {
+      "type" : "string",
+      "title": "SSL keystore path",
+      "description": "Path to the JKS or PKCS12 keystore (not used for pem)."
+    },
+    "sslKeystorePassword" : {
+      "type" : "string",
+      "title": "SSL keystore password",
+      "description": "Password of the JKS or PKCS12 keystore.",
+      "widget": "password",
+      "sensitive": true
+    },
+    "bulkActions" : {
+      "type": "number",
+      "title": "Bulk actions",
+      "description": "Number of documents buffered before a bulk flush.",
+      "default": 1000
+    },
+    "flushInterval" : {
+      "type": "number",
+      "title": "Bulk flush interval",
+      "description": "Flush interval for bulk actions, in seconds.",
+      "default": 5
+    }
+  },
+  "required": [
+    "endpoints",
+    "index",
+    "bulkActions",
+    "flushInterval"
+  ]
+}

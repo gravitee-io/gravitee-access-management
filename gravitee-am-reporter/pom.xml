@@ -41,6 +41,7 @@
         <module>gravitee-am-reporter-file</module>
         <module>gravitee-am-reporter-kafka</module>
         <module>gravitee-am-reporter-tcp</module>
+        <module>gravitee-am-reporter-elasticsearch</module>
     </modules>
     <dependencies>
         <dependency>
