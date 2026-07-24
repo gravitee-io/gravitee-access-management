@@ -101,6 +101,8 @@ public class PatchApplicationOAuthSettings {
 
     private Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings;
 
+    private Optional<String> commandEndpoint;
+
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
     }
@@ -557,6 +559,14 @@ public class PatchApplicationOAuthSettings {
         this.silentReAuthentication = silentReAuthentication;
     }
 
+    public Optional<String> getCommandEndpoint() {
+        return commandEndpoint;
+    }
+
+    public void setCommandEndpoint(Optional<String> commandEndpoint) {
+        this.commandEndpoint = commandEndpoint;
+    }
+
     public Optional<Boolean> getTlsClientCertificateBoundAccessTokens() {
         return tlsClientCertificateBoundAccessTokens;
     }
@@ -655,6 +665,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
         SetterUtils.safeSet(toPatch::setOptInScopeSelection, this.getOptInScopeSelection());
         SetterUtils.safeSet(toPatch::setTokenExchangeOAuthSettings, this.getTokenExchangeOAuthSettings());
+        SetterUtils.safeSet(toPatch::setCommandEndpoint, this.getCommandEndpoint());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

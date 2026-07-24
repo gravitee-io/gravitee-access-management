@@ -18,6 +18,7 @@ package io.gravitee.am.service.cimd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.common.oidc.command.CommandEndpointValidator;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -279,6 +280,12 @@ public class CimdMetadataFetcher {
         if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(tokenEndpointAuthMethod) && !hasJwks && !hasJwksUri) {
             throw new InvalidClientMetadataException("private_key_jwt requires jwks or jwks_uri.");
         }
+
+        try {
+            CommandEndpointValidator.validate(optionalText(metadata, "command_endpoint"));
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidClientMetadataException(ex.getMessage());
+        }
     }
 
     private CimdClientMetadata toPreview(String url, JsonNode metadata, FetchResult fetched) {
@@ -334,6 +341,7 @@ public class CimdMetadataFetcher {
                 optionalText(metadata, "backchannel_client_notification_endpoint"),
                 optionalText(metadata, "backchannel_authentication_request_signing_alg"),
                 optionalBoolean(metadata, "backchannel_user_code_parameter"),
+                optionalText(metadata, "command_endpoint"),
                 optionalText(metadata, "request_object_signing_alg"),
                 missing,
                 body,

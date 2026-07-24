@@ -24,6 +24,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.common.oidc.command.CommandEndpointValidator;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
@@ -712,6 +713,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (preview.backchannelClientNotificationEndpoint() != null) {
             oAuthSettings.setBackchannelClientNotificationEndpoint(preview.backchannelClientNotificationEndpoint());
         }
+        if (preview.commandEndpoint() != null) {
+            oAuthSettings.setCommandEndpoint(preview.commandEndpoint());
+        }
         if (preview.backchannelAuthRequestSignAlg() != null) {
             oAuthSettings.setBackchannelAuthRequestSignAlg(preview.backchannelAuthRequestSignAlg());
         }
@@ -1147,9 +1151,19 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(this::validateTlsClientAuth)
                             .flatMap(this::validatePostLogoutRedirectUris)
                             .flatMap(this::validateRequestUris)
+                            .flatMap(this::validateCommandEndpoint)
                             .flatMap(this::validateAgentSettings)
                             .flatMap(this::validateSpiffeSettings);
                 });
+    }
+
+    private Single<Application> validateCommandEndpoint(Application application) {
+        try {
+            CommandEndpointValidator.validate(application.getSettings().getOauth().getCommandEndpoint());
+            return Single.just(application);
+        } catch (IllegalArgumentException ex) {
+            return Single.error(new InvalidClientMetadataException(ex.getMessage()));
+        }
     }
 
     /**

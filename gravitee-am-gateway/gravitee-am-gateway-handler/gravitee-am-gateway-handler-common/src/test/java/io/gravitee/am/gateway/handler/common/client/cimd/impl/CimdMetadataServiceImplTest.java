@@ -66,6 +66,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -292,6 +293,81 @@ public class CimdMetadataServiceImplTest {
                 && client.getSecretSettings().isEmpty()
                 && !client.isTemplate()
                 && "domain-id".equals(client.getDomain()));
+    }
+
+    @Test
+    public void shouldApplyDocumentDeclaredCommandEndpoint() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("command_endpoint", "https://rp.example.com/commands");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> "https://rp.example.com/commands".equals(client.getCommandEndpoint()));
+    }
+
+    @Test
+    public void shouldNotInheritCommandEndpointFromTemplate() {
+        Client template = templateClient();
+        template.setCommandEndpoint("https://template.example.com/commands");
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getCommandEndpoint() == null);
+    }
+
+    @Test
+    public void shouldRejectMalformedCommandEndpoint() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("command_endpoint", "https://rp.example.com/commands#fragment");
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test(expected = InvalidClientMetadataException.class)
+    public void shouldRejectMalformedCommandEndpointWhenSynthesizingFromDocument() {
+        Client template = templateClient();
+        template.setCommandEndpoint("https://template.example.com/commands");
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("command_endpoint", "/relative/commands");
+        CimdMetadataDocument document = CimdMetadataDocument.of("domain-id", CLIENT_URL, metadata.encode(), Duration.ofMinutes(5));
+
+        cimdMetadataService.synthesizeFromDocument(document, template);
+    }
+
+    @Test
+    public void shouldSynthesizeFromPersistedDocumentWithoutFetching() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none")
+                .put("command_endpoint", "https://rp.example.com/commands");
+        CimdMetadataDocument document = CimdMetadataDocument.of("domain-id", CLIENT_URL, metadata.encode(), Duration.ofMinutes(5));
+
+        Client client = cimdMetadataService.synthesizeFromDocument(document, templateClient());
+
+        assertEquals(CLIENT_URL, client.getClientId());
+        assertEquals("https://rp.example.com/commands", client.getCommandEndpoint());
+        verifyNoInteractions(webClient);
     }
 
     @Test

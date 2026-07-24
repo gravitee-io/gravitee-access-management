@@ -348,6 +348,35 @@ public class UserResource extends AbstractResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
+    @POST
+    @Path("sessions/revoke")
+    @Operation(
+            operationId = "revokeUserSessions",
+            summary = "Revoke all sessions of a user",
+            description = "Terminates the user's access everywhere: destroys AM SSO sessions, revokes all tokens " +
+                    "and sends the OpenID Provider Commands invalidate command to every application of the domain " +
+                    "that registered a command_endpoint. " +
+                    "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Sessions revoked"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void revokeSessions(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> userService.revokeSessions(domain, user, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
+
     @Path("consents")
     public UserConsentsResource getUserConsentsResource() {
         return resourceContext.getResource(UserConsentsResource.class);

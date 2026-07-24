@@ -84,8 +84,19 @@ import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextSe
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.command.CommandStagingProcessor;
+import io.gravitee.am.gateway.handler.common.command.CommandStagingService;
+import io.gravitee.am.gateway.handler.common.command.CommandTargetResolver;
+import io.gravitee.am.gateway.handler.common.command.CommandTokenService;
+import io.gravitee.am.gateway.handler.common.command.impl.CimdAwareCommandTargetResolver;
+import io.gravitee.am.gateway.handler.common.command.impl.CommandStagingServiceImpl;
+import io.gravitee.am.gateway.handler.common.command.impl.CommandTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.command.impl.DefaultCommandTargetResolver;
+import io.gravitee.am.gateway.handler.common.service.CommandGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.gateway.handler.common.service.impl.CommandGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
@@ -579,6 +590,61 @@ public class CommonConfiguration {
     @Bean
     public RevokeTokenGatewayService revokeTokenGatewayService() {
         return new RevokeTokenGatewayServiceImpl();
+    }
+
+    @Bean
+    public CommandGatewayService commandGatewayService() {
+        return new CommandGatewayServiceImpl();
+    }
+
+    @Bean
+    public CommandStagingService commandStagingService() {
+        return new CommandStagingServiceImpl();
+    }
+
+    @Bean
+    public CommandTokenService commandTokenService() {
+        return new CommandTokenServiceImpl();
+    }
+
+    @Bean
+    public CommandTargetResolver commandTargetResolver(Domain domain,
+                                                       ClientManager clientManager,
+                                                       ClientSyncService clientSyncService,
+                                                       CimdMetadataDocumentService cimdMetadataDocumentService,
+                                                       CimdMetadataService cimdMetadataService) {
+        final var defaultResolver = new DefaultCommandTargetResolver(domain, clientManager);
+        final var cimdSettings = getCimdSettings(domain);
+        if (cimdSettings != null && cimdSettings.isEnabled() && cimdSettings.getTemplateId() != null) {
+            return new CimdAwareCommandTargetResolver(defaultResolver, domain, cimdSettings.getTemplateId(),
+                    clientSyncService, cimdMetadataDocumentService, cimdMetadataService);
+        }
+        return defaultResolver;
+    }
+
+    @Bean
+    public CommandStagingProcessor commandStagingProcessor(
+            CommandStagingService commandStagingService,
+            CommandTokenService commandTokenService,
+            CommandTargetResolver commandTargetResolver,
+            @Qualifier("oidcWebClient") WebClient webClient,
+            AuditService auditService,
+            Domain domain,
+            @Value("${commands.dispatch.enabled:true}") boolean enabled,
+            @Value("${commands.dispatch.batch:" + CommandStagingProcessor.DEFAULT_BATCH_SIZE + "}") int batchSize,
+            @Value("${commands.dispatch.period:" + CommandStagingProcessor.DEFAULT_PERIOD_IN_SECONDS + "}") int batchPeriod,
+            @Value("${commands.dispatch.attempts:" + CommandStagingProcessor.DEFAULT_MAX_ATTEMPTS + "}") int maxAttempts) {
+        return new CommandStagingProcessor(
+                commandStagingService,
+                commandTokenService,
+                commandTargetResolver,
+                webClient,
+                auditService,
+                domain,
+                batchSize,
+                batchPeriod,
+                maxAttempts,
+                enabled);
     }
 
     @Bean

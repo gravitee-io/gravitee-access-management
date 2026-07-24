@@ -269,6 +269,8 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
         oAuthSettings.setBackchannelTokenDeliveryMode(client.getBackchannelTokenDeliveryMode());
         oAuthSettings.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
+        // OpenID Provider Commands settings
+        oAuthSettings.setCommandEndpoint(client.getCommandEndpoint());
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings

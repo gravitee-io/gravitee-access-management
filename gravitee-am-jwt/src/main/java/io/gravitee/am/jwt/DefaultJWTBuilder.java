@@ -93,11 +93,20 @@ public class DefaultJWTBuilder implements JWTBuilder {
 
     @Override
     public String sign(JWT payload) {
+        return sign(payload, header);
+    }
+
+    @Override
+    public String sign(JWT payload, String tokenType) {
+        return sign(payload, new JWSHeader.Builder(header).type(new JOSEObjectType(tokenType)).build());
+    }
+
+    private String sign(JWT payload, JWSHeader jwsHeader) {
         try {
             if (issuer != null && !payload.containsKey(Claims.ISS)) {
                 payload.setIss(issuer);
             }
-            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));
+            SignedJWT signedJWT = new SignedJWT(jwsHeader, JWTClaimsSet.parse(payload));
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {

@@ -25,6 +25,7 @@ import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.command.CommandConstants;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -118,6 +120,12 @@ public class JWTServiceImpl implements JWTService {
     public Single<String> encode(JWT jwt, Client client) {
         return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
                 .flatMap(certificateProvider -> encodeWithFallback(jwt, certificateProvider));
+    }
+
+    @Override
+    public Single<String> encodeCommand(JWT jwt, Client client) {
+        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
+                .flatMap(certificateProvider -> signWithType(certificateProvider, jwt, CommandConstants.COMMAND_TOKEN_TYPE));
     }
 
     @Override
@@ -269,10 +277,17 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {
+        return sign(certificateProvider, () -> certificateProvider.getJwtBuilder().sign(jwt));
+    }
+
+    private Single<String> signWithType(CertificateProvider certificateProvider, JWT jwt, String tokenType) {
+        return sign(certificateProvider, () -> certificateProvider.getJwtBuilder().sign(jwt, tokenType));
+    }
+
+    private Single<String> sign(CertificateProvider certificateProvider, Supplier<String> signOperation) {
         final var signer = Single.create((SingleEmitter<String> emitter) -> {
             try {
-                String encodedToken = certificateProvider.getJwtBuilder().sign(jwt);
-                emitter.onSuccess(encodedToken);
+                emitter.onSuccess(signOperation.get());
             } catch (Exception ex) {
                 log.error("Failed to sign JWT", ex);
                 emitter.onError(new InvalidTokenException("The JWT token couldn't be signed", ex));

@@ -29,6 +29,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.common.oidc.command.Command;
 import io.gravitee.am.management.service.impl.ManagementUserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Credential;
@@ -122,6 +123,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atMostOnce;
@@ -195,6 +197,9 @@ public class ManagementUserServiceTest {
     private RevokeTokenManagementService tokenService;
 
     @Mock
+    private CommandManagementService commandManagementService;
+
+    @Mock
     private PasswordHistoryService passwordHistoryService;
 
     @Mock
@@ -229,6 +234,7 @@ public class ManagementUserServiceTest {
         lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.never());
         lenient().when(identityProviderManager.getIdentityProvider(any())).thenReturn(Optional.of(new IdentityProvider()));
         lenient().when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
+        lenient().when(commandManagementService.sendCommand(any(), any(), any(), any())).thenReturn(Completable.complete());
     }
 
     @Test
@@ -791,6 +797,117 @@ public class ManagementUserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(throwable -> throwable instanceof TechnicalManagementException && "boom".equals(throwable.getMessage()));
+    }
+
+    @Test
+    void shouldSendSuspendCommandWhenUserBecomesDisabled() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+        domain.setReferenceId("org-id");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setUsername("user-name");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
+        when(userRepository.update(any(), any())).thenAnswer(answer -> Single.just(answer.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        userService.updateStatus(domain, user.getId(), false, principal)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(commandManagementService).sendCommand(eq(domain), eq(Command.SUSPEND), eq(user.getId()), eq(principal));
+    }
+
+    @Test
+    void shouldNotSendCommandWhenStatusIsUnchanged() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setUsername("user-name");
+        user.setEnabled(true);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(), any())).thenAnswer(answer -> Single.just(answer.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        userService.updateStatus(domain, user.getId(), true, principal)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(commandManagementService, never()).sendCommand(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldRevokeSessions() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+        domain.setReferenceId("org-id");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setUsername("user-name");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
+        when(userRepository.update(any(), any())).thenAnswer(answer -> Single.just(answer.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        userService.revokeSessions(domain, user.getId(), principal)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        // baseline: lastLogoutAt set so the gateway lazily destroys SSO sessions
+        var updatedUserCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(updatedUserCaptor.capture(), any());
+        assertNotNull(updatedUserCaptor.getValue().getLastLogoutAt());
+
+        // baseline: all tokens revoked
+        var revokeTokenCaptor = ArgumentCaptor.forClass(RevokeToken.class);
+        verify(tokenService).sendProcessRequest(eq(domain), revokeTokenCaptor.capture());
+        assertEquals(RevokeType.BY_USER, revokeTokenCaptor.getValue().getRevokeType());
+
+        // completeness layer: invalidate command dispatched to opted-in applications
+        verify(commandManagementService).sendCommand(eq(domain), eq(Command.INVALIDATE), eq(user.getId()), eq(principal));
+    }
+
+    @Test
+    void shouldNotRevokeSessionsWhenUserNotFound() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.empty());
+
+        userService.revokeSessions(domain, "unknown", principal)
+                .test()
+                .assertError(UserNotFoundException.class);
+
+        verify(tokenService, never()).sendProcessRequest(any(), any());
+        verify(commandManagementService, never()).sendCommand(any(), any(), any(), any());
     }
 
     @Test

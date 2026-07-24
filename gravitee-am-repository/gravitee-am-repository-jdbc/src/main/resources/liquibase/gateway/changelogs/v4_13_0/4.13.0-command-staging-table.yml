@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-command-staging-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: dp_command_staging
+      changes:
+        # dp_command_staging #
+        ############################
+        - createTable:
+            tableName: dp_command_staging
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: command, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: attempts, type: integer, constraints: { nullable: false }, defaultValue: 0 }
+              - column: { name: terminal_clients, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_dp_command_staging
+            columnNames: id
+            tableName: dp_command_staging
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+              - column:
+                  name: updated_at
+            indexName: idx_dp_command_staging_updated_at
+            tableName: dp_command_staging
+            unique: false
