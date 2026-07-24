@@ -41,21 +41,60 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /**
+ * Database/version selection is driven by the {@code jdbcType} system property.
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class JdbcAuthenticationProviderConfigurationTest implements InitializingBean {
+@Configuration
+public class JdbcAuthenticationProviderConfigurationTest implements InitializingBean {
+
+    private static final String DEFAULT_JDBC_TYPE = "postgresql-tc~18.4";
 
     @Autowired
     private ConnectionPool connectionPool;
 
-    public abstract String url();
+    private String jdbcType() {
+        return System.getProperty("jdbcType", DEFAULT_JDBC_TYPE);
+    }
 
-    public abstract String protocol();
+    private String version(String fallback) {
+        final String jdbcType = jdbcType();
+        return jdbcType.contains("~") ? jdbcType.split("~")[1] : fallback;
+    }
+
+    public String protocol() {
+        final String jdbcType = jdbcType();
+        if (jdbcType.startsWith("mssql-tc")) {
+            return "sqlserver";
+        }
+        if (jdbcType.startsWith("mysql-tc")) {
+            return "mysql";
+        }
+        if (jdbcType.startsWith("mariadb-tc")) {
+            return "mariadb";
+        }
+        return "postgresql";
+    }
+
+    public String url() {
+        final String jdbcType = jdbcType();
+        if (jdbcType.startsWith("mssql-tc")) {
+            return "r2dbc:tc:sqlserver:///?TC_IMAGE_TAG=" + version("2022-latest") + "&preferCursoredExecution=false";
+        }
+        if (jdbcType.startsWith("mysql-tc")) {
+            return "r2dbc:tc:mysql:///databasename?TC_IMAGE_TAG=" + version("8.4");
+        }
+        if (jdbcType.startsWith("mariadb-tc")) {
+            return "r2dbc:tc:mariadb:///databasename?TC_IMAGE_TAG=" + version("11.6.2");
+        }
+        return "r2dbc:tc:postgresql:///databasename?TC_IMAGE_TAG=" + version("18.4");
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -79,13 +118,66 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
     }
 
     protected void initData(Connection connection) {
-        Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256), password varchar(256), email varchar(256), metadata text)").execute()).blockingGet();
-        Single.fromPublisher(connection.createStatement("insert into users values('1', 'bob', 'bobspassword', null, null)").execute()).subscribe();
-        Single.fromPublisher(connection.createStatement("insert into users values('2', 'user01', 'user01', 'user01@acme.com', null)").execute()).subscribe();
-        Single.fromPublisher(connection.createStatement("insert into users values('3', 'user02', 'user02', 'common@acme.com', null)").execute()).subscribe();
-        Single.fromPublisher(connection.createStatement("insert into users values('4', 'user03', 'user03', 'common@acme.com', null)").execute()).subscribe();
-        Single.fromPublisher(connection.createStatement("insert into users values('5', 'changeme', 'changepass', null, null)").execute()).subscribe();
-        Single.fromPublisher(connection.createStatement("insert into users values('6', 'b o b', 'changepass', null, null)").execute()).subscribe();
+        if ("sqlserver".equals(protocol())) {
+            initMssqlData(connection);
+            return;
+        }
+        Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256) unique, password varchar(256), email varchar(256), metadata text)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('1', 'bob', 'bobspassword', null, null)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('2', 'user01', 'user01', 'user01@acme.com', null)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('3', 'user02', 'user02', 'common@acme.com', null)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('4', 'user03', 'user03', 'common@acme.com', null)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('5', 'changeme', 'changepass', null, null)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('6', 'b o b', 'changepass', null, null)").execute()).blockingGet();
+    }
+
+    /**
+     * MSSQL needs named-parameter binds for the seed inserts (its R2DBC driver doesn't accept the same
+     * positional-literal statement syntax used for the other dialects).
+     */
+    private void initMssqlData(Connection connection) {
+        Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256) unique, password varchar(256), email varchar(256), metadata text)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users values('1', 'bob', 'bobspassword', null, null)").execute()).blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                .bind("id", "2")
+                .bind("username", "user01")
+                .bind("password", "user01")
+                .bind("email", "user01@acme.com")
+                .bindNull("metadata", String.class)
+                .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                .bind("id", "3")
+                .bind("username", "user02")
+                .bind("password", "user02")
+                .bind("email", "common@acme.com")
+                .bindNull("metadata", String.class)
+                .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                .bind("id", "4")
+                .bind("username", "user03")
+                .bind("password", "user03")
+                .bind("email", "common@acme.com")
+                .bindNull("metadata", String.class)
+                .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                        .bind("id", "5")
+                        .bind("username", "changeme")
+                        .bind("password", "changepass")
+                        .bindNull("email", String.class)
+                        .bindNull("metadata", String.class)
+                        .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                        .bind("id", "6")
+                        .bind("username", "b o b")
+                        .bind("password", "changepass")
+                        .bindNull("email", String.class)
+                        .bindNull("metadata", String.class)
+                        .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
     }
 
     @Bean
