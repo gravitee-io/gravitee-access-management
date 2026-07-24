@@ -37,9 +37,12 @@ import {
 } from './fixture/mfa-flow-fixture';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
-import { setup } from '../../test-fixture';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 
 setup(200000);
+// This file is order-dependent (shared MFA contexts / lockout state), so failed tests
+// must retry in place rather than after the rest of the file has mutated that state.
+retryImmediatelyForThisFile();
 const mfaChallengeAttemptsResetTime = 1;
 
 const domain: Domain = {
