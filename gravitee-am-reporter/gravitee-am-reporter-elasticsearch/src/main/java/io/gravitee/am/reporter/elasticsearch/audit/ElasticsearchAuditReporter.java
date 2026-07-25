@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -100,9 +101,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
 
     @Override
     public void afterPropertiesSet() {
-        // resolved before the pipeline is built, because a batch's index names are decided when the
-        // batch is assembled rather than when it is sent
-        this.rolloverPeriod = IndexRolloverPeriod.parse(configuration.getRolloverPeriod());
+        this.rolloverPeriod = rolloverPeriodOrDaily();
         this.queryBuilder = new ElasticsearchQueryBuilder(mapper);
         this.drops = new AuditDropCounter();
 
@@ -164,9 +163,27 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         return Flowable.timer(configuration.getRetryMaxInterval(), TimeUnit.SECONDS, Schedulers.computation());
     }
 
+    /**
+     * The period has to be known before the pipeline is built, because a batch's index names are
+     * decided when the batch is assembled rather than when it is sent. An unusable value cannot be
+     * rejected there: throwing out of {@code afterPropertiesSet} fails bean creation, which in the
+     * gateway aborts loading every <em>other</em> reporter on the domain too. It is re-resolved
+     * strictly in {@link #prepareIndex()} instead, so the reporter becomes permanently unwritable and
+     * every batch is dropped with that reason — the same way an illegal index name behaves. Nothing is
+     * written while that fails, so this fallback never decides where an audit lands.
+     */
+    private IndexRolloverPeriod rolloverPeriodOrDaily() {
+        try {
+            return IndexRolloverPeriod.parse(configuration.getRolloverPeriod());
+        } catch (IllegalStateException misconfigured) {
+            return IndexRolloverPeriod.DAILY;
+        }
+    }
+
     private Completable prepareIndex() {
         return Completable.defer(() -> {
             AuditIndexNames.validate(configuration.getIndex());
+            IndexRolloverPeriod.parse(configuration.getRolloverPeriod());
             return doPrepareIndex();
         });
     }
@@ -180,7 +197,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                     }
                     log.info("Elasticsearch audit reporter connected to {}, writing to {} with {} rollover",
                             version, AuditIndexNames.readPattern(configuration.getIndex()),
-                            rolloverPeriod.name().toLowerCase(java.util.Locale.ROOT));
+                            rolloverPeriod.name().toLowerCase(Locale.ROOT));
                     return client.putIndexTemplate(
                             AuditIndexTemplate.name(configuration.getIndex()),
                             AuditIndexTemplate.bodyFor(version, configuration.getIndex()));

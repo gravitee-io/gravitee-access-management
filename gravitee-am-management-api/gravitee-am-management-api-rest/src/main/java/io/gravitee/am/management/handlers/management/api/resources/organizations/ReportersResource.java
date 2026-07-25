@@ -51,6 +51,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
+import java.util.List;
 
 @Tag(name = "reporter")
 public class ReportersResource extends AbstractResource {
@@ -132,7 +133,7 @@ public class ReportersResource extends AbstractResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    private void markReadSource(Reference reference, java.util.List<Reporter> reporters) {
+    private void markReadSource(Reference reference, List<Reporter> reporters) {
         auditReporterManager.getReadSourceId(reference)
                 .ifPresent(id -> reporters.stream()
                         .filter(reporter -> id.equals(reporter.getId()))

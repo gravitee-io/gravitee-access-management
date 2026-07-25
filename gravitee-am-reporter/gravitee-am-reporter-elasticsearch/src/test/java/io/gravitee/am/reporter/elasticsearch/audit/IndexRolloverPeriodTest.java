@@ -20,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,7 +93,7 @@ class IndexRolloverPeriodTest {
     @Test
     void periodsCannotProduceTheSameSuffix() {
         Instant instant = Instant.parse("2026-07-25T13:45:00Z");
-        assertThat(java.util.Arrays.stream(IndexRolloverPeriod.values()).map(period -> period.suffix(instant)).distinct())
+        assertThat(Arrays.stream(IndexRolloverPeriod.values()).map(period -> period.suffix(instant)).distinct())
                 .hasSize(IndexRolloverPeriod.values().length);
     }
 

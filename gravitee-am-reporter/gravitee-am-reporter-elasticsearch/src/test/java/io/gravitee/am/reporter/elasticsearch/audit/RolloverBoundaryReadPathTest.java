@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.reporter.elasticsearch.audit;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.ReferenceType;
@@ -30,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -124,6 +128,38 @@ class RolloverBoundaryReadPathTest {
         }
     }
 
+    /**
+     * A period the reporter cannot interpret must behave like an illegal index name: the reporter
+     * starts, refuses to write, and says why. Throwing out of bean creation instead would abort
+     * loading every other reporter on the domain, and falling back to daily would quietly write
+     * audits somewhere the operator did not choose.
+     */
+    @Test
+    void anUnusablePeriodDropsAuditsLoudlyRatherThanWritingThemAnyway() throws Exception {
+        String index = indexName("unusable");
+        ElasticsearchReporterConfiguration configuration = ReporterHarness.configurationFor(index);
+        configuration.setRolloverPeriod("hourly");
+
+        ListAppender<ILoggingEvent> logs = captureLogs();
+        try (ReporterHarness harness = ReporterHarness.start(configuration)) {
+            harness.reporter().report(AuditFixtures.audit(domain(), "USER_CREATED", Status.SUCCESS, Instant.parse("2026-11-01T10:00:00Z")));
+
+            await().atMost(30, TimeUnit.SECONDS)
+                    .pollInterval(250, TimeUnit.MILLISECONDS)
+                    .until(() -> loggedText(logs).stream().anyMatch(text -> text.contains("not writable")));
+
+            assertThat(loggedText(logs))
+                    .describedAs("the operator needs the rejected value and what is accepted instead")
+                    .anyMatch(text -> text.contains("hourly") && text.contains("daily, weekly, monthly"));
+            assertThat(elasticsearch.indices(index + "-*"))
+                    .describedAs("nothing may be written under a period nobody configured")
+                    .isEmpty();
+        } finally {
+            releaseLogs(logs);
+            elasticsearch.cleanUp(index + "*");
+        }
+    }
+
     /** One template covers every period, because its pattern is the period-independent read wildcard. */
     @Test
     void appliesOneTemplateWhateverThePeriod() throws Exception {
@@ -140,6 +176,34 @@ class RolloverBoundaryReadPathTest {
         } finally {
             elasticsearch.cleanUp(index + "*");
         }
+    }
+
+    private static ListAppender<ILoggingEvent> captureLogs() {
+        ListAppender<ILoggingEvent> logs = new ListAppender<>();
+        logs.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+        logs.start();
+        rootLogger().addAppender(logs);
+        return logs;
+    }
+
+    private static void releaseLogs(ListAppender<ILoggingEvent> logs) {
+        rootLogger().detachAppender(logs);
+        logs.stop();
+    }
+
+    /** Message plus causes, since the rejected value lives on the wrapped exception. */
+    private static List<String> loggedText(ListAppender<ILoggingEvent> logs) {
+        return logs.list.stream().map(event -> {
+            StringBuilder text = new StringBuilder(event.getFormattedMessage());
+            for (var cause = event.getThrowableProxy(); cause != null; cause = cause.getCause()) {
+                text.append('\n').append(cause.getClassName()).append(": ").append(cause.getMessage());
+            }
+            return text.toString();
+        }).toList();
+    }
+
+    private static ch.qos.logback.classic.Logger rootLogger() {
+        return (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
     }
 
     private static ElasticsearchReporterConfiguration configurationFor(String index, IndexRolloverPeriod period) {

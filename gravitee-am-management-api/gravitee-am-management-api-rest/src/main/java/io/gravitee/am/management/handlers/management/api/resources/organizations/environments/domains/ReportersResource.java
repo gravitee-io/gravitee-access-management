@@ -53,6 +53,7 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -158,7 +159,7 @@ public class ReportersResource extends AbstractResource {
         return resourceContext.getResource(ReporterResource.class);
     }
 
-    private void markReadSource(Reference reference, java.util.List<Reporter> reporters) {
+    private void markReadSource(Reference reference, List<Reporter> reporters) {
         auditReporterManager.getReadSourceId(reference)
                 .ifPresent(id -> reporters.stream()
                         .filter(reporter -> id.equals(reporter.getId()))
