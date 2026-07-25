@@ -50,6 +50,18 @@ export const deleteIndices = async (indexPattern: string): Promise<void> => {
   await request('DELETE', `/_index_template/${indexPattern}`);
 };
 
+/**
+ * Plants a composable index template. Used to occupy the slot the reporter needs: Elasticsearch
+ * refuses two templates whose patterns overlap at the same priority, which is the way to make a
+ * reporter fail for good rather than retry.
+ */
+export const putIndexTemplate = async (name: string, template: object): Promise<void> => {
+  const { status, body } = await request('PUT', `/_index_template/${name}`, JSON.stringify(template));
+  if (status !== 200) {
+    throw new Error(`Failed to create index template ${name}: ${JSON.stringify(body)}`);
+  }
+};
+
 export const indexDocument = async (index: string, id: string, document: object): Promise<void> => {
   const { status, body } = await request('PUT', `/${index}/_doc/${id}?refresh=true`, JSON.stringify(document));
   if (status !== 200 && status !== 201) {
@@ -106,11 +118,7 @@ export const waitForAuditInElasticsearch = async (
 };
 
 /** Asserts nothing turned up, by giving it a fair chance to and then checking it did not. */
-export const expectNoAuditInElasticsearch = async (
-  indexPattern: string,
-  domainId: string,
-  waitMs = 8000,
-): Promise<void> => {
+export const expectNoAuditInElasticsearch = async (indexPattern: string, domainId: string, waitMs = 8000): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, waitMs));
   const audits = await searchAudits(indexPattern, { term: { referenceId: domainId } });
   if (audits.length > 0) {

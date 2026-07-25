@@ -17,9 +17,15 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { listDomainAudits } from '@management-commands/audit-management-commands';
-import { listDomainReporters } from '@management-commands/reporter-management-commands';
+import { createDomainReporter, listDomainReporters } from '@management-commands/reporter-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { expectNoAuditInElasticsearch, indexDocument, waitForAuditInElasticsearch } from '@utils-commands/elasticsearch-client';
+import {
+  expectNoAuditInElasticsearch,
+  indexDocument,
+  internalElasticsearchUrl,
+  putIndexTemplate,
+  waitForAuditInElasticsearch,
+} from '@utils-commands/elasticsearch-client';
 import { ElasticsearchReporterFixture, setupElasticsearchReporterFixture } from './fixture/domain-reporter-elasticsearch-fixture';
 import { setup } from '../../test-fixture';
 
@@ -40,6 +46,7 @@ const describeIfElasticsearch = process.env.RUN_ELASTICSEARCH_TESTS === 'true' ?
 
 let fixture: ElasticsearchReporterFixture;
 let selectionFixture: ElasticsearchReporterFixture;
+let misconfiguredFixture: ElasticsearchReporterFixture;
 
 const login = (target: ElasticsearchReporterFixture) =>
   loginUserNameAndPassword(
@@ -66,6 +73,28 @@ const waitForConsoleAudit = async (
   return page;
 };
 
+/**
+ * A reporter reaches its terminal state a moment after it deploys, so the management API is polled
+ * rather than assumed to have caught up.
+ */
+const waitForReporterToFail = async (target: ElasticsearchReporterFixture, reporterId: string, timeoutMs = 30000): Promise<any[]> => {
+  const deadline = Date.now() + timeoutMs;
+  let reporters = await listDomainReporters(target.domain.id, target.accessToken);
+  while (Date.now() < deadline && reporters.find((reporter) => reporter.id === reporterId)?.status !== 'FAILED') {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    reporters = await listDomainReporters(target.domain.id, target.accessToken);
+  }
+  const failed = reporters.find((reporter) => reporter.id === reporterId);
+  if (failed?.status !== 'FAILED') {
+    throw new Error(
+      `Reporter ${reporterId} did not fail within ${timeoutMs}ms. Saw: ${JSON.stringify(
+        reporters.map((reporter) => ({ id: reporter.id, status: reporter.status })),
+      )}`,
+    );
+  }
+  return reporters;
+};
+
 const sentinelAudit = (domainId: string, id: string) => ({
   id,
   transactionId: id,
@@ -80,11 +109,15 @@ describeIfElasticsearch('Elasticsearch Reporter - Domain Level Gateway', () => {
   // inside the gated describe, not at file scope: a file-scope beforeAll still runs when the tests
   // below are skipped, and would reach for a cluster that is not there
   beforeAll(async () => {
-    [fixture, selectionFixture] = await Promise.all([setupElasticsearchReporterFixture(), setupElasticsearchReporterFixture()]);
+    [fixture, selectionFixture, misconfiguredFixture] = await Promise.all([
+      setupElasticsearchReporterFixture(),
+      setupElasticsearchReporterFixture(),
+      setupElasticsearchReporterFixture(),
+    ]);
   });
 
   afterAll(async () => {
-    await Promise.all([fixture?.cleanUp(), selectionFixture?.cleanUp()].filter(Boolean));
+    await Promise.all([fixture?.cleanUp(), selectionFixture?.cleanUp(), misconfiguredFixture?.cleanUp()].filter(Boolean));
   });
 
   describe('Enabled', () => {
@@ -136,6 +169,63 @@ describeIfElasticsearch('Elasticsearch Reporter - Domain Level Gateway', () => {
       expect(reporters.find((reporter) => reporter.id === elasticsearch.id).readSource).toBe(true);
       expect(reporters.filter((reporter) => reporter.readSource).map((reporter) => reporter.id)).toEqual([elasticsearch.id]);
       expect(reporters.every((reporter) => reporter.enabled)).toBe(true);
+    });
+  });
+
+  describe('Index name validation', () => {
+    it('should reject an index name Elasticsearch would refuse rather than accept it and break later', async () => {
+      // the rule lives in the plugin schema as well as in the reporter, so it is enforced here rather
+      // than at deployment, where the operator has already been told the reporter was created
+      await expect(
+        createDomainReporter(fixture.domain.id, fixture.accessToken, {
+          type: 'reporter-am-elasticsearch',
+          name: uniqueName('es-reporter-illegal-index', true),
+          enabled: true,
+          configuration: JSON.stringify({
+            endpoints: [internalElasticsearchUrl()],
+            index: 'QA-Audit-UPPER',
+            bulkActions: 1,
+            flushInterval: 1,
+          }),
+        }),
+      ).rejects.toMatchObject({ response: { status: 400 } });
+    });
+
+    it('should accept a legal index name', async () => {
+      const index = uniqueName('es-audit-legal', true).toLowerCase();
+      const reporter = await fixture.addElasticsearchReporter(index);
+      expect(JSON.parse(reporter.configuration).index).toEqual(index);
+    });
+  });
+
+  describe('Reporter that cannot start', () => {
+    it('should keep serving database history when the Elasticsearch reporter is misconfigured', async () => {
+      const index = uniqueName('es-audit-broken', true).toLowerCase();
+
+      // history the database reporter holds and Elasticsearch never will
+      await login(misconfiguredFixture);
+      const beforeBreaking = await waitForConsoleAudit(misconfiguredFixture, (audit) => audit.type === 'USER_LOGIN');
+      expect(beforeBreaking.data.map((audit) => audit.type)).toContain('USER_LOGIN');
+
+      // occupy the template slot the reporter needs, at the priority it will ask for: Elasticsearch
+      // refuses overlapping composable templates at the same priority, and retrying cannot fix it
+      await putIndexTemplate(`${index}-conflict`, {
+        index_patterns: [`${index}-*`],
+        priority: index.length,
+        template: { mappings: {} },
+      });
+
+      const broken = await misconfiguredFixture.addElasticsearchReporter(index);
+      const reporters = await waitForReporterToFail(misconfiguredFixture, broken.id);
+
+      // the broken reporter outranks the database one, so without a liveness check it would win reads
+      // and the audit screen would render empty while the history sat in the database, reachable
+      const database = reporters.find((reporter) => reporter.system);
+      expect(reporters.find((reporter) => reporter.id === broken.id).readSource).toBe(false);
+      expect(reporters.filter((reporter) => reporter.readSource).map((reporter) => reporter.id)).toEqual([database.id]);
+
+      const afterBreaking = await listDomainAudits(misconfiguredFixture.domain.id, misconfiguredFixture.accessToken, { size: 100 });
+      expect(afterBreaking.data.map((audit) => audit.type)).toContain('USER_LOGIN');
     });
   });
 });

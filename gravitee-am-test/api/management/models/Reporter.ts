@@ -104,6 +104,12 @@ export interface Reporter {
    */
   reference?: Reference;
   /**
+   * Runtime state of this reporter: STARTING while it is still coming up, READY once it is answering, FAILED when it will not recover without a configuration change.
+   * @type {string}
+   * @memberof Reporter
+   */
+  readonly status?: ReporterStatusEnum;
+  /**
    *
    * @type {boolean}
    * @memberof Reporter
@@ -122,6 +128,16 @@ export interface Reporter {
    */
   updatedAt?: number;
 }
+
+/**
+ * @export
+ */
+export const ReporterStatusEnum = {
+  Starting: 'STARTING',
+  Ready: 'READY',
+  Failed: 'FAILED',
+} as const;
+export type ReporterStatusEnum = typeof ReporterStatusEnum[keyof typeof ReporterStatusEnum];
 
 /**
  * Check if a given object implements the Reporter interface.
@@ -150,6 +166,7 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     name: json['name'] == null ? undefined : json['name'],
     readSource: json['readSource'] == null ? undefined : json['readSource'],
     reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
+    status: json['status'] == null ? undefined : json['status'],
     system: json['system'] == null ? undefined : json['system'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
@@ -160,7 +177,10 @@ export function ReporterToJSON(json: any): Reporter {
   return ReporterToJSONTyped(json, false);
 }
 
-export function ReporterToJSONTyped(value?: Omit<Reporter, 'key' | 'readSource'> | null, ignoreDiscriminator: boolean = false): any {
+export function ReporterToJSONTyped(
+  value?: Omit<Reporter, 'key' | 'readSource' | 'status'> | null,
+  ignoreDiscriminator: boolean = false,
+): any {
   if (value == null) {
     return value;
   }
