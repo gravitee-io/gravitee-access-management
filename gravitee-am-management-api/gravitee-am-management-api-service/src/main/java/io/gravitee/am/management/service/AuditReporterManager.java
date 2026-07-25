@@ -36,6 +36,15 @@ public interface AuditReporterManager extends Service<AuditReporterManager> {
     Maybe<Reporter> getReporter(Reference domain);
 
     /**
+     * The id of the reporter {@link #getReporter(Reference)} would resolve to, so the Console can show
+     * which of a reference's reporters is actually serving its audit screen.
+     *
+     * @return empty when nothing configured for the reference can search, or when none of them has
+     *         started yet
+     */
+    Optional<String> getReadSourceId(Reference reference);
+
+    /**
      * Returns the internal (platform) reporter. This reporter is created in memory at startup and is not persisted in
      * the reporter repository, so it is not returned by {@link io.gravitee.am.service.ReporterService#findAll()}.
      *

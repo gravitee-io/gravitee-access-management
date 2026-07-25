@@ -35,6 +35,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AuditReporterSelectionTest {
 
     @Test
+    void explicitlyAddedReporterBeatsTheAutoProvisionedOne() {
+        Reporter autoProvisioned = autoProvisioned("a", daysAgo(30));
+        Reporter added = reporter("b", daysAgo(1));
+
+        assertThat(sorted(List.of(autoProvisioned, added))).containsExactly(added, autoProvisioned);
+        assertThat(sorted(List.of(added, autoProvisioned))).containsExactly(added, autoProvisioned);
+    }
+
+    @Test
+    void ordersAutoProvisionedReportersAmongstThemselvesOldestFirst() {
+        Reporter older = autoProvisioned("b", daysAgo(30));
+        Reporter newer = autoProvisioned("a", daysAgo(1));
+
+        assertThat(sorted(List.of(newer, older))).containsExactly(older, newer);
+    }
+
+    @Test
     void ordersOldestFirst() {
         Reporter older = reporter("b", daysAgo(30));
         Reporter newer = reporter("a", daysAgo(1));
@@ -70,6 +87,12 @@ class AuditReporterSelectionTest {
         Reporter reporter = new Reporter();
         reporter.setId(id);
         reporter.setCreatedAt(createdAt);
+        return reporter;
+    }
+
+    private static Reporter autoProvisioned(String id, Date createdAt) {
+        Reporter reporter = reporter(id, createdAt);
+        reporter.setSystem(true);
         return reporter;
     }
 

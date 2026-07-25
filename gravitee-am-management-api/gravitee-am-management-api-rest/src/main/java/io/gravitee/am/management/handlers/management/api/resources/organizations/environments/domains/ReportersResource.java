@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
@@ -73,6 +74,9 @@ public class ReportersResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private AuditReporterManager auditReporterManager;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -104,6 +108,7 @@ public class ReportersResource extends AbstractResource {
                     hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                         .map(hasPermission -> {
                             reporters.stream().filter(Reporter::isSystem).forEach(reporter -> reporter.setConfiguration(null));
+                            markReadSource(Reference.domain(domain), reporters);
                             if (hasPermission) {
                                 return reporters;
                             }
@@ -151,6 +156,13 @@ public class ReportersResource extends AbstractResource {
     @Path("{reporter}")
     public ReporterResource getReporterResource() {
         return resourceContext.getResource(ReporterResource.class);
+    }
+
+    private void markReadSource(Reference reference, java.util.List<Reporter> reporters) {
+        auditReporterManager.getReadSourceId(reference)
+                .ifPresent(id -> reporters.stream()
+                        .filter(reporter -> id.equals(reporter.getId()))
+                        .forEach(reporter -> reporter.setReadSource(true)));
     }
 
     private Reporter filterReporterInfos(Reporter reporter) {

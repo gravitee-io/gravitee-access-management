@@ -45,15 +45,24 @@ inherited also reports for every domain in that organization.
 
 ### Moving audit reads onto Elasticsearch
 
-Audit reads resolve to a **single** reporter. When a reference has more than one searchable
-reporter, the one it has had longest wins, so adding Elasticsearch alongside the built-in database
-reporter does not move the audit screen on its own.
+Audit reads resolve to a **single** reporter, while writes go to every enabled one. Adding and
+enabling this reporter is enough to move the audit screen onto Elasticsearch: a reporter an
+administrator added outranks the database reporter AM created with the domain. No restart, and no
+need to disable anything. The reporters screen marks the winner with an **audit reads** badge, and
+the management API returns `readSource: true` on the same reporter.
 
-The offload path is therefore:
+Between several reporters you added yourself, the oldest wins — so adding a second searchable
+reporter later never silently moves the screen onto a store with no history.
 
-1. Add and enable the Elasticsearch reporter. Audits now go to both stores.
-2. Once you are satisfied the data is arriving, **disable** the database reporter. Reads move to
-   Elasticsearch immediately, with no restart.
+Two consequences worth planning for:
+
+- **Reads move immediately, before any history exists in Elasticsearch.** The audit screen will look
+  empty until audits accumulate. The database history is not deleted, just no longer displayed; see
+  [Cutover](#cutover).
+- **Audits are written to both stores for as long as both reporters are enabled.** That is the
+  migration window, and it is deliberate — it is what lets you verify Elasticsearch before
+  committing. It is not a steady state: once you are satisfied, **disable the database reporter** to
+  stop paying for both.
 
 Disabling is allowed on system reporters — the delete protection covers deletion, not update.
 
@@ -140,8 +149,11 @@ The switch is **forward only**. Because reads resolve to a single reporter, a do
 Elasticsearch will not show its pre-existing database audit history in the console — that history is
 still in the database, but the console reads from one store at a time. There is no backfill.
 
-Plan the switch accordingly: keep the database reporter enabled until you no longer need the old
-history on screen, or export it before you switch.
+Export the old history before you switch if you still need it on screen. Keeping the database
+reporter enabled does *not* keep it visible: an added reporter wins reads either way, so enabling
+both buys you duplicated writes, not a merged view. To read the database history again, disable the
+Elasticsearch reporter — reads fall back to the database, and the audits written to Elasticsearch
+meanwhile stay in Elasticsearch.
 
 ## Limitations
 

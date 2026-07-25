@@ -32,6 +32,7 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.reporter.AuditReporterSelection;
+import io.gravitee.am.service.reporter.ReporterTeardown;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -127,18 +128,18 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         super.doStop();
 
         if (deploymentId != null) {
-            vertx.rxUndeploy(deploymentId)
-                    .doFinally(() -> {
-                        for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
-                            try {
-                                log.info("Stopping reporter: {}", reporter);
-                                reporter.stop();
-                            } catch (Exception ex) {
-                                log.error("Unexpected error while stopping reporter", ex);
-                            }
-                        }
-                    })
-                    .subscribe();
+            ReporterTeardown.undeployAndStopReporters(vertx, deploymentId, this::stopReporters);
+        }
+    }
+
+    private void stopReporters() {
+        for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
+            try {
+                log.info("Stopping reporter: {}", reporter);
+                reporter.stop();
+            } catch (Exception ex) {
+                log.error("Unexpected error while stopping reporter", ex);
+            }
         }
     }
 
@@ -177,15 +178,23 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         return Optional.ofNullable(internalReporter);
     }
 
-    private Maybe<Reporter> doGetReporter(Reference reference) {
-        Optional<Reporter> optionalReporter = auditReporters
+    @Override
+    public Optional<String> getReadSourceId(Reference reference) {
+        return selectReadSource(reference).map(entry -> entry.getKey().getId());
+    }
+
+    private Optional<Entry<io.gravitee.am.model.Reporter, Reporter>> selectReadSource(Reference reference) {
+        return auditReporters
                 .entrySet()
                 .stream()
                 .filter(entry -> reference.equals(entry.getKey().getReference()))
                 .sorted(Entry.comparingByKey(AuditReporterSelection.ORDER))
-                .map(Entry::getValue)
-                .filter(Reporter::canSearch)
+                .filter(entry -> entry.getValue().canSearch())
                 .findFirst();
+    }
+
+    private Maybe<Reporter> doGetReporter(Reference reference) {
+        Optional<Reporter> optionalReporter = selectReadSource(reference).map(Entry::getValue);
 
         // reporter can be missing as it can take sometime for the reporter events
         // to propagate across the cluster so if there are at least one reporter for the domain, return the NoOpReporter to avoid

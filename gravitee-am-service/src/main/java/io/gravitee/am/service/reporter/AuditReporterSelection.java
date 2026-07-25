@@ -25,17 +25,22 @@ import java.util.Date;
  * winner has to be defined rather than left to map iteration order — otherwise the same user
  * refreshing the audit screen can be served from a different store on each instance.
  * <p>
- * The order is oldest first, tie-broken by id. The reporter a reference has had longest keeps
- * serving reads, so adding a second one never silently moves the audit screen onto a store with no
- * history. Moving reads onto a newly added reporter is done by disabling the older one, which is the
- * documented offload path.
+ * A reporter an administrator added outranks the one AM provisioned with the reference. Every
+ * reference is born with a database reporter, created at the same instant as the reference itself, so
+ * ordering on age alone means an added reporter can never win a read: audits would be written to both
+ * stores while the audit screen kept reading from the database, which is more load and no relief.
+ * Choosing to add a searchable reporter is the intent; being handed one at creation is not.
+ * <p>
+ * Beyond that the order is oldest first, tie-broken by id, so a reference with several added
+ * reporters still resolves the same way on every instance.
  *
  * @author GraviteeSource Team
  */
 public final class AuditReporterSelection {
 
     public static final Comparator<Reporter> ORDER = Comparator
-            .comparing(Reporter::getCreatedAt, Comparator.nullsLast(Comparator.<Date>naturalOrder()))
+            .comparing(Reporter::isSystem)
+            .thenComparing(Reporter::getCreatedAt, Comparator.nullsLast(Comparator.<Date>naturalOrder()))
             .thenComparing(Reporter::getId, Comparator.nullsLast(Comparator.<String>naturalOrder()));
 
     private AuditReporterSelection() {

@@ -108,6 +108,16 @@ class GatewayAuditReporterManagerTest {
     }
 
     @Test
+    void anAddedReporterOutranksTheOneProvisionedWithTheDomain() {
+        io.gravitee.am.model.Reporter autoProvisioned = autoProvisioned("database", daysAgo(30));
+        io.gravitee.am.model.Reporter elasticsearch = model("elasticsearch", daysAgo(1));
+        register(autoProvisioned, true);
+        Reporter elasticsearchProvider = register(elasticsearch, true);
+
+        assertThat(manager.getReporter()).isSameAs(elasticsearchProvider);
+    }
+
+    @Test
     void skipsReportersThatCannotSearch() {
         io.gravitee.am.model.Reporter writeOnly = model("kafka", daysAgo(30));
         io.gravitee.am.model.Reporter searchable = model("elasticsearch", daysAgo(1));
@@ -197,6 +207,12 @@ class GatewayAuditReporterManagerTest {
         reporter.setEnabled(true);
         reporter.setCreatedAt(createdAt);
         reporter.setUpdatedAt(createdAt);
+        return reporter;
+    }
+
+    private io.gravitee.am.model.Reporter autoProvisioned(String id, Date createdAt) {
+        io.gravitee.am.model.Reporter reporter = model(id, createdAt);
+        reporter.setSystem(true);
         return reporter;
     }
 

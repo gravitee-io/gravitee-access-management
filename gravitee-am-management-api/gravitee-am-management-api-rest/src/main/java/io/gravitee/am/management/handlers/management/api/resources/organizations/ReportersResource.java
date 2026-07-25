@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
@@ -58,14 +59,17 @@ public class ReportersResource extends AbstractResource {
     private final ReporterServiceProxy reporterService;
     private final ReporterPluginService reporterPluginService;
     private final OrganizationService organizationService;
+    private final AuditReporterManager auditReporterManager;
 
     @Inject
     public ReportersResource(ReporterServiceProxy reporterService,
                              ReporterPluginService reporterPluginService,
-                             OrganizationService organizationService) {
+                             OrganizationService organizationService,
+                             AuditReporterManager auditReporterManager) {
         this.reporterService = reporterService;
         this.reporterPluginService = reporterPluginService;
         this.organizationService = organizationService;
+        this.auditReporterManager = auditReporterManager;
     }
 
 
@@ -91,9 +95,12 @@ public class ReportersResource extends AbstractResource {
                 )
                 .flatMap(reporters ->
                         hasPermission(authenticatedUser, ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
-                                .map(hasPermission -> reporters.stream()
-                                        .map(reporter -> reporter.apiRepresentation(!hasPermission))
-                                        .toList())
+                                .map(hasPermission -> {
+                                    markReadSource(Reference.organization(organizationId), reporters);
+                                    return reporters.stream()
+                                            .map(reporter -> reporter.apiRepresentation(!hasPermission))
+                                            .toList();
+                                })
                 )
                 .subscribe(response::resume, response::resume);
     }
@@ -123,6 +130,13 @@ public class ReportersResource extends AbstractResource {
                         .entity(reporter)
                         .build())
                 .subscribe(response::resume, response::resume);
+    }
+
+    private void markReadSource(Reference reference, java.util.List<Reporter> reporters) {
+        auditReporterManager.getReadSourceId(reference)
+                .ifPresent(id -> reporters.stream()
+                        .filter(reporter -> id.equals(reporter.getId()))
+                        .forEach(reporter -> reporter.setReadSource(true)));
     }
 
     @Path("{reporterId}")

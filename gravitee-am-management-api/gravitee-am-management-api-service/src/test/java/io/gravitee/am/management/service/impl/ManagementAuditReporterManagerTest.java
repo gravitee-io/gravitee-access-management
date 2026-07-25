@@ -88,6 +88,26 @@ class ManagementAuditReporterManagerTest {
     }
 
     @Test
+    void anAddedReporterOutranksTheOneProvisionedWithTheDomain() {
+        // the database reporter is created with the domain, so it is always the older of the two;
+        // without the system tie-break an administrator could never move reads onto Elasticsearch
+        io.gravitee.am.model.Reporter autoProvisioned = autoProvisioned("database", daysAgo(30));
+        io.gravitee.am.model.Reporter elasticsearch = model("elasticsearch", daysAgo(1));
+        register(autoProvisioned, true);
+        Reporter elasticsearchProvider = register(elasticsearch, true);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(elasticsearchProvider);
+    }
+
+    @Test
+    void theProvisionedReporterStillServesReadsWhenNothingElseWasAdded() {
+        io.gravitee.am.model.Reporter autoProvisioned = autoProvisioned("database", daysAgo(30));
+        Reporter provider = register(autoProvisioned, true);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(provider);
+    }
+
+    @Test
     void selectionIgnoresReporterIdOrdering() {
         // ids deliberately ordered the opposite way round to creation, so an id-ordered or
         // arbitrarily-ordered lookup would pick the elasticsearch reporter instead
@@ -175,6 +195,12 @@ class ManagementAuditReporterManagerTest {
         reporter.setEnabled(true);
         reporter.setCreatedAt(createdAt);
         reporter.setUpdatedAt(createdAt);
+        return reporter;
+    }
+
+    private io.gravitee.am.model.Reporter autoProvisioned(String id, Date createdAt) {
+        io.gravitee.am.model.Reporter reporter = model(id, createdAt);
+        reporter.setSystem(true);
         return reporter;
     }
 

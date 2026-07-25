@@ -65,6 +65,16 @@ public class Reporter implements Managed {
      */
     private ManagedBy managedBy;
 
+    /**
+     * True for the one reporter currently answering audit reads for this reference. Audit reads
+     * resolve to a single reporter, and which one wins depends on state the Console cannot see —
+     * whether a reporter's plugin can search at all, and whether it has finished starting. Resolved
+     * per request against the running reporters, never persisted.
+     */
+    @Schema(name = "readSource", accessMode = Schema.AccessMode.READ_ONLY,
+            description = "True for the reporter currently serving audit reads for this domain or organization.")
+    private boolean readSource;
+
     public Reporter() {
     }
 
@@ -82,6 +92,7 @@ public class Reporter implements Managed {
         this.updatedAt = other.updatedAt;
         this.inherited = other.inherited;
         this.managedBy = other.managedBy;
+        this.readSource = other.readSource;
     }
 
     /**
