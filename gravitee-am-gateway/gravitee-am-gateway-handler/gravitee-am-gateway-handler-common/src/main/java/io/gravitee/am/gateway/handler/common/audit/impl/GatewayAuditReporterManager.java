@@ -38,6 +38,7 @@ import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.service.reporter.AuditReporterSelection;
+import io.gravitee.am.service.reporter.ReporterTeardown;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -176,18 +177,18 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         eventManager.unsubscribeForEvents(this, ReporterEvent.class, domain.getId());
 
         if (deploymentId != null) {
-            vertx.rxUndeploy(deploymentId)
-                    .doFinally(() -> {
-                        for (io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
-                            try {
-                                log.info("Stopping reporter: {}", reporter);
-                                reporter.stop();
-                            } catch (Exception ex) {
-                                log.error("Unexpected error while stopping reporter", ex);
-                            }
-                        }
-                    })
-                    .subscribe();
+            ReporterTeardown.undeployAndStopReporters(vertx, deploymentId, this::stopReporters);
+        }
+    }
+
+    private void stopReporters() {
+        for (io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
+            try {
+                log.info("Stopping reporter: {}", reporter);
+                reporter.stop();
+            } catch (Exception ex) {
+                log.error("Unexpected error while stopping reporter", ex);
+            }
         }
     }
 
