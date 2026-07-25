@@ -20,6 +20,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.reporter.elasticsearch.AuditFixtures;
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchTestClient;
 import io.gravitee.am.reporter.elasticsearch.ReporterHarness;
@@ -127,6 +128,11 @@ class IndexTemplateFailureTest {
 
             // nothing reached Elasticsearch: an index without the template is exactly what must not happen
             assertThat(elasticsearch.indices(index + "-*")).isEmpty();
+
+            assertThat(harness.reporter().status())
+                    .describedAs("a collision is a misconfiguration, not a slow start, so audit reads have to be "
+                            + "able to fall through to a reporter that can answer them")
+                    .isEqualTo(ReporterStatus.FAILED);
         }
     }
 
@@ -157,6 +163,7 @@ class IndexTemplateFailureTest {
         try (ReporterHarness harness = ReporterHarness.start(ReporterHarness.configurationFor(index))) {
             assertThat(harness.reporter().canSearch()).isTrue();
             elasticsearch.awaitTemplate(AuditIndexTemplate.name(index));
+            await().atMost(30, TimeUnit.SECONDS).until(() -> harness.reporter().status() == ReporterStatus.READY);
 
             String dailyIndex = index + "-2026.07.25";
             HttpResponse<String> asString = elasticsearch.put("/" + dailyIndex + "/_doc/first", """

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
@@ -99,6 +100,13 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
     /** The in-flight index preparation, which retries indefinitely while the cluster is unreachable. */
     private Disposable preparation;
 
+    /**
+     * Follows the outcome of that preparation, because it is what decides whether this reporter can
+     * answer a query. An unreachable cluster leaves it STARTING for as long as the retries run, so a
+     * slow start is never mistaken for a broken configuration.
+     */
+    private volatile ReporterStatus status = ReporterStatus.STARTING;
+
     @Override
     public void afterPropertiesSet() {
         this.rolloverPeriod = rolloverPeriodOrDaily();
@@ -115,8 +123,11 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         // is stopped and restarted on every update event, so an uncancelled retry would outlive it.
         this.preparation = this.indexReady
                 .subscribeOn(Schedulers.io())
-                .subscribe(() -> { },
-                        error -> log.error("The Elasticsearch audit reporter cannot write audits", error));
+                .subscribe(() -> status = ReporterStatus.READY,
+                        error -> {
+                            status = ReporterStatus.FAILED;
+                            log.error("The Elasticsearch audit reporter cannot write audits", error);
+                        });
 
         this.disposable = bulkProcessor
                 .buffer(configuration.getFlushInterval(), TimeUnit.SECONDS, configuration.getBulkActions())
@@ -235,6 +246,11 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
     @Override
     public boolean canSearch() {
         return true;
+    }
+
+    @Override
+    public ReporterStatus status() {
+        return status;
     }
 
     @Override

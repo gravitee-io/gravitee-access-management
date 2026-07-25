@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.ReporterRuntimeState;
+import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Reference;
@@ -62,10 +64,13 @@ public class ReporterResource extends AbstractResource {
 
     private final OrganizationService organizationService;
 
+    private final AuditReporterManager auditReporterManager;
+
     @Inject
-    public ReporterResource(ReporterServiceProxy reporterService, OrganizationService domainService) {
+    public ReporterResource(ReporterServiceProxy reporterService, OrganizationService domainService, AuditReporterManager auditReporterManager) {
         this.reporterService = reporterService;
         this.organizationService = domainService;
+        this.auditReporterManager = auditReporterManager;
     }
 
     @GET
@@ -92,6 +97,9 @@ public class ReporterResource extends AbstractResource {
                             if (!reporter.getReference().matches(ReferenceType.ORGANIZATION, organizationId)) {
                                 throw new BadRequestException("Reporter does not belong to organization");
                             }
+                            // resolved per request, exactly as the list endpoint does, so fetching one
+                            // reporter cannot report it as not serving reads while the list says it is
+                            ReporterRuntimeState.mark(auditReporterManager, Reference.organization(organizationId), reporter);
                             return Response.ok(reporter.apiRepresentation(false)).build();
                         }))
                 .subscribe(response::resume, response::resume);

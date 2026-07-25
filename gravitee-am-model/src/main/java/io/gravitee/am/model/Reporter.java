@@ -75,6 +75,16 @@ public class Reporter implements Managed {
             description = "True for the reporter currently serving audit reads for this domain or organization.")
     private boolean readSource;
 
+    /**
+     * Whether the running instance of this reporter is usable. A reporter whose configuration the
+     * store refuses is enabled, deployed and broken, and looks identical to a working one without
+     * this. Resolved per request against the running reporters, never persisted.
+     */
+    @Schema(name = "status", accessMode = Schema.AccessMode.READ_ONLY,
+            description = "Runtime state of this reporter: STARTING while it is still coming up, READY once it is " +
+                    "answering, FAILED when it will not recover without a configuration change.")
+    private ReporterStatus status;
+
     public Reporter() {
     }
 
@@ -93,6 +103,7 @@ public class Reporter implements Managed {
         this.inherited = other.inherited;
         this.managedBy = other.managedBy;
         this.readSource = other.readSource;
+        this.status = other.status;
     }
 
     /**

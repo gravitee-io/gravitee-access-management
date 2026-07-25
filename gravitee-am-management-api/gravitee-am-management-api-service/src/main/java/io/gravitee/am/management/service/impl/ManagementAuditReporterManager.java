@@ -21,6 +21,7 @@ import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
@@ -183,14 +184,34 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         return selectReadSource(reference).map(entry -> entry.getKey().getId());
     }
 
+    @Override
+    public ReporterStatus getStatus(String reporterId) {
+        // absent from auditReporters means the reporter event has not reached this node yet, which is
+        // the same "not usable yet, nothing is wrong" the reporters themselves report while starting
+        return getReporterInstanceById(reporterId).map(Reporter::status).orElse(ReporterStatus.STARTING);
+    }
+
     private Optional<Entry<io.gravitee.am.model.Reporter, Reporter>> selectReadSource(Reference reference) {
         return auditReporters
                 .entrySet()
                 .stream()
-                .filter(entry -> reference.equals(entry.getKey().getReference()))
-                .sorted(Entry.comparingByKey(AuditReporterSelection.ORDER))
+                .filter(entry -> servesReadsFor(reference, entry.getKey(), entry.getValue()))
+                .sorted(Entry.comparingByKey(AuditReporterSelection.orderFor(reference)))
                 .filter(entry -> entry.getValue().canSearch())
+                // a reporter that failed to start is still deployed and still outranks the database one,
+                // so without this every read goes to the one reporter that cannot answer a single query
+                .filter(entry -> entry.getValue().status() != ReporterStatus.FAILED)
                 .findFirst();
+    }
+
+    /**
+     * A reporter belonging to the reference always qualifies. Beyond that the event bus wrapper is the
+     * authority: it knows which references a reporter actually receives audits for, which is how an
+     * inherited organization reporter becomes a candidate for a domain that has none of its own.
+     */
+    private static boolean servesReadsFor(Reference reference, io.gravitee.am.model.Reporter model, Reporter provider) {
+        return reference.equals(model.getReference())
+                || (provider instanceof EventBusReporterWrapper<?, ?> wrapper && wrapper.reportsFor(reference));
     }
 
     private Maybe<Reporter> doGetReporter(Reference reference) {

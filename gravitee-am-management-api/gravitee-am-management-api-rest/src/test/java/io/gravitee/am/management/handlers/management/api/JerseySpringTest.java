@@ -50,6 +50,7 @@ import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
+import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
@@ -524,6 +525,11 @@ public abstract class JerseySpringTest {
         @Bean
         public ReporterService reporterService() {
             return mock(ReporterService.class);
+        }
+
+        @Bean
+        public ReporterPluginService reporterPluginService() {
+            return mock(ReporterPluginService.class);
         }
 
         @Bean

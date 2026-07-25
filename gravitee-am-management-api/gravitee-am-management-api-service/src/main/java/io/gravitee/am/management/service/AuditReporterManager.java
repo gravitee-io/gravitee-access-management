@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
@@ -43,6 +44,12 @@ public interface AuditReporterManager extends Service<AuditReporterManager> {
      *         started yet
      */
     Optional<String> getReadSourceId(Reference reference);
+
+    /**
+     * Whether a deployed reporter is usable, so the Console can tell a reporter that failed to start
+     * from one that is running. A reporter this node has not loaded yet reports {@code STARTING}.
+     */
+    ReporterStatus getStatus(String reporterId);
 
     /**
      * Returns the internal (platform) reporter. This reporter is created in memory at startup and is not persisted in

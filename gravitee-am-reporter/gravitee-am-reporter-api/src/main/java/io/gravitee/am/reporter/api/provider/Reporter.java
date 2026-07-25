@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.api.provider;
 
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.Reportable;
 import io.reactivex.rxjava3.core.Completable;
@@ -46,6 +47,17 @@ public interface Reporter<R extends Reportable, C extends ReportableCriteria> ex
     Maybe<R> findById(ReferenceType referenceType, String referenceId, String id);
 
     boolean canSearch();
+
+    /**
+     * Whether this instance is usable, as opposed to whether its plugin supports search at all. A
+     * reporter that reaches a terminal failure must report it, because audit reads resolve to a single
+     * reporter and a broken one would otherwise keep winning and answer every query with nothing.
+     * <p>
+     * Reporters that are usable as soon as they are constructed need not override this.
+     */
+    default ReporterStatus status() {
+        return ReporterStatus.READY;
+    }
 
     default Completable purgeExpiredData(){
         return Completable.complete();

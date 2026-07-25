@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
@@ -40,6 +41,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -59,6 +61,7 @@ import static org.mockito.Mockito.when;
 class ManagementAuditReporterManagerTest {
 
     private static final Reference DOMAIN = Reference.domain("domain-1");
+    private static final Reference ORGANIZATION = Reference.organization("org-1");
 
     @Mock
     private ReporterService reporterService;
@@ -130,6 +133,82 @@ class ManagementAuditReporterManagerTest {
     }
 
     @Test
+    void aReporterThatFailedToStartDoesNotWinReads() {
+        // the failure mode this exists for: an Elasticsearch reporter added with a configuration its
+        // cluster refuses outranks the database reporter, and would answer every query with nothing
+        // while the history sits in the database, reachable
+        io.gravitee.am.model.Reporter database = autoProvisioned("database", daysAgo(30));
+        io.gravitee.am.model.Reporter elasticsearch = model("elasticsearch", daysAgo(1));
+        Reporter databaseProvider = register(database, true);
+        register(elasticsearch, true, ReporterStatus.FAILED);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(databaseProvider);
+    }
+
+    @Test
+    void aReporterThatHasNotFinishedStartingStillWinsReads() {
+        // a slow start is not a failure. Falling back to the database here would resurrect the problem
+        // added-reporter precedence solves: during the migration window Elasticsearch is meant to look
+        // empty, not to divert reads to the store being migrated away from
+        io.gravitee.am.model.Reporter database = autoProvisioned("database", daysAgo(30));
+        io.gravitee.am.model.Reporter elasticsearch = model("elasticsearch", daysAgo(1));
+        register(database, true);
+        Reporter startingProvider = register(elasticsearch, true, ReporterStatus.STARTING);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(startingProvider);
+    }
+
+    @Test
+    void reportsTheStatusOfADeployedReporter() {
+        io.gravitee.am.model.Reporter elasticsearch = model("elasticsearch", daysAgo(1));
+        register(elasticsearch, true, ReporterStatus.FAILED);
+
+        assertThat(manager.getStatus("elasticsearch")).isEqualTo(ReporterStatus.FAILED);
+    }
+
+    @Test
+    void reportsAReporterThisNodeHasNotLoadedAsStarting() {
+        assertThat(manager.getStatus("never-heard-of-it")).isEqualTo(ReporterStatus.STARTING);
+    }
+
+    @Test
+    void anInheritedOrganizationReporterServesTheDomainsReads() {
+        // it already receives this domain's audits; before this it could never answer for them, so the
+        // recommended shape at scale — one inherited organization reporter — was write-only
+        io.gravitee.am.model.Reporter database = autoProvisioned("database", daysAgo(30));
+        io.gravitee.am.model.Reporter organisationWide = model("org-elasticsearch", daysAgo(1));
+        organisationWide.setReference(ORGANIZATION);
+        organisationWide.setInherited(true);
+        register(database, true);
+        Reporter inheritedProvider = registerInherited(organisationWide, DOMAIN);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(inheritedProvider);
+    }
+
+    @Test
+    void anOrganizationReporterThatIsNotInheritedNeverServesADomain() {
+        io.gravitee.am.model.Reporter database = autoProvisioned("database", daysAgo(30));
+        io.gravitee.am.model.Reporter organisationOnly = model("org-elasticsearch", daysAgo(1));
+        organisationOnly.setReference(ORGANIZATION);
+        Reporter databaseProvider = register(database, true);
+        registerFor(organisationOnly, ORGANIZATION);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(databaseProvider);
+    }
+
+    @Test
+    void aDomainsOwnReporterOutranksAnInheritedOne() {
+        io.gravitee.am.model.Reporter organisationWide = model("org-elasticsearch", daysAgo(30));
+        organisationWide.setReference(ORGANIZATION);
+        organisationWide.setInherited(true);
+        io.gravitee.am.model.Reporter own = model("domain-elasticsearch", daysAgo(1));
+        registerInherited(organisationWide, DOMAIN);
+        Reporter ownProvider = register(own, true);
+
+        assertThat(manager.getReporter(DOMAIN).blockingGet()).isSameAs(ownProvider);
+    }
+
+    @Test
     void aSingleReporterIsStillSelected() {
         io.gravitee.am.model.Reporter only = model("database", daysAgo(30));
         Reporter onlyProvider = register(only, true);
@@ -178,9 +257,34 @@ class ManagementAuditReporterManagerTest {
     }
 
     private Reporter register(io.gravitee.am.model.Reporter model, boolean canSearch) {
+        return register(model, canSearch, ReporterStatus.READY);
+    }
+
+    private Reporter register(io.gravitee.am.model.Reporter model, boolean canSearch, ReporterStatus status) {
+        return registerWith(model, canSearch, status, new Reference[]{DOMAIN});
+    }
+
+    /** An organization reporter that consumes only its own reference, as a non-inherited one does. */
+    private Reporter registerFor(io.gravitee.am.model.Reporter model, Reference reference) {
+        return registerWith(model, true, ReporterStatus.READY, new Reference[]{reference});
+    }
+
+    /**
+     * An inherited organization reporter, which the launcher wires to its organization <em>and</em>
+     * every domain in it — the write-side fact read selection now consults.
+     */
+    private Reporter registerInherited(io.gravitee.am.model.Reporter model, Reference... domains) {
+        Reference[] references = new Reference[domains.length + 1];
+        references[0] = model.getReference();
+        System.arraycopy(domains, 0, references, 1, domains.length);
+        return registerWith(model, true, ReporterStatus.READY, references);
+    }
+
+    private Reporter registerWith(io.gravitee.am.model.Reporter model, boolean canSearch, ReporterStatus status, Reference[] references) {
         AuditReporter delegate = mock(AuditReporter.class);
         when(delegate.canSearch()).thenReturn(canSearch);
-        Reporter provider = new EventBusReporterWrapper<>(vertx, delegate, DOMAIN);
+        when(delegate.status()).thenReturn(status);
+        Reporter provider = new EventBusReporterWrapper<>(vertx, delegate, List.of(references));
         auditReporters().put(model, provider);
         deployedReporters().put(model.getId(), model);
         return provider;

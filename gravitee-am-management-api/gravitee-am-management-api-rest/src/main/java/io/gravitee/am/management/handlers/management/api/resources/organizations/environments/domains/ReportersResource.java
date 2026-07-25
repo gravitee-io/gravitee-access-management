@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.ReporterRuntimeState;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
@@ -28,6 +29,7 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,7 +55,6 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -104,12 +105,14 @@ public class ReportersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findByReference(Reference.domain(domain)).toList()))
+                        .flatMap(irrelevant -> reporterService.findByReference(Reference.domain(domain))
+                                .concatWith(inheritedOrganizationReporters(organizationId))
+                                .toList()))
                 .flatMap(reporters ->
                     hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                         .map(hasPermission -> {
                             reporters.stream().filter(Reporter::isSystem).forEach(reporter -> reporter.setConfiguration(null));
-                            markReadSource(Reference.domain(domain), reporters);
+                            ReporterRuntimeState.mark(auditReporterManager, Reference.domain(domain), reporters);
                             if (hasPermission) {
                                 return reporters;
                             }
@@ -159,11 +162,16 @@ public class ReportersResource extends AbstractResource {
         return resourceContext.getResource(ReporterResource.class);
     }
 
-    private void markReadSource(Reference reference, List<Reporter> reporters) {
-        auditReporterManager.getReadSourceId(reference)
-                .ifPresent(id -> reporters.stream()
-                        .filter(reporter -> id.equals(reporter.getId()))
-                        .forEach(reporter -> reporter.setReadSource(true)));
+    /**
+     * An inherited organization reporter receives this domain's audits and can therefore serve its
+     * reads, so it belongs in the domain's list — otherwise the reporter the audit screen is reading
+     * from is not on the screen. Its configuration is not: it is administered from the organization,
+     * and can hold credentials a domain-level permission does not entitle its holder to.
+     */
+    private Flowable<Reporter> inheritedOrganizationReporters(String organizationId) {
+        return reporterService.findByReference(Reference.organization(organizationId))
+                .filter(Reporter::isInherited)
+                .map(reporter -> reporter.toBuilder().configuration(null).build());
     }
 
     private Reporter filterReporterInfos(Reporter reporter) {

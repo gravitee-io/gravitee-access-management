@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.reporter;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author GraviteeSource Team
  */
 class AuditReporterSelectionTest {
+
+    private static final Reference DOMAIN = Reference.domain("domain-1");
 
     @Test
     void explicitlyAddedReporterBeatsTheAutoProvisionedOne() {
@@ -70,6 +73,28 @@ class AuditReporterSelectionTest {
     }
 
     @Test
+    void aDomainsOwnAddedReporterBeatsAnInheritedOrganizationOne() {
+        // both were added deliberately, so specificity decides: the one added to this domain is the
+        // narrower statement of intent
+        Reporter inherited = reporter("a", daysAgo(30), Reference.organization("org-1"));
+        Reporter own = reporter("b", daysAgo(1), DOMAIN);
+
+        assertThat(sortedFor(DOMAIN, List.of(inherited, own))).containsExactly(own, inherited);
+        assertThat(sortedFor(DOMAIN, List.of(own, inherited))).containsExactly(own, inherited);
+    }
+
+    @Test
+    void anInheritedOrganizationReporterBeatsTheDomainsAutoProvisionedOne() {
+        // the configuration ticket 17 recommends at scale: one inherited organization reporter and no
+        // domain-level one. If the auto-provisioned database reporter won here, inheriting a searchable
+        // reporter would write to it and never read from it
+        Reporter autoProvisioned = autoProvisioned("a", daysAgo(30), DOMAIN);
+        Reporter inherited = reporter("b", daysAgo(1), Reference.organization("org-1"));
+
+        assertThat(sortedFor(DOMAIN, List.of(autoProvisioned, inherited))).containsExactly(inherited, autoProvisioned);
+    }
+
+    @Test
     void reportersWithoutACreationTimeSortLast() {
         Reporter dated = reporter("a", daysAgo(1));
         Reporter undated = reporter("b", null);
@@ -83,6 +108,12 @@ class AuditReporterSelectionTest {
         return copy;
     }
 
+    private static List<Reporter> sortedFor(Reference reference, List<Reporter> reporters) {
+        List<Reporter> copy = new ArrayList<>(reporters);
+        copy.sort(AuditReporterSelection.orderFor(reference));
+        return copy;
+    }
+
     private static Reporter reporter(String id, Date createdAt) {
         Reporter reporter = new Reporter();
         reporter.setId(id);
@@ -90,9 +121,21 @@ class AuditReporterSelectionTest {
         return reporter;
     }
 
+    private static Reporter reporter(String id, Date createdAt, Reference reference) {
+        Reporter reporter = reporter(id, createdAt);
+        reporter.setReference(reference);
+        return reporter;
+    }
+
     private static Reporter autoProvisioned(String id, Date createdAt) {
         Reporter reporter = reporter(id, createdAt);
         reporter.setSystem(true);
+        return reporter;
+    }
+
+    private static Reporter autoProvisioned(String id, Date createdAt, Reference reference) {
+        Reporter reporter = autoProvisioned(id, createdAt);
+        reporter.setReference(reference);
         return reporter;
     }
 

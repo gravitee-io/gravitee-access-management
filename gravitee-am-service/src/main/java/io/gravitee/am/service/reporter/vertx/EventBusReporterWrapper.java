@@ -19,6 +19,7 @@ import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.reporter.api.Reportable;
@@ -87,6 +88,11 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     }
 
     @Override
+    public ReporterStatus status() {
+        return this.reporter.status();
+    }
+
+    @Override
     public void handle(Message<Reportable> reportableMsg) {
         Reportable reportable = reportableMsg.body();
 
@@ -98,6 +104,16 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     boolean canHandle(Reportable reportable) {
         return (referenceFilter == null || referenceFilter.contains(reportable.getReference()))
                 && reporter.canHandle(reportable);
+    }
+
+    /**
+     * Whether this reporter receives {@code reference}'s audits, which for an inherited organization
+     * reporter includes every domain in that organization. Read selection asks the same question the
+     * event bus already answers on the write side, so a reporter cannot end up receiving a reference's
+     * audits without being able to serve its reads.
+     */
+    public boolean reportsFor(Reference reference) {
+        return referenceFilter == null || referenceFilter.contains(reference);
     }
 
 

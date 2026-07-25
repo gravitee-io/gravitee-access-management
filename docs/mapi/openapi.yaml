@@ -17338,6 +17338,16 @@ components:
           readOnly: true
         reference:
           $ref: "#/components/schemas/Reference"
+        status:
+          type: string
+          description: "Runtime state of this reporter: STARTING while it is still\
+            \ coming up, READY once it is answering, FAILED when it will not recover\
+            \ without a configuration change."
+          enum:
+          - STARTING
+          - READY
+          - FAILED
+          readOnly: true
         system:
           type: boolean
         type:

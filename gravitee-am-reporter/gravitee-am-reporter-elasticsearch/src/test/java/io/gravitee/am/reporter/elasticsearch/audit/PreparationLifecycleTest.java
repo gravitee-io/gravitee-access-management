@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.elasticsearch.audit;
 
+import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchReporterConfiguration;
 import io.gravitee.am.reporter.elasticsearch.ReporterHarness;
 import org.junit.jupiter.api.Test;
@@ -71,6 +72,11 @@ class PreparationLifecycleTest {
             try {
                 // it has to actually be retrying, or stopping it proves nothing
                 await().atMost(30, SECONDS).untilAsserted(() -> assertThat(connections.get()).isGreaterThanOrEqualTo(20));
+
+                assertThat(harness.reporter().status())
+                        .describedAs("an unreachable cluster is transient, and audit reads must not be diverted "
+                                + "elsewhere on the strength of a slow start")
+                        .isEqualTo(ReporterStatus.STARTING);
 
                 harness.stopReporter();
                 int whenStopped = connections.get();
