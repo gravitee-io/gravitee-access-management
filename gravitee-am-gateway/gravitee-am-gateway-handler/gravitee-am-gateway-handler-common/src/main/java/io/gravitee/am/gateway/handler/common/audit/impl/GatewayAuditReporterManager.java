@@ -36,6 +36,7 @@ import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.PluginLicenseGate;
+import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.service.reporter.AuditReporterSelection;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
@@ -90,6 +91,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
+
+    /** Stateless, so one shared instance serves every read that finds nothing searchable. */
+    private static final io.gravitee.am.reporter.api.provider.Reporter NO_OP_REPORTER = new NoOpReporter();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -301,6 +305,12 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
     }
 
+    /**
+     * Never null: callers dereference this directly, so a domain with nothing searchable — every
+     * reporter disabled, none started, or all refused by the licence gate — has to answer empty rather
+     * than throw. {@link NoOpReporter} cannot be selected as a real store because it does not report
+     * itself as searchable; it only exists to be callable.
+     */
     @Override
     public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
         return reporters.values()
@@ -310,7 +320,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 .filter(Objects::nonNull)
                 .filter(io.gravitee.am.reporter.api.provider.Reporter::canSearch)
                 .findFirst()
-                .orElse(null);
+                .orElse(NO_OP_REPORTER);
     }
 
     @Override

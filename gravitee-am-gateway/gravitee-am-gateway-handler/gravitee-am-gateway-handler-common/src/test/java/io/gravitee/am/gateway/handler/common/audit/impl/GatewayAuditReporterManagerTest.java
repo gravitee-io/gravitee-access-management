@@ -22,6 +22,7 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -137,14 +138,31 @@ class GatewayAuditReporterManagerTest {
                 .until(() -> manager.getReporter() == elasticsearchProvider);
     }
 
+    /**
+     * Disabling the last searchable reporter must not leave reads with nothing to call. The end-user
+     * account activity screen dereferences the result of {@link GatewayAuditReporterManager#getReporter()}
+     * without a null check, so returning null turns a configuration choice into a 500. The management
+     * side already degrades to an empty page in the same situation.
+     */
     @Test
-    void aDisabledReporterNoLongerAnswersAuditQueries() {
+    void disablingTheLastReporterLeavesReadsAnsweringEmptyRatherThanNull() {
         io.gravitee.am.model.Reporter only = model("database", daysAgo(30));
-        register(only, true);
+        Reporter onlyProvider = register(only, true);
 
         disable(only);
 
-        await().atMost(5, TimeUnit.SECONDS).until(() -> manager.getReporter() == null);
+        await().atMost(5, TimeUnit.SECONDS).until(() -> manager.getReporter() != onlyProvider);
+
+        Reporter fallback = manager.getReporter();
+        assertThat(fallback).isNotNull();
+        assertThat(fallback.canSearch())
+                .describedAs("the fallback exists to be callable, not to be selected as a real store")
+                .isFalse();
+        assertThat(((AuditReporter) fallback)
+                .search(ReferenceType.DOMAIN, DOMAIN_ID, new AuditReportableCriteria.Builder().build(), 0, 10)
+                .blockingGet()
+                .getData())
+                .isEmpty();
     }
 
     /**
