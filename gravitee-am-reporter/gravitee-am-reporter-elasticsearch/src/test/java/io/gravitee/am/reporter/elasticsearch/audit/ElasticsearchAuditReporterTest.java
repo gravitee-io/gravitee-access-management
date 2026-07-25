@@ -41,7 +41,7 @@ import static org.awaitility.Awaitility.await;
  *
  * @author GraviteeSource Team
  */
-class ElasticsearchAuditReporterITests {
+class ElasticsearchAuditReporterTest {
 
     private static final String INDEX = "am-audit-roundtrip-" + UUID.randomUUID();
 
@@ -114,7 +114,9 @@ class ElasticsearchAuditReporterITests {
     private Audit awaitSingleAudit(String domain) {
         await().atMost(30, TimeUnit.SECONDS)
                 .pollInterval(250, TimeUnit.MILLISECONDS)
+                .ignoreExceptions()
                 .until(() -> search(domain).getData().size() == 1);
+        elasticsearch.awaitSearchable(INDEX + "-*");
         return search(domain).getData().iterator().next();
     }
 

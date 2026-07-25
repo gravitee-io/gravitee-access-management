@@ -74,6 +74,15 @@ public final class ElasticsearchTestClient {
         post("/" + indexPattern + "/_refresh", "");
     }
 
+    /**
+     * Blocks until every shard behind the pattern is allocated. A daily index created moments ago can
+     * still be initialising, and a search that touches it fails the whole request with
+     * {@code no_shard_available_action_exception} rather than returning partial results.
+     */
+    public void awaitSearchable(String indexPattern) {
+        get("/_cluster/health/" + indexPattern + "?wait_for_status=yellow&timeout=30s");
+    }
+
     /** Names of the concrete indices matching the pattern, or empty when none exist. */
     public JsonNode indices(String indexPattern) {
         return parse(get("/_cat/indices/" + indexPattern + "?format=json&h=index").body());

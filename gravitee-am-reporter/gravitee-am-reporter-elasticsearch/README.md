@@ -155,9 +155,13 @@ history on screen, or export it before you switch.
   reporters in one JVM pointing at endpoints with *different path prefixes* will misroute. Endpoints
   of the form `http://host:9200` are unaffected.
 - **At-most-once delivery.** Under a sustained outage the reporter drops audits rather than
-  exhausting the node. Every drop is logged with its reason and per-type counts, and counted on the
-  `gio_dropped_audits` metric, tagged `reason` — `buffer_overflow`, `retries_exhausted`, `rejected`
-  or `reporter_stopping`. Alert on it.
+  exhausting the node. Every drop is logged at ERROR with its reason and per-type counts, and
+  counted on the `gio_dropped_audits` metric, tagged `reason` — `buffer_overflow`,
+  `retries_exhausted`, `rejected` or `reporter_stopping`. Alert on it.
+
+  Note the metric requires `services.metrics.enabled: true` in `gravitee.yml`. Without it the node's
+  registry is a no-op, so the counters silently record nothing — the ERROR logs are still emitted,
+  and are the only signal you get. Enable metrics if you intend to alert on dropped audits.
 
 ## Tests
 

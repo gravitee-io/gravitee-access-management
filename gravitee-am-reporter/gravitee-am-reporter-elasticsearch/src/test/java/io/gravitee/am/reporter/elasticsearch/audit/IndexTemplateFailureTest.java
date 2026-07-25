@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author GraviteeSource Team
  */
-class IndexTemplateITests {
+class IndexTemplateFailureTest {
 
     private static ElasticsearchTestClient elasticsearch;
 

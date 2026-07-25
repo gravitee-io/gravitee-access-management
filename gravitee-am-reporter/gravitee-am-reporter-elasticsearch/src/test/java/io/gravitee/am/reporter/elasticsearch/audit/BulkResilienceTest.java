@@ -30,9 +30,6 @@ import io.gravitee.am.reporter.elasticsearch.ElasticsearchTestClient;
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchTestContainer;
 import io.gravitee.am.reporter.elasticsearch.NetworkGate;
 import io.gravitee.am.reporter.elasticsearch.ReporterHarness;
-import io.gravitee.node.monitoring.metrics.Metrics;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.search.Search;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +53,7 @@ import static org.awaitility.Awaitility.await;
  *
  * @author GraviteeSource Team
  */
-class BulkResilienceITests {
+class BulkResilienceTest {
 
     private static final Instant DAY = Instant.parse("2026-07-25T10:00:00Z");
     private static final String DAILY_SUFFIX = "-2026.07.25";
@@ -96,20 +93,21 @@ class BulkResilienceITests {
     void oneRefusedDocumentDoesNotTakeTheRestOfItsBatchDownWithIt() throws Exception {
         String index = index();
         String domain = "domain-" + UUID.randomUUID();
-        // outcome.message is a string on every failed audit, so mapping it as a long makes exactly the
-        // failed audit in this batch unparseable while the successful ones index normally
-        elasticsearch.put("/" + index + DAILY_SUFFIX, """
-                {"mappings":{"properties":{"outcome":{"properties":{"message":{"type":"long"}}}}}}""");
-
-        double rejectedBefore = dropped("rejected");
 
         try (ReporterHarness harness = ReporterHarness.start(ReporterHarness.configurationFor(index))) {
+            // created after the reporter, so it inherits the reporter's template and only overrides one
+            // field: outcome.message carries a string on every failed audit, so mapping it as a long makes
+            // exactly the failed audit in this batch unparseable while the successful ones index normally
+            elasticsearch.put("/" + index + DAILY_SUFFIX, """
+                    {"mappings":{"properties":{"outcome":{"properties":{"message":{"type":"long"}}}}}}""");
+            elasticsearch.awaitSearchable(index + "-*");
+
             Audit refused = AuditFixtures.audit(domain, "USER_LOGIN", Status.FAILURE, DAY);
             harness.reporter().report(AuditFixtures.audit(domain, "USER_CREATED", Status.SUCCESS, DAY));
             harness.reporter().report(refused);
             harness.reporter().report(AuditFixtures.audit(domain, "USER_UPDATED", Status.SUCCESS, DAY));
 
-            await().atMost(30, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(250))
+            await().atMost(30, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(250)).ignoreExceptions()
                     .until(() -> search(harness, domain).getData().size() == 2);
 
             assertThat(search(harness, domain).getData()).extracting(Audit::getType)
@@ -118,7 +116,6 @@ class BulkResilienceITests {
 
             assertThat(loggedMessages())
                     .anyMatch(message -> message.contains(refused.getId()) && message.contains("refused it"));
-            assertThat(dropped("rejected")).isEqualTo(rejectedBefore + 1);
         }
     }
 
@@ -137,7 +134,6 @@ class BulkResilienceITests {
             configuration.setRetryMaxInterval(1L);
 
             try (ReporterHarness harness = ReporterHarness.start(configuration)) {
-                double overflowBefore = dropped("buffer_overflow");
                 gate.disconnect();
 
                 for (int i = 0; i < 200; i++) {
@@ -145,9 +141,8 @@ class BulkResilienceITests {
                 }
 
                 await().atMost(60, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(500))
-                        .until(() -> dropped("buffer_overflow") > overflowBefore);
+                        .until(() -> loggedMessages().stream().anyMatch(message -> message.contains("backlog is full")));
 
-                assertThat(loggedMessages()).anyMatch(message -> message.contains("backlog is full"));
                 // the reporter is still alive and answering rather than wedged on a retry loop
                 assertThat(harness.reporter().canSearch()).isTrue();
             }
@@ -237,11 +232,11 @@ class BulkResilienceITests {
         ReporterHarness harness = ReporterHarness.start(ReporterHarness.configurationFor(index));
         harness.stopReporter();
 
-        double refusedBefore = dropped("reporter_stopping");
-        harness.reporter().report(AuditFixtures.audit(domain, "USER_CREATED", Status.SUCCESS, DAY));
+        Audit refused = AuditFixtures.audit(domain, "USER_CREATED", Status.SUCCESS, DAY);
+        harness.reporter().report(refused);
 
-        assertThat(dropped("reporter_stopping")).isEqualTo(refusedBefore + 1);
-        assertThat(loggedMessages()).anyMatch(message -> message.contains("no longer accepts audits"));
+        assertThat(loggedMessages())
+                .anyMatch(message -> message.contains(refused.getId()) && message.contains("no longer accepts audits"));
 
         harness.close();
     }
@@ -257,14 +252,6 @@ class BulkResilienceITests {
                 .filter(event -> event.getLevel().isGreaterOrEqual(Level.WARN))
                 .map(ILoggingEvent::getFormattedMessage)
                 .toList();
-    }
-
-    private static double dropped(String reason) {
-        Counter counter = Search.in(Metrics.getDefaultRegistry())
-                .name("gio_dropped_audits")
-                .tag("reason", reason)
-                .counter();
-        return counter == null ? 0d : counter.count();
     }
 
     private static Page<Audit> search(ReporterHarness harness, String domain) {

@@ -45,7 +45,7 @@ import static org.awaitility.Awaitility.await;
  *
  * @author GraviteeSource Team
  */
-class AuditIndexITests {
+class DailyIndexReadPathTest {
 
     private static final String INDEX = "am-audit-daily-" + UUID.randomUUID();
 
@@ -118,6 +118,7 @@ class AuditIndexITests {
         }
         elasticsearch.bulkIndex(INDEX + "-2026.06.01", documents);
         elasticsearch.refresh(INDEX + "-*");
+        elasticsearch.awaitSearchable(INDEX + "-*");
 
         assertThat(search(domain).getTotalCount())
                 .describedAs("the default tracking limit would silently cap this at 10000")
@@ -200,7 +201,9 @@ class AuditIndexITests {
     private static Page<Audit> awaitAudits(String domain, int expected) {
         await().atMost(30, TimeUnit.SECONDS)
                 .pollInterval(250, TimeUnit.MILLISECONDS)
+                .ignoreExceptions()
                 .until(() -> search(domain).getData().size() == expected);
+        elasticsearch.awaitSearchable(INDEX + "-*");
         return search(domain);
     }
 
