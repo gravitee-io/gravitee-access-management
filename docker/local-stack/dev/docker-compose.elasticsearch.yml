@@ -30,11 +30,15 @@ services:
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
       - bootstrap.memory_lock=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      # 512m suits a handful of demo audits. Raise it for volume testing: shard overhead is charged to
+      # heap, and daily indices mean shard count grows with retention, not with the number of audits.
+      - ES_JAVA_OPTS=-Xms${AM_ES_HEAP:-512m} -Xmx${AM_ES_HEAP:-512m}
     ulimits:
       memlock:
         soft: -1
         hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
     ports:
       - ${AM_ES_HOST_PORT:-9200}:9200
     healthcheck:
@@ -50,3 +54,8 @@ services:
   management:
     volumes:
       - ./plugins/reporter-elasticsearch/reporter-am-elasticsearch.zip:/opt/graviteeio-am-management-api/plugins/reporter-am-elasticsearch.zip:ro
+
+# Without this the indices live in the container's writable layer, so anything that recreates the
+# container — a heap change, an image bump — silently discards every audit written so far.
+volumes:
+  elasticsearch-data:
