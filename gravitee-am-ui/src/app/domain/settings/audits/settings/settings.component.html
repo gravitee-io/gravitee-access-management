@@ -32,7 +32,9 @@
       >
         <ngx-datatable-column>
           <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-icon *ngIf="hasFailed(row)" [ngStyle]="{ color: 'red' }" matTooltip="Reporter failed to start">error</mat-icon>
             <mat-icon
+              *ngIf="!hasFailed(row)"
               [ngStyle]="{ color: row.enabled ? 'green' : 'orange' }"
               matTooltip="{{ row.enabled ? 'Reporter enabled' : 'Reporter disabled' }}"
             >
@@ -47,10 +49,22 @@
               <div style="margin-left: 10px">
                 <span *ngIf="row.system" class="gio-badge-neutral">system</span>
                 <span
+                  *ngIf="isInherited(row)"
+                  class="gio-badge-neutral"
+                  matTooltip="Inherited from the organization, which reports for every domain in it. Edit or delete it from the organization's audit settings."
+                  >inherited</span
+                >
+                <span
                   *ngIf="row.readSource"
                   class="gio-badge-primary"
                   matTooltip="The audit log screen reads from this reporter. Audits are still written to every enabled reporter."
                   >audit reads</span
+                >
+                <span
+                  *ngIf="hasFailed(row)"
+                  class="gio-badge-error"
+                  matTooltip="This reporter could not start with its current configuration, so it neither receives audits nor serves reads. Check its settings and the server logs."
+                  >failed</span
                 >
               </div>
             </div>
@@ -58,13 +72,13 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Type" [flexGrow]="2">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            {{ row.type }}
+            {{ labelFor(row.type) }}
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <div fxLayout="row" class="gv-table-cell-actions">
-              <a mat-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+              <a *ngIf="!isInherited(row)" mat-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
             </div>
           </ng-template>
         </ngx-datatable-column>
@@ -85,6 +99,10 @@
         <p>
           Every enabled reporter receives every audit, but the audit log screen reads from a single one, marked <b>audit reads</b>. A
           reporter you add takes over from the one created with the domain; between several you added, the oldest wins.
+        </p>
+        <p>
+          A reporter marked <b>inherited</b> belongs to the organization and reports for every domain in it. It can serve this domain's
+          audit reads, but is edited and deleted from the organization's audit settings.
         </p>
       </div>
     </div>

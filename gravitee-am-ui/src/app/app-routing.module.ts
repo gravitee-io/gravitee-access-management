@@ -1219,6 +1219,7 @@ export const routes: Routes = [
                       reporters: ReportersResolver,
                     },
                     data: {
+                      organizationContext: true,
                       perms: {
                         only: ['organization_reporter_list'],
                       },

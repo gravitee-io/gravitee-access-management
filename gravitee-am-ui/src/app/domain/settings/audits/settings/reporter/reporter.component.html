@@ -20,6 +20,12 @@
   <div class="reporterTitle">
     <h1>{{ reporter.name }}</h1>
     <span *ngIf="reporter.system" class="gio-badge-neutral">system</span>
+    <span
+      *ngIf="hasFailed()"
+      class="gio-badge-error"
+      matTooltip="This reporter could not start with its current configuration, so it neither receives audits nor serves reads. Check its settings and the server logs."
+      >failed</span
+    >
   </div>
   <div class="reporter-content">
     <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">

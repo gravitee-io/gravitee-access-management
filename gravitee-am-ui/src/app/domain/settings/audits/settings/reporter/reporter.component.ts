@@ -21,6 +21,7 @@ import { DialogService } from '../../../../../services/dialog.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import { ReporterService } from '../../../../../services/reporter.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
+import { reporterTypeLabel } from '../reporter-type-label';
 
 @Component({
   selector: 'app-reporter',
@@ -108,20 +109,11 @@ export class ReporterComponent implements OnInit {
   }
 
   labelFor(pluginId) {
-    switch (pluginId) {
-      case 'reporter-am-tcp':
-        return 'TCP';
-      case 'reporter-am-file':
-        return 'File';
-      case 'reporter-am-kafka':
-        return 'Kafka';
-      case 'reporter-am-jdbc':
-        return 'JDBC';
-      case 'mongodb':
-        return 'MongoDB';
-      default:
-        return pluginId;
-    }
+    return reporterTypeLabel(pluginId);
+  }
+
+  hasFailed() {
+    return this.reporter?.status === 'FAILED';
   }
 
   save() {

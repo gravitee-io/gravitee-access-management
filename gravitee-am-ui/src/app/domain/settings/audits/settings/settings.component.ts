@@ -18,6 +18,8 @@ import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../../services/auth.service';
 
+import { reporterTypeLabel } from './reporter-type-label';
+
 @Component({
   selector: 'app-audits-settings',
   templateUrl: './settings.component.html',
@@ -27,6 +29,7 @@ import { AuthService } from '../../../../services/auth.service';
 export class AuditsSettingsComponent implements OnInit {
   reporters: any[];
   domainId: string;
+  organizationContext: boolean;
 
   constructor(
     private route: ActivatedRoute,
@@ -35,6 +38,7 @@ export class AuditsSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.reporters = this.route.snapshot.data['reporters'];
+    this.organizationContext = this.route.snapshot.data['organizationContext'];
   }
 
   get isEmpty() {
@@ -46,6 +50,19 @@ export class AuditsSettingsComponent implements OnInit {
       'row-disabled': !row.enabled,
     };
   };
+
+  hasFailed(reporter) {
+    return reporter.status === 'FAILED';
+  }
+
+  /** Inherited from the organization, so it is administered there rather than from this screen. */
+  isInherited(reporter) {
+    return reporter.inherited && !this.organizationContext;
+  }
+
+  labelFor(pluginId) {
+    return reporterTypeLabel(pluginId);
+  }
 
   hasPermissions(permissions) {
     return this.authService.hasPermissions(permissions);
