@@ -179,6 +179,44 @@ class DailyIndexReadPathTest {
     }
 
     @Test
+    void resolvesToNothingWhenTheAuditDoesNotExist() {
+        String domain = domain();
+        harness.reporter().report(AuditFixtures.audit(domain, "USER_CREATED", Status.SUCCESS, Instant.parse("2026-06-12T10:00:00Z")));
+        awaitAudits(domain, 1);
+
+        Audit found = harness.reporter()
+                .findById(ReferenceType.DOMAIN, domain, "an-id-that-was-never-written")
+                .blockingGet();
+
+        assertThat(found)
+                .describedAs("a missing audit is empty, not an error and not another domain's record")
+                .isNull();
+    }
+
+    /**
+     * The guard is {@code from + size > MAX_RESULT_WINDOW}, so the interesting cases are either side of
+     * the boundary rather than far past it: an off-by-one here either rejects a page Elasticsearch would
+     * have served, or lets through the request it exists to prevent.
+     */
+    @Test
+    void servesTheLastPageThatFitsInsideTheResultWindow() {
+        Page<Audit> page = harness.reporter()
+                .search(ReferenceType.DOMAIN, domain(), new AuditReportableCriteria.Builder().build(), 399, 25)
+                .blockingGet();
+
+        assertThat(page.getCurrentPage()).isEqualTo(399);
+    }
+
+    @Test
+    void refusesTheFirstPageThatFallsOutsideTheResultWindow() {
+        assertThatThrownBy(() -> harness.reporter()
+                .search(ReferenceType.DOMAIN, domain(), new AuditReportableCriteria.Builder().build(), 400, 25)
+                .blockingGet())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot page past the first 10000 audits");
+    }
+
+    @Test
     void appliesTheIndexTemplateOnACleanCluster() {
         elasticsearch.awaitTemplate(AuditIndexTemplate.name(INDEX));
 

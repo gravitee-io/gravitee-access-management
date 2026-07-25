@@ -156,13 +156,24 @@ history on screen, or export it before you switch.
   reporter introduces — but audit records are sensitive, so a warning is logged at startup whenever
   an https endpoint is configured. Treat the link as encrypted but unauthenticated, and keep it on a
   trusted network.
-- **Path-prefixed endpoints.** The shared client holds its request paths in static state, so two
-  reporters in one JVM pointing at endpoints with *different path prefixes* will misroute. Endpoints
-  of the form `http://host:9200` are unaffected.
+- **Path-prefixed endpoints.** The shared client derives its request paths from the endpoint URL and
+  stores them in *static* fields, rewriting all of them every time a client is constructed. AM builds
+  one client per reporter, and reporters are per domain and per organization, so a node running
+  several of them has them all overwriting the same paths — last one wins. Endpoints of the form
+  `http://host:9200` all produce identical paths and are unaffected; two reporters whose endpoints
+  carry *different path prefixes* (say `http://host:9200` and `http://host:9200/opensearch`) will
+  misroute each other's requests.
+
+  This is inherited from the shared client library rather than introduced here, and APIM has shipped
+  on it for years — but APIM configures one reporter per gateway node, where AM is the first product
+  to construct several clients in one JVM, so it is the first place the behaviour can actually bite.
+  Until the library gives each client its own paths, keep every audit reporter on a node pointing at
+  endpoints with the same path prefix.
 - **At-most-once delivery.** Under a sustained outage the reporter drops audits rather than
   exhausting the node. Every drop is logged at ERROR with its reason and per-type counts, and
   counted on the `gio_dropped_audits` metric, tagged `reason` — `buffer_overflow`,
-  `retries_exhausted`, `rejected` or `reporter_stopping`. Alert on it.
+  `retries_exhausted`, `rejected`, `not_writable`, `unserializable` or `reporter_stopping`. Alert on
+  it.
 
   Note the metric requires `services.metrics.enabled: true` in `gravitee.yml`. Without it the node's
   registry is a no-op, so the counters silently record nothing — the ERROR logs are still emitted,
