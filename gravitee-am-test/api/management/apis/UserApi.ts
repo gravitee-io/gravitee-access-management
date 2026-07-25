@@ -34,6 +34,9 @@ import {
   Audit,
   AuditFromJSON,
   AuditToJSON,
+  AuditPage,
+  AuditPageFromJSON,
+  AuditPageToJSON,
   BulkResponse,
   BulkResponseFromJSON,
   BulkResponseToJSON,
@@ -1953,7 +1956,7 @@ export class UserApi extends runtime.BaseAPI {
   async listUserAuditLogsRaw(
     requestParameters: ListUserAuditLogsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<Audit>>> {
+  ): Promise<runtime.ApiResponse<AuditPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -2032,7 +2035,7 @@ export class UserApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuditPageFromJSON(jsonValue));
   }
 
   /**
@@ -2042,7 +2045,7 @@ export class UserApi extends runtime.BaseAPI {
   async listUserAuditLogs(
     requestParameters: ListUserAuditLogsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<Audit>> {
+  ): Promise<AuditPage> {
     const response = await this.listUserAuditLogsRaw(requestParameters, initOverrides);
     return await response.value();
   }

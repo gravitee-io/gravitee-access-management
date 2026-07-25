@@ -27,7 +27,7 @@
 /* eslint-disable */
 
 import * as runtime from '../runtime';
-import { Audit, AuditFromJSON, AuditToJSON } from '../models';
+import { Audit, AuditFromJSON, AuditToJSON, AuditPage, AuditPageFromJSON, AuditPageToJSON } from '../models';
 
 export interface GetDomainAuditRequest {
   organizationId: string;
@@ -214,7 +214,7 @@ export class AuditApi extends runtime.BaseAPI {
   async listDomainAuditsRaw(
     requestParameters: ListDomainAuditsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<Audit>>> {
+  ): Promise<runtime.ApiResponse<AuditPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -289,7 +289,7 @@ export class AuditApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuditPageFromJSON(jsonValue));
   }
 
   /**
@@ -299,7 +299,7 @@ export class AuditApi extends runtime.BaseAPI {
   async listDomainAudits(
     requestParameters: ListDomainAuditsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<Audit>> {
+  ): Promise<AuditPage> {
     const response = await this.listDomainAuditsRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -311,7 +311,7 @@ export class AuditApi extends runtime.BaseAPI {
   async listOrganizationAuditsRaw(
     requestParameters: ListOrganizationAuditsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<Audit>>> {
+  ): Promise<runtime.ApiResponse<AuditPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -372,7 +372,7 @@ export class AuditApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuditPageFromJSON(jsonValue));
   }
 
   /**
@@ -382,7 +382,7 @@ export class AuditApi extends runtime.BaseAPI {
   async listOrganizationAudits(
     requestParameters: ListOrganizationAuditsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<Audit>> {
+  ): Promise<AuditPage> {
     const response = await this.listOrganizationAuditsRaw(requestParameters, initOverrides);
     return await response.value();
   }

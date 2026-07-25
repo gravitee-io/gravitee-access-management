@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { AuditPage } from '@management-models/AuditPage';
+
 import { getAuditApi } from './service/utils';
 
 export interface ListDomainAuditsOptions {
@@ -26,43 +28,17 @@ export interface ListDomainAuditsOptions {
   page?: number;
 }
 
-export interface AuditPage {
-  data: any[];
-  currentPage: number;
-  totalCount: number;
-}
-
-const domainAuditsUrl = (domainId: string, options: ListDomainAuditsOptions): string => {
-  const params = new URLSearchParams();
-  Object.entries(options).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      params.append(key, String(value));
-    }
-  });
-  const query = params.toString();
-  return (
-    `${process.env.AM_MANAGEMENT_ENDPOINT}/organizations/${process.env.AM_DEF_ORG_ID}` +
-    `/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainId}/audits${query ? `?${query}` : ''}`
-  );
-};
-
-/**
- * Called directly rather than through the generated SDK: the endpoint returns a page object, while
- * the generated client is typed for a bare array and maps over the response.
- */
-export const listDomainAudits = async (
+export const listDomainAudits = (
   domainId: string,
   accessToken: string,
   options: ListDomainAuditsOptions = {},
-): Promise<AuditPage> => {
-  const response = await fetch(domainAuditsUrl(domainId, options), {
-    headers: { Authorization: `Bearer ${accessToken}` },
+): Promise<AuditPage> =>
+  getAuditApi(accessToken).listDomainAudits({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    ...options,
   });
-  if (!response.ok) {
-    throw new Error(`Listing audits for domain ${domainId} failed with ${response.status}: ${await response.text()}`);
-  }
-  return response.json();
-};
 
 export const getDomainAudit = (domainId: string, accessToken: string, auditId: string): Promise<any> =>
   getAuditApi(accessToken).getDomainAudit({

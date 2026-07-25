@@ -92,6 +92,12 @@ export interface Reporter {
    */
   name?: string;
   /**
+   * True for the reporter currently serving audit reads for this domain or organization.
+   * @type {boolean}
+   * @memberof Reporter
+   */
+  readonly readSource?: boolean;
+  /**
    *
    * @type {Reference}
    * @memberof Reporter
@@ -142,6 +148,7 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     key: json['key'] == null ? undefined : json['key'],
     managedBy: json['managedBy'] == null ? undefined : ManagedByFromJSON(json['managedBy']),
     name: json['name'] == null ? undefined : json['name'],
+    readSource: json['readSource'] == null ? undefined : json['readSource'],
     reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
     system: json['system'] == null ? undefined : json['system'],
     type: json['type'] == null ? undefined : json['type'],
@@ -153,7 +160,7 @@ export function ReporterToJSON(json: any): Reporter {
   return ReporterToJSONTyped(json, false);
 }
 
-export function ReporterToJSONTyped(value?: Omit<Reporter, 'key'> | null, ignoreDiscriminator: boolean = false): any {
+export function ReporterToJSONTyped(value?: Omit<Reporter, 'key' | 'readSource'> | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

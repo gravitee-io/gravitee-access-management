@@ -55,6 +55,9 @@ import {
   Audit,
   AuditFromJSON,
   AuditToJSON,
+  AuditPage,
+  AuditPageFromJSON,
+  AuditPageToJSON,
   AuthenticationDeviceNotifier,
   AuthenticationDeviceNotifierFromJSON,
   AuthenticationDeviceNotifierToJSON,
@@ -12533,7 +12536,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listDomainAuditsRaw(
     requestParameters: ListDomainAuditsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<Audit>>> {
+  ): Promise<runtime.ApiResponse<AuditPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -12608,7 +12611,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuditPageFromJSON(jsonValue));
   }
 
   /**
@@ -12618,7 +12621,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listDomainAudits(
     requestParameters: ListDomainAuditsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<Audit>> {
+  ): Promise<AuditPage> {
     const response = await this.listDomainAuditsRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -13865,7 +13868,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listUserAuditLogsRaw(
     requestParameters: ListUserAuditLogsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<Audit>>> {
+  ): Promise<runtime.ApiResponse<AuditPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -13944,7 +13947,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuditPageFromJSON(jsonValue));
   }
 
   /**
@@ -13954,7 +13957,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listUserAuditLogs(
     requestParameters: ListUserAuditLogsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<Audit>> {
+  ): Promise<AuditPage> {
     const response = await this.listUserAuditLogsRaw(requestParameters, initOverrides);
     return await response.value();
   }
