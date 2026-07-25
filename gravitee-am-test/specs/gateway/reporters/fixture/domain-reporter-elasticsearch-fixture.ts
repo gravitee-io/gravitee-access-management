@@ -131,8 +131,9 @@ export const setupElasticsearchReporterFixture = async (): Promise<Elasticsearch
       enabled: false,
       configuration: database.configuration ?? '{}',
     });
-    // a disabled reporter produces no sync event to wait on, so give the reload a moment to land
-    await waitFor(5000);
+    // no fixed wait for the reload here: a disabled reporter produces no sync event to wait on, and
+    // the caller already polls the audit read path for the record only Elasticsearch can answer with,
+    // which is the reload actually having landed rather than a guess at how long it takes
   };
 
   const cleanUp = async (): Promise<void> => {

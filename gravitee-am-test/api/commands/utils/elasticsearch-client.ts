@@ -57,10 +57,19 @@ export const indexDocument = async (index: string, id: string, document: object)
   }
 };
 
+/**
+ * A daily index created moments ago can still be allocating its shards, and Elasticsearch fails the
+ * whole search with `no_shard_available_action_exception` rather than returning partial results. That
+ * is indistinguishable from "nothing written yet" to a caller, so it is reported the same way and the
+ * pollers above simply come back around.
+ */
+const shardsNotReadyYet = (status: number, body: any): boolean =>
+  status === 503 && JSON.stringify(body ?? {}).includes('no_shard_available_action_exception');
+
 export const searchAudits = async (indexPattern: string, query: object): Promise<any[]> => {
   await refreshIndices(indexPattern);
   const { status, body } = await request('POST', `/${indexPattern}/_search`, JSON.stringify({ size: 50, query }));
-  if (status === 404) {
+  if (status === 404 || shardsNotReadyYet(status, body)) {
     return [];
   }
   if (status !== 200) {
