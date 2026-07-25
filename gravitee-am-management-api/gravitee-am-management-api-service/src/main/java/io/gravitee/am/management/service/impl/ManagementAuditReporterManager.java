@@ -31,6 +31,7 @@ import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
+import io.gravitee.am.service.reporter.AuditReporterSelection;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -181,6 +182,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 .entrySet()
                 .stream()
                 .filter(entry -> reference.equals(entry.getKey().getReference()))
+                .sorted(Entry.comparingByKey(AuditReporterSelection.ORDER))
                 .map(Entry::getValue)
                 .filter(Reporter::canSearch)
                 .findFirst();
@@ -245,12 +247,15 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                                     loadReporter(reporter);
                                 } else {
                                     log.info("Reporter: {} has been disabled", reporter.getName());
-                                    // unregister event bus consumer
-                                    // we do not stop the underlying reporter if it manages search because it can be used to fetch reportable
+                                    // unregister event bus consumer so it stops receiving audits, then swap it for a
+                                    // no-op so it drops out of the searchable set straight away rather than answering
+                                    // audit queries until the next restart. The no-op keeps the reporter re-loadable
+                                    // if it is enabled again through the UI.
                                     ((EventBusReporterWrapper) auditReporter).unregister();
-                                    if (!auditReporter.canSearch()) {
-                                        auditReporter.stop();
-                                    }
+                                    auditReporter.stop();
+                                    auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
+                                    auditReporters.put(reporter, new EventBusReporterWrapper<>(vertx, new NoOpReporter(), reporter.getReference()));
+                                    reporters.put(reporter.getId(), reporter);
                                 }
                             } catch (Exception e) {
                                 log.error("An error occurs while reloading reporter: {}", reporter.getName(), e);

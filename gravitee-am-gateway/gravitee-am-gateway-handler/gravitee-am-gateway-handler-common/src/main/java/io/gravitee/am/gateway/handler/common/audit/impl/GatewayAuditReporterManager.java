@@ -36,6 +36,7 @@ import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.PluginLicenseGate;
+import io.gravitee.am.service.reporter.AuditReporterSelection;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -48,6 +49,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.CustomLog;
@@ -285,6 +287,12 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
     private boolean updateReporterProvider(Reporter reporter, GraviteeContext context) {
         if (needDeployment(reporter)) {
             stopReporterProvider(reporter.getId(), reporterPlugins.get(reporter.getId()));
+            if (!reporter.isEnabled()) {
+                // drop it from the searchable set straight away rather than leaving a stopped provider
+                // behind that keeps answering audit queries until the next restart
+                reporterPlugins.remove(reporter.getId());
+                reporters.remove(reporter.getId());
+            }
             return startReporterProvider(reporter, context);
         } else {
             log.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
@@ -295,8 +303,11 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Override
     public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
-        return reporterPlugins.values()
+        return reporters.values()
                 .stream()
+                .sorted(AuditReporterSelection.ORDER)
+                .map(reporter -> reporterPlugins.get(reporter.getId()))
+                .filter(Objects::nonNull)
                 .filter(io.gravitee.am.reporter.api.provider.Reporter::canSearch)
                 .findFirst()
                 .orElse(null);
