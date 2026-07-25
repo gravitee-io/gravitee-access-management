@@ -24,6 +24,19 @@ import { setup } from '../../test-fixture';
 
 setup(200000);
 
+/**
+ * Needs the Elasticsearch overlay running alongside the stack, which the default gateway stack does
+ * not include:
+ *
+ *   npm --prefix docker/local-stack run stack:elasticsearch
+ *   RUN_ELASTICSEARCH_TESTS=true npm --prefix gravitee-am-test run test -- \
+ *     specs/gateway/reporters/domain-reporter-elasticsearch.jest.spec.ts
+ *
+ * Opt-in rather than probing for a reachable cluster, so that a CI job where Elasticsearch failed to
+ * start reports a hard failure instead of quietly skipping. CI sets the flag in both gateway jobs.
+ */
+const describeIfElasticsearch = process.env.RUN_ELASTICSEARCH_TESTS === 'true' ? describe : describe.skip;
+
 let fixture: ElasticsearchReporterFixture;
 let selectionFixture: ElasticsearchReporterFixture;
 
@@ -62,15 +75,17 @@ const sentinelAudit = (domainId: string, id: string) => ({
   outcome: { status: 'SUCCESS' },
 });
 
-beforeAll(async () => {
-  [fixture, selectionFixture] = await Promise.all([setupElasticsearchReporterFixture(), setupElasticsearchReporterFixture()]);
-});
+describeIfElasticsearch('Elasticsearch Reporter - Domain Level Gateway', () => {
+  // inside the gated describe, not at file scope: a file-scope beforeAll still runs when the tests
+  // below are skipped, and would reach for a cluster that is not there
+  beforeAll(async () => {
+    [fixture, selectionFixture] = await Promise.all([setupElasticsearchReporterFixture(), setupElasticsearchReporterFixture()]);
+  });
 
-afterAll(async () => {
-  await Promise.all([fixture?.cleanUp(), selectionFixture?.cleanUp()].filter(Boolean));
-});
+  afterAll(async () => {
+    await Promise.all([fixture?.cleanUp(), selectionFixture?.cleanUp()].filter(Boolean));
+  });
 
-describe('Elasticsearch Reporter - Domain Level Gateway', () => {
   describe('Enabled', () => {
     it('should write a gateway audit into Elasticsearch', async () => {
       const index = uniqueName('es-audit-enabled', true).toLowerCase();
