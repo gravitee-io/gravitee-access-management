@@ -46,6 +46,12 @@
               <div>{{ row.name }}</div>
               <div style="margin-left: 10px">
                 <span *ngIf="row.system" class="gio-badge-neutral">system</span>
+                <span
+                  *ngIf="row.readSource"
+                  class="gio-badge-primary"
+                  matTooltip="The audit log screen reads from this reporter. Audits are still written to every enabled reporter."
+                  >audit reads</span
+                >
               </div>
             </div>
           </ng-template>
@@ -76,6 +82,10 @@
       <h3>Audit reporters</h3>
       <div class="gv-page-description-content">
         <p>Reporters are used by the platform to report many types of event (e.g Audit logs).</p>
+        <p>
+          Every enabled reporter receives every audit, but the audit log screen reads from a single one, marked <b>audit reads</b>. A
+          reporter you add takes over from the one created with the domain; between several you added, the oldest wins.
+        </p>
       </div>
     </div>
   </div>
