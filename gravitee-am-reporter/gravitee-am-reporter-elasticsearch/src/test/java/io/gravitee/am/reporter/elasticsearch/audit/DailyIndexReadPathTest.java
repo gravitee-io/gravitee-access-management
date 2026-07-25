@@ -180,6 +180,8 @@ class DailyIndexReadPathTest {
 
     @Test
     void appliesTheIndexTemplateOnACleanCluster() {
+        elasticsearch.awaitTemplate(AuditIndexTemplate.name(INDEX));
+
         JsonNode template = elasticsearch.getJson("/_index_template/" + AuditIndexTemplate.name(INDEX));
         JsonNode entry = template.get("index_templates").get(0).get("index_template");
 

@@ -16,10 +16,14 @@
 package io.gravitee.am.reporter.elasticsearch.audit;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * @author GraviteeSource Team
@@ -46,6 +50,25 @@ class AuditIndexNamesTest {
     @Test
     void readsAcrossEveryDailyIndex() {
         assertThat(AuditIndexNames.readPattern("gravitee-audit")).isEqualTo("gravitee-audit-*");
+    }
+
+    @Test
+    void acceptsALegalIndexName() {
+        assertThatCode(() -> AuditIndexNames.validate("gravitee-audit_2.x+eu")).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Gravitee-Audit", "gravitee audit", "-gravitee", "gravitee/audit", "gravitee*audit", ""})
+    void rejectsAnIndexNameElasticsearchWouldRefuse(String name) {
+        assertThatThrownBy(() -> AuditIndexNames.validate(name))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot be used as an Elasticsearch index name")
+                .hasMessageContaining("lowercase");
+    }
+
+    @Test
+    void rejectsAMissingIndexName() {
+        assertThatThrownBy(() -> AuditIndexNames.validate(null)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

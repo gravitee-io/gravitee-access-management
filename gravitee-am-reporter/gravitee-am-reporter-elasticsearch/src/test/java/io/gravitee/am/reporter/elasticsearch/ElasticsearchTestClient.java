@@ -93,6 +93,26 @@ public final class ElasticsearchTestClient {
         return response.path("count").asLong();
     }
 
+    /**
+     * Waits for a reporter's index template to appear. The reporter applies it asynchronously, so a
+     * test that writes the instant the harness returns would otherwise race it.
+     */
+    public void awaitTemplate(String templateName) {
+        long deadline = System.currentTimeMillis() + 30_000;
+        while (System.currentTimeMillis() < deadline) {
+            if (get("/_index_template/" + templateName).statusCode() == 200) {
+                return;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted waiting for template " + templateName, e);
+            }
+        }
+        throw new IllegalStateException("Index template " + templateName + " was never applied");
+    }
+
     /** Indexes pre-built documents directly, for volumes that would be slow through the reporter. */
     public void bulkIndex(String index, List<String> documents) {
         StringBuilder payload = new StringBuilder();

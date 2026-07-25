@@ -95,9 +95,10 @@ class BulkResilienceTest {
         String domain = "domain-" + UUID.randomUUID();
 
         try (ReporterHarness harness = ReporterHarness.start(ReporterHarness.configurationFor(index))) {
-            // created after the reporter, so it inherits the reporter's template and only overrides one
-            // field: outcome.message carries a string on every failed audit, so mapping it as a long makes
-            // exactly the failed audit in this batch unparseable while the successful ones index normally
+            elasticsearch.awaitTemplate(AuditIndexTemplate.name(index));
+            // created after the template, so it inherits it and only overrides one field: outcome.message
+            // carries a string on every failed audit, so mapping it as a long makes exactly the failed
+            // audit in this batch unparseable while the successful ones index normally
             elasticsearch.put("/" + index + DAILY_SUFFIX, """
                     {"mappings":{"properties":{"outcome":{"properties":{"message":{"type":"long"}}}}}}""");
             elasticsearch.awaitSearchable(index + "-*");

@@ -35,6 +35,7 @@ import io.gravitee.elasticsearch.model.SearchHit;
 import io.gravitee.elasticsearch.model.SearchResponse;
 import io.gravitee.reporter.api.Reportable;
 import io.gravitee.reporter.api.Reporter;
+import io.vertx.core.Context;
 import io.reactivex.rxjava3.core.BackpressureOverflowStrategy;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -96,7 +97,16 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         this.queryBuilder = new ElasticsearchQueryBuilder(mapper);
         this.drops = new AuditDropCounter();
 
-        prepareIndexOrFail();
+        this.indexReady = prepareIndex()
+                .retryWhen(errors -> errors.flatMap(this::retryUnlessMisconfigured))
+                .cache();
+        // kicked off now rather than on the first audit, so a misconfiguration shows up immediately.
+        // Never awaited here: afterPropertiesSet can run on a Vert.x event loop, and the Elasticsearch
+        // client needs that same event loop to answer, so blocking would deadlock the node.
+        this.indexReady
+                .subscribeOn(Schedulers.io())
+                .subscribe(() -> { },
+                        error -> log.error("The Elasticsearch audit reporter cannot write audits", error));
 
         this.disposable = bulkProcessor
                 .buffer(configuration.getFlushInterval(), TimeUnit.SECONDS, configuration.getBulkActions())
@@ -117,35 +127,33 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
     }
 
     /**
-     * Applies the index template before anything is written. A template Elasticsearch refuses is a
-     * misconfiguration and is fatal: without it the free-form actor and target attribute maps are
-     * dynamically mapped, and the first event whose attribute value type differs from a previously
-     * seen one is silently rejected. An unreachable cluster is a different matter — that is transient,
-     * so the reporter starts and keeps trying, buffering (and, if the outage lasts, dropping and
-     * counting) in the meantime.
+     * An unreachable cluster is transient, so it is retried indefinitely and the reporter keeps
+     * buffering (and, if the outage lasts, dropping and counting) meanwhile. A server that answers and
+     * refuses is a misconfiguration: retrying will never fix it, so preparation fails for good and
+     * every batch from then on is dropped with that reason rather than written to an index whose
+     * mapping would silently reject audits.
      */
-    private void prepareIndexOrFail() {
-        try {
-            prepareIndex().blockingAwait();
-            this.indexReady = Completable.complete();
-        } catch (RuntimeException e) {
-            if (isRefusedByServer(e)) {
-                throw new IllegalStateException(templateFailureMessage(), e);
-            }
-            log.warn("Elasticsearch at {} is not reachable yet. The reporter has started, but no audit will be written " +
-                            "until its index template has been applied.", configuration.getEndpoints(), e);
-            this.indexReady = prepareIndex()
-                    .retryWhen(errors -> errors.flatMap(error -> {
-                        if (isRefusedByServer(error)) {
-                            return Flowable.error(new IllegalStateException(templateFailureMessage(), error));
-                        }
-                        return Flowable.timer(configuration.getRetryMaxInterval(), TimeUnit.SECONDS, Schedulers.computation());
-                    }))
-                    .cache();
+    private Flowable<?> retryUnlessMisconfigured(Throwable error) {
+        if (error instanceof ElasticsearchException) {
+            return Flowable.error(new IllegalStateException(templateFailureMessage(), error));
         }
+        if (error instanceof IllegalStateException) {
+            // an unsupported or undetectable server version, which already carries its own message
+            return Flowable.error(error);
+        }
+        log.warn("Elasticsearch at {} is not reachable yet. No audit will be written until its index " +
+                "template has been applied.", configuration.getEndpoints(), error);
+        return Flowable.timer(configuration.getRetryMaxInterval(), TimeUnit.SECONDS, Schedulers.computation());
     }
 
     private Completable prepareIndex() {
+        return Completable.defer(() -> {
+            AuditIndexNames.validate(configuration.getIndex());
+            return doPrepareIndex();
+        });
+    }
+
+    private Completable doPrepareIndex() {
         return client.getInfo()
                 .map(ElasticsearchServerVersion::detect)
                 .flatMapCompletable(version -> {
@@ -169,19 +177,6 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                 "reporter's index name. The reporter will not run without its template, because audit attributes would " +
                 "then be dynamically mapped and audits could be silently rejected.")
                 .formatted(AuditIndexTemplate.name(index), AuditIndexNames.readPattern(index), AuditIndexTemplate.priority(index));
-    }
-
-    /** A server that answered and refused is a misconfiguration; anything else is transport. */
-    private static boolean isRefusedByServer(Throwable error) {
-        for (Throwable current = error; current != null; current = current.getCause()) {
-            if (current instanceof ElasticsearchException || current instanceof IllegalStateException) {
-                return true;
-            }
-            if (current.getCause() == current) {
-                break;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -291,6 +286,13 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         bulkProcessor.onComplete();
 
         long timeout = configuration.getShutdownFlushTimeout();
+        if (Context.isOnEventLoopThread()) {
+            // awaiting here would block the very event loop the flush needs to complete on, so the
+            // drain is left to finish in the background rather than deadlocked into losing everything
+            log.warn("The Elasticsearch reporter is stopping on an event loop thread, so its flush of {} audits " +
+                    "cannot be awaited and will finish in the background.", pendingAudits.get());
+            return;
+        }
         if (!drained.await(timeout, TimeUnit.SECONDS)) {
             log.error("The Elasticsearch reporter could not flush within {}s of stopping. {} audits were not written.",
                     timeout, pendingAudits.get());
@@ -310,8 +312,10 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
     private Completable deliver(BulkBatch batch) {
         return indexReady
                 .andThen(Completable.defer(() -> send(batch, 0)))
+                // send() absorbs its own failures, so anything arriving here means the reporter never
+                // became writable at all — a misconfiguration rather than a delivery problem
                 .onErrorResumeNext(error -> {
-                    drops.retriesExhausted(batch, error);
+                    drops.notWritable(batch, error);
                     return Completable.complete();
                 })
                 .doFinally(() -> pendingAudits.addAndGet(-batch.size()));

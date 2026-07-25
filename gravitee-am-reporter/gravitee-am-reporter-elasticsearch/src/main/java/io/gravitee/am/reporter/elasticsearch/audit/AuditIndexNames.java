@@ -18,6 +18,7 @@ package io.gravitee.am.reporter.elasticsearch.audit;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 
 /**
  * Audits are written to one index per day so an operator can expire them with a lifecycle policy,
@@ -33,7 +34,22 @@ public final class AuditIndexNames {
      */
     private static final DateTimeFormatter DAILY_SUFFIX = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneOffset.UTC);
 
+    /**
+     * Elasticsearch rejects index names that are not lowercase, or that use characters it reserves.
+     * Checked up front so an operator who mistypes the index gets told exactly that, rather than a
+     * template failure whose message points somewhere else.
+     */
+    private static final Pattern LEGAL_INDEX_NAME = Pattern.compile("[a-z0-9][a-z0-9_.+-]*");
+
     private AuditIndexNames() {
+    }
+
+    public static void validate(String baseIndex) {
+        if (baseIndex == null || baseIndex.isBlank() || !LEGAL_INDEX_NAME.matcher(baseIndex).matches()) {
+            throw new IllegalStateException(("'%s' cannot be used as an Elasticsearch index name. Names must be " +
+                    "lowercase, start with a letter or digit, and contain only letters, digits, and the characters " +
+                    "_ . + and -.").formatted(baseIndex));
+        }
     }
 
     /**

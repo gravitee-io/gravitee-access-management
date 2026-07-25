@@ -37,6 +37,7 @@ final class AuditDropCounter {
     private final Counter overflow = counter("buffer_overflow");
     private final Counter retriesExhausted = counter("retries_exhausted");
     private final Counter rejected = counter("rejected");
+    private final Counter notWritable = counter("not_writable");
     private final Counter notAccepted = counter("reporter_stopping");
 
     private final AtomicLong total = new AtomicLong();
@@ -67,6 +68,14 @@ final class AuditDropCounter {
         total.addAndGet(1);
         log.error("Dropped audit {} of type {}: Elasticsearch refused it for index {} with status {} — {}",
                 audit.auditId(), audit.auditType(), audit.index(), audit.status(), audit.reason());
+    }
+
+    /** The reporter never became writable — its index template could not be applied. */
+    void notWritable(BulkBatch batch, Throwable cause) {
+        notWritable.increment(batch.size());
+        total.addAndGet(batch.size());
+        log.error("Dropped {} audits: the Elasticsearch reporter is not writable, so nothing can be indexed. " +
+                "Per type: {}", batch.size(), batch.countsByType(), cause);
     }
 
     /** Reported after the reporter began stopping, so it was never buffered. */

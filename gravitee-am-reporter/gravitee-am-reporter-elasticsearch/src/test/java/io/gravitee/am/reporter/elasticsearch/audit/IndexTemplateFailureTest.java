@@ -15,19 +15,32 @@
  */
 package io.gravitee.am.reporter.elasticsearch.audit;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.reporter.elasticsearch.AuditFixtures;
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchTestClient;
 import io.gravitee.am.reporter.elasticsearch.ReporterHarness;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 /**
  * The index template is what stops free-form audit attributes being dynamically mapped, so a
@@ -41,21 +54,56 @@ class IndexTemplateFailureTest {
     private static ElasticsearchTestClient elasticsearch;
 
     private final List<String> createdIndexPatterns = new ArrayList<>();
+    private ListAppender<ILoggingEvent> logs;
 
     @BeforeAll
     static void connect() {
         elasticsearch = ElasticsearchTestClient.onTestContainer();
     }
 
+    @BeforeEach
+    void captureLogs() {
+        logs = new ListAppender<>();
+        logs.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+        logs.start();
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)).addAppender(logs);
+    }
+
+    private List<String> loggedMessages() {
+        return logs.list.stream()
+                .filter(event -> event.getLevel().isGreaterOrEqual(Level.WARN))
+                .map(ILoggingEvent::getFormattedMessage)
+                .toList();
+    }
+
+    /** Full text including causes, since the actionable detail lives on the wrapped exception. */
+    private List<String> loggedThrowables() {
+        return logs.list.stream()
+                .map(ILoggingEvent::getThrowableProxy)
+                .filter(java.util.Objects::nonNull)
+                .map(proxy -> {
+                    StringWriter text = new StringWriter();
+                    PrintWriter writer = new PrintWriter(text);
+                    for (var current = proxy; current != null; current = current.getCause()) {
+                        writer.println(current.getClassName() + ": " + current.getMessage());
+                    }
+                    return text.toString();
+                })
+                .toList();
+    }
+
     @AfterEach
     void cleanUp() {
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)).detachAppender(logs);
+        logs.stop();
         createdIndexPatterns.forEach(pattern -> elasticsearch.cleanUp(pattern));
         createdIndexPatterns.clear();
     }
 
     @Test
-    void startupFailsLoudlyWhenAnotherTemplateAlreadyOwnsThePattern() {
+    void aTemplateCollisionIsReportedLoudlyAndNothingIsWritten() throws Exception {
         String index = index();
+        String domain = "domain-" + UUID.randomUUID();
         // an existing composable template matching the same pattern at the same priority: Elasticsearch
         // refuses ours outright, which is exactly the collision two overlapping AM reporters produce
         HttpResponse<String> existing = elasticsearch.put("/_index_template/" + index + "-conflicting", """
@@ -63,11 +111,23 @@ class IndexTemplateFailureTest {
                 .formatted(index, AuditIndexTemplate.priority(index)));
         assertThat(existing.statusCode()).isEqualTo(200);
 
-        assertThatThrownBy(() -> ReporterHarness.start(ReporterHarness.configurationFor(index)))
-                .hasStackTraceContaining("Unable to apply the Elasticsearch index template")
-                .hasStackTraceContaining(AuditIndexTemplate.name(index))
-                .hasStackTraceContaining(index + "-*")
-                .hasStackTraceContaining("will not run without its template");
+        try (ReporterHarness harness = ReporterHarness.start(ReporterHarness.configurationFor(index))) {
+            harness.reporter().report(AuditFixtures.audit(domain, "USER_CREATED", Status.SUCCESS, Instant.now()));
+
+            await().atMost(30, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(250))
+                    .until(() -> loggedMessages().stream()
+                            .anyMatch(message -> message.contains("not writable")));
+
+            assertThat(loggedThrowables())
+                    .describedAs("the operator needs the template name, its pattern and what to change")
+                    .anyMatch(text -> text.contains("Unable to apply the Elasticsearch index template")
+                            && text.contains(AuditIndexTemplate.name(index))
+                            && text.contains(index + "-*")
+                            && text.contains("will not run without its template"));
+
+            // nothing reached Elasticsearch: an index without the template is exactly what must not happen
+            assertThat(elasticsearch.indices(index + "-*")).isEmpty();
+        }
     }
 
     @Test
@@ -96,6 +156,7 @@ class IndexTemplateFailureTest {
 
         try (ReporterHarness harness = ReporterHarness.start(ReporterHarness.configurationFor(index))) {
             assertThat(harness.reporter().canSearch()).isTrue();
+            elasticsearch.awaitTemplate(AuditIndexTemplate.name(index));
 
             String dailyIndex = index + "-2026.07.25";
             HttpResponse<String> asString = elasticsearch.put("/" + dailyIndex + "/_doc/first", """

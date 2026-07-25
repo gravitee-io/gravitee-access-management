@@ -57,6 +57,11 @@ The offload path is therefore:
 
 Disabling is allowed on system reporters — the delete protection covers deletion, not update.
 
+One wrinkle if you are scripting this rather than using the console: the management API nulls a
+system reporter's `configuration` when you read it, but the update endpoint rejects a request
+without one. There is therefore nothing to round-trip, and a disable call has to supply a
+placeholder configuration. It is never used, because a disabled reporter is not started.
+
 ## Index layout
 
 Audits are written to one index per day, named `<index>-yyyy.MM.dd`, and read back across
