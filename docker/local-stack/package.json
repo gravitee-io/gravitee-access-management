@@ -19,6 +19,7 @@
     "stack:dev:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml up -d",
     "stack:dev:setup:mongo:spire": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose.spire.yml up -d",
     "stack:dev:spire": "docker compose -f dev/docker-compose.spire.yml up -d",
+    "stack:elasticsearch": "docker compose -f dev/docker-compose.elasticsearch.yml up -d --wait",
     "stack:dev:setup:kerberos": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-kerberos.yml up -d",
     "stack:dev:setup:psql": "JDBC_PLUGINS=./plugins/jdbc docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
 

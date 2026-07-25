@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Elasticsearch overlay: a single-node ES cluster plus the gravitee-am-reporter-elasticsearch
-# plugin mounted into the gateway and management-api plugin directories.
+# Elasticsearch overlay: a single-node ES cluster, and nothing else.
+#
+# Deliberately holds no gateway or management-api service overrides, so CI can bring it up against
+# images that already carry the reporter without needing a locally built plugin zip on disk. The dev
+# plugin mounts live in docker-compose.elasticsearch-plugin.yml.
 #
 # The reporter itself is configured per-domain from the Console (Settings -> Reporters):
 #   endpoint  http://elasticsearch:9200   (docker network hostname; use localhost:9200 from the host)
-#
-# local-stack.sh stages the built plugin zip to ./plugins/reporter-elasticsearch/ before `up`.
 #
 
 services:
@@ -46,14 +47,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-
-  gateway:
-    volumes:
-      - ./plugins/reporter-elasticsearch/reporter-am-elasticsearch.zip:/opt/graviteeio-am-gateway/plugins/reporter-am-elasticsearch.zip:ro
-
-  management:
-    volumes:
-      - ./plugins/reporter-elasticsearch/reporter-am-elasticsearch.zip:/opt/graviteeio-am-management-api/plugins/reporter-am-elasticsearch.zip:ro
 
 # Without this the indices live in the container's writable layer, so anything that recreates the
 # container — a heap change, an image bump — silently discards every audit written so far.

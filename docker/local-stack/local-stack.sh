@@ -240,6 +240,7 @@ ALL_FILES=(
   -f "$DEV/docker-compose.spire.yml"
   -f "$DEV/docker-compose.cloud.yml"
   -f "$DEV/docker-compose.elasticsearch.yml"
+  -f "$DEV/docker-compose.elasticsearch-plugin.yml"
   -f "$DEV/docker-compose.images.yml"
 )
 
@@ -256,7 +257,7 @@ build_compose_files() {
   if [ "$WANT_UI" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ui.yml"); fi
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
-  if [ "$WANT_ELASTICSEARCH" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.elasticsearch.yml"); fi
+  if [ "$WANT_ELASTICSEARCH" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.elasticsearch.yml" -f "$DEV/docker-compose.elasticsearch-plugin.yml"); fi
   if [ "$PULLED" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.images.yml"); fi
   if [ -f "$LOCAL_OVERRIDE" ]; then COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE"); fi   # per-dev overrides win
 }
@@ -463,7 +464,7 @@ ensure_jdbc_drivers() {
 }
 
 # Stage the built Elasticsearch reporter plugin zip to a stable path the
-# docker-compose.elasticsearch.yml overlay mounts into the gateway/management plugins dirs.
+# docker-compose.elasticsearch-plugin.yml overlay mounts into the gateway/management plugins dirs.
 ES_REPORTER_TARGET="../../gravitee-am-reporter/gravitee-am-reporter-elasticsearch/target"
 ES_REPORTER_PLUGIN_DIR="$DEV/plugins/reporter-elasticsearch"
 stage_es_reporter_plugin() {
