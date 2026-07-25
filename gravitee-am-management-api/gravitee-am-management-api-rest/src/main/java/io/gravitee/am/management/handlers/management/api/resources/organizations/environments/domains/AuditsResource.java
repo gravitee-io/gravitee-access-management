@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.AuditPage;
 import io.gravitee.am.management.handlers.management.api.model.AuditParam;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.utils.FilterUtils;
@@ -25,10 +26,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
-import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -73,7 +72,7 @@ public class AuditsResource extends AbstractResource {
                     "Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List audit logs for a security domain",      content = @Content(mediaType =  "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = Audit.class)))),
+                    schema = @Schema(implementation = AuditPage.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
