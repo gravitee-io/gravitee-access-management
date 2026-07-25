@@ -37,6 +37,21 @@ const login = (target: ElasticsearchReporterFixture) =>
     target.domain,
   ).then(() => {});
 
+/** Polls the console's audit read path until the expected record shows up. */
+const waitForConsoleAudit = async (
+  target: ElasticsearchReporterFixture,
+  predicate: (audit: any) => boolean,
+  timeoutMs = 30000,
+): Promise<any> => {
+  const deadline = Date.now() + timeoutMs;
+  let page = await listDomainAudits(target.domain.id, target.accessToken, { size: 100 });
+  while (Date.now() < deadline && !page.data.some(predicate)) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    page = await listDomainAudits(target.domain.id, target.accessToken, { size: 100 });
+  }
+  return page;
+};
+
 const sentinelAudit = (domainId: string, id: string) => ({
   id,
   transactionId: id,
@@ -58,7 +73,7 @@ afterAll(async () => {
 describe('Elasticsearch Reporter - Domain Level Gateway', () => {
   describe('Enabled', () => {
     it('should write a gateway audit into Elasticsearch', async () => {
-      const index = uniqueName('es-audit-enabled', true);
+      const index = uniqueName('es-audit-enabled', true).toLowerCase();
       await fixture.addElasticsearchReporter(index);
 
       await login(fixture);
@@ -75,7 +90,7 @@ describe('Elasticsearch Reporter - Domain Level Gateway', () => {
 
   describe('Disabled', () => {
     it('should not write anything into Elasticsearch when the reporter is disabled', async () => {
-      const index = uniqueName('es-audit-disabled', true);
+      const index = uniqueName('es-audit-disabled', true).toLowerCase();
       await fixture.addElasticsearchReporter(index, false);
 
       await login(fixture);
@@ -86,7 +101,7 @@ describe('Elasticsearch Reporter - Domain Level Gateway', () => {
 
   describe('Reporter selection with both stores configured', () => {
     it('should read from the database reporter until it is disabled, then from Elasticsearch', async () => {
-      const index = uniqueName('es-audit-selection', true);
+      const index = uniqueName('es-audit-selection', true).toLowerCase();
       await selectionFixture.addElasticsearchReporter(index);
       await login(selectionFixture);
       await waitForAuditInElasticsearch(`${index}-*`, selectionFixture.domain.id, (a) => a.type === 'USER_LOGIN');
@@ -96,13 +111,15 @@ describe('Elasticsearch Reporter - Domain Level Gateway', () => {
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
       await indexDocument(`${index}-${today}`, sentinelId, sentinelAudit(selectionFixture.domain.id, sentinelId));
 
-      const beforeDisabling = await listDomainAudits(selectionFixture.domain.id, selectionFixture.accessToken, { size: 100 });
+      // the database reporter writes on its own schedule, so give the login audit time to land there
+      const beforeDisabling = await waitForConsoleAudit(selectionFixture, (audit) => audit.type === 'USER_LOGIN');
       expect(beforeDisabling.data.map((audit) => audit.type)).toContain('USER_LOGIN');
-      expect(beforeDisabling.data.map((audit) => audit.id)).not.toContain(sentinelId);
+      expect(beforeDisabling.data.map((audit) => audit.id))
+        .not.toContain(sentinelId);
 
       await selectionFixture.disableDatabaseReporter();
 
-      const afterDisabling = await listDomainAudits(selectionFixture.domain.id, selectionFixture.accessToken, { size: 100 });
+      const afterDisabling = await waitForConsoleAudit(selectionFixture, (audit) => audit.id === sentinelId);
       expect(afterDisabling.data.map((audit) => audit.id)).toContain(sentinelId);
       expect(afterDisabling.data.map((audit) => audit.type)).toContain('USER_LOGIN');
     });

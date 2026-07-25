@@ -23,6 +23,7 @@ import { createUser } from '@management-commands/user-management-commands';
 import {
   createDomainReporter,
   deleteDomainReporter,
+  getDomainReporter,
   listDomainReporters,
   updateDomainReporter,
 } from '@management-commands/reporter-management-commands';
@@ -91,7 +92,7 @@ export const setupElasticsearchReporterFixture = async (): Promise<Elasticsearch
   const indexPatterns: string[] = [];
 
   const addElasticsearchReporter = async (index: string, enabled = true): Promise<Reporter> => {
-    const reporter = await waitForSyncAfter(domain.id, () =>
+    const create = () =>
       createDomainReporter(domain.id, accessToken, {
         type: 'reporter-am-elasticsearch',
         name: uniqueName('es-reporter', true),
@@ -102,8 +103,14 @@ export const setupElasticsearchReporterFixture = async (): Promise<Elasticsearch
           bulkActions: 1,
           flushInterval: 1,
         }),
-      }),
-    );
+      });
+
+    // a disabled reporter is never deployed, so it produces no sync event to wait on
+    const reporter = enabled ? await waitForSyncAfter(domain.id, create) : await create().then(async (created) => {
+      await waitFor(5000);
+      return created;
+    });
+
     reporterIds.push(reporter.id);
     indexPatterns.push(`${index}-*`);
     return reporter;
@@ -111,15 +118,18 @@ export const setupElasticsearchReporterFixture = async (): Promise<Elasticsearch
 
   const disableDatabaseReporter = async (): Promise<void> => {
     const reporters = await listDomainReporters(domain.id, accessToken);
-    const database = reporters.find((reporter) => reporter.type !== 'reporter-am-elasticsearch');
-    if (!database) {
+    const listed = reporters.find((reporter) => reporter.type !== 'reporter-am-elasticsearch');
+    if (!listed) {
       throw new Error('No database reporter found on the domain');
     }
+    const database = await getDomainReporter(domain.id, accessToken, listed.id);
+    // the API nulls a system reporter's configuration on read but requires one on update, so there is
+    // nothing to round-trip; a placeholder is enough here because a disabled reporter is never started
     await updateDomainReporter(domain.id, accessToken, database.id, {
       type: database.type,
       name: database.name,
       enabled: false,
-      configuration: database.configuration,
+      configuration: database.configuration ?? '{}',
     });
     // a disabled reporter produces no sync event to wait on, so give the reload a moment to land
     await waitFor(5000);
