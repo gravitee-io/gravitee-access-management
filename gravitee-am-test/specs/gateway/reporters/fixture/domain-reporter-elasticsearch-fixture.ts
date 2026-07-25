@@ -20,13 +20,7 @@ import { Reporter } from '@management-models/Reporter';
 import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import {
-  createDomainReporter,
-  deleteDomainReporter,
-  getDomainReporter,
-  listDomainReporters,
-  updateDomainReporter,
-} from '@management-commands/reporter-management-commands';
+import { createDomainReporter, deleteDomainReporter } from '@management-commands/reporter-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
@@ -40,7 +34,6 @@ export interface ElasticsearchReporterFixture extends Fixture {
   user: any & { password: string };
   openIdConfiguration: DomainOidcConfig;
   addElasticsearchReporter(index: string, enabled?: boolean): Promise<Reporter>;
-  disableDatabaseReporter(): Promise<void>;
   cleanUp(): Promise<void>;
 }
 
@@ -116,26 +109,6 @@ export const setupElasticsearchReporterFixture = async (): Promise<Elasticsearch
     return reporter;
   };
 
-  const disableDatabaseReporter = async (): Promise<void> => {
-    const reporters = await listDomainReporters(domain.id, accessToken);
-    const listed = reporters.find((reporter) => reporter.type !== 'reporter-am-elasticsearch');
-    if (!listed) {
-      throw new Error('No database reporter found on the domain');
-    }
-    const database = await getDomainReporter(domain.id, accessToken, listed.id);
-    // the API nulls a system reporter's configuration on read but requires one on update, so there is
-    // nothing to round-trip; a placeholder is enough here because a disabled reporter is never started
-    await updateDomainReporter(domain.id, accessToken, database.id, {
-      type: database.type,
-      name: database.name,
-      enabled: false,
-      configuration: database.configuration ?? '{}',
-    });
-    // no fixed wait for the reload here: a disabled reporter produces no sync event to wait on, and
-    // the caller already polls the audit read path for the record only Elasticsearch can answer with,
-    // which is the reload actually having landed rather than a guess at how long it takes
-  };
-
   const cleanUp = async (): Promise<void> => {
     for (const id of reporterIds) {
       try {
@@ -157,7 +130,6 @@ export const setupElasticsearchReporterFixture = async (): Promise<Elasticsearch
     user,
     openIdConfiguration: oidcConfig,
     addElasticsearchReporter,
-    disableDatabaseReporter,
     cleanUp,
   };
 };

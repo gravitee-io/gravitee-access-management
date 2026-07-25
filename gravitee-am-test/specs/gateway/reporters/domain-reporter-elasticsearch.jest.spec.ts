@@ -17,6 +17,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { listDomainAudits } from '@management-commands/audit-management-commands';
+import { listDomainReporters } from '@management-commands/reporter-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { expectNoAuditInElasticsearch, indexDocument, waitForAuditInElasticsearch } from '@utils-commands/elasticsearch-client';
 import { ElasticsearchReporterFixture, setupElasticsearchReporterFixture } from './fixture/domain-reporter-elasticsearch-fixture';
@@ -115,9 +116,9 @@ describeIfElasticsearch('Elasticsearch Reporter - Domain Level Gateway', () => {
   });
 
   describe('Reporter selection with both stores configured', () => {
-    it('should read from the database reporter until it is disabled, then from Elasticsearch', async () => {
+    it('should serve reads from Elasticsearch without disabling the database reporter', async () => {
       const index = uniqueName('es-audit-selection', true).toLowerCase();
-      await selectionFixture.addElasticsearchReporter(index);
+      const elasticsearch = await selectionFixture.addElasticsearchReporter(index);
       await login(selectionFixture);
       await waitForAuditInElasticsearch(`${index}-*`, selectionFixture.domain.id, (a) => a.type === 'USER_LOGIN');
 
@@ -126,17 +127,15 @@ describeIfElasticsearch('Elasticsearch Reporter - Domain Level Gateway', () => {
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
       await indexDocument(`${index}-${today}`, sentinelId, sentinelAudit(selectionFixture.domain.id, sentinelId));
 
-      // the database reporter writes on its own schedule, so give the login audit time to land there
-      const beforeDisabling = await waitForConsoleAudit(selectionFixture, (audit) => audit.type === 'USER_LOGIN');
-      expect(beforeDisabling.data.map((audit) => audit.type)).toContain('USER_LOGIN');
-      expect(beforeDisabling.data.map((audit) => audit.id))
-        .not.toContain(sentinelId);
+      const audits = await waitForConsoleAudit(selectionFixture, (audit) => audit.id === sentinelId);
+      expect(audits.data.map((audit) => audit.id)).toContain(sentinelId);
+      expect(audits.data.map((audit) => audit.type)).toContain('USER_LOGIN');
 
-      await selectionFixture.disableDatabaseReporter();
-
-      const afterDisabling = await waitForConsoleAudit(selectionFixture, (audit) => audit.id === sentinelId);
-      expect(afterDisabling.data.map((audit) => audit.id)).toContain(sentinelId);
-      expect(afterDisabling.data.map((audit) => audit.type)).toContain('USER_LOGIN');
+      // the database reporter is still enabled and still being written to; it just no longer wins reads
+      const reporters = await listDomainReporters(selectionFixture.domain.id, selectionFixture.accessToken);
+      expect(reporters.find((reporter) => reporter.id === elasticsearch.id).readSource).toBe(true);
+      expect(reporters.filter((reporter) => reporter.readSource).map((reporter) => reporter.id)).toEqual([elasticsearch.id]);
+      expect(reporters.every((reporter) => reporter.enabled)).toBe(true);
     });
   });
 });
