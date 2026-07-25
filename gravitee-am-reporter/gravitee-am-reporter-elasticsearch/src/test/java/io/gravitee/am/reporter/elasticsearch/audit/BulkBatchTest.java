@@ -42,7 +42,7 @@ class BulkBatchTest {
     void addressesEachAuditByIdInItsOwnDailyIndex() {
         Audit audit = AuditFixtures.audit("domain-1", "USER_CREATED", Status.SUCCESS, Instant.parse("2026-07-25T13:45:00Z"));
 
-        BulkBatch batch = BulkBatch.of("gravitee-audit", MAPPER, List.of(audit));
+        BulkBatch batch = BulkBatch.of("gravitee-audit", IndexRolloverPeriod.DAILY, MAPPER, List.of(audit));
 
         assertThat(batch.payload().toString())
                 .contains("\"_index\":\"gravitee-audit-2026.07.25\"")
@@ -55,7 +55,7 @@ class BulkBatchTest {
         // no timestamp means no daily index can be derived, so this one cannot be turned into a document
         Audit bad = AuditFixtures.audit("domain-1", "USER_UPDATED", Status.SUCCESS, null);
 
-        BulkBatch batch = BulkBatch.of("gravitee-audit", MAPPER, List.of(good, bad));
+        BulkBatch batch = BulkBatch.of("gravitee-audit", IndexRolloverPeriod.DAILY, MAPPER, List.of(good, bad));
 
         assertThat(batch.size()).isEqualTo(1);
         assertThat(batch.payload().toString()).doesNotContain(bad.getId());
@@ -131,7 +131,7 @@ class BulkBatchTest {
     @Test
     void reportsTheRejectedAuditsOwnIdAndTypeSoItCanBeFoundInTheLogs() {
         Audit audit = AuditFixtures.audit("domain-1", "USER_CREATED", Status.SUCCESS, Instant.parse("2026-07-25T13:45:00Z"));
-        BulkBatch batch = BulkBatch.of("gravitee-audit", MAPPER, List.of(audit));
+        BulkBatch batch = BulkBatch.of("gravitee-audit", IndexRolloverPeriod.DAILY, MAPPER, List.of(audit));
         List<BulkBatch.RejectedAudit> rejected = new ArrayList<>();
 
         batch.retryable(response(400), rejected::add);
@@ -167,7 +167,7 @@ class BulkBatchTest {
                 AuditFixtures.audit("domain-1", "USER_LOGIN", Status.SUCCESS, Instant.now()),
                 AuditFixtures.audit("domain-1", "USER_LOGIN", Status.FAILURE, Instant.now()));
 
-        assertThat(BulkBatch.of("gravitee-audit", MAPPER, audits).countsByType())
+        assertThat(BulkBatch.of("gravitee-audit", IndexRolloverPeriod.DAILY, MAPPER, audits).countsByType())
                 .containsEntry("USER_CREATED", 1L)
                 .containsEntry("USER_LOGIN", 2L);
     }
@@ -177,7 +177,7 @@ class BulkBatchTest {
         for (int i = 0; i < count; i++) {
             audits.add(AuditFixtures.audit("domain-1", "USER_CREATED", Status.SUCCESS, Instant.parse("2026-07-25T13:45:00Z")));
         }
-        return BulkBatch.of("gravitee-audit", MAPPER, audits);
+        return BulkBatch.of("gravitee-audit", IndexRolloverPeriod.DAILY, MAPPER, audits);
     }
 
     private static final String PARSE_FAILURE =

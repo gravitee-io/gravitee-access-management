@@ -32,6 +32,13 @@ public class ElasticsearchReporterConfiguration implements ReporterConfiguration
 
     private List<String> endpoints = new ArrayList<>();
     private String index = "gravitee-audit";
+
+    /**
+     * How often a new index is started: {@code daily}, {@code weekly} or {@code monthly}. Daily by
+     * default, so an upgrade changes nothing. A longer period cuts shard count roughly proportionally,
+     * at the cost of coarser date pruning on reads.
+     */
+    private String rolloverPeriod = "daily";
     private String username;
     @Secret
     private String password;

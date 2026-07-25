@@ -16,23 +16,19 @@
 package io.gravitee.am.reporter.elasticsearch.audit;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
 /**
- * Audits are written to one index per day so an operator can expire them with a lifecycle policy,
- * and read back across all of them with a wildcard.
+ * Audits are written to one index per {@link IndexRolloverPeriod} so an operator can expire them with
+ * a lifecycle policy, and read back across all of them with a wildcard.
+ * <p>
+ * Both names come from here, so the write index and the read wildcard cannot drift apart. That is
+ * also what lets the rollover period be changed on a deployment that already has data: the wildcard
+ * does not mention the period, so indices written under the old one keep answering reads.
  *
  * @author GraviteeSource Team
  */
 public final class AuditIndexNames {
-
-    /**
-     * Pinned to UTC on purpose: the system default zone would scatter the same audit across
-     * different daily indices depending on which node happened to write it.
-     */
-    private static final DateTimeFormatter DAILY_SUFFIX = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneOffset.UTC);
 
     /**
      * Elasticsearch rejects index names that are not lowercase, or that use characters it reserves.
@@ -54,14 +50,14 @@ public final class AuditIndexNames {
 
     /**
      * The index an audit belongs in, derived from the audit's own timestamp rather than from the
-     * clock at index time. Document ids are unique per index, so an audit retried across midnight
-     * would otherwise land in a second index and duplicate.
+     * clock at index time. Document ids are unique per index, so an audit retried across a period
+     * boundary would otherwise land in a second index and duplicate.
      */
-    public static String writeIndex(String baseIndex, Instant auditTimestamp) {
-        return baseIndex + "-" + DAILY_SUFFIX.format(auditTimestamp);
+    public static String writeIndex(String baseIndex, IndexRolloverPeriod period, Instant auditTimestamp) {
+        return baseIndex + "-" + period.suffix(auditTimestamp);
     }
 
-    /** The wildcard every read goes through, covering every daily index. */
+    /** The wildcard every read goes through, covering every index whatever period wrote it. */
     public static String readPattern(String baseIndex) {
         return baseIndex + "-*";
     }

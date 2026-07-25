@@ -80,6 +80,8 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
 
     private ElasticsearchQueryBuilder queryBuilder;
 
+    private IndexRolloverPeriod rolloverPeriod;
+
     private AuditDropCounter drops;
 
     private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
@@ -98,6 +100,9 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
 
     @Override
     public void afterPropertiesSet() {
+        // resolved before the pipeline is built, because a batch's index names are decided when the
+        // batch is assembled rather than when it is sent
+        this.rolloverPeriod = IndexRolloverPeriod.parse(configuration.getRolloverPeriod());
         this.queryBuilder = new ElasticsearchQueryBuilder(mapper);
         this.drops = new AuditDropCounter();
 
@@ -117,7 +122,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         this.disposable = bulkProcessor
                 .buffer(configuration.getFlushInterval(), TimeUnit.SECONDS, configuration.getBulkActions())
                 .filter(audits -> !audits.isEmpty())
-                .map(audits -> BulkBatch.of(configuration.getIndex(), mapper, audits))
+                .map(audits -> BulkBatch.of(configuration.getIndex(), rolloverPeriod, mapper, audits))
                 .doOnNext(this::accountForUnserializable)
                 .filter(batch -> !batch.isEmpty())
                 // bounded backlog: when Elasticsearch cannot keep up the oldest pending batch is
@@ -173,8 +178,9 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                     if (!version.isSupported()) {
                         return Completable.error(new IllegalStateException(version.unsupportedMessage()));
                     }
-                    log.info("Elasticsearch audit reporter connected to {}, writing to {}",
-                            version, AuditIndexNames.readPattern(configuration.getIndex()));
+                    log.info("Elasticsearch audit reporter connected to {}, writing to {} with {} rollover",
+                            version, AuditIndexNames.readPattern(configuration.getIndex()),
+                            rolloverPeriod.name().toLowerCase(java.util.Locale.ROOT));
                     return client.putIndexTemplate(
                             AuditIndexTemplate.name(configuration.getIndex()),
                             AuditIndexTemplate.bodyFor(version, configuration.getIndex()));

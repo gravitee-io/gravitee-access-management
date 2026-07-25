@@ -17,7 +17,14 @@
       "type" : "string",
       "default": "gravitee-audit",
       "title": "Index name",
-      "description": "Base index name. Audits are written to daily indices named <index>-yyyy.MM.dd (UTC) and searched across <index>-*."
+      "description": "Base index name. Audits are written to dated indices below it and searched across <index>-*. Domains sharing an index name share retention, deletion and blast radius; give a domain its own name to isolate them."
+    },
+    "rolloverPeriod" : {
+      "type" : "string",
+      "default": "daily",
+      "title": "Index rollover period",
+      "description": "How often a new index is started: daily (<index>-yyyy.MM.dd), weekly (<index>-yyyy.wWW) or monthly (<index>-yyyy.MM), all in UTC. Shard count follows your retention window, so weekly cuts it roughly sevenfold and monthly roughly thirtyfold. Longer periods make date filtering prune fewer shards. Changing this leaves existing indices readable.",
+      "enum": [ "daily", "weekly", "monthly" ]
     },
     "username" : {
       "type" : "string",

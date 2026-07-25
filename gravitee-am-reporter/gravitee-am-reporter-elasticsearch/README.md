@@ -29,7 +29,8 @@ inherited also reports for every domain in that organization.
 | Option | Default | What it does |
 |---|---|---|
 | `endpoints` | — | Elasticsearch/OpenSearch node URLs |
-| `index` | `gravitee-audit` | Base index name; see [Index layout](#index-layout) |
+| `index` | `gravitee-audit` | Base index name; see [Index layout](#index-layout) and [Sharing an index between domains](#sharing-an-index-between-domains) |
+| `rolloverPeriod` | `daily` | How often a new index is started: `daily`, `weekly` or `monthly`; see [Rollover period](#rollover-period) |
 | `username` / `password` | — | Basic authentication |
 | `requestTimeout` | `30000` | Request timeout, milliseconds |
 | `sslKeystoreType` | — | Client certificate type: `jks`, `pkcs12` or `pem` |
@@ -73,13 +74,104 @@ placeholder configuration. It is never used, because a disabled reporter is not 
 
 ## Index layout
 
-Audits are written to one index per day, named `<index>-yyyy.MM.dd`, and read back across
-`<index>-*`. The daily suffix comes from the **audit's own timestamp**, resolved in **UTC**, so an
-audit retried across midnight lands in the same index it would have the first time, and nodes in
-different timezones agree.
+Audits are written to one index per rollover period and read back across `<index>-*`. The suffix
+comes from the **audit's own timestamp**, resolved in **UTC**, so an audit retried across a period
+boundary lands in the same index it would have the first time, and nodes in different timezones agree.
 
 Each document's id is the audit id, so retries and concurrent writers overwrite rather than
 duplicate.
+
+### Rollover period
+
+| `rolloverPeriod` | Index name | Example |
+|---|---|---|
+| `daily` (default) | `<index>-yyyy.MM.dd` | `gravitee-audit-2026.07.25` |
+| `weekly` | `<index>-yyyy.wWW` | `gravitee-audit-2026.w30` |
+| `monthly` | `<index>-yyyy.MM` | `gravitee-audit-2026.07` |
+
+`weekly` uses the ISO-8601 week and its **week-based year**, so 1 January 2027 is written to
+`2026.w53` — the week it actually belongs to.
+
+**Why this is a setting.** Shard count follows your *retention window*, not your audit volume. A
+domain retaining two years at daily rollover has roughly 730 indices whether it wrote 600 million
+audits or 600, and every shard costs heap in cluster state and segment metadata:
+
+| Retention | `daily` | `weekly` | `monthly` |
+|---|---|---|---|
+| 90 days | 90 indices | 13 | 3 |
+| 1 year | 365 | 53 | 12 |
+| 2 years | 730 | 105 | 24 |
+
+Multiply by one primary shard each (the Elasticsearch default), and again by your replica count.
+
+**The cost of a longer period** is coarser date pruning. AM's audit console always sends a bounded
+date range and defaults to the last 24 hours, so Elasticsearch can rule out whole shards from the
+index name before doing any real work — measured at 731 daily indices, a 24-hour query skipped 729 of
+them and ran in roughly a sixth of the time of the same query without a date range. Monthly indices
+are fewer but wider in time, so fewer can be skipped. That is the trade: fewer shards and less heap,
+against less effective pruning.
+
+Pick the shortest period whose shard count your cluster can carry. Changing it later is safe: the read
+wildcard does not mention the period, so indices written under the old setting keep answering reads.
+
+### Sizing heap against retention
+
+**Heap has to be sized against the retention window, not the audit volume**, and running out of it is
+a cliff rather than a slope. Elasticsearch's own guidance is to stay under roughly 20 shards per GB of
+JVM heap, and `cluster.max_shards_per_node` defaults to 1000.
+
+Measured during development on a single node: 651 shards exhausted a 512 MB heap with 1.8 million
+documents in the cluster. Document count was not the driver — shard count was.
+
+The symptom, if you get it wrong: the node starts rejecting **every** request with a
+`circuit_breaking_exception` from the parent breaker, including the `_cat/indices` and `_cluster/health`
+calls you would reach for to diagnose it, and it does not recover on its own. Watch shard count as
+retention grows, and lengthen the rollover period before you get there.
+
+## Sharing an index between domains
+
+Reporters are configured per domain, but the index name is **not** derived from the domain — every
+reporter left on the default `gravitee-audit` writes into the same indices. This is a deliberate
+default, and it is the opposite of what the built-in database reporters do: those get a per-reference
+collection or table when AM provisions them.
+
+**Audit isolation is not affected.** Every query the reporter issues — search, single-record lookup,
+count, group-by and date histogram — filters on `referenceType` and `referenceId`, so no domain can
+read another's audits through AM, shared index or not. That isolation is enforced in the query layer,
+though, not by a storage boundary: anyone with direct cluster access sees every domain's audits in the
+shared index.
+
+What a shared index does affect is everything that operates on an *index* rather than a document:
+
+- **Retention.** An ILM or ISM policy applies to indices. Domains sharing indices cannot have
+  different retention, so the strictest requirement governs everyone or the loosest violates someone.
+- **Deletion.** Removing one domain's audit history means deleting documents by query rather than
+  dropping an index, which is the cheap operation dated indices exist to enable.
+- **Compliance.** A tenant whose audit records must be physically separable cannot be served by a
+  shared index.
+- **Blast radius.** A mapping conflict or a corrupt index affects every domain sharing it.
+
+**To isolate a domain, give its reporter its own index name** — for example `gravitee-audit-payments`.
+Then decide the layout deliberately, because per-domain indices multiply the shard arithmetic above by
+the number of domains. Staying under 1000 primary shards on a node means roughly:
+
+| Retention | `daily` | `weekly` | `monthly` |
+|---|---|---|---|
+| 90 days | ~11 domains | ~77 | ~333 |
+| 2 years | ~1 domain | ~9 | ~41 |
+
+So per-domain indices suit a handful of domains with a real isolation requirement, and do not scale to
+hundreds. At that scale the configuration that works is a **single inherited organization reporter**,
+which reports for every domain in the organization through one index — the shared layout, chosen on
+purpose.
+
+Two constraints on a name you pick:
+
+- Elasticsearch caps an index name at **255 bytes**, and the reporter appends a suffix of up to 11
+  characters (`-2026.07.25`), so keep the base name under 244 bytes.
+- The base name must be lowercase and use only letters, digits and `_ . + -`, starting with a letter or
+  digit. The reporter checks this at startup and refuses to run with a clear message rather than
+  failing later on a template it could not apply.
 
 An index template is applied at startup, before anything is written. It maps the fields the console
 filters and aggregates on as keywords, and maps `actor.attributes` / `target.attributes` as
@@ -97,6 +189,13 @@ deterministically (the longer, more specific name wins) and both are accepted.
 
 The platform's audit purge retention setting **does not apply** to this reporter. Retention is
 delegated to the cluster's own lifecycle management, which differs by vendor.
+
+The policies below match `<index>-*`, so they work for every [rollover period](#rollover-period). One
+thing to adjust when you lengthen the period: lifecycle age is measured from **index creation**, and an
+index holds a whole period of audits. A `min_age` of `90d` on monthly indices deletes the July index
+around 29 September, taking the 31 July audits with it when they are only 60 days old. To guarantee a
+minimum retention, add the period length to `min_age` — `90d` becomes `97d` for weekly and `120d` for
+monthly.
 
 ### Elasticsearch — Index Lifecycle Management
 

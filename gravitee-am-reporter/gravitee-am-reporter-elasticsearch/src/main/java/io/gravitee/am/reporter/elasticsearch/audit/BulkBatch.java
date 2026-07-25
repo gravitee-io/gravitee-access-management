@@ -50,13 +50,16 @@ final class BulkBatch {
     static final int MAX_REASON_LENGTH = 256;
 
     private final String baseIndex;
+    private final IndexRolloverPeriod period;
     private final ObjectMapper mapper;
     private final List<Audit> audits;
     private final List<Audit> unserializable;
     private final Buffer payload;
 
-    private BulkBatch(String baseIndex, ObjectMapper mapper, List<Audit> audits, List<Audit> unserializable, Buffer payload) {
+    private BulkBatch(String baseIndex, IndexRolloverPeriod period, ObjectMapper mapper, List<Audit> audits,
+                      List<Audit> unserializable, Buffer payload) {
         this.baseIndex = baseIndex;
+        this.period = period;
         this.mapper = mapper;
         this.audits = audits;
         this.unserializable = unserializable;
@@ -65,16 +68,16 @@ final class BulkBatch {
 
     /**
      * Serializes the audits into an NDJSON bulk payload. Each document is addressed by its audit id
-     * in the daily index its own timestamp falls in, which makes every write idempotent: a retry or a
+     * in the index its own timestamp falls in, which makes every write idempotent: a retry or a
      * concurrent writer overwrites rather than duplicates.
      */
-    static BulkBatch of(String baseIndex, ObjectMapper mapper, List<Audit> audits) {
+    static BulkBatch of(String baseIndex, IndexRolloverPeriod period, ObjectMapper mapper, List<Audit> audits) {
         List<Audit> serialized = new ArrayList<>(audits.size());
         List<Audit> unserializable = new ArrayList<>();
         Buffer payload = Buffer.buffer();
         for (Audit audit : audits) {
             try {
-                String index = AuditIndexNames.writeIndex(baseIndex, audit.timestamp());
+                String index = AuditIndexNames.writeIndex(baseIndex, period, audit.timestamp());
                 String action = mapper.writeValueAsString(Map.of("index", Map.of("_index", index, "_id", audit.getId())));
                 String source = mapper.writeValueAsString(AuditConverter.toDocument(audit));
                 payload.appendString(action).appendString("\n").appendString(source).appendString("\n");
@@ -86,7 +89,7 @@ final class BulkBatch {
                 unserializable.add(audit);
             }
         }
-        return new BulkBatch(baseIndex, mapper, serialized, unserializable, payload);
+        return new BulkBatch(baseIndex, period, mapper, serialized, unserializable, payload);
     }
 
     /** Audits that could not be turned into documents at all, so were never part of the payload. */
@@ -155,7 +158,7 @@ final class BulkBatch {
         for (int i = count; i < audits.size(); i++) {
             retry.add(audits.get(i));
         }
-        return of(baseIndex, mapper, retry);
+        return of(baseIndex, period, mapper, retry);
     }
 
     private static String abbreviate(String reason) {
