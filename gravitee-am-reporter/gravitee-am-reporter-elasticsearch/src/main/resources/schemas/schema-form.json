@@ -17,7 +17,8 @@
       "type" : "string",
       "default": "gravitee-audit",
       "title": "Index name",
-      "description": "Base index name. Audits are written to dated indices below it and searched across <index>-*. Domains sharing an index name share retention, deletion and blast radius; give a domain its own name to isolate them."
+      "pattern": "^[a-z0-9][a-z0-9_.+-]*$",
+      "description": "Base index name. Must be lowercase, start with a letter or digit, and contain only letters, digits, and the characters _ . + and -. Audits are written to dated indices below it and searched across <index>-*. Domains sharing an index name share retention, deletion and blast radius; give a domain its own name to isolate them."
     },
     "rolloverPeriod" : {
       "type" : "string",
