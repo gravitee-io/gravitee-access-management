@@ -37,8 +37,16 @@ export const refreshIndices = async (indexPattern: string): Promise<void> => {
   await request('POST', `/${indexPattern}/_refresh`);
 };
 
+/**
+ * Elasticsearch refuses a wildcard delete by default (`action.destructive_requires_name`), so the
+ * matching indices are resolved to concrete names first — otherwise cleanup silently leaves the test
+ * indices behind.
+ */
 export const deleteIndices = async (indexPattern: string): Promise<void> => {
-  await request('DELETE', `/${indexPattern}`);
+  const { status, body } = await request('GET', `/_cat/indices/${indexPattern}?format=json&h=index`);
+  if (status === 200 && Array.isArray(body) && body.length > 0) {
+    await request('DELETE', `/${body.map((entry: any) => entry.index).join(',')}`);
+  }
   await request('DELETE', `/_index_template/${indexPattern}`);
 };
 

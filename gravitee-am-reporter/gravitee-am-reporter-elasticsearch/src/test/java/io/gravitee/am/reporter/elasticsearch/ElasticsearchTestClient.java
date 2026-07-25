@@ -128,7 +128,14 @@ public final class ElasticsearchTestClient {
 
     /** Best-effort teardown: removes every index and index template matching the pattern. */
     public void cleanUp(String indexPattern) {
-        delete("/" + indexPattern);
+        // Elasticsearch refuses a wildcard delete by default (action.destructive_requires_name), so the
+        // matching indices have to be resolved to concrete names or the teardown silently does nothing
+        JsonNode matching = indices(indexPattern);
+        if (matching.isArray() && !matching.isEmpty()) {
+            StringBuilder names = new StringBuilder();
+            matching.forEach(node -> names.append(names.isEmpty() ? "" : ",").append(node.get("index").asText()));
+            delete("/" + names);
+        }
         delete("/_index_template/" + indexPattern);
     }
 
