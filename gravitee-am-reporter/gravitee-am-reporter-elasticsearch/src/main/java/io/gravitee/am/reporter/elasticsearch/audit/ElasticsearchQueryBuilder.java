@@ -23,6 +23,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import org.springframework.util.StringUtils;
 
+import java.util.Map;
+
 /**
  * Builds the JSON query/aggregation bodies sent to Elasticsearch from an {@link AuditReportableCriteria}.
  * Field paths mirror the {@link io.gravitee.am.reporter.elasticsearch.audit.model.AuditDocument} layout.
@@ -45,6 +47,22 @@ public class ElasticsearchQueryBuilder {
     static final String AGG_BY_DATE = "by_date";
     static final String AGG_BY_FIELD = "by_field";
 
+    /**
+     * Elasticsearch refuses {@code from + size} past this by default, so paging beyond it fails
+     * rather than returning wrong data.
+     */
+    static final int MAX_RESULT_WINDOW = 10_000;
+
+    /**
+     * Criteria field names are mapped explicitly rather than passed straight through, so a field name
+     * this reporter does not know fails with a clear message instead of silently returning empty
+     * buckets or taking a 400 from Elasticsearch.
+     */
+    private static final Map<String, String> GROUP_BY_FIELDS = Map.of(
+            "accessPoint.id", FIELD_ACCESS_POINT_ID,
+            "type", FIELD_TYPE,
+            "outcome.status", FIELD_STATUS);
+
     private final ObjectMapper mapper;
 
     public ElasticsearchQueryBuilder(ObjectMapper mapper) {
@@ -59,6 +77,8 @@ public class ElasticsearchQueryBuilder {
         ObjectNode root = mapper.createObjectNode();
         root.put("from", (long) size * page);
         root.put("size", size);
+        // without this the total silently caps at 10 000 while the database reporters return the truth
+        root.put("track_total_hits", true);
         ArrayNode sort = root.putArray("sort");
         sort.addObject().putObject(FIELD_TIMESTAMP).put("order", "desc");
         root.set("query", boolFilter(referenceType, referenceId, criteria));
@@ -88,7 +108,7 @@ public class ElasticsearchQueryBuilder {
         root.put("size", 0);
         root.set("query", boolFilter(referenceType, referenceId, criteria));
         ObjectNode terms = root.putObject("aggregations").putObject(AGG_BY_FIELD).putObject("terms");
-        terms.put("field", criteria.field());
+        terms.put("field", groupByField(criteria.field()));
         terms.put("size", (criteria.size() != null && criteria.size() > 0) ? criteria.size() : 10);
         return root.toString();
     }
@@ -168,6 +188,15 @@ public class ElasticsearchQueryBuilder {
         }
 
         return query;
+    }
+
+    private static String groupByField(String criteriaField) {
+        String field = criteriaField == null ? null : GROUP_BY_FIELDS.get(criteriaField);
+        if (field == null) {
+            throw new IllegalArgumentException("Audits cannot be grouped by '%s'. Supported fields: %s"
+                    .formatted(criteriaField, GROUP_BY_FIELDS.keySet()));
+        }
+        return field;
     }
 
     private ObjectNode term(String field, String value) {

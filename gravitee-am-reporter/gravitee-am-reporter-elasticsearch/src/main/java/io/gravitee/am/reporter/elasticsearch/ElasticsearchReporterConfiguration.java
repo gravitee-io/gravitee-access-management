@@ -41,7 +41,34 @@ public class ElasticsearchReporterConfiguration implements ReporterConfiguration
     private String sslKeystorePath;
     @Secret
     private String sslKeystorePassword;
+    private List<String> sslPemCerts = new ArrayList<>();
+    private List<String> sslPemKeys = new ArrayList<>();
 
     private Integer bulkActions = 1000;
     private Long flushInterval = 5L;
+
+    /**
+     * Upper bound on the backlog of pending bulk batches held in memory while Elasticsearch is slow
+     * or unreachable. Once reached the oldest pending batch is dropped, so the node stays healthy
+     * instead of growing until it runs out of memory. The audit bound is this times {@code bulkActions}.
+     */
+    private Integer maxPendingBatches = 50;
+
+    /** Upper bound on bulk requests in flight at once. */
+    private Integer maxConcurrentRequests = 5;
+
+    /** How many times a batch is retried before it is dropped and counted. */
+    private Integer retryAttempts = 6;
+
+    /** First retry delay, in seconds; doubles per attempt up to {@link #retryMaxInterval}. */
+    private Long retryInitialInterval = 3L;
+
+    /** Ceiling on the retry delay, in seconds. */
+    private Long retryMaxInterval = 30L;
+
+    /**
+     * How long a stopping reporter waits for its buffered audits to be acknowledged, in seconds.
+     * Bounded so a sick cluster cannot hang a rolling restart.
+     */
+    private Long shutdownFlushTimeout = 10L;
 }

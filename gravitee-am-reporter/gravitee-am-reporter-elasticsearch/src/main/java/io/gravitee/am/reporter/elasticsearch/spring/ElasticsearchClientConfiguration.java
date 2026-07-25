@@ -21,13 +21,16 @@ import io.gravitee.elasticsearch.client.http.ClientSslConfiguration;
 import io.gravitee.elasticsearch.client.http.HttpClient;
 import io.gravitee.elasticsearch.client.http.HttpClientConfiguration;
 import io.gravitee.elasticsearch.client.http.HttpClientJksSslConfiguration;
+import io.gravitee.elasticsearch.client.http.HttpClientPemSslConfiguration;
 import io.gravitee.elasticsearch.client.http.HttpClientPfxSslConfiguration;
 import io.gravitee.elasticsearch.config.Endpoint;
 import io.vertx.rxjava3.core.Vertx;
+import lombok.CustomLog;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.Locale;
 
 import static java.util.stream.Collectors.toList;
 
@@ -37,6 +40,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 @Configuration
 public class ElasticsearchClientConfiguration {
 
@@ -55,17 +59,50 @@ public class ElasticsearchClientConfiguration {
         clientConfiguration.setPassword(configuration.getPassword());
         clientConfiguration.setRequestTimeout(configuration.getRequestTimeout());
 
-        final String keystoreType = configuration.getSslKeystoreType();
-        if (keystoreType != null) {
-            if (keystoreType.equalsIgnoreCase(ClientSslConfiguration.JKS_KEYSTORE_TYPE)) {
-                clientConfiguration.setSslConfig(
-                        new HttpClientJksSslConfiguration(configuration.getSslKeystorePath(), configuration.getSslKeystorePassword()));
-            } else if (keystoreType.equalsIgnoreCase(ClientSslConfiguration.PFX_KEYSTORE_TYPE) || keystoreType.equalsIgnoreCase("pkcs12")) {
-                clientConfiguration.setSslConfig(
-                        new HttpClientPfxSslConfiguration(configuration.getSslKeystorePath(), configuration.getSslKeystorePassword()));
-            }
-        }
+        warnAboutUnverifiedServerCertificates(configuration);
+        applyClientCertificate(configuration, clientConfiguration);
 
         return new HttpClient(clientConfiguration);
+    }
+
+    /**
+     * The shared Elasticsearch client enables TLS and trusts every certificate on an https endpoint,
+     * with no truststore, CA or hostname verification option anywhere in it. That is inherited
+     * platform behaviour rather than something this reporter introduces, but audit records are
+     * sensitive enough that it should be visible rather than latent.
+     */
+    private void warnAboutUnverifiedServerCertificates(ElasticsearchReporterConfiguration configuration) {
+        List<String> secureEndpoints = configuration.getEndpoints().stream()
+                .filter(endpoint -> endpoint != null && endpoint.toLowerCase(Locale.ROOT).startsWith("https://"))
+                .toList();
+        if (!secureEndpoints.isEmpty()) {
+            log.warn("Audits will be sent to {} over TLS, but the Elasticsearch server certificate is NOT verified: " +
+                            "the shared Gravitee Elasticsearch client trusts any certificate presented. Treat the link as " +
+                            "encrypted but unauthenticated, and keep it on a trusted network.", secureEndpoints);
+        }
+    }
+
+    private void applyClientCertificate(ElasticsearchReporterConfiguration configuration, HttpClientConfiguration clientConfiguration) {
+        final String keystoreType = configuration.getSslKeystoreType();
+        if (keystoreType == null || keystoreType.isBlank()) {
+            return;
+        }
+        if (keystoreType.equalsIgnoreCase(ClientSslConfiguration.JKS_KEYSTORE_TYPE)) {
+            clientConfiguration.setSslConfig(
+                    new HttpClientJksSslConfiguration(configuration.getSslKeystorePath(), configuration.getSslKeystorePassword()));
+        } else if (keystoreType.equalsIgnoreCase(ClientSslConfiguration.PFX_KEYSTORE_TYPE) || keystoreType.equalsIgnoreCase("pkcs12")) {
+            clientConfiguration.setSslConfig(
+                    new HttpClientPfxSslConfiguration(configuration.getSslKeystorePath(), configuration.getSslKeystorePassword()));
+        } else if (keystoreType.equalsIgnoreCase(ClientSslConfiguration.PEM_KEYSTORE_TYPE)) {
+            if (configuration.getSslPemCerts().isEmpty() || configuration.getSslPemKeys().isEmpty()) {
+                throw new IllegalStateException("The Elasticsearch reporter is configured with a pem client certificate " +
+                        "but no certificate or key path was given. Set both sslPemCerts and sslPemKeys, or clear the client certificate type.");
+            }
+            clientConfiguration.setSslConfig(
+                    new HttpClientPemSslConfiguration(configuration.getSslPemCerts(), configuration.getSslPemKeys()));
+        } else {
+            throw new IllegalStateException("Unsupported Elasticsearch client certificate type '%s'. Supported types are jks, pkcs12 and pem."
+                    .formatted(keystoreType));
+        }
     }
 }

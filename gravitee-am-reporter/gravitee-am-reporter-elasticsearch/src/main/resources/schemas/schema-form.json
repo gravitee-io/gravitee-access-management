@@ -5,7 +5,7 @@
     "endpoints" : {
       "type" : "array",
       "title": "Elasticsearch endpoints",
-      "description": "List of Elasticsearch/OpenSearch node URLs (e.g. http://localhost:9200).",
+      "description": "List of Elasticsearch/OpenSearch node URLs (e.g. http://localhost:9200). Server certificates are NOT verified on https endpoints.",
       "items": {
         "type": "string",
         "title": "Endpoint URL",
@@ -17,7 +17,7 @@
       "type" : "string",
       "default": "gravitee-audit",
       "title": "Index name",
-      "description": "Name of the index (or data stream) audit documents are written to and searched from."
+      "description": "Base index name. Audits are written to daily indices named <index>-yyyy.MM.dd (UTC) and searched across <index>-*."
     },
     "username" : {
       "type" : "string",
@@ -39,21 +39,39 @@
     },
     "sslKeystoreType" : {
       "type" : "string",
-      "title": "SSL keystore type",
-      "description": "Keystore type used for TLS (jks, pkcs12 or pem). Leave empty for plain HTTP or trust-all HTTPS.",
+      "title": "Client certificate type",
+      "description": "Type of client certificate presented to Elasticsearch (jks, pkcs12 or pem). Leave empty when no client certificate is required. This does not enable server certificate verification.",
       "enum": [ "jks", "pkcs12", "pem" ]
     },
     "sslKeystorePath" : {
       "type" : "string",
-      "title": "SSL keystore path",
-      "description": "Path to the JKS or PKCS12 keystore (not used for pem)."
+      "title": "Client keystore path",
+      "description": "Path to the JKS or PKCS12 keystore. Not used when the type is pem."
     },
     "sslKeystorePassword" : {
       "type" : "string",
-      "title": "SSL keystore password",
+      "title": "Client keystore password",
       "description": "Password of the JKS or PKCS12 keystore.",
       "widget": "password",
       "sensitive": true
+    },
+    "sslPemCerts" : {
+      "type" : "array",
+      "title": "Client PEM certificates",
+      "description": "Paths to the PEM certificate files. Used when the client certificate type is pem.",
+      "items": {
+        "type": "string",
+        "title": "Certificate path"
+      }
+    },
+    "sslPemKeys" : {
+      "type" : "array",
+      "title": "Client PEM keys",
+      "description": "Paths to the PEM private key files. Used when the client certificate type is pem.",
+      "items": {
+        "type": "string",
+        "title": "Key path"
+      }
     },
     "bulkActions" : {
       "type": "number",
@@ -66,6 +84,42 @@
       "title": "Bulk flush interval",
       "description": "Flush interval for bulk actions, in seconds.",
       "default": 5
+    },
+    "maxPendingBatches" : {
+      "type": "number",
+      "title": "Maximum pending batches",
+      "description": "Upper bound on bulk batches held in memory while Elasticsearch is slow or unreachable. Beyond it the oldest pending batch is dropped and counted.",
+      "default": 50
+    },
+    "maxConcurrentRequests" : {
+      "type": "number",
+      "title": "Maximum concurrent requests",
+      "description": "Upper bound on bulk requests in flight at once.",
+      "default": 5
+    },
+    "retryAttempts" : {
+      "type": "number",
+      "title": "Retry attempts",
+      "description": "How many times a failed batch is retried before it is dropped and counted.",
+      "default": 6
+    },
+    "retryInitialInterval" : {
+      "type": "number",
+      "title": "Initial retry interval",
+      "description": "First retry delay in seconds. Doubles per attempt up to the maximum retry interval.",
+      "default": 3
+    },
+    "retryMaxInterval" : {
+      "type": "number",
+      "title": "Maximum retry interval",
+      "description": "Ceiling on the retry delay, in seconds.",
+      "default": 30
+    },
+    "shutdownFlushTimeout" : {
+      "type": "number",
+      "title": "Shutdown flush timeout",
+      "description": "How long a stopping reporter waits for buffered audits to be acknowledged, in seconds.",
+      "default": 10
     }
   },
   "required": [
