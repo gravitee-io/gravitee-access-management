@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.elasticsearch.spring;
 
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchReporterConfiguration;
+import io.gravitee.am.reporter.elasticsearch.LoggableEndpoints;
 import io.gravitee.elasticsearch.client.Client;
 import io.gravitee.elasticsearch.client.http.ClientSslConfiguration;
 import io.gravitee.elasticsearch.client.http.HttpClient;
@@ -78,7 +79,8 @@ public class ElasticsearchClientConfiguration {
         if (!secureEndpoints.isEmpty()) {
             log.warn("Audits will be sent to {} over TLS, but the Elasticsearch server certificate is NOT verified: " +
                             "the shared Gravitee Elasticsearch client trusts any certificate presented. Treat the link as " +
-                            "encrypted but unauthenticated, and keep it on a trusted network.", secureEndpoints);
+                            "encrypted but unauthenticated, and keep it on a trusted network.",
+                    LoggableEndpoints.redact(secureEndpoints));
         }
     }
 

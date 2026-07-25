@@ -50,6 +50,47 @@ class BulkBatchTest {
     }
 
     @Test
+    void reportsAnAuditItCouldNotSerialiseInsteadOfLosingItSilently() {
+        Audit good = AuditFixtures.audit("domain-1", "USER_CREATED", Status.SUCCESS, Instant.parse("2026-07-25T13:45:00Z"));
+        // no timestamp means no daily index can be derived, so this one cannot be turned into a document
+        Audit bad = AuditFixtures.audit("domain-1", "USER_UPDATED", Status.SUCCESS, null);
+
+        BulkBatch batch = BulkBatch.of("gravitee-audit", MAPPER, List.of(good, bad));
+
+        assertThat(batch.size()).isEqualTo(1);
+        assertThat(batch.payload().toString()).doesNotContain(bad.getId());
+        assertThat(batch.unserializable()).containsExactly(bad);
+    }
+
+    @Test
+    void hasNothingUnserialisableWhenEveryAuditConverts() {
+        assertThat(batchOf(3).unserializable()).isEmpty();
+    }
+
+    @Test
+    void boundsTheRejectionReasonBecauseElasticsearchEchoesTheOffendingValue() {
+        // a parse failure quotes the field value back, and an audit's values are usernames and addresses
+        String personal = "x".repeat(600);
+        BulkBatch batch = batchOf(1);
+        List<BulkBatch.RejectedAudit> rejected = new ArrayList<>();
+
+        batch.retryable(responseRejecting(personal), rejected::add);
+
+        assertThat(rejected).hasSize(1);
+        assertThat(rejected.get(0).reason()).hasSizeLessThanOrEqualTo(BulkBatch.MAX_REASON_LENGTH);
+    }
+
+    @Test
+    void keepsAShortRejectionReasonWhole() {
+        BulkBatch batch = batchOf(1);
+        List<BulkBatch.RejectedAudit> rejected = new ArrayList<>();
+
+        batch.retryable(responseRejecting("mapper_parsing_exception"), rejected::add);
+
+        assertThat(rejected.get(0).reason()).isEqualTo("mapper_parsing_exception");
+    }
+
+    @Test
     void keepsNothingToRetryWhenEveryItemSucceeded() {
         BulkBatch batch = batchOf(2);
         List<BulkBatch.RejectedAudit> rejected = new ArrayList<>();
@@ -154,6 +195,18 @@ class BulkBatchTest {
                     .append("}}");
         }
         String json = "{\"took\":3,\"errors\":true,\"items\":[" + items + "]}";
+        try {
+            return MAPPER.readValue(json, BulkResponse.class);
+        } catch (Exception e) {
+            throw new IllegalStateException("unparseable fixture: " + json, e);
+        }
+    }
+
+    /** A single-item response refusing the document with the given reason text. */
+    private static BulkResponse responseRejecting(String reason) {
+        String json = "{\"took\":3,\"errors\":true,\"items\":[{\"index\":{\"_index\":\"gravitee-audit-2026.07.25\","
+                + "\"_id\":\"doc-0\",\"status\":400,\"error\":{\"type\":\"document_parsing_exception\","
+                + "\"reason\":\"" + reason + "\"}}}]}";
         try {
             return MAPPER.readValue(json, BulkResponse.class);
         } catch (Exception e) {

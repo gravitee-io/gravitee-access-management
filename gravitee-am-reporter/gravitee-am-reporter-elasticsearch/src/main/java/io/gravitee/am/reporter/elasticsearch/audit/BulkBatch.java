@@ -40,15 +40,26 @@ final class BulkBatch {
     /** Server-side conditions worth another attempt; everything else in the 4xx range is a refusal. */
     private static final int TOO_MANY_REQUESTS = 429;
 
+    /**
+     * Elasticsearch quotes the offending value back in a parse failure, and an audit's values are
+     * usernames, addresses and user agents. The exception type and field name lead the message and are
+     * what makes it diagnosable, so keeping the head and dropping the tail bounds how much of a record
+     * can reach the logs without giving up the diagnosis. It bounds the exposure rather than removing
+     * it — a short enough value still fits.
+     */
+    static final int MAX_REASON_LENGTH = 256;
+
     private final String baseIndex;
     private final ObjectMapper mapper;
     private final List<Audit> audits;
+    private final List<Audit> unserializable;
     private final Buffer payload;
 
-    private BulkBatch(String baseIndex, ObjectMapper mapper, List<Audit> audits, Buffer payload) {
+    private BulkBatch(String baseIndex, ObjectMapper mapper, List<Audit> audits, List<Audit> unserializable, Buffer payload) {
         this.baseIndex = baseIndex;
         this.mapper = mapper;
         this.audits = audits;
+        this.unserializable = unserializable;
         this.payload = payload;
     }
 
@@ -59,6 +70,7 @@ final class BulkBatch {
      */
     static BulkBatch of(String baseIndex, ObjectMapper mapper, List<Audit> audits) {
         List<Audit> serialized = new ArrayList<>(audits.size());
+        List<Audit> unserializable = new ArrayList<>();
         Buffer payload = Buffer.buffer();
         for (Audit audit : audits) {
             try {
@@ -68,10 +80,18 @@ final class BulkBatch {
                 payload.appendString(action).appendString("\n").appendString(source).appendString("\n");
                 serialized.add(audit);
             } catch (Exception e) {
+                // logged here because this is the only place the cause is available; the caller still
+                // has to count it, so the drop reaches the metric alongside every other drop reason
                 log.error("Unable to serialize audit {} for Elasticsearch, it will not be indexed", audit.getId(), e);
+                unserializable.add(audit);
             }
         }
-        return new BulkBatch(baseIndex, mapper, serialized, payload);
+        return new BulkBatch(baseIndex, mapper, serialized, unserializable, payload);
+    }
+
+    /** Audits that could not be turned into documents at all, so were never part of the payload. */
+    List<Audit> unserializable() {
+        return unserializable;
     }
 
     Buffer payload() {
@@ -128,7 +148,7 @@ final class BulkBatch {
                         audit.getType(),
                         result.getIndexName(),
                         status,
-                        result.getError() == null ? null : result.getError().getReason()));
+                        result.getError() == null ? null : abbreviate(result.getError().getReason())));
             }
         }
         // any audit the response did not cover was never acknowledged
@@ -136,6 +156,13 @@ final class BulkBatch {
             retry.add(audits.get(i));
         }
         return of(baseIndex, mapper, retry);
+    }
+
+    private static String abbreviate(String reason) {
+        if (reason == null || reason.length() <= MAX_REASON_LENGTH) {
+            return reason;
+        }
+        return reason.substring(0, MAX_REASON_LENGTH - 3) + "...";
     }
 
     private static boolean isSucceeded(Integer status) {

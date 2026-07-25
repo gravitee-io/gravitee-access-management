@@ -25,6 +25,7 @@ import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchReporterConfiguration;
+import io.gravitee.am.reporter.elasticsearch.LoggableEndpoints;
 import io.gravitee.am.reporter.elasticsearch.audit.model.AuditDocument;
 import io.gravitee.am.reporter.elasticsearch.spring.ElasticsearchClientConfiguration;
 import io.gravitee.common.service.AbstractService;
@@ -92,6 +93,9 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
 
     private Disposable disposable;
 
+    /** The in-flight index preparation, which retries indefinitely while the cluster is unreachable. */
+    private Disposable preparation;
+
     @Override
     public void afterPropertiesSet() {
         this.queryBuilder = new ElasticsearchQueryBuilder(mapper);
@@ -103,7 +107,9 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         // kicked off now rather than on the first audit, so a misconfiguration shows up immediately.
         // Never awaited here: afterPropertiesSet can run on a Vert.x event loop, and the Elasticsearch
         // client needs that same event loop to answer, so blocking would deadlock the node.
-        this.indexReady
+        // Held so stopping cancels it: an unreachable cluster is retried indefinitely, and a reporter
+        // is stopped and restarted on every update event, so an uncancelled retry would outlive it.
+        this.preparation = this.indexReady
                 .subscribeOn(Schedulers.io())
                 .subscribe(() -> { },
                         error -> log.error("The Elasticsearch audit reporter cannot write audits", error));
@@ -112,6 +118,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                 .buffer(configuration.getFlushInterval(), TimeUnit.SECONDS, configuration.getBulkActions())
                 .filter(audits -> !audits.isEmpty())
                 .map(audits -> BulkBatch.of(configuration.getIndex(), mapper, audits))
+                .doOnNext(this::accountForUnserializable)
                 .filter(batch -> !batch.isEmpty())
                 // bounded backlog: when Elasticsearch cannot keep up the oldest pending batch is
                 // evicted rather than letting the node grow until it runs out of memory
@@ -141,8 +148,14 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
             // an unsupported or undetectable server version, which already carries its own message
             return Flowable.error(error);
         }
+        if (!accepting.get()) {
+            // the reporter is stopping. This is what actually ends the loop: indexReady is cached, and
+            // a cached Completable keeps its upstream alive no matter who unsubscribes, so disposing
+            // the subscription alone would leave this retrying for the lifetime of the node.
+            return Flowable.error(error);
+        }
         log.warn("Elasticsearch at {} is not reachable yet. No audit will be written until its index " +
-                "template has been applied.", configuration.getEndpoints(), error);
+                "template has been applied.", LoggableEndpoints.redact(configuration.getEndpoints()), error);
         return Flowable.timer(configuration.getRetryMaxInterval(), TimeUnit.SECONDS, Schedulers.computation());
     }
 
@@ -283,6 +296,9 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         }
 
         accepting.set(false);
+        if (preparation != null) {
+            preparation.dispose();
+        }
         bulkProcessor.onComplete();
 
         long timeout = configuration.getShutdownFlushTimeout();
@@ -309,6 +325,18 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         drops.overflowed(batch);
     }
 
+    /**
+     * An audit that could not be serialized never reaches a batch, so without this it would stay
+     * counted as pending forever and the shutdown messages would overstate what was lost.
+     */
+    private void accountForUnserializable(BulkBatch batch) {
+        int lost = batch.unserializable().size();
+        if (lost > 0) {
+            pendingAudits.addAndGet(-lost);
+            drops.unserializable(lost);
+        }
+    }
+
     private Completable deliver(BulkBatch batch) {
         return indexReady
                 .andThen(Completable.defer(() -> send(batch, 0)))
@@ -325,6 +353,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         return client.bulk(batch.payload(), false)
                 .flatMapCompletable(response -> {
                     BulkBatch remaining = batch.retryable(response, drops::rejected);
+                    accountForUnserializable(remaining);
                     if (remaining.isEmpty()) {
                         return Completable.complete();
                     }

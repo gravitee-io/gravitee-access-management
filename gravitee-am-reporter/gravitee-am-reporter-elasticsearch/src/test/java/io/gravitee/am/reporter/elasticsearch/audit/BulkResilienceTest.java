@@ -219,7 +219,13 @@ class BulkResilienceTest {
             assertThat(elapsed)
                     .describedAs("a sick cluster must not be able to hang a rolling restart")
                     .isLessThan(Duration.ofSeconds(20));
-            assertThat(loggedMessages()).anyMatch(message -> message.contains("could not flush within"));
+            // A reporter stopping against a cluster it never reached stops retrying its index
+            // preparation rather than waiting out the flush timeout, so the loss is recorded as
+            // nothing being writable. Batches for a reporter that did become writable are unaffected:
+            // they still get the full flush window to be acknowledged.
+            assertThat(loggedMessages())
+                    .describedAs("audits that could not be written must be recorded, not lost silently")
+                    .anyMatch(message -> message.contains("Dropped 1 audits"));
 
             harness.close();
         }

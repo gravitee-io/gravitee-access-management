@@ -19,8 +19,6 @@ import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.Counter;
 import lombok.CustomLog;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * The reporter is at-most-once: under a sustained outage audits are dropped rather than allowed to
  * exhaust the node. That loss must never be silent, so every drop is logged with its reason and
@@ -39,13 +37,11 @@ final class AuditDropCounter {
     private final Counter rejected = counter("rejected");
     private final Counter notWritable = counter("not_writable");
     private final Counter notAccepted = counter("reporter_stopping");
-
-    private final AtomicLong total = new AtomicLong();
+    private final Counter unserializable = counter("unserializable");
 
     /** The backlog was full, so the oldest pending batch was evicted to keep memory bounded. */
     void overflowed(BulkBatch batch) {
         overflow.increment(batch.size());
-        total.addAndGet(batch.size());
         log.error("Dropped {} audits: the Elasticsearch backlog is full and the oldest pending batch was evicted. " +
                         "Elasticsearch is not keeping up or is unreachable. Per type: {}",
                 batch.size(), batch.countsByType());
@@ -54,9 +50,17 @@ final class AuditDropCounter {
     /** Every retry was used up and the batch still had not been acknowledged. */
     void retriesExhausted(BulkBatch batch, Throwable cause) {
         retriesExhausted.increment(batch.size());
-        total.addAndGet(batch.size());
         log.error("Dropped {} audits: Elasticsearch did not acknowledge them within the retry budget. Per type: {}",
                 batch.size(), batch.countsByType(), cause);
+    }
+
+    /**
+     * The audits could not be turned into bulk documents at all. {@link BulkBatch} has already logged
+     * each one with the cause that no other drop path has, so this only has to make sure the drop
+     * still reaches the metric operators alert on.
+     */
+    void unserializable(int count) {
+        unserializable.increment(count);
     }
 
     /**
@@ -65,7 +69,6 @@ final class AuditDropCounter {
      */
     void rejected(BulkBatch.RejectedAudit audit) {
         rejected.increment();
-        total.addAndGet(1);
         log.error("Dropped audit {} of type {}: Elasticsearch refused it for index {} with status {} — {}",
                 audit.auditId(), audit.auditType(), audit.index(), audit.status(), audit.reason());
     }
@@ -73,7 +76,6 @@ final class AuditDropCounter {
     /** The reporter never became writable — its index template could not be applied. */
     void notWritable(BulkBatch batch, Throwable cause) {
         notWritable.increment(batch.size());
-        total.addAndGet(batch.size());
         log.error("Dropped {} audits: the Elasticsearch reporter is not writable, so nothing can be indexed. " +
                 "Per type: {}", batch.size(), batch.countsByType(), cause);
     }
@@ -81,12 +83,7 @@ final class AuditDropCounter {
     /** Reported after the reporter began stopping, so it was never buffered. */
     void notAccepted(String auditId) {
         notAccepted.increment();
-        total.addAndGet(1);
         log.warn("Dropped audit {}: the Elasticsearch reporter is stopping and no longer accepts audits", auditId);
-    }
-
-    long total() {
-        return total.get();
     }
 
     private static Counter counter(String reason) {
