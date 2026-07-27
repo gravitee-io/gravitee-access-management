@@ -16,11 +16,14 @@
 package io.gravitee.am.management.service.impl.adapter;
 
 
+import io.gravitee.am.management.service.CockpitAccessService;
+import io.gravitee.am.management.service.model.AccessPointTemplate;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.InstallationService;
+import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
 import io.gravitee.cockpit.api.command.v1.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.v1.hello.HelloCommandPayload;
@@ -33,10 +36,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
@@ -57,11 +65,18 @@ class HelloCommandAdapterTest {
     @Mock
     private Node node;
 
+    @Mock
+    private CockpitAccessService cockpitAccessService;
+
+    @Mock
+    private org.springframework.core.env.Environment environment;
+
     private HelloCommandAdapter cut;
 
     @BeforeEach
     public void beforeEach() {
-        cut = new HelloCommandAdapter(node, installationService);
+        cut = new HelloCommandAdapter(node, installationService, cockpitAccessService, environment);
+        lenient().when(environment.getProperty("cloud.enabled", Boolean.class)).thenReturn(false);
     }
 
     @Test
@@ -105,6 +120,59 @@ class HelloCommandAdapterTest {
                 .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
                 .test()
                 .assertError(TechnicalException.class);
+    }
+
+    @Test
+    void adaptWithoutManagedCloud_doesNotSetAccessPointsTemplate() {
+        final Installation installation = new Installation();
+        installation.setId(INSTALLATION_ID);
+
+        when(node.hostname()).thenReturn(HOSTNAME);
+        when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
+
+        final TestObserver<HelloCommand> obs = cut
+                .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
+                .test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(helloCommand -> {
+            assertTrue(helloCommand.getPayload().getAccessPointsTemplate() == null || helloCommand.getPayload().getAccessPointsTemplate().isEmpty());
+            return true;
+        });
+    }
+
+    @Test
+    void adaptWithManagedCloud_setsAccessPointsTemplate() {
+        when(environment.getProperty("cloud.enabled", Boolean.class)).thenReturn(true);
+        when(environment.getProperty("installation.type", "standalone")).thenReturn("managed");
+
+        final Installation installation = new Installation();
+        installation.setId(INSTALLATION_ID);
+
+        when(node.hostname()).thenReturn(HOSTNAME);
+        when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
+
+        final Map<AccessPointTemplate.Type, List<AccessPointTemplate>> templates = new EnumMap<>(AccessPointTemplate.Type.class);
+        templates.put(
+                AccessPointTemplate.Type.ENVIRONMENT,
+                List.of(AccessPointTemplate.builder().target(AccessPointTemplate.Target.GATEWAY).host("env.gravitee.io").secured(true).build())
+        );
+        when(cockpitAccessService.getAccessPointsTemplate()).thenReturn(templates);
+
+        final TestObserver<HelloCommand> obs = cut
+                .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
+                .test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(helloCommand -> {
+            final Map<AccessPoint.Type, List<AccessPoint>> accessPointsTemplate = helloCommand.getPayload().getAccessPointsTemplate();
+            assertTrue(accessPointsTemplate.containsKey(AccessPoint.Type.ENVIRONMENT));
+            final AccessPoint accessPoint = accessPointsTemplate.get(AccessPoint.Type.ENVIRONMENT).get(0);
+            assertEquals("env.gravitee.io", accessPoint.getHost());
+            assertTrue(accessPoint.isSecured());
+            assertEquals(AccessPoint.Target.GATEWAY, accessPoint.getTarget());
+            return true;
+        });
     }
 
     @Test

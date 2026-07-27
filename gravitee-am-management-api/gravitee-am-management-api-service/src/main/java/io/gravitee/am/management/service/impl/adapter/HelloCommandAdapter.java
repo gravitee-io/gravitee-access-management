@@ -16,9 +16,12 @@
 package io.gravitee.am.management.service.impl.adapter;
 
 import com.google.common.base.Strings;
+import io.gravitee.am.common.env.CloudProperties;
+import io.gravitee.am.management.service.CockpitAccessService;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.InstallationService;
+import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
 import io.gravitee.cockpit.api.command.v1.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.v1.hello.HelloCommandPayload;
@@ -32,7 +35,9 @@ import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +60,8 @@ public class HelloCommandAdapter implements CommandAdapter<io.gravitee.exchange.
 
     private final Node node;
     private final InstallationService installationService;
+    private final CockpitAccessService cockpitAccessService;
+    private final org.springframework.core.env.Environment environment;
 
     @Override
     public String supportType() {
@@ -63,10 +70,12 @@ public class HelloCommandAdapter implements CommandAdapter<io.gravitee.exchange.
 
     @Override
     public Single<HelloCommand> adapt(final String targetId, final io.gravitee.exchange.api.command.hello.HelloCommand command) {
+        final var isManaged = CloudProperties.isManagedCloudEnabled(environment);
         return installationService.getOrInitialize()
                 .map(installation -> {
                     HelloCommandPayload.HelloCommandPayloadBuilder<?, ?> payloadBuilder = HelloCommandPayload
                             .builder()
+                            .installationType(isManaged ? CloudProperties.INSTALLATION_TYPE_MANAGED : CloudProperties.INSTALLATION_TYPE_STANDALONE)
                             .node(
                                     io.gravitee.cockpit.api.command.model.Node
                                             .builder()
@@ -81,6 +90,29 @@ public class HelloCommandAdapter implements CommandAdapter<io.gravitee.exchange.
                     Map<String, String> additionalInformation = new HashMap<>(installation.getAdditionalInformation());
                     additionalInformation.put(API_URL, sanitizeUrl(apiURL));
                     additionalInformation.put(UI_URL, sanitizeUrl(uiURL));
+
+                    if (isManaged) {
+                        Map<AccessPoint.Type, List<AccessPoint>> accessPointTemplates = new EnumMap<>(AccessPoint.Type.class);
+                        cockpitAccessService
+                                .getAccessPointsTemplate()
+                                .forEach((type, accessPoints) ->
+                                        accessPointTemplates.put(
+                                                AccessPoint.Type.valueOf(type.name()),
+                                                accessPoints
+                                                        .stream()
+                                                        .map(accessPoint ->
+                                                                AccessPoint.builder()
+                                                                        .host(accessPoint.getHost())
+                                                                        .secured(accessPoint.isSecured())
+                                                                        .target(AccessPoint.Target.valueOf(accessPoint.getTarget().name()))
+                                                                        .build()
+                                                        )
+                                                        .toList()
+                                        )
+                                );
+                        payloadBuilder.accessPointsTemplate(accessPointTemplates);
+                    }
+
                     payloadBuilder.additionalInformation(additionalInformation);
                     return new HelloCommand(payloadBuilder.build());
                 });
