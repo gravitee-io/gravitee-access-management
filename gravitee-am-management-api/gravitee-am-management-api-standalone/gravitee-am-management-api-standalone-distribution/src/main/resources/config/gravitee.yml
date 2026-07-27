@@ -29,7 +29,19 @@
 
 ## Installation type of this node: "standalone" (default) or "managed".
 #installation:
+#  # Installation type standalone (default) or managed
+#  # * standalone: AM installation deployed on-premise with manual connection to cockpit
+#  # * managed: AM installation managed by Gravitee Cloud
 #  type: standalone
+#  managed:
+#    # Specify the access points of your installation, mandatory if you want to connect it to Cockpit
+#    # with a managed installation (a.k.a Cloud deployment)
+#    # You can use template variable such as {account}, {organization} or {environment}
+#    accessPoints:
+#      environment:
+#        gateway:
+#          host: '{environment}.{organization}.{account}.example.com'
+#          secured: true
 
 # Secret managers config in order to use secret
 #secrets:
