@@ -54,6 +54,17 @@ public class ElasticsearchQueryBuilder {
     static final int MAX_RESULT_WINDOW = 10_000;
 
     /**
+     * Elasticsearch's own {@code search.max_buckets} default. A date histogram asks for one bucket per
+     * interval in the range, times the {type, status} series requested under it, and forces empty ones
+     * to be materialized — so a narrow interval over a wide range multiplies out fast. Checked here so
+     * the caller gets a message naming the range and interval, rather than a raw aggregation error.
+     */
+    static final int MAX_BUCKETS = 65_536;
+
+    /** Used when a histogram request carries no interval, matching the fallback below. */
+    private static final long DEFAULT_INTERVAL_MS = 86_400_000L;
+
+    /**
      * Criteria field names are mapped explicitly rather than passed straight through, so a field name
      * this reporter does not know fails with a clear message instead of silently returning empty
      * buckets or taking a 400 from Elasticsearch.
@@ -114,6 +125,10 @@ public class ElasticsearchQueryBuilder {
     }
 
     public String buildDateHistogramQuery(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
+        long interval = criteria.interval() > 0 ? criteria.interval() : DEFAULT_INTERVAL_MS;
+        int seriesPerBucket = 1 + 2 * (criteria.types() == null ? 0 : criteria.types().size());
+        rejectIfTooManyBuckets(criteria, interval, seriesPerBucket);
+
         ObjectNode root = mapper.createObjectNode();
         root.put("size", 0);
         root.set("query", boolFilter(referenceType, referenceId, criteria));
@@ -121,7 +136,6 @@ public class ElasticsearchQueryBuilder {
         ObjectNode byDate = root.putObject("aggregations").putObject(AGG_BY_DATE);
         ObjectNode dateHisto = byDate.putObject("date_histogram");
         dateHisto.put("field", FIELD_TIMESTAMP);
-        long interval = criteria.interval() > 0 ? criteria.interval() : 86_400_000L;
         dateHisto.put("fixed_interval", interval + "ms");
         dateHisto.put("min_doc_count", 0);
         ObjectNode bounds = dateHisto.putObject("extended_bounds");
@@ -188,6 +202,26 @@ public class ElasticsearchQueryBuilder {
         }
 
         return query;
+    }
+
+    /**
+     * {@code min_doc_count: 0} plus explicit bounds means every interval in the range is materialized
+     * whether or not anything happened in it, so the cost is set by the range and the interval rather
+     * than by how many audits there are.
+     */
+    private static void rejectIfTooManyBuckets(AuditReportableCriteria criteria, long interval, int seriesPerBucket) {
+        if (criteria.from() == 0 || criteria.to() <= criteria.from()) {
+            // an open-ended range leaves Elasticsearch to bound the histogram by the data it finds
+            return;
+        }
+        long intervals = (criteria.to() - criteria.from()) / interval + 1;
+        long buckets = intervals * seriesPerBucket;
+        if (buckets > MAX_BUCKETS) {
+            throw new IllegalArgumentException(("This histogram asks Elasticsearch for %d buckets (%d intervals of %dms " +
+                    "across the requested range, times %d series), past the %d it allows. Widen the interval or narrow " +
+                    "the date range.")
+                    .formatted(buckets, intervals, interval, seriesPerBucket, MAX_BUCKETS));
+        }
     }
 
     private static String groupByField(String criteriaField) {

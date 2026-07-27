@@ -23,6 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -73,5 +76,55 @@ class ElasticsearchQueryBuilderTest {
 
         assertThatThrownBy(() -> queryBuilder.buildGroupByQuery(ReferenceType.DOMAIN, "domain-1", criteria))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void buildsAHistogramWhoseBucketsElasticsearchWillAccept() throws Exception {
+        long day = 86_400_000L;
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .from(0L + day)
+                .to(day * 31)
+                .interval(day)
+                .types(List.of("USER_LOGIN", "USER_LOGOUT"))
+                .build();
+
+        JsonNode query = MAPPER.readTree(queryBuilder.buildDateHistogramQuery(ReferenceType.DOMAIN, "domain-1", criteria));
+
+        assertThat(query.get("aggregations").get("by_date").get("date_histogram").get("fixed_interval").asText())
+                .isEqualTo(day + "ms");
+        assertThat(query.get("aggregations").get("by_date").get("aggregations"))
+                .describedAs("one filter series per type and status")
+                .hasSize(4);
+    }
+
+    @Test
+    void refusesAHistogramThatWouldAskForMoreBucketsThanElasticsearchAllows() {
+        // 90 days at one minute, across 30 audit types: millions of buckets, which Elasticsearch
+        // answers with a raw aggregation error rather than anything an operator can act on
+        long minute = 60_000L;
+        List<String> types = IntStream.range(0, 30).mapToObj(i -> "AUDIT_TYPE_" + i).toList();
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .from(minute)
+                .to(minute + 90L * 24 * 60 * minute)
+                .interval(minute)
+                .types(types)
+                .build();
+
+        assertThatThrownBy(() -> queryBuilder.buildDateHistogramQuery(ReferenceType.DOMAIN, "domain-1", criteria))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("buckets")
+                .hasMessageContaining("Widen the interval or narrow the date range");
+    }
+
+    @Test
+    void leavesAnOpenEndedHistogramToElasticsearch() {
+        // no bounds means no materialized empty buckets, so there is nothing to bound up front
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .interval(1L)
+                .types(List.of("USER_LOGIN"))
+                .build();
+
+        assertThat(queryBuilder.buildDateHistogramQuery(ReferenceType.DOMAIN, "domain-1", criteria))
+                .isNotEmpty();
     }
 }
