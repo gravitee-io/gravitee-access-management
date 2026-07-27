@@ -36,6 +36,9 @@ inherited also reports for every domain in that organization.
 | `sslKeystoreType` | — | Client certificate type: `jks`, `pkcs12` or `pem` |
 | `sslKeystorePath` / `sslKeystorePassword` | — | JKS or PKCS12 client keystore |
 | `sslPemCerts` / `sslPemKeys` | — | PEM client certificate and key paths |
+| `proxyHost` / `proxyPort` | — | Egress proxy to reach the cluster through; empty means connect directly |
+| `proxyType` | `HTTP` | Proxy protocol: `HTTP`, `SOCKS4` or `SOCKS5` |
+| `proxyUsername` / `proxyPassword` | — | Proxy authentication, when the proxy requires it |
 | `bulkActions` | `1000` | Documents buffered before a bulk flush |
 | `flushInterval` | `5` | Flush interval, seconds |
 | `maxPendingBatches` | `50` | Backlog bound; beyond it the oldest pending batch is dropped |

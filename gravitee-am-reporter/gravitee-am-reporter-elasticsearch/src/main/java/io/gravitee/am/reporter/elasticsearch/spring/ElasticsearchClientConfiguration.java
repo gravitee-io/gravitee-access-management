@@ -25,14 +25,17 @@ import io.gravitee.elasticsearch.client.http.HttpClientJksSslConfiguration;
 import io.gravitee.elasticsearch.client.http.HttpClientPemSslConfiguration;
 import io.gravitee.elasticsearch.client.http.HttpClientPfxSslConfiguration;
 import io.gravitee.elasticsearch.config.Endpoint;
+import io.vertx.core.net.ProxyType;
 import io.vertx.rxjava3.core.Vertx;
 import lombok.CustomLog;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -62,8 +65,57 @@ public class ElasticsearchClientConfiguration {
 
         warnAboutUnverifiedServerCertificates(configuration);
         applyClientCertificate(configuration, clientConfiguration);
+        applyProxy(configuration, clientConfiguration);
 
         return new HttpClient(clientConfiguration);
+    }
+
+    /**
+     * Routes the cluster traffic through an egress proxy when one is configured. The client picks
+     * between its http and https proxy settings by endpoint scheme, so the one proxy configured here
+     * is applied to both — otherwise switching an endpoint from http to https would silently stop
+     * using the proxy.
+     */
+    private void applyProxy(ElasticsearchReporterConfiguration configuration, HttpClientConfiguration clientConfiguration) {
+        if (!configuration.isProxyConfigured()) {
+            return;
+        }
+        Integer port = configuration.getProxyPort();
+        if (port == null || port <= 0 || port > 65535) {
+            throw new IllegalStateException(("The Elasticsearch reporter is configured to use the proxy at '%s' but its " +
+                    "port is %s. Set a proxy port between 1 and 65535, or clear the proxy host.")
+                    .formatted(configuration.getProxyHost(), port));
+        }
+
+        clientConfiguration.setProxyType(proxyType(configuration.getProxyType()));
+        clientConfiguration.setProxyHttpHost(configuration.getProxyHost());
+        clientConfiguration.setProxyHttpPort(port);
+        clientConfiguration.setProxyHttpUsername(configuration.getProxyUsername());
+        clientConfiguration.setProxyHttpPassword(configuration.getProxyPassword());
+        clientConfiguration.setProxyHttpsHost(configuration.getProxyHost());
+        clientConfiguration.setProxyHttpsPort(port);
+        clientConfiguration.setProxyHttpsUsername(configuration.getProxyUsername());
+        clientConfiguration.setProxyHttpsPassword(configuration.getProxyPassword());
+        clientConfiguration.setProxyConfigured(true);
+
+        log.info("Audits will be sent to Elasticsearch through the {} proxy at {}:{}",
+                clientConfiguration.getProxyType(), configuration.getProxyHost(), port);
+    }
+
+    /**
+     * The client passes this straight to {@link ProxyType#valueOf}, which would otherwise fail bean
+     * creation with a bare enum-constant error naming neither the reporter nor the accepted values.
+     */
+    private String proxyType(String configured) {
+        String type = configured == null || configured.isBlank()
+                ? ProxyType.HTTP.name()
+                : configured.trim().toUpperCase(Locale.ROOT);
+        try {
+            return ProxyType.valueOf(type).name();
+        } catch (IllegalArgumentException unsupported) {
+            throw new IllegalStateException(("Unsupported Elasticsearch proxy type '%s'. Supported types are %s.")
+                    .formatted(configured, Arrays.stream(ProxyType.values()).map(ProxyType::name).collect(joining(", "))));
+        }
     }
 
     /**

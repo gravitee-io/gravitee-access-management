@@ -81,6 +81,35 @@
         "title": "Key path"
       }
     },
+    "proxyHost" : {
+      "type" : "string",
+      "title": "Proxy host",
+      "description": "Host of the egress proxy used to reach Elasticsearch. Leave empty to connect directly, which is the default. The proxy applies to both http and https endpoints."
+    },
+    "proxyPort" : {
+      "type" : "number",
+      "title": "Proxy port",
+      "description": "Port of the egress proxy. Required when a proxy host is set."
+    },
+    "proxyType" : {
+      "type" : "string",
+      "default": "HTTP",
+      "title": "Proxy type",
+      "description": "Protocol used to reach the proxy. Only applies when a proxy host is set.",
+      "enum": [ "HTTP", "SOCKS4", "SOCKS5" ]
+    },
+    "proxyUsername" : {
+      "type" : "string",
+      "title": "Proxy user",
+      "description": "User used to authenticate against the proxy. Leave empty when the proxy does not require authentication."
+    },
+    "proxyPassword" : {
+      "type" : "string",
+      "title": "Proxy password",
+      "description": "Password used to authenticate against the proxy.",
+      "widget": "password",
+      "sensitive": true
+    },
     "bulkActions" : {
       "type": "number",
       "title": "Bulk actions",

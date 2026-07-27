@@ -51,6 +51,21 @@ public class ElasticsearchReporterConfiguration implements ReporterConfiguration
     private List<String> sslPemCerts = new ArrayList<>();
     private List<String> sslPemKeys = new ArrayList<>();
 
+    /**
+     * Egress proxy to reach the cluster through, for installs whose outbound traffic does not go
+     * direct. Optional: a blank {@link #proxyHost} means no proxy, which is the default.
+     * <p>
+     * One proxy is configured here and applied to both the http and https sides of the client, which
+     * chooses between them by endpoint scheme. A single reporter talks to one cluster over one scheme,
+     * so splitting them would be two ways to express the same thing.
+     */
+    private String proxyType = "HTTP";
+    private String proxyHost;
+    private Integer proxyPort;
+    private String proxyUsername;
+    @Secret
+    private String proxyPassword;
+
     private Integer bulkActions = 1000;
     private Long flushInterval = 5L;
 
@@ -78,4 +93,9 @@ public class ElasticsearchReporterConfiguration implements ReporterConfiguration
      * Bounded so a sick cluster cannot hang a rolling restart.
      */
     private Long shutdownFlushTimeout = 10L;
+
+    /** A blank host is how "no proxy" is expressed, so there is no separate flag to keep in step. */
+    public boolean isProxyConfigured() {
+        return proxyHost != null && !proxyHost.isBlank();
+    }
 }
