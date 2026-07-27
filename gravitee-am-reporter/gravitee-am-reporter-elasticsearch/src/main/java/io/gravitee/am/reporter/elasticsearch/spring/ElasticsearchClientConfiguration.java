@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.elasticsearch.spring;
 
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.reporter.elasticsearch.ElasticsearchReporterConfiguration;
 import io.gravitee.am.reporter.elasticsearch.LoggableEndpoints;
 import io.gravitee.elasticsearch.client.Client;
@@ -28,6 +29,7 @@ import io.gravitee.elasticsearch.config.Endpoint;
 import io.vertx.core.net.ProxyType;
 import io.vertx.rxjava3.core.Vertx;
 import lombok.CustomLog;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -53,8 +55,34 @@ public class ElasticsearchClientConfiguration {
         return Vertx.newInstance(vertx);
     }
 
+    /**
+     * One client per distinct Elasticsearch connection rather than one per reporter, the way the TCP
+     * and Kafka reporters share their write streams. An install with a reporter per domain, all
+     * pointing at the same cluster, would otherwise open a client per domain.
+     * <p>
+     * The shared instance is built and wired here rather than registered as a bean, because it must
+     * be autowired and initialized exactly once no matter how many reporter contexts ask for it. Each
+     * context gets its own {@link SharedElasticsearchClient} over it, which is what Spring owns.
+     */
     @Bean
-    public Client httpClient(ElasticsearchReporterConfiguration configuration) {
+    public Client httpClient(ElasticsearchReporterConfiguration configuration,
+                             WriteStreamRegistry sharedClients,
+                             AutowireCapableBeanFactory beanFactory) {
+        String key = configuration.sharedClientKey();
+        Client shared = sharedClients.share(key, () -> {
+            log.debug("Creating a shared Elasticsearch client for {}", LoggableEndpoints.redact(configuration.getEndpoints()));
+            HttpClient client = new HttpClient(clientConfigurationFrom(configuration));
+            // the shared client autowires its Vert.x instance and reads its enabled flag from the
+            // environment, then connects from an @PostConstruct initializer, so it needs the full
+            // bean lifecycle even though it is never registered as a bean
+            beanFactory.autowireBean(client);
+            beanFactory.initializeBean(client, key);
+            return client;
+        });
+        return new SharedElasticsearchClient(shared);
+    }
+
+    private HttpClientConfiguration clientConfigurationFrom(ElasticsearchReporterConfiguration configuration) {
         HttpClientConfiguration clientConfiguration = new HttpClientConfiguration();
 
         List<Endpoint> endpoints = configuration.getEndpoints().stream().map(Endpoint::new).collect(toList());
@@ -67,7 +95,7 @@ public class ElasticsearchClientConfiguration {
         applyClientCertificate(configuration, clientConfiguration);
         applyProxy(configuration, clientConfiguration);
 
-        return new HttpClient(clientConfiguration);
+        return clientConfiguration;
     }
 
     /**

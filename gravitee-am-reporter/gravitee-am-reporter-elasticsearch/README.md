@@ -281,8 +281,10 @@ meanwhile stay in Elasticsearch.
   This is inherited from the shared client library rather than introduced here, and APIM has shipped
   on it for years — but APIM configures one reporter per gateway node, where AM is the first product
   to construct several clients in one JVM, so it is the first place the behaviour can actually bite.
-  Until the library gives each client its own paths, keep every audit reporter on a node pointing at
-  endpoints with the same path prefix.
+  Reporters pointing at the same cluster with the same credentials now share one client, which
+  removes the repeated rewrites in the common case, but two reporters whose endpoints differ *only*
+  by path prefix are by definition two clients and still collide. Until the library gives each client
+  its own paths, keep every audit reporter on a node pointing at endpoints with the same path prefix.
 - **The in-memory backlog is bounded per reporter, not per node.** `maxPendingBatches` ×
   `bulkActions` is the ceiling for *one* reporter — at the defaults, 50 000 audits. Reporters are per
   domain, so a node hosting 100 domains that are all backed up at once can hold 100 times that. Size

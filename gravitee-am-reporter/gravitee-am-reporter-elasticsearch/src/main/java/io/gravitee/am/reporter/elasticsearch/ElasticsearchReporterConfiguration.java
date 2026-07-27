@@ -22,6 +22,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author GraviteeSource Team
@@ -93,6 +94,23 @@ public class ElasticsearchReporterConfiguration implements ReporterConfiguration
      * Bounded so a sick cluster cannot hang a rolling restart.
      */
     private Long shutdownFlushTimeout = 10L;
+
+    /**
+     * Identifies the Elasticsearch connection this reporter needs, so every reporter pointing at the
+     * same cluster with the same credentials shares one HTTP client instead of opening its own. An
+     * install with a reporter per domain would otherwise hold one client per domain.
+     * <p>
+     * Only what the client is built from is hashed. The index, rollover period and batching settings
+     * are deliberately excluded: they are applied per reporter on top of the shared transport, so two
+     * reporters writing different indices to the same cluster still share a client. Anything that
+     * would change the client — endpoints, credentials, timeout, TLS material — is included, so a
+     * reconfigured reporter is handed a new client rather than the one built from its old settings.
+     */
+    public String sharedClientKey() {
+        return "es-" + Objects.hash(endpoints, username, password, requestTimeout,
+                sslKeystoreType, sslKeystorePath, sslKeystorePassword, sslPemCerts, sslPemKeys,
+                proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword);
+    }
 
     /** A blank host is how "no proxy" is expressed, so there is no separate flag to keep in step. */
     public boolean isProxyConfigured() {

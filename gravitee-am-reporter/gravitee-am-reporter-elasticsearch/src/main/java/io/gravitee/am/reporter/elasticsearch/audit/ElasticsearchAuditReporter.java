@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.Page;
@@ -80,6 +81,9 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
 
     @Autowired
     private ElasticsearchReporterConfiguration configuration;
+
+    @Autowired
+    private WriteStreamRegistry sharedClients;
 
     /** Absent outside a domain or organization scope, which is why the drop counters tolerate null. */
     @Autowired(required = false)
@@ -345,7 +349,16 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
      */
     @Override
     protected void doStop() throws Exception {
-        super.doStop();
+        try {
+            super.doStop();
+            drainAndDispose();
+        } finally {
+            // after the drain, which still needs the client, and on every path out of it
+            releaseSharedClient();
+        }
+    }
+
+    private void drainAndDispose() throws Exception {
         if (disposable == null || disposable.isDisposed()) {
             return;
         }
@@ -369,6 +382,18 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                     timeout, pendingAudits.get());
         }
         disposable.dispose();
+    }
+
+    /**
+     * Drops this reporter's claim on the client it shares with any other reporter pointing at the
+     * same cluster, so the next one configured against it builds a fresh client rather than inheriting
+     * one built from settings that have since changed. There is nothing to close when the last claim
+     * goes: the shared Elasticsearch client exposes no shutdown of its own.
+     */
+    private void releaseSharedClient() {
+        if (sharedClients != null) {
+            sharedClients.release(configuration.sharedClientKey());
+        }
     }
 
     private String readPattern() {

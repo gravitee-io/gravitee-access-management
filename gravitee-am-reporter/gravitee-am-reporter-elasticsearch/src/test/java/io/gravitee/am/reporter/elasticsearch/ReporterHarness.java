@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.elasticsearch;
 
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.reporter.elasticsearch.audit.ElasticsearchAuditReporter;
 import io.vertx.core.Vertx;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -59,9 +60,19 @@ public final class ReporterHarness implements AutoCloseable {
     }
 
     public static ReporterHarness start(ElasticsearchReporterConfiguration configuration) throws Exception {
+        return start(configuration, new WriteStreamRegistry());
+    }
+
+    /**
+     * Starts a reporter against a caller-supplied registry, so a test can start two reporters that
+     * share client instances the way two reporters in one node would.
+     */
+    public static ReporterHarness start(ElasticsearchReporterConfiguration configuration,
+                                        WriteStreamRegistry sharedClients) throws Exception {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
         context.registerBean(PropertySourcesPlaceholderConfigurer.class);
         context.registerBean(ElasticsearchReporterConfiguration.class, () -> configuration);
+        context.registerBean(WriteStreamRegistry.class, () -> sharedClients);
         context.registerBean(Vertx.class, () -> Vertx.vertx());
         context.register(ElasticsearchAuditReporter.class);
         try {
