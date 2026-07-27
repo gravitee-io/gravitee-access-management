@@ -58,6 +58,26 @@ object ManagementAPICalls {
       .check(jsonPath("$.id").saveAs("domainId"))
   }
 
+  /**
+   * Adds an Elasticsearch audit reporter to the domain currently in session. The configuration is a
+   * JSON string inside the reporter body, so it is escaped rather than nested.
+   */
+  def createElasticsearchReporter = {
+    // the reporter's configuration travels as a JSON string inside the body, so it is escaped rather
+    // than nested. Not named `configuration`, which would shadow Gatling's implicit of that name and
+    // break StringBody
+    val reporterConfig =
+      s"""{"endpoints":["${ES_URL}"],"index":"${ES_INDEX}","bulkActions":${ES_BULK_ACTIONS},"flushInterval":${ES_FLUSH_INTERVAL}}"""
+        .replace("\"", "\\\"")
+
+    http("Create Elasticsearch Reporter")
+      .post(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/reporters")
+      .header("Authorization", "Bearer #{auth-token}")
+      .body(StringBody(s"""{"type":"reporter-am-elasticsearch","name":"Gatling Elasticsearch Reporter","enabled":true,"configuration":"${reporterConfig}"}""")).asJson
+      .check(status.is(201))
+      .check(jsonPath("$.id").saveAs("reporterId"))
+  }
+
   def enableCurrentIDPToApp(appName: String) = {
     http("Enable IDP on " + appName + " Application")
       .patch(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/applications/#{"+appName+"Id}")

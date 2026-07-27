@@ -43,6 +43,12 @@ object SimulationSettings {
   val USE_DELEGATION_MODE = java.lang.Boolean.parseBoolean(System.getProperty("use_delegation_mode", "false"))
   val NUMBER_OF_TOKENS = Integer.getInteger("number_of_tokens", 10000)
 
+  // Elasticsearch audit reporter, added by the AddElasticsearchReporter provisioning simulation
+  val ES_URL = System.getProperty("es_url", "http://localhost:9200")
+  val ES_INDEX = System.getProperty("es_index", "gatling-audit")
+  val ES_BULK_ACTIONS = Integer.getInteger("es_bulk_actions", 1000)
+  val ES_FLUSH_INTERVAL = Integer.getInteger("es_flush_interval", 5)
+
   val DOMAIN_NAME = System.getProperty("domain", "gatling-domain")
   val IDENTITY_PROVIDER_NAME = System.getProperty("idp", "Default Identity Provider")
   val MULTI_DOMAIN_NAMES = System.getProperty("multiDomains", "gatling-domain").split(",")
