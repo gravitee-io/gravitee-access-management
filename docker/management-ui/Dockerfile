@@ -34,6 +34,7 @@ RUN apk update \
   && wget https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -P /tmp \
   && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
   && apk del unzip netcat-openbsd wget \
+  && mkdir -p ${WWW_TARGET} \
   && cp -fr /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET} \
   && rm -rf /tmp/*
 
