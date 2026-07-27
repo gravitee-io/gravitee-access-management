@@ -110,6 +110,7 @@
                     mat-icon-button
                     (click)="toggleDefault(domain, $event)"
                     [matTooltip]="isDefault(domain.id) ? 'Unset default domain' : 'Set as default domain'"
+                    [attr.data-testid]="'domainDefaultToggle-' + domain.name"
                   >
                     <mat-icon>{{ isDefault(domain.id) ? 'star' : 'star_border' }}</mat-icon>
                   </button>
@@ -117,6 +118,7 @@
                     mat-icon-button
                     (click)="togglePin(domain, $event)"
                     [matTooltip]="isPinned(domain.id) ? 'Unpin domain' : 'Pin domain'"
+                    [attr.data-testid]="'domainPinToggle-' + domain.name"
                   >
                     <!-- bookmark instead of push_pin: the bundled Material Icons font predates the push_pin ligature -->
                     <mat-icon>{{ isPinned(domain.id) ? 'bookmark' : 'bookmark_border' }}</mat-icon>
