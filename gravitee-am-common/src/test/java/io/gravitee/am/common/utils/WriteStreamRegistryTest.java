@@ -29,38 +29,38 @@ public class WriteStreamRegistryTest {
     public void write_stream_registry_test(){
         WriteStreamRegistry registry = new WriteStreamRegistry();
 
-        assertEquals(0, registry.writeStreams.size());
+        assertEquals(0, registry.resources.size());
         assertEquals(0, registry.refCount.size());
 
         WriteStream stream = writeStream();
         registry.getOrCreate("id", () -> stream);
 
-        assertEquals(1, registry.writeStreams.size());
+        assertEquals(1, registry.resources.size());
         assertEquals(1, registry.refCount.size());
         assertEquals(1, registry.refCount.get("id").get());
 
         registry.getOrCreate("id", () -> stream);
 
-        assertEquals(1, registry.writeStreams.size());
+        assertEquals(1, registry.resources.size());
         assertEquals(1, registry.refCount.size());
         assertEquals(2, registry.refCount.get("id").get());
 
         WriteStream stream2 = writeStream();
         registry.getOrCreate("id2", () -> stream2);
 
-        assertEquals(2, registry.writeStreams.size());
+        assertEquals(2, registry.resources.size());
         assertEquals(2, registry.refCount.size());
         assertEquals(1, registry.refCount.get("id2").get());
 
         Optional<WriteStream> optStream = registry.decreaseUsage("id2");
         assertTrue(optStream.isPresent());
         assertSame(optStream.get(), stream2);
-        assertEquals(1, registry.writeStreams.size());
+        assertEquals(1, registry.resources.size());
         assertEquals(1, registry.refCount.size());
         assertNull(registry.refCount.get("id2"));
 
         assertFalse(registry.decreaseUsage("id").isPresent());
-        assertEquals(1, registry.writeStreams.size());
+        assertEquals(1, registry.resources.size());
         assertEquals(1, registry.refCount.size());
         assertEquals(1, registry.refCount.get("id").get());
     }

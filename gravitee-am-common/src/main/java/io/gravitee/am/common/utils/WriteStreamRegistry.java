@@ -25,8 +25,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+/**
+ * Ref-counted registry of connection-scoped resources shared by reporter instances that point at the
+ * same endpoint, so N reporters configured against one backend open one connection rather than N.
+ * <p>
+ * Most entries are Vert.x {@link WriteStream}s, which is what the class is named after, but a shared
+ * resource is not always a write stream — the Elasticsearch reporter shares an HTTP client that is
+ * not one — so entries are held untyped and the typed accessors below cast on the way out. Keys are
+ * expected to be namespaced by the sharing reporter and to hash every setting that identifies the
+ * connection, so a reconfigured reporter gets a new resource rather than the previous one.
+ */
 public class WriteStreamRegistry {
-    final ConcurrentMap<String, WriteStream> writeStreams = new ConcurrentHashMap<>();
+    final ConcurrentMap<String, Object> resources = new ConcurrentHashMap<>();
     final ConcurrentMap<String, AtomicInteger> refCount = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
@@ -35,30 +45,53 @@ public class WriteStreamRegistry {
     }
 
     public WriteStream getOrCreate(String streamId, Supplier<WriteStream> streamSupplier) {
-        ReentrantLock lock = getLock(streamId);
+        return share(streamId, streamSupplier::get);
+    }
+
+    public Optional<WriteStream> decreaseUsage(String streamId) {
+        return release(streamId);
+    }
+
+    /**
+     * Returns the resource registered under {@code id}, creating it from {@code supplier} the first
+     * time, and records one more user of it.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T share(String id, Supplier<T> supplier) {
+        ReentrantLock lock = getLock(id);
         try {
             lock.lock();
-            WriteStream stream = writeStreams.computeIfAbsent(streamId, id -> streamSupplier.get());
-            AtomicInteger counter = refCount.computeIfAbsent(streamId, id -> new AtomicInteger(0));
+            Object resource = resources.computeIfAbsent(id, key -> supplier.get());
+            AtomicInteger counter = refCount.computeIfAbsent(id, key -> new AtomicInteger(0));
             counter.incrementAndGet();
-            return stream;
+            return (T) resource;
         } finally {
             lock.unlock();
         }
     }
 
-    public Optional<WriteStream> decreaseUsage(String streamId) {
-        ReentrantLock lock = getLock(streamId);
+    /** How many distinct resources are currently shared, which is how many connections are open. */
+    public int size() {
+        return resources.size();
+    }
+
+    /**
+     * Records one fewer user of {@code id}. Returns the resource only when the last user let go, so
+     * the caller closes it exactly once; an empty result means somebody else is still using it.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> release(String id) {
+        ReentrantLock lock = getLock(id);
         try {
             lock.lock();
-            AtomicInteger counter = refCount.get(streamId);
+            AtomicInteger counter = refCount.get(id);
             if(counter == null || counter.get() <= 0) {
                 return Optional.empty();
             }
             int value = counter.decrementAndGet();
             if(value <= 0) {
-                refCount.remove(streamId);
-                return Optional.ofNullable(writeStreams.remove(streamId));
+                refCount.remove(id);
+                return Optional.ofNullable((T) resources.remove(id));
             } else {
                 return Optional.empty();
             }
