@@ -283,11 +283,28 @@ meanwhile stay in Elasticsearch.
   to construct several clients in one JVM, so it is the first place the behaviour can actually bite.
   Until the library gives each client its own paths, keep every audit reporter on a node pointing at
   endpoints with the same path prefix.
+- **The in-memory backlog is bounded per reporter, not per node.** `maxPendingBatches` ×
+  `bulkActions` is the ceiling for *one* reporter — at the defaults, 50 000 audits. Reporters are per
+  domain, so a node hosting 100 domains that are all backed up at once can hold 100 times that. Size
+  `maxPendingBatches` against the number of domains on the node, not against one of them.
+- **Reads span every index.** Searches, counts, aggregations and single-audit fetches all run against
+  the `<index>-*` wildcard, so their cost grows with the retention window rather than with the result
+  size. A query carrying a date range lets Elasticsearch skip indices outside it; the audit screen's
+  unfiltered first page does not, and totals are tracked exactly rather than capped, so it is the
+  most expensive query the reporter issues. On a long retention window, lengthen the
+  [rollover period](#rollover-period) — weekly cuts the indices a read touches roughly sevenfold,
+  monthly roughly thirtyfold — and put a
+  [lifecycle policy](#retention) on the indices so the wildcard does not grow without end.
 - **At-most-once delivery.** Under a sustained outage the reporter drops audits rather than
   exhausting the node. Every drop is logged at ERROR with its reason and per-type counts, and
   counted on the `gio_dropped_audits` metric, tagged `reason` — `buffer_overflow`,
-  `retries_exhausted`, `rejected`, `not_writable`, `unserializable` or `reporter_stopping`. Alert on
-  it.
+  `retries_exhausted`, `rejected`, `not_writable`, `unserializable` or `reporter_stopping` — and
+  tagged `organization`, `environment` and `domain` so an alert names the domain losing audits rather
+  than just the node. Alert on it.
+
+  Rejections are reported once per batch rather than once per audit: a mapping conflict refuses every
+  audit carrying the offending field, and a line each would bury the one message worth reading. The
+  metric still counts every rejected audit, and the log carries the first few as exemplars.
 
   Note the metric requires `services.metrics.enabled: true` in `gravitee.yml`. Without it the node's
   registry is a no-op, so the counters silently record nothing — the ERROR logs are still emitted,

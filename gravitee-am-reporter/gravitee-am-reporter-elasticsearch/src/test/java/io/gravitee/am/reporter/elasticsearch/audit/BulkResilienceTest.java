@@ -116,7 +116,8 @@ class BulkResilienceTest {
                     .containsExactlyInAnyOrder("USER_CREATED", "USER_UPDATED");
 
             assertThat(loggedMessages())
-                    .anyMatch(message -> message.contains(refused.getId()) && message.contains("refused it"));
+                    .describedAs("the refused audit is named in the batch's rejection report")
+                    .anyMatch(message -> message.contains(refused.getId()) && message.contains("Elasticsearch refused them"));
         }
     }
 

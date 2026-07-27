@@ -114,6 +114,11 @@ final class BulkBatch {
     }
 
     Map<String, Long> countsByType() {
+        return countsByType(audits);
+    }
+
+    /** Also needed for audits dropped before they ever reached a batch. */
+    static Map<String, Long> countsByType(List<Audit> audits) {
         Map<String, Long> counts = new LinkedHashMap<>();
         for (Audit audit : audits) {
             counts.merge(audit.getType(), 1L, Long::sum);

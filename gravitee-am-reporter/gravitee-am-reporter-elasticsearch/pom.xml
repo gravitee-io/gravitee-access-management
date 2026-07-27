@@ -42,6 +42,13 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- GraviteeContext, which tags this reporter's drop counters with the domain it serves -->
+        <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>io.gravitee.node</groupId>
             <artifactId>gravitee-node-api</artifactId>

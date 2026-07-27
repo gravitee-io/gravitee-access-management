@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.ReporterStatus;
 import io.gravitee.am.model.common.Page;
@@ -44,6 +45,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.PublishProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.CustomLog;
@@ -58,6 +60,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -78,6 +81,10 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
     @Autowired
     private ElasticsearchReporterConfiguration configuration;
 
+    /** Absent outside a domain or organization scope, which is why the drop counters tolerate null. */
+    @Autowired(required = false)
+    private GraviteeContext graviteeContext;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     private ElasticsearchQueryBuilder queryBuilder;
@@ -86,7 +93,12 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
 
     private AuditDropCounter drops;
 
-    private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
+    /**
+     * Serialized because audits arrive from the event bus, and an inherited organization reporter
+     * registers one consumer per domain in that organization — so {@link #report} can be called
+     * concurrently, which a bare processor does not allow.
+     */
+    private final FlowableProcessor<Audit> bulkProcessor = PublishProcessor.<Audit>create().toSerialized();
 
     /** Completes once the index template is in place. Nothing is written before it does. */
     private Completable indexReady;
@@ -111,7 +123,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
     public void afterPropertiesSet() {
         this.rolloverPeriod = rolloverPeriodOrDaily();
         this.queryBuilder = new ElasticsearchQueryBuilder(mapper);
-        this.drops = new AuditDropCounter();
+        this.drops = new AuditDropCounter(graviteeContext);
 
         this.indexReady = prepareIndex()
                 .retryWhen(errors -> errors.flatMap(this::retryUnlessMisconfigured))
@@ -132,15 +144,14 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         this.disposable = bulkProcessor
                 .buffer(configuration.getFlushInterval(), TimeUnit.SECONDS, configuration.getBulkActions())
                 .filter(audits -> !audits.isEmpty())
-                .map(audits -> BulkBatch.of(configuration.getIndex(), rolloverPeriod, mapper, audits))
-                .doOnNext(this::accountForUnserializable)
-                .filter(batch -> !batch.isEmpty())
                 // bounded backlog: when Elasticsearch cannot keep up the oldest pending batch is
-                // evicted rather than letting the node grow until it runs out of memory
+                // evicted rather than letting the node grow until it runs out of memory. It holds the
+                // audits rather than serialized batches, so a backlog costs one representation of each
+                // pending audit instead of two.
                 .onBackpressureBuffer(configuration.getMaxPendingBatches(),
                         () -> { },
                         BackpressureOverflowStrategy.DROP_OLDEST,
-                        this::onBatchEvicted)
+                        this::onAuditsEvicted)
                 .flatMapCompletable(this::deliver, true, configuration.getMaxConcurrentRequests())
                 .subscribe(drained::countDown, error -> {
                     log.error("The Elasticsearch audit pipeline stopped unexpectedly, audits will no longer be written", error);
@@ -298,11 +309,16 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                 .observeOn(Schedulers.computation());
     }
 
+    /**
+     * Every branch defers building its query, so criteria the builder rejects — an unknown group-by
+     * field, a histogram that would ask for more buckets than Elasticsearch allows — surface as a
+     * failed {@link Single} rather than as an exception thrown at the caller before it ever subscribes.
+     */
     @Override
     public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, Type analyticsType) {
         switch (analyticsType) {
             case COUNT:
-                return client.count(readPattern(), null, queryBuilder.buildCountQuery(referenceType, referenceId, criteria))
+                return Single.defer(() -> client.count(readPattern(), null, queryBuilder.buildCountQuery(referenceType, referenceId, criteria)))
                         .map(response -> {
                             Map<Object, Object> result = new HashMap<>();
                             result.put("data", response.getCount() != null ? response.getCount() : 0L);
@@ -314,7 +330,7 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                         .map(this::toGroupByResult)
                         .observeOn(Schedulers.computation());
             case DATE_HISTO:
-                return client.search(readPattern(), null, queryBuilder.buildDateHistogramQuery(referenceType, referenceId, criteria))
+                return Single.defer(() -> client.search(readPattern(), null, queryBuilder.buildDateHistogramQuery(referenceType, referenceId, criteria)))
                         .map(response -> toHistogramResult(response, criteria))
                         .observeOn(Schedulers.computation());
             default:
@@ -359,40 +375,62 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
         return AuditIndexNames.readPattern(configuration.getIndex());
     }
 
-    private void onBatchEvicted(BulkBatch batch) {
-        pendingAudits.addAndGet(-batch.size());
-        drops.overflowed(batch);
+    private void onAuditsEvicted(List<Audit> audits) {
+        pendingAudits.addAndGet(-audits.size());
+        drops.overflowed(audits);
     }
 
     /**
-     * An audit that could not be serialized never reaches a batch, so without this it would stay
-     * counted as pending forever and the shutdown messages would overstate what was lost.
+     * An audit that could not be serialized never reaches Elasticsearch, so the drop has to reach the
+     * metric. It stays part of the pending count its batch settles as a whole, which is what keeps this
+     * from being double counted on a retry that re-serializes the same audits.
      */
-    private void accountForUnserializable(BulkBatch batch) {
+    private void recordUnserializable(BulkBatch batch) {
         int lost = batch.unserializable().size();
         if (lost > 0) {
-            pendingAudits.addAndGet(-lost);
             drops.unserializable(lost);
         }
     }
 
-    private Completable deliver(BulkBatch batch) {
-        return indexReady
-                .andThen(Completable.defer(() -> send(batch, 0)))
-                // send() absorbs its own failures, so anything arriving here means the reporter never
-                // became writable at all — a misconfiguration rather than a delivery problem
-                .onErrorResumeNext(error -> {
-                    drops.notWritable(batch, error);
-                    return Completable.complete();
+    /**
+     * Serializing a batch is CPU work proportional to {@code bulkActions}, and the thread that gets
+     * here is whichever one reported the audit that filled the buffer — a Vert.x event loop in the
+     * gateway. It is moved onto the IO scheduler so a busy domain cannot stall the event loop that is
+     * also serving its token requests.
+     */
+    private Completable deliver(List<Audit> audits) {
+        return Single.fromCallable(() -> BulkBatch.of(configuration.getIndex(), rolloverPeriod, mapper, audits))
+                .subscribeOn(Schedulers.io())
+                .flatMapCompletable(batch -> {
+                    recordUnserializable(batch);
+                    if (batch.isEmpty()) {
+                        return Completable.complete();
+                    }
+                    return indexReady
+                            .andThen(Completable.defer(() -> send(batch, 0)))
+                            // send() absorbs its own failures, so anything arriving here means the
+                            // reporter never became writable at all — a misconfiguration rather than a
+                            // delivery problem
+                            .onErrorResumeNext(error -> {
+                                drops.notWritable(batch, error);
+                                return Completable.complete();
+                            });
                 })
-                .doFinally(() -> pendingAudits.addAndGet(-batch.size()));
+                // settled as one unit, whatever became of the individual audits inside it
+                .doFinally(() -> pendingAudits.addAndGet(-audits.size()));
     }
 
     private Completable send(BulkBatch batch, int attempt) {
         return client.bulk(batch.payload(), false)
                 .flatMapCompletable(response -> {
-                    BulkBatch remaining = batch.retryable(response, drops::rejected);
-                    accountForUnserializable(remaining);
+                    List<BulkBatch.RejectedAudit> rejected = new ArrayList<>();
+                    BulkBatch remaining = batch.retryable(response, rejected::add);
+                    if (!rejected.isEmpty()) {
+                        // reported per batch rather than per audit: a mapping conflict rejects every
+                        // audit, and a line each would bury the cause it is trying to surface
+                        drops.rejected(rejected);
+                    }
+                    recordUnserializable(remaining);
                     if (remaining.isEmpty()) {
                         return Completable.complete();
                     }
@@ -414,9 +452,21 @@ public class ElasticsearchAuditReporter extends AbstractService<Reporter> implem
                 .andThen(Completable.defer(() -> send(batch, attempt + 1)));
     }
 
-    private long backoffSeconds(int attempt) {
+    /**
+     * Exponential, then jittered. Without the jitter every batch in flight and every batch behind it
+     * retries on the same schedule, so a cluster coming back up is met by the whole backlog at once,
+     * knocked over, and met again by the same wave. The jitter only ever shortens the delay, so the
+     * configured maximum stays a maximum.
+     */
+    long backoffSeconds(int attempt) {
         long delay = configuration.getRetryInitialInterval() * (1L << Math.min(attempt, 16));
-        return Math.min(delay, configuration.getRetryMaxInterval());
+        long capped = Math.min(delay, configuration.getRetryMaxInterval());
+        if (capped <= 1) {
+            return capped;
+        }
+        // full jitter across the lower quarter of the window, keeping most of the backoff intact
+        long spread = Math.max(1, capped / 4);
+        return capped - ThreadLocalRandom.current().nextLong(spread);
     }
 
     private Audit toAudit(SearchHit hit) throws Exception {
