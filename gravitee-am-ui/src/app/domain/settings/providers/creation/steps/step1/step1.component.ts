@@ -18,6 +18,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { IdentityProvider } from '../../../../../../entities/identity-providers/IdentityProvider';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'provider-creation-step1',
@@ -26,20 +27,25 @@ import { IdentityProvider } from '../../../../../../entities/identity-providers/
   standalone: false,
 })
 export class ProviderCreationStep1Component implements OnInit {
-  identities: IdentityProvider[];
+  identities: (IdentityProvider & LicensedPlugin)[];
   @Input() provider;
   filter: string;
-  filteredIdentities: IdentityProvider[];
+  filteredIdentities: (IdentityProvider & LicensedPlugin)[];
 
   constructor(
     private organizationService: OrganizationService,
     private route: ActivatedRoute,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
     this.filter = '';
-    this.identities = this.route.snapshot.data['identities'];
-    this.filteredIdentities = this.getFilteredIdentities();
+    this.pluginFeatureService
+      .decorateCatalog$<IdentityProvider>(Object.values(this.route.snapshot.data['identities'] ?? {}))
+      .subscribe((identities) => {
+        this.identities = identities;
+        this.filteredIdentities = this.getFilteredIdentities();
+      });
   }
 
   private initDomainWhitelist(idpType: string) {

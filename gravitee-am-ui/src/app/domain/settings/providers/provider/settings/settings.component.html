@@ -79,9 +79,11 @@
           <button
             mat-raised-button
             color="primary"
+            [licenseGuard]="licenseOptions"
             [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)"
             (click)="update($event)"
           >
+            <mat-icon *ngIf="isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
             SAVE
           </button>
         </div>

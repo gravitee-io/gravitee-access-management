@@ -51,9 +51,11 @@
             <div *hasPermission="['domain_alert_notifier_update']" fxLayout="row">
               <button
                 mat-raised-button
+                [licenseGuard]="licenseOptions"
                 [disabled]="(!alertNotifierForm.valid || alertNotifierForm.pristine) && (!configurationIsValid || configurationPristine)"
                 (click)="update()"
               >
+                <mat-icon *ngIf="isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
                 SAVE
               </button>
             </div>

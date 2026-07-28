@@ -18,13 +18,23 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose grant type flow to request OAuth 2.0 tokens.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card appearance="outlined" *ngFor="let extensionGrant of extensionGrants" fxFlex="30">
+    <mat-card
+      appearance="outlined"
+      class="plugin-type-card"
+      *ngFor="let extensionGrant of extensionGrants"
+      fxFlex="30"
+      [licenseGuard]="extensionGrant.licenseOptions"
+    >
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedExtensionGrantTypeId" (ngModelChange)="selectExtensionGrantType()">
-          <mat-radio-button [value]="extensionGrant.id"></mat-radio-button>
+          <mat-radio-button
+            [value]="extensionGrant.id"
+            [class.plugin-type-radio-locked]="extensionGrant.isMissing$ | async"
+          ></mat-radio-button>
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
+        <mat-icon *ngIf="extensionGrant.isMissing$ | async" svgIcon="gio:lock" class="plugin-license-lock"></mat-icon>
         {{ displayName(extensionGrant) }}
       </mat-card-content>
     </mat-card>

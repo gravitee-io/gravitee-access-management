@@ -5,7 +5,6 @@ mat-card {
 
   display: flex;
   box-sizing: border-box;
-  margin-top: 10px;
   place-content: center center;
 }
 
@@ -29,16 +28,4 @@ mat-card-content {
 
 :host ::ng-deep mat-card-content img {
   height: 6rem;
-}
-
-.settings-resources-creation-steps {
-  &__card {
-    &__content {
-      &__featureIcon {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-      }
-    }
-  }
 }

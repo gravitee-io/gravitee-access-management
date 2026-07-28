@@ -15,13 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { BotDetectionService } from '../../../../services/bot-detection.service';
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-bot-detection',
@@ -39,6 +42,8 @@ export class BotDetectionComponent implements OnInit {
   botDetectionConfiguration: any;
   updatebotDetectionConfiguration: any;
   editMode: boolean;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   constructor(
     private route: ActivatedRoute,
@@ -48,6 +53,7 @@ export class BotDetectionComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -56,6 +62,12 @@ export class BotDetectionComponent implements OnInit {
     this.botDetectionConfiguration = JSON.parse(this.botDetection.configuration);
     this.updatebotDetectionConfiguration = this.botDetectionConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_bot_detection_update']);
+    this.pluginFeatureService
+      .getFeature$('bot_detection', this.botDetection.type)
+      .subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('bot_detection', this.botDetection.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
     this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe((data) => {
       this.botDetectionSchema = data;

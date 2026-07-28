@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'certificate-creation-step1',
@@ -30,13 +32,19 @@ export class CertificateCreationStep1Component implements OnInit {
     'aws-am-certificate': 'AWS Secret Manager',
   };
   @Input() certificate: any;
-  certificates: any[];
+  certificates: (any & LicensedPlugin)[];
   selectedCertificateTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit(): void {
-    this.organizationService.certificates().subscribe((data) => (this.certificates = data));
+    this.organizationService
+      .certificates()
+      .pipe(switchMap((data) => this.pluginFeatureService.decorateCatalog$(data)))
+      .subscribe((certificates) => (this.certificates = certificates));
   }
 
   selectCertificateType(): void {

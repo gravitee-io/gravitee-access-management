@@ -18,13 +18,20 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose bot detection mechanism.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card appearance="outlined" *ngFor="let botDetection of botDetections" fxFlex="30">
+    <mat-card
+      appearance="outlined"
+      class="plugin-type-card"
+      *ngFor="let botDetection of botDetections"
+      fxFlex="30"
+      [licenseGuard]="botDetection.licenseOptions"
+    >
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedBotDetectionTypeId" (ngModelChange)="selectBotDetectionType()">
-          <mat-radio-button [value]="botDetection.id"></mat-radio-button>
+          <mat-radio-button [value]="botDetection.id" [class.plugin-type-radio-locked]="botDetection.isMissing$ | async"></mat-radio-button>
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
+        <mat-icon *ngIf="botDetection.isMissing$ | async" svgIcon="gio:lock" class="plugin-license-lock"></mat-icon>
         {{ displayName(botDetection) }}
       </mat-card-content>
     </mat-card>

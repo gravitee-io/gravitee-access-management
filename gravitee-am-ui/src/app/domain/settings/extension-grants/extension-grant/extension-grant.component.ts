@@ -15,13 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { ExtensionGrantService } from '../../../../services/extension-grant.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-extension-grant',
@@ -44,6 +47,8 @@ export class ExtensionGrantComponent implements OnInit {
     // eslint-disable-next-line
     /^[A-Za-z][A-Za-z0-9+\-.]*:(?:\/\/(?:(?:[A-Za-z0-9\-._~!$&'()*+,;=:]|%[0-9A-Fa-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9A-Fa-f]{1,4}:){6}|::(?:[0-9A-Fa-f]{1,4}:){5}|(?:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}|(?:(?:[0-9A-Fa-f]{1,4}:){0,1}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}|(?:(?:[0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}|(?:(?:[0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}:|(?:(?:[0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})?::)(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(?:(?:[0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}|(?:(?:[0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})?::)|[Vv][0-9A-Fa-f]+\.[A-Za-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(?:[A-Za-z0-9\-._~!$&'()*+,;=]|%[0-9A-Fa-f]{2})*)(?::[0-9]*)?(?:\/(?:[A-Za-z0-9\-._~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})*)*|\/(?:(?:[A-Za-z0-9\-._~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})+(?:\/(?:[A-Za-z0-9\-._~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})*)*)?|(?:[A-Za-z0-9\-._~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})+(?:\/(?:[A-Za-z0-9\-._~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})*)*|)(?:\?(?:[A-Za-z0-9\-._~!$&'()*+,;=:@\/?]|%[0-9A-Fa-f]{2})*)?$/;
   editMode: boolean;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   constructor(
     private route: ActivatedRoute,
@@ -53,6 +58,7 @@ export class ExtensionGrantComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -62,6 +68,12 @@ export class ExtensionGrantComponent implements OnInit {
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
     this.updateTokenGranterConfiguration = this.extensionGrantConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_extension_grant_update']);
+    this.pluginFeatureService
+      .getFeature$('extension_grant', this.extensionGrant.type)
+      .subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('extension_grant', this.extensionGrant.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.organizationService.extensionGrantSchema(this.extensionGrant.type).subscribe((data) => {
       this.extensionGrantSchema = data;
       // set the grant_type value

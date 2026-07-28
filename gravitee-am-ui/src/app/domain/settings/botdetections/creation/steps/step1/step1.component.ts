@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'bot-detection-creation-step1',
@@ -28,13 +30,19 @@ export class BotDetectionCreationStep1Component implements OnInit {
     'google-recaptcha-v3-am-bot-detection': 'Google reCAPTHCA v3',
   };
   @Input() botDetection: any;
-  botDetections: any[];
+  botDetections: (any & LicensedPlugin)[];
   selectedBotDetectionTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
-    this.organizationService.botDetections().subscribe((data) => (this.botDetections = data));
+    this.organizationService
+      .botDetections()
+      .pipe(switchMap((data) => this.pluginFeatureService.decorateCatalog$(data)))
+      .subscribe((botDetections) => (this.botDetections = botDetections));
   }
 
   selectBotDetectionType() {

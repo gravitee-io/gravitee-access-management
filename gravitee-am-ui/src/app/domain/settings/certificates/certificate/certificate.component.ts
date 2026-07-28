@@ -15,13 +15,15 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
-import { finalize } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { finalize, Observable } from 'rxjs';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OrganizationService } from '../../../../services/organization.service';
 import { CertificateService } from '../../../../services/certificate.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-certificate',
@@ -38,6 +40,8 @@ export class CertificateComponent implements OnInit {
   certificateConfiguration: any;
   updateCertificateConfiguration: any;
   submissionPending = false;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   constructor(
     private route: ActivatedRoute,
@@ -46,6 +50,7 @@ export class CertificateComponent implements OnInit {
     private snackbarService: SnackbarService,
     private router: Router,
     private dialogService: DialogService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -53,6 +58,10 @@ export class CertificateComponent implements OnInit {
     this.certificate = this.route.snapshot.data['certificate'];
     this.certificateConfiguration = JSON.parse(this.certificate.configuration);
     this.updateCertificateConfiguration = this.certificateConfiguration;
+    this.pluginFeatureService.getFeature$('certificate', this.certificate.type).subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('certificate', this.certificate.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
   }
 

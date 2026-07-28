@@ -15,13 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { catchError, filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
 import { ResourceService } from '../../../../services/resource.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-resource',
@@ -39,6 +42,8 @@ export class ResourceComponent implements OnInit {
   resourceConfiguration: any;
   updateResourceConfiguration: any;
   editMode: boolean;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   constructor(
     private route: ActivatedRoute,
@@ -48,6 +53,7 @@ export class ResourceComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -56,6 +62,10 @@ export class ResourceComponent implements OnInit {
     this.resourceConfiguration = JSON.parse(this.resource.configuration);
     this.updateResourceConfiguration = this.resourceConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_resource_update']);
+    this.pluginFeatureService.getFeature$('resource', this.resource.type).subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('resource', this.resource.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.organizationService.resourceSchema(this.resource.type).subscribe((data) => {
       this.resourceSchema = data;
     });

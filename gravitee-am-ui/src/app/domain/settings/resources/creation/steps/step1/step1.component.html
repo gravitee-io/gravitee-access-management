@@ -17,23 +17,20 @@
 -->
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose resource to create.</p>
-  <div fxLayout="row wrap" fxLayoutGap="10px" fxLayoutAlign="center">
+  <div class="plugin-type-grid" fxLayout="row wrap" fxLayoutAlign="center">
     <mat-card
       appearance="outlined"
+      class="plugin-type-card"
       *ngFor="let res of resources"
       fxFlex="30"
       [class.selected]="resource.type === res.id"
       (click)="selectResourceType(res.id)"
       (keyup.enter)="selectResourceType(res.id)"
       tabIndex="0"
-      [gioLicense]="res"
+      [licenseGuard]="res.licenseOptions"
     >
       <mat-card-content>
-        <mat-icon
-          *ngIf="res.deployed === false"
-          svgIcon="gio:lock"
-          class="settings-resources-creation-steps__card__content__featureIcon"
-        ></mat-icon>
+        <mat-icon *ngIf="res.isMissing$ | async" svgIcon="gio:lock" class="plugin-license-lock"></mat-icon>
         <div class="identity-provider__icon" [innerHTML]="getIcon(res) | safe: 'html'"></div>
         {{ displayName(res) }}
       </mat-card-content>

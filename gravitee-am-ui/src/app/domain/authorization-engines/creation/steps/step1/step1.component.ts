@@ -16,6 +16,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { PluginFeatureService } from '../../../../../services/plugin-feature.service';
+
 @Component({
   selector: 'authorization-engine-creation-step1',
   templateUrl: './step1.component.html',
@@ -30,13 +32,18 @@ export class AuthorizationEngineCreationStep1Component implements OnInit {
   filteredPlugins: any[];
   hasAvailablePlugins: boolean;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
     this.filter = '';
-    this.authorizationEnginePlugins = this.route.snapshot.data['authorizationEnginePlugins'];
     this.existingEngines = this.route.snapshot.data['authorizationEngines'] || [];
-    this.filteredPlugins = this.getFilteredPlugins();
+    this.pluginFeatureService.decorateCatalog$(this.route.snapshot.data['authorizationEnginePlugins']).subscribe((plugins) => {
+      this.authorizationEnginePlugins = plugins;
+      this.filteredPlugins = this.getFilteredPlugins();
+    });
   }
 
   selectEngineType(plugin: any) {

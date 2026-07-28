@@ -16,6 +16,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
+
 @Component({
   selector: 'alert-notifier-creation-step1',
   templateUrl: './step1.component.html',
@@ -23,13 +25,18 @@ import { ActivatedRoute } from '@angular/router';
   standalone: false,
 })
 export class DomainAlertNotifierCreationStep1Component implements OnInit {
-  notifiers: any[];
+  notifiers: (any & LicensedPlugin)[];
   @Input() alertNotifier;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
-    this.notifiers = this.route.snapshot.data['notifiers'];
+    this.pluginFeatureService
+      .decorateCatalog$(this.route.snapshot.data['notifiers'])
+      .subscribe((notifiers) => (this.notifiers = notifiers));
   }
 
   selectNotifier(notifier) {

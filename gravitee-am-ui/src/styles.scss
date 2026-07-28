@@ -352,6 +352,23 @@ p.gv-plugin-creation-description {
   text-align: center;
 }
 
+.plugin-type-grid {
+  margin-top: 10px;
+  gap: 10px;
+}
+
+.plugin-license-lock {
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  left: 16px;
+}
+
+.plugin-type-radio-locked {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
 .no-padding-dialog-container .mat-mdc-dialog-container {
   padding: 0;
 }

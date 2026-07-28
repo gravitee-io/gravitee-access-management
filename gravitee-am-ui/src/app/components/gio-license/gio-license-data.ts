@@ -37,6 +37,11 @@ export enum AmFeature {
   AM_GRAVITEE_RISK_ASSESSMENT = 'gravitee-risk-assessment',
   AM_IDP_SAML2 = 'am-idp-saml2',
   ALERT_ENGINE = 'alert-engine',
+  /**
+   * Generic fallback used to render the upgrade dialog for an Enterprise plugin whose own feature
+   * has no dedicated entry.
+   */
+  AM_ENTERPRISE = 'am-enterprise',
 }
 
 export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
@@ -147,6 +152,11 @@ export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
     image: 'assets/gio-license/alert-engine.svg',
     description:
       'Alert Engine allows you to isolate, understand and remediate for API performance and security risks before they cause a problem for your customers.',
+  },
+  [AmFeature.AM_ENTERPRISE]: {
+    image: 'assets/gio-license/gravitee-ee-upgrade.svg',
+    title: 'Gravitee Enterprise',
+    description: 'This is part of Gravitee Enterprise. Upgrade your license to enable it.',
   },
 };
 

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'device-identifier-creation-step1',
@@ -29,13 +31,19 @@ export class DeviceIdentifierCreationStep1Component implements OnInit {
     'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro',
   };
   @Input() deviceIdentifier: any;
-  deviceIdentifiers: any[];
+  deviceIdentifiers: (any & LicensedPlugin)[];
   selectedDeviceIdentifierTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
-    this.organizationService.deviceIdentifiers().subscribe((data) => (this.deviceIdentifiers = data));
+    this.organizationService
+      .deviceIdentifiers()
+      .pipe(switchMap((data) => this.pluginFeatureService.decorateCatalog$(data)))
+      .subscribe((deviceIdentifiers) => (this.deviceIdentifiers = deviceIdentifiers));
   }
 
   selectType() {

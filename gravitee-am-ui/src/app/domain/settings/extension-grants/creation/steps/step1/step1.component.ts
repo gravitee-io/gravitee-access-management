@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'extension-grant-creation-step1',
@@ -28,13 +30,19 @@ export class ExtensionGrantCreationStep1Component implements OnInit {
     'jwtbearer-am-extension-grant': 'Extension Grant JWT Bearer',
   };
   @Input() extensionGrant: any;
-  extensionGrants: any[];
+  extensionGrants: (any & LicensedPlugin)[];
   selectedExtensionGrantTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
-    this.organizationService.extensionGrants().subscribe((data) => (this.extensionGrants = data));
+    this.organizationService
+      .extensionGrants()
+      .pipe(switchMap((data) => this.pluginFeatureService.decorateCatalog$(data)))
+      .subscribe((extensionGrants) => (this.extensionGrants = extensionGrants));
   }
 
   selectExtensionGrantType() {

@@ -38,9 +38,10 @@
     </mat-card>
   </div>
 
-  <div *ngIf="hasAvailablePlugins" fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
+  <div *ngIf="hasAvailablePlugins" class="plugin-type-grid" fxLayout="row wrap" fxFlex fxLayoutAlign="center">
     <mat-card
       appearance="outlined"
+      class="plugin-type-card"
       *ngFor="let plugin of filteredPlugins"
       fxFlex="30"
       [class.selected]="authorizationEngine.type === plugin.id"
@@ -48,9 +49,10 @@
       (click)="selectEngineType(plugin)"
       (keyup.enter)="selectEngineType(plugin)"
       tabIndex="0"
-      [gioLicense]="plugin"
+      [licenseGuard]="plugin.licenseOptions"
     >
       <mat-card-content>
+        <mat-icon *ngIf="plugin.isMissing$ | async" svgIcon="gio:lock" class="plugin-license-lock"></mat-icon>
         <div class="authorization-engine-plugin__icon" [innerHTML]="getIcon(plugin) | safe: 'html'"></div>
         {{ displayName(plugin) }}
         <div *ngIf="isTypeInUse(plugin.id)" class="already-in-use-badge">

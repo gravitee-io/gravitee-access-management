@@ -15,12 +15,15 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { DialogService } from '../../../../../services/dialog.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import { ReporterService } from '../../../../../services/reporter.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
+import { PluginFeatureService } from '../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-reporter',
@@ -43,6 +46,8 @@ export class ReporterComponent implements OnInit {
   updateReporterConfiguration: any;
   formChanged = false;
   hasName = false;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   constructor(
     private route: ActivatedRoute,
@@ -51,6 +56,7 @@ export class ReporterComponent implements OnInit {
     private reporterService: ReporterService,
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -84,6 +90,14 @@ export class ReporterComponent implements OnInit {
     }
     this.validateName();
     this.getSchemaFor(this.reporter.type);
+    this.updateLicenseOptions(this.reporter.type);
+  }
+
+  private updateLicenseOptions(type) {
+    this.pluginFeatureService.getFeature$('reporter', type).subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('reporter', type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 
   getSchemaFor(type) {
@@ -105,6 +119,7 @@ export class ReporterComponent implements OnInit {
 
   onReporterTypeChanged(event) {
     this.getSchemaFor(event.value);
+    this.updateLicenseOptions(event.value);
   }
 
   labelFor(pluginId) {

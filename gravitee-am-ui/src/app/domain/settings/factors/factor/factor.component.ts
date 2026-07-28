@@ -15,13 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
 import { FactorService } from '../../../../services/factor.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-factor',
@@ -39,6 +42,8 @@ export class FactorComponent implements OnInit {
   factorConfiguration: any;
   updateFactorConfiguration: any;
   editMode: boolean;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
   private factorPlugins: any[];
   private resourcePlugins: any[];
   private resources: any[];
@@ -51,6 +56,7 @@ export class FactorComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -59,6 +65,10 @@ export class FactorComponent implements OnInit {
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_factor_update']);
+    this.pluginFeatureService.getFeature$('factor', this.factor.type).subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('factor', this.factor.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.factorPlugins = this.route.snapshot.data['factorPlugins'];
     this.resourcePlugins = this.route.snapshot.data['resourcePlugins'];
     this.resources = this.route.snapshot.data['resources'];

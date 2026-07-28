@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { takeUntil, tap } from 'rxjs/operators';
+import { switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { Plugin } from '../../../../../../entities/plugins/Plugin';
 import { OrganizationService } from '../../../../../../services/organization.service';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'resource-creation-step1',
@@ -34,21 +35,22 @@ export class ResourceCreationStep1Component implements OnInit, OnDestroy {
     'http-factor-am-resource': 'HTTP Factor',
   };
   @Input() resource: any;
-  resources: Plugin[];
+  resources: (Plugin & LicensedPlugin)[];
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
     this.organizationService
       .resources(true)
       .pipe(
-        tap((resources) => {
-          this.resources = resources;
-        }),
+        switchMap((resources) => this.pluginFeatureService.decorateCatalog$(resources)),
         takeUntil(this.unsubscribe$),
       )
-      .subscribe();
+      .subscribe((resources) => (this.resources = resources));
   }
 
   ngOnDestroy(): void {

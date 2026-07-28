@@ -15,7 +15,9 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { AuthService } from '../../../../../../services/auth.service';
 import { DeviceNotifiersService } from '../../../../../../services/device-notifiers.service';
@@ -23,6 +25,7 @@ import { DialogService } from '../../../../../../services/dialog.service';
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { ProviderService } from '../../../../../../services/provider.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 import { DynamicSourceMap } from '../dynamic-sources';
 
 @Component({
@@ -41,6 +44,8 @@ export class DeviceNotifierComponent implements OnInit {
   deviceNotifierConfiguration: any;
   updateDeviceNotifierConfiguration: any;
   editMode: boolean;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
   /** Populated on init; passed to the form so AJSF can render dynamic dropdowns. */
   dynamicSources: DynamicSourceMap = {};
 
@@ -53,6 +58,7 @@ export class DeviceNotifierComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -61,6 +67,12 @@ export class DeviceNotifierComponent implements OnInit {
     this.deviceNotifierConfiguration = JSON.parse(this.deviceNotifier.configuration);
     this.updateDeviceNotifierConfiguration = this.deviceNotifierConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_authdevice_notifier_update']);
+    this.pluginFeatureService
+      .getFeature$('authdevice_notifier', this.deviceNotifier.type)
+      .subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('authdevice_notifier', this.deviceNotifier.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
     // Fetch identity providers so the form can render a populated dropdown for
     // any schema property whose widget is 'graviteeIdentityProvider'.
