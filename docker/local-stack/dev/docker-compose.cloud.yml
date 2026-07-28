@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Cloud/console overlay: puts the management API into managed-cloud mode and
-# starts the cockpit mock it dials out to. Layer this on top of the base +
+# Cloud/console overlay: puts both planes into managed-cloud mode and starts the
+# cockpit mock the management API dials out to. Layer this on top of the base +
 # dev/ci overlays to exercise the console/cloud command path (e.g. Cockpit
 # ENVIRONMENT commands whose gateway access points become entrypoints).
 # It is absent by default, so the standalone suites are unaffected.
@@ -40,3 +40,11 @@ services:
     depends_on:
       cockpit-mock:
         condition: service_healthy
+
+  # The gateway never talks to Cockpit, so it needs no connector endpoint — but it does resolve the
+  # environment's entrypoint when building links in the emails it sends, and that is gated on managed
+  # cloud. Without these it silently falls back to the data plane gateway url.
+  gateway:
+    environment:
+      - GRAVITEE_CLOUD_ENABLED=true
+      - GRAVITEE_INSTALLATION_TYPE=managed
