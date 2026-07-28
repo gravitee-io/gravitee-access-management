@@ -40,12 +40,6 @@ public interface EntrypointService {
         return create(organizationId, entrypoint, false, principal);
     }
 
-    /**
-     * The {@code defaultEntrypoint} flag is deliberately kept off {@link NewEntrypoint}: that DTO is the
-     * public REST body, and letting an API caller raise the flag would allow a second default entrypoint
-     * per organization, which the organization-wide resolution and the last-default deletion guard both
-     * assume cannot happen. Only the Cockpit environment sync passes {@code true}.
-     */
     Single<Entrypoint> create(String organizationId, NewEntrypoint entrypoint, boolean defaultEntrypoint, User principal);
 
     Flowable<Entrypoint> createDefaults(Organization organization);

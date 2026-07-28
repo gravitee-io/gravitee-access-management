@@ -161,8 +161,8 @@ public class AbstractEntryPointManagerTest {
         cut.doStart();
 
         assertEquals(List.of(orgEntrypoint), cut.findByOrganizationId("org#1"));
-        assertEquals(List.of(envEntrypoint), cut.findByEnvironmentId("env#1"));
-        assertTrue(cut.findByEnvironmentId("env#other").isEmpty());
+        assertEquals(List.of(envEntrypoint), cut.findAllByEnvironmentId("env#1"));
+        assertTrue(cut.findAllByEnvironmentId("env#other").isEmpty());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class AbstractEntryPointManagerTest {
 
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
 
-        assertEquals(List.of(entrypoint), cut.findByEnvironmentId("env#1"));
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
     }
 
     @Test
@@ -188,7 +188,7 @@ public class AbstractEntryPointManagerTest {
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
         cut.onEvent(event(EntrypointEvent.UPDATE, "e1"));
 
-        List<Entrypoint> result = cut.findByEnvironmentId("env#1");
+        List<Entrypoint> result = cut.findAllByEnvironmentId("env#1");
         assertEquals(1, result.size());
         assertEquals("https://after.example.com", result.get(0).getUrl());
     }
@@ -213,10 +213,10 @@ public class AbstractEntryPointManagerTest {
         when(entrypointRepository.findById("e1")).thenReturn(Maybe.just(entrypoint), Maybe.empty());
 
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
-        assertEquals(1, cut.findByEnvironmentId("env#1").size());
+        assertEquals(1, cut.findAllByEnvironmentId("env#1").size());
 
         cut.onEvent(event(EntrypointEvent.UPDATE, "e1"));
-        assertTrue(cut.findByEnvironmentId("env#1").isEmpty());
+        assertTrue(cut.findAllByEnvironmentId("env#1").isEmpty());
     }
 
     @Test
@@ -228,7 +228,7 @@ public class AbstractEntryPointManagerTest {
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
         cut.onEvent(event(EntrypointEvent.UPDATE, "e1"));
 
-        assertEquals(List.of(entrypoint), cut.findByEnvironmentId("env#1"));
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
     }
 
     @Test
@@ -239,7 +239,7 @@ public class AbstractEntryPointManagerTest {
 
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e2"));
 
-        assertTrue(cut.findByEnvironmentId("env#9").isEmpty());
+        assertTrue(cut.findAllByEnvironmentId("env#9").isEmpty());
     }
 
     private static Set<String> idsOf(List<Entrypoint> entrypoints) {
@@ -250,21 +250,21 @@ public class AbstractEntryPointManagerTest {
     public void shouldResolveNothingWhenEnvironmentHasNoEntrypoint() throws Exception {
         cache(generatedEntrypoint("other-env-generated", "env#other"));
 
-        assertTrue(cut.resolveByEnvironmentId("env#1").isEmpty());
+        assertTrue(cut.findByEnvironmentId("env#1").isEmpty());
     }
 
     @Test
     public void shouldResolveTheGeneratedEntrypointWhenItIsTheOnlyOne() throws Exception {
         cache(generatedEntrypoint("generated", "env#1"));
 
-        assertEquals(Set.of("generated"), idsOf(cut.resolveByEnvironmentId("env#1")));
+        assertEquals(Set.of("generated"), idsOf(cut.findByEnvironmentId("env#1")));
     }
 
     @Test
     public void shouldResolveTheOverridingEntrypointAndDropTheGeneratedOne() throws Exception {
         cache(generatedEntrypoint("generated", "env#1"), entrypoint("overriding", "org#1", "env#1"));
 
-        assertEquals(Set.of("overriding"), idsOf(cut.resolveByEnvironmentId("env#1")));
+        assertEquals(Set.of("overriding"), idsOf(cut.findByEnvironmentId("env#1")));
     }
 
     @Test
@@ -273,7 +273,7 @@ public class AbstractEntryPointManagerTest {
                 entrypoint("overriding-1", "org#1", "env#1"),
                 entrypoint("overriding-2", "org#1", "env#1"));
 
-        assertEquals(Set.of("overriding-1", "overriding-2"), idsOf(cut.resolveByEnvironmentId("env#1")));
+        assertEquals(Set.of("overriding-1", "overriding-2"), idsOf(cut.findByEnvironmentId("env#1")));
     }
 
     @Test
@@ -282,6 +282,6 @@ public class AbstractEntryPointManagerTest {
         // default. Filtering them all away would leave callers with no URL at all.
         cache(generatedEntrypoint("generated-1", "env#1"), generatedEntrypoint("generated-2", "env#1"));
 
-        assertEquals(Set.of("generated-1", "generated-2"), idsOf(cut.resolveByEnvironmentId("env#1")));
+        assertEquals(Set.of("generated-1", "generated-2"), idsOf(cut.findByEnvironmentId("env#1")));
     }
 }

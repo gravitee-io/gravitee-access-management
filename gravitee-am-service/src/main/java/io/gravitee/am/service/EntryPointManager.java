@@ -26,7 +26,7 @@ import java.util.List;
  * management API and the gateway.
  * <p>
  * The cache only holds entrypoints within the node's configured organization/environment scope
- * (node metadata; unscoped nodes cache everything), and {@link #findByEnvironmentId(String)} only
+ * (node metadata; unscoped nodes cache everything), and {@link #findAllByEnvironmentId(String)} only
  * returns environment-scoped entrypoints — organization-level ones are not matched by it.
  *
  * @author GraviteeSource Team
@@ -35,7 +35,7 @@ public interface EntryPointManager extends Service<EntryPointManager> {
 
     List<Entrypoint> findByOrganizationId(String organizationId);
 
-    List<Entrypoint> findByEnvironmentId(String environmentId);
+    List<Entrypoint> findAllByEnvironmentId(String environmentId);
 
     /**
      * The entrypoints user-facing URLs should be built from for the given environment.
@@ -50,8 +50,8 @@ public interface EntryPointManager extends Service<EntryPointManager> {
      * {@code overriding} field produces — the full list is returned instead. Callers dereference the
      * URL of whatever comes back, so an empty result would break them.
      */
-    default List<Entrypoint> resolveByEnvironmentId(String environmentId) {
-        List<Entrypoint> all = findByEnvironmentId(environmentId);
+    default List<Entrypoint> findByEnvironmentId(String environmentId) {
+        List<Entrypoint> all = findAllByEnvironmentId(environmentId);
         List<Entrypoint> overriding = all.stream().filter(entrypoint -> !entrypoint.isDefaultEntrypoint()).toList();
         return overriding.isEmpty() ? all : overriding;
     }

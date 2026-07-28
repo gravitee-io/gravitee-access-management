@@ -104,7 +104,7 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
     }
 
     @Override
-    public List<Entrypoint> findByEnvironmentId(String environmentId) {
+    public List<Entrypoint> findAllByEnvironmentId(String environmentId) {
         return entrypoints.values().stream()
                 .filter(entrypoint -> environmentId != null && environmentId.equals(entrypoint.getEnvironmentId()))
                 .collect(Collectors.toList());
