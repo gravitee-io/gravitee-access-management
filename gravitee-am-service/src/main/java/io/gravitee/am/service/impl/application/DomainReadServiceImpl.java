@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.service.impl.application;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -29,8 +32,10 @@ import io.vertx.core.MultiMap;
 import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,10 +49,18 @@ public class DomainReadServiceImpl implements DomainReadService {
     private final String gatewayUrl;
     private final DomainRepository domainRepository;
     private final DataPlaneRegistry dataPlaneRegistry;
+    private final EntryPointManager entryPointManager;
+    private final Environment springEnvironment;
 
-    public DomainReadServiceImpl(@Lazy DomainRepository domainRepository, @Lazy DataPlaneRegistry dataPlaneRegistry, @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+    public DomainReadServiceImpl(@Lazy DomainRepository domainRepository,
+                                 @Lazy DataPlaneRegistry dataPlaneRegistry,
+                                 @Lazy EntryPointManager entryPointManager,
+                                 Environment springEnvironment,
+                                 @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
         this.dataPlaneRegistry = dataPlaneRegistry;
         this.domainRepository = domainRepository;
+        this.entryPointManager = entryPointManager;
+        this.springEnvironment = springEnvironment;
         this.gatewayUrl = gatewayUrl;
     }
 
@@ -75,8 +88,7 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     @Override
     public String buildUrl(Domain domain, String path, MultiMap queryParams) {
-        final var dataPlaneDesc = dataPlaneRegistry.getDescription(domain);
-        String entryPoint = ofNullable(dataPlaneDesc.gatewayUrl()).orElse(gatewayUrl);
+        String entryPoint = resolveEntryPoint(domain);
 
         if (entryPoint != null && entryPoint.endsWith("/")) {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
@@ -109,6 +121,19 @@ public class DomainReadServiceImpl implements DomainReadService {
         }
 
         return uri;
+    }
+
+    // In managed cloud the environment's entrypoint is this domain's gateway hostname; everywhere else,
+    // and until Cockpit has synced one, the data plane url stands.
+    private String resolveEntryPoint(Domain domain) {
+        if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
+            Optional<String> entrypointUrl = entryPointManager.resolvePrimaryByEnvironmentId(domain.getReferenceId())
+                    .map(Entrypoint::getUrl);
+            if (entrypointUrl.isPresent()) {
+                return entrypointUrl.get();
+            }
+        }
+        return ofNullable(dataPlaneRegistry.getDescription(domain).gatewayUrl()).orElse(gatewayUrl);
     }
 
 }
