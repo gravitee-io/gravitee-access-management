@@ -812,27 +812,35 @@ public class DomainServiceImpl implements DomainService {
 
     private Single<List<Entrypoint>> listEnvironmentEntryPoint(Domain domain, String organizationId) {
         return Single.defer(() -> {
-            List<Entrypoint> environmentEntrypoints = entryPointManager.findByEnvironmentId(domain.getReferenceId());
+            List<Entrypoint> environmentEntrypoints = entryPointManager.resolveByEnvironmentId(domain.getReferenceId());
             if (environmentEntrypoints.isEmpty()) {
-                // No environment entrypoint synced yet: degrade to the organization resolution, whose
-                // default entrypoint always carries a url (the UI builds links from it, never null).
-                return listOrganizationEntryPoint(domain, organizationId);
+                return organizationDefaultEntryPoint(domain, organizationId);
             }
-
-            // Cockpit recreates every environment entrypoint on each environment command, so createdAt/id
-            // churn and are not stable to order on. Prefer the one flagged default (the overridden access
-            // point), otherwise take the first in the list received from the command.
-            Entrypoint selected = environmentEntrypoints.stream()
-                    .filter(Entrypoint::isDefaultEntrypoint)
-                    .findFirst()
-                    .orElseGet(() -> {
-                        if (environmentEntrypoints.size() > 1) {
-                            log.warn("Environment {} resolves to {} entrypoints and none is flagged default; using the first", domain.getReferenceId(), environmentEntrypoints.size());
-                        }
-                        return environmentEntrypoints.get(0);
-                    });
-            return Single.just(List.of(selected));
+            return Single.just(environmentEntrypoints);
         });
+    }
+
+    /**
+     * The environment has no entrypoint yet — Cockpit has not synced it. Fall back to the organization's
+     * own default entrypoint carrying the data-plane gateway url, as the organization resolution does.
+     * <p>
+     * Deliberately does not call {@link #listOrganizationEntryPoint}: that one reads every entrypoint in
+     * the organization, environment-scoped rows included, and those are flagged default too — so its
+     * "drop the defaults once something else matched" step could filter the whole list away.
+     */
+    private Single<List<Entrypoint>> organizationDefaultEntryPoint(Domain domain, String organizationId) {
+        return entrypointService.findAll(organizationId)
+                .filter(entrypoint -> entrypoint.getEnvironmentId() == null && entrypoint.isDefaultEntrypoint())
+                .firstElement()
+                .map(entrypoint -> {
+                    ofNullable(this.dataPlaneRegistry.getDescription(domain).gatewayUrl())
+                            .ifPresent(entrypoint::setUrl);
+                    return List.of(entrypoint);
+                })
+                .switchIfEmpty(Single.fromCallable(() -> {
+                    log.warn("Organization {} has no default entrypoint; domain {} resolves to no entrypoint at all", organizationId, domain.getId());
+                    return List.<Entrypoint>of();
+                }));
     }
 
     private Single<Domain> createSystemScopes(Domain domain) {

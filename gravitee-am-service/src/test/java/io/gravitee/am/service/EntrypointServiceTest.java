@@ -180,6 +180,72 @@ public class EntrypointServiceTest {
         }));
     }
 
+    private NewEntrypoint newEntrypointFor(String host) {
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setName(host);
+        newEntrypoint.setTags(Collections.emptyList());
+        newEntrypoint.setUrl("https://" + host);
+        newEntrypoint.setEnvironmentId("env#1");
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
+        when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain(host, null);
+
+        return newEntrypoint;
+    }
+
+    @Test
+    public void shouldCreateDefaultEntrypointWhenFlagged() {
+
+        NewEntrypoint newEntrypoint = newEntrypointFor("env-acme.gravitee.io");
+
+        TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, true, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(Entrypoint::isDefaultEntrypoint);
+    }
+
+    @Test
+    public void shouldNotCreateDefaultEntrypointWhenCallerOmitsTheFlag() {
+        // The three-arg form is what the public REST resource calls; it must never raise the flag.
+        NewEntrypoint newEntrypoint = newEntrypointFor("auth.acme.com");
+
+        TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(entrypoint -> !entrypoint.isDefaultEntrypoint());
+    }
+
+    @Test
+    public void shouldDeleteDefaultFlaggedEnvironmentEntrypoint() {
+        // Cockpit's generated access point is now stored as a default entrypoint, and every ENVIRONMENT
+        // command deletes the environment's entrypoints before recreating them. That delete goes through
+        // the last-default guard, which passes because the organization keeps its own default entrypoint.
+        Entrypoint environmentEntrypoint = new Entrypoint();
+        environmentEntrypoint.setId(ENTRYPOINT_ID);
+        environmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        environmentEntrypoint.setEnvironmentId("env#1");
+        environmentEntrypoint.setDefaultEntrypoint(true);
+
+        Entrypoint organizationDefault = new Entrypoint();
+        organizationDefault.setId("org-default");
+        organizationDefault.setOrganizationId(ORGANIZATION_ID);
+        organizationDefault.setDefaultEntrypoint(true);
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(environmentEntrypoint));
+        when(entrypointRepository.findAll(ORGANIZATION_ID)).thenReturn(Flowable.just(environmentEntrypoint, organizationDefault));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+
+        TestObserver<Void> obs = cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        verify(entrypointRepository, times(1)).delete(ENTRYPOINT_ID);
+    }
+
     @Test
     public void shouldDeleteWithNullPrincipal() {
 
