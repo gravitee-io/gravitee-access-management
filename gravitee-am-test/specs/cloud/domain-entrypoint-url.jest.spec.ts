@@ -87,6 +87,21 @@ describe('Cloud domain entrypoint URL (management API)', () => {
     expect(urls).not.toContain(`https://${generatedHost}`);
   });
 
+  it('resolves every overriding access point when the customer has several custom domains', async () => {
+    const first = fixture.uniqueHost();
+    const second = fixture.uniqueHost();
+    await fixture.resyncAccessPoints([
+      { host: first, overriding: true },
+      { host: second, overriding: true },
+    ]);
+
+    // Nothing is the generated default here, so there is nothing to drop and both are returned.
+    const expected = [`https://${first}`, `https://${second}`].sort();
+    const urls = await retryUntil(() => domainEntrypointUrls(), (resolved) => resolved.length === 2, POLL);
+
+    expect([...urls].sort()).toEqual(expected);
+  });
+
   it('resolves the environment access-point URL when the environment has a single access point', async () => {
     const [expectedUrl] = await fixture.resyncAccessPoints([fixture.uniqueHost()]);
 
