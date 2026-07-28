@@ -119,6 +119,9 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         newEntrypoint.setName(accessPoint.getHost());
         newEntrypoint.setEnvironmentId(environmentId);
 
-        return entrypointService.create(organizationId, newEntrypoint, null).ignoreElement();
+        // Counter-intuitive but avoids introducing a field: the access point Cockpit generates itself is
+        // the environment's *default* entrypoint, and the customer's overriding one is not. Resolution
+        // then drops the default whenever an override exists — see EntryPointManager#resolveByEnvironmentId.
+        return entrypointService.create(organizationId, newEntrypoint, !accessPoint.isOverriding(), null).ignoreElement();
     }
 }

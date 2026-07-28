@@ -36,4 +36,23 @@ public interface EntryPointManager extends Service<EntryPointManager> {
     List<Entrypoint> findByOrganizationId(String organizationId);
 
     List<Entrypoint> findByEnvironmentId(String environmentId);
+
+    /**
+     * The entrypoints user-facing URLs should be built from for the given environment.
+     * <p>
+     * Cockpit provisions one entrypoint per gateway access point; the access point it generates itself
+     * is flagged {@code defaultEntrypoint} and the customer's overriding one is not (see
+     * {@code EnvironmentCommandHandler}). So whenever an environment resolves to more than its default,
+     * the customer has an override and it wins.
+     * <p>
+     * Never narrows a non-empty environment down to nothing: when no entrypoint survives the filter —
+     * every one of them is flagged default, which is what an access point payload carrying no
+     * {@code overriding} field produces — the full list is returned instead. Callers dereference the
+     * URL of whatever comes back, so an empty result would break them.
+     */
+    default List<Entrypoint> resolveByEnvironmentId(String environmentId) {
+        List<Entrypoint> all = findByEnvironmentId(environmentId);
+        List<Entrypoint> overriding = all.stream().filter(entrypoint -> !entrypoint.isDefaultEntrypoint()).toList();
+        return overriding.isEmpty() ? all : overriding;
+    }
 }

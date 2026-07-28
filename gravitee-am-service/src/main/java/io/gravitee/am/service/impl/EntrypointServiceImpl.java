@@ -111,12 +111,13 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     @Override
-    public Single<Entrypoint> create(String organizationId, NewEntrypoint newEntrypoint, User principal) {
+    public Single<Entrypoint> create(String organizationId, NewEntrypoint newEntrypoint, boolean defaultEntrypoint, User principal) {
 
         log.debug("Create a new entrypoint {} for organization {}", newEntrypoint, organizationId);
 
         Entrypoint toCreate = new Entrypoint();
         toCreate.setOrganizationId(organizationId);
+        toCreate.setDefaultEntrypoint(defaultEntrypoint);
         toCreate.setEnvironmentId(newEntrypoint.getEnvironmentId());
         toCreate.setName(newEntrypoint.getName());
         toCreate.setDescription(newEntrypoint.getDescription());

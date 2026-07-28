@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -107,8 +108,24 @@ public class AbstractEntryPointManagerTest {
         return entrypoint;
     }
 
+    private static Entrypoint generatedEntrypoint(String id, String environmentId) {
+        Entrypoint entrypoint = entrypoint(id, "org#1", environmentId);
+        entrypoint.setDefaultEntrypoint(true);
+        return entrypoint;
+    }
+
     private static SimpleEvent<EntrypointEvent, Payload> event(EntrypointEvent type, String id) {
         return new SimpleEvent<>(type, new Payload(id, ReferenceType.ENVIRONMENT, "env#1", Action.CREATE));
+    }
+
+    /** Seeds the cache with the given entrypoints, all owned by org#1. */
+    private void cache(Entrypoint... entrypoints) throws Exception {
+        when(node.metadata()).thenReturn(Map.of());
+        Organization organization = new Organization();
+        organization.setId("org#1");
+        when(organizationRepository.findAll()).thenReturn(Flowable.just(organization));
+        when(entrypointRepository.findAll("org#1")).thenReturn(Flowable.fromArray(entrypoints));
+        cut.doStart();
     }
 
     @Test
@@ -223,5 +240,48 @@ public class AbstractEntryPointManagerTest {
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e2"));
 
         assertTrue(cut.findByEnvironmentId("env#9").isEmpty());
+    }
+
+    private static Set<String> idsOf(List<Entrypoint> entrypoints) {
+        return entrypoints.stream().map(Entrypoint::getId).collect(Collectors.toSet());
+    }
+
+    @Test
+    public void shouldResolveNothingWhenEnvironmentHasNoEntrypoint() throws Exception {
+        cache(generatedEntrypoint("other-env-generated", "env#other"));
+
+        assertTrue(cut.resolveByEnvironmentId("env#1").isEmpty());
+    }
+
+    @Test
+    public void shouldResolveTheGeneratedEntrypointWhenItIsTheOnlyOne() throws Exception {
+        cache(generatedEntrypoint("generated", "env#1"));
+
+        assertEquals(Set.of("generated"), idsOf(cut.resolveByEnvironmentId("env#1")));
+    }
+
+    @Test
+    public void shouldResolveTheOverridingEntrypointAndDropTheGeneratedOne() throws Exception {
+        cache(generatedEntrypoint("generated", "env#1"), entrypoint("overriding", "org#1", "env#1"));
+
+        assertEquals(Set.of("overriding"), idsOf(cut.resolveByEnvironmentId("env#1")));
+    }
+
+    @Test
+    public void shouldResolveEveryOverridingEntrypointWhenSeveralExist() throws Exception {
+        cache(generatedEntrypoint("generated", "env#1"),
+                entrypoint("overriding-1", "org#1", "env#1"),
+                entrypoint("overriding-2", "org#1", "env#1"));
+
+        assertEquals(Set.of("overriding-1", "overriding-2"), idsOf(cut.resolveByEnvironmentId("env#1")));
+    }
+
+    @Test
+    public void shouldResolveEveryEntrypointWhenTheyAreAllFlaggedDefault() throws Exception {
+        // What an access point payload carrying no `overriding` field produces: everything flagged
+        // default. Filtering them all away would leave callers with no URL at all.
+        cache(generatedEntrypoint("generated-1", "env#1"), generatedEntrypoint("generated-2", "env#1"));
+
+        assertEquals(Set.of("generated-1", "generated-2"), idsOf(cut.resolveByEnvironmentId("env#1")));
     }
 }

@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -208,7 +209,7 @@ class EnvironmentCommandHandlerTest {
         when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.just(existing1, existing2));
         when(entrypointService.delete(eq("entrypoint#1"), eq("orga#1"), isNull())).thenReturn(Completable.complete());
         when(entrypointService.delete(eq("entrypoint#2"), eq("orga#1"), isNull())).thenReturn(Completable.complete());
-        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
+        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
@@ -220,13 +221,13 @@ class EnvironmentCommandHandlerTest {
         verify(entrypointService, times(1)).create(eq("orga#1"), argThat(newEntrypoint ->
                 newEntrypoint.getUrl().equals("https://domain.restriction1.io")
                         && newEntrypoint.getName().equals("domain.restriction1.io")
-                        && "env#1".equals(newEntrypoint.getEnvironmentId())), isNull());
+                        && "env#1".equals(newEntrypoint.getEnvironmentId())), eq(true), isNull());
         verify(entrypointService, times(1)).create(eq("orga#1"), argThat(newEntrypoint ->
                 newEntrypoint.getUrl().equals("https://domain.restriction2.io")
                         && newEntrypoint.getName().equals("domain.restriction2.io")
-                        && "env#1".equals(newEntrypoint.getEnvironmentId())), isNull());
+                        && "env#1".equals(newEntrypoint.getEnvironmentId())), eq(true), isNull());
         // CONSOLE access point must not generate an entrypoint
-        verify(entrypointService, times(2)).create(eq("orga#1"), any(NewEntrypoint.class), isNull());
+        verify(entrypointService, times(2)).create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull());
     }
 
     @Test
@@ -245,7 +246,7 @@ class EnvironmentCommandHandlerTest {
 
         when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
         when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.empty());
-        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
+        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
@@ -253,7 +254,7 @@ class EnvironmentCommandHandlerTest {
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         verify(entrypointService, never()).delete(any(), any(), any());
-        verify(entrypointService, times(1)).create(eq("orga#1"), any(NewEntrypoint.class), isNull());
+        verify(entrypointService, times(1)).create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull());
     }
 
     @Test
@@ -277,6 +278,65 @@ class EnvironmentCommandHandlerTest {
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         verifyNoInteractions(entrypointService);
+    }
+
+    /**
+     * The access point Cockpit generates itself becomes the environment's default entrypoint; the
+     * customer's overriding one does not. Resolution later drops the default whenever an override
+     * exists, so getting this inversion right is what makes the override win.
+     */
+    private void assertPersistedDefaultFlag(AccessPoint accessPoint, boolean expectedDefaultFlag) {
+        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
+                .organizationId("orga#1")
+                .name("Environment name")
+                .accessPoints(List.of(accessPoint))
+                .build();
+
+        when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
+        when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.empty());
+        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
+
+        TestObserver<EnvironmentReply> obs = cut.handle(new EnvironmentCommand(environmentPayload)).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(reply -> reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
+        verify(entrypointService, times(1)).create(eq("orga#1"), any(NewEntrypoint.class), eq(expectedDefaultFlag), isNull());
+    }
+
+    @Test
+    void handleCloudMode_overridingAccessPoint_isNotTheDefaultEntrypoint() {
+        enableCloudMode();
+
+        assertPersistedDefaultFlag(AccessPoint.builder()
+                .target(AccessPoint.Target.GATEWAY)
+                .host("auth.acme.com")
+                .overriding(true)
+                .build(), false);
+    }
+
+    @Test
+    void handleCloudMode_nonOverridingAccessPoint_becomesTheDefaultEntrypoint() {
+        enableCloudMode();
+
+        assertPersistedDefaultFlag(AccessPoint.builder()
+                .target(AccessPoint.Target.GATEWAY)
+                .host("env-acme.gravitee.io")
+                .overriding(false)
+                .build(), true);
+    }
+
+    @Test
+    void handleCloudMode_accessPointWithoutOverridingFlag_becomesTheDefaultEntrypoint() {
+        enableCloudMode();
+
+        // `overriding` is a primitive boolean, so a payload omitting it deserializes to false and every
+        // entrypoint ends up flagged default. Resolution copes by returning them all rather than none.
+        assertPersistedDefaultFlag(AccessPoint.builder()
+                .target(AccessPoint.Target.GATEWAY)
+                .host("env-acme.gravitee.io")
+                .build(), true);
     }
 
     @Test

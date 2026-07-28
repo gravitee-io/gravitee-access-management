@@ -1878,7 +1878,7 @@ public class DomainServiceTest {
         envEntrypoint.setEnvironmentId(ENVIRONMENT_ID);
         envEntrypoint.setUrl("https://acme.gravitee.io");
 
-        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(envEntrypoint));
+        when(entryPointManager.resolveByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(envEntrypoint));
 
         final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
         subscriber.assertValue(entrypoints -> entrypoints.size() == 1
@@ -1892,7 +1892,7 @@ public class DomainServiceTest {
         enableCloudMode();
 
         final Domain mockDomain = cloudDomain();
-        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        when(entryPointManager.resolveByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
         when(dataPlaneRegistry.getDescription(mockDomain))
                 .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", "http://gateway:8092"));
 
@@ -1910,26 +1910,34 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldGetEntrypoint_cloud_multipleEntrypoints_picksDefaultFlagged() {
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_fallbackIgnoresEnvironmentScopedEntrypoints() {
         enableCloudMode();
 
-        final Entrypoint first = new Entrypoint();
-        first.setId("first-entrypoint");
-        first.setEnvironmentId(ENVIRONMENT_ID);
-        first.setUrl("https://first.gravitee.io");
+        final Domain mockDomain = cloudDomain();
+        when(entryPointManager.resolveByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        when(dataPlaneRegistry.getDescription(mockDomain))
+                .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
 
-        final Entrypoint flagged = new Entrypoint();
-        flagged.setId("flagged-entrypoint");
-        flagged.setEnvironmentId(ENVIRONMENT_ID);
-        flagged.setUrl("https://flagged.gravitee.io");
-        flagged.setDefaultEntrypoint(true);
+        // Another environment's generated entrypoint: organization-wide, flagged default, and must not
+        // be mistaken for this organization's own default.
+        final Entrypoint otherEnvironmentEntrypoint = new Entrypoint();
+        otherEnvironmentEntrypoint.setId("other-env-generated");
+        otherEnvironmentEntrypoint.setEnvironmentId("env#other");
+        otherEnvironmentEntrypoint.setDefaultEntrypoint(true);
+        otherEnvironmentEntrypoint.setUrl("https://other-env.gravitee.io");
+        otherEnvironmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
 
-        // The default-flagged entrypoint wins even when it is not first in the list.
-        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(first, flagged));
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setUrl("https://default.gravitee.io");
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
 
-        final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
+        doReturn(Flowable.just(otherEnvironmentEntrypoint, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
         subscriber.assertValue(entrypoints -> entrypoints.size() == 1
-                && entrypoints.get(0).getId().equals("flagged-entrypoint"));
+                && entrypoints.get(0).getId().equals(ENTRYPOINT_ID_DEFAULT));
     }
 
     @Test
@@ -1937,7 +1945,7 @@ public class DomainServiceTest {
         enableCloudMode();
 
         final Domain mockDomain = cloudDomain();
-        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        when(entryPointManager.resolveByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
         when(dataPlaneRegistry.getDescription(mockDomain))
                 .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
 
@@ -1955,7 +1963,7 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldGetEntrypoint_cloud_multipleEntrypoints_noneDefault_picksFirstInList() {
+    public void shouldGetEntrypoint_cloud_severalEnvironmentEntrypoints_returnsThemAll() {
         enableCloudMode();
 
         final Entrypoint first = new Entrypoint();
@@ -1968,12 +1976,14 @@ public class DomainServiceTest {
         second.setEnvironmentId(ENVIRONMENT_ID);
         second.setUrl("https://second.gravitee.io");
 
-        // None flagged default: fall back to the first in the list received from the command.
-        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(first, second));
+        // Whatever the environment resolves to is returned as-is — no collapsing to a single entrypoint.
+        when(entryPointManager.resolveByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(first, second));
 
         final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();
-        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
-                && entrypoints.get(0).getId().equals("first-entrypoint"));
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 2
+                && entrypoints.stream().anyMatch(e -> e.getId().equals("first-entrypoint"))
+                && entrypoints.stream().anyMatch(e -> e.getId().equals("second-entrypoint")));
+        verify(entrypointService, never()).findAll(anyString());
     }
 
     @Test
@@ -1999,7 +2009,7 @@ public class DomainServiceTest {
         final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
         subscriber.assertValue(entrypoints -> entrypoints.size() == 1
                 && entrypoints.get(0).getId().equals(ENTRYPOINT_ID1));
-        verify(entryPointManager, never()).findByEnvironmentId(anyString());
+        verify(entryPointManager, never()).resolveByEnvironmentId(anyString());
     }
 
     @Test
