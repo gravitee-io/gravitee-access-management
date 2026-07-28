@@ -25,6 +25,18 @@ const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 
 const urlFor = (host: string) => `https://${host}`;
 
+/**
+ * A gateway access point to provision. A bare host is the access point Cockpit generates itself
+ * (`overriding` absent, exactly as older Cockpit versions send it); the object form sets the flag
+ * explicitly so specs can provision a customer's overriding access point.
+ */
+export type AccessPointSpec = string | { host: string; overriding: boolean };
+
+const hostOf = (spec: AccessPointSpec): string => (typeof spec === 'string' ? spec : spec.host);
+
+const accessPointPayload = (spec: AccessPointSpec) =>
+  typeof spec === 'string' ? { target: 'GATEWAY', host: spec } : { target: 'GATEWAY', host: spec.host, overriding: spec.overriding };
+
 export interface CloudEntrypointFixture {
   organizationId: string;
   environmentId: string;
@@ -33,8 +45,8 @@ export interface CloudEntrypointFixture {
   expectedUrls: string[];
   /** A globally-unique gateway host, safe to reuse across parallel runs. */
   uniqueHost: () => string;
-  /** Re-issue the ENVIRONMENT command with a new set of gateway hosts; returns the expected https URLs. */
-  resyncAccessPoints: (hosts: string[]) => Promise<string[]>;
+  /** Re-issue the ENVIRONMENT command with a new set of gateway access points; returns the expected https URLs. */
+  resyncAccessPoints: (accessPoints: AccessPointSpec[]) => Promise<string[]>;
   /** The entrypoint URLs the gateway currently has cached for this domain's environment, sorted. */
   cachedEntrypointUrls: () => Promise<string[]>;
   cleanup: () => Promise<void>;
@@ -55,7 +67,8 @@ export const setupCloudEntrypointFixture = async (accessToken: string): Promise<
   // Track every host we ever provision so cleanup removes all of them, not just the current set
   // (each ENVIRONMENT command deletes-and-recreates the environment's entrypoints).
   const provisionedHosts = new Set<string>();
-  const resyncAccessPoints = async (hosts: string[]): Promise<string[]> => {
+  const resyncAccessPoints = async (accessPoints: AccessPointSpec[]): Promise<string[]> => {
+    const hosts = accessPoints.map(hostOf);
     hosts.forEach((host) => provisionedHosts.add(host));
     await sendCockpitCommand({
       type: 'ENVIRONMENT',
@@ -64,7 +77,7 @@ export const setupCloudEntrypointFixture = async (accessToken: string): Promise<
         organizationId,
         hrids: [environmentId],
         name: 'AM7226 cloud entrypoint env',
-        accessPoints: hosts.map((host) => ({ target: 'GATEWAY', host })),
+        accessPoints: accessPoints.map(accessPointPayload),
       },
     });
     return hosts.map(urlFor);

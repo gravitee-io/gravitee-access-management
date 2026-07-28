@@ -54,18 +54,37 @@ const domainEntrypointUrls = async (): Promise<string[]> => {
 // first, then re-synced to a single one. In cloud mode the endpoint resolves the environment entrypoint,
 // not the internal data-plane gateway URL. retryUntil covers the management API sync-tick cache latency.
 describe('Cloud domain entrypoint URL (management API)', () => {
-  it('resolves a single environment access-point URL when the environment has several access points', async () => {
-    // The fixture provisions two GATEWAY access points; cloud mode returns exactly one (the
-    // default-flagged access point if any, otherwise the first), always one of the environment
-    // URLs (never the gateway fallback).
+  it('resolves every access point when none of them is the customer override', async () => {
+    // The fixture provisions two GATEWAY access points with no `overriding` flag, so both are stored
+    // as the environment's default entrypoint. Nothing can be dropped without emptying the list, so
+    // the endpoint returns them both — never nothing.
     const urls = await retryUntil(
       () => domainEntrypointUrls(),
-      (resolved) => resolved.length === 1 && fixture.expectedUrls.includes(resolved[0]),
+      (resolved) => resolved.length === fixture.expectedUrls.length,
       POLL,
     );
 
-    expect(urls).toHaveLength(1);
-    expect(fixture.expectedUrls).toContain(urls[0]);
+    expect([...urls].sort()).toEqual([...fixture.expectedUrls].sort());
+  });
+
+  it("resolves the customer's overriding access point and drops the one Cockpit generated", async () => {
+    const generatedHost = fixture.uniqueHost();
+    const overridingHost = fixture.uniqueHost();
+    await fixture.resyncAccessPoints([
+      { host: generatedHost, overriding: false },
+      { host: overridingHost, overriding: true },
+    ]);
+
+    // This is the whole point of the flag: Cockpit's `overriding` bit has to survive the wire into
+    // AM, or the generated host would be resolved instead.
+    const urls = await retryUntil(
+      () => domainEntrypointUrls(),
+      (resolved) => resolved.length === 1 && resolved[0] === `https://${overridingHost}`,
+      POLL,
+    );
+
+    expect(urls).toEqual([`https://${overridingHost}`]);
+    expect(urls).not.toContain(`https://${generatedHost}`);
   });
 
   it('resolves the environment access-point URL when the environment has a single access point', async () => {
