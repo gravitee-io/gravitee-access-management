@@ -15,13 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
 import { DeviceIdentifierService } from '../../../../services/device-identifier.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'app-device-identifier',
@@ -39,6 +42,8 @@ export class DeviceIdentifierComponent implements OnInit {
   deviceIdentifierConfiguration: any;
   updateDeviceIdentifierConfiguration: any;
   editMode: boolean;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   private deviceIdentifierTypes: any = {
     'fingerprintjs-v3-community-device-identifier': 'FingerprintJS v3 community',
@@ -53,6 +58,7 @@ export class DeviceIdentifierComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private authService: AuthService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -61,6 +67,12 @@ export class DeviceIdentifierComponent implements OnInit {
     this.deviceIdentifierConfiguration = JSON.parse(this.deviceIdentifier.configuration);
     this.updateDeviceIdentifierConfiguration = this.deviceIdentifierConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_device_identifier_update']);
+    this.pluginFeatureService
+      .getFeature$('device_identifier', this.deviceIdentifier.type)
+      .subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('device_identifier', this.deviceIdentifier.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
     this.organizationService.deviceIdentifiersSchema(this.deviceIdentifier.type).subscribe((data) => {
       this.deviceIdentifierSchema = data;

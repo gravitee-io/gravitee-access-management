@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { takeUntil, tap } from 'rxjs/operators';
+import { switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { Plugin } from '../../../../../../entities/plugins/Plugin';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'factor-creation-step1',
@@ -38,22 +39,23 @@ export class FactorCreationStep1Component implements OnInit, OnDestroy {
     'mock-am-factor': 'MOCK Factor',
   };
   @Input() factor: any;
-  factors: Plugin[];
+  factors: (Plugin & LicensedPlugin)[];
   selectedFactorTypeId: string;
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
     this.organizationService
       .factors()
       .pipe(
-        tap((factors) => {
-          this.factors = factors;
-        }),
+        switchMap((factors) => this.pluginFeatureService.decorateCatalog$(factors)),
         takeUntil(this.unsubscribe$),
       )
-      .subscribe();
+      .subscribe((factors) => (this.factors = factors));
   }
 
   ngOnDestroy(): void {

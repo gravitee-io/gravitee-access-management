@@ -75,7 +75,10 @@
         </div>
       </div>
       <div fxLayout="row">
-        <button mat-raised-button [disabled]="!readyToSave()" (click)="save()">SAVE</button>
+        <button mat-raised-button [licenseGuard]="licenseOptions" [disabled]="!readyToSave()" (click)="save()">
+          <mat-icon *ngIf="isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
+          SAVE
+        </button>
       </div>
       <ng-template [ngIf]="!createMode">
         <!-- use ng-template otherwise *ngIf can't be used into the div -->

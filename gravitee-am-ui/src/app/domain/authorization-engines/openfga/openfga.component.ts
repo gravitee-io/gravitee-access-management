@@ -18,12 +18,13 @@ import { ActivatedRoute } from '@angular/router';
 import { FormControl, Validators } from '@angular/forms';
 import { transformer } from '@openfga/syntax-transformer';
 import { graphBuilder } from '@openfga/frontend-utils';
-import { Subscription } from 'rxjs';
-import { filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { filter, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { Network } from 'vis-network';
 import { decodeTime } from 'ulid';
 import './openfga-mode';
 import { HttpErrorResponse } from '@angular/common/http';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OpenFGAService } from '../../../services/openfga.service';
 import { AuthorizationEngineService } from '../../../services/authorization-engine.service';
@@ -31,6 +32,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { DialogService } from '../../../services/dialog.service';
 import { PaginationService } from '../../../services/pagination.service';
+import { PluginFeatureService } from '../../../services/plugin-feature.service';
 
 interface AuthorizationEngine {
   id?: string;
@@ -79,6 +81,8 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
   engineId: string;
   authorizationEngine: AuthorizationEngine = { name: '', type: '', configuration: '' };
   plugin: Plugin | null = null;
+  licenseOptions$: Observable<LicenseOptions>;
+  isMissingFeature$: Observable<boolean>;
   storeId: string;
   authorizationModelId: string;
   storeInfo: StoreInfo | null = null;
@@ -162,6 +166,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     private snackbarService: SnackbarService,
     private organizationService: OrganizationService,
     private dialogService: DialogService,
+    private pluginFeatureService: PluginFeatureService,
   ) {
     this.tuplePagination = new PaginationService<Tuple>();
     this.modelPagination = new PaginationService<AuthorizationModel>();
@@ -188,6 +193,12 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
         next: (engine) => {
           this.authorizationEngine = engine;
           this.plugin = this.authorizationEnginePlugins?.[engine.type];
+          this.licenseOptions$ = this.pluginFeatureService
+            .getFeature$('authorization_engine', engine.type)
+            .pipe(map((feature) => ({ feature })));
+          this.isMissingFeature$ = this.pluginFeatureService
+            .isMissingFeatureForType$('authorization_engine', engine.type)
+            .pipe(shareReplay({ bufferSize: 1, refCount: true }));
           const config = JSON.parse(engine.configuration || '{}');
           this.storeId = config.storeId;
           this.authorizationModelId = config.authorizationModelId;

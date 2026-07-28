@@ -28,18 +28,20 @@
     </mat-form-field>
   </div>
 
-  <div fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
+  <div class="plugin-type-grid" fxLayout="row wrap" fxFlex fxLayoutAlign="center">
     <mat-card
       appearance="outlined"
+      class="plugin-type-card"
       *ngFor="let idp of filteredIdentities"
       fxFlex="30"
       [class.selected]="provider.type === idp.id"
       (click)="selectProviderType(idp)"
       (keyup.enter)="selectProviderType(idp)"
       tabIndex="0"
-      [gioLicense]="idp"
+      [licenseGuard]="idp.licenseOptions"
     >
       <mat-card-content>
+        <mat-icon *ngIf="idp.isMissing$ | async" svgIcon="gio:lock" class="plugin-license-lock"></mat-icon>
         <div class="identity-provider__icon" [innerHTML]="getIcon(idp) | safe: 'html'"></div>
         {{ displayName(idp) }}
       </mat-card-content>

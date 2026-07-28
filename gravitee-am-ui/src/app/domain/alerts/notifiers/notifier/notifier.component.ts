@@ -15,12 +15,15 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { AlertService } from '../../../../services/alert.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { OrganizationService } from '../../../../services/organization.service';
+import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
 @Component({
   templateUrl: './notifier.component.html',
@@ -37,6 +40,8 @@ export class DomainAlertNotifierComponent implements OnInit {
   alertNotifierConfiguration: any;
   updateAlertNotifierConfiguration: any;
   redirectUri: string;
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
 
   constructor(
     private alertService: AlertService,
@@ -45,6 +50,7 @@ export class DomainAlertNotifierComponent implements OnInit {
     private router: Router,
     private dialogService: DialogService,
     private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
@@ -52,6 +58,10 @@ export class DomainAlertNotifierComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.alertNotifierConfiguration = JSON.parse(this.alertNotifier.configuration);
     this.updateAlertNotifierConfiguration = this.alertNotifierConfiguration;
+    this.pluginFeatureService.getFeature$('notifier', this.alertNotifier.type).subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('notifier', this.alertNotifier.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
     this.organizationService.notifierSchema(this.alertNotifier.type).subscribe((data) => {
       this.notifierSchema = data;

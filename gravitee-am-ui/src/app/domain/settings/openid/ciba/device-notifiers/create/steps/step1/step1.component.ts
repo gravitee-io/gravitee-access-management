@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../../../services/organization.service';
+import { LicensedPlugin, PluginFeatureService } from '../../../../../../../../services/plugin-feature.service';
 
 @Component({
   selector: 'device-notifier-creation-step1',
@@ -28,15 +30,19 @@ export class DeviceNotifierCreationStep1Component implements OnInit {
     'http-am-authdevice-notifier': 'External HTTP Service',
   };
   @Input() deviceNotifier: any;
-  deviceNotifiers: any[];
+  deviceNotifiers: (any & LicensedPlugin)[];
   selectedNotifierTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private pluginFeatureService: PluginFeatureService,
+  ) {}
 
   ngOnInit() {
-    this.organizationService.deviceNotifiers(true).subscribe((data) => {
-      this.deviceNotifiers = data;
-    });
+    this.organizationService
+      .deviceNotifiers(true)
+      .pipe(switchMap((data) => this.pluginFeatureService.decorateCatalog$(data)))
+      .subscribe((deviceNotifiers) => (this.deviceNotifiers = deviceNotifiers));
   }
 
   selectNotifierType() {

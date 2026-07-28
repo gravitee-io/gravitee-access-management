@@ -364,10 +364,12 @@ type document
             <button
               mat-raised-button
               color="primary"
+              [licenseGuard]="licenseOptions$ | async"
               (click)="saveConfiguration()"
               [disabled]="!isConfigurationDirty() || !configurationIsValid || isSaving"
             >
               <span class="gv-button-content">
+                <mat-icon *ngIf="isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
                 <mat-progress-spinner *ngIf="isSaving" [diameter]="16" [strokeWidth]="2" mode="indeterminate"></mat-progress-spinner>
                 <span>{{ isSaving ? 'Saving...' : 'SAVE' }}</span>
               </span>

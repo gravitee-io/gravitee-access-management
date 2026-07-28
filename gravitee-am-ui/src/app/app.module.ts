@@ -261,6 +261,7 @@ import { EntrypointsResolver } from './resolvers/entrypoints.resolver';
 import { EntrypointResolver } from './resolvers/entrypoint.resolver';
 import { EntrypointService } from './services/entrypoint.service';
 import { CloudModeService } from './services/cloud-mode.service';
+import { PluginFeatureService } from './services/plugin-feature.service';
 import { EntrypointsComponent } from './settings/management/entrypoints/entrypoints.component';
 import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
 import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
@@ -316,6 +317,7 @@ import { DomainPermissionsResolver } from './resolvers/domain-permissions.resolv
 import { AuthGuard } from './guards/auth-guard.service';
 import { HasPermissionDirective } from './directives/has-permission.directive';
 import { HasAnyPermissionDirective } from './directives/has-any-permission.directive';
+import { LicenseGuardDirective } from './directives/license-guard.directive';
 import { AnalyticsService } from './services/analytics.service';
 import { DashboardComponent } from './domain/components/dashboard/dashboard.component';
 import { WidgetComponent } from './components/widget/widget.component';
@@ -724,6 +726,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     MembershipsDialogComponent,
     HasPermissionDirective,
     HasAnyPermissionDirective,
+    LicenseGuardDirective,
     IdenticonHashDirective,
     InfoBannerComponent,
     DashboardComponent,
@@ -948,6 +951,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     TagResolver,
     EntrypointService,
     CloudModeService,
+    PluginFeatureService,
     EntrypointsResolver,
     EntrypointResolver,
     PolicyService,

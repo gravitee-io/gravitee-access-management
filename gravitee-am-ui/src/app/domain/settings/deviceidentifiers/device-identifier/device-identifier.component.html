@@ -60,6 +60,7 @@
         <div fxLayout="row" *ngIf="editMode">
           <button
             mat-raised-button
+            [licenseGuard]="licenseOptions"
             [disabled]="
               (!deviceIdentifierForm.valid || deviceIdentifierForm.pristine) &&
               (!configurationIsValid || configurationPristine) &&
@@ -67,6 +68,7 @@
             "
             (click)="update()"
           >
+            <mat-icon *ngIf="isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
             SAVE
           </button>
         </div>

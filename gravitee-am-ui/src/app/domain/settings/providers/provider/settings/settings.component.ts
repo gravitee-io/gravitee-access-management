@@ -16,9 +16,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { ProviderService } from '../../../../../services/provider.service';
+import { PluginFeatureService } from '../../../../../services/plugin-feature.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import { DomainService } from '../../../../../services/domain.service';
@@ -50,6 +53,8 @@ export class ProviderSettingsComponent implements OnInit {
   customCode: string;
   domainWhitelistPattern: string;
   certificates: any[];
+  licenseOptions: LicenseOptions = {};
+  isMissingFeature$: Observable<boolean>;
   private datasources: any[];
 
   constructor(
@@ -62,12 +67,19 @@ export class ProviderSettingsComponent implements OnInit {
     private dialogService: DialogService,
     private entrypointService: EntrypointService,
     private dataSourcesService: DataSourcesService,
+    private pluginFeatureService: PluginFeatureService,
   ) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];
     this.datasources = this.route.snapshot.data['datasources'];
     this.provider = this.route.snapshot.data['provider'];
+    this.pluginFeatureService
+      .getFeature$('identity_provider', this.provider.type)
+      .subscribe((feature) => (this.licenseOptions = { feature }));
+    this.isMissingFeature$ = this.pluginFeatureService
+      .isMissingFeatureForType$('identity_provider', this.provider.type)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
     if (this.provider.system) {
       // settings tab is useless for system providers
       // define the mappers as default landing page in this case
