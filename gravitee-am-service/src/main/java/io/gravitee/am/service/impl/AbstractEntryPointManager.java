@@ -31,8 +31,10 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -108,6 +110,15 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
         return entrypoints.values().stream()
                 .filter(entrypoint -> environmentId != null && environmentId.equals(entrypoint.getEnvironmentId()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Entrypoint> resolvePrimaryByEnvironmentId(String environmentId) {
+        List<Entrypoint> resolved = findByEnvironmentId(environmentId);
+        if (resolved.size() > 1) {
+            log.warn("Environment {} resolves to {} entrypoints, building URLs from the first in URL order", environmentId, resolved.size());
+        }
+        return resolved.stream().min(Comparator.comparing(Entrypoint::getUrl));
     }
 
     @Override

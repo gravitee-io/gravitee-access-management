@@ -55,6 +55,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.util.StringUtils;
 
@@ -146,7 +147,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainReadServiceImpl(mock(), dataPlaneRegistry, "http://localhost:1234/unittest"),
+                new DomainReadServiceImpl(mock(), dataPlaneRegistry, mock(), new MockEnvironment(), "http://localhost:1234/unittest"),
                 i18nDictionaryService,
                 environment
         );
@@ -210,7 +211,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainReadServiceImpl(mock(), dataPlaneRegistry, "http://localhost:1234/default/unittest"),
+                new DomainReadServiceImpl(mock(), dataPlaneRegistry, mock(), new MockEnvironment(), "http://localhost:1234/default/unittest"),
                 i18nDictionaryService,
                 environment
         );

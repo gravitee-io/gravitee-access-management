@@ -19,6 +19,7 @@ import io.gravitee.am.model.Entrypoint;
 import io.gravitee.common.service.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * In-memory cache of entrypoints, loaded on startup and kept current through entrypoint events, so
@@ -55,4 +56,15 @@ public interface EntryPointManager extends Service<EntryPointManager> {
         List<Entrypoint> overriding = all.stream().filter(entrypoint -> !entrypoint.isDefaultEntrypoint()).toList();
         return overriding.isEmpty() ? all : overriding;
     }
+
+    /**
+     * The single entrypoint a user-facing URL should be built from for the given environment.
+     * <p>
+     * {@link #findByEnvironmentId(String)} can return several, since an environment may have more than
+     * one overriding access point, but a link needs exactly one. The lowest URL wins rather than the first
+     * in the list: the cache is a {@link java.util.concurrent.ConcurrentHashMap} whose iteration order is
+     * unspecified and varies with how many entrypoints a node holds, so "the first" would differ between
+     * the management API and a gateway and two emails for one environment could carry different hosts.
+     */
+    Optional<Entrypoint> resolvePrimaryByEnvironmentId(String environmentId);
 }

@@ -114,6 +114,18 @@ public class AbstractEntryPointManagerTest {
         return entrypoint;
     }
 
+    private static Entrypoint generatedEntrypoint(String id, String environmentId, String url) {
+        Entrypoint entrypoint = generatedEntrypoint(id, environmentId);
+        entrypoint.setUrl(url);
+        return entrypoint;
+    }
+
+    private static Entrypoint overridingEntrypoint(String id, String environmentId, String url) {
+        Entrypoint entrypoint = entrypoint(id, "org#1", environmentId);
+        entrypoint.setUrl(url);
+        return entrypoint;
+    }
+
     private static SimpleEvent<EntrypointEvent, Payload> event(EntrypointEvent type, String id) {
         return new SimpleEvent<>(type, new Payload(id, ReferenceType.ENVIRONMENT, "env#1", Action.CREATE));
     }
@@ -283,5 +295,47 @@ public class AbstractEntryPointManagerTest {
         cache(generatedEntrypoint("generated-1", "env#1"), generatedEntrypoint("generated-2", "env#1"));
 
         assertEquals(Set.of("generated-1", "generated-2"), idsOf(cut.findByEnvironmentId("env#1")));
+    }
+
+    @Test
+    public void shouldResolveNoPrimaryWhenEnvironmentHasNoEntrypoint() throws Exception {
+        cache(generatedEntrypoint("other-env-generated", "env#other", "https://other.gravitee.io"));
+
+        assertTrue(cut.resolvePrimaryByEnvironmentId("env#1").isEmpty());
+    }
+
+    @Test
+    public void shouldResolvePrimaryAsTheOnlyEntrypoint() throws Exception {
+        cache(generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));
+
+        assertEquals("https://generated.gravitee.io", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
+    }
+
+    @Test
+    public void shouldResolvePrimaryAsTheOverridingEntrypoint() throws Exception {
+        // The generated URL sorts first, so this fails if the default is not dropped before the tiebreak.
+        cache(generatedEntrypoint("generated", "env#1", "https://aaa-generated.gravitee.io"),
+                overridingEntrypoint("overriding", "env#1", "https://zzz.acme.com"));
+
+        assertEquals("overriding", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolvePrimaryFromTheLowestUrlWhenSeveralOverridingExist() throws Exception {
+        // Seeded highest URL first, so an implementation taking whatever the cache yields first would
+        // have to get lucky to pass.
+        cache(overridingEntrypoint("overriding-z", "env#1", "https://z.acme.com"),
+                overridingEntrypoint("overriding-a", "env#1", "https://a.acme.com"),
+                generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));
+
+        assertEquals("https://a.acme.com", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
+    }
+
+    @Test
+    public void shouldResolvePrimaryFromTheLowestUrlWhenEveryEntrypointIsFlaggedDefault() throws Exception {
+        cache(generatedEntrypoint("generated-2", "env#1", "https://b.gravitee.io"),
+                generatedEntrypoint("generated-1", "env#1", "https://a.gravitee.io"));
+
+        assertEquals("https://a.gravitee.io", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
     }
 }

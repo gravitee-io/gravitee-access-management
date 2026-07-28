@@ -17,31 +17,41 @@ package io.gravitee.am.service.impl.application;
 
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class DomainReadServiceImplTest {
+    private static final String ENVIRONMENT_ID = "env#1";
+
     private final DomainRepository domainRepository = mock();
     private final DataPlaneRegistry dataPlaneRegistry = mock();
-    private final DomainReadService underTest = new DomainReadServiceImpl(domainRepository, dataPlaneRegistry, "http://default:8092");
+    private final EntryPointManager entryPointManager = mock();
+    private final MockEnvironment springEnvironment = new MockEnvironment();
+    private final DomainReadService underTest = new DomainReadServiceImpl(domainRepository, dataPlaneRegistry, entryPointManager, springEnvironment, "http://default:8092");
 
     @BeforeEach
     public void init() {
@@ -147,7 +157,7 @@ class DomainReadServiceImplTest {
     @Test
     void shouldBuildUrl_vhostModeAndHttps() {
 
-        var underTest = new DomainReadServiceImpl(mock(), dataPlaneRegistry, "http://localhost:8092");
+        var underTest = new DomainReadServiceImpl(mock(), dataPlaneRegistry, entryPointManager, springEnvironment, "http://localhost:8092");
         when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "https://localhost:8092"));
 
 
@@ -169,6 +179,96 @@ class DomainReadServiceImplTest {
         String url = underTest.buildUrl(domain, "/mySubPath?myParam=param1");
 
         assertEquals("https://test2.gravitee.io/test2/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    void shouldBuildUrl_nonCloud_neverConsultsTheEntrypointManager() {
+        Domain domain = cloudDomain();
+
+        underTest.buildUrl(domain, "/mySubPath");
+
+        verifyNoInteractions(entryPointManager);
+    }
+
+    @Test
+    void shouldBuildUrl_cloud_usesEnvironmentEntrypoint() {
+        enableCloudMode();
+        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath?myParam=param1");
+
+        assertEquals("https://auth.acme.com/testPath/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    void shouldBuildUrl_cloud_stripsTrailingSlashFromEntrypoint() {
+        enableCloudMode();
+        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com/")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath");
+
+        assertEquals("https://auth.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    void shouldBuildUrl_cloud_noEntrypoint_fallsBackToDataPlaneUrl() {
+        enableCloudMode();
+        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath?myParam=param1");
+
+        assertEquals("http://localhost:8092/testPath/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    void shouldBuildUrl_cloud_noEntrypoint_nullDataPlaneUrl_fallsBackToConfiguredGatewayUrl() {
+        enableCloudMode();
+        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", null));
+        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath?myParam=param1");
+
+        assertEquals("http://default:8092/testPath/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    void shouldBuildUrl_cloud_vhostModeStillWins() {
+        // Unreachable in production: EnvironmentCommandHandler leaves domainRestrictions unset in managed
+        // cloud, so setDeployMode never turns vhost mode on, and AM-7228 blocks enabling it afterwards.
+        enableCloudMode();
+        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
+
+        Domain domain = cloudDomain();
+        domain.setVhostMode(true);
+        VirtualHost vhost = new VirtualHost();
+        vhost.setHost("legacy.gravitee.io");
+        vhost.setPath("/legacy");
+        vhost.setOverrideEntrypoint(true);
+        domain.setVhosts(new ArrayList<>(List.of(vhost)));
+
+        String url = underTest.buildUrl(domain, "/mySubPath");
+
+        assertEquals("https://legacy.gravitee.io/legacy/mySubPath", url);
+    }
+
+    private void enableCloudMode() {
+        springEnvironment.setProperty("cloud.enabled", "true");
+        springEnvironment.setProperty("installation.type", "managed");
+    }
+
+    private static Domain cloudDomain() {
+        Domain domain = new Domain();
+        domain.setPath("/testPath");
+        domain.setVhostMode(false);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        return domain;
+    }
+
+    private static Entrypoint entrypoint(String url) {
+        Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setUrl(url);
+        return entrypoint;
     }
 
 }
