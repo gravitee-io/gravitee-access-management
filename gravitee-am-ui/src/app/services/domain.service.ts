@@ -76,7 +76,10 @@ export class DomainService {
         if (entrypoints.length === 1) {
           entrypoint = entrypoints[0];
         } else {
-          entrypoint = entrypoints.filter((e) => !e.defaultEntrypoint)[0];
+          // In cloud mode an environment whose access points all arrive without Cockpit's `overriding`
+          // flag resolves to several entrypoints that are every one of them flagged default, so the
+          // filter can come back empty. Fall back rather than hand callers an undefined entrypoint.
+          entrypoint = entrypoints.filter((e) => !e.defaultEntrypoint)[0] ?? entrypoints[0];
         }
 
         return entrypoint;
