@@ -16,10 +16,13 @@
 package io.gravitee.am.gateway.handler.common.license;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.CustomLog;
 
@@ -31,14 +34,13 @@ import lombok.CustomLog;
  * and recorded in the domain state as unlicensed (readiness stays healthy). Outside managed cloud
  * mode the underlying {@link PluginLicenseGate} is a no-op and every plugin loads.
  * <p>
- * Blocking is acceptable here: checks run during domain (re)deployment on deployment threads,
- * and the gate is in-memory except the first domain-to-organization resolution, which is cached.
+ * The domain's organization is resolved <strong>once</strong>, when this bean initializes during the
+ * domain's deployment (on the sync deployment pool), and held as an organization {@link Reference}.
  *
  * @author GraviteeSource Team
  */
 @CustomLog
-public class DomainPluginLicenseGate {
-
+public class DomainPluginLicenseGate implements InitializingBean {
 
     @Autowired
     private Domain domain;
@@ -48,6 +50,29 @@ public class DomainPluginLicenseGate {
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private EnvironmentService environmentService;
+
+    private volatile Reference licenseReference;
+
+    @Override
+    public void afterPropertiesSet() {
+        // Resolve domain -> environment -> organization exactly once. This runs during the domain's
+        // Spring context refresh, on the sync deployment pool.
+        try {
+            final String organizationId = environmentService.findById(domain.getReferenceId())
+                    .map(Environment::getOrganizationId)
+                    .blockingGet();
+            if (organizationId != null && !organizationId.isBlank()) {
+                this.licenseReference = Reference.organization(organizationId);
+            } else {
+                log.warn("No organization resolved for domain {}; license checks will fail open", domain.getId());
+            }
+        } catch (Exception e) {
+            log.warn("Cannot resolve the organization of domain {}; license checks will fail open", domain.getId(), e);
+        }
+    }
 
     /**
      * Checks that an instance of the given plugin may be loaded for the current domain.
@@ -61,8 +86,12 @@ public class DomainPluginLicenseGate {
      * @return {@code true} when the plugin may be loaded, {@code false} when it is not licensed
      */
     public boolean check(String pluginType, String pluginId, String instanceId) {
+        if (licenseReference == null) {
+            return true;
+        }
         try {
-            pluginLicenseGate.check(Reference.domain(domain.getId()), pluginType, pluginId).blockingAwait();
+            // the underlying check resolves synchronously because the reference is already resolved to an organization
+            pluginLicenseGate.check(licenseReference, pluginType, pluginId).blockingAwait();
             return true;
         } catch (LicenseFeatureRequiredException e) {
             log.warn("Skipping {} '{}' [{}] for domain {}: {}", pluginType, instanceId, pluginId, domain.getId(), e.getMessage());
