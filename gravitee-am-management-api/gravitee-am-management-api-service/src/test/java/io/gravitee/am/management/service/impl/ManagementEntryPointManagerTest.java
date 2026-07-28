@@ -98,10 +98,10 @@ public class ManagementEntryPointManagerTest {
                 .thenReturn(Single.just(entrypoint), Single.error(new EntrypointNotFoundException("e1")));
 
         cut.onEvent(event(EntrypointEvent.DEPLOY));
-        assertEquals(List.of(entrypoint), cut.findByEnvironmentId("env#1"));
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
 
         cut.onEvent(event(EntrypointEvent.UPDATE));
-        assertTrue(cut.findByEnvironmentId("env#1").isEmpty());
+        assertTrue(cut.findAllByEnvironmentId("env#1").isEmpty());
     }
 
     @Test
@@ -111,9 +111,9 @@ public class ManagementEntryPointManagerTest {
         when(entrypointService.findById("e1", "org#1")).thenReturn(Single.just(entrypoint));
 
         cut.onEvent(event(EntrypointEvent.DEPLOY));
-        assertEquals(List.of(entrypoint), cut.findByEnvironmentId("env#1"));
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
 
         cut.onEvent(event(EntrypointEvent.UPDATE));
-        assertTrue(cut.findByEnvironmentId("env#1").isEmpty());
+        assertTrue(cut.findAllByEnvironmentId("env#1").isEmpty());
     }
 }

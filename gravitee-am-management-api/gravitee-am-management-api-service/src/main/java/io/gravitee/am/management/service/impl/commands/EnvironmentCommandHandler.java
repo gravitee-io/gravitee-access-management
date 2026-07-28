@@ -121,7 +121,7 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
 
         // Counter-intuitive but avoids introducing a field: the access point Cockpit generates itself is
         // the environment's *default* entrypoint, and the customer's overriding one is not. Resolution
-        // then drops the default whenever an override exists — see EntryPointManager#resolveByEnvironmentId.
+        // then drops the default whenever an override exists — see EntryPointManager#findByEnvironmentId.
         return entrypointService.create(organizationId, newEntrypoint, !accessPoint.isOverriding(), null).ignoreElement();
     }
 }

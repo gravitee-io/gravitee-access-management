@@ -812,9 +812,11 @@ public class DomainServiceImpl implements DomainService {
 
     private Single<List<Entrypoint>> listEnvironmentEntryPoint(Domain domain, String organizationId) {
         return Single.defer(() -> {
-            List<Entrypoint> environmentEntrypoints = entryPointManager.resolveByEnvironmentId(domain.getReferenceId());
+            List<Entrypoint> environmentEntrypoints = entryPointManager.findByEnvironmentId(domain.getReferenceId());
             if (environmentEntrypoints.isEmpty()) {
-                return organizationDefaultEntryPoint(domain, organizationId);
+                return getOrganizationDefaultEntrypoint(domain, organizationId)
+                        .<List<Entrypoint>>map(List::of)
+                        .defaultIfEmpty(List.of());
             }
             return Single.just(environmentEntrypoints);
         });
@@ -828,19 +830,16 @@ public class DomainServiceImpl implements DomainService {
      * the organization, environment-scoped rows included, and those are flagged default too — so its
      * "drop the defaults once something else matched" step could filter the whole list away.
      */
-    private Single<List<Entrypoint>> organizationDefaultEntryPoint(Domain domain, String organizationId) {
+    private Maybe<Entrypoint> getOrganizationDefaultEntrypoint(Domain domain, String organizationId) {
         return entrypointService.findAll(organizationId)
                 .filter(entrypoint -> entrypoint.getEnvironmentId() == null && entrypoint.isDefaultEntrypoint())
                 .firstElement()
                 .map(entrypoint -> {
                     ofNullable(this.dataPlaneRegistry.getDescription(domain).gatewayUrl())
                             .ifPresent(entrypoint::setUrl);
-                    return List.of(entrypoint);
+                    return entrypoint;
                 })
-                .switchIfEmpty(Single.fromCallable(() -> {
-                    log.warn("Organization {} has no default entrypoint; domain {} resolves to no entrypoint at all", organizationId, domain.getId());
-                    return List.<Entrypoint>of();
-                }));
+                .doOnComplete(() -> log.warn("Organization {} has no default entrypoint; domain {} resolves to no entrypoint at all", organizationId, domain.getId()));
     }
 
     private Single<Domain> createSystemScopes(Domain domain) {
