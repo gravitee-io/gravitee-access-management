@@ -1963,6 +1963,21 @@ public class DomainServiceTest {
     }
 
     @Test
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_noOrganizationDefault_returnsEmptyWithoutError() {
+        enableCloudMode();
+
+        final Domain mockDomain = cloudDomain();
+        when(entryPointManager.resolveByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        doReturn(Flowable.empty()).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        // createDefaults gives every organization a default entrypoint and the last-default guard stops
+        // it being removed, so this should be unreachable — it just must not blow up if it ever is.
+        subscriber.assertNoErrors();
+        subscriber.assertValue(List::isEmpty);
+    }
+
+    @Test
     public void shouldGetEntrypoint_cloud_severalEnvironmentEntrypoints_returnsThemAll() {
         enableCloudMode();
 
