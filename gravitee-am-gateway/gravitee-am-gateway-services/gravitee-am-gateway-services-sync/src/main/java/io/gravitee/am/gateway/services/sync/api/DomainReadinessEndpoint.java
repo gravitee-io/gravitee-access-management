@@ -120,6 +120,11 @@ public class DomainReadinessEndpoint implements ManagementEndpoint, Probe {
      * Attach the entrypoints the gateway has cached for this domain's environment. Entrypoints are
      * environment-scoped rather than per-domain, so we resolve the domain's environment from the
      * deployed domain registry and read that environment's entrypoints from the in-memory cache.
+     * <p>
+     * Deliberately reports the raw cache rather than
+     * {@link io.gravitee.am.service.EntryPointManager#resolveByEnvironmentId(String)}: this is a
+     * diagnostic surface, so it should show everything the gateway actually holds, not the subset
+     * user-facing URLs are built from.
      */
     private void enrichWithEntrypoints(String domainId, DomainState details) {
         Domain domain = securityDomainManager.get(domainId);
