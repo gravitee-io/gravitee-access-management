@@ -157,7 +157,7 @@ describe('Register User on domain', () => {
   });
 
   describe('Duplicate username rejection', () => {
-    it('should reject registration with a username that already exists', async () => {
+    it('should acknowledge registration with a username that already exists', async () => {
       const username = uniqueName('dup-user', true);
       const user = {
         firstName: faker.name.firstName(),
@@ -170,12 +170,12 @@ describe('Register User on domain', () => {
       // First registration should succeed
       await register(fixture.domain, user, 'success=registration_succeed', fixture.application.settings.oauth.clientId);
 
-      // Second registration with same username should fail
+      // Second registration with same username should fail but the status should be "succeed" to avoid account enumeration
       const duplicateUser = {
         ...user,
         email: faker.internet.email(), // different email, same username
       };
-      await register(fixture.domain, duplicateUser, 'error=registration_failed', fixture.application.settings.oauth.clientId);
+      await register(fixture.domain, duplicateUser, 'success=registration_succeed', fixture.application.settings.oauth.clientId);
 
       // Verify only one user exists with this username
       const foundUsers = await listUsers(fixture.domain.id, fixture.accessToken, username);
