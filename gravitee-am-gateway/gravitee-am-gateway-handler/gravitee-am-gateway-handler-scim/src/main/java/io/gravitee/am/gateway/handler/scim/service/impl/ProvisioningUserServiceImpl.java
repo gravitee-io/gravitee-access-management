@@ -449,7 +449,9 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                                 } else {
                                                                     return createPasswordHistory(domain, userToUpdate, rawPassword, principal, client)
                                                                             .switchIfEmpty(Single.just(new PasswordHistory()))
-                                                                            .flatMap(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)));
+                                                                            .flatMap(ph -> userProvider.findByUsername(userToUpdate.getUsername())
+                                                                                    .switchIfEmpty(Single.error(() -> new UserNotFoundException(userToUpdate.getUsername())))
+                                                                                    .flatMap(idpUser -> userProvider.update(idpUser.getId(), UserMapper.convert(userToUpdate))));
                                                                 }
                                                             });
                                                 })
@@ -569,7 +571,9 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
                         .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
-                        .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
+                        .flatMapCompletable(userProvider -> userProvider.findByUsername(user.getUsername())
+                                .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(user.getUsername())))
+                                .flatMapCompletable(idpUser -> userProvider.delete(idpUser.getId())))
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException || ex instanceof UserProviderNotFoundException) {
                                 // idp user does not exist, only remove AM user
