@@ -602,8 +602,11 @@ public class ProvisioningUserServiceTest {
         when(scimUser.isActive()).thenReturn(true);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        // the id resolved from the IdP is different from the (potentially stale) AM external id
+        when(idpUser.getId()).thenReturn("idp-resolved-id");
 
         UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(existingUser.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
@@ -621,7 +624,9 @@ public class ProvisioningUserServiceTest {
 
         verify(userRepository, times(1)).update(userCaptor.capture(), any());
         verify(userProvider, never()).create(any());
-        verify(userProvider).update(anyString(), any());
+        verify(userProvider).findByUsername(existingUser.getUsername());
+        // update must be called with the id resolved through findByUsername, not the stored external id
+        verify(userProvider).update(argThat(id -> id.equals(idpUser.getId()) && !id.equals(existingUser.getExternalId())), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
         verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
@@ -642,8 +647,11 @@ public class ProvisioningUserServiceTest {
         when(scimUser.isActive()).thenReturn(true);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        // the id resolved from the IdP is different from the (potentially stale) AM external id
+        when(idpUser.getId()).thenReturn("idp-resolved-id");
 
         UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(existingUser.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
@@ -660,10 +668,47 @@ public class ProvisioningUserServiceTest {
 
         verify(userRepository, times(1)).update(userCaptor.capture(), any());
         verify(userProvider, never()).create(any());
-        verify(userProvider).update(anyString(), any());
+        verify(userProvider).findByUsername(existingUser.getUsername());
+        // update must be called with the id resolved through findByUsername, not the stored external id
+        verify(userProvider).update(argThat(id -> id.equals(idpUser.getId()) && !id.equals(existingUser.getExternalId())), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
         verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldNotUpdateUser_idpUserNotFound() {
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getSource()).thenReturn("user-idp");
+        when(existingUser.getExternalId()).thenReturn("user-extid");
+        when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+
+        User scimUser = mock(User.class);
+        when(scimUser.isActive()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(existingUser.getUsername())).thenReturn(Maybe.empty());
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        // the idp user could not be resolved, so update must never be invoked; only the AM user is updated
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture(), any());
+        verify(userProvider).findByUsername(existingUser.getUsername());
+        verify(userProvider, never()).update(anyString(), any());
+        assertNull(userCaptor.getValue().getPassword());
     }
 
     @Test
@@ -844,11 +889,17 @@ public class ProvisioningUserServiceTest {
         io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
         when(endUser.getId()).thenReturn(userId);
         when(endUser.getExternalId()).thenReturn("user-external-id");
+        when(endUser.getUsername()).thenReturn("username");
         when(endUser.getSource()).thenReturn("user-idp");
         when(endUser.getReferenceId()).thenReturn(DOMAIN_ID);
         when(endUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        // the id resolved from the IdP is different from the (potentially stale) AM external id
+        when(idpUser.getId()).thenReturn("idp-resolved-id");
+
         UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(endUser.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.delete(any())).thenReturn(complete());
 
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
@@ -866,8 +917,45 @@ public class ProvisioningUserServiceTest {
         testObserver.assertComplete();
         verify(userRepository, times(1)).delete(userId);
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
-        verify(userProvider, times(1)).delete(anyString());
+
         verify(credentialService, times(1)).deleteByUserId(domain, userId);
+
+        verify(userProvider, times(1)).findByUsername(endUser.getUsername());
+        // delete must be called with the id resolved through findByUsername, not the stored external id
+        verify(userProvider, times(1)).delete(argThat(id -> id.equals(idpUser.getId()) && !id.equals(endUser.getExternalId())));
+    }
+
+    @Test
+    public void shouldDeleteUser_idpUserNotFound() {
+        final String userId = "userId";
+
+        io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
+        when(endUser.getId()).thenReturn(userId);
+        when(endUser.getExternalId()).thenReturn("user-external-id");
+        when(endUser.getUsername()).thenReturn("username");
+        when(endUser.getSource()).thenReturn("user-idp");
+        when(endUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(endUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(endUser.getUsername())).thenReturn(Maybe.empty());
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(userRepository.delete(userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
+        when(passwordHistoryService.deleteByUser(any(), eq(userId))).thenReturn(complete());
+        when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+        when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
+
+        // even though the idp user cannot be resolved, the AM user deletion must still proceed
+        var testObserver = userService.delete(userId, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        verify(userRepository, times(1)).delete(userId);
+        verify(userProvider, times(1)).findByUsername(endUser.getUsername());
+        verify(userProvider, never()).delete(any());
     }
 
     @Test
