@@ -160,7 +160,7 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
   };
 
   // preRegistration is only honoured when the payload deserializes into a GraviteeUser, which needs the
-  // custom schema URI both in `schemas` and as the key of the extension object (UserMapper:203).
+  // custom schema URI both in `schemas` and as the key of the extension object (see UserMapper).
   const createScimUser = async (email: string) => {
     const username = uniqueName('scimuser', true);
     const response = await performPost(
@@ -181,8 +181,8 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     return response.body;
   };
 
-  // Only the domain. The environment's entrypoints are Cockpit-owned and AM-7228 rejects deleting them
-  // in a managed installation, so attempting it only ever produces a 400 and a misleading warning.
+  // Only the domain. Entrypoints are Cockpit-owned and a managed installation rejects deleting them,
+  // so attempting it only ever produces a 400 and a misleading warning.
   const cleanup = async () => {
     await domainApi
       .deleteDomain({ organizationId, environmentId, domain: domain.id })

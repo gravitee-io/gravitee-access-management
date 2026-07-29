@@ -313,7 +313,6 @@ public class AbstractEntryPointManagerTest {
 
     @Test
     public void shouldResolvePrimaryAsTheOverridingEntrypoint() throws Exception {
-        // The generated URL sorts first, so this fails if the default is not dropped before the tiebreak.
         cache(generatedEntrypoint("generated", "env#1", "https://aaa-generated.gravitee.io"),
                 overridingEntrypoint("overriding", "env#1", "https://zzz.acme.com"));
 
@@ -322,8 +321,6 @@ public class AbstractEntryPointManagerTest {
 
     @Test
     public void shouldResolvePrimaryFromTheLowestUrlWhenSeveralOverridingExist() throws Exception {
-        // Seeded highest URL first, so an implementation taking whatever the cache yields first would
-        // have to get lucky to pass.
         cache(overridingEntrypoint("overriding-z", "env#1", "https://z.acme.com"),
                 overridingEntrypoint("overriding-a", "env#1", "https://a.acme.com"),
                 generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));

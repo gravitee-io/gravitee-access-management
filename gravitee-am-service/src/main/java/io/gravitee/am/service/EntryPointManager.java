@@ -41,15 +41,9 @@ public interface EntryPointManager extends Service<EntryPointManager> {
     /**
      * The entrypoints user-facing URLs should be built from for the given environment.
      * <p>
-     * Cockpit provisions one entrypoint per gateway access point; the access point it generates itself
-     * is flagged {@code defaultEntrypoint} and the customer's overriding one is not (see
-     * {@code EnvironmentCommandHandler}). So whenever an environment resolves to more than its default,
-     * the customer has an override and it wins.
-     * <p>
-     * Never narrows a non-empty environment down to nothing: when no entrypoint survives the filter —
-     * every one of them is flagged default, which is what an access point payload carrying no
-     * {@code overriding} field produces — the full list is returned instead. Callers dereference the
-     * URL of whatever comes back, so an empty result would break them.
+     * Cockpit's own access point is flagged {@code defaultEntrypoint} and the customer's overriding one
+     * is not, so the override wins whenever both are present. Falls back to the full list when every
+     * entrypoint is flagged default: callers dereference a URL, so an empty result would break them.
      */
     default List<Entrypoint> findByEnvironmentId(String environmentId) {
         List<Entrypoint> all = findAllByEnvironmentId(environmentId);
@@ -60,11 +54,9 @@ public interface EntryPointManager extends Service<EntryPointManager> {
     /**
      * The single entrypoint a user-facing URL should be built from for the given environment.
      * <p>
-     * {@link #findByEnvironmentId(String)} can return several, since an environment may have more than
-     * one overriding access point, but a link needs exactly one. The lowest URL wins rather than the first
-     * in the list: the cache is a {@link java.util.concurrent.ConcurrentHashMap} whose iteration order is
-     * unspecified and varies with how many entrypoints a node holds, so "the first" would differ between
-     * the management API and a gateway and two emails for one environment could carry different hosts.
+     * The lowest URL wins rather than the first in the list. Cache iteration order is unspecified and the
+     * management API and gateway hold separate caches, so "the first" could differ between planes and two
+     * emails for one environment could carry different hosts.
      */
     Optional<Entrypoint> resolvePrimaryByEnvironmentId(String environmentId);
 }

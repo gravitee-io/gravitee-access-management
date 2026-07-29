@@ -823,12 +823,11 @@ public class DomainServiceImpl implements DomainService {
     }
 
     /**
-     * The environment has no entrypoint yet — Cockpit has not synced it. Fall back to the organization's
-     * own default entrypoint carrying the data-plane gateway url, as the organization resolution does.
+     * Fallback for an environment Cockpit has not synced an entrypoint for yet: the organization's own
+     * default entrypoint, carrying the data-plane gateway url.
      * <p>
-     * Deliberately does not call {@link #listOrganizationEntryPoint}: that one reads every entrypoint in
-     * the organization, environment-scoped rows included, and those are flagged default too — so its
-     * "drop the defaults once something else matched" step could filter the whole list away.
+     * Not {@link #listOrganizationEntryPoint}, which also reads environment-scoped rows; those are
+     * flagged default too, so its "drop the defaults once something else matched" step can empty the list.
      */
     private Maybe<Entrypoint> getOrganizationDefaultEntrypoint(Domain domain, String organizationId) {
         return entrypointService.findAll(organizationId)

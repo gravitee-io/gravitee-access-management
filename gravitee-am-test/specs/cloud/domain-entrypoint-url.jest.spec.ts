@@ -55,9 +55,6 @@ const domainEntrypointUrls = async (): Promise<string[]> => {
 // not the internal data-plane gateway URL. retryUntil covers the management API sync-tick cache latency.
 describe('Cloud domain entrypoint URL (management API)', () => {
   it('resolves every access point when none of them is the customer override', async () => {
-    // The fixture provisions two GATEWAY access points with no `overriding` flag, so both are stored
-    // as the environment's default entrypoint. Nothing can be dropped without emptying the list, so
-    // the endpoint returns them both — never nothing.
     const urls = await retryUntil(
       () => domainEntrypointUrls(),
       (resolved) => resolved.length === fixture.expectedUrls.length,
@@ -75,8 +72,6 @@ describe('Cloud domain entrypoint URL (management API)', () => {
       { host: overridingHost, overriding: true },
     ]);
 
-    // This is the whole point of the flag: Cockpit's `overriding` bit has to survive the wire into
-    // AM, or the generated host would be resolved instead.
     const urls = await retryUntil(
       () => domainEntrypointUrls(),
       (resolved) => resolved.length === 1 && resolved[0] === `https://${overridingHost}`,
@@ -95,7 +90,6 @@ describe('Cloud domain entrypoint URL (management API)', () => {
       { host: second, overriding: true },
     ]);
 
-    // Nothing is the generated default here, so there is nothing to drop and both are returned.
     const expected = [`https://${first}`, `https://${second}`].sort();
     const urls = await retryUntil(() => domainEntrypointUrls(), (resolved) => resolved.length === 2, POLL);
 
