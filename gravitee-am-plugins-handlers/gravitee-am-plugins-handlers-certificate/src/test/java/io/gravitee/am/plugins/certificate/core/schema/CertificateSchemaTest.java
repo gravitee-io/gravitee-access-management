@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.plugins.certificate.core.schema;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.security.cert.CertificateException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,5 +47,57 @@ public class CertificateSchemaTest {
         Optional<String> fileKey = schema.getFileKey();
         Assertions.assertTrue(fileKey.isEmpty());
     }
-  
+
+    @Test
+    void shouldIgnoreUnknownPropertiesLikeAllOf() throws Exception {
+        var json = """
+                {
+                    "type": "object",
+                    "id": "urn:jsonschema:io:gravitee:am:certificate:oci:OCIConfiguration",
+                    "description": "OCI certificate",
+                    "properties": {
+                        "authMethod": { "type": "string", "title": "Authentication method" },
+                        "privateKey": { "type": "string", "widget": "file" }
+                    },
+                    "required": ["authMethod"],
+                    "allOf": [
+                        {
+                            "if": {
+                                "properties": { "authMethod": { "const": "API_PRIVATE_KEY" } },
+                                "required": ["authMethod"]
+                            },
+                            "then": {
+                                "properties": {
+                                    "tenancyOcid": { "minLength": 1 },
+                                    "userOcid": { "minLength": 1 },
+                                    "fingerprint": { "minLength": 1 },
+                                    "region": { "minLength": 1 },
+                                    "privateKey": { "minLength": 1 }
+                                },
+                                "required": ["tenancyOcid", "userOcid", "fingerprint", "region", "privateKey"]
+                            }
+                        },
+                        {
+                            "if": {
+                                "properties": { "authMethod": { "const": "CONFIG_FILE" } },
+                                "required": ["authMethod"]
+                            },
+                            "then": {
+                                "properties": { "configFilePath": { "minLength": 1 } },
+                                "required": ["configFilePath"]
+                            }
+                        }
+                    ]
+                }
+                """;
+
+        var schema = new ObjectMapper().readValue(json, CertificateSchema.class);
+
+        assertEquals("object", schema.getType());
+        assertEquals(List.of("authMethod"), schema.getRequired());
+        assertEquals(2, schema.getProperties().size());
+        assertEquals("file", schema.getProperties().get("privateKey").getWidget());
+        assertEquals(Optional.of("privateKey"), schema.getFileKey());
+    }
+
 }
