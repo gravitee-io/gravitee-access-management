@@ -32,13 +32,15 @@ setup(200000);
 describe('AM - Cloud - entrypoint url in email links', () => {
   let fixture: CloudEmailFixture;
   let expectedOrigin: string;
+  let generatedOrigin: string;
 
   beforeAll(async () => {
     const accessToken = await requestAdminAccessToken();
     fixture = await setupCloudEmailFixture(accessToken);
     // Through URL rather than string concatenation: uniqueName produces mixed case and hostnames are
     // case-insensitive, so both sides have to be normalised the same way.
-    expectedOrigin = new URL(`https://${fixture.entrypointHost}`).origin;
+    expectedOrigin = new URL(`https://${fixture.overridingHost}`).origin;
+    generatedOrigin = new URL(`https://${fixture.entrypointHost}`).origin;
   });
 
   afterAll(async () => {
@@ -84,5 +86,29 @@ describe('AM - Cloud - entrypoint url in email links', () => {
     const link = (await getLastEmail(5000, email)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
     await clearEmails(email);
+  });
+
+  it('builds the reset password link from the host the user reached the gateway on', async () => {
+    // The generated access point is a real host for this environment but not the one the request-less
+    // flows above resolve to, so seeing it here is only possible if the request decided it.
+    await clearEmails(fixture.resetPasswordUserEmail);
+
+    await fixture.requestForgotPassword(fixture.entrypointHost);
+
+    const link = (await getLastEmail(5000, fixture.resetPasswordUserEmail)).extractLink();
+    expect(new URL(link).origin).toEqual(generatedOrigin);
+    await clearEmails(fixture.resetPasswordUserEmail);
+  });
+
+  it('ignores a request host that is not one of the environment entrypoints', async () => {
+    // A forged Host must not steer the link, the reset token travels in its query string.
+    await clearEmails(fixture.resetPasswordUserEmail);
+
+    await fixture.requestForgotPassword('evil.example.com');
+
+    const link = (await getLastEmail(5000, fixture.resetPasswordUserEmail)).extractLink();
+    expect(new URL(link).origin).toEqual(expectedOrigin);
+    expect(link).not.toContain('evil.example.com');
+    await clearEmails(fixture.resetPasswordUserEmail);
   });
 });
