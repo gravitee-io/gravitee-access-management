@@ -561,13 +561,19 @@ public class ManagementUserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setExternalId("ext-user-id");
+        user.setUsername("john.doe");
         user.setSource("idp-id");
         user.setReferenceId("domain");
         user.setReferenceType(ReferenceType.DOMAIN);
 
         when(userRepository.findById(any(Reference.class), any(UserId.class))).thenReturn(Maybe.just(user));
 
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        // the id resolved from the IdP is different from the (potentially stale) AM external id
+        when(idpUser.getId()).thenReturn("idp-resolved-id");
+
         UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.delete(any())).thenReturn(Completable.complete());
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userActivityManagementService.deleteByDomainAndUser(any(), any())).thenReturn(Completable.complete());
@@ -586,9 +592,49 @@ public class ManagementUserServiceTest {
         // Verify that WebAuthn credentials are deleted
         verify(credentialService, times(1)).deleteByUserId(domain, user.getId());
 
+        verify(userProvider).findByUsername(user.getUsername());
+        // delete must be called with the id resolved through findByUsername, not the stored external id
+        verify(userProvider).delete(argThat(id -> id.equals(idpUser.getId()) && !id.equals(user.getExternalId())));
         verify(tokenService).deleteByUser(any(), any());
         verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus() == Status.SUCCESS));
         verify(eventService).create(argThat(arg -> arg.getType() == Type.USER && arg.getPayload().getId().equals(user.getId())));
+    }
+
+    @Test
+    void should_delete_user_when_idp_user_not_found() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setExternalId("ext-user-id");
+        user.setUsername("john.doe");
+        user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        when(userRepository.findById(any(Reference.class), any(UserId.class))).thenReturn(Maybe.just(user));
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userActivityManagementService.deleteByDomainAndUser(any(), any())).thenReturn(Completable.complete());
+        when(userRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
+        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
+
+        // even though the idp user cannot be resolved, the AM user deletion must still proceed
+        userService.delete(domain, user.getId(), null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(userProvider).findByUsername(user.getUsername());
+        verify(userProvider, never()).delete(any());
+        verify(userRepository).delete(user.getId());
     }
 
     @Test
