@@ -198,7 +198,6 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
                     // get raw email template
                     io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
                     // prepare email
-                    // Staged emails are sent well after the request that queued them, so there is no origin.
                     email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap(), null);
 
                     return container.with(prepareEmailToSend(email, container.user()));

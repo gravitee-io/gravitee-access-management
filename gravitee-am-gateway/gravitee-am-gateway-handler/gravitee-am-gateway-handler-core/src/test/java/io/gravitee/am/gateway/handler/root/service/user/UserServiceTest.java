@@ -748,7 +748,6 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUser(any());
-        // The email goes out on its own thread, so this is what proves the origin survived the hop.
         verify(emailService, timeout(2000)).send(any(), any(), any(), any(), eq("https://auth.acme.com"));
         verify(auditService).report(argThat(builder -> {
             final Audit audit = builder.build(new ObjectMapper());

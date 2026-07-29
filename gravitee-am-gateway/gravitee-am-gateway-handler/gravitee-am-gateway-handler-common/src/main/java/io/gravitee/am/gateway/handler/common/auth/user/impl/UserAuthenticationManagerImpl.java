@@ -240,11 +240,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         String username = ofNullable(authentication.getContext())
                 .map(ctx -> (String) ctx.get(ACTUAL_USERNAME))
                 .orElse(authentication.getPrincipal().toString());
-        // Carried down for the blocked account email, which links back to reset password.
+
         String requestOrigin = ofNullable(authentication.getContext())
                 .map(AuthenticationContext::request)
                 .map(UriBuilderRequest::resolveOrigin)
                 .orElse(null);
+
         return postAuthentication(client, username, source, userAuthentication, requestOrigin);
     }
 

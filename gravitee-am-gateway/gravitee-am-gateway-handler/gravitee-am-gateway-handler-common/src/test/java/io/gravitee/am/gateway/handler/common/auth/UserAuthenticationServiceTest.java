@@ -1235,7 +1235,6 @@ public class UserAuthenticationServiceTest {
         verify(userService).update(argThat(updatedUser -> !updatedUser.isAccountNonLocked()
                 && updatedUser.getAccountLockedAt() != null
                 && updatedUser.getAccountLockedUntil() != null));
-        // The email goes out on its own thread, so this is what proves the origin survived the hop.
         verify(emailService, timeout(1000)).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client), any(), eq("https://auth.acme.com"));
     }
 

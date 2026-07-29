@@ -19,7 +19,6 @@ process.env.AM_GATEWAY_URL = 'http://localhost:8092';
 process.env.AM_DOMAIN_DATA_PLANE_ID = 'default';
 process.env.AM_INTERNAL_GATEWAY_URL = 'http://localhost:8092';
 process.env.AM_MONGODB_URI = 'mongodb://localhost:27017';
-// Handed to identity providers the gateway resolves from inside docker, so it cannot be localhost.
 process.env.AM_INTERNAL_MONGODB_URI = 'mongodb://mongodb:27017';
 process.env.AM_POSTGRES_HOST = 'localhost';
 process.env.AM_GATEWAY_NODE_MONITORING_URL = 'http://localhost:18092/_node';

@@ -235,13 +235,16 @@ public class UriBuilderRequest {
             LOGGER.warn("Unable to resolve the request origin from the forwarding headers");
             return null;
         }
+
         if (baseUri.getScheme() == null || baseUri.getHost() == null) {
             return null;
         }
+
         StringBuilder origin = new StringBuilder().append(baseUri.getScheme()).append("://").append(baseUri.getHost());
         if (baseUri.getPort() >= 0) {
             origin.append(':').append(baseUri.getPort());
         }
+
         return origin.toString();
     }
 
@@ -253,6 +256,7 @@ public class UriBuilderRequest {
         if (request == null) {
             return null;
         }
+
         return resolveOrigin(new HttpServerRequest(new GraviteeVertxHttpServerRequest(request)));
     }
 

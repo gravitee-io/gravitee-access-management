@@ -56,10 +56,6 @@ public class ForgotPasswordParameters {
         this.requestOrigin = requestOrigin;
     }
 
-    /**
-     * The origin the user submitted the form on, carried through to the reset email because the send
-     * happens on its own thread with no request in scope. See AM-7230.
-     */
     public ForgotPasswordParameters withRequestOrigin(String requestOrigin) {
         return new ForgotPasswordParameters(email, username, customFormEnabled, confirmIdentityEnabled, requestOrigin);
     }

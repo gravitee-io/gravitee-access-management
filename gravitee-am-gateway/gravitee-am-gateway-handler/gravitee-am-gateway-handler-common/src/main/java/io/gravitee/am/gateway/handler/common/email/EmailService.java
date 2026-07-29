@@ -41,10 +41,6 @@ public interface EmailService {
         this.send(template, user, client, queryParams, null);
     }
 
-    /**
-     * @param requestOrigin the origin the end user reached the gateway on, or null when the flow has no
-     *                      end-user request to take one from. See AM-7230.
-     */
     void send(Template template, User user, Client client, MultiMap queryParams, String requestOrigin);
 
     void asyncSend(Template template, User user, Client client, MultiMap queryParams);
