@@ -301,14 +301,14 @@ public class AbstractEntryPointManagerTest {
     public void shouldResolveNoPrimaryWhenEnvironmentHasNoEntrypoint() throws Exception {
         cache(generatedEntrypoint("other-env-generated", "env#other", "https://other.gravitee.io"));
 
-        assertTrue(cut.resolvePrimaryByEnvironmentId("env#1").isEmpty());
+        assertTrue(cut.findPrimaryByEnvironmentId("env#1").isEmpty());
     }
 
     @Test
     public void shouldResolvePrimaryAsTheOnlyEntrypoint() throws Exception {
         cache(generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));
 
-        assertEquals("https://generated.gravitee.io", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
+        assertEquals("https://generated.gravitee.io", cut.findPrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
     }
 
     @Test
@@ -316,7 +316,7 @@ public class AbstractEntryPointManagerTest {
         cache(generatedEntrypoint("generated", "env#1", "https://aaa-generated.gravitee.io"),
                 overridingEntrypoint("overriding", "env#1", "https://zzz.acme.com"));
 
-        assertEquals("overriding", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getId());
+        assertEquals("overriding", cut.findPrimaryByEnvironmentId("env#1").orElseThrow().getId());
     }
 
     @Test
@@ -325,7 +325,7 @@ public class AbstractEntryPointManagerTest {
                 overridingEntrypoint("overriding-a", "env#1", "https://a.acme.com"),
                 generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));
 
-        assertEquals("https://a.acme.com", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
+        assertEquals("https://a.acme.com", cut.findPrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
     }
 
     @Test
@@ -333,6 +333,6 @@ public class AbstractEntryPointManagerTest {
         cache(generatedEntrypoint("generated-2", "env#1", "https://b.gravitee.io"),
                 generatedEntrypoint("generated-1", "env#1", "https://a.gravitee.io"));
 
-        assertEquals("https://a.gravitee.io", cut.resolvePrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
+        assertEquals("https://a.gravitee.io", cut.findPrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
     }
 }

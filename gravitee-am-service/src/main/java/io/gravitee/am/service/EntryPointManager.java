@@ -58,5 +58,5 @@ public interface EntryPointManager extends Service<EntryPointManager> {
      * management API and gateway hold separate caches, so "the first" could differ between planes and two
      * emails for one environment could carry different hosts.
      */
-    Optional<Entrypoint> resolvePrimaryByEnvironmentId(String environmentId);
+    Optional<Entrypoint> findPrimaryByEnvironmentId(String environmentId);
 }
