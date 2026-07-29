@@ -315,6 +315,32 @@ class DomainReadServiceImplTest {
     }
 
     @Test
+    public void shouldBuildUrl_cloud_requestOriginOnADifferentSchemeIsRejected() {
+        // Same host over plain http is a different origin, so it must not unlock the entrypoint. The
+        // primary is a different host on purpose: it is what tells a rejection apart from a match.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://primary.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "http://custom.acme.com");
+
+        assertEquals("https://primary.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginOnADifferentPortIsRejected() {
+        // The default-port normalisation must not collapse into "ports do not matter": an entrypoint on
+        // 8443 is not the origin of a request that resolved to 443.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com:8443")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://primary.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://primary.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
     public void shouldBuildUrl_cloud_noMatchingEntrypointFallsBackToTheFirstCustomHost() {
         enableCloudMode();
         when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
