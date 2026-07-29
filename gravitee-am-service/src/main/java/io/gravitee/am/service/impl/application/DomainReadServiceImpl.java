@@ -127,7 +127,7 @@ public class DomainReadServiceImpl implements DomainReadService {
     // and until Cockpit has synced one, the data plane url stands.
     private String resolveEntryPoint(Domain domain) {
         if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
-            Optional<String> entrypointUrl = entryPointManager.resolvePrimaryByEnvironmentId(domain.getReferenceId())
+            Optional<String> entrypointUrl = entryPointManager.findPrimaryByEnvironmentId(domain.getReferenceId())
                     .map(Entrypoint::getUrl);
             if (entrypointUrl.isPresent()) {
                 return entrypointUrl.get();

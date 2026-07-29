@@ -193,7 +193,7 @@ class DomainReadServiceImplTest {
     @Test
     void shouldBuildUrl_cloud_usesEnvironmentEntrypoint() {
         enableCloudMode();
-        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
 
         String url = underTest.buildUrl(cloudDomain(), "/mySubPath?myParam=param1");
 
@@ -203,7 +203,7 @@ class DomainReadServiceImplTest {
     @Test
     void shouldBuildUrl_cloud_stripsTrailingSlashFromEntrypoint() {
         enableCloudMode();
-        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com/")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com/")));
 
         String url = underTest.buildUrl(cloudDomain(), "/mySubPath");
 
@@ -213,7 +213,7 @@ class DomainReadServiceImplTest {
     @Test
     void shouldBuildUrl_cloud_noEntrypoint_fallsBackToDataPlaneUrl() {
         enableCloudMode();
-        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
 
         String url = underTest.buildUrl(cloudDomain(), "/mySubPath?myParam=param1");
 
@@ -224,7 +224,7 @@ class DomainReadServiceImplTest {
     void shouldBuildUrl_cloud_noEntrypoint_nullDataPlaneUrl_fallsBackToConfiguredGatewayUrl() {
         enableCloudMode();
         when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", null));
-        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
 
         String url = underTest.buildUrl(cloudDomain(), "/mySubPath?myParam=param1");
 
@@ -236,7 +236,7 @@ class DomainReadServiceImplTest {
         // Unreachable in production: managed cloud leaves domainRestrictions unset, so vhost mode never
         // turns on. Pinned so the precedence is defined if that ever changes.
         enableCloudMode();
-        when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
 
         Domain domain = cloudDomain();
         domain.setVhostMode(true);

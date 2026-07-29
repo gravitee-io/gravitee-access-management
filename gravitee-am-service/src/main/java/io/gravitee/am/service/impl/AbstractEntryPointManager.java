@@ -113,7 +113,7 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
     }
 
     @Override
-    public Optional<Entrypoint> resolvePrimaryByEnvironmentId(String environmentId) {
+    public Optional<Entrypoint> findPrimaryByEnvironmentId(String environmentId) {
         List<Entrypoint> resolved = findByEnvironmentId(environmentId);
         if (resolved.size() > 1) {
             log.warn("Environment {} resolves to {} entrypoints, building URLs from the first in URL order", environmentId, resolved.size());
