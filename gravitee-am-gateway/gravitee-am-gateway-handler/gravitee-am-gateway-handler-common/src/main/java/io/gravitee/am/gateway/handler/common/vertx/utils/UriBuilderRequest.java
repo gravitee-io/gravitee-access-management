@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.gateway.api.Request;
 import io.vertx.core.MultiMap;
+import jakarta.annotation.Nullable;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -225,7 +226,7 @@ public class UriBuilderRequest {
      * Carries no path: callers compare it against configured entrypoints and vhosts, which are hosts
      * rather than URLs, so neither the request path nor {@code X-Forwarded-Prefix} belongs in it.
      */
-    public static String resolveOrigin(HttpServerRequest request) {
+    public static @Nullable String resolveOrigin(HttpServerRequest request) {
         final URI baseUri;
         try {
             baseUri = URI.create(resolveProxyRequest(request, "/", (MultiMap) null, false));
@@ -252,7 +253,7 @@ public class UriBuilderRequest {
      * As {@link #resolveOrigin(HttpServerRequest)}, for the flows that carry the gateway request rather
      * than the Vert.x one. Null request means no origin, same as a request we cannot parse.
      */
-    public static String resolveOrigin(Request request) {
+    public static @Nullable String resolveOrigin(Request request) {
         if (request == null) {
             return null;
         }

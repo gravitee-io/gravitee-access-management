@@ -29,6 +29,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.MultiMap;
+import jakarta.annotation.Nullable;
 import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -36,6 +37,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,7 +90,7 @@ public class DomainReadServiceImpl implements DomainReadService {
     }
 
     @Override
-    public String buildUrl(Domain domain, String path, MultiMap queryParams, String requestOrigin) {
+    public String buildUrl(Domain domain, String path, MultiMap queryParams, @Nullable String requestOrigin) {
         String entryPoint = resolveEntryPoint(domain, requestOrigin);
 
         if (entryPoint != null && entryPoint.endsWith("/")) {
@@ -126,7 +128,7 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     // In managed cloud the environment's entrypoint is this domain's gateway hostname; everywhere else,
     // and until Cockpit has synced one, the data plane url stands.
-    private String resolveEntryPoint(Domain domain, String requestOrigin) {
+    private String resolveEntryPoint(Domain domain, @Nullable String requestOrigin) {
         if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
             Optional<String> entrypointUrl = matchingEntrypoint(domain, requestOrigin)
                     .or(() -> entryPointManager.findPrimaryByEnvironmentId(domain.getReferenceId()))
@@ -145,13 +147,16 @@ public class DomainReadServiceImpl implements DomainReadService {
      * Only ever returns a stored entrypoint, never the caller's string: an unrecognised origin is a
      * forged {@code Host} header away from mailing a password-reset token to somebody else's domain.
      */
-    private Optional<Entrypoint> matchingEntrypoint(Domain domain, String requestOrigin) {
+    private Optional<Entrypoint> matchingEntrypoint(Domain domain, @Nullable String requestOrigin) {
         if (requestOrigin == null || requestOrigin.isBlank()) {
             return Optional.empty();
         }
+        // The lowest url wins rather than the first, for the same reason findPrimaryByEnvironmentId picks
+        // that way: cache iteration order is unspecified, so two entrypoints sharing an origin would
+        // otherwise mail different hosts from one environment.
         Optional<Entrypoint> matched = entryPointManager.findAllByEnvironmentId(domain.getReferenceId()).stream()
                 .filter(entrypoint -> sameOrigin(entrypoint.getUrl(), requestOrigin))
-                .findFirst();
+                .min(Comparator.comparing(Entrypoint::getUrl));
         if (matched.isEmpty()) {
             // Either a forged host or an entrypoint the environment never synced, and the two look the
             // same from here. Worth saying out loud, because the fallback link silently differs from

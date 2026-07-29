@@ -21,6 +21,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.Request;
+import jakarta.annotation.Nullable;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -83,7 +84,7 @@ public interface UserAuthenticationService {
      *                      resolves its url the same way the reset password flow does. See AM-7230.
      * @return
      */
-    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user, String requestOrigin);
+    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user, @Nullable String requestOrigin);
 
     default Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user) {
         return lockAccount(criteria, accountSettings, client, user, null);

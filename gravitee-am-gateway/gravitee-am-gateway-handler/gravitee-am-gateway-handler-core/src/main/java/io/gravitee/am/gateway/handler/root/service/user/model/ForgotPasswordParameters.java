@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.service.user.model;
 
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import jakarta.annotation.Nullable;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -56,11 +57,11 @@ public class ForgotPasswordParameters {
         this.requestOrigin = requestOrigin;
     }
 
-    public ForgotPasswordParameters withRequestOrigin(String requestOrigin) {
+    public ForgotPasswordParameters withRequestOrigin(@Nullable String requestOrigin) {
         return new ForgotPasswordParameters(email, username, customFormEnabled, confirmIdentityEnabled, requestOrigin);
     }
 
-    public String getRequestOrigin() {
+    public @Nullable String getRequestOrigin() {
         return requestOrigin;
     }
 
