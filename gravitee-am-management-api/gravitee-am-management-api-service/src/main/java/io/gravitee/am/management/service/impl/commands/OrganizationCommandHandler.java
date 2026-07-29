@@ -75,10 +75,12 @@ public class OrganizationCommandHandler implements CommandHandler<OrganizationCo
                     .collect(Collectors.toList()));
         }
 
+        final boolean licensePresent = organizationPayload.license() != null;
+
         return organizationService.createOrUpdate(organizationPayload.id(), newOrganization, null)
                 .map(organization -> new OrganizationReply(command.getId()))
-                .doOnSuccess(reply -> log.info("Organization [{}] handled with id [{}].", organizationPayload.name(), organizationPayload.id()))
-                .doOnError(error -> log.error("Error occurred when handling organization [{}] with id [{}].", organizationPayload.name(), organizationPayload.id(), error))
+                .doOnSuccess(reply -> log.info("Organization [{}] handled with id [{}]. commandId={}, licensePresent={}", organizationPayload.name(), organizationPayload.id(), command.getId(), licensePresent))
+                .doOnError(error -> log.error("Error occurred when handling organization [{}] with id [{}]. commandId={}, licensePresent={}", organizationPayload.name(), organizationPayload.id(), command.getId(), licensePresent, error))
                 .onErrorReturn(throwable -> new OrganizationReply(command.getId(), throwable.getMessage()));
     }
 }

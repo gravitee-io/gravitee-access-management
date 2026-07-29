@@ -118,6 +118,7 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
 
     private void undeploy(String organizationId) {
         licenseManager.registerOrganizationLicense(organizationId, null);
+        log.info("License deregistered for organization={}", organizationId);
     }
 
     private void register(String organizationId, String rawLicense) {
@@ -126,6 +127,7 @@ public class GatewayOrganizationLicenseManager extends AbstractService<GatewayOr
             // the factory only throws on undecodable input (e.g. a corrupted persisted row)
             licenseManager.registerOrganizationLicense(organizationId,
                     licenseFactory.create(ReferenceType.ORGANIZATION.name(), organizationId, rawLicense));
+            log.info("License registered for organization={}", organizationId);
         } catch (Exception e) {
             log.warn("License cannot be registered for organization={}", organizationId, e);
         }

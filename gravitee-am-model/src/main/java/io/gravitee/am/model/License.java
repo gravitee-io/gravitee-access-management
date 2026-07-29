@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Date;
 
@@ -26,6 +27,7 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 @Data
+@ToString(exclude = "license")
 public class License {
 
     private String referenceId;
