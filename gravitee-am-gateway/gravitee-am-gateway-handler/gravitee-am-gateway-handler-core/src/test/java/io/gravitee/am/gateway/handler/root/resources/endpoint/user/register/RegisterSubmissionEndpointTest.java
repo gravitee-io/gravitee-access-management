@@ -123,7 +123,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldFail_UserAlreadyExistsException() throws Exception {
+    public void shouldReturnSuccess_UserAlreadyExistsException() throws Exception {
         Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
@@ -142,7 +142,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/register?client_id=client-id&error=registration_failed"));
+                    assertTrue(location.endsWith("/register?client_id=client-id&success=registration_succeed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
