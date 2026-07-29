@@ -160,6 +160,75 @@ public class OrganizationUserServiceTest {
         verify(membershipService, times(3)).delete(any(), anyString());
     }
 
+    @Test
+    public void shouldDeleteUser_resolveIdpUserIdViaFindByUsername() {
+        String organization = "DEFAULT";
+        String userId = "user-id";
+        User user = new User();
+        user.setId(userId);
+        user.setExternalId("ext-user-id");
+        user.setUsername("john.doe");
+        user.setSource("source-idp");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        // the id resolved from the IdP is different from the (potentially stale) AM external id
+        when(idpUser.getId()).thenReturn("idp-resolved-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.delete(any())).thenReturn(Completable.complete());
+
+        when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
+        when(membershipService.findByMember(any(), any())).thenReturn(Flowable.empty());
+
+        organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(userProvider).findByUsername(user.getUsername());
+        // delete must be called with the id resolved through findByUsername, not the stored external id
+        verify(userProvider).delete(argThat(id -> id.equals(idpUser.getId()) && !id.equals(user.getExternalId())));
+        verify(commonUserService, times(1)).delete(any());
+    }
+
+    @Test
+    public void shouldDeleteUser_whenIdpUserNotFound() {
+        String organization = "DEFAULT";
+        String userId = "user-id";
+        User user = new User();
+        user.setId(userId);
+        user.setExternalId("ext-user-id");
+        user.setUsername("john.doe");
+        user.setSource("source-idp");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
+
+        when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
+        when(membershipService.findByMember(any(), any())).thenReturn(Flowable.empty());
+
+        // even though the idp user cannot be resolved, the AM user deletion must still proceed
+        organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(userProvider).findByUsername(user.getUsername());
+        verify(userProvider, never()).delete(any());
+        verify(commonUserService, times(1)).delete(any());
+    }
+
     private NewOrganizationUser newOrganizationUser() {
         NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setUsername("userid");
