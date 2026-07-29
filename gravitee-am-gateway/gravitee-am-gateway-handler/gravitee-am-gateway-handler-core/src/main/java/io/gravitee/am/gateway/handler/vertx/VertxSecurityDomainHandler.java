@@ -42,6 +42,7 @@ import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authenticator.core.AuthenticatorPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
@@ -89,6 +90,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     @Autowired
     private DomainPluginLicenseGate domainPluginLicenseGate;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -175,6 +179,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         log.info("Start security domain protocols");
 
         PROTOCOLS.forEach(protocol -> {
+            domainReadinessService.initPluginSync(domain.getId(), protocol, "PROTOCOL");
             try {
                 if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_PROTOCOL, protocol, protocol)) {
                     return;
@@ -185,9 +190,13 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
                     protocolProvider.start();
                     protocolProviders.add(protocolProvider);
                     log.info("\t Protocol {} loaded", protocol);
+                    domainReadinessService.pluginLoaded(domain.getId(), protocol);
+                } else {
+                    domainReadinessService.pluginUnloaded(domain.getId(), protocol);
                 }
             } catch (Exception e) {
                 log.error("\t An error occurs while loading {} protocol", protocol, e);
+                domainReadinessService.pluginFailed(domain.getId(), protocol, e.getMessage());
             }
         });
     }
@@ -195,7 +204,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     private void startSecurityDomainAuthenticators() {
         log.info("Start security domain authenticators");
         List<AuthenticatorProvider> providers = authenticatorPluginManager.createAll(applicationContext,
-                pluginId -> domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHENTICATOR, pluginId, pluginId));
+                this::isAuthenticatorLicensed);
         providers.forEach(provider -> {
             try {
                 provider.start();
@@ -205,6 +214,15 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
                 log.error("\t An error occurs while loading {} authenticator", provider.name(), e);
             }
         });
+    }
+
+    private boolean isAuthenticatorLicensed(String pluginId) {
+        domainReadinessService.initPluginSync(domain.getId(), pluginId, "AUTHENTICATOR");
+        boolean allowed = domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHENTICATOR, pluginId, pluginId);
+        if (allowed) {
+            domainReadinessService.pluginLoaded(domain.getId(), pluginId);
+        }
+        return allowed;
     }
 
     private void stopProtocols() {

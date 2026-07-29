@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.manager.resource.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ResourceEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
@@ -27,6 +28,7 @@ import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.service.PluginLicenseGate;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.exception.ResourceNotFoundException;
 import io.gravitee.common.event.Event;
@@ -66,6 +68,9 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     @Autowired
     private DomainPluginLicenseGate domainPluginLicenseGate;
 
+    @Autowired
+    private DomainReadinessService domainReadinessService;
+
     private final Map<String, ResourceProvider> resourceProviders = new ConcurrentHashMap<>();
     private final Map<String, ServiceResource> resources = new ConcurrentHashMap<>();
 
@@ -95,6 +100,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
+                            domainReadinessService.initPluginSync(domain.getId(), res.getId(), Type.RESOURCE.name());
                             if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_RESOURCE, res.getType(), res.getId())) {
                                 return;
                             }
@@ -104,8 +110,10 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                                 resourceProviders.put(res.getId(), provider);
                                 resources.put(res.getId(), res);
                                 log.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
+                                domainReadinessService.pluginLoaded(domain.getId(), res.getId());
                             } catch (Exception e) {
                                 log.error("Resource {} not loaded for domain {} due to: {}", res.getName(), domain.getName(), e.getMessage());
+                                domainReadinessService.pluginFailed(domain.getId(), res.getId(), e.getMessage());
                             }
                         },
                         error -> log.error("Unable to initialize resources for domain {}", domain.getName(), error)
@@ -137,13 +145,20 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .map(res -> {
                     if (needDeployment(res)) {
                         unloadResource(res.getId());
+                        domainReadinessService.initPluginSync(domain.getId(), res.getId(), Type.RESOURCE.name());
                         if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_RESOURCE, res.getType(), res.getId())) {
                             return res;
                         }
-                        var provider = resourcePluginManager.create(new ProviderConfiguration(res.getType(), res.getConfiguration()));
-                        provider.start();
-                        this.resources.put(res.getId(), res);
-                        this.resourceProviders.put(resourceId, provider);
+                        try {
+                            var provider = resourcePluginManager.create(new ProviderConfiguration(res.getType(), res.getConfiguration()));
+                            provider.start();
+                            this.resources.put(res.getId(), res);
+                            this.resourceProviders.put(resourceId, provider);
+                            domainReadinessService.pluginLoaded(domain.getId(), res.getId());
+                        } catch (Exception e) {
+                            domainReadinessService.pluginFailed(domain.getId(), res.getId(), e.getMessage());
+                            throw e;
+                        }
                     }
                     return res;
                 })

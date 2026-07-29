@@ -197,6 +197,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private Single<IdentityProvider> forceUpdateAuthenticationProvider(IdentityProvider identityProvider) {
         String identityProviderId = identityProvider.getId();
         try {
+            domainReadinessService.initPluginSync(domain.getId(), identityProviderId, Type.IDENTITY_PROVIDER.name());
             if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_IDENTITY_PROVIDER, identityProvider.getType(), identityProviderId)) {
                 if (hasExistingProvider(identityProviderId)) {
                     clearProvider(identityProviderId, false);
