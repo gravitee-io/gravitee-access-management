@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.vertx;
 
+import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authenticator.core.AuthenticatorPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
@@ -41,9 +43,13 @@ import java.util.function.Predicate;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +70,9 @@ public class VertxSecurityDomainHandlerTest {
 
     @Mock
     private DomainPluginLicenseGate domainPluginLicenseGate;
+
+    @Mock
+    private DomainReadinessService domainReadinessService;
 
     @Mock
     private ApplicationContext applicationContext;
@@ -119,5 +128,47 @@ public class VertxSecurityDomainHandlerTest {
         when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHENTICATOR, "ee-authenticator", "ee-authenticator")).thenReturn(false);
         assertFalse(filter.test("ee-authenticator"));
         assertTrue(filter.test("oss-authenticator"));
+
+        // both are registered with their type so the readiness entry is not left type-less
+        verify(domainReadinessService).initPluginSync(domain.getId(), "oss-authenticator", "AUTHENTICATOR");
+        verify(domainReadinessService).initPluginSync(domain.getId(), "ee-authenticator", "AUTHENTICATOR");
+        // a licensed authenticator must clear any stale "unlicensed" readiness; an unlicensed one must not
+        verify(domainReadinessService).pluginLoaded(domain.getId(), "oss-authenticator");
+        verify(domainReadinessService, never()).pluginLoaded(domain.getId(), "ee-authenticator");
+    }
+
+    @Test
+    public void shouldRegisterAndClearReadinessForLicensedProtocol() throws Exception {
+        when(protocolPluginManager.create(any())).thenReturn(mock(ProtocolProvider.class));
+
+        handler.doStart();
+
+        // every protocol is registered with its type, and a loaded one clears its readiness entry
+        verify(domainReadinessService).initPluginSync(domain.getId(), "openid-connect", "PROTOCOL");
+        verify(domainReadinessService).pluginLoaded(domain.getId(), "openid-connect");
+    }
+
+    @Test
+    public void shouldDropReadinessForProtocolWithoutProvider() throws Exception {
+        // create returns null (protocol not installed on this node): the seeded entry must be removed
+        when(protocolPluginManager.create(any())).thenReturn(null);
+
+        handler.doStart();
+
+        verify(domainReadinessService).initPluginSync(domain.getId(), "openid-connect", "PROTOCOL");
+        verify(domainReadinessService).pluginUnloaded(domain.getId(), "openid-connect");
+        verify(domainReadinessService, never()).pluginLoaded(domain.getId(), "openid-connect");
+    }
+
+    @Test
+    public void shouldRecordFailedProtocolAsFailed() throws Exception {
+        ProtocolProvider provider = mock(ProtocolProvider.class);
+        doThrow(new RuntimeException("boom")).when(provider).start();
+        when(protocolPluginManager.create(any())).thenReturn(provider);
+
+        handler.doStart();
+
+        verify(domainReadinessService, atLeastOnce()).pluginFailed(eq(domain.getId()), anyString(), eq("boom"));
+        verify(domainReadinessService, never()).pluginLoaded(eq(domain.getId()), anyString());
     }
 }

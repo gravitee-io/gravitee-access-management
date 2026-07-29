@@ -202,6 +202,10 @@ public class FlowManagerTest {
             return true;
         });
         verify(policyPluginManager, never()).create(anyString(), any(), anyString());
+        // the policy is registered with its type before the gate check, so an unlicensed entry is not type-less
+        verify(domainReadinessService).initPluginSync("domain-id", "ee-policy", io.gravitee.am.common.event.Type.POLICY.name());
+        // an unlicensed policy must not be cleared (the gate records it as unlicensed)
+        verify(domainReadinessService, never()).pluginUnloaded(anyString(), anyString());
     }
 
     @Test
@@ -231,6 +235,38 @@ public class FlowManagerTest {
             return true;
         });
         verify(policyPluginManager, times(1)).create(anyString(), anyString(), anyString());
+        // registered with its type, then removed on success so a licensed policy is not listed individually
+        verify(domainReadinessService).initPluginSync("domain-id", "step-policy", io.gravitee.am.common.event.Type.POLICY.name());
+        verify(domainReadinessService).pluginUnloaded("domain-id", "step-policy");
+    }
+
+    @Test
+    public void shouldRecordFailedPolicyAsFailed() {
+        Step step = mock(Step.class);
+        when(step.isEnabled()).thenReturn(true);
+        when(step.getPolicy()).thenReturn("step-policy");
+        when(step.getConfiguration()).thenReturn("step-configuration");
+        when(step.getCondition()).thenReturn("step-condition");
+
+        Flow flow = mock(Flow.class);
+        when(flow.getId()).thenReturn("flow-id");
+        when(flow.getType()).thenReturn(Type.CONSENT);
+        when(flow.isEnabled()).thenReturn(true);
+        when(flow.getPre()).thenReturn(Collections.singletonList(step));
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration()))
+                .thenThrow(new RuntimeException("boom"));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
+        flowManager.afterPropertiesSet();
+        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(policies -> {
+            Assert.assertTrue(policies.isEmpty());
+            return true;
+        });
+        verify(domainReadinessService).pluginFailed("domain-id", "step-policy", "boom");
+        verify(domainReadinessService, never()).pluginUnloaded("domain-id", "step-policy");
     }
 
     @Test

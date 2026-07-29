@@ -293,16 +293,19 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     }
 
     private Policy createPolicy(Step step) {
+        domainReadinessService.initPluginSync(domain.getId(), step.getPolicy(), io.gravitee.am.common.event.Type.POLICY.name());
+        if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_POLICY, step.getPolicy(), step.getPolicy())) {
+            return null;
+        }
         try {
-            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_POLICY, step.getPolicy(), step.getPolicy())) {
-                return null;
-            }
             log.info("\tInitializing policy: {} [{}]", step.getName(), step.getPolicy());
             Policy policy = policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration());
             log.info("\tPolicy : {} [{}] has been loaded", step.getName(), step.getPolicy());
             policy.activate();
+             domainReadinessService.pluginUnloaded(domain.getId(), step.getPolicy());
             return policy;
         } catch (Exception ex) {
+            domainReadinessService.pluginFailed(domain.getId(), step.getPolicy(), ex.getMessage());
             return null;
         }
     }

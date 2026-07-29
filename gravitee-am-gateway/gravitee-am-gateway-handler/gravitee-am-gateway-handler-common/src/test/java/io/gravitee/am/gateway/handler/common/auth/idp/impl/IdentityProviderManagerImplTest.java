@@ -92,6 +92,8 @@ public class IdentityProviderManagerImplTest {
 
         verifyNoInteractions(identityProviderPluginManager);
         verify(domainReadinessService, never()).pluginFailed(any(), any(), any());
+        // the provider is registered with its type before the gate check, so the unlicensed entry is not type-less
+        verify(domainReadinessService).initPluginSync("domain-id", "ee-idp", "IDENTITY_PROVIDER");
     }
 
     @Test
