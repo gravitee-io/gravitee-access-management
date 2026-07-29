@@ -17,7 +17,7 @@ import { getApplicationApi, getDomainApi, getEntrypointsApi, getUserApi } from '
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
-import { extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfToken, extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { retryUntil, withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
@@ -43,6 +43,8 @@ export interface CloudEmailFixture {
   resendRegistrationConfirmation: (userId: string) => Promise<void>;
   /** Provision a pre-registered user through SCIM; the gateway emails the confirmation link. */
   createScimUser: (email: string) => Promise<any>;
+  /** Register through the gateway's own form, as if the user reached it on `forwardedHost`. */
+  selfServiceRegister: (email: string, forwardedHost: string) => Promise<void>;
   /** The address of the user the forgot-password flow is driven for. */
   resetPasswordUserEmail: string;
   /** Ask the gateway to email a reset link, as if the user reached it on `forwardedHost`. */
@@ -181,6 +183,39 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
   });
   const resetClientId = webApp.settings.oauth.clientId;
 
+  // Self-service registration, the one registration flow that carries an end-user request.
+  // sendVerifyRegistrationAccountEmail is what makes it mail a link at all.
+  const registerApp = await applicationApi.createApplication({
+    organizationId,
+    environmentId,
+    domain: domain.id,
+    newApplication: {
+      name: uniqueName('register-app', true),
+      type: 'WEB',
+      clientId: uniqueName('register-app', true),
+      redirectUris: [RESET_REDIRECT_URI],
+    },
+  });
+  await applicationApi.updateApplication({
+    organizationId,
+    environmentId,
+    domain: domain.id,
+    application: registerApp.id,
+    patchApplication: {
+      settings: {
+        oauth: {
+          redirectUris: [RESET_REDIRECT_URI],
+          grantTypes: ['authorization_code'],
+          scopeSettings: [{ scope: 'openid', defaultScope: true }],
+        },
+        login: { inherited: false, registerEnabled: true },
+        account: { inherited: false, sendVerifyRegistrationAccountEmail: true },
+      },
+      identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+    },
+  });
+  const registerClientId = registerApp.settings.oauth.clientId;
+
   // Created before the domain starts, so the initial sync picks it up with no extra wait.
   const resetPasswordUserEmail = `reset-${uniqueName('user', true)}@acme.fr`;
   await getUserApi(accessToken).createUser({
@@ -269,6 +304,31 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     );
     expect(response.status).toEqual(201);
     return response.body;
+  };
+
+  const selfServiceRegister = async (email: string, forwardedHost: string) => {
+    const uri = `/${domain.hrid}/register?client_id=${registerClientId}`;
+    const { headers, token } = await extractXsrfToken(process.env.AM_GATEWAY_URL, uri);
+
+    await performFormPost(
+      process.env.AM_GATEWAY_URL,
+      uri,
+      {
+        'X-XSRF-TOKEN': token,
+        firstName: 'Self',
+        lastName: 'Registered',
+        username: uniqueName('selfreg', true),
+        email,
+        password: LOGIN_PASSWORD,
+        client_id: registerClientId,
+      },
+      {
+        Cookie: headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+        'X-Forwarded-Host': forwardedHost,
+        'X-Forwarded-Proto': 'https',
+      },
+    ).expect(302);
   };
 
   // X-Forwarded-Host is how the gateway learns the public host behind a proxy, so it is what decides
@@ -361,6 +421,7 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     createPreRegisteredUser,
     resendRegistrationConfirmation,
     createScimUser,
+    selfServiceRegister,
     resetPasswordUserEmail,
     requestForgotPassword,
     createLoginUser,

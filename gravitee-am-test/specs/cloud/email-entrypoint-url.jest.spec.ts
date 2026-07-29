@@ -141,4 +141,30 @@ describe('AM - Cloud - entrypoint url in email links', () => {
     expect(link).not.toContain('evil.example.com');
     await clearEmails(user.email);
   });
+
+  // Self-service registration is the third request-bearing flow, and the only registration one. Its
+  // origin comes off the routing context in RegisterProcessHandler, so it reaches the url builder by
+  // yet another route than the two above.
+  it('builds the self-service registration link from the host the user reached the gateway on', async () => {
+    const email = emailAddress();
+    await clearEmails(email);
+
+    await fixture.selfServiceRegister(email, fixture.entrypointHost);
+
+    const link = (await getLastEmail(5000, email)).extractLink();
+    expect(new URL(link).origin).toEqual(generatedOrigin);
+    await clearEmails(email);
+  });
+
+  it('ignores a forged request host on the self-service registration link', async () => {
+    const email = emailAddress();
+    await clearEmails(email);
+
+    await fixture.selfServiceRegister(email, 'evil.example.com');
+
+    const link = (await getLastEmail(5000, email)).extractLink();
+    expect(new URL(link).origin).toEqual(expectedOrigin);
+    expect(link).not.toContain('evil.example.com');
+    await clearEmails(email);
+  });
 });
