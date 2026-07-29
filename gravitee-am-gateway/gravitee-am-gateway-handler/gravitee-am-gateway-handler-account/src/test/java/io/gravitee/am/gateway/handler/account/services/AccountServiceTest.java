@@ -43,6 +43,7 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -349,9 +350,13 @@ public class AccountServiceTest {
         userUpdate.setWebsite("https://crazyhost/user-id");
 
         final UserProvider userProvider = mock(UserProvider.class);
+        final DefaultUser idpUser = new DefaultUser(userUpdate.getUsername());
+        // the id resolved from the IdP is different from the (potentially stale) AM external id
+        idpUser.setId("idp-resolved-id");
 
         when(userValidator.validate(userUpdate)).thenReturn(Completable.complete());
         when(identityProviderManager.getUserProvider(userUpdate.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userProvider.findByUsername(userUpdate.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(any(), any())).thenReturn(Single.just(new DefaultUser()));
         when(userRepository.update(any())).thenReturn(Single.just(userUpdate));
 
@@ -360,19 +365,49 @@ public class AccountServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userProvider).update(any(), argThat(idpUser ->
-                userUpdate.getFirstName().equals(idpUser.getFirstName()) &&
-                        userUpdate.getLastName().equals(idpUser.getLastName()) &&
-                        userUpdate.getNickName().equals(idpUser.getAdditionalInformation().get(StandardClaims.NICKNAME)) &&
-                        userUpdate.getMiddleName().equals(idpUser.getAdditionalInformation().get(StandardClaims.MIDDLE_NAME)) &&
-                        userUpdate.getBirthdate().equals(idpUser.getAdditionalInformation().get(StandardClaims.BIRTHDATE)) &&
-                        userUpdate.getPicture().equals(idpUser.getAdditionalInformation().get(StandardClaims.PICTURE)) &&
-                        userUpdate.getProfile().equals(idpUser.getAdditionalInformation().get(StandardClaims.PROFILE)) &&
-                        userUpdate.getWebsite().equals(idpUser.getAdditionalInformation().get(StandardClaims.WEBSITE)) &&
-                        userUpdate.getEmail().equals(idpUser.getEmail())&&
-                        userUpdate.getPhoneNumber().equals(idpUser.getAdditionalInformation().get(StandardClaims.PHONE_NUMBER))
+        verify(userProvider).findByUsername(userUpdate.getUsername());
+        // update must be called with the id resolved through findByUsername, not the stored external id
+        verify(userProvider).update(argThat(id -> id.equals(idpUser.getId()) && !id.equals(userUpdate.getExternalId())), argThat(convertedUser ->
+                userUpdate.getFirstName().equals(convertedUser.getFirstName()) &&
+                        userUpdate.getLastName().equals(convertedUser.getLastName()) &&
+                        userUpdate.getNickName().equals(convertedUser.getAdditionalInformation().get(StandardClaims.NICKNAME)) &&
+                        userUpdate.getMiddleName().equals(convertedUser.getAdditionalInformation().get(StandardClaims.MIDDLE_NAME)) &&
+                        userUpdate.getBirthdate().equals(convertedUser.getAdditionalInformation().get(StandardClaims.BIRTHDATE)) &&
+                        userUpdate.getPicture().equals(convertedUser.getAdditionalInformation().get(StandardClaims.PICTURE)) &&
+                        userUpdate.getProfile().equals(convertedUser.getAdditionalInformation().get(StandardClaims.PROFILE)) &&
+                        userUpdate.getWebsite().equals(convertedUser.getAdditionalInformation().get(StandardClaims.WEBSITE)) &&
+                        userUpdate.getEmail().equals(convertedUser.getEmail())&&
+                        userUpdate.getPhoneNumber().equals(convertedUser.getAdditionalInformation().get(StandardClaims.PHONE_NUMBER))
         ));
         verify(userRepository).update(any());
+    }
+
+    @Test
+    public void shouldUpdateUser_idpUserNotFound_fallbackToAmUserOnly() {
+        final String userId = "user-id";
+        final io.gravitee.am.model.User userUpdate = new io.gravitee.am.model.User();
+        userUpdate.setSource("source");
+        userUpdate.setId(userId);
+        userUpdate.setExternalId("ext-" + userId);
+        userUpdate.setUsername("john.doe");
+        userUpdate.setPassword("secret");
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        when(userValidator.validate(userUpdate)).thenReturn(Completable.complete());
+        when(identityProviderManager.getUserProvider(userUpdate.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userProvider.findByUsername(userUpdate.getUsername())).thenReturn(Maybe.empty());
+        when(userRepository.update(any())).thenReturn(Single.just(userUpdate));
+
+        TestObserver testObserver = accountService.update(userUpdate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userProvider).findByUsername(userUpdate.getUsername());
+        // the idp user could not be resolved so update must never be invoked
+        verify(userProvider, never()).update(any(), any());
+        verify(userRepository).update(argThat(u -> u.getPassword() == null));
     }
 
     @Test

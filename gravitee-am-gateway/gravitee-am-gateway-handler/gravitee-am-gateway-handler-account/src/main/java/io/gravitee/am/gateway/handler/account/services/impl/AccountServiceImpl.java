@@ -175,7 +175,9 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                     if (user.getExternalId() == null) {
                         return Single.error(new InvalidRequestException("User does not exist in upstream IDP"));
                     } else {
-                        return userProvider.update(user.getExternalId(), convert(user));
+                        return userProvider.findByUsername(user.getUsername())
+                                .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
+                                .flatMap(idpUser -> userProvider.update(idpUser.getId(), convert(user)));
                     }
                 })
                 .flatMap(idpUser -> userRepository.update(user))
