@@ -246,6 +246,17 @@ public class UriBuilderRequest {
     }
 
     /**
+     * As {@link #resolveOrigin(HttpServerRequest)}, for the flows that carry the gateway request rather
+     * than the Vert.x one. Null request means no origin, same as a request we cannot parse.
+     */
+    public static String resolveOrigin(Request request) {
+        if (request == null) {
+            return null;
+        }
+        return resolveOrigin(new HttpServerRequest(new GraviteeVertxHttpServerRequest(request)));
+    }
+
+    /**
      * True when {@code Origin} matches this request's public origin (scheme, host, port), using the same
      * {@code X-Forwarded-*} resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
      * Rejects missing, literal {@code null}, opaque, or non-http(s) origins.

@@ -78,9 +78,16 @@ public interface UserAuthenticationService {
      * @param accountSettings account settings
      * @param client oauth2 client
      * @param user End-User to lock
+     * @param requestOrigin the origin the failed login came in on, or null when there is no request to
+     *                      take one from. The blocked account email carries a reset password link, so it
+     *                      resolves its url the same way the reset password flow does. See AM-7230.
      * @return
      */
-    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user);
+    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user, String requestOrigin);
+
+    default Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user) {
+        return lockAccount(criteria, accountSettings, client, user, null);
+    }
 
     default Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
         return connect(principal, null, null, afterAuthentication);

@@ -35,7 +35,9 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordPolicy;
@@ -238,10 +240,15 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         String username = ofNullable(authentication.getContext())
                 .map(ctx -> (String) ctx.get(ACTUAL_USERNAME))
                 .orElse(authentication.getPrincipal().toString());
-        return postAuthentication(client, username, source, userAuthentication);
+        // Carried down for the blocked account email, which links back to reset password.
+        String requestOrigin = ofNullable(authentication.getContext())
+                .map(AuthenticationContext::request)
+                .map(UriBuilderRequest::resolveOrigin)
+                .orElse(null);
+        return postAuthentication(client, username, source, userAuthentication, requestOrigin);
     }
 
-    private Completable postAuthentication(Client client, String username, String source, UserAuthentication userAuthentication) {
+    private Completable postAuthentication(Client client, String username, String source, UserAuthentication userAuthentication, String requestOrigin) {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
 
         // if brute force detection feature disabled, continue
@@ -281,7 +288,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 .flatMapCompletable(user -> loginAttemptService.loginFailed(domain, criteria, accountSettings)
                                         .flatMapCompletable(loginAttempt -> {
                                             if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
-                                                return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);
+                                                return userAuthenticationService.lockAccount(criteria, accountSettings, client, user, requestOrigin);
                                             }
                                             return Completable.complete();
                                         })
