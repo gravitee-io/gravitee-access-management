@@ -27,6 +27,7 @@ import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,9 +51,15 @@ public class RegisterFailureHandler extends AbstractErrorHandler {
             queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_email");
         } else {
             logger.error("An error occurs while ending user registration", cause);
-            queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
-            if(context.session()!=null && !context.session().isDestroyed()){
-                context.session().put(ConstantKeys.ERROR_HASH, HashUtil.generateSHA256("registration_failed"));
+            if (context.statusCode() == 404) {
+                // registration is disabled, return an error
+                queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
+                if(context.session()!=null && !context.session().isDestroyed()){
+                    context.session().put(ConstantKeys.ERROR_HASH, HashUtil.generateSHA256("registration_failed"));
+                }
+            } else {
+                // in all other cases, always return success to avoid account enumeration
+                queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "registration_succeed");
             }
         }
         redirectToPage(context, queryParams, cause);
@@ -63,7 +70,9 @@ public class RegisterFailureHandler extends AbstractErrorHandler {
             if (exceptions != null && exceptions.length > 0) {
                 logger.debug("Error user actions : " + queryParams.get(ERROR_PARAM_KEY), exceptions[0]);
             }
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
+            // if 404, we have to redirect to error page otherwise there is an infinite redirection loop
+            final String path = (context.statusCode() == 404) ? context.get(CONTEXT_PATH) + errorPage : context.request().path();
+            final String uri = UriBuilderRequest.resolveProxyRequest(context.request(), path, queryParams, true);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);
