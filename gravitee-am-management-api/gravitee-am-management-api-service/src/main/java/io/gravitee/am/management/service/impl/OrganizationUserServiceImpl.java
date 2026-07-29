@@ -325,7 +325,9 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                             if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
                                 return Completable.complete();
                             }
-                            return optUserProvider.get().delete(user.getExternalId())
+                            return optUserProvider.get().findByUsername(user.getUsername())
+                                    .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(user.getUsername())))
+                                    .flatMapCompletable(idpUser -> optUserProvider.get().delete(idpUser.getId()))
                                     .onErrorResumeNext(ex -> {
                                         if (ex instanceof UserNotFoundException) {
                                             // idp user does not exist, continue
