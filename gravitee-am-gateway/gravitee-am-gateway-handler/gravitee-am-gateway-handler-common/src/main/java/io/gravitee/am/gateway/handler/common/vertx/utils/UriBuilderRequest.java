@@ -226,7 +226,18 @@ public class UriBuilderRequest {
      * rather than URLs, so neither the request path nor {@code X-Forwarded-Prefix} belongs in it.
      */
     public static String resolveOrigin(HttpServerRequest request) {
-        final URI baseUri = URI.create(resolveProxyRequest(request, "/", (MultiMap) null, false));
+        final URI baseUri;
+        try {
+            baseUri = URI.create(resolveProxyRequest(request, "/", (MultiMap) null, false));
+        } catch (IllegalArgumentException e) {
+            // The forwarding headers are caller-controlled and go into the url unencoded, so they can
+            // fail to parse. Callers read null as "no origin" and resolve the url the usual way.
+            LOGGER.warn("Unable to resolve the request origin from the forwarding headers");
+            return null;
+        }
+        if (baseUri.getScheme() == null || baseUri.getHost() == null) {
+            return null;
+        }
         StringBuilder origin = new StringBuilder().append(baseUri.getScheme()).append("://").append(baseUri.getHost());
         if (baseUri.getPort() >= 0) {
             origin.append(':').append(baseUri.getPort());

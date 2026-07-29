@@ -741,14 +741,15 @@ public class UserServiceTest {
         when(commonUserService.update(any())).thenReturn(Single.just(user));
 
         TestObserver testObserver = userService.forgotPassword(
-                new ForgotPasswordParameters(user.getEmail(), true, true),
+                new ForgotPasswordParameters(user.getEmail(), true, true).withRequestOrigin("https://auth.acme.com"),
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUser(any());
-        verify(emailService, timeout(2000)).send(any(), any(), any(), any(), any());
+        // The email goes out on its own thread, so this is what proves the origin survived the hop.
+        verify(emailService, timeout(2000)).send(any(), any(), any(), any(), eq("https://auth.acme.com"));
         verify(auditService).report(argThat(builder -> {
             final Audit audit = builder.build(new ObjectMapper());
             return audit.getType().equals(EventType.FORGOT_PASSWORD_REQUESTED) && audit.getOutcome().getStatus().equals(Status.SUCCESS);
@@ -1536,14 +1537,14 @@ public class UserServiceTest {
         final Client client = new Client();
         client.setId("clientId");
 
-        var testObserver = userService.register(client, user).test();
+        var testObserver = userService.register(client, user, null, io.vertx.core.MultiMap.caseInsensitiveMultiMap(), "https://auth.acme.com").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(registrationResponse -> {
             return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user) && !registrationResponse.getUser().isEnabled();
         });
 
-        verify(emailService, times(1)).send(any(), any(), any(), any(), any());
+        verify(emailService, times(1)).send(any(), any(), any(), any(), eq("https://auth.acme.com"));
         verify(auditService, times(1)).report(any());
     }
 

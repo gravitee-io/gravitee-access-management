@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -148,13 +149,51 @@ public class DomainReadServiceImpl implements DomainReadService {
         if (requestOrigin == null || requestOrigin.isBlank()) {
             return Optional.empty();
         }
-        return entryPointManager.findAllByEnvironmentId(domain.getReferenceId()).stream()
+        Optional<Entrypoint> matched = entryPointManager.findAllByEnvironmentId(domain.getReferenceId()).stream()
                 .filter(entrypoint -> sameOrigin(entrypoint.getUrl(), requestOrigin))
                 .findFirst();
+        if (matched.isEmpty()) {
+            // Either a forged host or an entrypoint the environment never synced, and the two look the
+            // same from here. Worth saying out loud, because the fallback link silently differs from
+            // the host the user is on.
+            log.warn("Environment {} has no entrypoint matching the request origin, building URLs from the configured entrypoint instead", domain.getReferenceId());
+        }
+        return matched;
     }
 
     private static boolean sameOrigin(String entrypointUrl, String requestOrigin) {
-        return entrypointUrl != null && stripTrailingSlash(entrypointUrl).equalsIgnoreCase(stripTrailingSlash(requestOrigin));
+        if (entrypointUrl == null) {
+            return false;
+        }
+        URI entrypointUri = toUri(stripTrailingSlash(entrypointUrl));
+        URI requestUri = toUri(stripTrailingSlash(requestOrigin));
+        if (entrypointUri == null || requestUri == null) {
+            return false;
+        }
+        return equalsIgnoringCase(entrypointUri.getScheme(), requestUri.getScheme())
+                && equalsIgnoringCase(entrypointUri.getHost(), requestUri.getHost())
+                && effectivePort(entrypointUri) == effectivePort(requestUri);
+    }
+
+    private static boolean equalsIgnoringCase(String left, String right) {
+        return left != null && left.equalsIgnoreCase(right);
+    }
+
+    // An entrypoint may spell out the default port where the request origin never does, so compare what
+    // the two actually resolve to rather than the text.
+    private static int effectivePort(URI uri) {
+        if (uri.getPort() >= 0) {
+            return uri.getPort();
+        }
+        return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+    }
+
+    private static URI toUri(String url) {
+        try {
+            return URI.create(url);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static String stripTrailingSlash(String url) {

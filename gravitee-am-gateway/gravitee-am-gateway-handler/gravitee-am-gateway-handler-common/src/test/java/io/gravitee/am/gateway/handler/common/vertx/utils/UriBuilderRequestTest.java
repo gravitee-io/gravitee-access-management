@@ -27,6 +27,7 @@ import org.springframework.core.env.Environment;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -725,6 +726,17 @@ public class UriBuilderRequestTest {
         when(request.scheme()).thenReturn("https");
 
         assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_returnsNullWhenTheHeadersDoNotFormAUri() {
+        // X-Forwarded-Host is attacker controlled and UriBuilder appends it raw, so a hostile value can
+        // make the resolved url unparseable. Callers treat null as "no origin" and fall back.
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("bad host|value");
+        when(request.scheme()).thenReturn("https");
+
+        assertNull(UriBuilderRequest.resolveOrigin(request));
     }
 
     @Test

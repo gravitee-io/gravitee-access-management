@@ -281,6 +281,28 @@ class DomainReadServiceImplTest {
     }
 
     @Test
+    public void shouldBuildUrl_cloud_requestOriginMatchesEntrypointCarryingAnExplicitDefaultPort() {
+        // resolveOrigin drops :443, so a stored entrypoint that spells it out has to compare equal or
+        // the request would be ignored on a host the user legitimately reached us on.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com:443")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://custom.acme.com:443/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_blankRequestOriginFallsBack() {
+        enableCloudMode();
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "   ");
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
     public void shouldBuildUrl_cloud_unknownRequestOriginIsRejected() {
         // The whole point of the check: a forged Host must never steer the link.
         enableCloudMode();

@@ -27,8 +27,9 @@ public interface DomainReadService {
     Maybe<Domain> findById(String id);
     /**
      * @param requestOrigin the {@code scheme://host[:port]} the end user reached the gateway on, or null
-     *                      for flows with no end-user request (SCIM, management API). Not consulted yet,
-     *                      see AM-7230.
+     *                      or blank for flows with no end-user request (SCIM, management API). Honoured
+     *                      only in managed cloud, and only when it matches one of the environment's
+     *                      entrypoints; anything else falls back to the configured resolution.
      */
     String buildUrl(Domain domain, String path, MultiMap queryParams, String requestOrigin);
 
