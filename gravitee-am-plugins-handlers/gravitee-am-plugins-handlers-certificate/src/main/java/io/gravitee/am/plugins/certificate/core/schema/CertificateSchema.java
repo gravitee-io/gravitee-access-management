@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.plugins.certificate.core.schema;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,6 +30,7 @@ import java.util.Optional;
  */
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CertificateSchema {
 
     private String type;
