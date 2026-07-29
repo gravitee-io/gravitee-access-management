@@ -1972,7 +1972,7 @@ public class DomainServiceTest {
 
         final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
         // createDefaults gives every organization a default entrypoint and the last-default guard stops
-        // it being removed, so this should be unreachable — it just must not blow up if it ever is.
+        // it being removed, so this should be unreachable, it just must not blow up if it ever is.
         subscriber.assertNoErrors();
         subscriber.assertValue(List::isEmpty);
     }
@@ -1991,7 +1991,7 @@ public class DomainServiceTest {
         second.setEnvironmentId(ENVIRONMENT_ID);
         second.setUrl("https://second.gravitee.io");
 
-        // Whatever the environment resolves to is returned as-is — no collapsing to a single entrypoint.
+        // Whatever the environment resolves to is returned as-is, no collapsing to a single entrypoint.
         when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(first, second));
 
         final var subscriber = domainService.listEntryPoint(cloudDomain(), ORGANIZATION_ID).test();

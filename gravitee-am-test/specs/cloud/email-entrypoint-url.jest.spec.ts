@@ -23,14 +23,11 @@ import { setup } from '../test-fixture';
 setup(200000);
 
 /**
- * AM-7229 — in managed cloud, links in emails are built from the environment's entrypoint rather than
- * from the data plane's gateway url.
+ * In managed cloud, email links are built from the environment's entrypoint rather than the data
+ * plane's gateway url. These are the request-less flows, with no end-user request to take a hostname
+ * from, so the entrypoint is the only thing that can produce a correct link.
  *
- * These are the request-less flows: nothing in them carries an end-user request AM could take a
- * hostname from, so the entrypoint is the only thing that can produce a correct link.
- *
- * The entrypoint host is synthetic and does not resolve, so every assertion is on the link string.
- * Never follow it.
+ * The entrypoint host is synthetic and never resolves: assert on the link string, never follow it.
  */
 describe('AM - Cloud - entrypoint url in email links', () => {
   let fixture: CloudEmailFixture;
@@ -78,8 +75,7 @@ describe('AM - Cloud - entrypoint url in email links', () => {
   });
 
   it('builds the SCIM-provisioned registration link from the environment entrypoint', async () => {
-    // The gateway's own email path. SCIM has no end-user request, so it keeps resolving from the
-    // entrypoint even once AM-7230 makes request-bearing flows use the request hostname.
+    // The gateway's own email path, and the one flow with no end-user request to fall back on.
     const email = emailAddress();
     await clearEmails(email);
 

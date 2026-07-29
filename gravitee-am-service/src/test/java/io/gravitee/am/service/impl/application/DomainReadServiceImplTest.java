@@ -233,8 +233,8 @@ class DomainReadServiceImplTest {
 
     @Test
     void shouldBuildUrl_cloud_vhostModeStillWins() {
-        // Unreachable in production: EnvironmentCommandHandler leaves domainRestrictions unset in managed
-        // cloud, so setDeployMode never turns vhost mode on, and AM-7228 blocks enabling it afterwards.
+        // Unreachable in production: managed cloud leaves domainRestrictions unset, so vhost mode never
+        // turns on. Pinned so the precedence is defined if that ever changes.
         enableCloudMode();
         when(entryPointManager.resolvePrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
 
