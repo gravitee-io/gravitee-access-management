@@ -27,6 +27,7 @@ const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 const SCIM_CUSTOM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:extension:custom:2.0:User';
 const RESET_REDIRECT_URI = 'http://localhost:4000';
+const LOGIN_PASSWORD = 'Password123!';
 
 export interface CloudEmailFixture {
   organizationId: string;
@@ -46,6 +47,10 @@ export interface CloudEmailFixture {
   resetPasswordUserEmail: string;
   /** Ask the gateway to email a reset link, as if the user reached it on `forwardedHost`. */
   requestForgotPassword: (forwardedHost: string) => Promise<void>;
+  /** A user with a password, for the login flows. One per lockout case: the lock is sticky. */
+  createLoginUser: () => Promise<{ username: string; email: string }>;
+  /** Fail one login, as if the user reached the gateway on `forwardedHost`. Trips the lockout. */
+  failLogin: (username: string, forwardedHost: string) => Promise<void>;
   cleanup: () => Promise<void>;
 }
 
@@ -103,6 +108,16 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     patchDomain: {
       scim: { enabled: true, idpSelectionEnabled: false },
       loginSettings: { forgotPasswordEnabled: true },
+      // One failed login locks the account and sends the blocked-account mail. The durations only
+      // have to outlast the run: nothing here unlocks a user, each case brings its own.
+      accountSettings: {
+        inherited: false,
+        loginAttemptsDetectionEnabled: true,
+        maxLoginAttempts: 1,
+        loginAttemptsResetTime: 60,
+        accountBlockedDuration: 120,
+        sendRecoverAccountEmail: true,
+      },
       // The reset app redirects to localhost, which the domain rejects by default.
       oidc: {
         clientRegistrationSettings: {
@@ -177,7 +192,7 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
       firstName: 'Reset',
       lastName: 'Me',
       email: resetPasswordUserEmail,
-      password: 'Password123!',
+      password: LOGIN_PASSWORD,
       preRegistration: false,
     },
   });
@@ -280,6 +295,55 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     ).expect(302);
   };
 
+  // Users are not part of domain sync, the gateway reads them straight from the data plane, so one
+  // created here is immediately usable without waiting. `source` has to be the idp the application
+  // authenticates against: without it the provider raises UsernameNotFoundException, which the
+  // brute-force path deliberately ignores, so the login fails without ever counting as an attempt.
+  const createLoginUser = async () => {
+    // Lower-cased: the brute-force lookup does not find a mixed-case username, so the lockout never
+    // fires and no mail is sent. uniqueName mixes case, hence the fold.
+    const username = uniqueName('lockout', true).toLowerCase();
+    const email = `${username}@acme.fr`;
+    await userApi.createUser({
+      organizationId,
+      environmentId,
+      domain: domain.id,
+      newUser: {
+        username,
+        firstName: 'Lock',
+        lastName: 'Me',
+        email,
+        password: LOGIN_PASSWORD,
+        source: `default-idp-${domain.id}`,
+        preRegistration: false,
+      },
+    });
+    return { username, email };
+  };
+
+  const failLogin = async (username: string, forwardedHost: string) => {
+    const authParams = `?response_type=token&client_id=${resetClientId}&redirect_uri=${RESET_REDIRECT_URI}`;
+    const authResponse = await performGet(oidcConfig.authorization_endpoint, authParams).expect(302);
+    const { headers, token, action } = await extractXsrfTokenAndActionResponse(authResponse);
+
+    await performFormPost(
+      action,
+      '',
+      {
+        'X-XSRF-TOKEN': token,
+        username,
+        password: 'DefinitelyNotThePassword1!',
+        client_id: resetClientId,
+      },
+      {
+        Cookie: headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+        'X-Forwarded-Host': forwardedHost,
+        'X-Forwarded-Proto': 'https',
+      },
+    ).expect(302);
+  };
+
   // Only the domain. Entrypoints are Cockpit-owned and a managed installation rejects deleting them,
   // so attempting it only ever produces a 400 and a misleading warning.
   const cleanup = async () => {
@@ -299,6 +363,8 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     createScimUser,
     resetPasswordUserEmail,
     requestForgotPassword,
+    createLoginUser,
+    failLogin,
     cleanup,
   };
 };

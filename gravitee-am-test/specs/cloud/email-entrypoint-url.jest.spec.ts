@@ -111,4 +111,34 @@ describe('AM - Cloud - entrypoint url in email links', () => {
     expect(link).not.toContain('evil.example.com');
     await clearEmails(fixture.resetPasswordUserEmail);
   });
+
+  // The blocked-account mail links to /resetPassword too, so its host matters for the same reason.
+  // It travels a different route to get there: the origin comes off the authentication context
+  // rather than the routing context, and survives a detached thread.
+  it('builds the blocked account link from the host the user reached the gateway on', async () => {
+    const user = await fixture.createLoginUser();
+    await clearEmails(user.email);
+
+    await fixture.failLogin(user.username, fixture.entrypointHost);
+
+    const email = await getLastEmail(5000, user.email);
+    const link = email.extractLink();
+    expect(new URL(link).origin).toEqual(generatedOrigin);
+    expect(new URL(link).pathname).toContain('/resetPassword');
+    await clearEmails(user.email);
+  });
+
+  it('ignores a forged request host on the blocked account link', async () => {
+    // A fresh user: the previous lockout is sticky for accountBlockedDuration, so re-using one
+    // never sends a second mail.
+    const user = await fixture.createLoginUser();
+    await clearEmails(user.email);
+
+    await fixture.failLogin(user.username, 'evil.example.com');
+
+    const link = (await getLastEmail(5000, user.email)).extractLink();
+    expect(new URL(link).origin).toEqual(expectedOrigin);
+    expect(link).not.toContain('evil.example.com');
+    await clearEmails(user.email);
+  });
 });
