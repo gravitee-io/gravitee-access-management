@@ -260,13 +260,58 @@ class DomainReadServiceImplTest {
     }
 
     @Test
-    public void shouldBuildUrl_requestOriginNotYetConsulted() {
-        // Plumbing only: the origin is carried to resolveEntryPoint but nothing reads it until the
-        // AM-7230 precedence is agreed. Pinned so wiring it up is a deliberate change, not a surprise.
-        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription(null, null, null, null, "https://gw.gravitee.io"));
-        Domain domain = cloudDomain();
+    public void shouldBuildUrl_cloud_requestOriginWinsWhenItIsAnEnvironmentEntrypoint() {
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(List.of(entrypoint("https://generated.gravitee.io"), entrypoint("https://custom.acme.com")));
 
-        assertEquals("https://gw.gravitee.io/testPath/mySubPath", underTest.buildUrl(domain, "/mySubPath", null, "https://request.acme.com"));
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginMatchIsCaseInsensitiveAndIgnoresTrailingSlash() {
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://Custom.Acme.com/")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://Custom.Acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_unknownRequestOriginIsRejected() {
+        // The whole point of the check: a forged Host must never steer the link.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://evil.example");
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_noMatchingEntrypointFallsBackToTheFirstCustomHost() {
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, null);
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_nonCloud_ignoresRequestOrigin() {
+        // Agreed 29 Jul: the change is limited to managed cloud, self-hosted behaviour must not move.
+        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription(null, null, null, null, "https://gw.gravitee.io"));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://gw.gravitee.io/testPath/mySubPath", url);
+        verifyNoInteractions(entryPointManager);
     }
 
     private void enableCloudMode() {

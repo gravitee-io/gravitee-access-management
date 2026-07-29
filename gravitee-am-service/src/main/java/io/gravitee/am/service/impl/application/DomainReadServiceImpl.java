@@ -125,18 +125,40 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     // In managed cloud the environment's entrypoint is this domain's gateway hostname; everywhere else,
     // and until Cockpit has synced one, the data plane url stands.
-    // requestOrigin is carried here for AM-7230 but not consulted yet: it may only be honoured once it is
-    // checked against the hosts already known for the domain, otherwise a forged Host header would steer
-    // password-reset links at an attacker.
     private String resolveEntryPoint(Domain domain, String requestOrigin) {
         if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
-            Optional<String> entrypointUrl = entryPointManager.findPrimaryByEnvironmentId(domain.getReferenceId())
+            Optional<String> entrypointUrl = matchingEntrypoint(domain, requestOrigin)
+                    .or(() -> entryPointManager.findPrimaryByEnvironmentId(domain.getReferenceId()))
                     .map(Entrypoint::getUrl);
             if (entrypointUrl.isPresent()) {
                 return entrypointUrl.get();
             }
         }
         return ofNullable(dataPlaneRegistry.getDescription(domain).gatewayUrl()).orElse(gatewayUrl);
+    }
+
+    /**
+     * The environment entrypoint the user actually reached us on, so an environment with several hosts
+     * mails links back to the one in the address bar rather than an arbitrary pick.
+     * <p>
+     * Only ever returns a stored entrypoint, never the caller's string: an unrecognised origin is a
+     * forged {@code Host} header away from mailing a password-reset token to somebody else's domain.
+     */
+    private Optional<Entrypoint> matchingEntrypoint(Domain domain, String requestOrigin) {
+        if (requestOrigin == null || requestOrigin.isBlank()) {
+            return Optional.empty();
+        }
+        return entryPointManager.findAllByEnvironmentId(domain.getReferenceId()).stream()
+                .filter(entrypoint -> sameOrigin(entrypoint.getUrl(), requestOrigin))
+                .findFirst();
+    }
+
+    private static boolean sameOrigin(String entrypointUrl, String requestOrigin) {
+        return entrypointUrl != null && stripTrailingSlash(entrypointUrl).equalsIgnoreCase(stripTrailingSlash(requestOrigin));
+    }
+
+    private static String stripTrailingSlash(String url) {
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
 }
