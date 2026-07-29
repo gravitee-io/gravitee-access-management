@@ -1543,7 +1543,7 @@ public class UserServiceTest {
             return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user) && !registrationResponse.getUser().isEnabled();
         });
 
-        verify(emailService, times(1)).send(any(), any(), any(), any());
+        verify(emailService, times(1)).send(any(), any(), any(), any(), any());
         verify(auditService, times(1)).report(any());
     }
 

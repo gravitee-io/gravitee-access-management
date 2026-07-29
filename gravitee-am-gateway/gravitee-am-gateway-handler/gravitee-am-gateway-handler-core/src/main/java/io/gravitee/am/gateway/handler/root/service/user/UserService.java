@@ -46,7 +46,15 @@ public interface UserService {
 
     Maybe<UserToken> confirmVerifyRegistration(String token);
 
-    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams);
+    default Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams) {
+        return register(client, user, principal, queryParams, null);
+    }
+
+    /**
+     * @param requestOrigin the origin the end user registered on, or null when the flow has no end-user
+     *                      request to take one from. See AM-7230.
+     */
+    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams, String requestOrigin);
 
     Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 

@@ -230,7 +230,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams) {
+    public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams, String requestOrigin) {
         // set user idp source
         var accountSettings = AccountSettings.getInstance(client, domain);
         final String source = UserRegistrationIdpResolver.getRegistrationIdpForUser(domain, client, user);
@@ -241,8 +241,8 @@ public class UserServiceImpl implements UserService {
                         .flatMapMaybe(checkUserPresence(user, source))
                         .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
-                        .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser, queryParams))
-                        .flatMap(amUser -> sendVerifyAccountEmail(client, amUser, accountSettings, queryParams))
+                        .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser, queryParams, requestOrigin))
+                        .flatMap(amUser -> sendVerifyAccountEmail(client, amUser, accountSettings, queryParams, requestOrigin))
                         .flatMap(amUser -> createPasswordHistory(amUser, rawPassword, principal))
                         .flatMap(userService::enhance)
                         .map(enhancedUser -> buildRegistrationResponse(accountSettings, enhancedUser))
@@ -267,7 +267,7 @@ public class UserServiceImpl implements UserService {
         return new RegistrationResponse(user, redirectUri, isAutoLogin);
     }
 
-    private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser, MultiMap queryParams) {
+    private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser, MultiMap queryParams, String requestOrigin) {
         // AM 'users' collection is not made for authentication (but only management stuff)
         var now = new Date();
         // clear password
@@ -295,7 +295,7 @@ public class UserServiceImpl implements UserService {
                 user.setPreRegistration(true);
                 user.setRegistrationCompleted(false);
                 user.setEnabled(false);
-                user.setRegistrationUserUri(domainService.buildUrl(domain, REGISTRATION_VERIFY.redirectUri(), queryParams));
+                user.setRegistrationUserUri(domainService.buildUrl(domain, REGISTRATION_VERIFY.redirectUri(), queryParams, requestOrigin));
             }
         });
         user.setLastPasswordReset(now);
@@ -313,9 +313,9 @@ public class UserServiceImpl implements UserService {
         };
     }
 
-    private @NonNull Single<User> sendVerifyAccountEmail(Client client, User amUser, Optional<AccountSettings> accountSettings, MultiMap queryParams) {
+    private @NonNull Single<User> sendVerifyAccountEmail(Client client, User amUser, Optional<AccountSettings> accountSettings, MultiMap queryParams, String requestOrigin) {
         accountSettings.filter(AccountSettings::isSendVerifyRegistrationAccountEmail).ifPresent(sendEmail ->
-                fromRunnable(() -> emailService.send(REGISTRATION_VERIFY, amUser, client, queryParams)).subscribe()
+                fromRunnable(() -> emailService.send(REGISTRATION_VERIFY, amUser, client, queryParams, requestOrigin)).subscribe()
         );
         return Single.just(amUser);
     }

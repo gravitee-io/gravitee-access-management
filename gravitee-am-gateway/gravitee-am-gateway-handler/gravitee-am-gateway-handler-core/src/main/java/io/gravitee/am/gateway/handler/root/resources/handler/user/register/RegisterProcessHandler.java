@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -62,7 +63,7 @@ public class RegisterProcessHandler extends UserRequestHandler {
         User user = convert(params, client);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
         // register the user
-        register(client, user, getAuthenticatedUser(context), queryParams, h -> {
+        register(client, user, getAuthenticatedUser(context), queryParams, UriBuilderRequest.resolveOrigin(context.request()), h -> {
             // if failure, return to the register page with an error
             if (h.failed()) {
                 context.fail(h.cause());
@@ -81,8 +82,8 @@ public class RegisterProcessHandler extends UserRequestHandler {
         });
     }
 
-    private void register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams, Handler<AsyncResult<RegistrationResponse>> handler) {
-        userService.register(client, user, principal, queryParams).subscribe(
+    private void register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams, String requestOrigin, Handler<AsyncResult<RegistrationResponse>> handler) {
+        userService.register(client, user, principal, queryParams, requestOrigin).subscribe(
                 response -> handler.handle(Future.succeededFuture(response)),
                 error -> handler.handle(Future.failedFuture(error))
         );

@@ -73,11 +73,11 @@ public class RegisterProcessHandlerTest {
 
         RegistrationResponse registrationResponse = new RegistrationResponse();
         registrationResponse.setUser(new User());
-        when(userService.register(any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
+        when(userService.register(any(), any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
 
         registerProcessHandler.handle(context);
 
-        verify(userService).register(any(), argThat(user -> client.getId().equals(user.getClient())), any(), any());
+        verify(userService).register(any(), argThat(user -> client.getId().equals(user.getClient())), any(), any(), any());
         context.verifyNext(1);
         assertNotNull(context.get(REGISTRATION_RESPONSE_KEY));
         assertNotNull(context.get(USER_CONTEXT_KEY));
@@ -89,11 +89,11 @@ public class RegisterProcessHandlerTest {
 
         RegistrationResponse registrationResponse = new RegistrationResponse();
         registrationResponse.setUser(new User());
-        when(userService.register(any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
+        when(userService.register(any(), any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
 
         registerProcessHandler.handle(context);
 
-        verify(userService).register(any(), argThat(user -> user.getClient() == null), any(), any());
+        verify(userService).register(any(), argThat(user -> user.getClient() == null), any(), any(), any());
         context.verifyNext(1);
         assertNotNull(context.get(REGISTRATION_RESPONSE_KEY));
         assertNotNull(context.get(USER_CONTEXT_KEY));
