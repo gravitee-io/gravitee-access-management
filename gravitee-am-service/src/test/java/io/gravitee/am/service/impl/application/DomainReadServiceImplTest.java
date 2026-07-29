@@ -251,6 +251,24 @@ class DomainReadServiceImplTest {
         assertEquals("https://legacy.gravitee.io/legacy/mySubPath", url);
     }
 
+    @Test
+    public void shouldBuildUrl_threeArgFormPassesNoRequestOrigin() {
+        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription(null, null, null, null, "https://gw.gravitee.io"));
+        Domain domain = cloudDomain();
+
+        assertEquals(underTest.buildUrl(domain, "/mySubPath", null, null), underTest.buildUrl(domain, "/mySubPath", null));
+    }
+
+    @Test
+    public void shouldBuildUrl_requestOriginNotYetConsulted() {
+        // Plumbing only: the origin is carried to resolveEntryPoint but nothing reads it until the
+        // AM-7230 precedence is agreed. Pinned so wiring it up is a deliberate change, not a surprise.
+        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription(null, null, null, null, "https://gw.gravitee.io"));
+        Domain domain = cloudDomain();
+
+        assertEquals("https://gw.gravitee.io/testPath/mySubPath", underTest.buildUrl(domain, "/mySubPath", null, "https://request.acme.com"));
+    }
+
     private void enableCloudMode() {
         springEnvironment.setProperty("cloud.enabled", "true");
         springEnvironment.setProperty("installation.type", "managed");

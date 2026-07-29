@@ -29,24 +29,43 @@ public class ForgotPasswordParameters {
     final String username;
     final boolean customFormEnabled;
     final boolean confirmIdentityEnabled;
+    final String requestOrigin;
 
     public ForgotPasswordParameters(String email,
                                     String username,
                                     boolean customFormEnabled,
                                     boolean confirmIdentityEnabled) {
-        this.email = email;
-        this.username = username;
-        this.customFormEnabled = customFormEnabled;
-        this.confirmIdentityEnabled = confirmIdentityEnabled;
+        this(email, username, customFormEnabled, confirmIdentityEnabled, null);
     }
 
     public ForgotPasswordParameters(String email,
                                     boolean customFormEnabled,
                                     boolean confirmIdentityEnabled) {
+        this(email, null, customFormEnabled, confirmIdentityEnabled, null);
+    }
+
+    private ForgotPasswordParameters(String email,
+                                     String username,
+                                     boolean customFormEnabled,
+                                     boolean confirmIdentityEnabled,
+                                     String requestOrigin) {
         this.email = email;
-        this.username = null;
+        this.username = username;
         this.customFormEnabled = customFormEnabled;
         this.confirmIdentityEnabled = confirmIdentityEnabled;
+        this.requestOrigin = requestOrigin;
+    }
+
+    /**
+     * The origin the user submitted the form on, carried through to the reset email because the send
+     * happens on its own thread with no request in scope. See AM-7230.
+     */
+    public ForgotPasswordParameters withRequestOrigin(String requestOrigin) {
+        return new ForgotPasswordParameters(email, username, customFormEnabled, confirmIdentityEnabled, requestOrigin);
+    }
+
+    public String getRequestOrigin() {
+        return requestOrigin;
     }
 
     public String getEmail() {

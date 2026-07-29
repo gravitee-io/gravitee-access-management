@@ -219,6 +219,22 @@ public class UriBuilderRequest {
     }
 
     /**
+     * This request's public origin as {@code scheme://host[:port]}, using the same {@code X-Forwarded-*}
+     * resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
+     * <p>
+     * Carries no path: callers compare it against configured entrypoints and vhosts, which are hosts
+     * rather than URLs, so neither the request path nor {@code X-Forwarded-Prefix} belongs in it.
+     */
+    public static String resolveOrigin(HttpServerRequest request) {
+        final URI baseUri = URI.create(resolveProxyRequest(request, "/", (MultiMap) null, false));
+        StringBuilder origin = new StringBuilder().append(baseUri.getScheme()).append("://").append(baseUri.getHost());
+        if (baseUri.getPort() >= 0) {
+            origin.append(':').append(baseUri.getPort());
+        }
+        return origin.toString();
+    }
+
+    /**
      * True when {@code Origin} matches this request's public origin (scheme, host, port), using the same
      * {@code X-Forwarded-*} resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
      * Rejects missing, literal {@code null}, opaque, or non-http(s) origins.

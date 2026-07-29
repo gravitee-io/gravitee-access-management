@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
@@ -62,7 +63,8 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
 
         AccountSettings settings = AccountSettings.getInstance(domain, client);
 
-        final ForgotPasswordParameters parameters = new ForgotPasswordParameters(email, username, settings != null && settings.isResetPasswordCustomForm(), settings != null && settings.isResetPasswordConfirmIdentity());
+        final ForgotPasswordParameters parameters = new ForgotPasswordParameters(email, username, settings != null && settings.isResetPasswordCustomForm(), settings != null && settings.isResetPasswordConfirmIdentity())
+                .withRequestOrigin(UriBuilderRequest.resolveOrigin(context.request()));
         userService.forgotPassword(parameters, client, getAuthenticatedUser(context))
                 .subscribe(
                         () -> {

@@ -87,8 +87,8 @@ public class DomainReadServiceImpl implements DomainReadService {
     }
 
     @Override
-    public String buildUrl(Domain domain, String path, MultiMap queryParams) {
-        String entryPoint = resolveEntryPoint(domain);
+    public String buildUrl(Domain domain, String path, MultiMap queryParams, String requestOrigin) {
+        String entryPoint = resolveEntryPoint(domain, requestOrigin);
 
         if (entryPoint != null && entryPoint.endsWith("/")) {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
@@ -125,7 +125,10 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     // In managed cloud the environment's entrypoint is this domain's gateway hostname; everywhere else,
     // and until Cockpit has synced one, the data plane url stands.
-    private String resolveEntryPoint(Domain domain) {
+    // requestOrigin is carried here for AM-7230 but not consulted yet: it may only be honoured once it is
+    // checked against the hosts already known for the domain, otherwise a forged Host header would steer
+    // password-reset links at an attacker.
+    private String resolveEntryPoint(Domain domain, String requestOrigin) {
         if (CloudProperties.isManagedCloudEnabled(springEnvironment)) {
             Optional<String> entrypointUrl = entryPointManager.findPrimaryByEnvironmentId(domain.getReferenceId())
                     .map(Entrypoint::getUrl);

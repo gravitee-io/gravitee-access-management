@@ -25,7 +25,16 @@ import java.util.List;
 
 public interface DomainReadService {
     Maybe<Domain> findById(String id);
-    String buildUrl(Domain domain, String path, MultiMap queryParams);
+    /**
+     * @param requestOrigin the {@code scheme://host[:port]} the end user reached the gateway on, or null
+     *                      for flows with no end-user request (SCIM, management API). Not consulted yet,
+     *                      see AM-7230.
+     */
+    String buildUrl(Domain domain, String path, MultiMap queryParams, String requestOrigin);
+
+    default String buildUrl(Domain domain, String path, MultiMap queryParams) {
+        return buildUrl(domain, path, queryParams, null);
+    }
 
     default String buildUrl(Domain domain, String path) {
         return buildUrl(domain, path, MultiMap.caseInsensitiveMultiMap());

@@ -748,7 +748,7 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUser(any());
-        verify(emailService, timeout(2000)).send(any(), any(), any());
+        verify(emailService, timeout(2000)).send(any(), any(), any(), any(), any());
         verify(auditService).report(argThat(builder -> {
             final Audit audit = builder.build(new ObjectMapper());
             return audit.getType().equals(EventType.FORGOT_PASSWORD_REQUESTED) && audit.getOutcome().getStatus().equals(Status.SUCCESS);

@@ -697,4 +697,46 @@ public class UriBuilderRequestTest {
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "null"));
     }
 
+    @Test
+    public void shouldResolveOrigin_fromForwardedHeaders() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("gw.example.com");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8443");
+        when(request.scheme()).thenReturn("http");
+        when(request.authority()).thenReturn(HostAndPort.create("internal", 8080));
+
+        assertEquals("https://gw.example.com:8443", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_fromHostHeaderWhenNotForwarded() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("auth.acme.com");
+        when(request.scheme()).thenReturn("https");
+
+        assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_omitsDefaultPort() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("auth.acme.com:443");
+        when(request.scheme()).thenReturn("https");
+
+        assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_withoutPathOrForwardedPrefix() {
+        // The origin is compared against configured entrypoints and vhosts, which carry no path, so the
+        // request path and X-Forwarded-Prefix must not leak into it.
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("auth.acme.com");
+        when(request.getHeader(eq("X-Forwarded-Prefix"))).thenReturn("/auth");
+        when(request.scheme()).thenReturn("https");
+
+        assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
+    }
+
 }

@@ -585,7 +585,7 @@ public class UserServiceImpl implements UserService {
                             })
                             .onErrorResumeNext(exception -> Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
                 })
-                .doOnSuccess(user -> new Thread(() -> emailService.send(RESET_PASSWORD, user, client)).start())
+                .doOnSuccess(user -> new Thread(() -> emailService.send(RESET_PASSWORD, user, client, MultiMap.caseInsensitiveMultiMap(), params.getRequestOrigin())).start())
                 .doOnSuccess(user1 -> {
                     // reload principal
                     io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
