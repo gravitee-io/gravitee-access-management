@@ -15,67 +15,96 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user.model;
 
+import io.gravitee.am.model.account.ForgotPasswordLookupField;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ForgotPasswordParameters {
-    final String email;
-    final String username;
-    final boolean customFormEnabled;
-    final boolean confirmIdentityEnabled;
+
+    private final Map<String, String> lookupValues;
+    private final boolean customFormEnabled;
+    private final boolean confirmIdentityEnabled;
 
     public ForgotPasswordParameters(String email,
                                     String username,
                                     boolean customFormEnabled,
                                     boolean confirmIdentityEnabled) {
-        this.email = email;
-        this.username = username;
-        this.customFormEnabled = customFormEnabled;
-        this.confirmIdentityEnabled = confirmIdentityEnabled;
+        this(buildLookupValues(email, username), customFormEnabled, confirmIdentityEnabled);
     }
 
     public ForgotPasswordParameters(String email,
                                     boolean customFormEnabled,
                                     boolean confirmIdentityEnabled) {
-        this.email = email;
-        this.username = null;
+        this(email, null, customFormEnabled, confirmIdentityEnabled);
+    }
+
+    public ForgotPasswordParameters(Map<String, String> lookupValues,
+                                    boolean customFormEnabled,
+                                    boolean confirmIdentityEnabled) {
+        this.lookupValues = lookupValues == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(lookupValues));
         this.customFormEnabled = customFormEnabled;
         this.confirmIdentityEnabled = confirmIdentityEnabled;
     }
 
     public String getEmail() {
-        return email;
+        return lookupValues.get(ForgotPasswordLookupField.EMAIL);
     }
 
     public String getUsername() {
-        return username;
+        return lookupValues.get(ForgotPasswordLookupField.USERNAME);
     }
 
+    public Map<String, String> getLookupValues() {
+        return lookupValues;
+    }
+
+    public boolean hasAnyLookupValue() {
+        return lookupValues.values().stream().anyMatch(value -> !StringUtils.isEmpty(value));
+    }
+
+    public boolean canFallbackToIdentityProvider() {
+        return !StringUtils.isEmpty(getEmail()) || !StringUtils.isEmpty(getUsername());
+    }
 
     public FilterCriteria buildCriteria() {
         final ArrayList<FilterCriteria> filterComponents = new ArrayList<>();
-        if (!StringUtils.isEmpty(email)) {
-            filterComponents.add(buildCriteria("emails.value", email));
+        lookupValues.forEach((key, value) -> {
+            if (!StringUtils.isEmpty(value)) {
+                filterComponents.add(buildCriteria(ForgotPasswordLookupField.toFilterFieldName(key), value));
+            }
+        });
+
+        if (filterComponents.isEmpty()) {
+            return new FilterCriteria();
         }
-        if (!StringUtils.isEmpty(username)) {
-            filterComponents.add(buildCriteria("userName", username));
+        if (filterComponents.size() == 1) {
+            return filterComponents.get(0);
         }
 
         FilterCriteria criteria = new FilterCriteria();
-        if (filterComponents.size() == 1) {
-            criteria = filterComponents.get(0);
-        } else {
-            criteria.setOperator("and");
-            criteria.setFilterComponents(filterComponents);
-        }
-
+        criteria.setOperator("and");
+        criteria.setFilterComponents(filterComponents);
         return criteria;
+    }
+
+    private static Map<String, String> buildLookupValues(String email, String username) {
+        Map<String, String> values = new LinkedHashMap<>();
+        if (!StringUtils.isEmpty(email)) {
+            values.put(ForgotPasswordLookupField.EMAIL, email);
+        }
+        if (!StringUtils.isEmpty(username)) {
+            values.put(ForgotPasswordLookupField.USERNAME, username);
+        }
+        return values;
     }
 
     private FilterCriteria buildCriteria(String scimField, String value) {

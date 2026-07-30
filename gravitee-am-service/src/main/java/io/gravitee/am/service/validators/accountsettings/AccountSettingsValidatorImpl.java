@@ -17,13 +17,11 @@ package io.gravitee.am.service.validators.accountsettings;
 
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.account.ForgotPasswordLookupField;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -31,10 +29,6 @@ import static java.util.Arrays.asList;
  */
 @Component
 public class AccountSettingsValidatorImpl implements AccountSettingsValidator {
-
-    public static final String EMAIL = "email";
-    public static final String USERNAME = "username";
-    private static final HashSet<String> AUTHORIZED_FIELDS = new HashSet<>(asList(EMAIL, USERNAME));
 
     @Override
     public Boolean validate(AccountSettings element) {
@@ -45,7 +39,9 @@ public class AccountSettingsValidatorImpl implements AccountSettingsValidator {
         if (settings != null && settings.isResetPasswordCustomForm()) {
             final List<FormField> fields = Optional.ofNullable(settings.getResetPasswordCustomFormFields())
                     .orElse(List.of());
-            return fields.stream().anyMatch(field -> !AUTHORIZED_FIELDS.contains(field.getKey()));
+            return fields.stream().anyMatch(field -> field == null
+                    || field.getKey() == null
+                    || !ForgotPasswordLookupField.isValidKey(field.getKey()));
         }
         return false;
     }

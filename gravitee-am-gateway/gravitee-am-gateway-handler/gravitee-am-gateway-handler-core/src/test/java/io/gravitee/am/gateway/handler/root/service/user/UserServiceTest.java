@@ -490,6 +490,37 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldForgotPassword_customAttribute() {
+        Client client = mock(Client.class);
+        ApplicationIdentityProvider applicationIdentityProvider = mock(ApplicationIdentityProvider.class);
+        when(applicationIdentityProvider.getIdentity()).thenReturn(IDP_ID);
+        TreeSet<ApplicationIdentityProvider> applicationIdentityProviders = new TreeSet<>();
+        applicationIdentityProviders.add(applicationIdentityProvider);
+        when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.getSource()).thenReturn(IDP_ID);
+        when(user.isInactive()).thenReturn(false);
+        when(user.isEnabled()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+
+        var testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters(Map.of("employeeId", "E-42"), true, false),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
     public void shouldForgotPassword_userActive_noUpdate() {
         Client client = mock(Client.class);
         ApplicationIdentityProvider applicationIdentityProvider = mock(ApplicationIdentityProvider.class);
@@ -1101,6 +1132,7 @@ public class UserServiceTest {
     public void shouldNotForgotPassword_client_has_no_Idp() {
         Client client = mock(Client.class);
         User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
 
         when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
 
@@ -1118,6 +1150,7 @@ public class UserServiceTest {
 
         User user = mock(User.class);
         when(user.getSource()).thenReturn(IDP_ID);
+        when(user.getEmail()).thenReturn("test@test.com");
 
         when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
