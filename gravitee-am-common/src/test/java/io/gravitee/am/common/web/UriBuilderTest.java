@@ -138,8 +138,17 @@ public class UriBuilderTest {
     }
 
     @Test
-    public void toOriginLowercasesTheSchemeAndKeepsAnExplicitDefaultPort() {
-        assertEquals("https://auth.example.com:443", UriBuilder.toOrigin("HTTPS://auth.example.com:443"));
+    public void toOriginLowercasesTheSchemeAndHost() {
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("HTTPS://Auth.Example.COM"));
+        assertEquals("https://auth.example.com:8443", UriBuilder.toOrigin("https://AUTH.example.com:8443"));
+    }
+
+    @Test
+    public void toOriginDropsAnExplicitDefaultPort() {
+        // The browser omits it from clientDataJSON.origin, and WebAuthn compares the two with string equality.
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("https://auth.example.com:443"));
+        assertEquals("http://auth.example.com", UriBuilder.toOrigin("http://auth.example.com:80"));
+        assertEquals("https://auth.example.com:80", UriBuilder.toOrigin("https://auth.example.com:80"));
     }
 
     @Test

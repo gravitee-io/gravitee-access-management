@@ -104,6 +104,15 @@ class DomainDataPlaneTest {
     }
 
     @Test
+    public void should_serialize_the_entrypoint_origin_the_way_the_browser_does() {
+        // Vert.x compares this against clientDataJSON.origin by string equality, and the browser sends
+        // neither the scheme's default port nor the casing the entrypoint was stored with.
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://Auth.Acme.com:443/")));
+
+        assertEquals("https://auth.acme.com", managedCloud(cloudDomain()).getWebAuthnOrigin(null));
+    }
+
+    @Test
     public void should_fall_back_to_the_gateway_url_when_the_environment_has_no_entrypoint() {
         when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
 

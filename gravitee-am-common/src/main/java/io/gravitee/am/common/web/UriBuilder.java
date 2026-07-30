@@ -369,12 +369,19 @@ public class UriBuilder {
     }
 
     private static int effectivePort(URI uri) {
-        if (uri.getPort() >= 0) {
-            return uri.getPort();
-        }
+        return uri.getPort() >= 0 ? uri.getPort() : defaultPort(uri);
+    }
+
+    private static int defaultPort(URI uri) {
         return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
     }
 
+    /**
+     * The url's origin, serialized the way a browser serializes {@code window.location.origin}: scheme and
+     * host lowercased, and the port present only when it is not the scheme's default. WebAuthn compares the
+     * ceremony origin against {@code clientDataJSON.origin} by exact string equality, so an origin that
+     * keeps {@code :443} or the stored host's casing fails verification against the very host it matched.
+     */
     public static String toOrigin(String url) {
         if (url == null || url.isBlank()) {
             return null;
@@ -388,8 +395,10 @@ public class UriBuilder {
         if (uri.getScheme() == null || uri.getHost() == null) {
             return null;
         }
-        StringBuilder origin = new StringBuilder(uri.getScheme().toLowerCase(Locale.ROOT)).append("://").append(uri.getHost());
-        if (uri.getPort() >= 0) {
+        StringBuilder origin = new StringBuilder(uri.getScheme().toLowerCase(Locale.ROOT))
+                .append("://")
+                .append(uri.getHost().toLowerCase(Locale.ROOT));
+        if (uri.getPort() >= 0 && uri.getPort() != defaultPort(uri)) {
             origin.append(':').append(uri.getPort());
         }
         return origin.toString();
