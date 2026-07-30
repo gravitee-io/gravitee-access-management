@@ -37,6 +37,9 @@ services:
       - GRAVITEE_INSTALLATION_TYPE=managed
       - GRAVITEE_CLOUD_CONNECTOR_WS_ENDPOINTS_0=http://cockpit-mock:8085
       - gravitee_installation_managed_accessPoints_environment_gateway_host={environment}.{organization}.{account}.example.com
+      # A managed cloud node has no platform license
+      - GRAVITEE_LICENSE_KEY=
+      - JAVA_OPTS=-Dgravitee.license=/opt/graviteeio-am-management-api/license/no-platform-license.key
     depends_on:
       cockpit-mock:
         condition: service_healthy
@@ -48,3 +51,6 @@ services:
     environment:
       - GRAVITEE_CLOUD_ENABLED=true
       - GRAVITEE_INSTALLATION_TYPE=managed
+      # A managed cloud node has no platform license
+      - GRAVITEE_LICENSE_KEY=
+      - JAVA_OPTS=-Dgravitee.license=/opt/graviteeio-am-gateway/license/no-platform-license.key
