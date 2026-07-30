@@ -1118,6 +1118,44 @@ export class PlatformApi extends runtime.BaseAPI {
   }
 
   /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get the installation type of this instance
+   */
+  async getInstallationConfigurationRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/configuration/installation`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get the installation type of this instance
+   */
+  async getInstallationConfiguration(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.getInstallationConfigurationRaw(initOverrides);
+  }
+
+  /**
    * Get current node License
    */
   async getLicenseRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<GraviteeLicense>> {

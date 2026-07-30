@@ -43,6 +43,12 @@ export interface NewEntrypoint {
    * @type {string}
    * @memberof NewEntrypoint
    */
+  environmentId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewEntrypoint
+   */
   name: string;
   /**
    *
@@ -78,6 +84,7 @@ export function NewEntrypointFromJSONTyped(json: any, ignoreDiscriminator: boole
   }
   return {
     description: json['description'] == null ? undefined : json['description'],
+    environmentId: json['environmentId'] == null ? undefined : json['environmentId'],
     name: json['name'],
     tags: json['tags'],
     url: json['url'],
@@ -95,6 +102,7 @@ export function NewEntrypointToJSONTyped(value?: NewEntrypoint | null, ignoreDis
 
   return {
     description: value['description'],
+    environmentId: value['environmentId'],
     name: value['name'],
     tags: value['tags'],
     url: value['url'],

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -49,7 +51,20 @@ public class GraviteeLicense {
 
     private Date expiresAt;
 
+    @JsonProperty("isExpired")
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean isExpired;
 
     private String scope;
+
+    @JsonProperty("isExpired")
+    public boolean isExpired() {
+        return isExpired;
+    }
+
+    @JsonProperty("isExpired")
+    public void setExpired(boolean isExpired) {
+        this.isExpired = isExpired;
+    }
 }

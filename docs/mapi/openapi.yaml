@@ -14609,8 +14609,6 @@ components:
     GraviteeLicense:
       type: object
       properties:
-        expired:
-          type: boolean
         expiresAt:
           type: integer
           format: int64
@@ -14620,6 +14618,8 @@ components:
           items:
             type: string
           uniqueItems: true
+        isExpired:
+          type: boolean
         packs:
           type: array
           items:

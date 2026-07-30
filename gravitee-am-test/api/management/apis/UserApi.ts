@@ -40,6 +40,9 @@ import {
   CertificateCredential,
   CertificateCredentialFromJSON,
   CertificateCredentialToJSON,
+  ConsoleUserPreferences,
+  ConsoleUserPreferencesFromJSON,
+  ConsoleUserPreferencesToJSON,
   Credential,
   CredentialFromJSON,
   CredentialToJSON,
@@ -398,6 +401,10 @@ export interface UnlockUserRequest {
   environmentId: string;
   domain: string;
   user: string;
+}
+
+export interface UpdateConsolePreferencesRequest {
+  consoleUserPreferences: ConsoleUserPreferences;
 }
 
 export interface UpdateOrganisationUsernameRequest {
@@ -1332,6 +1339,45 @@ export class UserApi extends runtime.BaseAPI {
    */
   async findUser(requestParameters: FindUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<UserEntity> {
     const response = await this.findUserRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Get the console preferences of the current user
+   */
+  async getConsolePreferencesRaw(
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ConsoleUserPreferences>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/user/preferences`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ConsoleUserPreferencesFromJSON(jsonValue));
+  }
+
+  /**
+   * Get the console preferences of the current user
+   */
+  async getConsolePreferences(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ConsoleUserPreferences> {
+    const response = await this.getConsolePreferencesRaw(initOverrides);
     return await response.value();
   }
 
@@ -3658,6 +3704,59 @@ export class UserApi extends runtime.BaseAPI {
    */
   async unlockUser(requestParameters: UnlockUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.unlockUserRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Update the console preferences of the current user
+   */
+  async updateConsolePreferencesRaw(
+    requestParameters: UpdateConsolePreferencesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ConsoleUserPreferences>> {
+    if (requestParameters.consoleUserPreferences === null || requestParameters.consoleUserPreferences === undefined) {
+      throw new runtime.RequiredError(
+        'consoleUserPreferences',
+        'Required parameter requestParameters.consoleUserPreferences was null or undefined when calling updateConsolePreferences.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/user/preferences`,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: ConsoleUserPreferencesToJSON(requestParameters.consoleUserPreferences),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ConsoleUserPreferencesFromJSON(jsonValue));
+  }
+
+  /**
+   * Update the console preferences of the current user
+   */
+  async updateConsolePreferences(
+    requestParameters: UpdateConsolePreferencesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ConsoleUserPreferences> {
+    const response = await this.updateConsolePreferencesRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**

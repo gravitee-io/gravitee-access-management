@@ -33,12 +33,6 @@ import { mapValues } from '../runtime';
  */
 export interface GraviteeLicense {
   /**
-   *
-   * @type {boolean}
-   * @memberof GraviteeLicense
-   */
-  expired?: boolean;
-  /**
    * Epoch timestamp in milliseconds.
    * @type {number}
    * @memberof GraviteeLicense
@@ -50,6 +44,12 @@ export interface GraviteeLicense {
    * @memberof GraviteeLicense
    */
   features?: Set<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GraviteeLicense
+   */
+  isExpired?: boolean;
   /**
    *
    * @type {Set<string>}
@@ -86,9 +86,9 @@ export function GraviteeLicenseFromJSONTyped(json: any, ignoreDiscriminator: boo
     return json;
   }
   return {
-    expired: json['expired'] == null ? undefined : json['expired'],
     expiresAt: json['expiresAt'] == null ? undefined : json['expiresAt'],
     features: json['features'] == null ? undefined : new Set(json['features']),
+    isExpired: json['isExpired'] == null ? undefined : json['isExpired'],
     packs: json['packs'] == null ? undefined : new Set(json['packs']),
     scope: json['scope'] == null ? undefined : json['scope'],
     tier: json['tier'] == null ? undefined : json['tier'],
@@ -105,9 +105,9 @@ export function GraviteeLicenseToJSONTyped(value?: GraviteeLicense | null, ignor
   }
 
   return {
-    expired: value['expired'],
     expiresAt: value['expiresAt'],
     features: value['features'] == null ? undefined : Array.from(value['features'] as Set<any>),
+    isExpired: value['isExpired'],
     packs: value['packs'] == null ? undefined : Array.from(value['packs'] as Set<any>),
     scope: value['scope'],
     tier: value['tier'],

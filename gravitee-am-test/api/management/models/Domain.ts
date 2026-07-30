@@ -80,6 +80,13 @@ import {
   TokenExchangeSettingsToJSON,
   TokenExchangeSettingsToJSONTyped,
 } from './TokenExchangeSettings';
+import type { WebProtectionSettings } from './WebProtectionSettings';
+import {
+  WebProtectionSettingsFromJSON,
+  WebProtectionSettingsFromJSONTyped,
+  WebProtectionSettingsToJSON,
+  WebProtectionSettingsToJSONTyped,
+} from './WebProtectionSettings';
 import type { VirtualHost } from './VirtualHost';
 import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
 import type { PasswordSettings } from './PasswordSettings';
@@ -344,6 +351,12 @@ export interface Domain {
    * @memberof Domain
    */
   webAuthnSettings?: WebAuthnSettings;
+  /**
+   *
+   * @type {WebProtectionSettings}
+   * @memberof Domain
+   */
+  webProtectionSettings?: WebProtectionSettings;
 }
 
 /**
@@ -434,6 +447,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     vhostMode: json['vhostMode'] == null ? undefined : json['vhostMode'],
     vhosts: json['vhosts'] == null ? undefined : (json['vhosts'] as Array<any>).map(VirtualHostFromJSON),
     webAuthnSettings: json['webAuthnSettings'] == null ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
+    webProtectionSettings: json['webProtectionSettings'] == null ? undefined : WebProtectionSettingsFromJSON(json['webProtectionSettings']),
   };
 }
 
@@ -487,5 +501,6 @@ export function DomainToJSONTyped(value?: Omit<Domain, 'key'> | null, ignoreDisc
     vhostMode: value['vhostMode'],
     vhosts: value['vhosts'] == null ? undefined : (value['vhosts'] as Array<any>).map(VirtualHostToJSON),
     webAuthnSettings: WebAuthnSettingsToJSON(value['webAuthnSettings']),
+    webProtectionSettings: WebProtectionSettingsToJSON(value['webProtectionSettings']),
   };
 }
