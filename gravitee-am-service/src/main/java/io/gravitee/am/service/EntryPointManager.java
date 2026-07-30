@@ -40,8 +40,6 @@ import java.util.Optional;
  */
 public interface EntryPointManager extends Service<EntryPointManager> {
 
-    Logger LOG = NodeLoggerFactory.getLogger(EntryPointManager.class);
-
     List<Entrypoint> findByOrganizationId(String organizationId);
 
     List<Entrypoint> findAllByEnvironmentId(String environmentId);
@@ -92,10 +90,11 @@ public interface EntryPointManager extends Service<EntryPointManager> {
                 .filter(entrypoint -> sameOrigin(entrypoint.getUrl(), requestOrigin))
                 .min(Comparator.comparing(Entrypoint::getUrl));
         if (matched.isEmpty()) {
-            // Either a forged host or an entrypoint the environment never synced, and the two look the
-            // same from here. Worth saying out loud, because the fallback silently differs from the host
-            // the user is on.
-            LOG.warn("Environment {} has no entrypoint matching the request origin, falling back to its primary entrypoint", environmentId);
+            // Either a forged host or an entrypoint the environment never synced, and the two look the same
+            // from here. Debug rather than warn: this also runs per webauthn request, so an environment
+            // whose entrypoints never synced would warn at request rate.
+            Logger logger = NodeLoggerFactory.getLogger(this.getClass());
+            logger.debug("Environment {} has no entrypoint matching the request origin, falling back to its primary entrypoint", environmentId);
         }
         return matched;
     }
