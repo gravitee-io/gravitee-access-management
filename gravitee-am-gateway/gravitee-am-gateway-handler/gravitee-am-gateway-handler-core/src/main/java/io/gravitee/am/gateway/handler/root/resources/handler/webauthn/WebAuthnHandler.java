@@ -118,18 +118,14 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     /**
-     * Point the generated options at the relying party for this request's origin.
+     * Point the generated options at the relying party for this request's origin: {@code rp.id} on
+     * registration, top-level {@code rpId} on assertion.
      * <p>
      * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory} builds the {@code WebAuthn}
-     * bean once per domain, so its relying party id cannot follow the request. It also has no view of the
-     * environment entrypoint and falls back to {@code localhost}, which the browser rejects outright in
-     * cloud. Rewriting the emitted options is safe because we never set {@code WebAuthnCredentials.domain},
-     * so Vert.x skips its {@code rpIdHash} check and the id is purely what we advertise to the browser.
-     * <p>
-     * Registration carries it as {@code rp.id}, assertion as a top-level {@code rpId}. Only an origin that
-     * came from an entrypoint is used: with no entrypoint to go on the factory's value already honours
-     * whatever relying party id the domain configured, and deriving one from the fallback origin would
-     * overwrite it with the origin's host.
+     * bean once per domain and falls back to {@code localhost}, so its id cannot follow the request.
+     * Rewriting is safe because we never set {@code WebAuthnCredentials.domain}, so Vert.x skips its
+     * {@code rpIdHash} check. Only entrypoint-derived origins are used: otherwise the factory's value
+     * already honours the relying party id the domain configured.
      */
     protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
         String relyingPartyId = domainDataPlane

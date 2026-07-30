@@ -55,6 +55,10 @@ public class DomainDataPlane {
      * Empty unless the origin came from an environment entrypoint. Callers that derive the relying party
      * id need to tell that apart from the fallbacks: a domain that configured its own relying party id
      * keeps it, and deriving one from the fallback origin would silently replace it.
+     * <p>
+     * Present does not mean the entrypoint matched {@code requestOrigin} — the environment's primary
+     * entrypoint stands in when nothing matches, so an unrecognised host resolves to a host the browser
+     * is not on and fails the ceremony rather than being trusted.
      */
     public Optional<String> getWebAuthnEntrypointOrigin(@Nullable String requestOrigin) {
         if (!managedCloud || domain.getReferenceId() == null) {
