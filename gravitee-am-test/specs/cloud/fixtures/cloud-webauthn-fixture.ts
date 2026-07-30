@@ -15,7 +15,7 @@
  */
 
 import { getApplicationApi, getDomainApi, getEntrypointsApi } from '@management-commands/service/utils';
-import { waitForDomainReady } from '@gateway-commands/monitoring-commands';
+import { waitForDomainStart } from '@management-commands/domain-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
 import { retryUntil } from '@utils-commands/retry';
@@ -61,7 +61,9 @@ export interface CloudWebAuthnFixture {
 export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<CloudWebAuthnFixture> => {
   const organizationId = process.env.AM_DEF_ORG_ID;
   const environmentId = uniqueName('env-wa', true);
-  const uniqueHost = () => `${uniqueName('gw', true)}.example.com`;
+  // Lowercased: uniqueName capitalises a word, and a host is case-insensitive, so the browser lowercases
+  // it when it parses the origin. The relying party id has to match that, not the stored spelling.
+  const uniqueHost = () => `${uniqueName('gw', true)}.example.com`.toLowerCase();
 
   let generatedHost = uniqueHost();
   let overridingHost = uniqueHost();
@@ -120,7 +122,9 @@ export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<Cl
   });
 
   await domainApi.patchDomain({ organizationId, environmentId, domain: domain.id, patchDomain: { enabled: true } });
-  await waitForDomainReady(domain.id);
+  // waitForDomainStart, not waitForDomainReady: the latter only reports sync, and the gateway rebuilds its
+  // routes asynchronously after that, so the first request can land in a 404 window.
+  await waitForDomainStart(domain);
 
   const gatewayUrl = process.env.AM_GATEWAY_URL;
   const options = async (path: string, body: any, forwardedHost?: string) => {
