@@ -164,6 +164,24 @@ curl -i localhost:8085/_control/queue
 
 Returns the full queue as an array, non-destructively.
 
+### Read AM's HELLO — `GET /_control/hello`
+
+The handshake is answered automatically and never reaches the queue, so this is the only way to see
+what AM announced itself with. **204** until AM connects; overwritten on each reconnect.
+
+```bash
+curl -s localhost:8085/_control/hello
+# { "commandId": "...", "receivedAt": "2026-07-30T...",
+#   "payload": { "installationType": "managed", "node": { ... },
+#                "accessPointsTemplate": { "ENVIRONMENT": [ { "host": "{environment}.{organization}...",
+#                                                             "target": "GATEWAY", "secured": true } ] },
+#                "additionalInformation": { "API_URL": "...", "UI_URL": "..." } } }
+```
+
+`accessPointsTemplate` is only populated by a managed installation; a standalone one still sends the
+field, as an empty object. Note this `installationType` is AM's own (command direction) — not the same
+field as the `--installation-type` flag, which rides on the reply and is inert.
+
 ### Connection status — `GET /_control/status`
 
 ```bash

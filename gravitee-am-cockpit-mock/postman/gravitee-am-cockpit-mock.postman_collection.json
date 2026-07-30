@@ -70,6 +70,18 @@
             },
             "description": "Returns the whole queue as an array without consuming anything."
           }
+        },
+        {
+          "name": "Read AM's HELLO",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/hello",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "hello"]
+            },
+            "description": "The HELLO command AM sent on connect. HELLO only ever flows AM -> cockpit (AM is the WebSocket client and opens with it), the mock answers it automatically, and it never reaches the queue — so there is no HELLO to *send*, and this is the only way to see what AM announced itself with. 204 until AM connects; overwritten on each reconnect.\n\nUseful fields in `payload`: `installationType` (managed/standalone), `accessPointsTemplate` (the host template per type/target — only populated by a managed installation, a standalone one sends it as `{}`), `node`, and `additionalInformation` (API_URL/UI_URL).\n\nWatch out: this `installationType` is AM's own, on the command. It is a different field from the mock's `--installation-type` flag, which rides on the reply and is inert (AM ignores it)."
+          }
         }
       ]
     },
