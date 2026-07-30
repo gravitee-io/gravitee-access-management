@@ -175,22 +175,7 @@ public class DomainReadServiceImpl implements DomainReadService {
         if (entrypointUri == null || requestUri == null) {
             return false;
         }
-        return equalsIgnoringCase(entrypointUri.getScheme(), requestUri.getScheme())
-                && equalsIgnoringCase(entrypointUri.getHost(), requestUri.getHost())
-                && effectivePort(entrypointUri) == effectivePort(requestUri);
-    }
-
-    private static boolean equalsIgnoringCase(String left, String right) {
-        return left != null && left.equalsIgnoreCase(right);
-    }
-
-    // An entrypoint may spell out the default port where the request origin never does, so compare what
-    // the two actually resolve to rather than the text.
-    private static int effectivePort(URI uri) {
-        if (uri.getPort() >= 0) {
-            return uri.getPort();
-        }
-        return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+        return UriBuilder.sameOriginAuthority(entrypointUri, requestUri);
     }
 
     private static URI toUri(String url) {

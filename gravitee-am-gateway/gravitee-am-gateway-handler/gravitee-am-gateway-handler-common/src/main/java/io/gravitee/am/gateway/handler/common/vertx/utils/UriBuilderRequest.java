@@ -298,28 +298,6 @@ public class UriBuilderRequest {
         if (baseUri.getScheme() == null || baseUri.getHost() == null) {
             return false;
         }
-        return sameOriginAuthority(baseUri, originUri);
-    }
-
-    private static boolean sameOriginAuthority(URI expected, URI origin) {
-        if (!expected.getScheme().equalsIgnoreCase(origin.getScheme())) {
-            return false;
-        }
-        if (!expected.getHost().equalsIgnoreCase(origin.getHost())) {
-            return false;
-        }
-        return effectivePort(expected) == effectivePort(origin);
-    }
-
-    private static int effectivePort(URI uri) {
-        int port = uri.getPort();
-        if (port >= 0) {
-            return port;
-        }
-        String scheme = uri.getScheme();
-        if (scheme != null && "https".equalsIgnoreCase(scheme)) {
-            return 443;
-        }
-        return 80;
+        return UriBuilder.sameOriginAuthority(baseUri, originUri);
     }
 }
