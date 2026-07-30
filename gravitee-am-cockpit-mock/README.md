@@ -196,6 +196,17 @@ status/queue inspection, every supported command type with valid example payload
 templates for AM-initiated commands, and management API calls to verify the results.
 Command ids are chained between requests automatically via collection variables.
 
+`Commands → AM > License changes (AM-7237)` walks an organization license through
+create / no-op / update / delete — the only write path, since the management API exposes
+the license read-only. Set `{{licenseB64}}` to `base64 -i <your>.key | tr -d '\n'` first,
+then read the result with `List organization license audits`, which asserts the audits
+exist and that the raw license appears nowhere in them.
+
+Run it against DEFAULT (the `{{orgId}}` default). A cockpit-created org has no audit
+reporter, so its audits go to an event-bus address with no consumer and are dropped —
+the log lines still appear, but nothing lands in the store and the admin gets 403 reading
+that org's audits anyway.
+
 ## Notes
 
 - **Single active connection.** One AM at a time; a reconnect (AM restart) takes over

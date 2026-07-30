@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Gravitee AM Cockpit Mock",
-    "description": "Common requests against the cockpit mock (gravitee-am-cockpit-mock) control API, plus a few management API calls to verify the results in AM.\n\nPrerequisites: stack up in managed-cloud mode (`./local-stack.sh up --cloud` or `--full`), or the mock running standalone (`npm start` in gravitee-am-cockpit-mock). The mock itself has NO auth. `POST /_control/send` returns 409 while no AM instance is connected — check `Connection status` first.\n\nFlow: send a command, note the returned `id` (auto-saved to `{{commandId}}`), then pop the queue until AM's REPLY with that `commandId` appears.",
+    "description": "Common requests against the cockpit mock (gravitee-am-cockpit-mock) control API, plus a few management API calls to verify the results in AM.\n\nPrerequisites: stack up in managed-cloud mode (`./local-stack.sh up --cloud`, or `--with cloud`; note `--full` does NOT include the cloud overlay), or the mock running standalone (`npm start` in gravitee-am-cockpit-mock). The mock itself has NO auth. `POST /_control/send` returns 409 while no AM instance is connected — check `Connection status` first.\n\nFlow: send a command, note the returned `id` (auto-saved to `{{commandId}}`), then pop the queue until AM's REPLY with that `commandId` appears.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,7 +12,10 @@
     { "key": "envId", "value": "postman-cloud-env" },
     { "key": "commandId", "value": "" },
     { "key": "amCommandId", "value": "" },
-    { "key": "token", "value": "" }
+    { "key": "token", "value": "" },
+    { "key": "orgId", "value": "DEFAULT" },
+    { "key": "licenseB64", "value": "" },
+    { "key": "licenseB64Alt", "value": "bm90LWEtcmVhbC1saWNlbnNl" }
   ],
   "item": [
     {
@@ -121,7 +124,7 @@
               "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"DEFAULT\",\n    \"name\": \"Acme (via cockpit mock)\",\n    \"hrids\": [\"default\"],\n    \"description\": \"Updated by the cockpit mock Postman collection\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "createOrUpdate on the organization. Required: `id`, `name`, `hrids`. With `id: DEFAULT` this renames the default org."
+            "description": "createOrUpdate on the organization. Required: `id`, `name`, `hrids`. With `id: DEFAULT` this renames the default org. An optional `license` field (base64 of a signed key, see `{{licenseB64}}`) attaches an organization license — `License changes (AM-7237)` below drives that through create/update/delete."
           }
         },
         {
@@ -231,6 +234,102 @@
             },
             "description": "Missing required fields — AM rejects it and the queue receives a REPLY with `commandStatus: ERROR` and an errorDetails message listing the missing fields."
           }
+        },
+        {
+          "name": "License changes (AM-7237)",
+          "description": "Drives the organization license through create / no-op / update / delete — the only write path there is, since the management API exposes the license read-only.\n\nSet `{{licenseB64}}` first: `base64 -i <your>.key | tr -d '\\n'`. Without it step 1 attaches an OSS license and the whole run still works, just with `tier: oss` everywhere.\n\n`{{orgId}}` defaults to DEFAULT on purpose. A cockpit-created org has no audit reporter, so its audits are published to an event-bus address with no consumer and silently dropped — the log lines appear but `List organization license audits` stays empty, and the admin gets 403 on that org anyway. Run 1 → 4 in order; the org is left with no license, which is the state it started in (AM falls back to the platform license).",
+          "item": [
+            {
+              "name": "1. Set license (create)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{cockpitMockUrl}}/_control/send",
+                  "host": ["{{cockpitMockUrl}}"],
+                  "path": ["_control", "send"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"{{licenseB64}}\"\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "description": "Creates the org and attaches the license. Produces an `ORGANIZATION_LICENSE_CREATED` audit whose newValue is the decoded tier/packs/features/expiry, `License created for referenceType=ORGANIZATION...` in the management API log, and `License registered for organization={{orgId}}` in both planes once the LICENSE event propagates."
+              }
+            },
+            {
+              "name": "2. Resend same license (no-op)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{cockpitMockUrl}}/_control/send",
+                  "host": ["{{cockpitMockUrl}}"],
+                  "path": ["_control", "send"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"{{licenseB64}}\"\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "description": "Identical license — the write is skipped. Expect SUCCEEDED, no new audit, no new event, and `License unchanged ... skipping` at debug level."
+              }
+            },
+            {
+              "name": "3. Change license (update)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{cockpitMockUrl}}/_control/send",
+                  "host": ["{{cockpitMockUrl}}"],
+                  "path": ["_control", "send"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"{{licenseB64Alt}}\"\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "description": "Produces `ORGANIZATION_LICENSE_UPDATED`, whose message is a JSON patch from the old decoded license to the new one. The default `{{licenseB64Alt}}` is valid base64 but not a signed license — the license factory does not reject it, it hands back an OSS license, so expect `tier: universe -> oss` and the org silently downgraded until step 4. Swap in a second real key for a tier-to-tier diff."
+              }
+            },
+            {
+              "name": "4. Remove license (delete)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{cockpitMockUrl}}/_control/send",
+                  "host": ["{{cockpitMockUrl}}"],
+                  "path": ["_control", "send"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"]\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "description": "Omitting `license` deletes it. Produces `ORGANIZATION_LICENSE_DELETED` carrying the previous decoded license in `outcome.message` rather than a diff, plus `License deregistered for organization={{orgId}}` in both planes."
+              }
+            },
+            {
+              "name": "5. Invalid license (rejected, no audit)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{cockpitMockUrl}}/_control/send",
+                  "host": ["{{cockpitMockUrl}}"],
+                  "path": ["_control", "send"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"not base64 !!\"\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "description": "Documents a known gap: OrganizationServiceImpl validates the license before LicenseService is reached, so the command replies ERROR and no license audit is written at all. The failure audits in LicenseServiceImpl only fire on repository failures, which cannot be triggered from outside."
+              }
+            }
+          ]
         }
       ]
     },
@@ -349,6 +448,102 @@
               "path": ["management", "organizations", "DEFAULT", "environments"]
             },
             "description": "Shows environments including those created by ENVIRONMENT commands."
+          }
+        },
+        {
+          "name": "List organization license audits",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const audits = (pm.response.json().data || []).filter((a) => a.type && a.type.startsWith('ORGANIZATION_LICENSE_'));",
+                  "",
+                  "pm.test('at least one license audit', () => {",
+                  "    // audits are reported asynchronously - re-send this request if the list comes back empty",
+                  "    pm.expect(audits.length).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('raw license never leaves the database', () => {",
+                  "    const raw = pm.response.text();",
+                  "    ['licenseB64', 'licenseB64Alt'].forEach((key) => {",
+                  "        const value = pm.collectionVariables.get(key);",
+                  "        if (value && value.length > 32) {",
+                  "            pm.expect(raw).to.not.include(value.substring(0, 32));",
+                  "        }",
+                  "    });",
+                  "});",
+                  "",
+                  "audits.forEach((a) =>",
+                  "    console.log(a.timestamp + ' ' + a.type + ' ' + a.outcome.status + ' ' + (a.outcome.message || '(no detail - license could not be decoded)')),",
+                  ");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{managementUrl}}/management/organizations/{{orgId}}/audits?size=20",
+              "host": ["{{managementUrl}}"],
+              "path": ["management", "organizations", "{{orgId}}", "audits"],
+              "query": [{ "key": "size", "value": "20" }]
+            },
+            "description": "The traceability this ticket is about. Asserts the license audits exist and that the raw base64 license appears nowhere in them — only the decoded metadata is audited. Append `&type=ORGANIZATION_LICENSE_UPDATED` to filter to one event. There is no organization-level audit screen in the Console, so this endpoint is the only way to read them."
+          }
+        },
+        {
+          "name": "Get organization license (decoded)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{managementUrl}}/management/organizations/{{orgId}}/license",
+              "host": ["{{managementUrl}}"],
+              "path": ["management", "organizations", "{{orgId}}", "license"]
+            },
+            "description": "The license AM is actually applying for the org. Falls back to the platform license when the org has none, so after `4. Remove license` this returns the platform license rather than a 404."
+          }
+        },
+        {
+          "name": "List audit event types",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('license event types are registered', () => {",
+                  "    pm.expect(pm.response.json()).to.include.members([",
+                  "        'ORGANIZATION_LICENSE_CREATED',",
+                  "        'ORGANIZATION_LICENSE_UPDATED',",
+                  "        'ORGANIZATION_LICENSE_DELETED',",
+                  "    ]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{managementUrl}}/management/platform/audits/events",
+              "host": ["{{managementUrl}}"],
+              "path": ["management", "platform", "audits", "events"]
+            },
+            "description": "The list backing the Console audit filter. Confirms the three ORGANIZATION_LICENSE_* types are registered in EventType.types()."
           }
         }
       ]
