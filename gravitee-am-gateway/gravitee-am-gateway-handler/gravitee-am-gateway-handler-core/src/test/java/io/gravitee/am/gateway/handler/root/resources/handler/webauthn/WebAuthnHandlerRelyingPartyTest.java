@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
@@ -30,6 +32,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -50,6 +54,7 @@ public class WebAuthnHandlerRelyingPartyTest {
     @Before
     public void before() {
         when(ctx.request()).thenReturn(mock(HttpServerRequest.class));
+        when(domainDataPlane.getDomain()).thenReturn(domainWithRelyingPartyId(null));
         cut = new WebAuthnHandler() {
             @Override
             public void handle(RoutingContext event) {
@@ -57,6 +62,14 @@ public class WebAuthnHandlerRelyingPartyTest {
             }
         };
         cut.setDomainDataplane(domainDataPlane);
+    }
+
+    private Domain domainWithRelyingPartyId(String relyingPartyId) {
+        WebAuthnSettings settings = new WebAuthnSettings();
+        settings.setRelyingPartyId(relyingPartyId);
+        Domain domain = new Domain();
+        domain.setWebAuthnSettings(settings);
+        return domain;
     }
 
     @Test
@@ -102,6 +115,19 @@ public class WebAuthnHandlerRelyingPartyTest {
         cut.applyRelyingPartyId(ctx, options);
 
         assertEquals("configured.acme.com", options.getString("rpId"));
+    }
+
+    @Test
+    public void shouldLeaveAConfiguredRelyingPartyIdAlone() {
+        // Credentials are bound to the id they were registered under, so a domain that deliberately scoped
+        // itself to a parent domain keeps it even though an entrypoint resolves.
+        when(domainDataPlane.getDomain()).thenReturn(domainWithRelyingPartyId("acme.com"));
+        JsonObject options = new JsonObject().put("rpId", "acme.com");
+
+        cut.applyRelyingPartyId(ctx, options);
+
+        assertEquals("acme.com", options.getString("rpId"));
+        verify(domainDataPlane, never()).getWebAuthnEntrypointOrigin(any());
     }
 
     private void resolvedEntrypoint(String origin) {

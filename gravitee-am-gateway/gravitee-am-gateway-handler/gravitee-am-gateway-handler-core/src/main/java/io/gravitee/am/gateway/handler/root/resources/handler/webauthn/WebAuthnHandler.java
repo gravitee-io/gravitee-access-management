@@ -126,8 +126,16 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
      * Rewriting is safe because we never set {@code WebAuthnCredentials.domain}, so Vert.x skips its
      * {@code rpIdHash} check. Only entrypoint-derived origins are used: otherwise the factory's value
      * already honours the relying party id the domain configured.
+     * <p>
+     * A relying party id the domain set explicitly is left alone. Credentials are bound to the id they
+     * were registered under, so replacing a deliberate one — often a parent domain, so a single credential
+     * covers several subdomains — would stop every existing authenticator offering it.
      */
     protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
+        WebAuthnSettings webAuthnSettings = domainDataPlane.getDomain().getWebAuthnSettings();
+        if (webAuthnSettings != null && webAuthnSettings.getRelyingPartyId() != null) {
+            return;
+        }
         String relyingPartyId = domainDataPlane
                 .getWebAuthnEntrypointOrigin(UriBuilderRequest.resolveOrigin(ctx.request()))
                 .map(RequestUtils::getDomain)
