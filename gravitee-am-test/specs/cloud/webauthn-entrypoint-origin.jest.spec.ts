@@ -29,8 +29,9 @@ setup(200000);
  * origin is only compared server-side during verification and needs a real authenticator, so these
  * assert on the relying party id the gateway hands the browser, which travels with it.
  *
- * The fixture's domain deliberately has origin/relyingPartyId set to localhost, so a passing assertion
- * can only mean the entrypoint overrode them.
+ * The fixture's domains deliberately point their origin at localhost, so a passing assertion can only
+ * mean the entrypoint overrode it. A relying party id the domain set for itself is the exception: that
+ * one has to survive, because existing credentials are bound to it.
  */
 describe('AM - Cloud - webauthn relying party from the environment entrypoint', () => {
   let accessToken: string;
@@ -64,6 +65,15 @@ describe('AM - Cloud - webauthn relying party from the environment entrypoint', 
     const options = await fixture.assertionOptions('forged.example.com');
 
     expect(options.rpId).toEqual(fixture.overridingHost);
+  });
+
+  it('leaves a relying party id the domain configured for itself alone', async () => {
+    // Credentials are bound to the relying party id they were registered under, so overriding a
+    // deliberate one — typically a parent domain covering several subdomains — would orphan every
+    // credential a customer already has.
+    const options = await fixture.configuredAssertionOptions();
+
+    expect(options.rpId).toEqual(fixture.configuredRelyingPartyId);
   });
 
   it('picks up re-synced access points without redeploying the domain', async () => {

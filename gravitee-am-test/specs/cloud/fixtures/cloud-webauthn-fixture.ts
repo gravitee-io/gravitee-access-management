@@ -24,6 +24,8 @@ import { uniqueName } from '@utils-commands/misc';
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 const REDIRECT_URI = 'https://callback.example.com';
+const PATH_LOGIN_CREDENTIALS = '/webauthn/login/credentials';
+const CONFIGURED_RELYING_PARTY_ID = 'configured.example.com';
 
 const urlFor = (host: string) => `https://${host}`;
 
@@ -37,24 +39,29 @@ export interface CloudWebAuthnFixture {
   overridingHost: string;
   /** A globally-unique gateway host, safe to reuse across parallel runs. */
   uniqueHost: () => string;
+  /** The relying party id the second domain configured for itself. */
+  configuredRelyingPartyId: string;
   /**
    * Assertion options from POST /webauthn/login/credentials, optionally as seen from a given host.
    * The registration endpoint carries the same relying party id but demands an authenticated session,
    * so it is left to the unit tests.
    */
   assertionOptions: (forwardedHost?: string) => Promise<any>;
+  /** As {@link assertionOptions}, for the domain that configured its own relying party id. */
+  configuredAssertionOptions: (forwardedHost?: string) => Promise<any>;
   /** Re-issue the ENVIRONMENT command with a new set of gateway access points. */
   resyncAccessPoints: (hosts: { generated: string; overriding: string }) => Promise<void>;
   cleanup: () => Promise<void>;
 }
 
 /**
- * A managed-cloud environment with two gateway access points and a passwordless domain deployed in it,
+ * A managed-cloud environment with two gateway access points and two passwordless domains deployed in it,
  * so the relying party the gateway advertises can be observed per request.
  * <p>
- * The domain's own WebAuthn settings are deliberately seeded with the wrong host: in cloud the
- * environment entrypoint has to win over them, and a domain with nothing configured would pass the
- * assertions for the wrong reason.
+ * Both domains seed a deliberately wrong origin, so the environment entrypoint has to be what wins and a
+ * domain with nothing configured cannot pass the assertions for the wrong reason. They differ in the one
+ * thing under test: the first leaves the relying party id unset for the entrypoint to supply, the second
+ * sets its own and must keep it.
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
@@ -93,71 +100,90 @@ export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<Cl
 
   await resyncAccessPoints({ generated: generatedHost, overriding: overridingHost });
 
+  const domainApi = getDomainApi(accessToken);
+  const gatewayUrl = process.env.AM_GATEWAY_URL;
+
   // Passwordless and the WebAuthn settings go on before the domain starts, so the initial sync picks
   // everything up in one pass and no patch lands on a running domain.
-  const domainApi = getDomainApi(accessToken);
-  const domain = await domainApi.createDomain({
-    organizationId,
-    environmentId,
-    newDomain: { name: uniqueName('wa-entrypoint-domain', true), dataPlaneId: DATA_PLANE_ID },
-  });
-  await domainApi.patchDomain({
-    organizationId,
-    environmentId,
-    domain: domain.id,
-    patchDomain: {
-      loginSettings: { inherited: false, passwordlessEnabled: true },
-      webAuthnSettings: { origin: 'http://localhost:8092', relyingPartyId: 'localhost', relyingPartyName: 'AM7231' },
-    },
-  });
+  const passwordlessDomain = async (namePrefix: string, webAuthnSettings: Record<string, string>) => {
+    const domain = await domainApi.createDomain({
+      organizationId,
+      environmentId,
+      newDomain: { name: uniqueName(namePrefix, true), dataPlaneId: DATA_PLANE_ID },
+    });
+    await domainApi.patchDomain({
+      organizationId,
+      environmentId,
+      domain: domain.id,
+      patchDomain: { loginSettings: { inherited: false, passwordlessEnabled: true }, webAuthnSettings },
+    });
 
-  // Through the API directly rather than createTestApp: that helper hardcodes the default
-  // organization/environment, and this domain lives in the environment Cockpit just provisioned.
-  const clientId = uniqueName('wa-entrypoint-app', true);
-  const application = await getApplicationApi(accessToken).createApplication({
-    organizationId,
-    environmentId,
-    domain: domain.id,
-    newApplication: { name: clientId, type: 'WEB', clientId, redirectUris: [REDIRECT_URI] },
-  });
+    // Through the API directly rather than createTestApp: that helper hardcodes the default
+    // organization/environment, and this domain lives in the environment Cockpit just provisioned.
+    const clientId = uniqueName(`${namePrefix}-app`, true);
+    const application = await getApplicationApi(accessToken).createApplication({
+      organizationId,
+      environmentId,
+      domain: domain.id,
+      newApplication: { name: clientId, type: 'WEB', clientId, redirectUris: [REDIRECT_URI] },
+    });
 
-  await domainApi.patchDomain({ organizationId, environmentId, domain: domain.id, patchDomain: { enabled: true } });
-  // waitForDomainStart, not waitForDomainReady: the latter only reports sync, and the gateway rebuilds its
-  // routes asynchronously after that, so the first request can land in a 404 window.
-  await waitForDomainStart(domain);
+    await domainApi.patchDomain({ organizationId, environmentId, domain: domain.id, patchDomain: { enabled: true } });
+    // waitForDomainStart, not waitForDomainReady: the latter only reports sync, and the gateway rebuilds its
+    // routes asynchronously after that, so the first request can land in a 404 window.
+    await waitForDomainStart(domain);
 
-  const gatewayUrl = process.env.AM_GATEWAY_URL;
-  const options = async (path: string, body: any, forwardedHost?: string) => {
-    // X-Forwarded-Host rather than Host: supertest owns the Host header, and the gateway resolves the
-    // public origin from the forwarding headers first anyway.
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(forwardedHost ? { 'X-Forwarded-Host': forwardedHost, 'X-Forwarded-Proto': 'https' } : {}),
+    const assertionOptions = async (forwardedHost?: string) => {
+      // X-Forwarded-Host rather than Host: supertest owns the Host header, and the gateway resolves the
+      // public origin from the forwarding headers first anyway.
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(forwardedHost ? { 'X-Forwarded-Host': forwardedHost, 'X-Forwarded-Proto': 'https' } : {}),
+      };
+      const response = await performPost(
+        gatewayUrl,
+        `/${domain.hrid}${PATH_LOGIN_CREDENTIALS}?client_id=${application.settings.oauth.clientId}`,
+        { name: uniqueName('wa-user', true) },
+        headers,
+      );
+      if (response.status !== 200) {
+        throw new Error(`${PATH_LOGIN_CREDENTIALS} returned ${response.status}: ${response.text}`);
+      }
+      return JSON.parse(response.text);
     };
-    const response = await performPost(
-      gatewayUrl,
-      `/${domain.hrid}${path}?client_id=${application.settings.oauth.clientId}`,
-      body,
-      headers,
-    );
-    if (response.status !== 200) {
-      throw new Error(`${path} returned ${response.status}: ${response.text}`);
-    }
-    return JSON.parse(response.text);
+
+    return { domain, assertionOptions };
   };
+
+  // Origin deliberately wrong and no relying party id at all, so the entrypoint is the only thing that can
+  // supply one and a passing assertion cannot mean "it was already right".
+  const derived = await passwordlessDomain('wa-entrypoint-domain', {
+    origin: 'http://localhost:8092',
+    relyingPartyName: 'AM7231',
+  });
+
+  // A relying party id the domain set deliberately. Credentials are bound to it, so the entrypoint must
+  // leave it alone or every already-registered authenticator stops offering them.
+  const configured = await passwordlessDomain('wa-configured-domain', {
+    origin: 'http://localhost:8092',
+    relyingPartyId: CONFIGURED_RELYING_PARTY_ID,
+    relyingPartyName: 'AM7231',
+  });
 
   // The entrypoints this fixture provisions are deliberately left behind: AM-7228 makes them read-only
   // in a managed installation, so deleting them can only ever return 400. The hosts are unique per run.
   const cleanup = async () => {
-    await domainApi
-      .deleteDomain({ organizationId, environmentId, domain: domain.id })
-      .catch((e) => console.warn(`cleanup: failed to delete domain ${domain.id}: ${e.message}`));
+    for (const { domain } of [derived, configured]) {
+      await domainApi
+        .deleteDomain({ organizationId, environmentId, domain: domain.id })
+        .catch((e) => console.warn(`cleanup: failed to delete domain ${domain.id}: ${e.message}`));
+    }
   };
 
   return {
     organizationId,
     environmentId,
-    domainId: domain.id,
+    domainId: derived.domain.id,
     get generatedHost() {
       return generatedHost;
     },
@@ -165,8 +191,9 @@ export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<Cl
       return overridingHost;
     },
     uniqueHost,
-    assertionOptions: (forwardedHost?: string) =>
-      options('/webauthn/login/credentials', { name: uniqueName('wa-user', true) }, forwardedHost),
+    configuredRelyingPartyId: CONFIGURED_RELYING_PARTY_ID,
+    assertionOptions: derived.assertionOptions,
+    configuredAssertionOptions: configured.assertionOptions,
     resyncAccessPoints,
     cleanup,
   };
