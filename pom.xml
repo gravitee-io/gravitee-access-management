@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>25.0.0</version>
+        <version>25.1.0</version>
         <relativePath/>
     </parent>
 
@@ -239,7 +239,6 @@
 
         <kryo.version>5.6.2</kryo.version>
         <testcontainers.version>2.0.3</testcontainers.version>
-        <gravitee.archrules.skip>false</gravitee.archrules.skip>
     </properties>
 
     <dependencyManagement>
@@ -879,8 +878,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Parent pins archrules 1.0.0 (ArchUnit 1.2.1) whose ASM can't read Java 25 (class major version 69);
-                 override with a Java 25-capable ArchUnit so the rules actually analyse our bytecode -->
             <plugin>
                 <groupId>io.gravitee.maven</groupId>
                 <artifactId>gravitee-archrules-maven-plugin</artifactId>
@@ -891,15 +888,6 @@
                         <ignoreExecutionContextClass>io.gravitee.am.gateway.handler.context.ExecutionContextFactory</ignoreExecutionContextClass>
                     </ignoreExecutionContextClasses>
                 </configuration>
-                <dependencies>
-                    <!-- TODO(AM-7328): drop this override once gravitee-parent bumps
-                         gravitee-archrules-maven-plugin to a Java 25-capable ArchUnit -->
-                    <dependency>
-                        <groupId>com.tngtech.archunit</groupId>
-                        <artifactId>archunit</artifactId>
-                        <version>1.4.1</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>
