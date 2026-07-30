@@ -171,6 +171,13 @@ curl -s localhost:8085/_control/status
 # { "connected": true, "installation": { ... }, "queueSize": 0 }
 ```
 
+## Postman collection
+
+Import `postman/gravitee-am-cockpit-mock.postman_collection.json` for ready-made requests:
+status/queue inspection, every supported command type with valid example payloads, REPLY
+templates for AM-initiated commands, and management API calls to verify the results.
+Command ids are chained between requests automatically via collection variables.
+
 ## Notes
 
 - **Single active connection.** One AM at a time; a reconnect (AM restart) takes over

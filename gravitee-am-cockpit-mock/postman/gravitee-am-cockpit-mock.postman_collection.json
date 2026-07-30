@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "Gravitee AM Cockpit Mock",
+    "description": "Common requests against the cockpit mock (gravitee-am-cockpit-mock) control API, plus a few management API calls to verify the results in AM.\n\nPrerequisites: stack up in managed-cloud mode (`./local-stack.sh up --cloud` or `--full`), or the mock running standalone (`npm start` in gravitee-am-cockpit-mock). The mock itself has NO auth. `POST /_control/send` returns 409 while no AM instance is connected — check `Connection status` first.\n\nFlow: send a command, note the returned `id` (auto-saved to `{{commandId}}`), then pop the queue until AM's REPLY with that `commandId` appears.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "cockpitMockUrl", "value": "http://localhost:8085" },
+    { "key": "managementUrl", "value": "http://localhost:8093" },
+    { "key": "adminUsername", "value": "admin" },
+    { "key": "adminPassword", "value": "adminadmin" },
+    { "key": "envId", "value": "postman-cloud-env" },
+    { "key": "commandId", "value": "" },
+    { "key": "amCommandId", "value": "" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Status & Queue",
+      "item": [
+        {
+          "name": "Connection status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/status",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "status"]
+            },
+            "description": "Returns `{ connected, installation, queueSize }`. `connected: true` means AM's WebSocket is up and `/_control/send` will work."
+          }
+        },
+        {
+          "name": "Pop next message (FIFO)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const entry = pm.response.json();",
+                  "    if (entry.protocolType === 'COMMAND' && entry.commandId) {",
+                  "        pm.collectionVariables.set('amCommandId', entry.commandId);",
+                  "        console.log('AM-initiated COMMAND, saved amCommandId=' + entry.commandId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/queue",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "queue"]
+            },
+            "description": "Removes and returns the queue head; 204 when empty. REPLY entries carry the `commandId` of the command they answer plus `commandStatus` (SUCCEEDED/ERROR). If the entry is an AM-initiated COMMAND, its `commandId` is auto-saved to `{{amCommandId}}` for the reply requests."
+          }
+        },
+        {
+          "name": "Peek queue (non-destructive)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/queue/peek",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "queue", "peek"]
+            },
+            "description": "Returns the whole queue as an array without consuming anything."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Commands → AM",
+      "description": "Each request POSTs a cockpit command at AM and auto-saves the returned command `id` to `{{commandId}}`. AM's REPLY (matching that `commandId`) lands on the queue — pop it to see SUCCEEDED/ERROR.",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const json = pm.response.json();",
+              "    if (json.id) {",
+              "        pm.collectionVariables.set('commandId', json.id);",
+              "        console.log('sent command, saved commandId=' + json.id);",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "ORGANIZATION - create/update org",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"DEFAULT\",\n    \"name\": \"Acme (via cockpit mock)\",\n    \"hrids\": [\"default\"],\n    \"description\": \"Updated by the cockpit mock Postman collection\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "createOrUpdate on the organization. Required: `id`, `name`, `hrids`. With `id: DEFAULT` this renames the default org."
+          }
+        },
+        {
+          "name": "ENVIRONMENT - create env with GATEWAY access points",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ENVIRONMENT\",\n  \"payload\": {\n    \"id\": \"{{envId}}\",\n    \"organizationId\": \"DEFAULT\",\n    \"hrids\": [\"{{envId}}\"],\n    \"name\": \"Postman cloud environment\",\n    \"description\": \"Created via cockpit mock\",\n    \"accessPoints\": [\n      { \"target\": \"GATEWAY\", \"host\": \"gw-{{envId}}.example.com\" },\n      { \"target\": \"GATEWAY\", \"host\": \"custom-{{envId}}.example.com\", \"overriding\": true }\n    ]\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "createOrUpdate on the environment. Required: `organizationId`, `id`, `name`, `hrids`. In managed-cloud mode the GATEWAY access points are synced to organization entrypoints: `overriding: true` marks the customer's custom host, the other becomes `defaultEntrypoint: true`. The only way to create environments/entrypoints locally — the Console cannot.\n\nGotchas: entrypoints are cockpit-owned (deleting them via the console returns 400) and both planes warm their caches async, so poll before relying on them. Verify with `List organization entrypoints`."
+          }
+        },
+        {
+          "name": "USER - create/update org user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"USER\",\n  \"payload\": {\n    \"id\": \"cockpit-user-1\",\n    \"organizationId\": \"DEFAULT\",\n    \"username\": \"cockpit.user\",\n    \"firstName\": \"Cockpit\",\n    \"lastName\": \"User\",\n    \"email\": \"cockpit.user@example.com\",\n    \"picture\": \"https://example.com/avatar.png\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "createOrUpdate on an organization user with source `cockpit`. Required: `id`, `username`, `organizationId`. The payload `id` becomes the user's externalId — MEMBERSHIP commands reference it via `userId`."
+          }
+        },
+        {
+          "name": "MEMBERSHIP - assign role",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MEMBERSHIP\",\n  \"payload\": {\n    \"organizationId\": \"DEFAULT\",\n    \"referenceType\": \"ENVIRONMENT\",\n    \"referenceId\": \"{{envId}}\",\n    \"userId\": \"cockpit-user-1\",\n    \"role\": \"ENVIRONMENT_PRIMARY_OWNER\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Assigns a role to a cockpit-sourced user. All fields required. `userId` is the USER command's payload `id` (externalId) — the user must exist first. `referenceType` is ENVIRONMENT or ORGANIZATION; `role` is a system role name (e.g. ENVIRONMENT_PRIMARY_OWNER, ORGANIZATION_PRIMARY_OWNER) or default role name (e.g. ENVIRONMENT_OWNER, ORGANIZATION_USER)."
+          }
+        },
+        {
+          "name": "INSTALLATION - update status",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"INSTALLATION\",\n  \"payload\": {\n    \"status\": \"ACCEPTED\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sets the installation's cockpit status (`COCKPIT_INSTALLATION_STATUS` in the installation's additionalInformation). Required: `status`."
+          }
+        },
+        {
+          "name": "GOODBYE - decommission installation (careful)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"GOODBYE\",\n  \"payload\": {}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Marks the installation's cockpit status DELETED — AM considers itself unlinked from cockpit. Only send when testing the decommission path; recover by restarting the stack (or sending INSTALLATION with status ACCEPTED)."
+          }
+        },
+        {
+          "name": "Invalid payload - exercise ERROR reply",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Missing required fields — AM rejects it and the queue receives a REPLY with `commandStatus: ERROR` and an errorDetails message listing the missing fields."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Replies → AM",
+      "description": "When AM initiates a command toward cockpit it shows up on the queue as a COMMAND entry (popping it auto-saves `{{amCommandId}}`). Answer it with one of these.",
+      "item": [
+        {
+          "name": "Reply SUCCEEDED",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"protocolType\": \"REPLY\",\n  \"type\": \"<type-from-queue-entry>\",\n  \"commandId\": \"{{amCommandId}}\",\n  \"commandStatus\": \"SUCCEEDED\",\n  \"payload\": {}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Set `type` to the queue entry's `type`. `commandStatus` defaults to SUCCEEDED if omitted."
+          }
+        },
+        {
+          "name": "Reply ERROR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": ["{{cockpitMockUrl}}"],
+              "path": ["_control", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"protocolType\": \"REPLY\",\n  \"type\": \"<type-from-queue-entry>\",\n  \"commandId\": \"{{amCommandId}}\",\n  \"commandStatus\": \"ERROR\",\n  \"errorDetails\": \"simulated cockpit failure\",\n  \"payload\": {}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Exercises AM's failure handling for its own outbound commands."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verify in AM (Management API)",
+      "description": "Companion requests against the management API (port 8093) to check what the cockpit commands actually produced. Run `Get admin token` first — it saves `{{token}}` for the others.",
+      "item": [
+        {
+          "name": "Get admin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().access_token);",
+                  "    console.log('saved management API token');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{managementUrl}}/management/auth/token",
+              "host": ["{{managementUrl}}"],
+              "path": ["management", "auth", "token"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grant_type\": \"password\",\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Saves `access_token` to `{{token}}` for the other requests in this folder."
+          }
+        },
+        {
+          "name": "List organization entrypoints",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{managementUrl}}/management/organizations/DEFAULT/entrypoints",
+              "host": ["{{managementUrl}}"],
+              "path": ["management", "organizations", "DEFAULT", "entrypoints"]
+            },
+            "description": "Shows the entrypoints created from the ENVIRONMENT command's GATEWAY access points. Caches warm async — retry if a just-sent command's entrypoints aren't visible yet."
+          }
+        },
+        {
+          "name": "List environments",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{managementUrl}}/management/organizations/DEFAULT/environments",
+              "host": ["{{managementUrl}}"],
+              "path": ["management", "organizations", "DEFAULT", "environments"]
+            },
+            "description": "Shows environments including those created by ENVIRONMENT commands."
+          }
+        }
+      ]
+    }
+  ]
+}
