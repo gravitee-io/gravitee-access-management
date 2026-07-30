@@ -164,12 +164,48 @@ curl -i localhost:8085/_control/queue
 
 Returns the full queue as an array, non-destructively.
 
+### Read AM's HELLO — `GET /_control/hello`
+
+The handshake is answered automatically and never reaches the queue, so this is the only way to see
+what AM announced itself with. **204** until AM connects; overwritten on each reconnect.
+
+```bash
+curl -s localhost:8085/_control/hello
+# { "commandId": "...", "receivedAt": "2026-07-30T...",
+#   "payload": { "installationType": "managed", "node": { ... },
+#                "accessPointsTemplate": { "ENVIRONMENT": [ { "host": "{environment}.{organization}...",
+#                                                             "target": "GATEWAY", "secured": true } ] },
+#                "additionalInformation": { "API_URL": "...", "UI_URL": "..." } } }
+```
+
+`accessPointsTemplate` is only populated by a managed installation; a standalone one still sends the
+field, as an empty object. Note this `installationType` is AM's own (command direction) — not the same
+field as the `--installation-type` flag, which rides on the reply and is inert.
+
 ### Connection status — `GET /_control/status`
 
 ```bash
 curl -s localhost:8085/_control/status
 # { "connected": true, "installation": { ... }, "queueSize": 0 }
 ```
+
+## Postman collection
+
+Import `postman/gravitee-am-cockpit-mock.postman_collection.json` for ready-made requests:
+status/queue inspection, every supported command type with valid example payloads, REPLY
+templates for AM-initiated commands, and management API calls to verify the results.
+Command ids are chained between requests automatically via collection variables.
+
+`Commands → AM > License changes (AM-7237)` walks an organization license through
+create / no-op / update / delete — the only write path, since the management API exposes
+the license read-only. Set `{{licenseB64}}` to `base64 -i <your>.key | tr -d '\n'` first,
+then read the result with `List organization license audits`, which asserts the audits
+exist and that the raw license appears nowhere in them.
+
+Run it against DEFAULT (the `{{orgId}}` default). A cockpit-created org has no audit
+reporter, so its audits go to an event-bus address with no consumer and are dropped —
+the log lines still appear, but nothing lands in the store and the admin gets 403 reading
+that org's audits anyway.
 
 ## Notes
 

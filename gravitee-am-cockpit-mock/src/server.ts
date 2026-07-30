@@ -24,6 +24,7 @@
  *   POST /_control/send        send a COMMAND (default) or REPLY toward AM
  *   GET  /_control/queue       pop the FIFO head of AM's messages (204 when empty)
  *   GET  /_control/queue/peek  non-destructive snapshot of the queue
+ *   GET  /_control/hello       the HELLO AM sent on connect (204 before it arrives)
  *   GET  /_control/status      connection + installation + queue summary
  */
 
@@ -33,6 +34,13 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { decodeFrame, encodeFrame, ProtocolType } from './protocol';
 import { loadInstallationState, InstallationState } from './state';
 import { ReplyQueue, QueueEntry } from './queue';
+
+/** AM's HELLO command, retained so its payload can be read back over HTTP. */
+interface HelloCapture {
+  commandId?: string;
+  payload?: unknown;
+  receivedAt: string;
+}
 
 interface Config {
   port: number;
@@ -128,6 +136,9 @@ function main(): void {
   /** The single active AM connection (last-writer-wins on reconnect). */
   let activeSocket: WebSocket | null = null;
 
+  /** AM's latest HELLO, kept because the handshake never reaches the queue. */
+  let lastHello: HelloCapture | null = null;
+
   const httpServer = createServer((req, res) => handleHttp(req, res));
   const wss = new WebSocketServer({ noServer: true });
 
@@ -161,8 +172,14 @@ function main(): void {
     const frame = decodeFrame(raw);
     const exchangeType = frame.exchangeType ?? frame.exchange?.type;
 
-    // Auto-handle the HELLO handshake so the link comes up; keep it off the queue.
+    // Auto-handle the HELLO handshake so the link comes up; keep it off the queue, but retain it —
+    // its payload carries AM's installationType and access point templates, and nothing else exposes them.
     if (frame.protocolType === 'COMMAND' && exchangeType === 'HELLO') {
+      lastHello = {
+        commandId: frame.exchange?.id,
+        payload: frame.exchange?.payload,
+        receivedAt: new Date().toISOString(),
+      };
       replyToHello(frame.exchange?.id);
       return;
     }
@@ -237,6 +254,14 @@ function main(): void {
     if (req.method === 'GET' && path === `${cfg.controlPrefix}/queue/peek`) {
       return sendJson(res, 200, queue.peek());
     }
+    if (req.method === 'GET' && path === `${cfg.controlPrefix}/hello`) {
+      if (!lastHello) {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      return sendJson(res, 200, lastHello);
+    }
     if (req.method === 'GET' && path === `${cfg.controlPrefix}/status`) {
       return sendJson(res, 200, {
         connected: !!activeSocket && activeSocket.readyState === WebSocket.OPEN,
@@ -299,7 +324,7 @@ function main(): void {
   httpServer.listen(cfg.port, () => {
     log('boot', `listening on http://localhost:${cfg.port}`);
     log('boot', `  WebSocket : ws://localhost:${cfg.port}${cfg.wsPath}`);
-    log('boot', `  control   : ${cfg.controlPrefix}/send | /queue | /queue/peek | /status`);
+    log('boot', `  control   : ${cfg.controlPrefix}/send | /queue | /queue/peek | /hello | /status`);
     log('boot', `  installation: id=${installation.installationId} status=${installation.installationStatus}${installation.installationType ? ` type=${installation.installationType}` : ''}`);
     if (cfg.stateFile) log('boot', `  state file: ${cfg.stateFile}`);
     log('boot', `Point AM at it: cloud.connector.ws.endpoints=http://localhost:${cfg.port} + cloud.enabled=true`);
