@@ -222,9 +222,8 @@ public class UriBuilderRequest {
     /**
      * This request's public origin as {@code scheme://host[:port]}, using the same {@code X-Forwarded-*}
      * resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
-     * <p>
-     * Carries no path: callers compare it against configured entrypoints and vhosts, which are hosts
-     * rather than URLs, so neither the request path nor {@code X-Forwarded-Prefix} belongs in it.
+     * Carries no path and ignores {@code X-Forwarded-Prefix}; null when the forwarding headers do not
+     * form a parseable origin.
      */
     public static @Nullable String resolveOrigin(HttpServerRequest request) {
         final URI baseUri;
@@ -232,7 +231,7 @@ public class UriBuilderRequest {
             baseUri = URI.create(resolveProxyRequest(request, "/", (MultiMap) null, false));
         } catch (IllegalArgumentException e) {
             // The forwarding headers are caller-controlled and go into the url unencoded, so they can
-            // fail to parse. Callers read null as "no origin" and resolve the url the usual way.
+            // fail to parse.
             LOGGER.warn("Unable to resolve the request origin from the forwarding headers");
             return null;
         }

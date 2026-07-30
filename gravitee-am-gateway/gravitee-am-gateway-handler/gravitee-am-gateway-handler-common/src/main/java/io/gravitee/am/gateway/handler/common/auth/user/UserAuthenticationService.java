@@ -81,7 +81,7 @@ public interface UserAuthenticationService {
      * @param user End-User to lock
      * @param requestOrigin the origin the failed login came in on, or null when there is no request to
      *                      take one from. The blocked account email carries a reset password link, so it
-     *                      resolves its url the same way the reset password flow does. See AM-7230.
+     *                      resolves its url the same way the reset password flow does.
      * @return
      */
     Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user, @Nullable String requestOrigin);
