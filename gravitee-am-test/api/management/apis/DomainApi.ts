@@ -1414,6 +1414,7 @@ export interface ListDomainsRequest {
   page?: number;
   size?: number;
   q?: string;
+  ids?: Array<string>;
 }
 
 export interface ListExtensionGrantsRequest {
@@ -12876,6 +12877,10 @@ export class DomainApi extends runtime.BaseAPI {
 
     if (requestParameters.q !== undefined) {
       queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.ids) {
+      queryParameters['ids'] = requestParameters.ids;
     }
 
     const headerParameters: runtime.HTTPHeaders = {};

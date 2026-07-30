@@ -38,6 +38,13 @@ import type { UserId } from './UserId';
 import { UserIdFromJSON, UserIdFromJSONTyped, UserIdToJSON, UserIdToJSONTyped } from './UserId';
 import type { UserIdentity } from './UserIdentity';
 import { UserIdentityFromJSON, UserIdentityFromJSONTyped, UserIdentityToJSON, UserIdentityToJSONTyped } from './UserIdentity';
+import type { ConsoleUserPreferences } from './ConsoleUserPreferences';
+import {
+  ConsoleUserPreferencesFromJSON,
+  ConsoleUserPreferencesFromJSONTyped,
+  ConsoleUserPreferencesToJSON,
+  ConsoleUserPreferencesToJSONTyped,
+} from './ConsoleUserPreferences';
 import type { Certificate } from './Certificate';
 import { CertificateFromJSON, CertificateFromJSONTyped, CertificateToJSON, CertificateToJSONTyped } from './Certificate';
 
@@ -101,6 +108,12 @@ export interface User {
    * @memberof User
    */
   client?: string;
+  /**
+   *
+   * @type {ConsoleUserPreferences}
+   * @memberof User
+   */
+  consolePreferences?: ConsoleUserPreferences;
   /**
    * Epoch timestamp in milliseconds.
    * @type {number}
@@ -513,6 +526,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     addresses: json['addresses'] == null ? undefined : (json['addresses'] as Array<any>).map(AddressFromJSON),
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
     client: json['client'] == null ? undefined : json['client'],
+    consolePreferences: json['consolePreferences'] == null ? undefined : ConsoleUserPreferencesFromJSON(json['consolePreferences']),
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
@@ -597,6 +611,7 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     addresses: value['addresses'] == null ? undefined : (value['addresses'] as Array<any>).map(AddressToJSON),
     birthdate: value['birthdate'],
     client: value['client'],
+    consolePreferences: ConsoleUserPreferencesToJSON(value['consolePreferences']),
     createdAt: value['createdAt'],
     credentialsNonExpired: value['credentialsNonExpired'],
     disabled: value['disabled'],

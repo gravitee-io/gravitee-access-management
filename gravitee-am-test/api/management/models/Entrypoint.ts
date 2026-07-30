@@ -55,6 +55,12 @@ export interface Entrypoint {
    * @type {string}
    * @memberof Entrypoint
    */
+  environmentId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Entrypoint
+   */
   id?: string;
   /**
    *
@@ -107,6 +113,7 @@ export function EntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     defaultEntrypoint: json['defaultEntrypoint'] == null ? undefined : json['defaultEntrypoint'],
     description: json['description'] == null ? undefined : json['description'],
+    environmentId: json['environmentId'] == null ? undefined : json['environmentId'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
@@ -129,6 +136,7 @@ export function EntrypointToJSONTyped(value?: Entrypoint | null, ignoreDiscrimin
     createdAt: value['createdAt'],
     defaultEntrypoint: value['defaultEntrypoint'],
     description: value['description'],
+    environmentId: value['environmentId'],
     id: value['id'],
     name: value['name'],
     organizationId: value['organizationId'],

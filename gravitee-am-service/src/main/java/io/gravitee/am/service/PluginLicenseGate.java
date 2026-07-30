@@ -25,7 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
  * when the license of the owning organization grants that feature. Reads and deletes are
  * never gated. Plugins without a feature (OSS plugins) are always allowed.
  * <p>
- * The gate only restricts anything when {@code cloud.enabled} is set.
+ * The gate only restricts anything when managed cloud mode is enabled.
  * <p>
  * The plugin type values are the raw {@code type} entries of the plugins' {@code plugin.properties}
  * (the keys of {@link io.gravitee.plugin.core.api.PluginRegistry}).

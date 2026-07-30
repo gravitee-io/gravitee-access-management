@@ -90,9 +90,11 @@ models/CimdValidationResponse.ts
 models/ClientMetadata.ts
 models/ClientRegistrationSettings.ts
 models/ClientSecret.ts
+models/ConsoleUserPreferences.ts
 models/CookieSettings.ts
 models/CorsSettings.ts
 models/Credential.ts
+models/CspSettings.ts
 models/DataPlane.ts
 models/DataSource.ts
 models/DeviceIdentifier.ts
@@ -287,5 +289,8 @@ models/UserPage.ts
 models/UsernameEntity.ts
 models/VirtualHost.ts
 models/WebAuthnSettings.ts
+models/WebProtectionSettings.ts
+models/XFrameSettings.ts
+models/XssProtectionSettings.ts
 models/index.ts
 runtime.ts

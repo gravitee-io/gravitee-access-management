@@ -57,11 +57,17 @@ export interface CorsSettings {
    */
   allowedOrigins?: Set<string>;
   /**
-   * Whether CORS handling is enabled for the domain.
+   * Whether CORS handling is enabled for the domain when not inherited.
    * @type {boolean}
    * @memberof CorsSettings
    */
   enabled?: boolean;
+  /**
+   * Whether CORS settings are inherited from the gateway defaults (gravitee.yml). When null, legacy behaviour applies: enabled=true overrides and enabled=false inherits.
+   * @type {boolean}
+   * @memberof CorsSettings
+   */
+  inherited?: boolean;
   /**
    * How long, in seconds, a browser may cache the result of a preflight request.
    * @type {number}
@@ -91,6 +97,7 @@ export function CorsSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     allowedMethods: json['allowedMethods'] == null ? undefined : new Set(json['allowedMethods']),
     allowedOrigins: json['allowedOrigins'] == null ? undefined : new Set(json['allowedOrigins']),
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
     maxAge: json['maxAge'] == null ? undefined : json['maxAge'],
   };
 }
@@ -110,6 +117,7 @@ export function CorsSettingsToJSONTyped(value?: CorsSettings | null, ignoreDiscr
     allowedMethods: value['allowedMethods'] == null ? undefined : Array.from(value['allowedMethods'] as Set<any>),
     allowedOrigins: value['allowedOrigins'] == null ? undefined : Array.from(value['allowedOrigins'] as Set<any>),
     enabled: value['enabled'],
+    inherited: value['inherited'],
     maxAge: value['maxAge'],
   };
 }
