@@ -53,6 +53,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
+import io.vertx.core.MultiMap;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -216,7 +217,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
-    public Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user) {
+    public Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user, String requestOrigin) {
         if (user == null) {
             return Completable.complete();
         }
@@ -230,7 +231,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 .flatMap(user1 -> {
                     // send an email if option is enabled
                     if (user1.getEmail() != null && accountSettings.isSendRecoverAccountEmail()) {
-                        new Thread(() -> emailService.send(Template.BLOCKED_ACCOUNT, user1, client)).start();
+                        new Thread(() -> emailService.send(Template.BLOCKED_ACCOUNT, user1, client, MultiMap.caseInsensitiveMultiMap(), requestOrigin)).start();
                     }
                     return Single.just(user);
                 })

@@ -1226,7 +1226,7 @@ public class UserAuthenticationServiceTest {
 
         when(userService.update(any())).thenReturn(Single.just(user));
 
-        TestObserver<Void> testObserver = userAuthenticationService.lockAccount(criteria, accountSettings, client, user).test();
+        TestObserver<Void> testObserver = userAuthenticationService.lockAccount(criteria, accountSettings, client, user, "https://auth.acme.com").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1235,7 +1235,7 @@ public class UserAuthenticationServiceTest {
         verify(userService).update(argThat(updatedUser -> !updatedUser.isAccountNonLocked()
                 && updatedUser.getAccountLockedAt() != null
                 && updatedUser.getAccountLockedUntil() != null));
-        verify(emailService, timeout(1000)).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client));
+        verify(emailService, timeout(1000)).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client), any(), eq("https://auth.acme.com"));
     }
 
     @Test
@@ -1269,7 +1269,7 @@ public class UserAuthenticationServiceTest {
         verify(userService).update(argThat(updatedUser -> !updatedUser.isAccountNonLocked()
                 && updatedUser.getAccountLockedAt() != null
                 && updatedUser.getAccountLockedUntil() != null));
-        verify(emailService, never()).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client));
+        verify(emailService, never()).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client), any(), any());
     }
 
     private Client initClient() {

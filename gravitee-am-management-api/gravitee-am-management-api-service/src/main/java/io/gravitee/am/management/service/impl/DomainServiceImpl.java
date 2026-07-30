@@ -778,8 +778,8 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public String buildUrl(Domain domain, String path, MultiMap queryParams) {
-        return domainReadService.buildUrl(domain, path, queryParams);
+    public String buildUrl(Domain domain, String path, MultiMap queryParams, String requestOrigin) {
+        return domainReadService.buildUrl(domain, path, queryParams, requestOrigin);
     }
 
     @Override

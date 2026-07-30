@@ -20,12 +20,23 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.MultiMap;
+import jakarta.annotation.Nullable;
 
 import java.util.List;
 
 public interface DomainReadService {
     Maybe<Domain> findById(String id);
-    String buildUrl(Domain domain, String path, MultiMap queryParams);
+    /**
+     * @param requestOrigin the {@code scheme://host[:port]} the end user reached the gateway on, or null
+     *                      or blank for flows with no end-user request (SCIM, management API). Honoured
+     *                      only in managed cloud, and only when it matches one of the environment's
+     *                      entrypoints; anything else falls back to the configured resolution.
+     */
+    String buildUrl(Domain domain, String path, MultiMap queryParams, @Nullable String requestOrigin);
+
+    default String buildUrl(Domain domain, String path, MultiMap queryParams) {
+        return buildUrl(domain, path, queryParams, null);
+    }
 
     default String buildUrl(Domain domain, String path) {
         return buildUrl(domain, path, MultiMap.caseInsensitiveMultiMap());

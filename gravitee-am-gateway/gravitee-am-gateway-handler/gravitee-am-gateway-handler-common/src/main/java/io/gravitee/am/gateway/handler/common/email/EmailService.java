@@ -22,6 +22,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 
 import io.vertx.core.MultiMap;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -37,7 +38,11 @@ public interface EmailService {
         this.send(template, user, client, MultiMap.caseInsensitiveMultiMap());
     }
 
-    void send(Template template, User user, Client client, MultiMap queryParams);
+    default void send(Template template, User user, Client client, MultiMap queryParams) {
+        this.send(template, user, client, queryParams, null);
+    }
+
+    void send(Template template, User user, Client client, MultiMap queryParams, @Nullable String requestOrigin);
 
     void asyncSend(Template template, User user, Client client, MultiMap queryParams);
 

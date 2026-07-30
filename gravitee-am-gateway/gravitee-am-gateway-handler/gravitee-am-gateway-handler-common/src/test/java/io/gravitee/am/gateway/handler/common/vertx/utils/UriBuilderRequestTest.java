@@ -27,6 +27,7 @@ import org.springframework.core.env.Environment;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -695,6 +696,59 @@ public class UriBuilderRequestTest {
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "https://evil.example"));
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, null));
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "null"));
+    }
+
+    @Test
+    public void shouldResolveOrigin_fromForwardedHeaders() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("gw.example.com");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8443");
+        when(request.scheme()).thenReturn("http");
+        when(request.authority()).thenReturn(HostAndPort.create("internal", 8080));
+
+        assertEquals("https://gw.example.com:8443", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_fromHostHeaderWhenNotForwarded() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("auth.acme.com");
+        when(request.scheme()).thenReturn("https");
+
+        assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_omitsDefaultPort() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("auth.acme.com:443");
+        when(request.scheme()).thenReturn("https");
+
+        assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_returnsNullWhenTheHeadersDoNotFormAUri() {
+        // X-Forwarded-Host is attacker controlled and UriBuilder appends it raw, so a hostile value can
+        // make the resolved url unparseable. Callers treat null as "no origin" and fall back.
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("bad host|value");
+        when(request.scheme()).thenReturn("https");
+
+        assertNull(UriBuilderRequest.resolveOrigin(request));
+    }
+
+    @Test
+    public void shouldResolveOrigin_withoutPathOrForwardedPrefix() {
+        // The origin is compared against configured entrypoints and vhosts, which carry no path, so the
+        // request path and X-Forwarded-Prefix must not leak into it.
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("auth.acme.com");
+        when(request.getHeader(eq("X-Forwarded-Prefix"))).thenReturn("/auth");
+        when(request.scheme()).thenReturn("https");
+
+        assertEquals("https://auth.acme.com", UriBuilderRequest.resolveOrigin(request));
     }
 
 }

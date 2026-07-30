@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.gateway.api.Request;
 import io.vertx.core.MultiMap;
+import jakarta.annotation.Nullable;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -219,6 +220,47 @@ public class UriBuilderRequest {
     }
 
     /**
+     * This request's public origin as {@code scheme://host[:port]}, using the same {@code X-Forwarded-*}
+     * resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
+     * Carries no path and ignores {@code X-Forwarded-Prefix}; null when the forwarding headers do not
+     * form a parseable origin.
+     */
+    public static @Nullable String resolveOrigin(HttpServerRequest request) {
+        final URI baseUri;
+        try {
+            baseUri = URI.create(resolveProxyRequest(request, "/", (MultiMap) null, false));
+        } catch (IllegalArgumentException e) {
+            // The forwarding headers are caller-controlled and go into the url unencoded, so they can
+            // fail to parse.
+            LOGGER.warn("Unable to resolve the request origin from the forwarding headers");
+            return null;
+        }
+
+        if (baseUri.getScheme() == null || baseUri.getHost() == null) {
+            return null;
+        }
+
+        StringBuilder origin = new StringBuilder().append(baseUri.getScheme()).append("://").append(baseUri.getHost());
+        if (baseUri.getPort() >= 0) {
+            origin.append(':').append(baseUri.getPort());
+        }
+
+        return origin.toString();
+    }
+
+    /**
+     * As {@link #resolveOrigin(HttpServerRequest)}, for the flows that carry the gateway request rather
+     * than the Vert.x one. Null request means no origin, same as a request we cannot parse.
+     */
+    public static @Nullable String resolveOrigin(Request request) {
+        if (request == null) {
+            return null;
+        }
+
+        return resolveOrigin(new HttpServerRequest(new GraviteeVertxHttpServerRequest(request)));
+    }
+
+    /**
      * True when {@code Origin} matches this request's public origin (scheme, host, port), using the same
      * {@code X-Forwarded-*} resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
      * Rejects missing, literal {@code null}, opaque, or non-http(s) origins.
@@ -255,28 +297,6 @@ public class UriBuilderRequest {
         if (baseUri.getScheme() == null || baseUri.getHost() == null) {
             return false;
         }
-        return sameOriginAuthority(baseUri, originUri);
-    }
-
-    private static boolean sameOriginAuthority(URI expected, URI origin) {
-        if (!expected.getScheme().equalsIgnoreCase(origin.getScheme())) {
-            return false;
-        }
-        if (!expected.getHost().equalsIgnoreCase(origin.getHost())) {
-            return false;
-        }
-        return effectivePort(expected) == effectivePort(origin);
-    }
-
-    private static int effectivePort(URI uri) {
-        int port = uri.getPort();
-        if (port >= 0) {
-            return port;
-        }
-        String scheme = uri.getScheme();
-        if (scheme != null && "https".equalsIgnoreCase(scheme)) {
-            return 443;
-        }
-        return 80;
+        return UriBuilder.sameOriginAuthority(baseUri, originUri);
     }
 }

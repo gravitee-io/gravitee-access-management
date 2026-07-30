@@ -385,8 +385,10 @@ public class DomainServiceTest {
 
     @Test
     public void shouldDelegateBuildUrl() {
-        domainService.buildUrl(any(), any(), any());
-        verify(domainReadService).buildUrl(any(), any(), any());
+        // The management API has no end-user request, so it must always delegate without an origin.
+        Domain domain = new Domain();
+        domainService.buildUrl(domain, "/path", null);
+        verify(domainReadService).buildUrl(domain, "/path", null, null);
     }
 
     @Test

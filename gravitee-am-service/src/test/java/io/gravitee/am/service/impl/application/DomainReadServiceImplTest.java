@@ -251,6 +251,117 @@ class DomainReadServiceImplTest {
         assertEquals("https://legacy.gravitee.io/legacy/mySubPath", url);
     }
 
+    @Test
+    public void shouldBuildUrl_threeArgFormPassesNoRequestOrigin() {
+        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription(null, null, null, null, "https://gw.gravitee.io"));
+        Domain domain = cloudDomain();
+
+        assertEquals(underTest.buildUrl(domain, "/mySubPath", null, null), underTest.buildUrl(domain, "/mySubPath", null));
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginWinsWhenItIsAnEnvironmentEntrypoint() {
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(List.of(entrypoint("https://generated.gravitee.io"), entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginMatchIsCaseInsensitiveAndIgnoresTrailingSlash() {
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://Custom.Acme.com/")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://Custom.Acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginMatchesEntrypointCarryingAnExplicitDefaultPort() {
+        // resolveOrigin drops :443, so a stored entrypoint that spells it out has to compare equal or
+        // the request would be ignored on a host the user legitimately reached us on.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com:443")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://custom.acme.com:443/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_blankRequestOriginFallsBack() {
+        enableCloudMode();
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "   ");
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_unknownRequestOriginIsRejected() {
+        // The whole point of the check: a forged Host must never steer the link.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://evil.example");
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginOnADifferentSchemeIsRejected() {
+        // Same host over plain http is a different origin, so it must not unlock the entrypoint. The
+        // primary is a different host on purpose: it is what tells a rejection apart from a match.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://primary.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "http://custom.acme.com");
+
+        assertEquals("https://primary.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_requestOriginOnADifferentPortIsRejected() {
+        // The default-port normalisation must not collapse into "ports do not matter": an entrypoint on
+        // 8443 is not the origin of a request that resolved to 443.
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com:8443")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://primary.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://primary.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_cloud_noMatchingEntrypointFallsBackToTheFirstCustomHost() {
+        enableCloudMode();
+        when(entryPointManager.findAllByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of(entrypoint("https://custom.acme.com")));
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://custom.acme.com")));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, null);
+
+        assertEquals("https://custom.acme.com/testPath/mySubPath", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_nonCloud_ignoresRequestOrigin() {
+        // Agreed 29 Jul: the change is limited to managed cloud, self-hosted behaviour must not move.
+        when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription(null, null, null, null, "https://gw.gravitee.io"));
+
+        String url = underTest.buildUrl(cloudDomain(), "/mySubPath", null, "https://custom.acme.com");
+
+        assertEquals("https://gw.gravitee.io/testPath/mySubPath", url);
+        verifyNoInteractions(entryPointManager);
+    }
+
     private void enableCloudMode() {
         springEnvironment.setProperty("cloud.enabled", "true");
         springEnvironment.setProperty("installation.type", "managed");

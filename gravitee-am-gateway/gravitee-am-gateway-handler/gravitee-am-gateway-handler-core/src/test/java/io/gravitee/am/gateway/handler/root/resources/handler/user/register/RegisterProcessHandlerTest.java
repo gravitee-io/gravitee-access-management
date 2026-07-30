@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -39,6 +40,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +57,8 @@ public class RegisterProcessHandlerTest {
     @Mock
     private Domain domain;
 
+    private static final String REQUEST_ORIGIN = "https://auth.acme.com";
+
     private SpyRoutingContext context;
     private RegisterProcessHandler registerProcessHandler;
 
@@ -63,6 +67,11 @@ public class RegisterProcessHandlerTest {
         registerProcessHandler = new RegisterProcessHandler(userService, domain);
         context = new SpyRoutingContext("/register");
         context.put(CONTEXT_PATH, "");
+        // The registration email links back to the host the user reached us on, so the handler has to
+        // take the origin off this request rather than leave it to the configured entrypoint.
+        context.request().headers()
+                .set(HttpHeaders.X_FORWARDED_PROTO, "https")
+                .set(HttpHeaders.X_FORWARDED_HOST, "auth.acme.com");
     }
 
     @Test
@@ -73,11 +82,11 @@ public class RegisterProcessHandlerTest {
 
         RegistrationResponse registrationResponse = new RegistrationResponse();
         registrationResponse.setUser(new User());
-        when(userService.register(any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
+        when(userService.register(any(), any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
 
         registerProcessHandler.handle(context);
 
-        verify(userService).register(any(), argThat(user -> client.getId().equals(user.getClient())), any(), any());
+        verify(userService).register(any(), argThat(user -> client.getId().equals(user.getClient())), any(), any(), eq(REQUEST_ORIGIN));
         context.verifyNext(1);
         assertNotNull(context.get(REGISTRATION_RESPONSE_KEY));
         assertNotNull(context.get(USER_CONTEXT_KEY));
@@ -89,11 +98,11 @@ public class RegisterProcessHandlerTest {
 
         RegistrationResponse registrationResponse = new RegistrationResponse();
         registrationResponse.setUser(new User());
-        when(userService.register(any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
+        when(userService.register(any(), any(), any(), any(), any())).thenReturn(Single.just(registrationResponse));
 
         registerProcessHandler.handle(context);
 
-        verify(userService).register(any(), argThat(user -> user.getClient() == null), any(), any());
+        verify(userService).register(any(), argThat(user -> user.getClient() == null), any(), any(), eq(REQUEST_ORIGIN));
         context.verifyNext(1);
         assertNotNull(context.get(REGISTRATION_RESPONSE_KEY));
         assertNotNull(context.get(USER_CONTEXT_KEY));

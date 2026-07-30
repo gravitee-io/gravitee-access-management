@@ -168,12 +168,12 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
     }
 
     @Override
-    public void send(io.gravitee.am.model.Template template, User user, Client client, MultiMap queryParams) {
+    public void send(io.gravitee.am.model.Template template, User user, Client client, MultiMap queryParams, String requestOrigin) {
         if (enabled) {
             // get raw email template
             io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, client);
             // prepare email
-            Email email = prepareEmail(template, emailTemplate, user, client, queryParams);
+            Email email = prepareEmail(template, emailTemplate, user, client, queryParams, requestOrigin);
             // send email
             sendEmail(email, user, client);
         }
@@ -198,7 +198,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
                     // get raw email template
                     io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
                     // prepare email
-                    email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
+                    email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap(), null);
 
                     return container.with(prepareEmailToSend(email, container.user()));
                 } catch (Exception ex) {
@@ -371,8 +371,8 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
                 .user(user));
     }
 
-    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client, MultiMap queryParams) {
-        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template, queryParams);
+    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client, MultiMap queryParams, String requestOrigin) {
+        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template, queryParams, requestOrigin);
         return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -383,7 +383,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
                 .build();
     }
 
-    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, io.gravitee.am.model.Template template, MultiMap queryParams) {
+    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, io.gravitee.am.model.Template template, MultiMap queryParams, String requestOrigin) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
@@ -418,7 +418,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
             params.put("client", new ClientProperties(client));
         }
 
-        params.put("url", domainService.buildUrl(domain, template.redirectUri(), queryParams));
+        params.put("url", domainService.buildUrl(domain, template.redirectUri(), queryParams, requestOrigin));
 
         return params;
     }

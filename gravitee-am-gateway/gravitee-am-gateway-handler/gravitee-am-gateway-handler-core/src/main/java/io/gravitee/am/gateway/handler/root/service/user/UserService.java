@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.MultiMap;
+import jakarta.annotation.Nullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,7 +47,11 @@ public interface UserService {
 
     Maybe<UserToken> confirmVerifyRegistration(String token);
 
-    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams);
+    default Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams) {
+        return register(client, user, principal, queryParams, null);
+    }
+
+    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams, @Nullable String requestOrigin);
 
     Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 

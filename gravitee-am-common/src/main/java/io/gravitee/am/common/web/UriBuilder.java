@@ -354,6 +354,27 @@ public class UriBuilder {
         return host.matches("[0-9]+(?:\\.[0-9]+){1,3}") || host.contains(":");
     }
 
+    /**
+     * True when the two URIs share an origin: scheme and host compared case-insensitively, ports by
+     * what they resolve to, so a spelled-out default port still matches an implicit one.
+     */
+    public static boolean sameOriginAuthority(URI left, URI right) {
+        return equalsIgnoreCase(left.getScheme(), right.getScheme())
+                && equalsIgnoreCase(left.getHost(), right.getHost())
+                && effectivePort(left) == effectivePort(right);
+    }
+
+    private static boolean equalsIgnoreCase(String left, String right) {
+        return left != null && left.equalsIgnoreCase(right);
+    }
+
+    private static int effectivePort(URI uri) {
+        if (uri.getPort() >= 0) {
+            return uri.getPort();
+        }
+        return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+    }
+
     public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
         final URI redirectUri = UriBuilder.fromURIString(baseRedirectUri).build();
 
