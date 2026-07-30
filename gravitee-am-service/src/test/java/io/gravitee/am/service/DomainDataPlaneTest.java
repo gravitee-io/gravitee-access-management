@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -113,6 +114,24 @@ class DomainDataPlaneTest {
     public void should_fall_back_to_the_gateway_url_when_the_domain_has_no_environment() {
         assertEquals("http://gravitee.io", managedCloud(new Domain()).getWebAuthnOrigin(null));
         verifyNoInteractions(entryPointManager);
+    }
+
+    @Test
+    public void the_entrypoint_origin_is_empty_whenever_the_origin_did_not_come_from_one() {
+        // Callers deriving a relying party id key off this: a fallback origin must not produce one, or a
+        // domain that configured its own relying party id would have it replaced by the origin's host.
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.empty());
+
+        assertTrue(standalone(cloudDomain()).getWebAuthnEntrypointOrigin(null).isEmpty());
+        assertTrue(managedCloud(new Domain()).getWebAuthnEntrypointOrigin(null).isEmpty());
+        assertTrue(managedCloud(cloudDomain()).getWebAuthnEntrypointOrigin(null).isEmpty());
+    }
+
+    @Test
+    public void the_entrypoint_origin_is_present_when_the_environment_resolves_one() {
+        when(entryPointManager.findPrimaryByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Optional.of(entrypoint("https://auth.acme.com")));
+
+        assertEquals(Optional.of("https://auth.acme.com"), managedCloud(cloudDomain()).getWebAuthnEntrypointOrigin(null));
     }
 
     private DomainDataPlane standalone(Domain domain) {

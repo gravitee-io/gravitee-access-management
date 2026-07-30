@@ -19,6 +19,8 @@ import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,7 +61,7 @@ public class WebAuthnHandlerRelyingPartyTest {
 
     @Test
     public void shouldRewriteTheRegistrationRelyingPartyId() {
-        inManagedCloudOn("https://auth.acme.com");
+        resolvedEntrypoint("https://auth.acme.com");
         JsonObject options = new JsonObject().put("rp", new JsonObject().put("id", "localhost").put("name", "Gravitee"));
 
         cut.applyRelyingPartyId(ctx, options);
@@ -70,7 +72,7 @@ public class WebAuthnHandlerRelyingPartyTest {
 
     @Test
     public void shouldRewriteTheAssertionRelyingPartyId() {
-        inManagedCloudOn("https://auth.acme.com:8443");
+        resolvedEntrypoint("https://auth.acme.com:8443");
         JsonObject options = new JsonObject().put("rpId", "localhost");
 
         cut.applyRelyingPartyId(ctx, options);
@@ -80,8 +82,11 @@ public class WebAuthnHandlerRelyingPartyTest {
     }
 
     @Test
-    public void shouldLeaveTheOptionsAloneOutsideManagedCloud() {
-        when(domainDataPlane.isManagedCloud()).thenReturn(false);
+    public void shouldLeaveTheOptionsAloneWithoutAnEntrypoint() {
+        // No entrypoint means the origin fell back to the domain's own settings or the gateway url, and
+        // the factory has already applied whatever relying party id the domain configured. Deriving one
+        // from the fallback origin would replace a deliberate parent-domain id with the origin's host.
+        when(domainDataPlane.getWebAuthnEntrypointOrigin(any())).thenReturn(Optional.empty());
         JsonObject options = new JsonObject().put("rpId", "configured.acme.com");
 
         cut.applyRelyingPartyId(ctx, options);
@@ -90,8 +95,8 @@ public class WebAuthnHandlerRelyingPartyTest {
     }
 
     @Test
-    public void shouldLeaveTheOptionsAloneWhenTheOriginCarriesNoHost() {
-        inManagedCloudOn("not-a-url");
+    public void shouldLeaveTheOptionsAloneWhenTheEntrypointCarriesNoHost() {
+        resolvedEntrypoint("not-a-url");
         JsonObject options = new JsonObject().put("rpId", "configured.acme.com");
 
         cut.applyRelyingPartyId(ctx, options);
@@ -99,8 +104,7 @@ public class WebAuthnHandlerRelyingPartyTest {
         assertEquals("configured.acme.com", options.getString("rpId"));
     }
 
-    private void inManagedCloudOn(String origin) {
-        when(domainDataPlane.isManagedCloud()).thenReturn(true);
-        when(domainDataPlane.getWebAuthnOrigin(any())).thenReturn(origin);
+    private void resolvedEntrypoint(String origin) {
+        when(domainDataPlane.getWebAuthnEntrypointOrigin(any())).thenReturn(Optional.of(origin));
     }
 }

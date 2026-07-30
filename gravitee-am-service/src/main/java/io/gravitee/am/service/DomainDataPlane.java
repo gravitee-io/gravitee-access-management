@@ -39,7 +39,7 @@ public class DomainDataPlane {
     private final boolean managedCloud;
 
     public String getWebAuthnOrigin(@Nullable String requestOrigin) {
-        Optional<String> entrypointOrigin = entrypointOrigin(requestOrigin);
+        Optional<String> entrypointOrigin = getWebAuthnEntrypointOrigin(requestOrigin);
         if (entrypointOrigin.isPresent()) {
             return entrypointOrigin.get();
         }
@@ -51,7 +51,12 @@ public class DomainDataPlane {
         }
     }
 
-    private Optional<String> entrypointOrigin(@Nullable String requestOrigin) {
+    /**
+     * Empty unless the origin came from an environment entrypoint. Callers that derive the relying party
+     * id need to tell that apart from the fallbacks: a domain that configured its own relying party id
+     * keeps it, and deriving one from the fallback origin would silently replace it.
+     */
+    public Optional<String> getWebAuthnEntrypointOrigin(@Nullable String requestOrigin) {
         if (!managedCloud || domain.getReferenceId() == null) {
             return Optional.empty();
         }

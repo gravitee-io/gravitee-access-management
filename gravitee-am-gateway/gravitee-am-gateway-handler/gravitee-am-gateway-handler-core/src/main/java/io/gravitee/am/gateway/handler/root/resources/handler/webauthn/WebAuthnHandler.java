@@ -126,14 +126,16 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
      * cloud. Rewriting the emitted options is safe because we never set {@code WebAuthnCredentials.domain},
      * so Vert.x skips its {@code rpIdHash} check and the id is purely what we advertise to the browser.
      * <p>
-     * Registration carries it as {@code rp.id}, assertion as a top-level {@code rpId}. Outside managed
-     * cloud the options are left exactly as the factory built them.
+     * Registration carries it as {@code rp.id}, assertion as a top-level {@code rpId}. Only an origin that
+     * came from an entrypoint is used: with no entrypoint to go on the factory's value already honours
+     * whatever relying party id the domain configured, and deriving one from the fallback origin would
+     * overwrite it with the origin's host.
      */
     protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
-        if (!domainDataPlane.isManagedCloud()) {
-            return;
-        }
-        String relyingPartyId = RequestUtils.getDomain(webAuthnOrigin(ctx));
+        String relyingPartyId = domainDataPlane
+                .getWebAuthnEntrypointOrigin(UriBuilderRequest.resolveOrigin(ctx.request()))
+                .map(RequestUtils::getDomain)
+                .orElse(null);
         if (relyingPartyId == null) {
             return;
         }
