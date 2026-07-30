@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -174,7 +175,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
         if (factor.is(FIDO2)) {
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
-            factorCtx.registerData(ConstantKeys.PASSWORDLESS_ORIGIN, domainDataPlane.getWebAuthnOrigin());
+            factorCtx.registerData(ConstantKeys.PASSWORDLESS_ORIGIN, domainDataPlane.getWebAuthnOrigin(UriBuilderRequest.resolveOrigin(routingContext.request())));
         }
 
         verifyAttemptService.checkVerifyAttempt(endUser, factorId, client, domainDataPlane.getDomain())

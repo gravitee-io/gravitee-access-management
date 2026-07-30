@@ -130,5 +130,24 @@ public class UriBuilderTest {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
+    @Test
+    public void toOriginDropsPathQueryAndTrailingSlash() {
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("https://auth.example.com/"));
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("https://auth.example.com/some/path?a=b"));
+        assertEquals("https://auth.example.com:8443", UriBuilder.toOrigin("https://auth.example.com:8443/path"));
+    }
+
+    @Test
+    public void toOriginLowercasesTheSchemeAndKeepsAnExplicitDefaultPort() {
+        assertEquals("https://auth.example.com:443", UriBuilder.toOrigin("HTTPS://auth.example.com:443"));
+    }
+
+    @Test
+    public void toOriginIsNullWhenThereIsNoOriginToTake() {
+        Assertions.assertNull(UriBuilder.toOrigin(null));
+        Assertions.assertNull(UriBuilder.toOrigin("   "));
+        Assertions.assertNull(UriBuilder.toOrigin("auth.example.com"));
+        Assertions.assertNull(UriBuilder.toOrigin("https://not a host"));
+    }
 
 }

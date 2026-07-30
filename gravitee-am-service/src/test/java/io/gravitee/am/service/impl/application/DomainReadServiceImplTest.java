@@ -56,6 +56,9 @@ class DomainReadServiceImplTest {
     @BeforeEach
     public void init() {
         when(dataPlaneRegistry.getDescription(any())).thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "http://localhost:8092"));
+        // resolveForRequest is a default method carrying the origin matching itself, so the cases below
+        // exercise it for real off the findAll/findPrimary stubs rather than a canned Optional.
+        when(entryPointManager.resolveForRequest(any(), any())).thenCallRealMethod();
     }
 
     @Test

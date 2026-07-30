@@ -15,9 +15,15 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.common.service.Service;
+import io.gravitee.node.logging.NodeLoggerFactory;
+import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
 
+import java.net.URI;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +39,8 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 public interface EntryPointManager extends Service<EntryPointManager> {
+
+    Logger LOG = NodeLoggerFactory.getLogger(EntryPointManager.class);
 
     List<Entrypoint> findByOrganizationId(String organizationId);
 
@@ -59,4 +67,45 @@ public interface EntryPointManager extends Service<EntryPointManager> {
      * emails for one environment could carry different hosts.
      */
     Optional<Entrypoint> findPrimaryByEnvironmentId(String environmentId);
+
+    /**
+     * The entrypoint an environment should be addressed by for a caller arriving on {@code requestOrigin},
+     * so an environment with several hosts answers on the one in the address bar rather than an arbitrary
+     * pick. Falls back to {@link #findPrimaryByEnvironmentId(String)} when there is no request to go on or
+     * nothing matches.
+     * <p>
+     * Only ever returns a stored entrypoint, never the caller's string: an unrecognised origin is a forged
+     * {@code Host} header away from trusting somebody else's domain.
+     */
+    default Optional<Entrypoint> resolveForRequest(String environmentId, @Nullable String requestOrigin) {
+        return matchingEntrypoint(environmentId, requestOrigin).or(() -> findPrimaryByEnvironmentId(environmentId));
+    }
+
+    private Optional<Entrypoint> matchingEntrypoint(String environmentId, @Nullable String requestOrigin) {
+        if (requestOrigin == null || requestOrigin.isBlank()) {
+            return Optional.empty();
+        }
+        // The lowest url wins rather than the first, for the same reason findPrimaryByEnvironmentId picks
+        // that way: cache iteration order is unspecified, so two entrypoints sharing an origin would
+        // otherwise resolve differently between planes.
+        Optional<Entrypoint> matched = findAllByEnvironmentId(environmentId).stream()
+                .filter(entrypoint -> sameOrigin(entrypoint.getUrl(), requestOrigin))
+                .min(Comparator.comparing(Entrypoint::getUrl));
+        if (matched.isEmpty()) {
+            // Either a forged host or an entrypoint the environment never synced, and the two look the
+            // same from here. Worth saying out loud, because the fallback silently differs from the host
+            // the user is on.
+            LOG.warn("Environment {} has no entrypoint matching the request origin, falling back to its primary entrypoint", environmentId);
+        }
+        return matched;
+    }
+
+    private static boolean sameOrigin(String entrypointUrl, String requestOrigin) {
+        String entrypointOrigin = UriBuilder.toOrigin(entrypointUrl);
+        String callerOrigin = UriBuilder.toOrigin(requestOrigin);
+        if (entrypointOrigin == null || callerOrigin == null) {
+            return false;
+        }
+        return UriBuilder.sameOriginAuthority(URI.create(entrypointOrigin), URI.create(callerOrigin));
+    }
 }

@@ -671,7 +671,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginCredentialsEndpoint(webAuthn));
+                .handler(new WebAuthnLoginCredentialsEndpoint(domainDataPlane, webAuthn));
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)

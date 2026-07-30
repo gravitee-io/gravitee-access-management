@@ -375,6 +375,26 @@ public class UriBuilder {
         return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
     }
 
+    public static String toOrigin(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        final URI uri;
+        try {
+            uri = URI.create(url.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        if (uri.getScheme() == null || uri.getHost() == null) {
+            return null;
+        }
+        StringBuilder origin = new StringBuilder(uri.getScheme().toLowerCase(Locale.ROOT)).append("://").append(uri.getHost());
+        if (uri.getPort() >= 0) {
+            origin.append(':').append(uri.getPort());
+        }
+        return origin.toString();
+    }
+
     public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
         final URI redirectUri = UriBuilder.fromURIString(baseRedirectUri).build();
 

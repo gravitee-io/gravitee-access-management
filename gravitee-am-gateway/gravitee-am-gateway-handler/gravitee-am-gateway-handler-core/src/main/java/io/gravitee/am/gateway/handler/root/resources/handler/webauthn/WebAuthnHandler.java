@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
@@ -106,6 +107,42 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
 
     public void setDomainDataplane(DomainDataPlane domainDataPlane) {
         this.domainDataPlane = domainDataPlane;
+    }
+
+    /**
+     * The origin this request's ceremony is verified against. Resolved per request rather than once at
+     * deploy time, so an environment with several entrypoints answers on the host the browser is on.
+     */
+    protected String webAuthnOrigin(RoutingContext ctx) {
+        return domainDataPlane.getWebAuthnOrigin(UriBuilderRequest.resolveOrigin(ctx.request()));
+    }
+
+    /**
+     * Point the generated options at the relying party for this request's origin.
+     * <p>
+     * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory} builds the {@code WebAuthn}
+     * bean once per domain, so its relying party id cannot follow the request. It also has no view of the
+     * environment entrypoint and falls back to {@code localhost}, which the browser rejects outright in
+     * cloud. Rewriting the emitted options is safe because we never set {@code WebAuthnCredentials.domain},
+     * so Vert.x skips its {@code rpIdHash} check and the id is purely what we advertise to the browser.
+     * <p>
+     * Registration carries it as {@code rp.id}, assertion as a top-level {@code rpId}. Outside managed
+     * cloud the options are left exactly as the factory built them.
+     */
+    protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
+        if (!domainDataPlane.isManagedCloud()) {
+            return;
+        }
+        String relyingPartyId = RequestUtils.getDomain(webAuthnOrigin(ctx));
+        if (relyingPartyId == null) {
+            return;
+        }
+        if (options.containsKey("rp")) {
+            options.getJsonObject("rp").put("id", relyingPartyId);
+        }
+        if (options.containsKey("rpId")) {
+            options.put("rpId", relyingPartyId);
+        }
     }
 
     protected static boolean isEmptyString(JsonObject json, String key) {

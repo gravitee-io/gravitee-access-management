@@ -61,7 +61,6 @@ import lombok.CustomLog;
 public class WebAuthnLoginHandler extends WebAuthnHandler {
 
     private final WebAuthn webAuthn;
-    private final String origin;
 
     public WebAuthnLoginHandler(UserService userService,
                                 FactorManager factorManager,
@@ -75,7 +74,6 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         setUserAuthenticationManager(userAuthenticationManager);
         setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
-        this.origin = domainDataPlane.getWebAuthnOrigin();
     }
 
     @Override
@@ -127,6 +125,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         Single.fromCompletionStage(webAuthn.getCredentialsOptions(username).toCompletionStage())
                 .subscribe(
                         entries -> {
+                            applyRelyingPartyId(ctx, entries);
                             session
                                     .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
                                     .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
@@ -178,7 +177,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         Single.fromCompletionStage(webAuthn.authenticate(
                         // authInfo
                         new WebAuthnCredentials()
-                                .setOrigin(origin)
+                                .setOrigin(webAuthnOrigin(ctx))
                                 .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                                 .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
                                 .setWebauthn(webauthnResp)).toCompletionStage()).onErrorResumeNext(throwable -> {

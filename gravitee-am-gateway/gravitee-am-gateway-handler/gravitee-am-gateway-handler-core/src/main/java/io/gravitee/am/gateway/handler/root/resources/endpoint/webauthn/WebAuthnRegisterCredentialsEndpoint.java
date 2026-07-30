@@ -92,6 +92,8 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
             Single.fromCompletionStage(webAuthn.createCredentialsOptions(webauthnRegister).toCompletionStage())
                     .subscribe(
                             entries -> {
+                                applyRelyingPartyId(ctx, entries);
+
                                 // force user id with our own user id
                                 entries.getJsonObject("user").put("id", user.getId());
 
