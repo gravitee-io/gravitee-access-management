@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -47,22 +47,30 @@ describe('AM - Cloud - entrypoint url in email links', () => {
     if (fixture) await fixture.cleanup();
   });
 
-  const emailAddress = () => `${uniqueName('am7229', true)}@acme.fr`;
+  // Cleared per address rather than a blanket delete: the fake SMTP inbox is shared with whatever
+  // suites run in parallel.
+  const usedEmails: string[] = [];
+  const track = (email: string) => {
+    usedEmails.push(email);
+    return email;
+  };
+  const emailAddress = () => track(`${uniqueName('am7229', true)}@acme.fr`);
+
+  afterEach(async () => {
+    await Promise.all(usedEmails.splice(0).map((email) => clearEmails(email)));
+  });
 
   it('builds the pre-registration link from the environment entrypoint', async () => {
     const email = emailAddress();
-    await clearEmails(email);
 
     await fixture.createPreRegisteredUser(email);
 
     const link = (await getLastEmail(5000, email)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
-    await clearEmails(email);
   });
 
   it('builds the re-sent registration confirmation link from the environment entrypoint', async () => {
     const email = emailAddress();
-    await clearEmails(email);
 
     const user = await fixture.createPreRegisteredUser(email);
     // Drop the email the creation itself sent, so the assertion cannot pass on the wrong one.
@@ -73,43 +81,38 @@ describe('AM - Cloud - entrypoint url in email links', () => {
 
     const link = (await getLastEmail(5000, email)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
-    await clearEmails(email);
   });
 
   it('builds the SCIM-provisioned registration link from the environment entrypoint', async () => {
     // The gateway's own email path, and the one flow with no end-user request to fall back on.
     const email = emailAddress();
-    await clearEmails(email);
 
     await fixture.createScimUser(email);
 
     const link = (await getLastEmail(5000, email)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
-    await clearEmails(email);
   });
 
   it('builds the reset password link from the host the user reached the gateway on', async () => {
     // The generated access point is a real host for this environment but not the one the request-less
     // flows above resolve to, so seeing it here is only possible if the request decided it.
-    await clearEmails(fixture.resetPasswordUserEmail);
+    await clearEmails(track(fixture.resetPasswordUserEmail));
 
     await fixture.requestForgotPassword(fixture.entrypointHost);
 
     const link = (await getLastEmail(5000, fixture.resetPasswordUserEmail)).extractLink();
     expect(new URL(link).origin).toEqual(generatedOrigin);
-    await clearEmails(fixture.resetPasswordUserEmail);
   });
 
   it('ignores a request host that is not one of the environment entrypoints', async () => {
     // A forged Host must not steer the link, the reset token travels in its query string.
-    await clearEmails(fixture.resetPasswordUserEmail);
+    await clearEmails(track(fixture.resetPasswordUserEmail));
 
     await fixture.requestForgotPassword('evil.example.com');
 
     const link = (await getLastEmail(5000, fixture.resetPasswordUserEmail)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
     expect(link).not.toContain('evil.example.com');
-    await clearEmails(fixture.resetPasswordUserEmail);
   });
 
   // The blocked-account mail links to /resetPassword too, so its host matters for the same reason.
@@ -117,7 +120,7 @@ describe('AM - Cloud - entrypoint url in email links', () => {
   // rather than the routing context, and survives a detached thread.
   it('builds the blocked account link from the host the user reached the gateway on', async () => {
     const user = await fixture.createLoginUser();
-    await clearEmails(user.email);
+    await clearEmails(track(user.email));
 
     await fixture.failLogin(user.username, fixture.entrypointHost);
 
@@ -125,21 +128,19 @@ describe('AM - Cloud - entrypoint url in email links', () => {
     const link = email.extractLink();
     expect(new URL(link).origin).toEqual(generatedOrigin);
     expect(new URL(link).pathname).toContain('/resetPassword');
-    await clearEmails(user.email);
   });
 
   it('ignores a forged request host on the blocked account link', async () => {
     // A fresh user: the previous lockout is sticky for accountBlockedDuration, so re-using one
     // never sends a second mail.
     const user = await fixture.createLoginUser();
-    await clearEmails(user.email);
+    await clearEmails(track(user.email));
 
     await fixture.failLogin(user.username, 'evil.example.com');
 
     const link = (await getLastEmail(5000, user.email)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
     expect(link).not.toContain('evil.example.com');
-    await clearEmails(user.email);
   });
 
   // Self-service registration is the third request-bearing flow, and the only registration one. Its
@@ -147,24 +148,20 @@ describe('AM - Cloud - entrypoint url in email links', () => {
   // yet another route than the two above.
   it('builds the self-service registration link from the host the user reached the gateway on', async () => {
     const email = emailAddress();
-    await clearEmails(email);
 
     await fixture.selfServiceRegister(email, fixture.entrypointHost);
 
     const link = (await getLastEmail(5000, email)).extractLink();
     expect(new URL(link).origin).toEqual(generatedOrigin);
-    await clearEmails(email);
   });
 
   it('ignores a forged request host on the self-service registration link', async () => {
     const email = emailAddress();
-    await clearEmails(email);
 
     await fixture.selfServiceRegister(email, 'evil.example.com');
 
     const link = (await getLastEmail(5000, email)).extractLink();
     expect(new URL(link).origin).toEqual(expectedOrigin);
     expect(link).not.toContain('evil.example.com');
-    await clearEmails(email);
   });
 });
