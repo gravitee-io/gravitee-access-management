@@ -152,6 +152,14 @@ public class UriBuilderTest {
     }
 
     @Test
+    public void toOriginPunycodesAUnicodeHost() {
+        // Whatever the entrypoint was written with, the browser puts the ascii form in clientDataJSON.origin.
+        assertEquals("https://xn--bcher-kva.example", UriBuilder.toOrigin("https://bücher.example"));
+        assertEquals("https://xn--bcher-kva.example", UriBuilder.toOrigin("https://BÜCHER.example:443/path"));
+        assertEquals("https://xn--bcher-kva.example:8443", UriBuilder.toOrigin("https://bücher.example:8443"));
+    }
+
+    @Test
     public void toOriginIsNullWhenThereIsNoOriginToTake() {
         Assertions.assertNull(UriBuilder.toOrigin(null));
         Assertions.assertNull(UriBuilder.toOrigin("   "));
