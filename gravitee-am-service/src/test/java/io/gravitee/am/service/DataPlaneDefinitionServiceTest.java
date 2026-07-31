@@ -30,10 +30,12 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.dataplane.config.JdbcDataPlaneConfigHandler;
 import io.gravitee.am.service.dataplane.config.MongoDataPlaneConfigHandler;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
+import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
 import io.gravitee.am.service.exception.EnvironmentAlreadyBoundToDataPlaneException;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -41,6 +43,7 @@ import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.impl.DataPlaneDefinitionServiceImpl;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -82,6 +85,9 @@ class DataPlaneDefinitionServiceTest {
     private DataPlaneDefinitionRepository dataPlaneDefinitionRepository;
 
     @Mock
+    private DomainRepository domainRepository;
+
+    @Mock
     private OrganizationService organizationService;
 
     @Mock
@@ -101,6 +107,7 @@ class DataPlaneDefinitionServiceTest {
     void setUp() {
         service = new DataPlaneDefinitionServiceImpl(
                 dataPlaneDefinitionRepository,
+                domainRepository,
                 organizationService,
                 environmentService,
                 dataPlanePluginManager,
@@ -114,6 +121,8 @@ class DataPlaneDefinitionServiceTest {
         when(dataPlaneDefinitionRepository.findById(anyString())).thenReturn(Maybe.empty());
         when(dataPlaneDefinitionRepository.findByEnvironmentId(anyString())).thenReturn(Maybe.empty());
         when(dataPlaneDefinitionRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(dataPlaneDefinitionRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(domainRepository.existsByDataPlaneId(anyString())).thenReturn(Single.just(false));
     }
 
     // --- create ------------------------------------------------------------------------------
@@ -427,6 +436,62 @@ class DataPlaneDefinitionServiceTest {
         observer.assertComplete();
         observer.assertValue(summary -> "dp-corrupted".equals(summary.id()));
         observer.assertValue(summary -> summary.database() == null);
+    }
+
+    // --- delete ------------------------------------------------------------------------------
+
+    @Test
+    void shouldDeleteAndReportAnAudit() {
+        when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
+
+        TestObserver<Void> observer = service.delete("dp-acme").test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        verify(dataPlaneDefinitionRepository).delete("dp-acme");
+
+        Audit audit = capturedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_DELETED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+        assertThat(audit.getTarget().getId()).isEqualTo("dp-acme");
+        assertThat(audit.getTarget().getType()).isEqualTo(EntityType.DATA_PLANE);
+    }
+
+    @Test
+    void shouldFailDeletingAnUnknownDefinition() {
+        TestObserver<Void> observer = service.delete("dp-missing").test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertError(DataPlaneDefinitionNotFoundException.class);
+        verify(dataPlaneDefinitionRepository, never()).delete(anyString());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldRejectDeletingADataPlaneStillUsedByADomain() {
+        when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
+        when(domainRepository.existsByDataPlaneId("dp-acme")).thenReturn(Single.just(true));
+
+        TestObserver<Void> observer = service.delete("dp-acme").test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertError(DataPlaneInUseByDomainsException.class);
+        verify(dataPlaneDefinitionRepository, never()).delete(anyString());
+
+        Audit audit = capturedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_DELETED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+    }
+
+    @Test
+    void shouldNotLeakCredentialsIntoTheDeleteAudit() {
+        DataPlaneDefinition withSecrets = definition("dp-acme", "env-1");
+        withSecrets.setConfiguration(MONGO_CONFIGURATION_WITH_SECRETS);
+        when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(withSecrets));
+
+        service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS);
+
+        assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
     }
 
     // --- helpers -----------------------------------------------------------------------------

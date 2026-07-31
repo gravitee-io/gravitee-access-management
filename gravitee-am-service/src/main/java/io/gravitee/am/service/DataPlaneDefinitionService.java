@@ -17,11 +17,12 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 /**
- * Every method returns a {@link DataPlaneDefinitionSummary} rather than the stored definition: the
+ * Every read returns a {@link DataPlaneDefinitionSummary} rather than the stored definition: the
  * {@code configuration} blob can hold connection credentials and must not leave this layer. The
  * data plane loader (AM-7260) reads the repository directly for the raw settings.
  *
@@ -34,4 +35,9 @@ public interface DataPlaneDefinitionService {
     Flowable<DataPlaneDefinitionSummary> findAll();
 
     Single<DataPlaneDefinitionSummary> findById(String id);
+
+    /**
+     * Deletes a definition, refused while any domain still points at it.
+     */
+    Completable delete(String id);
 }

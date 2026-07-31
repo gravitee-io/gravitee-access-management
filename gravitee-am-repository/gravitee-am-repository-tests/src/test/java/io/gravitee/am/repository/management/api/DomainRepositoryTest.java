@@ -467,4 +467,19 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver1.assertValue(d -> d.getDataPlaneId().equals("dataPlaneId"));
 
     }
+
+    @Test
+    public void testExistsByDataPlaneId() {
+        Domain domain = initDomain();
+        domain.setDataPlaneId("dp-bound");
+        domainRepository.create(domain).blockingGet();
+
+        domainRepository.existsByDataPlaneId("dp-bound").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(true);
+
+        domainRepository.existsByDataPlaneId("dp-nobody-uses").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(false);
+    }
 }

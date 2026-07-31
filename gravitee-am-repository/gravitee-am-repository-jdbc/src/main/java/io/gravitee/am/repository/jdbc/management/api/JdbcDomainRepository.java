@@ -114,6 +114,13 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     }
 
     @Override
+    public Single<Boolean> existsByDataPlaneId(String dataPlaneId) {
+        LOGGER.debug("existsByDataPlaneId({})", dataPlaneId);
+        return monoToSingle(getTemplate().exists(Query.query(where("data_plane_id").is(dataPlaneId)), JdbcDomain.class))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<Domain> findByIdIn(Collection<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {

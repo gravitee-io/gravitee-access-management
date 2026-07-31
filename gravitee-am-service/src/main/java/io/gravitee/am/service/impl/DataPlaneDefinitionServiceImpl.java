@@ -24,6 +24,7 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.EnvironmentService;
@@ -32,6 +33,7 @@ import io.gravitee.am.service.dataplane.config.DataPlaneConfigHandler;
 import io.gravitee.am.service.dataplane.config.DataPlaneConnectionSummary;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
+import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
 import io.gravitee.am.service.exception.EnvironmentAlreadyBoundToDataPlaneException;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -66,6 +68,7 @@ import static org.springframework.util.StringUtils.hasText;
 public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionService {
 
     private final DataPlaneDefinitionRepository dataPlaneDefinitionRepository;
+    private final DomainRepository domainRepository;
     private final OrganizationService organizationService;
     private final EnvironmentService environmentService;
     private final DataPlanePluginManager dataPlanePluginManager;
@@ -75,12 +78,14 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public DataPlaneDefinitionServiceImpl(@Lazy DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
+                                          @Lazy DomainRepository domainRepository,
                                           OrganizationService organizationService,
                                           EnvironmentService environmentService,
                                           DataPlanePluginManager dataPlanePluginManager,
                                           List<DataPlaneConfigHandler> configHandlers,
                                           AuditService auditService) {
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
+        this.domainRepository = domainRepository;
         this.organizationService = organizationService;
         this.environmentService = environmentService;
         this.dataPlanePluginManager = dataPlanePluginManager;
@@ -126,6 +131,32 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         return dataPlaneDefinitionRepository.findById(id)
                 .map(this::toSummary)
                 .switchIfEmpty(Single.error(() -> new DataPlaneDefinitionNotFoundException(id)));
+    }
+
+    @Override
+    public Completable delete(String id) {
+        log.debug("Delete data plane definition {}", id);
+        return dataPlaneDefinitionRepository.findById(id)
+                .map(this::toSummary)
+                .switchIfEmpty(Single.error(() -> new DataPlaneDefinitionNotFoundException(id)))
+                .flatMapCompletable(summary -> checkNoDomainUsesIt(id)
+                        .andThen(Completable.defer(() -> dataPlaneDefinitionRepository.delete(id)))
+                        .doOnComplete(() -> reportDeleted(summary, null))
+                        .doOnError(throwable -> reportDeleted(summary, throwable)));
+    }
+
+    private Completable checkNoDomainUsesIt(String dataPlaneId) {
+        return domainRepository.existsByDataPlaneId(dataPlaneId)
+                .flatMapCompletable(inUse -> inUse
+                        ? Completable.error(new DataPlaneInUseByDomainsException(dataPlaneId))
+                        : Completable.complete());
+    }
+
+    private void reportDeleted(DataPlaneDefinitionSummary summary, Throwable throwable) {
+        auditService.report(AuditBuilder.builder(DataPlaneDefinitionAuditBuilder.class)
+                .type(EventType.DATA_PLANE_DELETED)
+                .dataPlane(summary)
+                .throwable(throwable));
     }
 
     /**

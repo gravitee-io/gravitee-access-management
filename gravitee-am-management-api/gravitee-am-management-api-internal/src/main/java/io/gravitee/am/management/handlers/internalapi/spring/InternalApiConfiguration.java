@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.internalapi.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
+import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
@@ -46,6 +47,11 @@ public class InternalApiConfiguration {
     @Bean
     public GetDataPlaneEndpoint getDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService, ObjectMapper objectMapper) {
         return new GetDataPlaneEndpoint(dataPlaneDefinitionService, objectMapper);
+    }
+
+    @Bean
+    public DeleteDataPlaneEndpoint deleteDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService, ObjectMapper objectMapper) {
+        return new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, objectMapper);
     }
 
     @Bean

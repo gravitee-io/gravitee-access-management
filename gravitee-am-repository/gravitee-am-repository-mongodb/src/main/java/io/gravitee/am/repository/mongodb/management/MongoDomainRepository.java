@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
@@ -94,6 +95,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     private MongoCollection<DomainMongo> domainsCollection;
     private static final String FIELD_HRID = "hrid";
     private static final String FIELD_NAME = "name";
+    private static final String FIELD_DATA_PLANE_ID = "dataPlaneId";
 
     private final Set<String> UNUSED_INDEXES = Set.of("ri1rt1");
 
@@ -184,6 +186,14 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return toBsonFilter(criteria.isLogicalOR(), eqAlertEnabled)
                 .switchIfEmpty(Single.just(new BsonDocument()))
                 .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(domainsCollection.find(filter)))).map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Boolean> existsByDataPlaneId(String dataPlaneId) {
+        return Observable.fromPublisher(domainsCollection.countDocuments(eq(FIELD_DATA_PLANE_ID, dataPlaneId), new CountOptions().limit(1)))
+                .firstOrError()
+                .map(count -> count > 0)
                 .observeOn(Schedulers.computation());
     }
 

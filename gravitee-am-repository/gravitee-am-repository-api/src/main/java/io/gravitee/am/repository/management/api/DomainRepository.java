@@ -21,6 +21,7 @@ import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Collection;
 
@@ -41,4 +42,6 @@ public interface DomainRepository extends CrudRepository<Domain, String> {
     Flowable<Domain> findByIdIn(Collection<String> ids);
 
     Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
+
+    Single<Boolean> existsByDataPlaneId(String dataPlaneId);
 }
