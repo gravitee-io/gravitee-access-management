@@ -1,0 +1,45 @@
+databaseChangeLog:
+  # Scope username uniqueness to the organization (reference).  #
+  # PostgreSQL / SQL Server expose this as a unique constraint.
+  # MySQL / MariaDB implement this as a unique INDEX.
+  - changeSet:
+      id: 4.13.0-organization-users-drop-username-source-unique
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - uniqueConstraintExists:
+            tableName: organization_users
+            constraintName: org_users_username_source_unique
+      changes:
+        - dropUniqueConstraint:
+            tableName: organization_users
+            constraintName: org_users_username_source_unique
+
+  - changeSet:
+      id: 4.13.0-organization-users-drop-username-source-unique-mysql
+      author: GraviteeSource Team
+      dbms: mysql,mariadb
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            tableName: organization_users
+            indexName: org_users_username_source_unique
+      changes:
+        - dropIndex:
+            tableName: organization_users
+            indexName: org_users_username_source_unique
+
+  - changeSet:
+      id: 4.13.0-organization-users-add-reference-username-source-unique
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: organization_users
+                indexName: org_users_reference_username_source_unique
+      changes:
+        - addUniqueConstraint:
+            tableName: organization_users
+            columnNames: reference_type, reference_id, username, source
+            constraintName: org_users_reference_username_source_unique
