@@ -75,9 +75,9 @@ export const getOrgReporter = (accessToken: string, reporterId: string): Promise
     reporterId,
   });
 
-export const listOrgReporters = (accessToken: string): Promise<Array<Reporter>> =>
+export const listOrgReporters = (accessToken: string, organizationId: string = process.env.AM_DEF_ORG_ID): Promise<Array<Reporter>> =>
   getReporterApi(accessToken).getOrgReporters({
-    organizationId: process.env.AM_DEF_ORG_ID,
+    organizationId,
   });
 
 export const updateOrgReporter = (accessToken: string, reporterId: string, body: UpdateReporter): Promise<Reporter> =>

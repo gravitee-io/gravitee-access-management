@@ -41,6 +41,7 @@ import { NotifierApi } from '@management-apis/NotifierApi';
 import { ReporterApi } from '@management-apis/ReporterApi';
 import { AuthenticationDeviceNotifierApi } from '@management-apis/AuthenticationDeviceNotifierApi';
 import { LicenseApi } from '@management-apis/LicenseApi';
+import { AuditApi } from '@management-apis/AuditApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });
@@ -157,6 +158,10 @@ export function getReporterApi(accessToken: string): ReporterApi {
 
 export function getLicenseApi(accessToken: string): LicenseApi {
   return new LicenseApi(createAccessTokenConfig(accessToken));
+}
+
+export function getAuditApi(accessToken: string): AuditApi {
+  return new AuditApi(createAccessTokenConfig(accessToken));
 }
 
 export function createRandomString(length: number) {

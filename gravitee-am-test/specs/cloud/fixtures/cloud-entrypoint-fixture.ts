@@ -61,7 +61,7 @@ export interface CloudEntrypointFixture {
  */
 export const setupCloudEntrypointFixture = async (accessToken: string): Promise<CloudEntrypointFixture> => {
   const organizationId = process.env.AM_DEF_ORG_ID;
-  const environmentId = uniqueName('env-ep', true);
+  const environmentId = 'cloud-env-ep';
   const uniqueHost = () => `${uniqueName('gw', true)}.example.com`;
 
   // Track every host we ever provision so cleanup removes all of them, not just the current set
@@ -129,6 +129,7 @@ export const setupCloudEntrypointFixture = async (accessToken: string): Promise<
             .catch((err) => console.warn(`cleanup: failed to delete entrypoint ${e.id}: ${err.message}`)),
         ),
     );
+    // Note: organizations and environments have no delete endpoint in the management API
   };
 
   return {

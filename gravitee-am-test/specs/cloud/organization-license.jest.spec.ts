@@ -15,7 +15,6 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
 import { setup } from '../test-fixture';
 import { CloudLicenseFixture, OSS_TIER, EXAMPLE_EE_FEATURES, setupCloudLicenseFixture } from './fixtures/cloud-license-fixture';
@@ -25,9 +24,8 @@ setup(120000);
 let fixture: CloudLicenseFixture;
 
 beforeAll(async () => {
-  const accessToken = await requestAdminAccessToken();
   await waitForCockpitConnection();
-  fixture = await setupCloudLicenseFixture(accessToken);
+  fixture = await setupCloudLicenseFixture();
 });
 
 afterAll(async () => {

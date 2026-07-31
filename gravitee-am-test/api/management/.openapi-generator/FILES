@@ -67,6 +67,7 @@ models/Audit.ts
 models/AuditAccessPoint.ts
 models/AuditEntity.ts
 models/AuditOutcome.ts
+models/AuditPage.ts
 models/AuthenticationDeviceNotifier.ts
 models/AuthorizationEngine.ts
 models/BotDetection.ts

@@ -17,7 +17,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
-import { getOrganisationManagementUrl } from '@management-commands/service/utils';
+import { getAuditApi, getOrganisationManagementUrl } from '@management-commands/service/utils';
 import { performGet, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { retryUntil } from '@utils-commands/retry';
@@ -126,13 +126,19 @@ describe('Console user preferences', () => {
 
     // audits are written asynchronously, and `from` excludes any USER_PREFERENCES_UPDATED
     // entries from earlier tests in this file so this only matches the update above
-    const auditResponse = await retryUntil(
-      () => performGet(getOrganisationManagementUrl(), `/audits?type=USER_PREFERENCES_UPDATED&from=${beforePut}&size=1`, authHeaders()),
-      (response) => response.status === 200 && response.body.data.length > 0,
+    const auditPage = await retryUntil(
+      () =>
+        getAuditApi(accessToken).listOrganizationAudits({
+          organizationId: process.env.AM_DEF_ORG_ID,
+          type: 'USER_PREFERENCES_UPDATED',
+          from: beforePut,
+          size: 1,
+        }),
+      (page) => page.data?.length > 0,
       { timeoutMillis: 10_000, intervalMillis: 250 },
     );
 
-    expect(auditResponse.body.data[0]).toMatchObject({
+    expect(auditPage.data[0]).toMatchObject({
       type: 'USER_PREFERENCES_UPDATED',
       outcome: { status: 'success' },
     });

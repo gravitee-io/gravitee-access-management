@@ -123,9 +123,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Audit"
+                $ref: "#/components/schemas/AuditPage"
           description: List audit logs for the platform
         "500":
           description: Internal server error
@@ -2788,9 +2786,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Audit"
+                $ref: "#/components/schemas/AuditPage"
           description: List audit logs for a security domain
         "500":
           description: Internal server error
@@ -8873,9 +8869,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Audit"
+                $ref: "#/components/schemas/AuditPage"
           description: User audit logs successfully fetched
         "500":
           description: Internal server error
@@ -13229,6 +13223,19 @@ components:
           enum:
           - SUCCESS
           - FAILURE
+    AuditPage:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          format: int32
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Audit"
+        totalCount:
+          type: integer
+          format: int64
     AuthenticationDeviceNotifier:
       type: object
       properties:

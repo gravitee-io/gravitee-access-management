@@ -15,9 +15,9 @@
  */
 
 import { getDomainApi } from '@management-commands/service/utils';
-import { safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { sendCockpitCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
 import { DomainState } from '../../../api/gateway/apis/MonitoringApi';
 import { CloudLicenseFixture, setupCloudLicenseFixture } from './cloud-license-fixture';
 
@@ -38,13 +38,30 @@ export interface CloudLicenseEnforcementFixture extends CloudLicenseFixture {
 
 /**
  * Adds domain deployment to the license fixture, so the gateway's decisions can be read off domain state.
+ *
+ * The domains must live in the same organization the license is pushed to, so the environment is
+ * provisioned in the fixture's Cockpit-created organization rather than the default one.
  */
-export const setupCloudLicenseEnforcementFixture = async (accessToken: string): Promise<CloudLicenseEnforcementFixture> => {
-  const licenseFixture = await setupCloudLicenseFixture(accessToken);
-  const organizationId = process.env.AM_DEF_ORG_ID!;
-  const environmentId = process.env.AM_DEF_ENV_ID!;
+export const setupCloudLicenseEnforcementFixture = async (): Promise<CloudLicenseEnforcementFixture> => {
+  const licenseFixture = await setupCloudLicenseFixture('cloud-license-gate');
+  const organizationId = licenseFixture.organizationId;
+  const accessToken = licenseFixture.accessToken;
+  const environmentId = 'lic-gate-env';
   const domainApi = getDomainApi(accessToken);
   const domainIds: string[] = [];
+
+  const environmentReply = await sendCockpitCommand({
+    type: 'ENVIRONMENT',
+    payload: {
+      id: environmentId,
+      organizationId,
+      hrids: [environmentId],
+      name: `License enforcement env ${environmentId}`,
+    },
+  }).then(waitForCockpitReply);
+  if (environmentReply.commandStatus !== 'SUCCEEDED') {
+    throw new Error(`Cockpit refused to create environment ${environmentId}: ${environmentReply.errorDetails}`);
+  }
 
   const deployDomain = async (): Promise<DomainState> => {
     const domain = await domainApi.createDomain({
@@ -58,11 +75,19 @@ export const setupCloudLicenseEnforcementFixture = async (accessToken: string): 
     return getDomainState(domain.id!);
   };
 
+  const safeDelete = async (domain: string): Promise<void> => {
+    try {
+      await domainApi.deleteDomain({ organizationId, environmentId, domain });
+    } catch (err: any) {
+      console.warn(`⚠️  Failed to delete domain ${domain}: ${err.message}`);
+    }
+  };
+
   return {
     ...licenseFixture,
     deployDomain,
     cleanup: async () => {
-      await Promise.all(domainIds.map((id) => safeDeleteDomain(id, accessToken)));
+      await Promise.all(domainIds.map(safeDelete));
       await licenseFixture.cleanup();
     },
   };

@@ -16,11 +16,13 @@
 import request from 'supertest';
 const btoa = require('btoa');
 
-export const requestAdminAccessToken = () => requestAccessToken(process.env.AM_ADMIN_USERNAME, process.env.AM_ADMIN_PASSWORD);
+export const requestAdminAccessToken = (organizationId?: string) =>
+  requestAccessToken(process.env.AM_ADMIN_USERNAME, process.env.AM_ADMIN_PASSWORD, organizationId);
 
-export const requestAccessToken = (username: string, password: string) => {
+export const requestAccessToken = (username: string, password: string, organizationId?: string) => {
+  const path = organizationId ? `/management/auth/token?org=${encodeURIComponent(organizationId)}` : '/management/auth/token';
   return request(process.env.AM_MANAGEMENT_URL)
-    .post('/management/auth/token')
+    .post(path)
     .set('Authorization', 'Basic ' + btoa(`${username}:${password}`))
     .send({ grant_type: 'password', username: username, password: password })
     .expect(200)
