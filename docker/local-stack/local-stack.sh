@@ -304,7 +304,7 @@ WEBUI_TARGET="../../gravitee-am-ui/target"
 latest() { ls -t $1 2>/dev/null | head -1 || true; }   # newest file matching a glob
 
 # Speed flags safe for a local dev build (skip checks/docs/coverage/formatting).
-MVN_SPEED=(-Dlicense.skip=true -Dmaven.javadoc.skip=true -Djacoco.skip=true -Dprettier.skip=true)
+MVN_SPEED=(-Dlicense.skip=true -Dmaven.javadoc.skip=true -Djacoco.skip=true -Dprettier.skip=true -T 2C)
 
 # The distribution plugin dirs live in SOURCE (src/main/resources/plugins), so
 # `mvn clean` never touches them. Stale-version zips left here get bundled
