@@ -99,6 +99,31 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testCreateSameUsernameAndSourceInDifferentOrganizations() {
+        User first = new User();
+        first.setUsername("shared-admin");
+        first.setSource("memory");
+        first.setReferenceType(ReferenceType.ORGANIZATION);
+        first.setReferenceId("orga#1");
+        organizationUserRepository.create(first).blockingGet();
+
+        User second = new User();
+        second.setUsername("shared-admin");
+        second.setSource("memory");
+        second.setReferenceType(ReferenceType.ORGANIZATION);
+        second.setReferenceId("orga#2");
+
+        TestObserver<User> testObserver = organizationUserRepository.create(second).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals("shared-admin")
+                && u.getSource().equals("memory")
+                && u.getReferenceId().equals("orga#2"));
+    }
+
+    @Test
     public void testFindByUserAndSource_gravitee_caseInsensitive() {
         // create user with Gravitee IDP
         User user = new User();
