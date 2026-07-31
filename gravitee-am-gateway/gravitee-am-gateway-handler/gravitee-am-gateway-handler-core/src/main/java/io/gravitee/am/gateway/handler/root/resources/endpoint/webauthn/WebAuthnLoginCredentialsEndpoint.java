@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
@@ -44,7 +45,8 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
 
     private final WebAuthn webAuthn;
 
-    public WebAuthnLoginCredentialsEndpoint(WebAuthn webAuthn) {
+    public WebAuthnLoginCredentialsEndpoint(DomainDataPlane domainDataPlane, WebAuthn webAuthn) {
+        setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
     }
 
@@ -86,6 +88,7 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
             Single.fromCompletionStage(webAuthn.getCredentialsOptions(username).toCompletionStage())
                     .subscribe(
                             entries -> {
+                                applyRelyingPartyId(ctx, entries);
                                 session
                                         .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
                                         .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);

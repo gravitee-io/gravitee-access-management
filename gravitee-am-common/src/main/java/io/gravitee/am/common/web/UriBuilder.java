@@ -18,6 +18,7 @@ package io.gravitee.am.common.web;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 
+import java.net.IDN;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -369,10 +370,68 @@ public class UriBuilder {
     }
 
     private static int effectivePort(URI uri) {
-        if (uri.getPort() >= 0) {
-            return uri.getPort();
-        }
+        return uri.getPort() >= 0 ? uri.getPort() : defaultPort(uri);
+    }
+
+    private static int defaultPort(URI uri) {
         return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+    }
+
+    /**
+     * The url's origin, serialized the way a browser serializes {@code window.location.origin}: scheme and
+     * host lowercased, a unicode host in its punycode form, and the port present only when it is not the
+     * scheme's default. WebAuthn compares the ceremony origin against {@code clientDataJSON.origin} by
+     * exact string equality, so an origin that keeps {@code :443} or the stored host's casing fails
+     * verification against the very host it matched.
+     */
+    public static String toOrigin(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        final URI uri = toAsciiUri(url.trim());
+        if (uri == null || uri.getScheme() == null || uri.getHost() == null) {
+            return null;
+        }
+        StringBuilder origin = new StringBuilder(uri.getScheme().toLowerCase(Locale.ROOT))
+                .append("://")
+                .append(uri.getHost().toLowerCase(Locale.ROOT));
+        if (uri.getPort() >= 0 && uri.getPort() != defaultPort(uri)) {
+            origin.append(':').append(uri.getPort());
+        }
+        return origin.toString();
+    }
+
+    /**
+     * The url parsed with an ascii host, whatever it was written with. {@link URI} only recognises a host
+     * spelled in ascii, so {@code https://bücher.example} parses as a registry-based authority with no
+     * host at all. The browser puts the punycode form in {@code clientDataJSON.origin}, so that is the
+     * form a stored url has to be compared in, and converting after the parse is too late.
+     */
+    private static URI toAsciiUri(String url) {
+        final URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        if (uri.getHost() != null || uri.getAuthority() == null) {
+            return uri;
+        }
+        try {
+            return new URI(uri.getScheme(), toAsciiAuthority(uri.getAuthority()), uri.getPath(), uri.getQuery(), uri.getFragment());
+        } catch (URISyntaxException | IllegalArgumentException e) {
+            // Not a host we can make sense of, so there is no origin to take.
+            return null;
+        }
+    }
+
+    private static String toAsciiAuthority(String authority) {
+        int hostStart = authority.lastIndexOf('@') + 1;
+        int portStart = authority.indexOf(':', hostStart);
+        String host = portStart >= 0 ? authority.substring(hostStart, portStart) : authority.substring(hostStart);
+        return authority.substring(0, hostStart)
+                + IDN.toASCII(host)
+                + (portStart >= 0 ? authority.substring(portStart) : "");
     }
 
     public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
