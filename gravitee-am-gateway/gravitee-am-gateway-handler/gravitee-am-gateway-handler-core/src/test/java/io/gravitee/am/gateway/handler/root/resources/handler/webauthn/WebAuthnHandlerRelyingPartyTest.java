@@ -54,7 +54,7 @@ public class WebAuthnHandlerRelyingPartyTest {
     @Before
     public void before() {
         when(ctx.request()).thenReturn(mock(HttpServerRequest.class));
-        when(domainDataPlane.getDomain()).thenReturn(domainWithRelyingPartyId(null));
+        when(domainDataPlane.getDomain()).thenReturn(domainWith(null, null));
         cut = new WebAuthnHandler() {
             @Override
             public void handle(RoutingContext event) {
@@ -64,9 +64,10 @@ public class WebAuthnHandlerRelyingPartyTest {
         cut.setDomainDataplane(domainDataPlane);
     }
 
-    private Domain domainWithRelyingPartyId(String relyingPartyId) {
+    private Domain domainWith(String relyingPartyId, String origin) {
         WebAuthnSettings settings = new WebAuthnSettings();
         settings.setRelyingPartyId(relyingPartyId);
+        settings.setOrigin(origin);
         Domain domain = new Domain();
         domain.setWebAuthnSettings(settings);
         return domain;
@@ -121,13 +122,38 @@ public class WebAuthnHandlerRelyingPartyTest {
     public void shouldLeaveAConfiguredRelyingPartyIdAlone() {
         // Credentials are bound to the id they were registered under, so a domain that deliberately scoped
         // itself to a parent domain keeps it even though an entrypoint resolves.
-        when(domainDataPlane.getDomain()).thenReturn(domainWithRelyingPartyId("acme.com"));
+        when(domainDataPlane.getDomain()).thenReturn(domainWith("acme.com", "https://auth.acme.com"));
         JsonObject options = new JsonObject().put("rpId", "acme.com");
 
         cut.applyRelyingPartyId(ctx, options);
 
         assertEquals("acme.com", options.getString("rpId"));
         verify(domainDataPlane, never()).getWebAuthnEntrypointOrigin(any());
+    }
+
+    @Test
+    public void shouldLeaveARelyingPartyIdConfiguredWithoutAnOriginAlone() {
+        when(domainDataPlane.getDomain()).thenReturn(domainWith("acme.com", null));
+        JsonObject options = new JsonObject().put("rpId", "acme.com");
+
+        cut.applyRelyingPartyId(ctx, options);
+
+        assertEquals("acme.com", options.getString("rpId"));
+        verify(domainDataPlane, never()).getWebAuthnEntrypointOrigin(any());
+    }
+
+    @Test
+    public void shouldRewriteARelyingPartyIdThatOnlyMirrorsTheConfiguredOrigin() {
+        // The console prefills the field with the origin's host, so this id was never a choice. The origin
+        // it mirrors is the one the entrypoint replaces, and keeping it would scope the ceremony to a host
+        // the browser is not on.
+        when(domainDataPlane.getDomain()).thenReturn(domainWith("auth.acme.com", "https://auth.acme.com"));
+        resolvedEntrypoint("https://tenant.eu.gravitee.io");
+        JsonObject options = new JsonObject().put("rpId", "auth.acme.com");
+
+        cut.applyRelyingPartyId(ctx, options);
+
+        assertEquals("tenant.eu.gravitee.io", options.getString("rpId"));
     }
 
     private void resolvedEntrypoint(String origin) {

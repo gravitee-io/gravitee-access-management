@@ -132,8 +132,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
      * covers several subdomains — would stop every existing authenticator offering it.
      */
     protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
-        WebAuthnSettings webAuthnSettings = domainDataPlane.getDomain().getWebAuthnSettings();
-        if (webAuthnSettings != null && webAuthnSettings.getRelyingPartyId() != null) {
+        if (saysMoreThanTheOrigin(domainDataPlane.getDomain().getWebAuthnSettings())) {
             return;
         }
         String relyingPartyId = domainDataPlane
@@ -149,6 +148,22 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         if (options.containsKey("rpId")) {
             options.put("rpId", relyingPartyId);
         }
+    }
+
+    /**
+     * Whether the configured relying party id carries an intent the origin does not already imply.
+     * <p>
+     * A non-null id is not by itself a deliberate one: the console prefills the field with the configured
+     * origin's host, so most domains carry a value nobody chose. Such an id is worth no more than the
+     * origin it was taken from — the same origin the entrypoint is replacing — and keeping it would hand
+     * the browser a relying party id for one host while the ceremony runs on another, which it refuses.
+     * An id that differs is a decision, most often a parent domain, and only that is left alone.
+     */
+    private static boolean saysMoreThanTheOrigin(WebAuthnSettings webAuthnSettings) {
+        if (webAuthnSettings == null || webAuthnSettings.getRelyingPartyId() == null) {
+            return false;
+        }
+        return !webAuthnSettings.getRelyingPartyId().equals(RequestUtils.getDomain(webAuthnSettings.getOrigin()));
     }
 
     protected static boolean isEmptyString(JsonObject json, String key) {
