@@ -154,9 +154,6 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
     }
 
     private static TrustedIssuer findTrustedIssuer(TokenExchangeSettings settings, String issuer) {
-        return settings.getTrustedIssuers().stream()
-                .filter(ti -> issuer.equals(ti.getIssuer()))
-                .findFirst()
-                .orElse(null);
+        return settings.getMapOfTrustedIssuers().get(issuer);
     }
 }
