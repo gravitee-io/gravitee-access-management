@@ -15,12 +15,20 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.util.StringUtils;
 
+import java.beans.Transient;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.common.oauth2.TokenType.ID_TOKEN;
@@ -107,6 +115,13 @@ public class TokenExchangeSettings {
     private List<TrustedIssuer> trustedIssuers;
 
     /**
+     * Map representation of the TrustedIssuer list to each the lookup
+     */
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private Map<String, TrustedIssuer> mapOfTrustedIssuers = Map.of();
+
+    /**
      * Domain-level default token exchange OAuth settings (e.g. scope handling).
      * Applications can inherit these or override them per-application.
      * Null means use system defaults (DOWNSCOPING).
@@ -140,4 +155,16 @@ public class TokenExchangeSettings {
         this.maxDelegationDepth = Math.max(MIN_MAX_DELEGATION_DEPTH, Math.min(MAX_MAX_DELEGATION_DEPTH, maxDelegationDepth));
     }
 
+    public void setTrustedIssuers(List<TrustedIssuer> trustedIssuers) {
+        this.trustedIssuers = trustedIssuers;
+        if (trustedIssuers != null) {
+            this.mapOfTrustedIssuers = trustedIssuers.stream()
+                    // make sure the issuer has value to avoid "null" in the map
+                    .filter(ti -> StringUtils.hasText(ti.getIssuer()))
+                    // in case of two issuer definitions keep the first one.
+                    .collect(Collectors.toMap(TrustedIssuer::getIssuer, Function.identity(), (issuer1, issuer2) -> issuer1));
+        } else {
+            this.mapOfTrustedIssuers = Map.of();
+        }
+    }
 }
