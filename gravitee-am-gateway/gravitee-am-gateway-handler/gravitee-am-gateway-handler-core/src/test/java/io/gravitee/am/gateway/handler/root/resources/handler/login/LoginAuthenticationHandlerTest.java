@@ -38,6 +38,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -139,6 +140,61 @@ public class LoginAuthenticationHandlerTest extends RxWebTestBase {
             Assertions.assertThat(idp).hasSize(1);
             Assertions.assertThat(idp.get(0).getConfiguration()).isNull();
             Assertions.assertThat(rc.data()).doesNotContainKeys(ConstantKeys.INTERNAL_PROVIDER_CONTEXT_KEY);
+
+            Assertions.assertThat(rc.data()).containsKey(LoginAuthenticationHandler.SOCIAL_PROVIDER_MAP_CONTEXT_KEY);
+            Map<String, IdentityProvider> providersById = rc.get(LoginAuthenticationHandler.SOCIAL_PROVIDER_MAP_CONTEXT_KEY);
+            Assertions.assertThat(providersById).hasSize(1).containsKey(identityProvider.getId());
+
+            Assertions.assertThat(rc.data()).containsKey(LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
+            Map<String, String> authorizeUrls = rc.get(LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
+            Assertions.assertThat(authorizeUrls).hasSize(1).containsKey(identityProvider.getId());
+        });
+
+        testRequest(HttpMethod.GET, RootProvider.PATH_LOGIN, 200, "OK", "completed");
+    }
+
+    @Test
+    public void should_filter_out_social_idp_without_authorize_url_from_all_context_collections() throws Exception {
+        var applicationIdentityProviderWithUrl = new ApplicationIdentityProvider();
+        applicationIdentityProviderWithUrl.setIdentity("idpWithUrl");
+        var identityProviderWithUrl = new IdentityProvider();
+        identityProviderWithUrl.setId(applicationIdentityProviderWithUrl.getIdentity());
+        identityProviderWithUrl.setExternal(true);
+        identityProviderWithUrl.setConfiguration(UUID.randomUUID().toString());
+
+        var applicationIdentityProviderNoUrl = new ApplicationIdentityProvider();
+        applicationIdentityProviderNoUrl.setIdentity("idpNoUrl");
+        var identityProviderNoUrl = new IdentityProvider();
+        identityProviderNoUrl.setId(applicationIdentityProviderNoUrl.getIdentity());
+        identityProviderNoUrl.setExternal(true);
+        identityProviderNoUrl.setConfiguration(UUID.randomUUID().toString());
+
+        when(client.getIdentityProviders()).thenReturn(new TreeSet<>(Set.of(applicationIdentityProviderWithUrl, applicationIdentityProviderNoUrl)));
+        when(identityProviderManager.getIdentityProvider(identityProviderWithUrl.getId())).thenReturn(identityProviderWithUrl);
+        when(identityProviderManager.getIdentityProvider(identityProviderNoUrl.getId())).thenReturn(identityProviderNoUrl);
+
+        final var authProviderWithUrl = Mockito.mock(SocialAuthenticationProvider.class);
+        final var request = new Request();
+        request.setUri(UUID.randomUUID().toString());
+        request.setMethod(io.gravitee.common.http.HttpMethod.GET);
+        when(authProviderWithUrl.asyncSignInUrl(any(), any(), any())).thenReturn(Maybe.just(request));
+        when(identityProviderManager.get(eq(identityProviderWithUrl.getId()))).thenReturn(Maybe.just(authProviderWithUrl));
+
+        final var authProviderNoUrl = Mockito.mock(SocialAuthenticationProvider.class);
+        when(authProviderNoUrl.asyncSignInUrl(any(), any(), any())).thenReturn(Maybe.empty());
+        when(identityProviderManager.get(eq(identityProviderNoUrl.getId()))).thenReturn(Maybe.just(authProviderNoUrl));
+
+        router.route(HttpMethod.GET, RootProvider.PATH_LOGIN);
+
+        assertAfterRequest(rc -> {
+            List<IdentityProvider> idp = rc.get(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY);
+            Assertions.assertThat(idp).extracting(IdentityProvider::getId).containsExactly(identityProviderWithUrl.getId());
+
+            Map<String, String> authorizeUrls = rc.get(LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
+            Assertions.assertThat(authorizeUrls).containsOnlyKeys(identityProviderWithUrl.getId());
+
+            Map<String, IdentityProvider> providersById = rc.get(LoginAuthenticationHandler.SOCIAL_PROVIDER_MAP_CONTEXT_KEY);
+            Assertions.assertThat(providersById).containsOnlyKeys(identityProviderWithUrl.getId());
         });
 
         testRequest(HttpMethod.GET, RootProvider.PATH_LOGIN, 200, "OK", "completed");

@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -89,6 +90,7 @@ public class LoginAuthenticationHandler implements Handler<RoutingContext> {
     }
 
     public static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
+    public static final String SOCIAL_PROVIDER_MAP_CONTEXT_KEY = "socialProvidersById";
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
 
     private final IdentityProviderManager identityProviderManager;
@@ -146,14 +148,24 @@ public class LoginAuthenticationHandler implements Handler<RoutingContext> {
                 // put social providers in context data
                 final var socialProviderData = resultHandler.result();
                 if (socialProviderData != null) {
-                    final var filteredSocialProviderData = socialProviderData.stream().filter(providerData -> providerData.getIdentityProvider() != null && providerData.getAuthorizeUrl() != null).collect(Collectors.toList());
-                    final var providers = filteredSocialProviderData.stream().map(SocialProviderData::getIdentityProvider).map(IdentityProvider::asSafeIdentityProvider).collect(Collectors.toList());
-                    Map<String, String> authorizeUrls = filteredSocialProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), SocialProviderData::getAuthorizeUrl));
+                    final List<IdentityProvider> providers = new ArrayList<>(socialProviderData.size());
+                    final Map<String, String> authorizeUrls = new HashMap<>();
+                    final Map<String, IdentityProvider> providersById = new HashMap<>();
+                    for (SocialProviderData providerData : socialProviderData) {
+                        final IdentityProvider identityProvider = providerData.getIdentityProvider();
+                        if (identityProvider != null && providerData.getAuthorizeUrl() != null) {
+                            final IdentityProvider safeIdentityProvider = identityProvider.asSafeIdentityProvider();
+                            providers.add(safeIdentityProvider);
+                            authorizeUrls.put(identityProvider.getId(), providerData.getAuthorizeUrl());
+                            providersById.put(safeIdentityProvider.getId(), safeIdentityProvider);
+                        }
+                    }
 
                     // backwards compatibility
                     routingContext.put(OAUTH2_PROVIDER_CONTEXT_KEY, providers);
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, providers);
                     routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, authorizeUrls);
+                    routingContext.put(SOCIAL_PROVIDER_MAP_CONTEXT_KEY, providersById);
                 }
 
                 // continue
