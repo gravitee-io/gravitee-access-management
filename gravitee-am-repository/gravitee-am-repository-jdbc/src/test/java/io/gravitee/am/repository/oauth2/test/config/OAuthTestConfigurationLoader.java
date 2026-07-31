@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.oauth2.test.config;
 
 import io.gravitee.am.repository.jdbc.common.AbstractTestRepositoryConfiguration;
+import io.gravitee.am.repository.jdbc.common.RetryOnConcurrencyFailureConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
@@ -31,4 +33,10 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
         "io.gravitee.am.repository.jdbc.oauth2.api",
         "io.gravitee.am.repository.jdbc.common"})
 public class OAuthTestConfigurationLoader extends AbstractTestRepositoryConfiguration {
+
+    @Bean
+    public RetryOnConcurrencyFailureConfiguration retryOnConcurrencyFailureConfiguration(){
+        // to keep the pipeline stable
+        return new RetryOnConcurrencyFailureConfiguration(10, 100);
+    }
 }
