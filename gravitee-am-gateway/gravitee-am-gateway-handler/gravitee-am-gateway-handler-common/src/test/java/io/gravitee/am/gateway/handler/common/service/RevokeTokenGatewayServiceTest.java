@@ -17,6 +17,9 @@
 package io.gravitee.am.gateway.handler.common.service;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.event.RevokeTokenEvent;
 import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -25,23 +28,34 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +67,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class RevokeTokenGatewayServiceTest {
 
+    private static final int REVOKE_ATTEMPTS = 3;
+
     @InjectMocks
     private RevokeTokenGatewayService tokenService = new RevokeTokenGatewayServiceImpl();
 
@@ -61,6 +77,11 @@ public class RevokeTokenGatewayServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Captor
+    private ArgumentCaptor<AuditBuilder<?>> auditBuilderCaptor;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void shouldDeleteTokensByUser_withAudit() {
@@ -143,6 +164,55 @@ public class RevokeTokenGatewayServiceTest {
 
         verify(tokenRepository).deleteByDomainIdClientIdAndUserId(eq(domain.getId()), eq(clientId), eq(UserId.internal(userId)));
         verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void onEvent_shouldRetryRevokeUntilSuccess() {
+        var domain = domainOf(tokenService);
+        var userId = UUID.randomUUID().toString();
+        AtomicInteger executions = new AtomicInteger();
+        when(tokenRepository.deleteByDomainIdAndUserId(anyString(), any()))
+                .thenReturn(Completable.defer(() -> executions.incrementAndGet() == 1
+                        ? Completable.error(new RuntimeException("deadlock"))
+                        : Completable.complete()));
+
+        tokenService.onEvent(revokeEvent(domain, userId));
+
+        assertEquals(Status.SUCCESS, reportedAudit().getOutcome().getStatus());
+        assertEquals(2, executions.get());
+    }
+
+    @Test
+    public void onEvent_shouldStopRetryingWhenAttemptsExhausted() {
+        var domain = domainOf(tokenService);
+        var userId = UUID.randomUUID().toString();
+        AtomicInteger executions = new AtomicInteger();
+        when(tokenRepository.deleteByDomainIdAndUserId(anyString(), any()))
+                .thenReturn(Completable.defer(() -> {
+                    executions.incrementAndGet();
+                    return Completable.error(new RuntimeException("deadlock"));
+                }));
+
+        tokenService.onEvent(revokeEvent(domain, userId));
+
+        assertEquals(Status.FAILURE, reportedAudit().getOutcome().getStatus());
+        assertEquals(REVOKE_ATTEMPTS, executions.get());
+    }
+
+    private Audit reportedAudit() {
+        verify(auditService, timeout(5000).times(1)).report(auditBuilderCaptor.capture());
+        return auditBuilderCaptor.getValue().build(objectMapper);
+    }
+
+    private Domain domainOf(RevokeTokenGatewayService service) {
+        var domain = new Domain(UUID.randomUUID().toString());
+        ReflectionTestUtils.setField(service, "domain", domain);
+        return domain;
+    }
+
+    private Event<RevokeTokenEvent, Payload> revokeEvent(Domain domain, String userId) {
+        var revoke = RevokeToken.byUser(domain, userId, "user-name", "principal-id", "principal-name");
+        return new SimpleEvent<>(RevokeTokenEvent.REVOKE, Payload.from(revoke));
     }
 
 }

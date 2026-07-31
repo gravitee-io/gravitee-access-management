@@ -17,6 +17,8 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.repository.jdbc.common.RetryOnConcurrencyFailure;
+import io.gravitee.am.repository.jdbc.common.RetryOnConcurrencyFailureConfiguration;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringTokenRepository;
@@ -31,6 +33,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -52,6 +55,9 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
 
     @Autowired
     private SpringTokenRepository spring;
+
+    @Autowired
+    private RetryOnConcurrencyFailureConfiguration retryOnConcurrencyFailureConfiguration;
 
     @Override
     public Maybe<RefreshToken> findRefreshTokenByJti(String jti) {
@@ -95,10 +101,8 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     public Completable deleteByJti(String jti) {
         LOGGER.debug("deleteByJti({})", jti);
         String query = databaseDialectHelper.recursiveTokenDeleteQuery("token = :jti");
-        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
-                .bind("jti", jti)
-                .fetch()
-                .rowsUpdated())
+        return executeDelete("deleteByJti", getTemplate().getDatabaseClient().sql(query)
+                .bind("jti", jti))
                 .doOnError(error -> LOGGER.error("Unable to delete tokens with parent jti {}", jti, error))
                 .observeOn(Schedulers.computation());
     }
@@ -119,10 +123,8 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
         String query = databaseDialectHelper.recursiveTokenDeleteQuery(SUBJECT + " = :userId");
-        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
-                .bind("userId", userId)
-                .fetch()
-                .rowsUpdated())
+        return executeDelete("deleteByUserId", getTemplate().getDatabaseClient().sql(query)
+                .bind("userId", userId))
                 .doOnError(error -> LOGGER.error("Unable to delete tokens with subject {}", userId, error))
                 .observeOn(Schedulers.computation());
     }
@@ -131,12 +133,10 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
         String query = databaseDialectHelper.recursiveTokenDeleteQuery("domain = :domainId AND client = :clientId AND " + SUBJECT + " = :userId");
-        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+        return executeDelete("deleteByDomainIdClientIdAndUserId", getTemplate().getDatabaseClient().sql(query)
                 .bind("domainId", domainId)
                 .bind("clientId", clientId)
-                .bind("userId", userId.id())
-                .fetch()
-                .rowsUpdated())
+                .bind("userId", userId.id()))
                 .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {} and subject {}",
                                 domainId, clientId, userId, error))
                 .observeOn(Schedulers.computation());
@@ -146,11 +146,9 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
         String query = databaseDialectHelper.recursiveTokenDeleteQuery("domain = :domainId AND " + SUBJECT + " = :userId");
-        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+        return executeDelete("deleteByDomainIdAndUserId", getTemplate().getDatabaseClient().sql(query)
                 .bind("domainId", domainId)
-                .bind("userId", userId.id())
-                .fetch()
-                .rowsUpdated())
+                .bind("userId", userId.id()))
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",
                         domainId, userId, error))
                 .observeOn(Schedulers.computation());
@@ -160,14 +158,17 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     public Completable deleteByDomainIdAndClientId(String domainId, String clientId) {
         LOGGER.debug("deleteByDomainIdClientId({},{})", domainId, clientId);
         String query = databaseDialectHelper.recursiveTokenDeleteQuery("domain = :domainId AND client = :clientId");
-        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+        return executeDelete("deleteByDomainIdAndClientId", getTemplate().getDatabaseClient().sql(query)
                 .bind("domainId", domainId)
-                .bind("clientId", clientId)
-                .fetch()
-                .rowsUpdated())
+                .bind("clientId", clientId))
                 .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {}",
                         domainId, clientId, error))
                 .observeOn(Schedulers.computation());
+    }
+
+    private Completable executeDelete(String operation, DatabaseClient.GenericExecuteSpec spec) {
+        return monoToCompletable(spec.fetch().rowsUpdated())
+                .retryWhen(new RetryOnConcurrencyFailure(operation, retryOnConcurrencyFailureConfiguration));
     }
 
     @Override
