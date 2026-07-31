@@ -293,6 +293,13 @@ public interface EventType {
 
     /**
      * ----------
+     * Data plane audit log actions
+     * ----------
+     */
+    String DATA_PLANE_CREATED = "DATA_PLANE_CREATED";
+
+    /**
+     * ----------
      * Entrypoint audit log actions
      * ----------
      */
@@ -409,6 +416,7 @@ public interface EventType {
                 FACTOR_CREATED, FACTOR_UPDATED, FACTOR_DELETED,
                 ORGANIZATION_CREATED, ORGANIZATION_UPDATED, ORGANIZATION_LICENSE_CREATED, ORGANIZATION_LICENSE_UPDATED, ORGANIZATION_LICENSE_DELETED,
                 ENVIRONMENT_CREATED, ENVIRONMENT_UPDATED,
+                DATA_PLANE_CREATED,
                 ENTRYPOINT_CREATED, ENTRYPOINT_UPDATED, ENTRYPOINT_DELETED,
                 FLOW_CREATED, FLOW_UPDATED, FLOW_DELETED,
                 ALERT_TRIGGER_CREATED, ALERT_TRIGGER_UPDATED, ALERT_TRIGGER_DELETED,
