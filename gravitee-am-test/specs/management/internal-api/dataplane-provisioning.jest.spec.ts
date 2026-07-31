@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import {
   createDataPlane,
   DataPlaneSummary,
+  deleteDataPlane,
   getDataPlane,
   listDataPlanes,
   unauthenticated,
@@ -195,20 +196,44 @@ describe('Data plane provisioning (management technical API)', () => {
 
   describe('authentication', () => {
     it('rejects unauthenticated reads and writes', async () => {
-      const [list, get, create] = await Promise.all([
+      const [list, get, create, del] = await Promise.all([
         unauthenticated.list(),
         unauthenticated.get(PROVISIONED_ID),
         unauthenticated.create(dataPlanePayload('dp-e2e-unauthenticated')),
+        unauthenticated.delete(PROVISIONED_ID),
       ]);
 
       expect(list.status).toBe(401);
       expect(get.status).toBe(401);
       expect(create.status).toBe(401);
+      expect(del.status).toBe(401);
+    });
+  });
+
+  // last: deleting frees the environment the earlier describes rely on
+  describe('deletion', () => {
+    it('returns 404 for an unknown data plane', async () => {
+      const response = await deleteDataPlane('dp-e2e-does-not-exist');
+
+      expect(response.status).toBe(404);
+      expect(response.raw).toContain('can not be found');
+    });
+
+    it('deletes the provisioned data plane and frees its environment', async () => {
+      const deleted = await deleteDataPlane(provisioned.id);
+      expect(deleted.status).toBe(204);
+
+      const after = await getDataPlane(provisioned.id);
+      expect(after.status).toBe(404);
+
+      // the environment binding is released, so provisioning works again
+      const recreated = await createDataPlane(dataPlanePayload(PROVISIONED_ID));
+      expect(recreated.status).toBe(201);
     });
   });
 
   afterAll(async () => {
-    // AM-7259 has no delete endpoint, so the provisioned row intentionally outlives the run and is
-    // adopted by the next one.
+    // free the environment so the stack is left as the spec found it
+    await deleteDataPlane(PROVISIONED_ID);
   });
 });

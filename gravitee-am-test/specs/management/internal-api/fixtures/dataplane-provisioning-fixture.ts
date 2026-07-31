@@ -17,9 +17,9 @@
 import { createDataPlane, DataPlaneSummary, listDataPlanes, NewDataPlane } from '@management-commands/dataplane-provisioning-commands';
 
 /**
- * AM-7259 ships create + read only, so there is no way to remove a provisioned data plane, and an
- * environment can hold at most one. The fixture therefore adopts whatever is already bound to the
- * environment instead of failing, which keeps the spec repeatable against a persistent stack.
+ * An environment can hold at most one data plane, so the fixture adopts whatever is already bound
+ * to the environment instead of failing, which keeps the spec repeatable against a persistent
+ * stack (e.g. a run interrupted before its afterAll cleanup).
  */
 
 /** Credentials the spec asserts never come back out. */

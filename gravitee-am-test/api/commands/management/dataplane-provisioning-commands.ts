@@ -88,6 +88,11 @@ export const getDataPlane = async (id: string): Promise<DataPlaneResponse<DataPl
   return read(response);
 };
 
+export const deleteDataPlane = async (id: string): Promise<DataPlaneResponse<void>> => {
+  const response = await fetch(`${basePath}/dataplanes/${id}`, { method: 'DELETE', headers: authHeader() });
+  return read(response);
+};
+
 /** Same requests without credentials, to prove the technical API stays behind basic auth. */
 export const unauthenticated = {
   list: () => fetch(`${basePath}/dataplanes`, { method: 'GET' }),
@@ -98,4 +103,5 @@ export const unauthenticated = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  delete: (id: string) => fetch(`${basePath}/dataplanes/${id}`, { method: 'DELETE' }),
 };
