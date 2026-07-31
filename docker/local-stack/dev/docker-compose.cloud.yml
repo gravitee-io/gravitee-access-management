@@ -39,7 +39,19 @@ services:
       - gravitee_installation_managed_accessPoints_environment_gateway_host={environment}.{organization}.{account}.example.com
       # A managed cloud node has no platform license
       - GRAVITEE_LICENSE_KEY=
-      - JAVA_OPTS=-Dgravitee.license=/opt/graviteeio-am-management-api/license/no-platform-license.key
+      # Define an inline admin usable against ANY organization, so the cloud specs can drive the organizations
+      # Cockpit creates rather than DEFAULT. The management API offers the providers declared here to
+      # whichever organization is being logged into (`?org=<id>`), creates the user there and grants the
+      # mapped role.
+      - >-
+        JAVA_OPTS=-Dgravitee.license=/opt/graviteeio-am-management-api/license/no-platform-license.key
+        -Dsecurity.providers[0].type=memory
+        -Dsecurity.providers[0].enabled=true
+        -Dsecurity.providers[0].users[0].username=admin
+        -Dsecurity.providers[0].users[0].firstname=Administrator
+        -Dsecurity.providers[0].users[0].lastname=Administrator
+        -Dsecurity.providers[0].users[0].password=$$2a$$10$$NG5WLbspq8V1yJDzUKfUK.oum94qL/Ne3B5fQCgekw/Y4aOEaoFZq
+        -Dsecurity.providers[0].users[0].role=ORGANIZATION_PRIMARY_OWNER
     depends_on:
       cockpit-mock:
         condition: service_healthy

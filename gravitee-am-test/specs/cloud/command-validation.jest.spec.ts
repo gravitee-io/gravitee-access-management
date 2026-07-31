@@ -16,7 +16,6 @@
 
 import { beforeAll, describe, expect, it } from '@jest/globals';
 import { sendCockpitCommand, waitForCockpitConnection, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
-import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../test-fixture';
 
 setup(120000);
@@ -36,7 +35,7 @@ describe('Cloud command payload validation (Cockpit -> AM)', () => {
   });
 
   it('accepts a well-formed ORGANIZATION command as SUCCEEDED', async () => {
-    const id = uniqueName('org-validation', true);
+    const id = 'cloud-org-validation';
     const commandId = await sendCockpitCommand({
       type: 'ORGANIZATION',
       payload: { id, name: 'Command validation org', hrids: [id] },
@@ -45,6 +44,6 @@ describe('Cloud command payload validation (Cockpit -> AM)', () => {
     const reply = await waitForCockpitReply(commandId);
 
     expect(reply.commandStatus).toBe('SUCCEEDED');
-    // Note: organizations have no delete endpoint in the management API; this upserted org is left in place.
+    // Note: organizations have no delete endpoint in the management API
   });
 });

@@ -18,12 +18,14 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.LicenseService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.model.NewOrganization;
@@ -60,16 +62,20 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     private final LicenseService licenseService;
 
+    private final ReporterService reporterService;
+
     public OrganizationServiceImpl(@Lazy OrganizationRepository organizationRepository,
                                    RoleService roleService,
                                    EntrypointService entrypointService,
                                    AuditService auditService,
-                                   LicenseService licenseService) {
+                                   LicenseService licenseService,
+                                   @Lazy ReporterService reporterService) {
         this.organizationRepository = organizationRepository;
         this.roleService = roleService;
         this.entrypointService = entrypointService;
         this.auditService = auditService;
         this.licenseService = licenseService;
+        this.reporterService = reporterService;
     }
 
     @Override
@@ -157,7 +163,8 @@ public class OrganizationServiceImpl implements OrganizationService {
         return organizationRepository.create(toCreate)
                 .flatMap(createdOrganization ->
                         Completable.mergeArrayDelayError(entrypointService.createDefaults(createdOrganization).ignoreElements(),
-                                roleService.createDefaultRoles(createdOrganization.getId()))
+                                roleService.createDefaultRoles(createdOrganization.getId()),
+                                reporterService.createDefault(Reference.organization(createdOrganization.getId())).ignoreElement())
                                 .andThen(Single.just(createdOrganization)))
                 .doOnSuccess(organization -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(organization).principal(owner)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(toCreate).principal(owner).throwable(throwable)));

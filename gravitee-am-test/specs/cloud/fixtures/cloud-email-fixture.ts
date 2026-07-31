@@ -17,7 +17,13 @@ import { getApplicationApi, getDomainApi, getEntrypointsApi, getUserApi } from '
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
-import { extractXsrfToken, extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import {
+  extractXsrfToken,
+  extractXsrfTokenAndActionResponse,
+  performFormPost,
+  performGet,
+  performPost,
+} from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { retryUntil, withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
@@ -66,7 +72,7 @@ export interface CloudEmailFixture {
  */
 export const setupCloudEmailFixture = async (accessToken: string): Promise<CloudEmailFixture> => {
   const organizationId = process.env.AM_DEF_ORG_ID;
-  const environmentId = uniqueName('env-email', true);
+  const environmentId = 'cloud-env-email';
   const entrypointHost = `${uniqueName('gw', true)}.example.com`;
   const overridingHost = `${uniqueName('custom', true)}.example.com`;
   const entrypointUrl = `https://${entrypointHost}`;
@@ -406,6 +412,7 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
 
   // Only the domain. Entrypoints are Cockpit-owned and a managed installation rejects deleting them,
   // so attempting it only ever produces a 400 and a misleading warning.
+  // Note: organizations and environments have no delete endpoint in the management API
   const cleanup = async () => {
     await domainApi
       .deleteDomain({ organizationId, environmentId, domain: domain.id })

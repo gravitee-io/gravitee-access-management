@@ -15,28 +15,21 @@
  */
 
 import { getLicenseApi } from '@management-commands/service/utils';
-import { CockpitQueueEntry, sendCockpitCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
+import { CockpitQueueEntry } from '@cloud-commands/cockpit-commands';
 import { stackLicenseBase64 } from '@cloud-commands/license-key';
 import { retryUntil } from '@utils-commands/retry';
 import { GraviteeLicense } from '../../../api/management/models/GraviteeLicense';
+import { setupCloudOrganizationFixture } from './cloud-organization-fixture';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 
 export const EXAMPLE_EE_FEATURES = ['am-idp-saml', 'am-mfa-fido2'];
 export const OSS_TIER = 'oss';
 
-/**
- * The default organization's own attributes, as OrganizationServiceImpl.createDefault() sets them.
- */
-const DEFAULT_ORGANIZATION = {
-  name: 'Default organization',
-  description: 'Default organization',
-  hrids: ['default'],
-  accessPoints: [],
-};
-
 export interface CloudLicenseFixture {
   organizationId: string;
+  /** Token scoped to this organization. */
+  accessToken: string;
   /** The license the running stack itself holds, base64-encoded as Cockpit would send it. */
   licenseKey: string;
   /** The node's own license. In managed cloud this is expected to be the OSS license. */
@@ -53,24 +46,18 @@ export interface CloudLicenseFixture {
 /**
  * Drives an organization's license the way Cockpit does, and reads it back through the settings API.
  *
- * Scoped to the default organization by necessity.
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudLicenseFixture = async (accessToken: string): Promise<CloudLicenseFixture> => {
-  const organizationId = process.env.AM_DEF_ORG_ID!;
-  const licenseApi = getLicenseApi(accessToken);
+export const setupCloudLicenseFixture = async (organizationName = 'cloud-license'): Promise<CloudLicenseFixture> => {
+  const organization = await setupCloudOrganizationFixture(organizationName);
+  const organizationId = organization.organizationId;
+  const licenseApi = getLicenseApi(organization.accessToken);
   const licenseKey = stackLicenseBase64();
 
   const organizationLicense = () => licenseApi.getOrganizationLicense({ organizationId });
   const platformLicense = await licenseApi.getLicense();
 
-  const pushOrganization = async (license?: string): Promise<CockpitQueueEntry> => {
-    const commandId = await sendCockpitCommand({
-      type: 'ORGANIZATION',
-      payload: { id: organizationId, ...DEFAULT_ORGANIZATION, ...(license === undefined ? {} : { license }) },
-    });
-    return waitForCockpitReply(commandId);
-  };
+  const pushOrganization = (license?: string): Promise<CockpitQueueEntry> => organization.resync(license === undefined ? {} : { license });
 
   // Registration is asynchronous: the license is persisted, then a LICENSE event drives
   // OrganizationLicenseManager to register it with the node's license manager.
@@ -90,6 +77,7 @@ export const setupCloudLicenseFixture = async (accessToken: string): Promise<Clo
 
   return {
     organizationId,
+    accessToken: organization.accessToken,
     licenseKey,
     platformLicense,
     organizationLicense,
