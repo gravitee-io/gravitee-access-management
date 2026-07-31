@@ -57,6 +57,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler.SOCIAL_PROVIDER_MAP_CONTEXT_KEY;
 import static java.lang.Boolean.TRUE;
 import static java.time.temporal.ChronoUnit.DECADES;
 import static org.mockito.Mockito.any;
@@ -185,6 +186,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     idp.setId("provider-id");
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
                     routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://somewhere/some/provider/oauth/authorize"));
+                    routingContext.put(SOCIAL_PROVIDER_MAP_CONTEXT_KEY, Map.of(idp.getId(), idp));
                     routingContext.next();
                 })
                 .handler(new LoginHideFormHandler(domain))

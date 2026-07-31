@@ -29,13 +29,12 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler.SOCIAL_PROVIDER_MAP_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -59,9 +58,7 @@ public class LoginSelectionRuleHandler extends LoginAbstractHandler  {
         if ((socialProviders != null && !socialProviders.isEmpty())
                 && (client.getIdentityProviders() != null && !client.getIdentityProviders().isEmpty())) {
 
-        var socialProviderMap = socialProviders.stream().collect(Collectors.toMap(
-                    IdentityProvider::getId, Function.identity()
-            ));
+            Map<String, IdentityProvider> socialProviderMap = routingContext.get(SOCIAL_PROVIDER_MAP_CONTEXT_KEY);
 
             var context = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()), routingContext.data());
             context.setDomain(domain);

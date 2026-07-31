@@ -34,6 +34,9 @@ import java.util.TreeSet;
 
 import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler.SOCIAL_PROVIDER_MAP_CONTEXT_KEY;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -82,6 +85,7 @@ public class LoginSelectionRuleHandlerTest extends RxWebTestBase {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     rc.put(SOCIAL_PROVIDER_CONTEXT_KEY, socialProviders);
                     rc.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, urls);
+                    rc.put(SOCIAL_PROVIDER_MAP_CONTEXT_KEY, socialProviders.stream().collect(toMap(IdentityProvider::getId, identity())));
                     rc.next();
                 });
 
