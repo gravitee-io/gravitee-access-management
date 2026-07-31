@@ -211,6 +211,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testTrustedIssuer_success() throws Exception {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -251,6 +252,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testTrustedIssuer_signatureVerificationFails() throws Exception {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -277,6 +279,7 @@ public class TrustedIssuerTokenValidatorTest {
         TrustedIssuer ti = createTrustedIssuer();
         ti.setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -313,6 +316,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testTrustedIssuer_noScopeMapping_passThrough() throws Exception {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -347,6 +351,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testTrustedIssuer_allFieldsCopied() throws Exception {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -398,6 +403,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testTrustedIssuer_expiredToken() throws Exception {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -429,6 +435,7 @@ public class TrustedIssuerTokenValidatorTest {
     public void testTrustedIssuer_nullTimestamps() throws Exception {
         TrustedIssuer ti = createTrustedIssuer();
         when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
