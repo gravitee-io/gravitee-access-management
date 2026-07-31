@@ -32,6 +32,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
+import io.gravitee.am.service.utils.RetryWithDelay;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
@@ -39,12 +40,17 @@ import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @CustomLog
 public class RevokeTokenGatewayServiceImpl extends AbstractService implements RevokeTokenGatewayService {
+
+    private static final int REVOKE_MAX_RETRIES = 2;
+    private static final long REVOKE_RETRY_DELAY_MS = 200;
 
     @Lazy
     @Autowired
@@ -79,10 +85,14 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
             final var revokeToken = event.content().getRevokeToken();
             if (event.type() == RevokeTokenEvent.REVOKE) {
                 process(revokeToken)
+                        .retryWhen(RetryWithDelay.builder()
+                                .maxRetries(REVOKE_MAX_RETRIES)
+                                .initialDelay(REVOKE_RETRY_DELAY_MS, TimeUnit.MILLISECONDS)
+                                .linear()
+                                .build())
                         .doOnComplete(() -> auditLog(revokeToken))
                         .doOnError(error -> auditLog(revokeToken, error))
-                        .onErrorComplete()
-                        .subscribe();
+                        .subscribe(() -> {}, error -> {});
             }
         }
     }
