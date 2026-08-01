@@ -130,5 +130,41 @@ public class UriBuilderTest {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
+    @Test
+    public void toOriginDropsPathQueryAndTrailingSlash() {
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("https://auth.example.com/"));
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("https://auth.example.com/some/path?a=b"));
+        assertEquals("https://auth.example.com:8443", UriBuilder.toOrigin("https://auth.example.com:8443/path"));
+    }
+
+    @Test
+    public void toOriginLowercasesTheSchemeAndHost() {
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("HTTPS://Auth.Example.COM"));
+        assertEquals("https://auth.example.com:8443", UriBuilder.toOrigin("https://AUTH.example.com:8443"));
+    }
+
+    @Test
+    public void toOriginDropsAnExplicitDefaultPort() {
+        // The browser omits it from clientDataJSON.origin, and WebAuthn compares the two with string equality.
+        assertEquals("https://auth.example.com", UriBuilder.toOrigin("https://auth.example.com:443"));
+        assertEquals("http://auth.example.com", UriBuilder.toOrigin("http://auth.example.com:80"));
+        assertEquals("https://auth.example.com:80", UriBuilder.toOrigin("https://auth.example.com:80"));
+    }
+
+    @Test
+    public void toOriginPunycodesAUnicodeHost() {
+        // Whatever the entrypoint was written with, the browser puts the ascii form in clientDataJSON.origin.
+        assertEquals("https://xn--bcher-kva.example", UriBuilder.toOrigin("https://bücher.example"));
+        assertEquals("https://xn--bcher-kva.example", UriBuilder.toOrigin("https://BÜCHER.example:443/path"));
+        assertEquals("https://xn--bcher-kva.example:8443", UriBuilder.toOrigin("https://bücher.example:8443"));
+    }
+
+    @Test
+    public void toOriginIsNullWhenThereIsNoOriginToTake() {
+        Assertions.assertNull(UriBuilder.toOrigin(null));
+        Assertions.assertNull(UriBuilder.toOrigin("   "));
+        Assertions.assertNull(UriBuilder.toOrigin("auth.example.com"));
+        Assertions.assertNull(UriBuilder.toOrigin("https://not a host"));
+    }
 
 }

@@ -15,7 +15,6 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
 import { setup } from '../test-fixture';
 import {
@@ -30,9 +29,8 @@ setup(180000);
 let fixture: CloudLicenseEnforcementFixture;
 
 beforeAll(async () => {
-  const accessToken = await requestAdminAccessToken();
   await waitForCockpitConnection();
-  fixture = await setupCloudLicenseEnforcementFixture(accessToken);
+  fixture = await setupCloudLicenseEnforcementFixture();
 });
 
 afterAll(async () => {
@@ -58,5 +56,6 @@ describe('Cloud organization license enforcement (gateway)', () => {
     const state = await fixture.deployDomain();
 
     expect(state.creationState[GATED_PLUGIN].message).toBeFalsy();
+    expect(state.creationState[GATED_PLUGIN].success).toBe(true);
   });
 });

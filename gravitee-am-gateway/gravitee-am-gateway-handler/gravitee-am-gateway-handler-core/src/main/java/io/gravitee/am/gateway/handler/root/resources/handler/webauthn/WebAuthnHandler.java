@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
@@ -106,6 +107,63 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
 
     public void setDomainDataplane(DomainDataPlane domainDataPlane) {
         this.domainDataPlane = domainDataPlane;
+    }
+
+    /**
+     * The origin this request's ceremony is verified against. Resolved per request rather than once at
+     * deploy time, so an environment with several entrypoints answers on the host the browser is on.
+     */
+    protected String webAuthnOrigin(RoutingContext ctx) {
+        return domainDataPlane.getWebAuthnOrigin(UriBuilderRequest.resolveOrigin(ctx.request()));
+    }
+
+    /**
+     * Point the generated options at the relying party for this request's origin: {@code rp.id} on
+     * registration, top-level {@code rpId} on assertion.
+     * <p>
+     * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory} builds the {@code WebAuthn}
+     * bean once per domain and falls back to {@code localhost}, so its id cannot follow the request.
+     * Rewriting is safe because we never set {@code WebAuthnCredentials.domain}, so Vert.x skips its
+     * {@code rpIdHash} check. Only entrypoint-derived origins are used: otherwise the factory's value
+     * already honours the relying party id the domain configured.
+     * <p>
+     * A relying party id the domain set explicitly is left alone. Credentials are bound to the id they
+     * were registered under, so replacing a deliberate one — often a parent domain, so a single credential
+     * covers several subdomains — would stop every existing authenticator offering it.
+     */
+    protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
+        if (saysMoreThanTheOrigin(domainDataPlane.getDomain().getWebAuthnSettings())) {
+            return;
+        }
+        String relyingPartyId = domainDataPlane
+                .getWebAuthnEntrypointOrigin(UriBuilderRequest.resolveOrigin(ctx.request()))
+                .map(RequestUtils::getDomain)
+                .orElse(null);
+        if (relyingPartyId == null) {
+            return;
+        }
+        if (options.containsKey("rp")) {
+            options.getJsonObject("rp").put("id", relyingPartyId);
+        }
+        if (options.containsKey("rpId")) {
+            options.put("rpId", relyingPartyId);
+        }
+    }
+
+    /**
+     * Whether the configured relying party id carries an intent the origin does not already imply.
+     * <p>
+     * A non-null id is not by itself a deliberate one: the console prefills the field with the configured
+     * origin's host, so most domains carry a value nobody chose. Such an id is worth no more than the
+     * origin it was taken from — the same origin the entrypoint is replacing — and keeping it would hand
+     * the browser a relying party id for one host while the ceremony runs on another, which it refuses.
+     * An id that differs is a decision, most often a parent domain, and only that is left alone.
+     */
+    private static boolean saysMoreThanTheOrigin(WebAuthnSettings webAuthnSettings) {
+        if (webAuthnSettings == null || webAuthnSettings.getRelyingPartyId() == null) {
+            return false;
+        }
+        return !webAuthnSettings.getRelyingPartyId().equals(RequestUtils.getDomain(webAuthnSettings.getOrigin()));
     }
 
     protected static boolean isEmptyString(JsonObject json, String key) {

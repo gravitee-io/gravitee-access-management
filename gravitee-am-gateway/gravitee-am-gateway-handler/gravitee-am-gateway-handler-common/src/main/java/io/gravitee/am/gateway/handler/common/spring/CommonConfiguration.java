@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
@@ -131,6 +132,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.DomainDataPlane;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.http.PoolOptionsBuilder;
@@ -566,9 +568,9 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public DomainDataPlane domainDataPlane(Domain domain, DataPlaneRegistry dataPlaneRegistry) {
+    public DomainDataPlane domainDataPlane(Domain domain, DataPlaneRegistry dataPlaneRegistry, EntryPointManager entryPointManager) {
         DataPlaneDescription description = dataPlaneRegistry.getDescription(domain);
-        return new DomainDataPlane(domain, description);
+        return new DomainDataPlane(domain, description, entryPointManager, CloudProperties.isManagedCloudEnabled(environment));
     }
 
     @Bean

@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -28,6 +29,7 @@ import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
@@ -48,9 +50,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.CustomLog;
@@ -78,6 +82,9 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
     private EnvironmentService environmentService;
 
     @Autowired
+    private OrganizationService organizationService;
+
+    @Autowired
     private Vertx vertx;
 
     @Autowired
@@ -101,8 +108,12 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         noOpReporter = new NoOpReporter();
 
         log.info("Initializing audit reporters");
+        final Set<String> organizationsWithReporter = new HashSet<>();
         reporterService.findAll().blockingForEach(reporter -> {
             log.info("Initializing audit reporter : {} for {}", reporter.getName(), reporter.getReference());
+            if (reporter.getReference().type() == ReferenceType.ORGANIZATION) {
+                organizationsWithReporter.add(reporter.getReference().id());
+            }
             try {
                 loadReporter(reporter);
             } catch (Exception ex) {
@@ -110,6 +121,8 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 removeReporter(reporter.getId());
             }
         });
+
+        warnOrganizationsWithoutReporter(organizationsWithReporter);
 
         // init internal reporter (platform reporter)
         NewReporter newInternalReporter = reporterService.createInternal();
@@ -159,6 +172,25 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
     @Override
     protected String name() {
         return "AM Management API Reporter service";
+    }
+
+    private void warnOrganizationsWithoutReporter(Set<String> organizationsWithReporter) {
+        organizationsWithoutReporter(organizationsWithReporter)
+                .forEach(organizationId ->
+                        log.warn("Organization {} has no audit reporter, its audit events will not be recorded", organizationId));
+    }
+
+    List<String> organizationsWithoutReporter(Set<String> organizationsWithReporter) {
+        try {
+            return organizationService.findAll()
+                    .map(Organization::getId)
+                    .filter(organizationId -> !organizationsWithReporter.contains(organizationId))
+                    .toList()
+                    .blockingGet();
+        } catch (Exception ex) {
+            log.warn("Unable to check organizations for missing audit reporters", ex);
+            return List.of();
+        }
     }
 
     @Override

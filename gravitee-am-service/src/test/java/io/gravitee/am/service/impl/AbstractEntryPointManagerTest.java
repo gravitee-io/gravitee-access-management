@@ -335,4 +335,64 @@ public class AbstractEntryPointManagerTest {
 
         assertEquals("https://a.gravitee.io", cut.findPrimaryByEnvironmentId("env#1").orElseThrow().getUrl());
     }
+
+    @Test
+    public void shouldResolveForRequestFromTheEntrypointTheCallerArrivedOn() throws Exception {
+        cache(generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"),
+                overridingEntrypoint("overriding", "env#1", "https://custom.acme.com"));
+
+        assertEquals("generated", cut.resolveForRequest("env#1", "https://generated.gravitee.io").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolveForRequestIgnoringCaseTrailingSlashAndDefaultPort() throws Exception {
+        // The match has to be the entrypoint the primary would not have picked, otherwise the assertion
+        // passes on the fallback.
+        cache(generatedEntrypoint("generated", "env#1", "https://Custom.Acme.com:443/"),
+                overridingEntrypoint("overriding", "env#1", "https://other.acme.com"));
+
+        assertEquals("generated", cut.resolveForRequest("env#1", "https://custom.acme.com").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolveForRequestFromTheLowestUrlWhenSeveralEntrypointsShareAnOrigin() throws Exception {
+        cache(generatedEntrypoint("generated-z", "env#1", "https://custom.acme.com/z"),
+                generatedEntrypoint("generated-a", "env#1", "https://custom.acme.com/a"),
+                overridingEntrypoint("overriding", "env#1", "https://other.acme.com"));
+
+        assertEquals("generated-a", cut.resolveForRequest("env#1", "https://custom.acme.com").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolveForRequestFallingBackToPrimaryWhenTheOriginIsUnknown() throws Exception {
+        cache(overridingEntrypoint("overriding", "env#1", "https://custom.acme.com"),
+                generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));
+
+        assertEquals("overriding", cut.resolveForRequest("env#1", "https://evil.example").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolveForRequestFallingBackToPrimaryWithoutARequestOrigin() throws Exception {
+        cache(overridingEntrypoint("overriding", "env#1", "https://custom.acme.com"),
+                generatedEntrypoint("generated", "env#1", "https://generated.gravitee.io"));
+
+        assertEquals("overriding", cut.resolveForRequest("env#1", null).orElseThrow().getId());
+        assertEquals("overriding", cut.resolveForRequest("env#1", "   ").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolveForRequestRejectingAnOriginOnADifferentSchemeOrPort() throws Exception {
+        cache(generatedEntrypoint("generated", "env#1", "https://custom.acme.com:8443"),
+                overridingEntrypoint("overriding", "env#1", "https://other.acme.com"));
+
+        assertEquals("overriding", cut.resolveForRequest("env#1", "http://custom.acme.com:8443").orElseThrow().getId());
+        assertEquals("overriding", cut.resolveForRequest("env#1", "https://custom.acme.com").orElseThrow().getId());
+    }
+
+    @Test
+    public void shouldResolveNothingForRequestWhenEnvironmentHasNoEntrypoint() throws Exception {
+        cache(generatedEntrypoint("other-env-generated", "env#other", "https://other.gravitee.io"));
+
+        assertTrue(cut.resolveForRequest("env#1", "https://other.gravitee.io").isEmpty());
+    }
 }

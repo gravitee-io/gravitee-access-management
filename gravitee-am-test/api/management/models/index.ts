@@ -52,6 +52,7 @@ export * from './Audit';
 export * from './AuditAccessPoint';
 export * from './AuditEntity';
 export * from './AuditOutcome';
+export * from './AuditPage';
 export * from './AuthenticationDeviceNotifier';
 export * from './AuthorizationEngine';
 export * from './BotDetection';

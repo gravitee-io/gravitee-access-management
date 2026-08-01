@@ -49,7 +49,6 @@ import lombok.CustomLog;
 public class WebAuthnResponseHandler extends WebAuthnHandler {
 
     private final WebAuthn webAuthn;
-    private final String origin;
 
     public WebAuthnResponseHandler(UserService userService,
                                    FactorManager factorManager,
@@ -63,7 +62,6 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
         setUserAuthenticationManager(userAuthenticationManager);
         setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
-        this.origin = domainDataPlane.getWebAuthnOrigin();
     }
 
     @Override
@@ -98,7 +96,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
             Single.fromCompletionStage(webAuthn.authenticate(
                     // authInfo
                     new WebAuthnCredentials()
-                            .setOrigin(origin)
+                            .setOrigin(webAuthnOrigin(ctx))
                             .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                             .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
                             .setWebauthn(webauthnResp)).toCompletionStage())

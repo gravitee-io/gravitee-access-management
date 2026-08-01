@@ -22,7 +22,9 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.License;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Reporter;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
@@ -89,12 +91,15 @@ public class OrganizationServiceTest {
     @Mock
     private LicenseService licenseService;
 
+    @Mock
+    private ReporterService reporterService;
+
     private OrganizationService cut;
 
     @BeforeEach
     public void before() {
 
-        cut = new OrganizationServiceImpl(organizationRepository, roleService, entrypointService, auditService, licenseService);
+        cut = new OrganizationServiceImpl(organizationRepository, roleService, entrypointService, auditService, licenseService, reporterService);
     }
 
     @Test
@@ -142,12 +147,14 @@ public class OrganizationServiceTest {
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(Organization.DEFAULT)))).thenReturn(Single.just(defaultOrganization));
         when(roleService.createDefaultRoles("DEFAULT")).thenReturn(Completable.complete());
         when(entrypointService.createDefaults(defaultOrganization)).thenReturn(Flowable.just(new Entrypoint()));
+        when(reporterService.createDefault(Reference.organization("DEFAULT"))).thenReturn(Single.just(new Reporter()));
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(defaultOrganization);
 
+        verify(reporterService).createDefault(Reference.organization("DEFAULT"));
         verify(auditService, times(1)).report(argThat(builder -> {
             Audit audit = builder.build(new ObjectMapper());
             assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
@@ -210,6 +217,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(roleService.createDefaultRoles(ORGANIZATION_ID)).thenReturn(Completable.complete());
         when(entrypointService.createDefaults(any(Organization.class))).thenReturn(Flowable.just(new Entrypoint()));
+        when(reporterService.createDefault(Reference.organization(ORGANIZATION_ID))).thenReturn(Single.just(new Reporter()));
         when(licenseService.createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE)).thenReturn(Single.just(new License()));
 
         NewOrganization newOrganization = new NewOrganization();
@@ -235,6 +243,7 @@ public class OrganizationServiceTest {
             return true;
         });
 
+        verify(reporterService).createDefault(Reference.organization(ORGANIZATION_ID));
         verify(licenseService).createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE);
         verify(licenseService, never()).delete(any(), any());
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -247,6 +256,28 @@ public class OrganizationServiceTest {
 
             return true;
         }));
+    }
+
+    @Test
+    public void shouldCreateOrganization_whenReporterCreationFails() {
+
+        when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.empty());
+        when(organizationRepository.create(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(roleService.createDefaultRoles(ORGANIZATION_ID)).thenReturn(Completable.complete());
+        when(entrypointService.createDefaults(any(Organization.class))).thenReturn(Flowable.just(new Entrypoint()));
+        when(reporterService.createDefault(Reference.organization(ORGANIZATION_ID))).thenReturn(Single.error(new TechnicalManagementException()));
+
+        NewOrganization newOrganization = new NewOrganization();
+        newOrganization.setName("TestName");
+
+        TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, new DefaultUser("test")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(TechnicalManagementException.class);
+
+        // mergeArrayDelayError: a failing reporter must not stop roles or entrypoints being created
+        verify(roleService).createDefaultRoles(ORGANIZATION_ID);
+        verify(entrypointService).createDefaults(any(Organization.class));
     }
 
     @Test
@@ -316,6 +347,8 @@ public class OrganizationServiceTest {
             return true;
         });
 
+        // updating an existing organization must not add a second reporter
+        verify(reporterService, never()).createDefault(any());
         verify(licenseService).createOrUpdate(ReferenceType.ORGANIZATION, ORGANIZATION_ID, LICENSE);
         verify(licenseService, never()).delete(any(), any());
         verify(auditService, times(1)).report(argThat(builder -> {
