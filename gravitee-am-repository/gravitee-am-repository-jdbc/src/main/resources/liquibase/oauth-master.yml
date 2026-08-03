@@ -23,3 +23,5 @@ databaseChangeLog:
       - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-ciba-add-authorization-details.yml
   - include:
       - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-ciba-subject-nullable.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-add-tokens-jkt.yml

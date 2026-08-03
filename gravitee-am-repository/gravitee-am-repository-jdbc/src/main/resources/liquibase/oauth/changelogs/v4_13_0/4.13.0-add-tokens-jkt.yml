@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-add-tokens-jkt
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: tokens
+                columnName: jkt
+      changes:
+        - addColumn:
+            tableName: tokens
+            columns:
+              - column: { name: jkt, type: nvarchar(255), constraints: { nullable: true } }

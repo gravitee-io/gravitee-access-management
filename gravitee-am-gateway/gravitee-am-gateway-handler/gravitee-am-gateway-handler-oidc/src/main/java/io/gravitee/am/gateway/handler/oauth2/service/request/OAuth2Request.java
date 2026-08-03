@@ -152,6 +152,12 @@ public class OAuth2Request extends BaseRequest {
     private String confirmationMethodX5S256;
 
     /**
+     * REQUIRED for <a href="https://datatracker.ietf.org/doc/html/rfc9449">DPoP</a> sender-constrained
+     * access tokens: the base64url JWK SHA-256 thumbprint bound via {@code cnf.jkt}.
+     */
+    private String confirmationMethodJkt;
+
+    /**
      * Token Exchange (RFC 8693) - issued token type
      */
     private String issuedTokenType;
@@ -211,6 +217,7 @@ public class OAuth2Request extends BaseRequest {
         this.authorizationDetails = other.authorizationDetails;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
+        this.confirmationMethodJkt = other.confirmationMethodJkt;
         this.issuedTokenType = other.issuedTokenType;
         this.exchangeExpiration = other.exchangeExpiration;
         this.actClaim = other.actClaim;

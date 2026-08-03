@@ -24,8 +24,10 @@ import org.junit.runners.JUnit4;
 
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -69,6 +71,39 @@ public class PatchOIDCSettingsTest {
         assertNotNull(result);
         assertNotNull(result.getCibaSettings());
         assertTrue("CIBA settings shall be true after update", result.getCibaSettings().isEnabled());
+    }
+
+    @Test
+    public void testPatchRequireDpopForAll() {
+        PatchDPoPSettings dpopPatcher = new PatchDPoPSettings();
+        dpopPatcher.setRequireDpopForAll(Optional.of(true));
+        PatchOIDCSettings patcher = new PatchOIDCSettings();
+        patcher.setDpopSettings(Optional.of(dpopPatcher));
+
+        OIDCSettings settings = new OIDCSettings();
+        assertNull("dpopSettings shall default to null", settings.getDpopSettings());
+
+        OIDCSettings result = patcher.patch(settings);
+
+        assertNotNull(result);
+        assertNotNull(result.getDpopSettings());
+        assertTrue("requireDpopForAll shall be true after update", result.getDpopSettings().isRequireDpopForAll());
+    }
+
+    @Test
+    public void testPatchDpopSigningAlgorithms() {
+        PatchDPoPSettings dpopPatcher = new PatchDPoPSettings();
+        dpopPatcher.setDpopSigningAlgorithms(Optional.of(java.util.List.of("ES256", "ES384")));
+        PatchOIDCSettings patcher = new PatchOIDCSettings();
+        patcher.setDpopSettings(Optional.of(dpopPatcher));
+
+        OIDCSettings settings = new OIDCSettings();
+
+        OIDCSettings result = patcher.patch(settings);
+
+        assertNotNull(result);
+        assertNotNull(result.getDpopSettings());
+        assertEquals(java.util.List.of("ES256", "ES384"), result.getDpopSettings().getDpopSigningAlgorithms());
     }
 
     @Test

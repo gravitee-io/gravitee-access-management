@@ -22,7 +22,7 @@ public interface JWTCache {
 
     void put(String jwt, long expiresAt);
 
-    class NoOpJtiCache implements JWTCache {
+    class NoOpJwtCache implements JWTCache {
 
         @Override
         public Single<Boolean> isPresent(String jwt) {
@@ -31,7 +31,6 @@ public interface JWTCache {
 
         @Override
         public void put(String jwt, long expiresAt) {
-            // do nothing
         }
     }
 }

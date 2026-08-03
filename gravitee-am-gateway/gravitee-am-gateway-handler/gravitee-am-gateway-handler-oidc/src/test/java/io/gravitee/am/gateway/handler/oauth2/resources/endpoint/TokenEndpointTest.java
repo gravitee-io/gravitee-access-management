@@ -46,7 +46,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -217,4 +220,5 @@ public class TokenEndpointTest extends RxWebTestBase {
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:ietf:params:oauth:grant-type:uma-ticket",
                 HttpStatusCode.FORBIDDEN_403, "Forbidden");
     }
+
 }

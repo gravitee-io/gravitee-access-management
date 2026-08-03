@@ -117,6 +117,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("token_endpoint_auth_signing_alg_values_supported")
     private List<String> tokenEndpointAuthSigningAlgValuesSupported;
 
+    @JsonProperty("dpop_signing_alg_values_supported")
+    private List<String> dpopSigningAlgValuesSupported;
+
     @JsonProperty("display_values_supported")
     private List<String> displayValuesSupported;
 
@@ -421,6 +424,14 @@ public class OpenIDProviderMetadata {
 
     public void setTokenEndpointAuthSigningAlgValuesSupported(List<String> tokenEndpointAuthSigningAlgValuesSupported) {
         this.tokenEndpointAuthSigningAlgValuesSupported = tokenEndpointAuthSigningAlgValuesSupported;
+    }
+
+    public List<String> getDpopSigningAlgValuesSupported() {
+        return dpopSigningAlgValuesSupported;
+    }
+
+    public void setDpopSigningAlgValuesSupported(List<String> dpopSigningAlgValuesSupported) {
+        this.dpopSigningAlgValuesSupported = dpopSigningAlgValuesSupported;
     }
 
     public List<String> getDisplayValuesSupported() {

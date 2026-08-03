@@ -75,6 +75,7 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.redirectUris = newSettings.redirectUris;
     this.oauthSettings.forcePKCE = newSettings.forcePKCE;
     this.oauthSettings.forceS256CodeChallengeMethod = newSettings.forceS256CodeChallengeMethod;
+    this.oauthSettings.dpopBoundAccessTokens = newSettings.dpopBoundAccessTokens;
     this.oauthSettings.tokenEndpointAuthMethod = newSettings.tokenEndpointAuthMethod;
     this.oauthSettings.tlsClientAuthSubjectDn = newSettings.tlsClientAuthSubjectDn;
     this.oauthSettings.tlsClientAuthSanDns = newSettings.tlsClientAuthSanDns;
@@ -142,6 +143,7 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.redirectUris = this.oauthSettings.redirectUris;
     oauthSettings.forcePKCE = this.oauthSettings.forcePKCE;
     oauthSettings.forceS256CodeChallengeMethod = this.oauthSettings.forceS256CodeChallengeMethod;
+    oauthSettings.dpopBoundAccessTokens = this.oauthSettings.dpopBoundAccessTokens;
     oauthSettings.tokenEndpointAuthMethod = this.oauthSettings.tokenEndpointAuthMethod;
     oauthSettings.tlsClientAuthSubjectDn = this.oauthSettings.tlsClientAuthSubjectDn;
     oauthSettings.tlsClientAuthSanDns = this.oauthSettings.tlsClientAuthSanDns;

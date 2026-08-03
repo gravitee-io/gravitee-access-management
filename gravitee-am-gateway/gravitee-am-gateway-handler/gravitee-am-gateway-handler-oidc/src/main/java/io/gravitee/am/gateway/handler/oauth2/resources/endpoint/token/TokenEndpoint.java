@@ -15,13 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
-import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -29,7 +26,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
@@ -78,17 +74,13 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
         }
 
-        if (context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT) != null) {
-            // preserve certificate thumbprint to add the information into the access token
-            tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
-        }
-
         tokenGranter.grant(tokenRequest, tokenRequest.getHttpResponse(), client)
                 .subscribe(accessToken -> context.response()
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .end(Json.encodePrettily(accessToken))
+                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                .end(Json.encodePrettily(accessToken))
                         , context::fail);
     }
+
 }

@@ -24,6 +24,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.DPoPSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,6 +114,26 @@ public class OpenIDDiscoveryServiceTest {
     public void shouldContain_token_endpoint_auth_signing_alg_values_supported() {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg().containsAll(openIDProviderMetadata.getTokenEndpointAuthSigningAlgValuesSupported()));
+    }
+
+    @Test
+    public void shouldContain_dpop_signing_alg_values_supported() {
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertEquals(List.of("ES256", "ES384", "ES512", "RS256", "RS384", "RS512"),
+                openIDProviderMetadata.getDpopSigningAlgValuesSupported());
+    }
+
+    @Test
+    public void shouldContain_dpop_signing_alg_values_supported_from_domain_allowlist() {
+        OIDCSettings oidc = new OIDCSettings();
+        DPoPSettings dpopSettings = new DPoPSettings();
+        dpopSettings.setDpopSigningAlgorithms(List.of("ES256", "ES384"));
+        oidc.setDpopSettings(dpopSettings);
+        when(domain.getOidc()).thenReturn(oidc);
+
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertEquals(List.of("ES256", "ES384"), openIDProviderMetadata.getDpopSigningAlgValuesSupported());
     }
 
     @Test

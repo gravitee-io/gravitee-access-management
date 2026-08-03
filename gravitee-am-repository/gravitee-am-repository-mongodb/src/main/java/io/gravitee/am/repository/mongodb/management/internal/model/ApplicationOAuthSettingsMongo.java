@@ -81,6 +81,7 @@ public class ApplicationOAuthSettingsMongo {
     private String tlsClientAuthSanIp;
     private String tlsClientAuthSanEmail;
     private boolean tlsClientCertificateBoundAccessTokens;
+    private boolean dpopBoundAccessTokens;
     private String authorizationSignedResponseAlg;
     private String authorizationEncryptedResponseAlg;
     private String authorizationEncryptedResponseEnc;
@@ -604,6 +605,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
+    }
+
+    public boolean isDpopBoundAccessTokens() {
+        return dpopBoundAccessTokens;
+    }
+
+    public void setDpopBoundAccessTokens(boolean dpopBoundAccessTokens) {
+        this.dpopBoundAccessTokens = dpopBoundAccessTokens;
     }
 
     public List<ApplicationScopeSettingsMongo> getScopeSettings() {

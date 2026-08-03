@@ -85,6 +85,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> tlsClientAuthSanIp;
     private Optional<String> tlsClientAuthSanEmail;
     private Optional<Boolean> tlsClientCertificateBoundAccessTokens;
+    private Optional<Boolean> dpopBoundAccessTokens;
     private Optional<String> authorizationSignedResponseAlg;
     private Optional<String> authorizationEncryptedResponseAlg;
     private Optional<String> authorizationEncryptedResponseEnc;
@@ -565,6 +566,14 @@ public class PatchApplicationOAuthSettings {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public Optional<Boolean> getDpopBoundAccessTokens() {
+        return dpopBoundAccessTokens;
+    }
+
+    public void setDpopBoundAccessTokens(Optional<Boolean> dpopBoundAccessTokens) {
+        this.dpopBoundAccessTokens = dpopBoundAccessTokens;
+    }
+
     public Optional<Boolean> getDisableRefreshTokenRotation() {
         return disableRefreshTokenRotation;
     }
@@ -644,6 +653,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
         SetterUtils.safeSet(toPatch::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
+        SetterUtils.safeSet(toPatch::setDpopBoundAccessTokens, this.getDpopBoundAccessTokens());
         SetterUtils.safeSet(toPatch::setAuthorizationSignedResponseAlg, this.getAuthorizationSignedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseAlg, this.getAuthorizationEncryptedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
