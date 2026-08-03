@@ -18,6 +18,7 @@ package io.gravitee.am.common.jwt;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Type-safe representation of standard JWT signature algorithm names as defined in the
@@ -104,6 +105,16 @@ public enum SignatureAlgorithm {
     public static final List<SignatureAlgorithm> PREFERRED_HMAC_ALGS = List.of(SignatureAlgorithm.HS512, SignatureAlgorithm.HS384, SignatureAlgorithm.HS256);
     //purposefully ordered higher to lower:
     public static final List<SignatureAlgorithm> PREFERRED_EC_ALGS = List.of(SignatureAlgorithm.ES512, SignatureAlgorithm.ES384, SignatureAlgorithm.ES256);
+
+    /**
+     * Canonical base set of DPoP (RFC 9449) proof signing algorithm names. Asymmetric only —
+     * EC and RSA (PKCS#1 v1.5); no {@code none} and no symmetric {@code HS*}, since a DPoP proof
+     * is verified against the public key embedded in its header. A domain's configured allowlist
+     * must be a non-empty subset of this set.
+     */
+    public static final Set<String> DPOP_SUPPORTED_ALGORITHMS = Set.of(
+            ES256.value, ES384.value, ES512.value,
+            RS256.value, RS384.value, RS512.value);
 
     private final String value;
     private final String description;

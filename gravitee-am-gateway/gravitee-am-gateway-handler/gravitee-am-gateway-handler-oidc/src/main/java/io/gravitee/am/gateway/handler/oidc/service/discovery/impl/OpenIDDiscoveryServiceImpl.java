@@ -170,6 +170,10 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(ClientAuthenticationMethod.supportedValues());
         openIDProviderMetadata.setTokenEndpointAuthSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg());
 
+        openIDProviderMetadata.setDpopSigningAlgValuesSupported(
+                JWAlgorithmUtils.resolveDpopSigningAlg(domain.getOidc() != null && domain.getOidc().getDpopSettings() != null
+                        ? domain.getOidc().getDpopSettings().getDpopSigningAlgorithms() : null));
+
         if (domain.useFapiBrazilProfile()) {
             openIDProviderMetadata.setAcrValuesSupported(Stream.concat(AcrValues.values().stream(), BrazilAcrValues.values().stream()).collect(Collectors.toList()));
         } else {

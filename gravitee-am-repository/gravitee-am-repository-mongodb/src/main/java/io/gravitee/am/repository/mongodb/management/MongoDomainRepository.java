@@ -38,6 +38,7 @@ import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import io.gravitee.am.model.oidc.DPoPSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -58,6 +59,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASett
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIMDSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.DPoPSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
@@ -312,6 +314,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         OIDCSettings oidcSettings = new OIDCSettings();
         oidcSettings.setRedirectUriStrictMatching(oidcMongo.isRedirectUriStrictMatching());
+        oidcSettings.setDpopSettings(convert(oidcMongo.getDpopSettings()));
         oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
         oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
@@ -400,6 +403,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         OIDCSettingsMongo oidcSettings = new OIDCSettingsMongo();
         oidcSettings.setRedirectUriStrictMatching(oidc.isRedirectUriStrictMatching());
+        oidcSettings.setDpopSettings(convert(oidc.getDpopSettings()));
         oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
         oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
@@ -505,6 +509,30 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
         result.setTemplateId(cimdSettings.getTemplateId());
         result.setRevokeOnDocumentChange(cimdSettings.isRevokeOnDocumentChange());
+
+        return result;
+    }
+
+    private static DPoPSettings convert(DPoPSettingsMongo dpopSettings) {
+        if (dpopSettings == null) {
+            return null;
+        }
+
+        DPoPSettings result = new DPoPSettings();
+        result.setRequireDpopForAll(dpopSettings.isRequireDpopForAll());
+        result.setDpopSigningAlgorithms(dpopSettings.getDpopSigningAlgorithms());
+
+        return result;
+    }
+
+    private static DPoPSettingsMongo convert(DPoPSettings dpopSettings) {
+        if (dpopSettings == null) {
+            return null;
+        }
+
+        DPoPSettingsMongo result = new DPoPSettingsMongo();
+        result.setRequireDpopForAll(dpopSettings.isRequireDpopForAll());
+        result.setDpopSigningAlgorithms(dpopSettings.getDpopSigningAlgorithms());
 
         return result;
     }

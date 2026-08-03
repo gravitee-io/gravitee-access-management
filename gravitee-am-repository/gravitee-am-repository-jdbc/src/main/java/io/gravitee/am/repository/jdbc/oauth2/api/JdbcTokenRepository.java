@@ -200,6 +200,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
+        result.setJkt(entity.getJkt());
         result.setAllParentJtis(new HashSet<>()); // parentIds are only needed to perform RECURSIVE delete
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
@@ -218,6 +219,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(token.getClient());
         result.setDomain(token.getDomain());
         result.setSubject(token.getSubject());
+        result.setJkt(token.getJkt());
 
         Iterator<String> it = (token.getAllParentJtis() == null ? Stream.<String>empty() : token.getAllParentJtis().stream())
                 .filter(jti -> !jti.equals(result.getToken()))

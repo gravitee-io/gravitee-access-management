@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.BEARER_AUTH_SCHEME;
+
 /**
  * See definition at <a href="https://tools.ietf.org/html/rfc6749#section-1.4"></a>
  *
@@ -38,7 +40,7 @@ import java.util.Map;
 public abstract class Token implements Serializable {
 
     private String value;
-    private String tokenType = BEARER_TYPE.toLowerCase();
+    private String tokenType = BEARER_AUTH_SCHEME.toLowerCase();
     private long expiresIn;
     private String scope;
     private String clientId;
@@ -49,8 +51,6 @@ public abstract class Token implements Serializable {
     private Date expireAt;
     private Boolean upgraded;
     private String issuedTokenType;
-
-    public static final String BEARER_TYPE = "Bearer";
 
     /**
      * REQUIRED. The access token issued by the authorization server.

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.scim.mapper.ScimErrorMapper;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -73,6 +74,9 @@ public class SCIMProvider extends AbstractProtocolProvider {
     private OAuth2AuthProvider oAuth2AuthProvider;
 
     @Autowired
+    private DPoPProofValidator dpopProofValidator;
+
+    @Autowired
     private CorsHandler corsHandler;
 
     @Autowired
@@ -107,6 +111,7 @@ public class SCIMProvider extends AbstractProtocolProvider {
             OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "scim");
             oAuth2AuthHandler.extractToken(true);
             oAuth2AuthHandler.extractClient(true);
+            oAuth2AuthHandler.dpopProofValidator(dpopProofValidator);
             scimRouter.route().handler(oAuth2AuthHandler);
 
             // Users resource

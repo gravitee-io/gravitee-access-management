@@ -49,6 +49,7 @@ public interface ConstantKeys {
     String ERROR_PARAM_KEY = "error";
     String SERVER_ERROR = "server_error";
     String INVALID_TOKEN = "invalid_token";
+    String INVALID_DPOP_PROOF = "invalid_dpop_proof";
     String MFA_CHALLENGE_FAILED = "mfa_challenge_failed";
     String MFA_ENROLL_VALIDATION_FAILED = "mfa_enroll_failed";
     String LOGIN_FAILED = "login_failed";
@@ -83,6 +84,10 @@ public interface ConstantKeys {
     String ERROR_HASH = "errorHash";
     String STORE_ORIGINAL_TOKEN_KEY = "store_original_token";
 
+    String BEARER_AUTH_SCHEME = "Bearer";
+    String DPOP_AUTH_SCHEME = "DPoP";
+
+    String DPOP_PROOF_HEADER = "DPoP";
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";

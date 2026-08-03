@@ -70,48 +70,4 @@ public class TokenRequest extends OAuth2Request {
      */
     private String requestingPartyToken;
 
-    public OAuth2Request createOAuth2Request() {
-        MultiValueMap<String, String> requestParameters = parameters();
-        MultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
-
-        // Remove password if present to prevent leaks
-        safeRequestParameters.remove(Parameters.PASSWORD);
-        safeRequestParameters.remove(Parameters.CLIENT_SECRET);
-
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        // set technical information
-        oAuth2Request.setId(id());
-        oAuth2Request.setTransactionId(transactionId());
-        oAuth2Request.setTimestamp(timestamp());
-        oAuth2Request.setPath(path());
-        oAuth2Request.setOrigin(getOrigin());
-        oAuth2Request.setUri(uri());
-        oAuth2Request.setScheme(scheme());
-        oAuth2Request.setContextPath(contextPath());
-        oAuth2Request.setMethod(method());
-        oAuth2Request.setVersion(version());
-        oAuth2Request.setHeaders(headers());
-        oAuth2Request.setParameters(safeRequestParameters);
-        oAuth2Request.setHttpResponse(getHttpResponse());
-        oAuth2Request.setContext(getContext());
-
-        // set OAuth 2.0 information
-        oAuth2Request.setClientId(getClientId());
-        oAuth2Request.setScopes(getScopes());
-        oAuth2Request.setGrantType(getGrantType());
-        oAuth2Request.setSubject(getSubject());
-        oAuth2Request.setAdditionalParameters(getAdditionalParameters());
-        oAuth2Request.setRefreshToken(getRefreshToken());
-        oAuth2Request.setAuthorizationCode(getAuthorizationCode());
-        oAuth2Request.setResources(getResources());
-        oAuth2Request.setOriginalAuthorizationResources(getOriginalAuthorizationResources());
-
-        // set UMA 2.0 permissions
-        oAuth2Request.setPermissions(getPermissions());
-
-        // certificate bound access token
-        oAuth2Request.setConfirmationMethodX5S256(getConfirmationMethodX5S256());
-
-        return oAuth2Request;
-    }
 }

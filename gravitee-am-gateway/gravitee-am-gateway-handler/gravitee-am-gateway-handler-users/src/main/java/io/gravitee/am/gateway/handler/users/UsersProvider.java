@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.users.resources.consents.UserConsentEndpointHandler;
@@ -54,6 +55,9 @@ public class UsersProvider extends AbstractProtocolProvider {
     private OAuth2AuthProvider oAuth2AuthProvider;
 
     @Autowired
+    private DPoPProofValidator dpopProofValidator;
+
+    @Autowired
     private SubjectManager subjectManager;
 
     @Override
@@ -68,6 +72,7 @@ public class UsersProvider extends AbstractProtocolProvider {
         final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "consent_admin", subjectManager);
         oAuth2AuthHandler.extractToken(true);
         oAuth2AuthHandler.selfResource(true, "userId", true);
+        oAuth2AuthHandler.dpopProofValidator(dpopProofValidator);
 
         // user consent routes
         usersRouter.routeWithRegex(".*consents.*")

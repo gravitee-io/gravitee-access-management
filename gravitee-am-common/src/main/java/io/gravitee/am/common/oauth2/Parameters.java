@@ -106,6 +106,12 @@ public interface Parameters {
      */
     String CODE_CHALLENGE_METHOD = "code_challenge_method";
     /**
+     * DPoP JWK Thumbprint confirmation.
+     * Binds the authorization code to the client's DPoP key at the authorization endpoint.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc9449#section-10">RFC 9449 Section 10</a>
+     */
+    String DPOP_JKT = "dpop_jkt";
+    /**
      * UMA claim token.
      */
     String CLAIM_TOKEN = "claim_token";
@@ -166,6 +172,6 @@ public interface Parameters {
 
     Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
                 REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
-                CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE, SUBJECT_TOKEN, SUBJECT_TOKEN_TYPE, REQUESTED_TOKEN_TYPE,
+                DPOP_JKT, CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE, SUBJECT_TOKEN, SUBJECT_TOKEN_TYPE, REQUESTED_TOKEN_TYPE,
                 ACTOR_TOKEN, ACTOR_TOKEN_TYPE);
 }

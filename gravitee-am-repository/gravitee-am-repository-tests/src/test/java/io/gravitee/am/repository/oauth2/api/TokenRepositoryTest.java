@@ -78,6 +78,21 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
+    public void shouldPersistAndReadRefreshTokenJkt() {
+        RefreshToken refreshToken = newRefreshToken("refresh-token-jkt", null, null, null);
+        refreshToken.setJkt("the-jwk-thumbprint");
+
+        TestObserver<RefreshToken> observer = Completable.fromSingle(tokenRepository.create(refreshToken))
+                .andThen(tokenRepository.findRefreshTokenByJti(refreshToken.getToken()))
+                .test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(rt -> "the-jwk-thumbprint".equals(rt.getJkt()));
+    }
+
+    @Test
     public void shouldFindAccessTokenByAuthorizationCode() {
         AccessToken accessToken = newAccessToken("access-token-auth", null, null, null);
         accessToken.setAuthorizationCode("auth-code");
