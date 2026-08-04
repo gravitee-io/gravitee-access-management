@@ -43,7 +43,9 @@ export type NewDataPlane = {
   type?: string;
   gatewayUrl?: string;
   organizationId?: string;
+  organizationHrid?: string;
   environmentId?: string;
+  environmentHrid?: string;
   configuration?: unknown;
 };
 

@@ -29,11 +29,11 @@ import {
   ALLOWED_SUMMARY_FIELDS,
   DATABASE_NAME,
   dataPlanePayload,
+  deleteProvisionedDataPlanes,
   JDBC_SUMMARY,
   jdbcPayload,
   MONGO_SUMMARY,
   provisionDataPlane,
-  releaseEnvironmentBinding,
   SECRET_PASSWORD,
   SECRET_USERNAME,
   uriFormPayload,
@@ -52,8 +52,8 @@ function expectNoCredentials(raw: string) {
 }
 
 describe('Data plane provisioning (management technical API)', () => {
-  beforeEach(releaseEnvironmentBinding);
-  afterEach(releaseEnvironmentBinding);
+  beforeEach(deleteProvisionedDataPlanes);
+  afterEach(deleteProvisionedDataPlanes);
 
   describe('provisioning', () => {
     let provisioned: DataPlaneSummary;
@@ -95,11 +95,17 @@ describe('Data plane provisioning (management technical API)', () => {
       expectNoCredentials(response.raw);
     });
 
-    it('rejects a second data plane for an environment that is already bound', async () => {
+    it('accepts a second data plane for the same environment', async () => {
       const response = await createDataPlane(dataPlanePayload('dp-e2e-second-on-same-env'));
 
-      expect(response.status).toBe(409);
-      expect(response.body.message).toContain(`Environment [${process.env.AM_DEF_ENV_ID}] is already bound`);
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: 'dp-e2e-second-on-same-env',
+        environmentId: process.env.AM_DEF_ENV_ID,
+      });
+
+      const listed = await listDataPlanes();
+      expect(listed.body.map((dataPlane) => dataPlane.id)).toEqual(expect.arrayContaining([provisioned.id, 'dp-e2e-second-on-same-env']));
     });
 
     it('rejects an id that is already taken', async () => {
@@ -107,6 +113,48 @@ describe('Data plane provisioning (management technical API)', () => {
 
       expect(response.status).toBe(409);
       expect(response.body.message).toContain(`[${provisioned.id}] already exists`);
+    });
+  });
+
+  describe('organization and environment references', () => {
+    it('resolves them from their hrids', async () => {
+      const response = await createDataPlane({
+        ...dataPlanePayload('dp-e2e-by-hrid'),
+        organizationHrid: 'default',
+        environmentHrid: 'default',
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+      });
+    });
+
+    it('prefers the ids over the hrids', async () => {
+      const response = await createDataPlane({
+        ...dataPlanePayload('dp-e2e-id-wins'),
+        organizationId: process.env.AM_DEF_ORG_ID,
+        organizationHrid: 'does-not-exist',
+        environmentId: process.env.AM_DEF_ENV_ID,
+        environmentHrid: 'does-not-exist',
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+      });
+    });
+
+    it('rejects an unknown environment hrid', async () => {
+      const response = await createDataPlane({
+        ...dataPlanePayload('dp-e2e-unknown-hrid'),
+        environmentHrid: 'does-not-exist',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Unknown environment hrid [does-not-exist]');
     });
   });
 
@@ -237,7 +285,7 @@ describe('Data plane provisioning (management technical API)', () => {
       expect(response.raw).toContain('can not be found');
     });
 
-    it('deletes the provisioned data plane and frees its environment', async () => {
+    it('deletes the provisioned data plane and frees its id', async () => {
       const provisioned = await provisionDataPlane(PROVISIONED_ID);
 
       const deleted = await deleteDataPlane(provisioned.id);

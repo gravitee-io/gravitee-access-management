@@ -86,11 +86,11 @@ export function jdbcPayload(id: string): NewDataPlane {
   };
 }
 
-export async function releaseEnvironmentBinding(): Promise<void> {
+export async function deleteProvisionedDataPlanes(): Promise<void> {
   const listed = await listDataPlanes();
-  const bound = listed.body?.find((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID);
-  if (bound) {
-    await deleteDataPlane(bound.id);
+  const provisioned = listed.body?.filter((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID) ?? [];
+  for (const dataPlane of provisioned) {
+    await deleteDataPlane(dataPlane.id);
   }
 }
 
