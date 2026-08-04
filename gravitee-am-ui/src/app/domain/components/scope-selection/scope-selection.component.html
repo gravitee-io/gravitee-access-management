@@ -20,10 +20,10 @@
     <input matInput (keyup)="applyFilter($any($event.target).value)" placeholder="Filter" />
   </mat-form-field>
 
-  <table mat-table [dataSource]="scopes" matSort matSortActive="select" matSortDirection="asc">
+  <table mat-table [dataSource]="scopes" matSort matSortActive="key" matSortDirection="asc">
     <!-- Checkbox Column -->
     <ng-container matColumnDef="select">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+      <th mat-header-cell *matHeaderCellDef>
         <mat-checkbox
           (change)="$event ? masterToggle() : null"
           [checked]="selection.hasValue() && isAllSelected()"
@@ -76,7 +76,7 @@
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="selection.toggle(row)"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="applyChange(row)"></tr>
   </table>
   <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
 </div>
