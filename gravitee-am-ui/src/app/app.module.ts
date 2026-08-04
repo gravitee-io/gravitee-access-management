@@ -455,6 +455,7 @@ import { HelpTipsThemeComponent } from './domain/settings/theme/help-tips/help-t
 import { EmailTemplateFactoryService } from './services/email.template.factory.service';
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
+import { CloudModeGuard } from './guards/cloud-mode-guard.service';
 import { MfaChallengeComponent } from './domain/applications/application/advanced/factors/mfa-challenge/mfa-challenge.component';
 import { InfoBannerComponent } from './domain/applications/application/advanced/factors/info-banner/info-banner.component';
 import { ExpressionInfoDialogComponent } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
@@ -977,6 +978,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ResourceResolver,
     AuthGuard,
     LicenseGuard,
+    CloudModeGuard,
     AnalyticsService,
     ApplicationResourcesResolver,
     ApplicationResourceResolver,

@@ -15,8 +15,8 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 
@@ -31,6 +31,7 @@ export class CloudModeService {
     if (!this.isCloudModeEnabled$) {
       this.isCloudModeEnabled$ = this.http.get<any>(this.platformURL + '/configuration/installation').pipe(
         map((response) => response.type === 'managed'),
+        catchError(() => of(false)),
         shareReplay({ bufferSize: 1, refCount: true }),
       );
     }

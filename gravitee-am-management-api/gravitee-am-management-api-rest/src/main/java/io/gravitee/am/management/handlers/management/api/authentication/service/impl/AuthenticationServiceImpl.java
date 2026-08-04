@@ -181,7 +181,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             return principal;
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to read user information");
+            throw new IllegalStateException("Unable to read user information", e);
         }
 
     }

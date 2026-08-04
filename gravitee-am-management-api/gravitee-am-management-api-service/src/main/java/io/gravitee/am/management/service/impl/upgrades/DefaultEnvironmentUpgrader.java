@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.service.EnvironmentService;
@@ -36,8 +37,15 @@ public class DefaultEnvironmentUpgrader implements Upgrader {
 
     private final EnvironmentService environmentService;
 
+    private final org.springframework.core.env.Environment environment;
+
     @Override
     public boolean upgrade() {
+
+        if (CloudProperties.isManagedCloudEnabled(environment)) {
+            log.info("Managed cloud installation, skip the default environment provisioning");
+            return true;
+        }
 
         try {
             Environment environment = environmentService.createDefault().blockingGet();

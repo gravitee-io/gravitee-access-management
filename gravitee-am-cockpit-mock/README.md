@@ -45,6 +45,7 @@ Options:
 | `--installation-id <id>` | *(generated UUID)* | override the installation id |
 | `--installation-status <s>` | `ACCEPTED` | override the installation status |
 | `--installation-type <t>` | *(none)* | echoed as an extra field only — **inert on AM** (AM does not read it from the HELLO reply) |
+| `--sso-private-key <path>` | *(none)* | PEM private key that signs `/_control/sso-token`; without it that route returns 501 |
 
 Example with stable, persisted identity:
 
@@ -182,12 +183,99 @@ curl -s localhost:8085/_control/hello
 field, as an empty object. Note this `installationType` is AM's own (command direction) — not the same
 field as the `--installation-type` flag, which rides on the reply and is inert.
 
+### Mint an SSO token — `POST /_control/sso-token`
+
+Cockpit signs users into AM out of band: it mints a short-lived RS512 JWT and redirects the browser to
+`/management/auth/cockpit?token=<jwt>`. This reproduces that token — same claims and signing parameters
+as cockpit's own `JWTService` (`kid=cockpit`, `iss=https://gravitee.cockpit`, 10 second TTL).
+
+```bash
+curl -sX POST localhost:8085/_control/sso-token \
+  -H 'content-type: application/json' \
+  -d '{ "sub": "cockpit-user-1", "org": "org-1", "env": "env-1" }'
+# -> { "token": "eyJhbGciOiJSUzUxMiIsImtpZCI6ImNvY2twaXQi..." }
+```
+
+`sub` and `org` are required; `env` and `ttlSeconds` are optional. No AM connection is needed — this is
+the redirect path, not a command.
+
+AM verifies the signature with the public key of the certificate under alias `cockpit-client` in the
+keystore at `cloud.connector.ws.ssl.keystore.path`, so `--sso-private-key` must be that certificate's
+private key. The local stack wires both from `docker/local-stack/dev/cockpit/`.
+
+> Cockpit does **not** set `preferred_username`, and neither does this endpoint. AM resolves the user by
+> `sub` (as external id) plus source `cockpit`, so the `USER` command must be acknowledged first —
+> otherwise AM creates a null-username account with no role.
+
 ### Connection status — `GET /_control/status`
 
 ```bash
 curl -s localhost:8085/_control/status
 # { "connected": true, "installation": { ... }, "queueSize": 0 }
 ```
+
+## Logging in when there is no inline admin
+
+A managed cloud installation registers no `security.providers[*]` identity provider, so `admin/adminadmin`
+against `DEFAULT` does not exist. Two ways in, both after provisioning an organization, a user, an
+organization membership and an environment (the SSO endpoint rejects a sign-in whose `env` is missing):
+
+**Cockpit SSO — the real path.** Mint a token, then open it in a browser to land on the console, or
+read the cookie for an API token:
+
+```bash
+TOKEN=$(curl -sX POST localhost:8085/_control/sso-token -H 'content-type: application/json' \
+  -d '{"sub":"<cockpit-user-id>","org":"<org>","env":"<env>","redirectUri":"http://localhost:4200"}' | jq -r .token)
+open "http://localhost:8093/management/auth/cockpit?token=$TOKEN"
+```
+
+(`redirectUri` is a local-stack concession, not something real Cockpit sends.)
+
+**A password user for dev.** The Cockpit-provisioned owner itself can never do this: it is stored with
+`source=cockpit` and no password, and no `cockpit` identity provider is registered to authenticate it.
+The signed token above is its only credential.
+
+Create a separate organization user instead. `OrganizationUserServiceImpl` forces `source=gravitee`, and
+the `gravitee` provider is registered for every installation and offered to every organization, so a
+password login works with no identity provider setup at all. Using a bearer token obtained above:
+
+```bash
+# create the user; the response's "id" is the member id below
+curl -X POST "$AM/management/organizations/$ORG/users" -H "Authorization: Bearer $BEARER" \
+  -H 'content-type: application/json' \
+  -d '{"username":"admin","password":"AdminAdmin1!","firstName":"Dev","lastName":"Admin","email":"dev.admin@example.com"}'
+
+# it lands on ORGANIZATION_USER by default; promote it (role id from GET .../roles)
+curl -X POST "$AM/management/organizations/$ORG/members" -H "Authorization: Bearer $BEARER" \
+  -H 'content-type: application/json' \
+  -d '{"memberId":"<user id>","memberType":"USER","role":"<ORGANIZATION_OWNER role id>"}'
+```
+
+`admin` then works against `POST /management/auth/token?org=<org>` and on the console login page at
+`?org=<org>`. Use `ORGANIZATION_OWNER`, not `ORGANIZATION_PRIMARY_OWNER` — the latter is already held by
+the Cockpit-provisioned owner, and `MembershipServiceImpl` allows only one per organization.
+
+Unlike the old `gravitee.yml` inline provider this user is persisted and belongs to a single
+organization, so it is not a cross-tenant back door.
+
+## Running the mock outside the local stack
+
+`/_control/sso-token` needs `--sso-private-key`, and AM needs the matching certificate. The local stack
+wires both from `docker/local-stack/dev/cockpit/`; reuse the same files when running by hand:
+
+```bash
+npm start -- --sso-private-key ../docker/local-stack/dev/cockpit/cockpit-key.pem
+```
+
+and start AM with:
+
+```
+cloud.connector.ws.ssl.keystore.type=PKCS12
+cloud.connector.ws.ssl.keystore.path=<repo>/docker/local-stack/dev/cockpit/cockpit-truststore.p12
+cloud.connector.ws.ssl.keystore.password=cockpit
+```
+
+Everything else — commands, queue, HELLO — works without either.
 
 ## Postman collection
 
@@ -202,10 +290,11 @@ the license read-only. Set `{{licenseB64}}` to `base64 -i <your>.key | tr -d '\n
 then read the result with `List organization license audits`, which asserts the audits
 exist and that the raw license appears nowhere in them.
 
-Run it against DEFAULT (the `{{orgId}}` default). A cockpit-created org has no audit
-reporter, so its audits go to an event-bus address with no consumer and are dropped —
-the log lines still appear, but nothing lands in the store and the admin gets 403 reading
-that org's audits anyway.
+Run the `Commands → AM` requests first — ORGANIZATION, USER, both MEMBERSHIPs, ENVIRONMENT — then
+`Sign in (cockpit SSO)` to populate `{{token}}` for everything under `Verify in AM`. Every request
+targets `{{orgId}}`, an organization the collection provisions itself; there is no DEFAULT to fall back
+on in managed cloud. A Cockpit-created organization does get its own audit reporter, so the license
+audits do land in `reporter_audits_{{orgId}}`.
 
 ## Notes
 

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -61,6 +62,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -99,6 +101,8 @@ public class DefaultOrganizationUpgraderTest {
     @BeforeEach
     public void before() {
         when(environment.getProperty("security.defaultAdmin", boolean.class, true)).thenReturn(true);
+        when(environment.getProperty("cloud.enabled", Boolean.class)).thenReturn(null);
+        when(environment.getProperty("cockpit.enabled", Boolean.class, false)).thenReturn(false);
         cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null, auditService);
     }
 
@@ -307,5 +311,19 @@ public class DefaultOrganizationUpgraderTest {
 
         verify(membershipHelper, times(totalUsers)).setOrganizationRole(eq(user), eq(adminRole));
         verify(membershipHelper, times(1)).setPlatformAdminRole();
+    }
+
+    @Test
+    public void shouldSkipProvisioningOnManagedCloud() {
+        when(environment.getProperty("cloud.enabled", Boolean.class)).thenReturn(true);
+        when(environment.getProperty("installation.type", CloudProperties.INSTALLATION_TYPE_STANDALONE))
+                .thenReturn(CloudProperties.INSTALLATION_TYPE_MANAGED);
+
+        var managedCloud = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService,
+                membershipHelper, roleService, domainService, environment, null, auditService);
+
+        // return true to continue running every upgrader ordered after this one
+        assertTrue(managedCloud.upgrade());
+        verifyNoInteractions(organizationService, identityProviderService, userService, domainService, membershipHelper);
     }
 }

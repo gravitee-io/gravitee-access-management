@@ -15,10 +15,12 @@
  */
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { GioSubmenuTheme } from '@gravitee/ui-particles-angular';
 
 import { NavigationService } from '../../services/navigation.service';
+import { CloudModeService } from '../../services/cloud-mode.service';
 
 @Component({
   selector: 'gv-submenu',
@@ -43,17 +45,20 @@ export class SubmenuComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private navigationService: NavigationService,
+    private cloudModeService: CloudModeService,
   ) {}
 
   ngOnInit(): void {
-    this.subscription = this.navigationService.level2MenuItemsObs$.subscribe(
-      (items) =>
-        (this.subMenuItems = items.reduce((r, a) => {
-          r[a.section] = r[a.section] || [];
-          r[a.section].push(a);
-          return r;
-        }, {})),
-    );
+    this.subscription = combineLatest([this.navigationService.level2MenuItemsObs$, this.cloudModeService.isCloudModeEnabled()])
+      .pipe(map(([items, cloudMode]) => items.filter((item) => !(cloudMode && item.hideInCloudMode))))
+      .subscribe(
+        (items) =>
+          (this.subMenuItems = items.reduce((r, a) => {
+            r[a.section] = r[a.section] || [];
+            r[a.section].push(a);
+            return r;
+          }, {})),
+      );
   }
 
   ngOnDestroy(): void {

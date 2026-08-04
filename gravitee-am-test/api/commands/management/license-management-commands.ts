@@ -37,9 +37,10 @@ export const waitForOrgLicenseScope = (
   accessToken: string,
   scope: string,
   options?: { timeoutMillis?: number; intervalMillis?: number },
+  orgId = process.env.AM_DEF_ORG_ID,
 ): Promise<GraviteeLicense> =>
   retryUntil(
-    () => getOrgLicense(accessToken).catch(() => null),
+    () => getOrgLicense(accessToken, orgId).catch(() => null),
     (license) => license?.scope === scope,
     {
       timeoutMillis: options?.timeoutMillis ?? 30000,

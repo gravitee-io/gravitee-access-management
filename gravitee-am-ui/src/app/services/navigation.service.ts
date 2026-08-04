@@ -30,6 +30,7 @@ export interface MenuItem {
   level: string;
   beta: boolean;
   display: boolean;
+  hideInCloudMode?: boolean;
   routerLinkActiveOptions: object;
   licenseOptions?: LicenseOptions;
   isMissingFeature$?: Observable<boolean>;
@@ -120,6 +121,7 @@ export class NavigationService implements OnDestroy {
               level: siblingRoute.data.menu.level,
               beta: siblingRoute.data.menu.beta,
               display: this.resolveDisplay(route, siblingRoute),
+              hideInCloudMode: siblingRoute.data.menu.hideInCloudMode === true,
               routerLinkActiveOptions: siblingRoute.data.menu.routerLinkActiveOptions ? siblingRoute.data.menu.routerLinkActiveOptions : {},
               licenseOptions,
               isMissingFeature$,

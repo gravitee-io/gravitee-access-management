@@ -15,8 +15,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
+import { CloudOrganizationFixture, setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 import { getDomainState } from '@gateway-commands/monitoring-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { setup } from '../test-fixture';
@@ -24,20 +24,23 @@ import { CloudEntrypointFixture, setupCloudEntrypointFixture } from './fixtures/
 
 setup(120000);
 
+const ORGANIZATION_NAME = 'cloud-org-ep-cache';
+
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const sameUrls = (urls: string[], expected: string[]) => urls.length === expected.length && expected.every((u) => urls.includes(u));
 
-let accessToken: string;
+let organization: CloudOrganizationFixture;
 let fixture: CloudEntrypointFixture;
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken();
   await waitForCockpitConnection();
-  fixture = await setupCloudEntrypointFixture(accessToken);
+  organization = await setupCloudOrganizationFixture(ORGANIZATION_NAME);
+  fixture = await setupCloudEntrypointFixture(organization);
 });
 
 afterAll(async () => {
   await fixture?.cleanup();
+  await organization?.cleanup();
 });
 
 // These specs share one environment/domain and run in order (jest --runInBand): the initial access
@@ -68,7 +71,11 @@ describe('Cloud entrypoint cache (Cockpit access points -> gateway)', () => {
     const addedHost = fixture.uniqueHost();
     const expectedUrls = await fixture.resyncAccessPoints([keptHost, addedHost]);
 
-    const cached = await retryUntil(() => fixture.cachedEntrypointUrls(), (urls) => sameUrls(urls, expectedUrls), POLL);
+    const cached = await retryUntil(
+      () => fixture.cachedEntrypointUrls(),
+      (urls) => sameUrls(urls, expectedUrls),
+      POLL,
+    );
 
     expect(cached).toEqual([...expectedUrls].sort());
     expect(cached).not.toContain(droppedUrl);
@@ -77,7 +84,11 @@ describe('Cloud entrypoint cache (Cockpit access points -> gateway)', () => {
   it('evicts every cached entrypoint when the environment has no gateway access points', async () => {
     await fixture.resyncAccessPoints([]);
 
-    const cached = await retryUntil(() => fixture.cachedEntrypointUrls(), (urls) => urls.length === 0, POLL);
+    const cached = await retryUntil(
+      () => fixture.cachedEntrypointUrls(),
+      (urls) => urls.length === 0,
+      POLL,
+    );
 
     expect(cached).toEqual([]);
   });

@@ -24,8 +24,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
-import { createIdp, deleteIdp, getIdp, updateIdp } from '@management-commands/idp-management-commands';
+import { waitForDomainStart } from '@management-commands/domain-management-commands';
+import { getDomainApi, getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { setup, retryImmediatelyForThisFile } from '../test-fixture';
 import { jira } from '@specs-utils/jira';
@@ -34,6 +34,7 @@ import { OrgLicenseFixture, setupOrgLicenseFixture } from './fixtures/org-licens
 setup(300000);
 retryImmediatelyForThisFile();
 
+const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 const AZURE_AD_TYPE = 'azure-ad-am-idp';
 const INLINE_TYPE = 'inline-am-idp';
 
@@ -46,41 +47,77 @@ let fixture: OrgLicenseFixture;
 let domainId: string;
 let eeIdpId: string | null = null;
 
+const orgEnv = () => ({ organizationId: fixture.organizationId, environmentId: fixture.environmentId });
+
+const createIdp = (idp: { name: string; type: string; configuration: string }) =>
+  getIdpApi(fixture.accessToken).createIdentityProvider({
+    ...orgEnv(),
+    domain: domainId,
+    newIdentityProvider: idp,
+  });
+
+const updateIdp = (idpId: string, body: { name: string; type: string; configuration: string }) =>
+  getIdpApi(fixture.accessToken).updateIdentityProvider({
+    ...orgEnv(),
+    domain: domainId,
+    identity: idpId,
+    updateIdentityProvider: body,
+  });
+
+const getIdp = (idpId: string) =>
+  getIdpApi(fixture.accessToken).findIdentityProvider({
+    ...orgEnv(),
+    domain: domainId,
+    identity: idpId,
+  });
+
+const deleteIdp = (idpId: string) =>
+  getIdpApi(fixture.accessToken).deleteIdentityProvider({
+    ...orgEnv(),
+    domain: domainId,
+    identity: idpId,
+  });
+
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture();
+  fixture = await setupOrgLicenseFixture('plugin-license-gate');
   // Universe license required to start the domain without EE-gate interference.
   await fixture.setUniverseLicense();
-  const domain = await createDomain(fixture.accessToken, uniqueName('am7241', true), 'AM-7241 plugin license gate');
-  await startDomain(domain.id, fixture.accessToken);
+
+  const domainApi = getDomainApi(fixture.accessToken);
+  const domain = await domainApi.createDomain({
+    ...orgEnv(),
+    newDomain: { name: uniqueName('am7241', true), description: 'AM-7241 plugin license gate', dataPlaneId: DATA_PLANE_ID },
+  });
+  await domainApi.patchDomain({ ...orgEnv(), domain: domain.id!, patchDomain: { enabled: true } });
   const started = await waitForDomainStart(domain);
-  domainId = started.domain.id;
+  domainId = started.domain.id!;
   await fixture.clearOrgLicense();
 });
 
 afterAll(async () => {
   if (eeIdpId) {
-    await deleteIdp(domainId, fixture.accessToken, eeIdpId).catch(() => null);
+    await deleteIdp(eeIdpId).catch(() => null);
   }
-  await fixture.cleanup();
-  await safeDeleteDomain(domainId, fixture.accessToken);
+  await fixture?.deleteDomain(domainId);
+  await fixture?.cleanup();
 });
 
 describe('OSS identity provider — no org license', () => {
   it(jira`should allow creating an OSS (inline) identity provider without an org license ${'AM-7241'}`, async () => {
-    const idp = await createIdp(domainId, fixture.accessToken, {
+    const idp = await createIdp({
       name: uniqueName('inline-oss'),
       type: INLINE_TYPE,
       configuration: inlineConfig,
     });
     expect(idp.id).toEqual(expect.any(String));
-    await deleteIdp(domainId, fixture.accessToken, idp.id);
+    await deleteIdp(idp.id!);
   });
 });
 
 describe('EE identity provider — no org license', () => {
   it(jira`should reject creating an EE (Azure AD) identity provider with 403 ${'AM-7241'}`, async () => {
     await expect(
-      createIdp(domainId, fixture.accessToken, {
+      createIdp({
         name: uniqueName('azure-ee-blocked'),
         type: AZURE_AD_TYPE,
         configuration: azureAdConfig,
@@ -95,22 +132,21 @@ describe('EE identity provider — with universe org license', () => {
   });
 
   it(jira`should allow creating an EE (Azure AD) identity provider with a universe org license ${'AM-7241'}`, async () => {
-    const idp = await createIdp(domainId, fixture.accessToken, {
+    const idp = await createIdp({
       name: uniqueName('azure-ee-licensed'),
       type: AZURE_AD_TYPE,
       configuration: azureAdConfig,
     });
     expect(idp.id).toEqual(expect.any(String));
-    eeIdpId = idp.id;
+    eeIdpId = idp.id!;
   });
 
   it(jira`should allow updating the EE identity provider while the universe license is active ${'AM-7241'}`, async () => {
-    const updated = await updateIdp(
-      domainId,
-      fixture.accessToken,
-      { name: uniqueName('azure-ee-updated'), type: AZURE_AD_TYPE, configuration: azureAdConfig },
-      eeIdpId,
-    );
+    const updated = await updateIdp(eeIdpId!, {
+      name: uniqueName('azure-ee-updated'),
+      type: AZURE_AD_TYPE,
+      configuration: azureAdConfig,
+    });
     expect(updated.id).toBe(eeIdpId);
   });
 });
@@ -122,22 +158,21 @@ describe('EE identity provider — license removed after creation', () => {
 
   it(jira`should reject updating an EE identity provider after the org license is removed ${'AM-7241'}`, async () => {
     await expect(
-      updateIdp(
-        domainId,
-        fixture.accessToken,
-        { name: uniqueName('azure-ee-update-blocked'), type: AZURE_AD_TYPE, configuration: azureAdConfig },
-        eeIdpId,
-      ),
+      updateIdp(eeIdpId!, {
+        name: uniqueName('azure-ee-update-blocked'),
+        type: AZURE_AD_TYPE,
+        configuration: azureAdConfig,
+      }),
     ).rejects.toMatchObject({ response: { status: 403 } });
   });
 
   it(jira`should allow reading an EE identity provider without an org license ${'AM-7241'}`, async () => {
-    const idp = await getIdp(domainId, fixture.accessToken, eeIdpId);
+    const idp = await getIdp(eeIdpId!);
     expect(idp.id).toBe(eeIdpId);
   });
 
   it(jira`should allow deleting an EE identity provider without an org license ${'AM-7241'}`, async () => {
-    await deleteIdp(domainId, fixture.accessToken, eeIdpId);
+    await deleteIdp(eeIdpId!);
     eeIdpId = null;
   });
 });

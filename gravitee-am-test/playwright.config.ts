@@ -91,15 +91,14 @@ export default defineConfig({
 
     // Cloud specs need a managed-cloud stack (cockpit-mock + empty platform license — see
     // docker-compose.cloud.yml) and are excluded from the 'chromium' project above. Run
-    // explicitly via `pw:ci:cloud` / `--project=cloud` against `local-stack.sh up --cloud`.
-    {
+    // explicitly via `pw:ci:cloud` / `--project=cloud` against `local-stack.sh up --cloud --ui`.
+   {
       name: 'cloud',
       testMatch: '**/cloud/**',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'playwright/fixtures/.auth/admin.json',
+        storageState: { cookies: [], origins: [] },
       },
-      dependencies: ['setup'],
     },
 
     // TODO: Enable Firefox cross-browser validation once Chromium suite is stable.

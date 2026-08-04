@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { cleanupTestDomains } from './global.setup';
+import { cleanupTestDomains } from './domain-cleanup';
 
 /** Clean up any test domains left behind after the suite finishes. */
 async function globalTeardown(): Promise<void> {

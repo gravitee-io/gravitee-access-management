@@ -251,6 +251,7 @@ import { DictionariesResolver } from './resolvers/dictionaries.resolver';
 import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
 import { ThemesResolver } from './resolvers/themes.resolver';
 import { LicenseGuard } from './guards/license-guard.service';
+import { CloudModeGuard } from './guards/cloud-mode-guard.service';
 import { AmFeature } from './components/gio-license/gio-license-data';
 import { UserIdentitiesComponent } from './domain/settings/users/user/identities/identities.component';
 import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
@@ -1281,7 +1282,7 @@ export const routes: Routes = [
           {
             path: 'cockpit',
             component: CockpitComponent,
-            canActivate: [AuthGuard],
+            canActivate: [AuthGuard, CloudModeGuard],
             resolve: {
               installation: InstallationResolver,
             },
@@ -1290,6 +1291,10 @@ export const routes: Routes = [
                 label: 'Discover cockpit',
                 section: 'Cockpit',
                 level: 'level2',
+                // Onboarding page for linking a self-hosted AM to Cockpit. A managed cloud installation is
+                // already linked, and nobody holds the PLATFORM_ADMIN role that installation_read requires,
+                // so the page would 403 on its resolver.
+                hideInCloudMode: true,
               },
               perms: {
                 only: ['installation_read'],

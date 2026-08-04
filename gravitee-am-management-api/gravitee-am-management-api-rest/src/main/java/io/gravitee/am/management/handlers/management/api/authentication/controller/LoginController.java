@@ -25,6 +25,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.ReCaptchaService;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.servlet.http.HttpServletRequest;
@@ -117,6 +118,11 @@ public class LoginController {
                     .filter(Objects::nonNull)
                     .filter(IdentityProvider::isExternal)
                     .toList();
+        } catch (OrganizationNotFoundException ex) {
+            // A managed cloud installation has no DEFAULT organization, so any request to this page without
+            // ?org=<id> lands here and renders a form that cannot authenticate.
+            log.warn("No organization [{}] to load social providers for, the login page needs an explicit '{}' parameter",
+                    organizationId, ORGANIZATION_PARAMETER_NAME);
         } catch (Exception ex) {
             log.error("An error has occurred while loading the organization social providers. It probably means that a social provider is not well started", ex);
         }

@@ -15,14 +15,21 @@
  */
 
 import { readFileSync } from 'fs';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { drainCockpitQueue, sendOrgCommand, waitForCockpitConnection, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
+import { drainCockpitQueue, waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
+import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { waitForOrgLicenseScope } from '@management-commands/license-management-commands';
 import { stackLicenseBase64 } from '@cloud-commands/license-key';
+import { setupCloudOrganizationFixture } from './cloud-organization-fixture';
 
 export interface OrgLicenseFixture {
+  /** Id of the Cockpit-provisioned organization. */
+  organizationId: string;
+  /** Home environment of that organization — domains must be created here. */
+  environmentId: string;
+  /** Cockpit id of the organization owner (USER command payload id / SSO `sub`). */
+  userId: string;
+  /** Token for the organization owner, obtained through Cockpit SSO. */
   accessToken: string;
-  orgId: string;
   /** Base64-encoded universe license key. */
   universeLicense: string;
   /** Base64-encoded expired license key — only present when AM_ORG_LICENSE_EXPIRED_PATH is set. */
@@ -34,37 +41,50 @@ export interface OrgLicenseFixture {
   clearOrgLicense: () => Promise<void>;
   /** Send expired license via cockpit (noop when no expired license path is configured). */
   setExpiredLicense: () => Promise<void>;
+  /** Best-effort delete of a domain in this organization's home environment. */
+  deleteDomain: (domainId: string | null | undefined) => Promise<void>;
   cleanup: () => Promise<void>;
 }
 
-export const setupOrgLicenseFixture = async (): Promise<OrgLicenseFixture> => {
-  const accessToken = await requestAdminAccessToken();
+export const setupOrgLicenseFixture = async (organizationName = 'org-license'): Promise<OrgLicenseFixture> => {
   await waitForCockpitConnection();
   await drainCockpitQueue();
 
-  const orgId = process.env.AM_DEF_ORG_ID;
-  const expiredLicensePath = process.env.AM_ORG_LICENSE_EXPIRED_PATH ?? null;
+  const organization = await setupCloudOrganizationFixture(organizationName);
+  const organizationId = organization.organizationId;
+  const environmentId = organization.environmentId;
+  const userId = organization.userId;
+  const accessToken = organization.accessToken;
 
+  const expiredLicensePath = process.env.AM_ORG_LICENSE_EXPIRED_PATH ?? null;
   const universeLicense = stackLicenseBase64();
   const expiredLicense = expiredLicensePath ? readFileSync(expiredLicensePath).toString('base64') : null;
 
   const setUniverseLicense = async (): Promise<void> => {
-    const id = await sendOrgCommand(orgId, universeLicense);
-    await waitForCockpitReply(id, { timeoutMillis: 15000 });
-    await waitForOrgLicenseScope(accessToken, 'ORGANIZATION', { timeoutMillis: 30000 });
+    const reply = await organization.resync({ license: universeLicense });
+    if (reply.commandStatus !== 'SUCCEEDED') {
+      throw new Error(`Failed to set universe license for ${organizationId}: ${reply.errorDetails}`);
+    }
+    await waitForOrgLicenseScope(accessToken, 'ORGANIZATION', { timeoutMillis: 30000 }, organizationId);
   };
 
   const clearOrgLicense = async (): Promise<void> => {
-    const id = await sendOrgCommand(orgId);
-    await waitForCockpitReply(id, { timeoutMillis: 15000 });
-    await waitForOrgLicenseScope(accessToken, 'PLATFORM', { timeoutMillis: 30000 });
+    const reply = await organization.resync();
+    if (reply.commandStatus !== 'SUCCEEDED') {
+      throw new Error(`Failed to clear org license for ${organizationId}: ${reply.errorDetails}`);
+    }
+    await waitForOrgLicenseScope(accessToken, 'PLATFORM', { timeoutMillis: 30000 }, organizationId);
   };
 
   const setExpiredLicense = async (): Promise<void> => {
     if (!expiredLicense) return;
-    const id = await sendOrgCommand(orgId, expiredLicense);
-    await waitForCockpitReply(id, { timeoutMillis: 15000 });
+    const reply = await organization.resync({ license: expiredLicense });
+    if (reply.commandStatus !== 'SUCCEEDED') {
+      throw new Error(`Failed to set expired license for ${organizationId}: ${reply.errorDetails}`);
+    }
   };
+
+  const deleteDomain = bindSafeDeleteCloudDomain({ accessToken, organizationId, environmentId });
 
   const cleanup = async (): Promise<void> => {
     try {
@@ -75,14 +95,17 @@ export const setupOrgLicenseFixture = async (): Promise<OrgLicenseFixture> => {
   };
 
   return {
+    organizationId,
+    environmentId,
+    userId,
     accessToken,
-    orgId,
     universeLicense,
     expiredLicense,
     hasExpiredLicense: expiredLicense !== null,
     setUniverseLicense,
     clearOrgLicense,
     setExpiredLicense,
+    deleteDomain,
     cleanup,
   };
 };

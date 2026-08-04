@@ -41,12 +41,12 @@ retryImmediatelyForThisFile();
 let fixture: OrgLicenseFixture;
 
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture();
+  fixture = await setupOrgLicenseFixture('org-license-endpoint');
   await fixture.clearOrgLicense();
 });
 
 afterAll(async () => {
-  await fixture.cleanup();
+  await fixture?.cleanup();
 });
 
 describe('GET /organizations/{orgId}/license — with universe org license', () => {
@@ -59,26 +59,26 @@ describe('GET /organizations/{orgId}/license — with universe org license', () 
   });
 
   it(jira`should return scope ORGANIZATION and tier universe ${'AM-7236'}`, async () => {
-    const license = await getOrgLicense(fixture.accessToken);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.scope).toBe('ORGANIZATION');
     expect(license.tier).toBe('universe');
   });
 
   it(jira`should include a non-null expiresAt ${'AM-7236'}`, async () => {
-    const license = await getOrgLicense(fixture.accessToken);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.expiresAt).not.toBeNull();
     expect(typeof license.expiresAt).toBe('number');
   });
 
   it(jira`should always include the scope property in the response ${'AM-7236'}`, async () => {
-    const license = await getOrgLicense(fixture.accessToken);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(Object.prototype.hasOwnProperty.call(license, 'scope')).toBe(true);
   });
 });
 
 describe('GET /organizations/{orgId}/license — no org license', () => {
   it(jira`should fall back to PLATFORM scope when no org license is set ${'AM-7236'}`, async () => {
-    const license = await getOrgLicense(fixture.accessToken);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.scope).toBe('PLATFORM');
   });
 });
@@ -86,9 +86,9 @@ describe('GET /organizations/{orgId}/license — no org license', () => {
 describe('GET /organizations/{orgId}/license — fake base64 org license', () => {
   beforeAll(async () => {
     const fakeLicense = Buffer.from('not-a-real-license').toString('base64');
-    const id = await sendOrgCommand(fixture.orgId, fakeLicense);
+    const id = await sendOrgCommand(fixture.organizationId, fakeLicense);
     await waitForCockpitReply(id, { timeoutMillis: 15000 });
-    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION');
+    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION', undefined, fixture.organizationId);
   });
 
   afterAll(async () => {
@@ -96,7 +96,7 @@ describe('GET /organizations/{orgId}/license — fake base64 org license', () =>
   });
 
   it(jira`should return scope ORGANIZATION and tier oss for a fake license payload ${'AM-7236'}`, async () => {
-    const license = await getOrgLicense(fixture.accessToken);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.scope).toBe('ORGANIZATION');
     expect(license.tier).toBe('oss');
   });
@@ -111,7 +111,7 @@ describe('GET /platform/license — platform license endpoint', () => {
 
 describe('GET /organizations/{orgId}/license — authentication', () => {
   it(jira`should return 401 when no token is provided ${'AM-7236'}`, async () => {
-    const response = await getOrgLicenseRaw(null);
+    const response = await getOrgLicenseRaw(null, fixture.organizationId);
     expect(response.status).toBe(401);
   });
 });

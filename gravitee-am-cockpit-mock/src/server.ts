@@ -26,6 +26,7 @@
  *   GET  /_control/queue/peek  non-destructive snapshot of the queue
  *   GET  /_control/hello       the HELLO AM sent on connect (204 before it arrives)
  *   GET  /_control/status      connection + installation + queue summary
+ *   POST /_control/sso-token   mint the SSO token AM's /auth/cockpit endpoint accepts
  */
 
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
@@ -34,6 +35,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { decodeFrame, encodeFrame, ProtocolType } from './protocol';
 import { loadInstallationState, InstallationState } from './state';
 import { ReplyQueue, QueueEntry } from './queue';
+import { SsoTokenSigner } from './sso';
 
 /** AM's HELLO command, retained so its payload can be read back over HTTP. */
 interface HelloCapture {
@@ -50,6 +52,8 @@ interface Config {
   installationId?: string;
   installationStatus?: string;
   installationType?: string;
+  /** PEM private key matching the certificate AM holds under alias 'cockpit-client'. */
+  ssoPrivateKey?: string;
 }
 
 function parseArgs(argv: string[]): Config {
@@ -97,6 +101,9 @@ function parseArgs(argv: string[]): Config {
       case '--installation-type':
         cfg.installationType = next();
         break;
+      case '--sso-private-key':
+        cfg.ssoPrivateKey = next();
+        break;
       case '--help':
       case '-h':
         printUsage();
@@ -121,6 +128,7 @@ Usage: tsx src/server.ts [options]
   --installation-id <id>       override installationId (else generated)
   --installation-status <s>    override installationStatus (default ACCEPTED)
   --installation-type <t>      override installationType (echoed only; inert on AM)
+  --sso-private-key <path>     PEM private key signing /_control/sso-token (else that route 501s)
 `);
 }
 
@@ -138,6 +146,17 @@ function main(): void {
 
   /** AM's latest HELLO, kept because the handshake never reaches the queue. */
   let lastHello: HelloCapture | null = null;
+
+  /** Only available when --sso-private-key was given; /_control/sso-token 501s otherwise. */
+  let ssoSigner: SsoTokenSigner | null = null;
+  if (cfg.ssoPrivateKey) {
+    try {
+      ssoSigner = new SsoTokenSigner(cfg.ssoPrivateKey);
+    } catch (err) {
+      console.error(`[boot] cannot read --sso-private-key ${cfg.ssoPrivateKey}: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  }
 
   const httpServer = createServer((req, res) => handleHttp(req, res));
   const wss = new WebSocketServer({ noServer: true });
@@ -262,6 +281,9 @@ function main(): void {
       }
       return sendJson(res, 200, lastHello);
     }
+    if (req.method === 'POST' && path === `${cfg.controlPrefix}/sso-token`) {
+      return handleSsoToken(req, res);
+    }
     if (req.method === 'GET' && path === `${cfg.controlPrefix}/status`) {
       return sendJson(res, 200, {
         connected: !!activeSocket && activeSocket.readyState === WebSocket.OPEN,
@@ -280,6 +302,32 @@ function main(): void {
       return;
     }
     sendJson(res, 200, head);
+  }
+
+  /**
+   * Mint the SSO token cockpit would hand the browser. No AM connection is required — this is the
+   * out-of-band redirect path, not a command.
+   */
+  function handleSsoToken(req: IncomingMessage, res: ServerResponse): void {
+    if (!ssoSigner) {
+      return sendJson(res, 501, { error: 'no signing key; start the mock with --sso-private-key <path>' });
+    }
+    readBody(req)
+      .then((body) => {
+        if (!body.sub || !body.org) {
+          return sendJson(res, 400, { error: 'both "sub" and "org" are required' });
+        }
+        const token = ssoSigner!.sign({
+          sub: body.sub,
+          org: body.org,
+          env: body.env,
+          redirectUri: body.redirectUri,
+          ttlSeconds: body.ttlSeconds,
+        });
+        log('http', `minted SSO token for sub=${body.sub} org=${body.org}`);
+        return sendJson(res, 200, { token });
+      })
+      .catch((err) => sendJson(res, 400, { error: `invalid request: ${err.message}` }));
   }
 
   function handleSend(req: IncomingMessage, res: ServerResponse): void {
@@ -324,7 +372,8 @@ function main(): void {
   httpServer.listen(cfg.port, () => {
     log('boot', `listening on http://localhost:${cfg.port}`);
     log('boot', `  WebSocket : ws://localhost:${cfg.port}${cfg.wsPath}`);
-    log('boot', `  control   : ${cfg.controlPrefix}/send | /queue | /queue/peek | /hello | /status`);
+    log('boot', `  control   : ${cfg.controlPrefix}/send | /queue | /queue/peek | /hello | /status | /sso-token`);
+    log('boot', `  sso token : ${ssoSigner ? 'enabled' : 'disabled (no --sso-private-key)'}`);
     log('boot', `  installation: id=${installation.installationId} status=${installation.installationStatus}${installation.installationType ? ` type=${installation.installationType}` : ''}`);
     if (cfg.stateFile) log('boot', `  state file: ${cfg.stateFile}`);
     log('boot', `Point AM at it: cloud.connector.ws.endpoints=http://localhost:${cfg.port} + cloud.enabled=true`);

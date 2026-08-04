@@ -27,6 +27,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
@@ -133,6 +134,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     private Flowable<IdentityProvider> loadProvidersFromConfig() {
+        if (CloudProperties.isManagedCloudEnabled(environment)) {
+            log.info("Managed cloud installation, skip the identity providers declared in the configuration");
+            return Flowable.empty();
+        }
+
         boolean found = true;
         int idx = 0;
 
@@ -157,6 +163,17 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         return identityProvidersFlow;
     }
 
+    /**
+     * The 'gravitee' provider is registered for every installation, including managed cloud: it is not a
+     * login path but the write path for organization users, since OrganizationUserServiceImpl forces
+     * {@code source = gravitee} on every user created through the console or the API.
+     * <p>
+     * The DEFAULT reference below is nominal and currently unread — its only consumer is
+     * {@code loadUserProvider} -> {@code PluginLicenseGate.checkPersisted}, which resolves ORGANIZATION
+     * references without a lookup and short-circuits because gravitee-am-idp declares no feature in its
+     * plugin.properties. It becomes meaningful, and wrong under managed cloud where DEFAULT does not
+     * exist, if that plugin ever gains a feature.
+     */
     private IdentityProvider buildOrganizationUserIdentityProvider() {
         IdentityProvider provider = new IdentityProvider();
         provider.setId(IDP_GRAVITEE);

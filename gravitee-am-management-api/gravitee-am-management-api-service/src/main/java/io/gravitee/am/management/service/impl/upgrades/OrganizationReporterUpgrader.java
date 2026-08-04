@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
@@ -33,9 +34,15 @@ import org.springframework.stereotype.Component;
 public class OrganizationReporterUpgrader extends AsyncUpgrader {
     private final OrganizationService organizationService;
     private final ReporterService reporterService;
+    private final org.springframework.core.env.Environment environment;
 
     @Override
     Completable doUpgrade() {
+
+        if (CloudProperties.isManagedCloudEnabled(environment)) {
+            log.info("Managed cloud installation, skip the default organization reporter provisioning");
+            return Completable.complete();
+        }
 
         var orgReference = Reference.organization(Organization.DEFAULT);
         return organizationService.findById(orgReference.id())

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.IdentityProviderManager;
@@ -81,6 +82,8 @@ public class DefaultOrganizationUpgrader implements Upgrader {
 
     private final boolean useDefaultAdmin;
 
+    private final boolean managedCloudEnabled;
+
     public DefaultOrganizationUpgrader(OrganizationService organizationService,
                                        IdentityProviderService identityProviderService,
                                        OrganizationUserService userService,
@@ -99,10 +102,16 @@ public class DefaultOrganizationUpgrader implements Upgrader {
         this.identityProviderManager = identityProviderManager;
         this.auditService = auditService;
         this.useDefaultAdmin = environment.getProperty("security.defaultAdmin", boolean.class, true);
+        this.managedCloudEnabled = CloudProperties.isManagedCloudEnabled(environment);
     }
 
     @Override
     public boolean upgrade() {
+
+        if (managedCloudEnabled) {
+            log.info("Managed cloud installation, skip the default organization provisioning");
+            return true;
+        }
 
         try {
             // This call create default organization with :

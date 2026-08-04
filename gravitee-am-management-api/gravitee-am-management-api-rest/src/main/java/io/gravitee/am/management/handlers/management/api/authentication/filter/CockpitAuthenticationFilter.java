@@ -129,12 +129,12 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
             } else {
                 try {
                     JWT jwt = jwtParser.parse(token);
+                    final Environment environment = environmentService.findById((String) jwt.get(Claims.ENVIRONMENT), (String) jwt.get(Claims.ORGANIZATION)).blockingGet();
+
                     UsernamePasswordAuthenticationToken authentication = convertToAuthentication(jwt);
                     User principal = authenticationService.onAuthenticationSuccess(authentication);
 
-                    final Environment environment = environmentService.findById((String) jwt.get(Claims.ENVIRONMENT), (String) jwt.get(Claims.ORGANIZATION)).blockingGet();
                     String redirectPath = "";
-
                     if (environment != null) {
                         redirectPath = "/environments/" + environment.getHrids().get(0);
                     }

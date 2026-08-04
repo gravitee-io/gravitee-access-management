@@ -5,17 +5,54 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "cockpitMockUrl", "value": "http://localhost:8085" },
-    { "key": "managementUrl", "value": "http://localhost:8093" },
-    { "key": "adminUsername", "value": "admin" },
-    { "key": "adminPassword", "value": "adminadmin" },
-    { "key": "envId", "value": "postman-cloud-env" },
-    { "key": "commandId", "value": "" },
-    { "key": "amCommandId", "value": "" },
-    { "key": "token", "value": "" },
-    { "key": "orgId", "value": "DEFAULT" },
-    { "key": "licenseB64", "value": "" },
-    { "key": "licenseB64Alt", "value": "bm90LWEtcmVhbC1saWNlbnNl" }
+    {
+      "key": "cockpitMockUrl",
+      "value": "http://localhost:8085"
+    },
+    {
+      "key": "managementUrl",
+      "value": "http://localhost:8093"
+    },
+    {
+      "key": "envId",
+      "value": "postman-cloud-env"
+    },
+    {
+      "key": "commandId",
+      "value": ""
+    },
+    {
+      "key": "amCommandId",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "orgId",
+      "value": "postman-cloud-org"
+    },
+    {
+      "key": "licenseB64",
+      "value": ""
+    },
+    {
+      "key": "licenseB64Alt",
+      "value": "bm90LWEtcmVhbC1saWNlbnNl"
+    },
+    {
+      "key": "userId",
+      "value": "postman-cockpit-user"
+    },
+    {
+      "key": "ssoToken",
+      "value": ""
+    },
+    {
+      "key": "consoleUrl",
+      "value": "http://localhost:4200"
+    }
   ],
   "item": [
     {
@@ -27,8 +64,13 @@
             "method": "GET",
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/status",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "status"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "status"
+              ]
             },
             "description": "Returns `{ connected, installation, queueSize }`. `connected: true` means AM's WebSocket is up and `/_control/send` will work."
           }
@@ -56,8 +98,13 @@
             "method": "GET",
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/queue",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "queue"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "queue"
+              ]
             },
             "description": "Removes and returns the queue head; 204 when empty. REPLY entries carry the `commandId` of the command they answer plus `commandStatus` (SUCCEEDED/ERROR). If the entry is an AM-initiated COMMAND, its `commandId` is auto-saved to `{{amCommandId}}` for the reply requests."
           }
@@ -68,8 +115,14 @@
             "method": "GET",
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/queue/peek",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "queue", "peek"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "queue",
+                "peek"
+              ]
             },
             "description": "Returns the whole queue as an array without consuming anything."
           }
@@ -80,8 +133,13 @@
             "method": "GET",
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/hello",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "hello"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "hello"
+              ]
             },
             "description": "The HELLO command AM sent on connect. HELLO only ever flows AM -> cockpit (AM is the WebSocket client and opens with it), the mock answers it automatically, and it never reaches the queue — so there is no HELLO to *send*, and this is the only way to see what AM announced itself with. 204 until AM connects; overwritten on each reconnect.\n\nUseful fields in `payload`: `installationType` (managed/standalone), `accessPointsTemplate` (the host template per type/target — only populated by a managed installation, a standalone one sends it as `{}`), `node`, and `additionalInformation` (API_URL/UI_URL).\n\nWatch out: this `installationType` is AM's own, on the command. It is a different field from the mock's `--installation-type` flag, which rides on the reply and is inert (AM ignores it)."
           }
@@ -113,16 +171,30 @@
           "name": "ORGANIZATION - create/update org",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"DEFAULT\",\n    \"name\": \"Acme (via cockpit mock)\",\n    \"hrids\": [\"default\"],\n    \"description\": \"Updated by the cockpit mock Postman collection\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"Acme (via cockpit mock)\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"description\": \"Updated by the cockpit mock Postman collection\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "createOrUpdate on the organization. Required: `id`, `name`, `hrids`. With `id: DEFAULT` this renames the default org. An optional `license` field (base64 of a signed key, see `{{licenseB64}}`) attaches an organization license — `License changes (AM-7237)` below drives that through create/update/delete."
           }
@@ -131,16 +203,30 @@
           "name": "ENVIRONMENT - create env with GATEWAY access points",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"ENVIRONMENT\",\n  \"payload\": {\n    \"id\": \"{{envId}}\",\n    \"organizationId\": \"DEFAULT\",\n    \"hrids\": [\"{{envId}}\"],\n    \"name\": \"Postman cloud environment\",\n    \"description\": \"Created via cockpit mock\",\n    \"accessPoints\": [\n      { \"target\": \"GATEWAY\", \"host\": \"gw-{{envId}}.example.com\" },\n      { \"target\": \"GATEWAY\", \"host\": \"custom-{{envId}}.example.com\", \"overriding\": true }\n    ]\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"type\": \"ENVIRONMENT\",\n  \"payload\": {\n    \"id\": \"{{envId}}\",\n    \"organizationId\": \"{{orgId}}\",\n    \"hrids\": [\"{{envId}}\"],\n    \"name\": \"Postman cloud environment\",\n    \"description\": \"Created via cockpit mock\",\n    \"accessPoints\": [\n      { \"target\": \"GATEWAY\", \"host\": \"gw-{{envId}}.example.com\" },\n      { \"target\": \"GATEWAY\", \"host\": \"custom-{{envId}}.example.com\", \"overriding\": true }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "createOrUpdate on the environment. Required: `organizationId`, `id`, `name`, `hrids`. In managed-cloud mode the GATEWAY access points are synced to organization entrypoints: `overriding: true` marks the customer's custom host, the other becomes `defaultEntrypoint: true`. The only way to create environments/entrypoints locally — the Console cannot.\n\nGotchas: entrypoints are cockpit-owned (deleting them via the console returns 400) and both planes warm their caches async, so poll before relying on them. Verify with `List organization entrypoints`."
           }
@@ -149,34 +235,94 @@
           "name": "USER - create/update org user",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"USER\",\n  \"payload\": {\n    \"id\": \"cockpit-user-1\",\n    \"organizationId\": \"DEFAULT\",\n    \"username\": \"cockpit.user\",\n    \"firstName\": \"Cockpit\",\n    \"lastName\": \"User\",\n    \"email\": \"cockpit.user@example.com\",\n    \"picture\": \"https://example.com/avatar.png\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"type\": \"USER\",\n  \"payload\": {\n    \"id\": \"{{userId}}\",\n    \"organizationId\": \"{{orgId}}\",\n    \"username\": \"cockpit.user\",\n    \"firstName\": \"Cockpit\",\n    \"lastName\": \"User\",\n    \"email\": \"cockpit.user@example.com\",\n    \"picture\": \"https://example.com/avatar.png\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "createOrUpdate on an organization user with source `cockpit`. Required: `id`, `username`, `organizationId`. The payload `id` becomes the user's externalId — MEMBERSHIP commands reference it via `userId`."
           }
         },
         {
-          "name": "MEMBERSHIP - assign role",
+          "name": "MEMBERSHIP - assign organization role",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"MEMBERSHIP\",\n  \"payload\": {\n    \"organizationId\": \"DEFAULT\",\n    \"referenceType\": \"ENVIRONMENT\",\n    \"referenceId\": \"{{envId}}\",\n    \"userId\": \"cockpit-user-1\",\n    \"role\": \"ENVIRONMENT_PRIMARY_OWNER\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"type\": \"MEMBERSHIP\",\n  \"payload\": {\n    \"organizationId\": \"{{orgId}}\",\n    \"referenceType\": \"ORGANIZATION\",\n    \"referenceId\": \"{{orgId}}\",\n    \"userId\": \"{{userId}}\",\n    \"role\": \"ORGANIZATION_PRIMARY_OWNER\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Assigns a role to a cockpit-sourced user. All fields required. `userId` is the USER command's payload `id` (externalId) — the user must exist first. `referenceType` is ENVIRONMENT or ORGANIZATION; `role` is a system role name (e.g. ENVIRONMENT_PRIMARY_OWNER, ORGANIZATION_PRIMARY_OWNER) or default role name (e.g. ENVIRONMENT_OWNER, ORGANIZATION_USER)."
+          }
+        },
+        {
+          "name": "MEMBERSHIP - assign environment role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/send",
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MEMBERSHIP\",\n  \"payload\": {\n    \"organizationId\": \"{{orgId}}\",\n    \"referenceType\": \"ENVIRONMENT\",\n    \"referenceId\": \"{{envId}}\",\n    \"userId\": \"{{userId}}\",\n    \"role\": \"ENVIRONMENT_PRIMARY_OWNER\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Assigns a role to a cockpit-sourced user. All fields required. `userId` is the USER command's payload `id` (externalId) — the user must exist first. `referenceType` is ENVIRONMENT or ORGANIZATION; `role` is a system role name (e.g. ENVIRONMENT_PRIMARY_OWNER, ORGANIZATION_PRIMARY_OWNER) or default role name (e.g. ENVIRONMENT_OWNER, ORGANIZATION_USER)."
           }
@@ -185,16 +331,30 @@
           "name": "INSTALLATION - update status",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"type\": \"INSTALLATION\",\n  \"payload\": {\n    \"status\": \"ACCEPTED\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Sets the installation's cockpit status (`COCKPIT_INSTALLATION_STATUS` in the installation's additionalInformation). Required: `status`."
           }
@@ -203,16 +363,30 @@
           "name": "GOODBYE - decommission installation (careful)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"type\": \"GOODBYE\",\n  \"payload\": {}\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Marks the installation's cockpit status DELETED — AM considers itself unlinked from cockpit. Only send when testing the decommission path; recover by restarting the stack (or sending INSTALLATION with status ACCEPTED)."
           }
@@ -221,16 +395,30 @@
           "name": "Invalid payload - exercise ERROR reply",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {}\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Missing required fields — AM rejects it and the queue receives a REPLY with `commandStatus: ERROR` and an errorDetails message listing the missing fields."
           }
@@ -243,16 +431,30 @@
               "name": "1. Set license (create)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{cockpitMockUrl}}/_control/send",
-                  "host": ["{{cockpitMockUrl}}"],
-                  "path": ["_control", "send"]
+                  "host": [
+                    "{{cockpitMockUrl}}"
+                  ],
+                  "path": [
+                    "_control",
+                    "send"
+                  ]
                 },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"{{licenseB64}}\"\n  }\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "description": "Creates the org and attaches the license. Produces an `ORGANIZATION_LICENSE_CREATED` audit whose newValue is the decoded tier/packs/features/expiry, `License created for referenceType=ORGANIZATION...` in the management API log, and `License registered for organization={{orgId}}` in both planes once the LICENSE event propagates."
               }
@@ -261,16 +463,30 @@
               "name": "2. Resend same license (no-op)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{cockpitMockUrl}}/_control/send",
-                  "host": ["{{cockpitMockUrl}}"],
-                  "path": ["_control", "send"]
+                  "host": [
+                    "{{cockpitMockUrl}}"
+                  ],
+                  "path": [
+                    "_control",
+                    "send"
+                  ]
                 },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"{{licenseB64}}\"\n  }\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "description": "Identical license — the write is skipped. Expect SUCCEEDED, no new audit, no new event, and `License unchanged ... skipping` at debug level."
               }
@@ -279,16 +495,30 @@
               "name": "3. Change license (update)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{cockpitMockUrl}}/_control/send",
-                  "host": ["{{cockpitMockUrl}}"],
-                  "path": ["_control", "send"]
+                  "host": [
+                    "{{cockpitMockUrl}}"
+                  ],
+                  "path": [
+                    "_control",
+                    "send"
+                  ]
                 },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"{{licenseB64Alt}}\"\n  }\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "description": "Produces `ORGANIZATION_LICENSE_UPDATED`, whose message is a JSON patch from the old decoded license to the new one. The default `{{licenseB64Alt}}` is valid base64 but not a signed license — the license factory does not reject it, it hands back an OSS license, so expect `tier: universe -> oss` and the org silently downgraded until step 4. Swap in a second real key for a tier-to-tier diff."
               }
@@ -297,16 +527,30 @@
               "name": "4. Remove license (delete)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{cockpitMockUrl}}/_control/send",
-                  "host": ["{{cockpitMockUrl}}"],
-                  "path": ["_control", "send"]
+                  "host": [
+                    "{{cockpitMockUrl}}"
+                  ],
+                  "path": [
+                    "_control",
+                    "send"
+                  ]
                 },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"]\n  }\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "description": "Omitting `license` deletes it. Produces `ORGANIZATION_LICENSE_DELETED` carrying the previous decoded license in `outcome.message` rather than a diff, plus `License deregistered for organization={{orgId}}` in both planes."
               }
@@ -315,16 +559,30 @@
               "name": "5. Invalid license (rejected, no audit)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{cockpitMockUrl}}/_control/send",
-                  "host": ["{{cockpitMockUrl}}"],
-                  "path": ["_control", "send"]
+                  "host": [
+                    "{{cockpitMockUrl}}"
+                  ],
+                  "path": [
+                    "_control",
+                    "send"
+                  ]
                 },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"ORGANIZATION\",\n  \"payload\": {\n    \"id\": \"{{orgId}}\",\n    \"name\": \"AM-7237 license traceability\",\n    \"hrids\": [\"{{orgId}}\"],\n    \"license\": \"not base64 !!\"\n  }\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "description": "Documents a known gap: OrganizationServiceImpl validates the license before LicenseService is reached, so the command replies ERROR and no license audit is written at all. The failure audits in LicenseServiceImpl only fire on repository failures, which cannot be triggered from outside."
               }
@@ -341,16 +599,30 @@
           "name": "Reply SUCCEEDED",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"protocolType\": \"REPLY\",\n  \"type\": \"<type-from-queue-entry>\",\n  \"commandId\": \"{{amCommandId}}\",\n  \"commandStatus\": \"SUCCEEDED\",\n  \"payload\": {}\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Set `type` to the queue entry's `type`. `commandStatus` defaults to SUCCEEDED if omitted."
           }
@@ -359,16 +631,30 @@
           "name": "Reply ERROR",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{cockpitMockUrl}}/_control/send",
-              "host": ["{{cockpitMockUrl}}"],
-              "path": ["_control", "send"]
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "send"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"protocolType\": \"REPLY\",\n  \"type\": \"<type-from-queue-entry>\",\n  \"commandId\": \"{{amCommandId}}\",\n  \"commandStatus\": \"ERROR\",\n  \"errorDetails\": \"simulated cockpit failure\",\n  \"payload\": {}\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Exercises AM's failure handling for its own outbound commands."
           }
@@ -376,20 +662,24 @@
       ]
     },
     {
-      "name": "Verify in AM (Management API)",
-      "description": "Companion requests against the management API (port 8093) to check what the cockpit commands actually produced. Run `Get admin token` first — it saves `{{token}}` for the others.",
+      "name": "Sign in (cockpit SSO)",
       "item": [
         {
-          "name": "Get admin token",
+          "name": "1. Mint cockpit SSO token",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test('mock minted an SSO token', function () {",
+                  "    if (pm.response.code === 501) {",
+                  "        throw new Error('the mock has no signing key: restart it with --sso-private-key docker/local-stack/dev/cockpit/cockpit-key.pem');",
+                  "    }",
+                  "    pm.response.to.have.status(200);",
+                  "});",
                   "if (pm.response.code === 200) {",
-                  "    pm.collectionVariables.set('token', pm.response.json().access_token);",
-                  "    console.log('saved management API token');",
+                  "    pm.collectionVariables.set('ssoToken', pm.response.json().token);",
                   "}"
                 ]
               }
@@ -397,39 +687,131 @@
           ],
           "request": {
             "method": "POST",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
-                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
-              ]
-            },
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": {
-              "raw": "{{managementUrl}}/management/auth/token",
-              "host": ["{{managementUrl}}"],
-              "path": ["management", "auth", "token"]
-            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"grant_type\": \"password\",\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"sub\": \"{{userId}}\",\n  \"org\": \"{{orgId}}\",\n  \"env\": \"{{envId}}\",\n  \"redirectUri\": \"{{consoleUrl}}\",\n  \"ttlSeconds\": 300\n}"
             },
-            "description": "Saves `access_token` to `{{token}}` for the other requests in this folder."
+            "url": {
+              "raw": "{{cockpitMockUrl}}/_control/sso-token",
+              "host": [
+                "{{cockpitMockUrl}}"
+              ],
+              "path": [
+                "_control",
+                "sso-token"
+              ]
+            },
+            "description": "Mints the short-lived RS512 token cockpit would redirect a browser to AM with. Run the ORGANIZATION, USER, MEMBERSHIP and ENVIRONMENT commands first: AM resolves the user by `sub` plus source `cockpit`, and rejects the sign-in if the `env` does not exist.\n\n`redirectUri` is a local-stack concession. Real Cockpit omits it for a managed installation (EndpointService only sets uiUrl on its legacy branch), so AM issues a RELATIVE redirect to /environments/<hrid> - which works in production because the console and the management API share the CONSOLE_API host. The local stack splits them across ports, so without {{consoleUrl}} the browser resolves that path against the management API and 404s."
           }
         },
+        {
+          "name": "2. Sign in via cockpit SSO (saves token)",
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// AM answers 302 and sets Auth-Graviteeio-AM. Redirects are disabled on this request so the header",
+                  "// is visible; the cookie jar is used as a fallback in case the client hides it.",
+                  "function fromHeaders() {",
+                  "    const setCookies = pm.response.headers.all()",
+                  "        .filter((h) => h.key.toLowerCase() === 'set-cookie')",
+                  "        .map((h) => h.value);",
+                  "    const auth = setCookies.find((v) => v.startsWith('Auth-Graviteeio-AM='));",
+                  "    return auth ? auth.split(';')[0].substring('Auth-Graviteeio-AM='.length) : undefined;",
+                  "}",
+                  "function fromJar() {",
+                  "    const c = pm.cookies.get('Auth-Graviteeio-AM');",
+                  "    return c === undefined || c === null ? undefined : c;",
+                  "}",
+                  "",
+                  "pm.test('cockpit SSO returned a session', function () {",
+                  "    pm.response.to.have.status(302);",
+                  "    let raw = fromHeaders() || fromJar();",
+                  "    if (!raw) {",
+                  "        throw new Error('no Auth-Graviteeio-AM cookie; run the ORGANIZATION, USER, MEMBERSHIP and ENVIRONMENT commands first, then request 1');",
+                  "    }",
+                  "    raw = decodeURIComponent(raw);",
+                  "    // AM sets an RFC 2109 cookie, so the value arrives wrapped in double quotes",
+                  "    if (raw.startsWith('\"') && raw.endsWith('\"')) { raw = raw.slice(1, -1); }",
+                  "    if (!raw.startsWith('Bearer ')) {",
+                  "        throw new Error('cookie has no Bearer prefix: ' + raw.substring(0, 24));",
+                  "    }",
+                  "    const token = raw.substring('Bearer '.length);",
+                  "    pm.collectionVariables.set('token', token);",
+                  "    // an active environment defining `token` would otherwise shadow the collection variable",
+                  "    if (pm.environment.has('token')) { pm.environment.set('token', token); }",
+                  "    console.log('saved management API token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{managementUrl}}/management/auth/cockpit?token={{ssoToken}}",
+              "host": [
+                "{{managementUrl}}"
+              ],
+              "path": [
+                "management",
+                "auth",
+                "cockpit"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{ssoToken}}"
+                }
+              ]
+            },
+            "description": "Exchanges the cockpit token for a management session. Redirects are disabled so the Set-Cookie header is visible; the cookie value is `Bearer <management JWT>`, which the test script unwraps into {{token}} for every later request.\n\nPaste the same URL into a browser to land logged in on the console at {{consoleUrl}} - start the stack with `--ui` for that (Console on :4200). The cookie is host-only for `localhost` and cookies ignore ports, so the console's XHRs to the management API carry it (the UI sets withCredentials: true)."
+          }
+        }
+      ],
+      "description": "Managed cloud has no inline admin: the only way in is the token cockpit signs. Run the provisioning commands first, then these two."
+    },
+    {
+      "name": "Verify in AM (Management API)",
+      "description": "Companion requests against the management API (port 8093) to check what the cockpit commands actually produced. Run `Get admin token` first — it saves `{{token}}` for the others.",
+      "item": [
         {
           "name": "List organization entrypoints",
           "request": {
             "method": "GET",
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             },
             "url": {
-              "raw": "{{managementUrl}}/management/organizations/DEFAULT/entrypoints",
-              "host": ["{{managementUrl}}"],
-              "path": ["management", "organizations", "DEFAULT", "entrypoints"]
+              "raw": "{{managementUrl}}/management/organizations/{{orgId}}/entrypoints",
+              "host": [
+                "{{managementUrl}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{orgId}}",
+                "entrypoints"
+              ]
             },
             "description": "Shows the entrypoints created from the ENVIRONMENT command's GATEWAY access points. Caches warm async — retry if a just-sent command's entrypoints aren't visible yet."
           }
@@ -440,12 +822,25 @@
             "method": "GET",
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             },
             "url": {
-              "raw": "{{managementUrl}}/management/organizations/DEFAULT/environments",
-              "host": ["{{managementUrl}}"],
-              "path": ["management", "organizations", "DEFAULT", "environments"]
+              "raw": "{{managementUrl}}/management/organizations/{{orgId}}/environments",
+              "host": [
+                "{{managementUrl}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{orgId}}",
+                "environments"
+              ]
             },
             "description": "Shows environments including those created by ENVIRONMENT commands."
           }
@@ -486,13 +881,31 @@
             "method": "GET",
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             },
             "url": {
               "raw": "{{managementUrl}}/management/organizations/{{orgId}}/audits?size=20",
-              "host": ["{{managementUrl}}"],
-              "path": ["management", "organizations", "{{orgId}}", "audits"],
-              "query": [{ "key": "size", "value": "20" }]
+              "host": [
+                "{{managementUrl}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{orgId}}",
+                "audits"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
             },
             "description": "The traceability this ticket is about. Asserts the license audits exist and that the raw base64 license appears nowhere in them — only the decoded metadata is audited. Append `&type=ORGANIZATION_LICENSE_UPDATED` to filter to one event. There is no organization-level audit screen in the Console, so this endpoint is the only way to read them."
           }
@@ -503,12 +916,25 @@
             "method": "GET",
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             },
             "url": {
               "raw": "{{managementUrl}}/management/organizations/{{orgId}}/license",
-              "host": ["{{managementUrl}}"],
-              "path": ["management", "organizations", "{{orgId}}", "license"]
+              "host": [
+                "{{managementUrl}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{orgId}}",
+                "license"
+              ]
             },
             "description": "The license AM is actually applying for the org. Falls back to the platform license when the org has none, so after `4. Remove license` this returns the platform license rather than a 404."
           }
@@ -536,12 +962,25 @@
             "method": "GET",
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             },
             "url": {
               "raw": "{{managementUrl}}/management/platform/audits/events",
-              "host": ["{{managementUrl}}"],
-              "path": ["management", "platform", "audits", "events"]
+              "host": [
+                "{{managementUrl}}"
+              ],
+              "path": [
+                "management",
+                "platform",
+                "audits",
+                "events"
+              ]
             },
             "description": "The list backing the Console audit filter. Confirms the three ORGANIZATION_LICENSE_* types are registered in EventType.types()."
           }

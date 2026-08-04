@@ -15,11 +15,11 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { setup } from '../test-fixture';
 import { CloudWebAuthnFixture, setupCloudWebAuthnFixture } from './fixtures/cloud-webauthn-fixture';
+import { CloudOrganizationFixture, setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 
 setup(200000);
 
@@ -34,17 +34,18 @@ setup(200000);
  * one has to survive, because existing credentials are bound to it.
  */
 describe('AM - Cloud - webauthn relying party from the environment entrypoint', () => {
-  let accessToken: string;
+  let organization: CloudOrganizationFixture;
   let fixture: CloudWebAuthnFixture;
 
   beforeAll(async () => {
-    accessToken = await requestAdminAccessToken();
     await waitForCockpitConnection();
-    fixture = await setupCloudWebAuthnFixture(accessToken);
+    organization = await setupCloudOrganizationFixture('cloud-org-webauthn');
+    fixture = await setupCloudWebAuthnFixture(organization);
   });
 
   afterAll(async () => {
     await fixture?.cleanup();
+    await organization?.cleanup();
   });
 
   it('scopes the ceremony to the environment entrypoint rather than the configured localhost', async () => {

@@ -17,8 +17,10 @@
 import { getDomainApi, getEntrypointsApi } from '@management-commands/service/utils';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
+import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
+import { CloudOrganizationFixture } from './cloud-organization-fixture';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
@@ -59,9 +61,12 @@ export interface CloudEntrypointFixture {
  * update/eviction path (the handler deletes-and-recreates the environment's entrypoints each time).
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudEntrypointFixture = async (accessToken: string): Promise<CloudEntrypointFixture> => {
-  const organizationId = process.env.AM_DEF_ORG_ID;
-  const environmentId = 'cloud-env-ep';
+export const setupCloudEntrypointFixture = async (organization: CloudOrganizationFixture): Promise<CloudEntrypointFixture> => {
+  const organizationId = organization.organizationId;
+  const accessToken = organization.accessToken;
+  // Derived from the organization so two specs using this fixture never collide on the environment id
+  // (ids are unique across organizations in AM), while staying fixed so each command is an upsert.
+  const environmentId = `${organizationId}-env`;
   const uniqueHost = () => `${uniqueName('gw', true)}.example.com`;
 
   // Track every host we ever provision so cleanup removes all of them, not just the current set
@@ -94,6 +99,9 @@ export const setupCloudEntrypointFixture = async (accessToken: string): Promise<
     POLL,
   );
 
+  // 2b. Cockpit grants the environment owner right after creating the environment.
+  await organization.grantEnvironmentOwnership(environmentId);
+
   // 3. Deploy an enabled domain in that environment so its cached entrypoints surface on domain state.
   const domainApi = getDomainApi(accessToken);
   const domain = await domainApi.createDomain({
@@ -109,10 +117,10 @@ export const setupCloudEntrypointFixture = async (accessToken: string): Promise<
     return (state.entrypoints ?? []).map((e) => e.url).sort();
   };
 
+  const deleteDomain = bindSafeDeleteCloudDomain({ accessToken, organizationId, environmentId });
+
   const cleanup = async () => {
-    await domainApi
-      .deleteDomain({ organizationId, environmentId, domain: domain.id })
-      .catch((e) => console.warn(`cleanup: failed to delete domain ${domain.id}: ${e.message}`));
+    await deleteDomain(domain.id);
     const provisionedUrls = [...provisionedHosts].map(urlFor);
     const entrypoints = await getEntrypointsApi(accessToken)
       .listEntrypoints({ organizationId })

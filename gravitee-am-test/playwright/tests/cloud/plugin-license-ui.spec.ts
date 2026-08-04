@@ -19,42 +19,36 @@
  * Verifies the lock icon + upsell dialog genuinely pre-empt the backend 403 when
  * unlicensed, and that a licensed org can create the EE plugin normally end-to-end.
  *
- * Requires: --cloud stack (local-stack.sh up --cloud).
+ * Requires: --cloud stack with UI (local-stack.sh up --cloud --ui).
+ * Signs in through Cockpit SSO against a Cockpit-provisioned organization — no DEFAULT admin.
  */
-import { test, expect } from '../../fixtures/base.fixture';
+import { test, expect } from '../../fixtures/cloud-plugin-license.fixture';
 import { linkJira } from '../../utils/jira';
-import { sendOrgCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
-import { stackLicenseBase64 } from '@cloud-commands/license-key';
-import { waitForOrgLicenseScope } from '@management-commands/license-management-commands';
-
-const universeLicense = stackLicenseBase64();
 
 test.describe('Console UI EE plugin license gating', () => {
   // Both tests mutate the same org-level license via cockpit — must not run concurrently.
   test.describe.configure({ mode: 'serial' });
 
-  test.afterEach(async () => {
+  test.afterEach(async ({ licenseFixture }) => {
     // Reset to a clean no-license state so tests don't leak state to each other.
-    const id = await sendOrgCommand('DEFAULT');
-    await waitForCockpitReply(id, { timeoutMillis: 15000 });
+    await licenseFixture.clearOrgLicense();
   });
 
   test('AM-7240 / AM-7241: EE plugin create is blocked via the console UI with no org license', async ({
-    page,
+    signedInPage: page,
     testDomain,
-    adminToken,
+    environmentHrid,
+    licenseFixture,
   }, testInfo) => {
     linkJira(testInfo, 'AM-7240', 'AM-7241');
 
-    const clearId = await sendOrgCommand('DEFAULT');
-    await waitForCockpitReply(clearId, { timeoutMillis: 15000 });
-    await waitForOrgLicenseScope(adminToken, 'PLATFORM');
+    await licenseFixture.clearOrgLicense();
 
     // Wait for the license fetch to resolve before checking the DOM — GioLicenseService caches
     // it once per page load, so checking too early would race the initial render.
     await Promise.all([
       page.waitForResponse((res) => res.url().includes('/license') && res.request().method() === 'GET'),
-      page.goto(`/environments/default/domains/${testDomain.id}/settings/providers/new`),
+      page.goto(`/environments/${environmentHrid}/domains/${testDomain.id}/settings/providers/new`),
     ]);
 
     await page.getByLabel('Filter providers...').fill('Azure');
@@ -78,17 +72,16 @@ test.describe('Console UI EE plugin license gating', () => {
   });
 
   test('AM-7240 / AM-7241: EE plugin create succeeds via the console UI with a universe org license', async ({
-    page,
+    signedInPage: page,
     testDomain,
-    adminToken,
+    environmentHrid,
+    licenseFixture,
   }, testInfo) => {
     linkJira(testInfo, 'AM-7240', 'AM-7241');
 
-    const id = await sendOrgCommand('DEFAULT', universeLicense);
-    await waitForCockpitReply(id, { timeoutMillis: 15000 });
-    await waitForOrgLicenseScope(adminToken, 'ORGANIZATION');
+    await licenseFixture.setUniverseLicense();
 
-    await page.goto(`/environments/default/domains/${testDomain.id}/settings/providers/new`);
+    await page.goto(`/environments/${environmentHrid}/domains/${testDomain.id}/settings/providers/new`);
     await page.reload();
 
     await page.getByLabel('Filter providers...').fill('Azure');
