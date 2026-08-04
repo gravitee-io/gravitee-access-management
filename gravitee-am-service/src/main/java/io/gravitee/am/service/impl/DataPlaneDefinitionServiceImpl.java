@@ -42,6 +42,7 @@ import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DataPlaneDefinitionAuditBuilder;
+import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -76,6 +77,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     private final PluginConfigurationValidatorsRegistry pluginValidatorsRegistry;
     private final List<DataPlaneConfigHandler> configHandlers;
     private final AuditService auditService;
+    private final Configuration configuration;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -86,7 +88,8 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                           DataPlanePluginManager dataPlanePluginManager,
                                           PluginConfigurationValidatorsRegistry pluginValidatorsRegistry,
                                           List<DataPlaneConfigHandler> configHandlers,
-                                          AuditService auditService) {
+                                          AuditService auditService,
+                                          Configuration configuration) {
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
         this.domainRepository = domainRepository;
         this.organizationService = organizationService;
@@ -95,6 +98,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         this.pluginValidatorsRegistry = pluginValidatorsRegistry;
         this.configHandlers = configHandlers;
         this.auditService = auditService;
+        this.configuration = configuration;
     }
 
     @Override
@@ -242,8 +246,8 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         if (!hasText(payload.getId())) {
             throw new InvalidParameterException("'id' is required");
         }
-        if (DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(payload.getId())) {
-            throw new InvalidParameterException("'" + DataPlaneDescription.DEFAULT_DATA_PLANE_ID + "' is reserved for the data plane declared in the gravitee.yml");
+        if (DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(payload.getId()) || isDeclaredInConfiguration(payload.getId())) {
+            throw new InvalidParameterException("'" + payload.getId() + "' is reserved for a data plane declared in the gravitee.yml");
         }
         if (!hasText(payload.getName())) {
             throw new InvalidParameterException("'name' is required");
@@ -266,6 +270,17 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         definition.setEnvironmentId(hasText(payload.getEnvironmentId()) ? payload.getEnvironmentId() : Environment.DEFAULT);
         definition.setConfiguration(payload.getConfiguration().toString());
         return definition;
+    }
+
+    // an id colliding with a gravitee.yml plane would persist but never register: the registry keeps
+    // serving the yml plane, and domains binding to the id would silently land on the wrong store
+    private boolean isDeclaredInConfiguration(String id) {
+        for (int i = 0; configuration.containsProperty("dataPlanes[" + i + "].id"); i++) {
+            if (id.equals(configuration.getProperty("dataPlanes[" + i + "].id", String.class))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateConfiguration(String type, JsonNode configuration) {

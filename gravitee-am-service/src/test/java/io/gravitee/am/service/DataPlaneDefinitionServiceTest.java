@@ -100,6 +100,9 @@ class DataPlaneDefinitionServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private io.gravitee.node.api.configuration.Configuration configuration;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final PluginConfigurationValidatorsRegistry validatorsRegistry = new PluginConfigurationValidatorsRegistry();
@@ -116,7 +119,8 @@ class DataPlaneDefinitionServiceTest {
                 dataPlanePluginManager,
                 validatorsRegistry,
                 List.of(new MongoDataPlaneConfigHandler(), new JdbcDataPlaneConfigHandler()),
-                auditService);
+                auditService,
+                configuration);
 
         when(dataPlanePluginManager.get("dataplane-am-mongodb")).thenReturn(mock(DataPlane.class));
         when(dataPlanePluginManager.get("dataplane-am-jdbc")).thenReturn(mock(DataPlane.class));
@@ -260,6 +264,19 @@ class DataPlaneDefinitionServiceTest {
         payload.setId("default");
 
         assertRejected(payload, InvalidParameterException.class, "reserved");
+    }
+
+    @Test
+    void shouldRejectAnIdDeclaredInTheGraviteeYml() {
+        when(configuration.containsProperty("dataPlanes[0].id")).thenReturn(true);
+        when(configuration.getProperty("dataPlanes[0].id", String.class)).thenReturn("default");
+        when(configuration.containsProperty("dataPlanes[1].id")).thenReturn(true);
+        when(configuration.getProperty("dataPlanes[1].id", String.class)).thenReturn("dp-yml");
+
+        NewDataPlaneDefinition payload = payload();
+        payload.setId("dp-yml");
+
+        assertRejected(payload, InvalidParameterException.class, "reserved for a data plane declared in the gravitee.yml");
     }
 
     @Test
