@@ -31,6 +31,8 @@ process.env.AM_DEF_ORG_ID = process.env.AM_DEF_ORG_ID || 'DEFAULT';
 process.env.AM_DEF_ENV_ID = process.env.AM_DEF_ENV_ID || 'DEFAULT';
 // The Angular router uses the environment hrid (lowercase), not the ID.
 process.env.AM_DEF_ENV_HRID = process.env.AM_DEF_ENV_HRID || 'default';
+// Cockpit mock — cloud specs only (local-stack.sh up --cloud).
+process.env.AM_COCKPIT_MOCK_URL = process.env.AM_COCKPIT_MOCK_URL || 'http://localhost:8085';
 // fakeSMTP UI (matches api/config/dev.setup.js) — forgot-password Playwright specs
 process.env.FAKE_SMTP = process.env.FAKE_SMTP || 'http://localhost:5080';
 process.env.INTERNAL_FAKE_SMTP_HOST = process.env.INTERNAL_FAKE_SMTP_HOST || 'smtp';
@@ -51,7 +53,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
 
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright/playwright-report' }], ['junit', { outputFile: 'playwright/junit-results/junit.xml' }]]
+    ? [
+        ['list'],
+        ['html', { open: 'never', outputFolder: 'playwright/playwright-report' }],
+        ['junit', { outputFile: 'playwright/junit-results/junit.xml' }],
+      ]
     : [['html', { open: 'on-failure', outputFolder: 'playwright/playwright-report' }]],
 
   use: {
@@ -75,6 +81,20 @@ export default defineConfig({
 
     {
       name: 'chromium',
+      testIgnore: '**/cloud/**',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/fixtures/.auth/admin.json',
+      },
+      dependencies: ['setup'],
+    },
+
+    // Cloud specs need a managed-cloud stack (cockpit-mock + empty platform license — see
+    // docker-compose.cloud.yml) and are excluded from the 'chromium' project above. Run
+    // explicitly via `pw:ci:cloud` / `--project=cloud` against `local-stack.sh up --cloud`.
+    {
+      name: 'cloud',
+      testMatch: '**/cloud/**',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/fixtures/.auth/admin.json',

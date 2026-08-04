@@ -82,7 +82,37 @@ export const isCockpitConnected = async (): Promise<boolean> => {
 
 /** Wait until AM has established its WebSocket connection to the cockpit mock. */
 export const waitForCockpitConnection = (options?: { timeoutMillis?: number; intervalMillis?: number }): Promise<boolean> =>
-  retryUntil(() => isCockpitConnected().catch(() => false), (connected) => connected === true, {
-    timeoutMillis: options?.timeoutMillis ?? 30000,
-    intervalMillis: options?.intervalMillis ?? 1000,
+  retryUntil(
+    () => isCockpitConnected().catch(() => false),
+    (connected) => connected === true,
+    {
+      timeoutMillis: options?.timeoutMillis ?? 30000,
+      intervalMillis: options?.intervalMillis ?? 1000,
+    },
+  );
+
+/** Drain all pending entries from the mock queue so tests start with a clean slate. */
+export const drainCockpitQueue = async (): Promise<void> => {
+  for (;;) {
+    const response = await fetch(`${baseUrl}/_control/queue`);
+    if (response.status === 204) return;
+    if (response.status !== 200) {
+      throw new Error(`cockpit mock /_control/queue returned ${response.status}: ${await response.text()}`);
+    }
+  }
+};
+
+/**
+ * Send a Cockpit ORGANIZATION command for the given org.
+ * Omit `license` to clear the org license; supply a base64-encoded key to set it.
+ */
+export const sendOrgCommand = (orgId: string, license?: string): Promise<string> =>
+  sendCockpitCommand({
+    type: 'ORGANIZATION',
+    payload: {
+      id: orgId,
+      name: orgId,
+      hrids: [orgId.toLowerCase()],
+      ...(license !== undefined ? { license } : {}),
+    },
   });

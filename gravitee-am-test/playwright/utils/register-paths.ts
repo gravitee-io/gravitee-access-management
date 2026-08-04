@@ -38,6 +38,7 @@ const aliases: Record<string, string> = {
   '@management-commands/': 'api/commands/management/',
   '@gateway-apis/': 'api/gateway/apis/',
   '@gateway-commands/': 'api/commands/gateway/',
+  '@cloud-commands/': 'api/commands/cloud/',
   '@utils-commands/': 'api/commands/utils/',
   '@utils/': 'api/utils/',
   '@api-fixtures/': 'api/fixtures/',

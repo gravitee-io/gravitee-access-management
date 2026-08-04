@@ -306,6 +306,13 @@ latest() { ls -t $1 2>/dev/null | head -1 || true; }   # newest file matching a 
 # Speed flags safe for a local dev build (skip checks/docs/coverage/formatting).
 MVN_SPEED=(-Dlicense.skip=true -Dmaven.javadoc.skip=true -Djacoco.skip=true -Dprettier.skip=true)
 
+# The gateway/management-api standalone-distribution modules gate their EE plugin
+# zips behind Maven profiles: 'ee-bundle' (activeByDefault) and 'addons-bundle'
+# (off by default, e.g. gravitee-am-gateway-handler-saml2-idp). Activating any
+# profile via -P deactivates activeByDefault ones unless listed explicitly, so
+# both must be named together to get the full plugin set the test suites expect.
+MVN_BACKEND_PROFILES=(-Pee-bundle,addons-bundle)
+
 # The distribution plugin dirs live in SOURCE (src/main/resources/plugins), so
 # `mvn clean` never touches them. Stale-version zips left here get bundled
 # alongside the freshly-built ones → runtime plugin/classpath conflicts (e.g.
@@ -411,10 +418,10 @@ source_build() {
   fi
 
   if [ "$need_backend" -eq 1 ] && [ "$need_ui" -eq 1 ]; then
-    run_maven "clean install (backend)" clean install -pl '!gravitee-am-ui' -DskipTests "${MVN_SPEED[@]}"
+    run_maven "clean install (backend)" clean install -pl '!gravitee-am-ui' -DskipTests "${MVN_SPEED[@]}" "${MVN_BACKEND_PROFILES[@]}"
     run_maven "install (UI)" install -pl gravitee-am-ui -DskipTests "${MVN_SPEED[@]}"
   elif [ "$need_backend" -eq 1 ]; then
-    run_maven "clean install (backend)" clean install -pl '!gravitee-am-ui' -DskipTests "${MVN_SPEED[@]}"
+    run_maven "clean install (backend)" clean install -pl '!gravitee-am-ui' -DskipTests "${MVN_SPEED[@]}" "${MVN_BACKEND_PROFILES[@]}"
   elif [ "$need_ui" -eq 1 ]; then
     run_maven "install (UI)" install -pl gravitee-am-ui -DskipTests "${MVN_SPEED[@]}"
   elif [ "$BUILD_MODE" = "skip" ]; then
