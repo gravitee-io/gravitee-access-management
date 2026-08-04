@@ -801,6 +801,128 @@ jobs:
           when: always
           command: npm --prefix docker/local-stack run stack:down
 
+  run_playwright_tests_cloud_mongo:
+    parameters:
+      mongo_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: mongodb
+      GIO_MAX_MEM: 512m
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Install Playwright browsers
+          command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - run:
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
+      - run:
+          name: Build stack (gateway + management)
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Build UI image
+          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - run:
+          name: Spin up cloud stack with Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:cloud:mongo
+      - run:
+          name: Check stack health before Cloud Playwright tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+      - run:
+          name: Run Cloud Playwright E2E tests
+          command: npm --prefix gravitee-am-test run pw:ci:cloud
+      - store_test_results:
+          path: gravitee-am-test/playwright/junit-results
+      - store_artifacts:
+          path: gravitee-am-test/playwright/playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: gravitee-am-test/playwright/test-results
+          destination: playwright-traces
+      - run:
+          name: Stop stack
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_playwright_tests_cloud_psql:
+    parameters:
+      psql_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: jdbc
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Install Playwright browsers
+          command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - run:
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
+      - run:
+          name: Prepare JDBC plugins
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
+      - run:
+          name: Build stack (gateway + management)
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Build UI image
+          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - run:
+          name: Spin up cloud stack with Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:cloud:psql
+      - run:
+          name: Check stack health before Cloud Playwright tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+      - run:
+          name: Run Cloud Playwright E2E tests
+          command: npm --prefix gravitee-am-test run pw:ci:cloud
+      - store_test_results:
+          path: gravitee-am-test/playwright/junit-results
+      - store_artifacts:
+          path: gravitee-am-test/playwright/playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: gravitee-am-test/playwright/test-results
+          destination: playwright-traces
+      - run:
+          name: Stop stack
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
   run_postman_tests_mongo:
     parameters:
       mongo_version:
@@ -2231,6 +2353,20 @@ workflows:
             parameters:
               mongo_version: ["8.2"]
       - run_playwright_tests_psql:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
+      - run_playwright_tests_cloud_mongo:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_playwright_tests_cloud_psql:
           context: cicd-orchestrator
           requires:
             - process_pull_request

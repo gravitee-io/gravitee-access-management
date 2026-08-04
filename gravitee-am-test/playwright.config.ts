@@ -53,7 +53,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
 
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright/playwright-report' }], ['junit', { outputFile: 'playwright/junit-results/junit.xml' }]]
+    ? [
+        ['list'],
+        ['html', { open: 'never', outputFolder: 'playwright/playwright-report' }],
+        ['junit', { outputFile: 'playwright/junit-results/junit.xml' }],
+      ]
     : [['html', { open: 'on-failure', outputFolder: 'playwright/playwright-report' }]],
 
   use: {
@@ -77,6 +81,20 @@ export default defineConfig({
 
     {
       name: 'chromium',
+      testIgnore: '**/cloud/**',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/fixtures/.auth/admin.json',
+      },
+      dependencies: ['setup'],
+    },
+
+    // Cloud specs need a managed-cloud stack (cockpit-mock + empty platform license — see
+    // docker-compose.cloud.yml) and are excluded from the 'chromium' project above. Run
+    // explicitly via `pw:ci:cloud` / `--project=cloud` against `local-stack.sh up --cloud`.
+    {
+      name: 'cloud',
+      testMatch: '**/cloud/**',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/fixtures/.auth/admin.json',

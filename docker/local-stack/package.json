@@ -16,6 +16,8 @@
     "stack:ci:setup:cloud:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.cloud.yml up -d",
     "stack:ci:pw:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml up -d",
     "stack:ci:pw:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml up -d",
+    "stack:ci:pw:setup:cloud:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml -f dev/docker-compose.cloud.yml up -d",
+    "stack:ci:pw:setup:cloud:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml -f dev/docker-compose.cloud.yml up -d",
     "stack:dev:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml up -d",
     "stack:dev:setup:mongo:spire": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose.spire.yml up -d",
     "stack:dev:spire": "docker compose -f dev/docker-compose.spire.yml up -d",
