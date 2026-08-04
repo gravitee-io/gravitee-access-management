@@ -19,7 +19,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
 import { ActivatedRoute } from '@angular/router';
-import { compact, intersectionWith, map } from 'lodash';
+import { intersectionWith, map } from 'lodash';
 
 export interface Scope {
   id: string;
@@ -37,9 +37,9 @@ export interface Scope {
 })
 export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  @Output() onScopeSelection = new EventEmitter();
-  @Input() initialSelectedScopes: string[];
-  @Input() readonly: boolean;
+  @Output() onScopeSelection = new EventEmitter<Scope[]>();
+  @Input() initialSelectedScopes: string[] = [];
+  @Input() readonly = false;
 
   scopes: MatTableDataSource<Scope>;
   selection: SelectionModel<Scope>;
@@ -65,24 +65,18 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
     this.scopes = new MatTableDataSource(datasource);
     this.scopes.paginator = this.paginator;
     const initialSelectedValues = intersectionWith(this.scopes.data, this.initialSelectedScopes, (scope, key) => scope.key === key);
-    this.selection = new SelectionModel<Scope>(true, compact(initialSelectedValues));
+    this.selection = new SelectionModel<Scope>(true, initialSelectedValues);
   }
 
   ngAfterViewInit() {
-    // implement custom sort to manage select checkbox
-    this.scopes.sortingDataAccessor = (scope, property) => {
-      if (property === 'select') {
-        return this.selection.isSelected(scope) ? 0 : 1;
-      } else {
-        return scope[property];
-      }
-    };
     this.applySort();
   }
 
-  applyChange(row: any) {
+  applyChange(row: Scope) {
+    if (this.readonly) {
+      return;
+    }
     this.selection.toggle(row);
-    this.applySort();
     this.onScopeSelection.emit(this.selection.selected);
   }
 
@@ -105,6 +99,9 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
 
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle() {
+    if (this.readonly) {
+      return;
+    }
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
