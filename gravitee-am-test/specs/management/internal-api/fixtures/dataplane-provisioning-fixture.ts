@@ -21,6 +21,9 @@ import {
   listDataPlanes,
   NewDataPlane,
 } from '@management-commands/dataplane-provisioning-commands';
+import { createDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 export const SECRET_PASSWORD = 'sup3r-s3cret-e2e';
 export const SECRET_USERNAME = 'am-e2e-user';
@@ -86,6 +89,46 @@ export function jdbcPayload(id: string): NewDataPlane {
   };
 }
 
+/**
+ * A data plane the running stack can genuinely connect to, mirroring its own `dataPlanes[0]`.
+ *
+ * The payloads above are never dialled, because nothing connects at provisioning time. Registering one
+ * does build a provider though, and that needs both a reachable store and the matching
+ * ConnectionProvider bean, which only exists for the repository type the stack was started with.
+ */
+export function connectablePayload(id: string): NewDataPlane {
+  return process.env.REPOSITORY_TYPE === 'jdbc'
+    ? {
+        id,
+        name: 'E2E connectable data plane',
+        type: 'jdbc',
+        configuration: {
+          jdbc: {
+            driver: 'postgresql',
+            host: 'postgres',
+            port: 5432,
+            database: 'postgres',
+            username: 'postgres',
+            password: 'postgres',
+          },
+        },
+      }
+    : {
+        id,
+        name: 'E2E connectable data plane',
+        type: 'mongodb',
+        configuration: { mongodb: { dbname: 'gravitee-am', host: 'mongodb', port: 27017 } },
+      };
+}
+
+export async function provisionConnectableDataPlane(id: string): Promise<DataPlaneSummary> {
+  const created = await createDataPlane(connectablePayload(id));
+  if (created.status !== 201) {
+    throw new Error(`Unable to provision a connectable data plane: status=${created.status} body=${created.raw}`);
+  }
+  return created.body;
+}
+
 export async function deleteProvisionedDataPlanes(): Promise<void> {
   const listed = await listDataPlanes();
   const provisioned = listed.body?.filter((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID) ?? [];
@@ -100,6 +143,29 @@ export async function provisionDataPlane(id: string): Promise<DataPlaneSummary> 
     throw new Error(`Unable to provision a data plane: status=${created.status} body=${created.raw}`);
   }
   return created.body;
+}
+
+export interface BoundDomain {
+  domainId: string;
+  dataPlaneId: string;
+  accessToken: string;
+}
+
+/**
+ * Creates a domain against a data plane provisioned since the node started. Domain creation checks the
+ * id against the data plane registry, so this only succeeds once the definition has been registered
+ * at runtime rather than at the next restart (AM-7260).
+ */
+export async function createDomainOnDataPlane(dataPlaneId: string): Promise<BoundDomain> {
+  const accessToken = await requestAdminAccessToken();
+  const domain = await createDomain(accessToken, uniqueName('dp-e2e-bound', true), 'Bound to a provisioned data plane', dataPlaneId);
+  return { domainId: domain.id, dataPlaneId: domain.dataPlaneId, accessToken };
+}
+
+export async function releaseBoundDomain(bound: BoundDomain | undefined): Promise<void> {
+  if (bound) {
+    await safeDeleteDomain(bound.domainId, bound.accessToken);
+  }
 }
 
 export const ALLOWED_SUMMARY_FIELDS = [
