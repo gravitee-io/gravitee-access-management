@@ -54,7 +54,7 @@ export class ClientRegistrationAllowedScopeComponent implements OnInit, OnDestro
       this.domain = domain;
       this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
       this.isAllowedScopesEnabled = this.domain.oidc.clientRegistrationSettings.isAllowedScopesEnabled;
-      this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.allowedScopes;
+      this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.allowedScopes ?? [];
     });
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
   }
@@ -78,14 +78,16 @@ export class ClientRegistrationAllowedScopeComponent implements OnInit, OnDestro
     const domain = {
       oidc: {
         clientRegistrationSettings: {
-          allowedScopes: map(this.selectedScopes, (scope) => scope.key),
+          allowedScopes: this.selectedScopes ? map(this.selectedScopes, (scope) => scope.key) : this.initialSelectedScopes,
           isAllowedScopesEnabled: this.isAllowedScopesEnabled,
         },
       },
     };
 
     this.domainService.patchOpenidDCRSettings(this.domain.id, domain).subscribe((response) => {
+      this.domainStore.set(response);
       this.domain = response;
+      this.domainService.notify(this.domain);
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       this.formChanged = false;
     });
