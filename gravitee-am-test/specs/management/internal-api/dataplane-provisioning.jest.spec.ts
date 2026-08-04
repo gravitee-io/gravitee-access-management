@@ -43,6 +43,7 @@ import {
   uriFormPayload,
 } from './fixtures/dataplane-provisioning-fixture';
 import { setup } from '../../test-fixture';
+import { uniqueName } from '@utils-commands/misc';
 
 setup(60000);
 
@@ -303,7 +304,9 @@ describe('Data plane provisioning (management technical API)', () => {
     });
 
     it('refuses to delete a data plane a domain still uses, and allows it once the domain is gone', async () => {
-      const provisioned = await provisionConnectableDataPlane(PROVISIONED_ID);
+      // unique per attempt: a leaked bound domain wedges its data plane id (the delete guard blocks
+      // cleanup), so reusing a shared id would fail every later test and retry with "already exists"
+      const provisioned = await provisionConnectableDataPlane(uniqueName('dp-e2e-guarded', true));
       let bound: BoundDomain | undefined;
 
       try {
@@ -324,7 +327,7 @@ describe('Data plane provisioning (management technical API)', () => {
 
   describe('runtime registration', () => {
     it('accepts a domain on a data plane provisioned since the node started', async () => {
-      const provisioned = await provisionConnectableDataPlane(PROVISIONED_ID);
+      const provisioned = await provisionConnectableDataPlane(uniqueName('dp-e2e-live', true));
       let bound: BoundDomain | undefined;
 
       try {

@@ -131,9 +131,16 @@ export async function provisionConnectableDataPlane(id: string): Promise<DataPla
 
 export async function deleteProvisionedDataPlanes(): Promise<void> {
   const listed = await listDataPlanes();
-  const provisioned = listed.body?.filter((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID) ?? [];
+  if (listed.status !== 200) {
+    console.warn(`⚠️  Could not list data planes for cleanup: status=${listed.status}`);
+    return;
+  }
+  const provisioned = listed.body.filter((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID);
   for (const dataPlane of provisioned) {
-    await deleteDataPlane(dataPlane.id);
+    const deleted = await deleteDataPlane(dataPlane.id);
+    if (deleted.status !== 204) {
+      console.warn(`⚠️  Could not clean up data plane [${dataPlane.id}]: status=${deleted.status} body=${deleted.raw}`);
+    }
   }
 }
 
