@@ -31,9 +31,6 @@ import lombok.CustomLog;
  * Provisions a data plane definition: {@code POST /_node/dataplanes}. Responds with the
  * credential-free summary.
  *
- * Registering the definition is a separate step from persisting it, because the service deliberately
- * keeps the raw configuration to itself: the loader reads the definition back out of the repository.
- *
  * @author GraviteeSource Team
  */
 @CustomLog

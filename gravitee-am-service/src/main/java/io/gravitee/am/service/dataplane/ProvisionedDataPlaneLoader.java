@@ -34,39 +34,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * Loads the data planes declared in the gravitee.yml, then the ones provisioned through the internal
- * API (AM-7259) and stored in the management repository. {@link #register(String)} adds a definition
- * provisioned since startup, so a new data plane can be served without restarting the node.
- *
- * A provider never receives its configuration: {@link DataPlaneDescription#propertiesBase()} hands it a
- * property prefix and the plugin resolves the settings out of the Spring environment itself. A stored
- * definition only holds a JSON blob, so its settings are flattened onto dotted keys under
- * {@code dataPlanes.provisioned.<id>} and published as a property source before the description is
- * handed over. Every existing read site — both plugins, both connection providers, liquibase — resolves
- * through that same environment, so none of them need to know where a definition came from.
- *
- * Reads {@link DataPlaneDefinitionRepository} rather than {@code DataPlaneDefinitionService} on purpose:
- * the service deliberately has no route out for the raw configuration.
+ * Loads the data planes declared in the gravitee.yml, then the provisioned ones stored in the
+ * management repository.
  *
  * @author GraviteeSource Team
  */
 @CustomLog
 public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
-    /**
-     * Must not be {@code graviteeYamlConfiguration}: gravitee-node's {@code /_node/configuration}
-     * endpoint enumerates that one source key by key, and these definitions carry credentials.
-     */
     static final String PROPERTY_SOURCE_NAME = "provisionedDataPlanes";
 
     static final String PROPERTIES_BASE = "dataPlanes.provisioned";
 
     private final DataPlaneLoader configurationLoader;
     private final DataPlaneDefinitionRepository dataPlaneDefinitionRepository;
-    // a parse failure is logged, and Jackson quotes the source it choked on unless told not to
+
     private final ObjectMapper objectMapper = JsonMapper.builder()
             .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
             .build();
+
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
     private final Set<String> registered = ConcurrentHashMap.newKeySet();
     private volatile Consumer<DataPlaneDescription> storage;
@@ -76,35 +62,24 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                                       ConfigurableEnvironment environment) {
         this.configurationLoader = configurationLoader;
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
-        // the source stays backed by the live map, so definitions published later are visible too
         environment.getPropertySources().addLast(new MapPropertySource(PROPERTY_SOURCE_NAME, properties));
     }
 
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
-        // kept so a definition provisioned later reaches the same registry this one is filling
         this.storage = storage;
         configurationLoader.load(storage);
         dataPlaneDefinitionRepository.findAll()
                 .blockingForEach(definition -> load(definition, storage));
     }
 
-    /**
-     * Registers a definition provisioned since startup so domains bound to it can be served straight away,
-     * rather than from the next restart.
-     *
-     * Best effort on purpose: the definition is persisted before this runs, so failing here only costs the
-     * node the live registration — the startup load will pick it up next time — and it must not turn a
-     * successful provisioning call into an error.
-     */
     public Completable register(String dataPlaneId) {
         var storage = this.storage;
-        // nothing registered yet means no registry to add to; its own load() will read this definition.
-        // only a definition that actually registered is remembered, so an id whose provider could not be
-        // built stays free for the corrected definition that replaces it
+
         if (storage == null || registered.contains(dataPlaneId)) {
             return Completable.complete();
         }
+
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
                 .doOnSuccess(definition -> load(definition, storage))
                 .ignoreElement()
@@ -112,12 +87,6 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 .onErrorComplete();
     }
 
-    /**
-     * A stored definition outlives the deployment that created it, so by the time it is read its type's
-     * plugin may be gone, its id may collide with a gravitee.yml one, or its configuration may no longer
-     * parse. None of that is worth refusing to start the node over: skip the definition and leave the
-     * rest of the installation running.
-     */
     private void load(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
         try {
             storage.accept(publish(definition));
@@ -140,11 +109,6 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 definition.getGatewayUrl());
     }
 
-    /**
-     * Mirrors how the gravitee.yml maps onto the environment: nested objects become dotted keys and
-     * list entries keep their index, so {@code {"mongodb":{"servers":[{"host":"h"}]}}} publishes
-     * {@code <base>.mongodb.servers[0].host}, which is the key {@code MongoFactoryImpl} looks for.
-     */
     private static void flatten(String prefix, JsonNode node, Map<String, Object> properties) {
         if (node.isObject()) {
             node.properties().forEach(property -> flatten(prefix + "." + property.getKey(), property.getValue(), properties));
