@@ -304,7 +304,7 @@ WEBUI_TARGET="../../gravitee-am-ui/target"
 latest() { ls -t $1 2>/dev/null | head -1 || true; }   # newest file matching a glob
 
 # Speed flags safe for a local dev build (skip checks/docs/coverage/formatting).
-MVN_SPEED=(-Dlicense.skip=true -Dmaven.javadoc.skip=true -Djacoco.skip=true -Dprettier.skip=true)
+MVN_SPEED=(-Dlicense.skip=true -Dmaven.javadoc.skip=true -Djacoco.skip=true -Dprettier.skip=true -T 2C)
 
 # The gateway/management-api standalone-distribution modules gate their EE plugin
 # zips behind Maven profiles: 'ee-bundle' (activeByDefault) and 'addons-bundle'

@@ -33,4 +33,7 @@ public interface SpringEnvironmentRepository extends RxJava3CrudRepository<JdbcE
 
     @Query("select * from environments e where e.organization_id = :organizationId")
     Flowable<JdbcEnvironment> findByOrganization(String organizationId);
+
+    @Query("select e.* from environments e INNER JOIN environment_hrids eh ON e.id = eh.environment_id where e.organization_id = :organizationId and eh.hrid = :hrid")
+    Flowable<JdbcEnvironment> findByHrid(String organizationId, String hrid);
 }

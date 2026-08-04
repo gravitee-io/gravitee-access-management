@@ -16,15 +16,17 @@
 package io.gravitee.am.plugins.dataplane;
 
 import io.gravitee.am.dataplane.api.DataPlane;
+import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginManager;
 import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
+
+import static io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator.defaultSchemaValidator;
 
 @CustomLog
 public class DataPlanePluginHandler extends AbstractPluginHandler {
@@ -34,7 +36,7 @@ public class DataPlanePluginHandler extends AbstractPluginHandler {
     protected PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
     @Autowired
-    protected PluginManager<DataPlane> pluginManager;
+    protected DataPlanePluginManager pluginManager;
 
     @Autowired
     protected PluginConfigurationValidatorsRegistry validatorsRegistry;
@@ -56,8 +58,18 @@ public class DataPlanePluginHandler extends AbstractPluginHandler {
             log.info("Register a new plugin: {} [{}]", plugin.id(), plugin.clazz());
             Assert.isAssignable(DataPlane.class, pluginClass);
             pluginManager.register(createInstance(pluginClass, plugin));
+            registerValidator(plugin);
         } catch (Exception iae) {
             log.error("Unexpected error while create data-plane instance", iae);
+        }
+    }
+
+    /** Publishes the plugin's {@code schemas/schema-form.json} so definitions can be validated against it. */
+    private void registerValidator(Plugin plugin) {
+        try {
+            validatorsRegistry.put(defaultSchemaValidator(plugin.id(), pluginManager.getSchema(plugin.id())));
+        } catch (Exception e) {
+            log.error("Unexpected error while creating the data-plane schema validator for {}", plugin.id(), e);
         }
     }
     @Override

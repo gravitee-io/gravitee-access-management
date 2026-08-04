@@ -75,6 +75,12 @@ public class EnvironmentServiceImpl implements EnvironmentService {
     }
 
     @Override
+    public Maybe<Environment> findByHrid(String organizationId, String hrid) {
+        log.debug("Find environment by hrid {} of organization {}", hrid, organizationId);
+        return environmentRepository.findByHrid(organizationId, hrid);
+    }
+
+    @Override
     public Flowable<Environment> findAll(String organizationId) {
 
         log.debug("Find environments by organizationId: {}", organizationId);

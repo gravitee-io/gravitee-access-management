@@ -35,6 +35,7 @@ import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ORGANIZATION_ID;
 
@@ -44,6 +45,8 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ORGANIZA
  */
 @Component
 public class MongoEnvironmentRepository extends AbstractManagementMongoRepository implements EnvironmentRepository {
+
+    private static final String FIELD_HRIDS = "hrids";
 
     private MongoCollection<EnvironmentMongo> collection;
 
@@ -78,6 +81,15 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
                 .observeOn(Schedulers.computation());
     }
 
+
+    @Override
+    public Maybe<Environment> findByHrid(String organizationId, String hrid) {
+
+        return Observable.fromPublisher(collection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), in(FIELD_HRIDS, hrid))).first())
+                .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
 
     @Override
     public Maybe<Environment> findById(String id) {

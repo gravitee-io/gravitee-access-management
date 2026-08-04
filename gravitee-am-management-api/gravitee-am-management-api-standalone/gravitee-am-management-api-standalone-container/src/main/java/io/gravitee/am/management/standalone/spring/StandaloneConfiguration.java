@@ -20,6 +20,7 @@ import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.management.service.spring.ManagementServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
+import io.gravitee.am.management.handlers.internalapi.spring.InternalApiConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
 import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
@@ -100,7 +101,8 @@ import java.util.List;
         PasswordDictionaryConfiguration.class,
         AuthenticationDeviceNotifierSpringConfiguration.class,
         NodeCertificatesConfiguration.class,
-        AuthenticatorSpringConfiguration.class
+        AuthenticatorSpringConfiguration.class,
+        InternalApiConfiguration.class
 })
 public class StandaloneConfiguration {
 

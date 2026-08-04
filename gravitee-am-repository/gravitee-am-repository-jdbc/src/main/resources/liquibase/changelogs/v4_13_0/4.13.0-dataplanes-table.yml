@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-dataplanes-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: dataplanes
+      changes:
+        - createTable:
+            tableName: dataplanes
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(128), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: gateway_url, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: organization_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: environment_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: configuration, type: clob, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_dataplanes
+            columnNames: id
+            tableName: dataplanes
+
+        - createIndex:
+            columns:
+              - column: { name: environment_id }
+            indexName: idx_dataplanes_environment_id
+            tableName: dataplanes

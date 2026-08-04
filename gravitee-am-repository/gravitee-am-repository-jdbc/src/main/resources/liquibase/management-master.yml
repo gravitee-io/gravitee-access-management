@@ -232,4 +232,6 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-update-domains-web-protection-settings.yml
   - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-dataplanes-table.yml
+  - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-organization-users-username-unique-per-reference.yml

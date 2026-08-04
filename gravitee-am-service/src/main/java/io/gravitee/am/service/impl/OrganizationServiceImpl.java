@@ -41,6 +41,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import lombok.CustomLog;
 
 /**
@@ -83,6 +84,12 @@ public class OrganizationServiceImpl implements OrganizationService {
         log.debug("Find organization by id: {}", id);
         return organizationRepository.findById(id)
                 .switchIfEmpty(Single.error(new OrganizationNotFoundException(id)));
+    }
+
+    @Override
+    public Maybe<Organization> findByHrid(String hrid) {
+        log.debug("Find organization by hrid: {}", hrid);
+        return organizationRepository.findByHrids(List.of(hrid)).firstElement();
     }
 
     @Override

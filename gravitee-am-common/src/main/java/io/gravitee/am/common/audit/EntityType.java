@@ -56,5 +56,6 @@ public interface EntityType {
     String PASSWORD_POLICY= "PASSWORD_POLICY";
     String PROTECTED_RESOURCE = "PROTECTED_RESOURCE";
     String TRUST_DOMAIN = "TRUST_DOMAIN";
+    String DATA_PLANE = "DATA_PLANE";
 
 }

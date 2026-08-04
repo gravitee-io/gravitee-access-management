@@ -140,6 +140,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "authorization_engines",
                 "protected_resources",
                 "licenses",
+                "dataplanes",
                 "dp_action_lease",
                 "cp_action_lease",
 

@@ -1,0 +1,125 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:dataplane:jdbc:JdbcDataPlaneConfiguration",
+  "properties": {
+    "uri": {
+      "type": "string",
+      "minLength": 1,
+      "title": "R2DBC connection URI",
+      "description": "Connection URI used to reach the data plane store. Must name both a host and a database.",
+      "sensitive-uri": true
+    },
+    "driver": {
+      "type": "string",
+      "title": "Database driver",
+      "description": "Not required if the connection URI is set.",
+      "enum": ["postgresql", "mysql", "mariadb", "sqlserver"]
+    },
+    "host": {
+      "type": "string",
+      "minLength": 1,
+      "title": "Database host",
+      "description": "Not required if the connection URI is set."
+    },
+    "port": {
+      "type": "number",
+      "minimum": 1,
+      "title": "Database port"
+    },
+    "database": {
+      "type": "string",
+      "minLength": 1,
+      "title": "Database name",
+      "description": "The database holding this data plane's tables. Not required if the connection URI names one."
+    },
+    "schema": {
+      "type": "string",
+      "title": "Schema",
+      "description": "Ignored by drivers that do not support schemas."
+    },
+    "collation": {
+      "type": "string",
+      "title": "Collation"
+    },
+    "username": {
+      "type": "string",
+      "title": "Authentication user"
+    },
+    "password": {
+      "type": "string",
+      "title": "Authentication password",
+      "widget": "password",
+      "sensitive": true
+    },
+    "acquireRetry": {
+      "type": "number",
+      "default": 1,
+      "minimum": 0,
+      "title": "Acquire retry"
+    },
+    "initialSize": {
+      "type": "number",
+      "default": 1,
+      "minimum": 0,
+      "title": "Initial pool size"
+    },
+    "maxSize": {
+      "type": "number",
+      "default": 50,
+      "minimum": 1,
+      "title": "Maximum pool size"
+    },
+    "maxIdleTime": {
+      "type": "number",
+      "default": 30000,
+      "title": "Maximum idle time (ms)"
+    },
+    "maxLifeTime": {
+      "type": "number",
+      "default": -1,
+      "title": "Maximum life time (ms)"
+    },
+    "maxAcquireTime": {
+      "type": "number",
+      "default": 3000,
+      "title": "Maximum acquire time (ms)"
+    },
+    "maxCreateConnectionTime": {
+      "type": "number",
+      "default": 5000,
+      "title": "Maximum create connection time (ms)"
+    },
+    "validationQuery": {
+      "type": "string",
+      "title": "Validation query",
+      "description": "Set to validate pooled connections against the server rather than locally."
+    },
+    "sslEnabled": {
+      "type": "boolean",
+      "default": false,
+      "title": "Enable TLS"
+    },
+    "tlsProtocol": {
+      "type": "string",
+      "title": "TLS protocol"
+    },
+    "trustServerCertificate": {
+      "type": "boolean",
+      "default": false,
+      "title": "Trust the server certificate"
+    },
+    "disableSslHostnameVerification": {
+      "type": "boolean",
+      "default": false,
+      "title": "Disable TLS host name verification"
+    }
+  },
+  "anyOf": [
+    {
+      "required": ["uri"]
+    },
+    {
+      "required": ["driver", "host", "database"]
+    }
+  ]
+}

@@ -253,6 +253,12 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- reads the shipped MAPI gravitee.yml in DataPlaneConfigHandlerTest -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
