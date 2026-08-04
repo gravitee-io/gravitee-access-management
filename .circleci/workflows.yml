@@ -2144,7 +2144,7 @@ workflows:
                   echo "graviteeio/am-gateway:4.12.0" >>  /tmp/built-docker-images.txt
           built_docker_image_file: /tmp/built-docker-images.txt
           fail_on: ""
-          extra_args: "--force-create-image-for-tag"
+          extra_args: " --force-create-image-for-tag "
       - pull_requests_ce:
           name: process_pull_request
           requires:
