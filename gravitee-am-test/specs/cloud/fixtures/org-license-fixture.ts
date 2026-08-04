@@ -15,12 +15,10 @@
  */
 
 import { readFileSync } from 'fs';
-import * as path from 'path';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { drainCockpitQueue, sendOrgCommand, waitForCockpitConnection, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
 import { waitForOrgLicenseScope } from '@management-commands/license-management-commands';
-
-const DEFAULT_LICENSE_PATH = path.resolve(__dirname, '../../../../docker/local-stack/dev/license/gravitee-universe-v4.key');
+import { stackLicenseBase64 } from '@cloud-commands/license-key';
 
 export interface OrgLicenseFixture {
   accessToken: string;
@@ -45,10 +43,9 @@ export const setupOrgLicenseFixture = async (): Promise<OrgLicenseFixture> => {
   await drainCockpitQueue();
 
   const orgId = process.env.AM_DEF_ORG_ID;
-  const licensePath = process.env.AM_ORG_LICENSE_PATH ?? DEFAULT_LICENSE_PATH;
   const expiredLicensePath = process.env.AM_ORG_LICENSE_EXPIRED_PATH ?? null;
 
-  const universeLicense = readFileSync(licensePath).toString('base64');
+  const universeLicense = stackLicenseBase64();
   const expiredLicense = expiredLicensePath ? readFileSync(expiredLicensePath).toString('base64') : null;
 
   const setUniverseLicense = async (): Promise<void> => {

@@ -21,15 +21,13 @@
  *
  * Requires: --cloud stack (local-stack.sh up --cloud).
  */
-import { readFileSync } from 'fs';
-import * as path from 'path';
 import { test, expect } from '../../fixtures/base.fixture';
 import { linkJira } from '../../utils/jira';
 import { sendOrgCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
+import { stackLicenseBase64 } from '@cloud-commands/license-key';
 import { waitForOrgLicenseScope } from '@management-commands/license-management-commands';
 
-const UNIVERSE_LICENSE_PATH = path.resolve(__dirname, '../../../../docker/local-stack/dev/license/gravitee-universe-v4.key');
-const universeLicense = readFileSync(UNIVERSE_LICENSE_PATH).toString('base64');
+const universeLicense = stackLicenseBase64();
 
 test.describe('Console UI EE plugin license gating', () => {
   // Both tests mutate the same org-level license via cockpit — must not run concurrently.
