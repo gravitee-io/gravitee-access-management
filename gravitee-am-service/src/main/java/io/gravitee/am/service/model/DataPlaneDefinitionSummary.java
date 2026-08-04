@@ -27,7 +27,7 @@ import java.util.List;
  * The stored {@code configuration} blob is never part of this: it can hold connection credentials,
  * so it is replaced by the credential-free {@code database} / {@code hosts} pair produced by the
  * type's {@code DataPlaneConfigHandler}. This type exists so the raw blob has no route out of the
- * service layer at all — the only consumer that needs it reads the repository directly.
+ * service layer at all: the one consumer that needs it goes to the repository instead.
  *
  * @author GraviteeSource Team
  */

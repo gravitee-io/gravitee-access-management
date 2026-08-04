@@ -64,7 +64,7 @@ public class MongoDataPlaneConfigHandler implements DataPlaneConfigHandler {
     }
 
     @Override
-    public DataPlaneConnectionSummary summarise(JsonNode configuration) {
+    public DataPlaneConnectionSummary summarize(JsonNode configuration) {
         JsonNode block = DataPlaneConfigs.block(configuration, BLOCK);
         if (block == null) {
             return DataPlaneConnectionSummary.UNKNOWN;

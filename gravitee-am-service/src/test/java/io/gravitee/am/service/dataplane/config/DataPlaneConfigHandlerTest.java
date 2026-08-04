@@ -256,8 +256,8 @@ class DataPlaneConfigHandlerTest {
     // --- summaries: what a read is allowed to expose -----------------------------------------
 
     @Test
-    void shouldSummariseAMongoConfigurationWithoutItsCredentials() {
-        DataPlaneConnectionSummary summary = mongoHandler.summarise(mongo("""
+    void shouldSummarizeAMongoConfigurationWithoutItsCredentials() {
+        DataPlaneConnectionSummary summary = mongoHandler.summarize(mongo("""
                 {
                   "dbname": "gravitee-am-acme",
                   "host": "mongo",
@@ -279,8 +279,8 @@ class DataPlaneConfigHandlerTest {
     }
 
     @Test
-    void shouldSummariseAMongoUriWithoutItsUserinfo() {
-        DataPlaneConnectionSummary summary = mongoHandler.summarise(
+    void shouldSummarizeAMongoUriWithoutItsUserinfo() {
+        DataPlaneConnectionSummary summary = mongoHandler.summarize(
                 mongo("{\"uri\": \"mongodb://am-user:sup3r-s3cret@mongo:27017/gravitee-am-acme?authSource=admin\"}"));
 
         assertThat(summary.database()).isEqualTo("gravitee-am-acme");
@@ -289,8 +289,8 @@ class DataPlaneConfigHandlerTest {
     }
 
     @Test
-    void shouldSummariseAMongoSrvUri() {
-        DataPlaneConnectionSummary summary = mongoHandler.summarise(
+    void shouldSummarizeAMongoSrvUri() {
+        DataPlaneConnectionSummary summary = mongoHandler.summarize(
                 mongo("{\"uri\": \"mongodb+srv://am-user:sup3r-s3cret@cluster0.abc.mongodb.net/gravitee-am-acme\"}"));
 
         assertThat(summary.database()).isEqualTo("gravitee-am-acme");
@@ -307,15 +307,15 @@ class DataPlaneConfigHandlerTest {
         // still a valid definition, it names a database
         assertThatCode(() -> mongoHandler.validate(configuration)).doesNotThrowAnyException();
 
-        DataPlaneConnectionSummary summary = mongoHandler.summarise(configuration);
+        DataPlaneConnectionSummary summary = mongoHandler.summarize(configuration);
         assertThat(summary.database()).isEqualTo("gravitee-am-acme");
         assertThat(summary.hosts()).isEmpty();
         assertThat(summary.toString()).doesNotContain("sup3r-s3cret").doesNotContain("am-user");
     }
 
     @Test
-    void shouldSummariseAMongoReplicaSetDeclaredWithServers() {
-        DataPlaneConnectionSummary summary = mongoHandler.summarise(mongo("""
+    void shouldSummarizeAMongoReplicaSetDeclaredWithServers() {
+        DataPlaneConnectionSummary summary = mongoHandler.summarize(mongo("""
                 {
                   "dbname": "gravitee-am-acme",
                   "password": "sup3r-s3cret",
@@ -329,8 +329,8 @@ class DataPlaneConfigHandlerTest {
     }
 
     @Test
-    void shouldSummariseAJdbcConfigurationWithoutItsCredentials() {
-        DataPlaneConnectionSummary summary = jdbcHandler.summarise(jdbc("""
+    void shouldSummarizeAJdbcConfigurationWithoutItsCredentials() {
+        DataPlaneConnectionSummary summary = jdbcHandler.summarize(jdbc("""
                 {
                   "driver": "postgresql",
                   "host": "postgres",
@@ -347,8 +347,8 @@ class DataPlaneConfigHandlerTest {
     }
 
     @Test
-    void shouldSummariseAnR2dbcUriWithoutItsUserinfo() {
-        DataPlaneConnectionSummary summary = jdbcHandler.summarise(
+    void shouldSummarizeAnR2dbcUriWithoutItsUserinfo() {
+        DataPlaneConnectionSummary summary = jdbcHandler.summarize(
                 jdbc("{\"uri\": \"r2dbc:postgresql://am-user:sup3r-s3cret@postgres:5432/gravitee-am-acme\"}"));
 
         assertThat(summary.database()).isEqualTo("gravitee-am-acme");
@@ -358,8 +358,8 @@ class DataPlaneConfigHandlerTest {
 
     @Test
     void shouldReturnAnUnknownSummaryWhenTheBlockIsAbsent() {
-        assertThat(mongoHandler.summarise(objectMapper.createObjectNode())).isEqualTo(DataPlaneConnectionSummary.UNKNOWN);
-        assertThat(jdbcHandler.summarise(objectMapper.createObjectNode())).isEqualTo(DataPlaneConnectionSummary.UNKNOWN);
+        assertThat(mongoHandler.summarize(objectMapper.createObjectNode())).isEqualTo(DataPlaneConnectionSummary.UNKNOWN);
+        assertThat(jdbcHandler.summarize(objectMapper.createObjectNode())).isEqualTo(DataPlaneConnectionSummary.UNKNOWN);
     }
 
     // --- helpers ---------------------------------------------------------------------------

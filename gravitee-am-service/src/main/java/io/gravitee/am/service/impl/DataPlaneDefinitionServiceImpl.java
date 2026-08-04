@@ -59,7 +59,8 @@ import static io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager.PLUGI
 import static org.springframework.util.StringUtils.hasText;
 
 /**
- * Persists a data plane definition. Deliberately inert: no registry entry, no event (AM-7260/7261).
+ * Persists a data plane definition. Persisting is all it does: registering the definition so that
+ * domains can be served from it is the loader's job, and nothing here emits a sync event.
  *
  * @author GraviteeSource Team
  */
@@ -174,7 +175,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
             return DataPlaneConnectionSummary.UNKNOWN;
         }
         try {
-            return handler.get().summarise(objectMapper.readTree(definition.getConfiguration()));
+            return handler.get().summarize(objectMapper.readTree(definition.getConfiguration()));
         } catch (Exception e) {
             log.warn("Data plane [{}] holds a configuration that can no longer be read", definition.getId());
             return DataPlaneConnectionSummary.UNKNOWN;

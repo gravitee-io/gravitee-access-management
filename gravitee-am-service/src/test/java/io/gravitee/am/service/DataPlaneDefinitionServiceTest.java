@@ -413,7 +413,7 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
-    void shouldSummariseADefinitionWhoseTypeIsNoLongerDeployed() {
+    void shouldSummarizeADefinitionWhoseTypeIsNoLongerDeployed() {
         DataPlaneDefinition orphan = definition("dp-orphan", "env-1");
         orphan.setType("cassandra");
         when(dataPlaneDefinitionRepository.findById("dp-orphan")).thenReturn(Maybe.just(orphan));
@@ -427,7 +427,7 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
-    void shouldSummariseADefinitionWhoseConfigurationIsUnreadable() {
+    void shouldSummarizeADefinitionWhoseConfigurationIsUnreadable() {
         DataPlaneDefinition corrupted = definition("dp-corrupted", "env-1");
         corrupted.setConfiguration("not json");
         when(dataPlaneDefinitionRepository.findById("dp-corrupted")).thenReturn(Maybe.just(corrupted));

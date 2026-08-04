@@ -25,7 +25,8 @@ import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Registers the Management API endpoints served by the node technical API (services.core, :18093).
+ * Registers the Management API endpoints served by the node technical API, on whichever port
+ * {@code services.core.http.port} resolves to.
  *
  * @author GraviteeSource Team
  */

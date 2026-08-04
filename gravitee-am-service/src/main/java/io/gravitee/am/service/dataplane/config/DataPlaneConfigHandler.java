@@ -53,5 +53,5 @@ public interface DataPlaneConfigHandler {
      * {@code keyPassword}, {@code truststore.password}, and the userinfo of a connection {@code uri}
      * — and the key surface keeps growing, so nothing is emitted unless it is named here.
      */
-    DataPlaneConnectionSummary summarise(JsonNode configuration);
+    DataPlaneConnectionSummary summarize(JsonNode configuration);
 }
