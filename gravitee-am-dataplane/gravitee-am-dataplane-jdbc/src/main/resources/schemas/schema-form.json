@@ -4,6 +4,7 @@
   "properties": {
     "uri": {
       "type": "string",
+      "minLength": 1,
       "title": "R2DBC connection URI",
       "description": "Connection URI used to reach the data plane store. Must name both a host and a database.",
       "sensitive-uri": true
@@ -16,6 +17,7 @@
     },
     "host": {
       "type": "string",
+      "minLength": 1,
       "title": "Database host",
       "description": "Not required if the connection URI is set."
     },
@@ -26,6 +28,7 @@
     },
     "database": {
       "type": "string",
+      "minLength": 1,
       "title": "Database name",
       "description": "The database holding this data plane's tables. Not required if the connection URI names one."
     },
@@ -110,5 +113,13 @@
       "default": false,
       "title": "Disable TLS host name verification"
     }
-  }
+  },
+  "anyOf": [
+    {
+      "required": ["uri"]
+    },
+    {
+      "required": ["driver", "host", "database"]
+    }
+  ]
 }

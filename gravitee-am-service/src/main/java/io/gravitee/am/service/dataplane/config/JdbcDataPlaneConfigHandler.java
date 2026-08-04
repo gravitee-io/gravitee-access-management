@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Requires driver, host and database: the connection builds without a database and would land on
+ * The schema requires either a uri or all of driver, host and database. What it cannot say is that a
+ * uri has to name a host and a database, without which the connection still builds and lands on
  * whatever the driver defaults to.
  *
  * @author GraviteeSource Team
@@ -33,7 +34,6 @@ import java.util.Optional;
 public class JdbcDataPlaneConfigHandler implements DataPlaneConfigHandler {
 
     private static final String BLOCK = "jdbc";
-    private static final List<String> REQUIRED_WITHOUT_URI = List.of("driver", "host", "database");
 
     @Override
     public String blockName() {
@@ -51,16 +51,9 @@ public class JdbcDataPlaneConfigHandler implements DataPlaneConfigHandler {
 
         if (DataPlaneConfigs.hasText(block, "uri")) {
             requireHostAndDatabaseInUri(block.get("uri").asText());
-            return;
-        }
-
-        List<String> missing = REQUIRED_WITHOUT_URI.stream()
-                .filter(key -> !DataPlaneConfigs.hasText(block, key))
-                .toList();
-        if (!missing.isEmpty()) {
-            throw new InvalidParameterException("configuration.jdbc requires either 'uri' or all of 'driver', 'host' and 'database', missing: " + String.join(", ", missing));
         }
     }
+
     private void requireHostAndDatabaseInUri(String uri) {
         URI parsed = DataPlaneConfigs.parseUri(uri)
                 .orElseThrow(() -> new InvalidParameterException("configuration.jdbc.uri is not a valid URI"));

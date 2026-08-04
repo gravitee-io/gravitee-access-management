@@ -95,6 +95,21 @@ class DataPlaneSchemaFormTest {
     }
 
     @Test
+    void jdbcSchemaRejectsAConnectionThatIsNeitherForm() {
+        rejects(jdbc(), "{\"port\": 5432}", "required");
+        rejects(jdbc(), "{\"driver\": \"postgresql\", \"host\": \"pg\"}", "required");
+        rejects(jdbc(), "{\"driver\": \"postgresql\", \"database\": \"acme\"}", "required");
+    }
+
+    @Test
+    void jdbcSchemaRejectsABlankKeyStandingInForAMissingOne() {
+        // 'required' only asks for the key, so the connection would still land on the driver defaults
+        rejects(jdbc(), "{\"uri\": \"\"}", "uri");
+        rejects(jdbc(), "{\"driver\": \"postgresql\", \"host\": \"\", \"database\": \"acme\"}", "host");
+        rejects(jdbc(), "{\"driver\": \"postgresql\", \"host\": \"pg\", \"database\": \"\"}", "database");
+    }
+
+    @Test
     void jdbcSchemaRejectsMistypedSettings() {
         rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"port\": \"3306\", \"database\": \"acme\"}", "port");
     }

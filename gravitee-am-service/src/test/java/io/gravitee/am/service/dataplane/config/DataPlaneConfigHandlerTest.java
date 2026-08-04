@@ -212,19 +212,10 @@ class DataPlaneConfigHandlerTest {
     }
 
     @Test
-    void shouldRejectAJdbcConfigurationWithoutDatabase() {
-        assertThatThrownBy(() -> jdbcHandler.validate(jdbc("{\"driver\": \"postgresql\", \"host\": \"postgres\"}")))
-                .isInstanceOf(InvalidParameterException.class)
-                .hasMessageContaining("database");
-    }
-
-    @Test
-    void shouldListEveryMissingJdbcKey() {
-        assertThatThrownBy(() -> jdbcHandler.validate(jdbc("{\"port\": 5432}")))
-                .isInstanceOf(InvalidParameterException.class)
-                .hasMessageContaining("driver")
-                .hasMessageContaining("host")
-                .hasMessageContaining("database");
+    void shouldLeaveTheDiscreteKeysToTheSchema() {
+        // 'uri' or all of driver/host/database is an anyOf in the plugin schema, see DataPlaneSchemaFormTest
+        assertThatCode(() -> jdbcHandler.validate(jdbc("{\"driver\": \"postgresql\", \"host\": \"postgres\"}")))
+                .doesNotThrowAnyException();
     }
 
     @Test
