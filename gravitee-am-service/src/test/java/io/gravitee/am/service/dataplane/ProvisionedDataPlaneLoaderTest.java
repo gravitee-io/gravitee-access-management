@@ -223,6 +223,29 @@ class ProvisionedDataPlaneLoaderTest {
     }
 
     @Test
+    void should_retry_an_id_whose_provider_could_not_be_built() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        var refused = new ArrayList<String>();
+        // stands in for the registry refusing the first definition, e.g. its store was unreachable
+        loader.load(description -> {
+            if (refused.isEmpty()) {
+                refused.add(description.id());
+                throw new IllegalStateException("No data plane provider could be built for id " + description.id());
+            }
+            loaded.add(description);
+        });
+        when(dataPlaneDefinitionRepository.findById("dp-1"))
+                .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+
+        loader.register("dp-1").test().assertComplete();
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(refused).containsExactly("dp-1");
+        assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
+    }
+
+    @Test
     void should_not_fail_the_caller_when_the_definition_cannot_be_read_back() {
         when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
         var loader = loader();

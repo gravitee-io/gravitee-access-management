@@ -99,8 +99,10 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
      */
     public Completable register(String dataPlaneId) {
         var storage = this.storage;
-        // nothing registered yet means no registry to add to; its own load() will read this definition
-        if (storage == null || !registered.add(dataPlaneId)) {
+        // nothing registered yet means no registry to add to; its own load() will read this definition.
+        // only a definition that actually registered is remembered, so an id whose provider could not be
+        // built stays free for the corrected definition that replaces it
+        if (storage == null || registered.contains(dataPlaneId)) {
             return Completable.complete();
         }
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
