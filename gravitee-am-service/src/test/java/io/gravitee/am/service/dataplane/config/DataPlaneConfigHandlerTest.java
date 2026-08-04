@@ -130,6 +130,32 @@ class DataPlaneConfigHandlerTest {
     }
 
     @Test
+    void shouldRejectAMongoUriWithoutAHost() {
+        assertThatThrownBy(() -> mongoHandler.validate(mongo("{\"uri\": \"mongodb:///gravitee-am-acme\"}")))
+                .isInstanceOf(InvalidParameterException.class)
+                .hasMessageContaining("must name a host");
+    }
+
+    /**
+     * A replica set uri parses to a null host while still naming its servers, so the host check has
+     * to read the authority rather than the host.
+     */
+    @Test
+    void shouldAcceptAMultiHostMongoUri() {
+        assertThatCode(() -> mongoHandler.validate(
+                mongo("{\"uri\": \"mongodb://am-user:sup3r-s3cret@mongo-1:27017,mongo-2:27017/gravitee-am-acme\"}")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldNotLeakTheUriCredentialsIntoTheHostRejection() {
+        assertThatThrownBy(() -> mongoHandler.validate(mongo("{\"uri\": \"mongodb://am-user:sup3r-s3cret@/gravitee-am-acme\"}")))
+                .isInstanceOf(InvalidParameterException.class)
+                .hasMessageNotContaining("sup3r-s3cret")
+                .hasMessageNotContaining("am-user");
+    }
+
+    @Test
     void shouldAcceptAMongoReplicaSetDeclaredWithServers() {
         assertThatCode(() -> mongoHandler.validate(mongo(
                 "{\"dbname\": \"gravitee-am-acme\", \"servers\": [{\"host\": \"mongo-1\", \"port\": 27017}]}")))
@@ -177,6 +203,13 @@ class DataPlaneConfigHandlerTest {
         assertThatThrownBy(() -> jdbcHandler.validate(jdbc("{\"uri\": \"r2dbc:postgresql://postgres:5432\"}")))
                 .isInstanceOf(InvalidParameterException.class)
                 .hasMessageContaining("must name a database");
+    }
+
+    @Test
+    void shouldRejectAJdbcUriWithoutAHost() {
+        assertThatThrownBy(() -> jdbcHandler.validate(jdbc("{\"uri\": \"r2dbc:postgresql:///gravitee-am-acme\"}")))
+                .isInstanceOf(InvalidParameterException.class)
+                .hasMessageContaining("must name a host");
     }
 
     @Test

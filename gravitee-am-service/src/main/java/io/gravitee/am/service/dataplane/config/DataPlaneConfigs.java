@@ -73,6 +73,24 @@ final class DataPlaneConfigs {
     }
 
     /**
+     * Whether the uri names its servers at all. {@link #hostFromUri} is not enough to decide this: a
+     * multi-host uri (a replica set) parses to a null host while still naming its servers in the
+     * authority, so keying off the host would reject a valid one. The authority is not enough on its
+     * own either, since {@code //user:password@/db} has one that is nothing but credentials.
+     *
+     * The authority holds the credentials, so callers must not put it in an error message.
+     */
+    static boolean namesAHost(URI uri) {
+        String authority = uri.getAuthority();
+        if (authority == null) {
+            return false;
+        }
+        // an unencoded password can itself hold an '@', so the last one is the userinfo separator
+        int userInfoEnd = authority.lastIndexOf('@');
+        return !authority.substring(userInfoEnd + 1).isBlank();
+    }
+
+    /**
      * getHost() only, never getAuthority(), which would return {@code user:password@host}.
      */
     static String hostFromUri(URI uri) {

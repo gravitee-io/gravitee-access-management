@@ -51,7 +51,7 @@ public class MongoDataPlaneConfigHandler implements DataPlaneConfigHandler {
 
         // an empty uri is ignored by MongoFactoryImpl, so it falls through to the host/dbname form
         if (DataPlaneConfigs.hasText(block, "uri")) {
-            requireDatabaseInUri(block.get("uri").asText());
+            requireHostAndDatabaseInUri(block.get("uri").asText());
             return;
         }
 
@@ -101,9 +101,12 @@ public class MongoDataPlaneConfigHandler implements DataPlaneConfigHandler {
         return host == null ? List.of() : List.of(host);
     }
 
-    private void requireDatabaseInUri(String uri) {
+    private void requireHostAndDatabaseInUri(String uri) {
         URI parsed = DataPlaneConfigs.parseUri(uri)
                 .orElseThrow(() -> new InvalidParameterException("configuration.mongodb.uri is not a valid URI"));
+        if (!DataPlaneConfigs.namesAHost(parsed)) {
+            throw new InvalidParameterException("configuration.mongodb.uri must name a host, e.g. mongodb://host:27017/my-database, otherwise the data plane would silently use 'localhost'");
+        }
         if (DataPlaneConfigs.databaseFromUri(parsed) == null) {
             throw new InvalidParameterException("configuration.mongodb.uri must name a database, e.g. mongodb://host:27017/my-database");
         }

@@ -50,7 +50,7 @@ public class JdbcDataPlaneConfigHandler implements DataPlaneConfigHandler {
         JsonNode block = DataPlaneConfigs.requireBlock(configuration, BLOCK);
 
         if (DataPlaneConfigs.hasText(block, "uri")) {
-            requireDatabaseInUri(block.get("uri").asText());
+            requireHostAndDatabaseInUri(block.get("uri").asText());
             return;
         }
 
@@ -61,11 +61,12 @@ public class JdbcDataPlaneConfigHandler implements DataPlaneConfigHandler {
             throw new InvalidParameterException("configuration.jdbc requires either 'uri' or all of 'driver', 'host' and 'database', missing: " + String.join(", ", missing));
         }
     }
-
-    // a uri without a database goes straight to ConnectionFactories.get(uri) and lands on the driver default
-    private void requireDatabaseInUri(String uri) {
+    private void requireHostAndDatabaseInUri(String uri) {
         URI parsed = DataPlaneConfigs.parseUri(uri)
                 .orElseThrow(() -> new InvalidParameterException("configuration.jdbc.uri is not a valid URI"));
+        if (!DataPlaneConfigs.namesAHost(parsed)) {
+            throw new InvalidParameterException("configuration.jdbc.uri must name a host, e.g. r2dbc:postgresql://host:5432/my-database");
+        }
         if (DataPlaneConfigs.databaseFromUri(parsed) == null) {
             throw new InvalidParameterException("configuration.jdbc.uri must name a database, e.g. r2dbc:postgresql://host:5432/my-database");
         }
