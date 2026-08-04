@@ -15,17 +15,34 @@
  */
 package io.gravitee.am.management.service;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
+import io.gravitee.am.service.ProtectedResourceService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +51,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,7 +62,11 @@ import static io.gravitee.am.repository.utils.RepositoryConstants.DEFAULT_MAX_CO
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class PermissionService {
+
+    private static final long PARENT_CACHE_MAX_SIZE = 10_000;
+    private static final long PARENT_CACHE_EXPIRE_AFTER_WRITE_SECONDS = 60;
 
     private final MembershipService membershipService;
     private final OrganizationGroupService orgGroupService;
@@ -54,7 +75,7 @@ public class PermissionService {
     private final DomainService domainService;
     private final ApplicationService applicationService;
     private final ProtectedResourceService protectedResourceService;
-    private final Map<String, Boolean> consistencyCache;
+    private final Cache<Reference, Reference> parentCache;
 
     public PermissionService(MembershipService membershipService,
                              OrganizationGroupService organizationGroupService,
@@ -70,7 +91,10 @@ public class PermissionService {
         this.domainService = domainService;
         this.applicationService = applicationService;
         this.protectedResourceService = protectedResourceService;
-        this.consistencyCache = new ConcurrentHashMap<>();
+        this.parentCache = CacheBuilder.newBuilder()
+                .maximumSize(PARENT_CACHE_MAX_SIZE)
+                .expireAfterWrite(PARENT_CACHE_EXPIRE_AFTER_WRITE_SECONDS, TimeUnit.SECONDS)
+                .build();
     }
 
     public Single<Map<Permission, Set<Acl>>> findAllPermissions(User user, ReferenceType referenceType, String referenceId) {
@@ -100,7 +124,7 @@ public class PermissionService {
 
     protected Single<Boolean> haveConsistentReferenceIds(PermissionAcls permissionAcls) {
 
-        try {
+        return Single.defer(() -> {
             Map<ReferenceType, String> referenceMap = permissionAcls.referenceStream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             if (referenceMap.size() == 1) {
@@ -116,101 +140,145 @@ public class PermissionService {
             String environmentId = referenceMap.get(ReferenceType.ENVIRONMENT);
             String organizationId = referenceMap.get(ReferenceType.ORGANIZATION);
 
-            String key = StringUtils.arrayToDelimitedString(new String[]{applicationId, protectedResourceId, domainId, environmentId, organizationId}, "#");
+            List<Single<Boolean>> checks = new ArrayList<>();
 
-            if(consistencyCache.containsKey(key)) {
-                return Single.just(consistencyCache.get(key));
-            }
-
-            List<Single<Boolean>> obs = new ArrayList<>();
-
-            if (applicationId != null) {
-                obs.add(isApplicationIdConsistent(applicationId, domainId, environmentId, organizationId));
+            if (environmentId != null) {
+                checks.add(isEnvironmentConsistent(environmentId, organizationId));
             }
 
             if (protectedResourceId != null) {
-                obs.add(isProtectedResourceIdConsistent(protectedResourceId, domainId, environmentId, organizationId));
+                checks.add(isProtectedResourceConsistent(protectedResourceId, domainId, environmentId, organizationId));
             }
 
             if (domainId != null) {
-                obs.add(isDomainIdConsistent(domainId, environmentId, organizationId));
+                checks.add(isDomainConsistent(domainId, environmentId, organizationId));
             }
 
-            if (environmentId != null) {
-                obs.add(isEnvironmentIdConsistent(environmentId, organizationId));
+            if (applicationId != null) {
+                checks.add(isApplicationConsistent(applicationId, domainId, environmentId, organizationId));
             }
 
-            return Single.merge(obs)
+            return Single.concat(checks)
                     .all(consistent -> consistent)
-                    .onErrorResumeNext(exception -> Single.just(false))
-                    .doOnSuccess(consistent -> consistencyCache.put(key, consistent));
-        } catch (Exception e){
-            return Single.just(false);
-        }
+                    .doOnSuccess(consistent -> {
+                        if (!consistent) {
+                            log.debug("Inconsistent reference ids, permission denied: application={}, domain={}, environment={}, organization={}",
+                                    applicationId, domainId, environmentId, organizationId);
+                        }
+                    });
+        });
     }
 
-    private Single<Boolean> isApplicationIdConsistent(String applicationId, String domainId, String environmentId, String organizationId) {
+    private Single<Boolean> isApplicationConsistent(String applicationId, String domainId, String environmentId, String organizationId) {
 
-        if(domainId == null && environmentId == null && organizationId == null) {
+        if (domainId == null && environmentId == null && organizationId == null) {
             return Single.just(true);
         }
 
-        return applicationService.findById(applicationId)
-                .map(Application::getDomain)
-                .flatMapSingle(storedDomainId -> {
+        return parentOf(Reference.application(applicationId))
+                .flatMap(parent -> {
                     if (domainId != null) {
-                        return Single.just(storedDomainId.equals(domainId));
-                    } else {
-                        // Need to fetch the domain to check if it belongs to the environment / organization.
-                        return isDomainIdConsistent(storedDomainId, environmentId, organizationId);
+                        return Maybe.just(parent.matches(ReferenceType.DOMAIN, domainId));
                     }
-                }).toSingle();
+                    if (parent.type() != ReferenceType.DOMAIN) {
+                        return Maybe.just(false);
+                    }
+                    return isDomainConsistent(parent.id(), environmentId, organizationId).toMaybe();
+                })
+                .defaultIfEmpty(false);
     }
 
-    private Single<Boolean> isProtectedResourceIdConsistent(String protectedResourceId, String domainId, String environmentId, String organizationId) {
+    private Single<Boolean> isProtectedResourceConsistent(String protectedResourceId, String domainId, String environmentId, String organizationId) {
 
-        if(domainId == null && environmentId == null && organizationId == null) {
+        if (domainId == null && environmentId == null && organizationId == null) {
             return Single.just(true);
         }
 
-        return protectedResourceService.findById(protectedResourceId)
-                .map(ProtectedResource::getDomainId)
-                .flatMapSingle(storedDomainId -> {
+        return parentOf(Reference.protectedResource(protectedResourceId))
+                .flatMap(parent -> {
                     if (domainId != null) {
-                        return Single.just(storedDomainId.equals(domainId));
-                    } else {
-                        // Need to fetch the domain to check if it belongs to the environment / organization.
-                        return isDomainIdConsistent(storedDomainId, environmentId, organizationId);
+                        return Maybe.just(parent.matches(ReferenceType.DOMAIN, domainId));
                     }
-                }).toSingle();
+                    if (parent.type() != ReferenceType.DOMAIN) {
+                        return Maybe.just(false);
+                    }
+                    return isDomainConsistent(parent.id(), environmentId, organizationId).toMaybe();
+                })
+                .defaultIfEmpty(false);
     }
 
-    private Single<Boolean> isDomainIdConsistent(String domainId, String environmentId, String organizationId) {
+    private Single<Boolean> isDomainConsistent(String domainId, String environmentId, String organizationId) {
 
-        if(environmentId == null && organizationId == null) {
+        if (environmentId == null && organizationId == null) {
             return Single.just(true);
         }
 
-        return domainService.findById(domainId)
-                .flatMapSingle(domain -> {
+        return parentOf(Reference.domain(domainId))
+                .flatMap(parent -> {
                     if (environmentId != null) {
-                        return Single.just(domain.getReferenceId().equals(environmentId) && domain.getReferenceType() == ReferenceType.ENVIRONMENT);
-                    } else {
-                        // Need to fetch the environment to check if it belongs to the organization.
-                        return isEnvironmentIdConsistent(domain.getReferenceId(), organizationId);
+                        return Maybe.just(parent.matches(ReferenceType.ENVIRONMENT, environmentId));
                     }
-                }).toSingle();
+                    if (parent.type() != ReferenceType.ENVIRONMENT) {
+                        return Maybe.just(false);
+                    }
+                    return isEnvironmentConsistent(parent.id(), organizationId).toMaybe();
+                })
+                .defaultIfEmpty(false);
     }
 
-    private Single<Boolean> isEnvironmentIdConsistent(String environmentId, String organizationId) {
+    private Single<Boolean> isEnvironmentConsistent(String environmentId, String organizationId) {
 
         if (organizationId == null) {
             return Single.just(true);
         }
 
-        return environmentService.findById(environmentId, organizationId)
-                .map(environment -> true)
-                .onErrorResumeNext(exception -> Single.just(false));
+        return parentOf(Reference.environment(environmentId))
+                .map(parent -> parent.matches(ReferenceType.ORGANIZATION, organizationId))
+                .defaultIfEmpty(false);
+    }
+
+    private Maybe<Reference> parentOf(Reference reference) {
+
+        return Maybe.defer(() -> {
+            Reference cached = parentCache.getIfPresent(reference);
+
+            if (cached != null) {
+                return Maybe.just(cached);
+            }
+
+            return resolveParent(reference).doOnSuccess(parent -> parentCache.put(reference, parent));
+        });
+    }
+
+    private Maybe<Reference> resolveParent(Reference reference) {
+
+        return switch (reference.type()) {
+            case APPLICATION -> applicationService.findById(reference.id())
+                    .flatMap(application -> parentReference(ReferenceType.DOMAIN, application.getDomain()));
+            case PROTECTED_RESOURCE -> protectedResourceService.findById(reference.id())
+                    .flatMap(resource -> parentReference(ReferenceType.DOMAIN, resource.getDomainId()));
+            case DOMAIN -> domainService.findById(reference.id())
+                    .flatMap(domain -> parentReference(domain.getReferenceType(), domain.getReferenceId()));
+            case ENVIRONMENT -> environmentService.findById(reference.id())
+                    .toMaybe()
+                    .flatMap(environment -> parentReference(ReferenceType.ORGANIZATION, environment.getOrganizationId()))
+                    .onErrorResumeNext(PermissionService::emptyIfNotFound);
+            default -> Maybe.empty();
+        };
+    }
+
+    private static Maybe<Reference> parentReference(ReferenceType type, String id) {
+
+        return type == null || id == null ? Maybe.empty() : Maybe.just(new Reference(type, id));
+    }
+
+    private static Maybe<Reference> emptyIfNotFound(Throwable throwable) {
+
+        if (throwable instanceof AbstractNotFoundException) {
+            return Maybe.empty();
+        }
+
+        return Maybe.error(throwable);
     }
 
     private Single<Map<Membership, Map<Permission, Set<Acl>>>> findMembershipPermissions(User user, Stream<Map.Entry<ReferenceType, String>> referenceStream) {
