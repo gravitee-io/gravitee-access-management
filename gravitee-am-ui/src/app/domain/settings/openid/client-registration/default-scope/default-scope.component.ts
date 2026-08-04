@@ -52,7 +52,7 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit, OnDestro
     this.domainStore.domain$.pipe(takeUntil(this.destroy$)).subscribe((domain) => {
       this.domain = domain;
       this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
-      this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.defaultScopes;
+      this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.defaultScopes ?? [];
     });
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
   }
@@ -71,13 +71,15 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit, OnDestro
     const domain = {
       oidc: {
         clientRegistrationSettings: {
-          defaultScopes: map(this.selectedScopes, (scope) => scope.key),
+          defaultScopes: this.selectedScopes ? map(this.selectedScopes, (scope) => scope.key) : this.initialSelectedScopes,
         },
       },
     };
 
     this.domainService.patchOpenidDCRSettings(this.domain.id, domain).subscribe((response) => {
+      this.domainStore.set(response);
       this.domain = response;
+      this.domainService.notify(this.domain);
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       this.formChanged = false;
     });
