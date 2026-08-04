@@ -16,7 +16,6 @@
 package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
@@ -38,9 +37,7 @@ public class DataPlaneDefinitionAuditBuilder extends ManagementAuditBuilder<Data
      */
     public DataPlaneDefinitionAuditBuilder dataPlane(DataPlaneDefinitionSummary dataPlane) {
         if (dataPlane != null) {
-            if (EventType.DATA_PLANE_CREATED.equals(getType())) {
-                setNewValue(dataPlane);
-            }
+            setNewValue(dataPlane);
 
             reference(new Reference(ReferenceType.ORGANIZATION, dataPlane.organizationId()));
             setTarget(dataPlane.id(), EntityType.DATA_PLANE, null, dataPlane.name(), ReferenceType.ORGANIZATION, dataPlane.organizationId());

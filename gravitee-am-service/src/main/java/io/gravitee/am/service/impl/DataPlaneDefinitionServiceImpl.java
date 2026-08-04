@@ -105,7 +105,8 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                             var now = new Date();
                             definition.setCreatedAt(now);
                             definition.setUpdatedAt(now);
-                            return dataPlaneDefinitionRepository.create(definition);
+                            return dataPlaneDefinitionRepository.create(definition)
+                                    .onErrorResumeNext(throwable -> conflictThatLostTheRace(definition, throwable));
                         }))
                         .map(this::toSummary)
                         .doOnError(throwable -> reportCreated(toSummary(definition), throwable)))
@@ -190,6 +191,12 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                 ? new InvalidParameterException("Unknown environment [" + definition.getEnvironmentId() + "] for organization [" + definition.getOrganizationId() + "]")
                                 : throwable)))
                 .ignoreElement();
+    }
+
+    private Single<DataPlaneDefinition> conflictThatLostTheRace(DataPlaneDefinition definition, Throwable throwable) {
+        return checkIdIsFree(definition)
+                .andThen(checkEnvironmentIsFree(definition))
+                .andThen(Single.<DataPlaneDefinition>error(throwable));
     }
 
     private Completable checkIdIsFree(DataPlaneDefinition definition) {

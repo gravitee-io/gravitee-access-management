@@ -168,7 +168,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setOrganizationId("org-1");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS);
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         Audit audit = capturedAudit();
         assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_CREATED);
@@ -184,7 +184,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setConfiguration(readTree(MONGO_CONFIGURATION_WITH_SECRETS));
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS);
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
     }
@@ -193,7 +193,8 @@ class DataPlaneDefinitionServiceTest {
     void shouldReportAFailedAuditWhenThePersistFails() {
         doReturn(Single.error(new TechnicalManagementException("boom"))).when(dataPlaneDefinitionRepository).create(any());
 
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS);
+        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
 
         Audit audit = capturedAudit();
         assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_CREATED);
@@ -206,7 +207,8 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setId(null);
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS);
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidParameterException.class);
 
         verify(auditService, never()).report(any());
     }
@@ -223,7 +225,7 @@ class DataPlaneDefinitionServiceTest {
         payload.setOrganizationId("org-1");
         payload.setEnvironmentId("env-1");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS);
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
         verify(dataPlaneDefinitionRepository).create(captor.capture());
@@ -438,6 +440,30 @@ class DataPlaneDefinitionServiceTest {
         observer.assertValue(summary -> summary.database() == null);
     }
 
+    @Test
+    void shouldReportADuplicateIdWhenTheInsertLosesTheRace() {
+        when(dataPlaneDefinitionRepository.findById("dp-acme"))
+                .thenReturn(Maybe.empty())                                  // free when we checked
+                .thenReturn(Maybe.just(definition("dp-acme", "env-1")));    // taken by the time we insert
+        doReturn(Single.error(new TechnicalManagementException("duplicate key")))
+                .when(dataPlaneDefinitionRepository).create(any());
+
+        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(DataPlaneDefinitionAlreadyExistsException.class);
+    }
+
+    @Test
+    void shouldReportABoundEnvironmentWhenTheInsertLosesTheRace() {
+        when(dataPlaneDefinitionRepository.findByEnvironmentId(anyString()))
+                .thenReturn(Maybe.empty())
+                .thenReturn(Maybe.just(definition("dp-other", "env-1")));
+        doReturn(Single.error(new TechnicalManagementException("duplicate key")))
+                .when(dataPlaneDefinitionRepository).create(any());
+
+        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(EnvironmentAlreadyBoundToDataPlaneException.class);
+    }
+
     // --- delete ------------------------------------------------------------------------------
 
     @Test
@@ -455,6 +481,7 @@ class DataPlaneDefinitionServiceTest {
         assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
         assertThat(audit.getTarget().getId()).isEqualTo("dp-acme");
         assertThat(audit.getTarget().getType()).isEqualTo(EntityType.DATA_PLANE);
+        assertThat(audit.getOutcome().getMessage()).contains("gravitee-am-acme", "mongo:27017");
     }
 
     @Test
