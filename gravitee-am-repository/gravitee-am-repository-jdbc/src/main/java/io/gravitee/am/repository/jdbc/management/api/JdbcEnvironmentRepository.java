@@ -105,6 +105,18 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
 
 
     @Override
+    public Maybe<Environment> findByHrid(String organizationId, String hrid) {
+        LOGGER.debug("findByHrid({},{})", organizationId, hrid);
+
+        return environmentRepository.findByHrid(organizationId, hrid)
+                .firstElement()
+                .map(this::toEnvironment)
+                .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
+                .flatMap(environment -> retrieveHrids(environment).toMaybe())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<Long> count() {
         return this.environmentRepository.count()
                 .observeOn(Schedulers.computation());

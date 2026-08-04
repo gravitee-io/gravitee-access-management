@@ -35,7 +35,6 @@ import io.gravitee.am.service.dataplane.config.DataPlaneConnectionSummary;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
-import io.gravitee.am.service.exception.EnvironmentAlreadyBoundToDataPlaneException;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
@@ -103,17 +102,16 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         log.debug("Create data plane definition {}", newDataPlaneDefinition);
 
         return Single.fromCallable(() -> validate(newDataPlaneDefinition))
-                .flatMap(definition -> checkReferences(definition)
-                        .andThen(checkIdIsFree(definition))
-                        .andThen(checkEnvironmentIsFree(definition))
-                        .andThen(Single.defer(() -> {
-                            var now = new Date();
-                            definition.setCreatedAt(now);
-                            definition.setUpdatedAt(now);
-                            return dataPlaneDefinitionRepository.create(definition)
-                                    .onErrorResumeNext(throwable -> conflictThatLostTheRace(definition, throwable));
-                        }))
-                        .map(this::toSummary)
+                .flatMap(definition -> resolveReferences(newDataPlaneDefinition, definition)
+                        .flatMap(resolved -> checkIdIsFree(resolved)
+                                .andThen(Single.defer(() -> {
+                                    var now = new Date();
+                                    resolved.setCreatedAt(now);
+                                    resolved.setUpdatedAt(now);
+                                    return dataPlaneDefinitionRepository.create(resolved)
+                                            .onErrorResumeNext(throwable -> conflictThatLostTheRace(resolved, throwable));
+                                }))
+                                .map(this::toSummary))
                         .doOnError(throwable -> reportCreated(toSummary(definition), throwable)))
                 .doOnSuccess(summary -> reportCreated(summary, null));
     }
@@ -186,32 +184,58 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         }
     }
 
-    private Completable checkReferences(DataPlaneDefinition definition) {
-        return organizationService.findById(definition.getOrganizationId())
+    /**
+     * Settles which organization and environment the definition belongs to, and proves both exist.
+     * An id wins over an hrid, and {@code DEFAULT} stands in when the payload names neither.
+     */
+    private Single<DataPlaneDefinition> resolveReferences(NewDataPlaneDefinition payload, DataPlaneDefinition definition) {
+        return resolveOrganizationId(payload)
+                .flatMap(organizationId -> {
+                    definition.setOrganizationId(organizationId);
+                    return resolveEnvironmentId(payload, organizationId);
+                })
+                .map(environmentId -> {
+                    definition.setEnvironmentId(environmentId);
+                    return definition;
+                });
+    }
+
+    private Single<String> resolveOrganizationId(NewDataPlaneDefinition payload) {
+        if (!hasText(payload.getOrganizationId()) && hasText(payload.getOrganizationHrid())) {
+            return organizationService.findByHrid(payload.getOrganizationHrid())
+                    .map(Organization::getId)
+                    .switchIfEmpty(Single.error(() -> new InvalidParameterException("Unknown organization hrid [" + payload.getOrganizationHrid() + "]")));
+        }
+        String organizationId = hasText(payload.getOrganizationId()) ? payload.getOrganizationId() : Organization.DEFAULT;
+        return organizationService.findById(organizationId)
+                .map(Organization::getId)
                 .onErrorResumeNext(throwable -> Single.error(throwable instanceof OrganizationNotFoundException
-                        ? new InvalidParameterException("Unknown organization [" + definition.getOrganizationId() + "]")
-                        : throwable))
-                .flatMap(organization -> environmentService.findById(definition.getEnvironmentId(), definition.getOrganizationId())
-                        .onErrorResumeNext(throwable -> Single.error(throwable instanceof EnvironmentNotFoundException
-                                ? new InvalidParameterException("Unknown environment [" + definition.getEnvironmentId() + "] for organization [" + definition.getOrganizationId() + "]")
-                                : throwable)))
-                .ignoreElement();
+                        ? new InvalidParameterException("Unknown organization [" + organizationId + "]")
+                        : throwable));
+    }
+
+    private Single<String> resolveEnvironmentId(NewDataPlaneDefinition payload, String organizationId) {
+        if (!hasText(payload.getEnvironmentId()) && hasText(payload.getEnvironmentHrid())) {
+            return environmentService.findByHrid(organizationId, payload.getEnvironmentHrid())
+                    .map(Environment::getId)
+                    .switchIfEmpty(Single.error(() -> new InvalidParameterException("Unknown environment hrid [" + payload.getEnvironmentHrid() + "] for organization [" + organizationId + "]")));
+        }
+        String environmentId = hasText(payload.getEnvironmentId()) ? payload.getEnvironmentId() : Environment.DEFAULT;
+        return environmentService.findById(environmentId, organizationId)
+                .map(Environment::getId)
+                .onErrorResumeNext(throwable -> Single.error(throwable instanceof EnvironmentNotFoundException
+                        ? new InvalidParameterException("Unknown environment [" + environmentId + "] for organization [" + organizationId + "]")
+                        : throwable));
     }
 
     private Single<DataPlaneDefinition> conflictThatLostTheRace(DataPlaneDefinition definition, Throwable throwable) {
         return checkIdIsFree(definition)
-                .andThen(checkEnvironmentIsFree(definition))
                 .andThen(Single.<DataPlaneDefinition>error(throwable));
     }
 
     private Completable checkIdIsFree(DataPlaneDefinition definition) {
         return dataPlaneDefinitionRepository.findById(definition.getId())
                 .flatMapCompletable(existing -> Completable.error(new DataPlaneDefinitionAlreadyExistsException(definition.getId())));
-    }
-
-    private Completable checkEnvironmentIsFree(DataPlaneDefinition definition) {
-        return dataPlaneDefinitionRepository.findByEnvironmentId(definition.getEnvironmentId())
-                .flatMapCompletable(bound -> Completable.error(new EnvironmentAlreadyBoundToDataPlaneException(definition.getEnvironmentId(), bound.getId())));
     }
 
     private DataPlaneDefinition validate(NewDataPlaneDefinition payload) {
@@ -237,6 +261,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         definition.setName(payload.getName());
         definition.setType(payload.getType());
         definition.setGatewayUrl(payload.getGatewayUrl());
+        // overwritten by resolveReferences, but a failed resolution still has to be audited against something
         definition.setOrganizationId(hasText(payload.getOrganizationId()) ? payload.getOrganizationId() : Organization.DEFAULT);
         definition.setEnvironmentId(hasText(payload.getEnvironmentId()) ? payload.getEnvironmentId() : Environment.DEFAULT);
         definition.setConfiguration(payload.getConfiguration().toString());

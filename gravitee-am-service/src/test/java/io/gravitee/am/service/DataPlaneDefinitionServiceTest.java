@@ -38,7 +38,6 @@ import io.gravitee.am.service.dataplane.config.MongoDataPlaneConfigHandler;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
-import io.gravitee.am.service.exception.EnvironmentAlreadyBoundToDataPlaneException;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
@@ -121,10 +120,9 @@ class DataPlaneDefinitionServiceTest {
 
         when(dataPlanePluginManager.get("dataplane-am-mongodb")).thenReturn(mock(DataPlane.class));
         when(dataPlanePluginManager.get("dataplane-am-jdbc")).thenReturn(mock(DataPlane.class));
-        when(organizationService.findById(anyString())).thenReturn(Single.just(new Organization()));
-        when(environmentService.findById(anyString(), anyString())).thenReturn(Single.just(new Environment()));
+        when(organizationService.findById(anyString())).thenAnswer(invocation -> Single.just(organization(invocation.getArgument(0))));
+        when(environmentService.findById(anyString(), anyString())).thenAnswer(invocation -> Single.just(environment(invocation.getArgument(0))));
         when(dataPlaneDefinitionRepository.findById(anyString())).thenReturn(Maybe.empty());
-        when(dataPlaneDefinitionRepository.findByEnvironmentId(anyString())).thenReturn(Maybe.empty());
         when(dataPlaneDefinitionRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(dataPlaneDefinitionRepository.delete(anyString())).thenReturn(Completable.complete());
         when(domainRepository.existsByDataPlaneId(anyString())).thenReturn(Single.just(false));
@@ -377,6 +375,72 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
+    void shouldResolveTheOrganizationAndEnvironmentFromTheirHrids() {
+        when(organizationService.findByHrid("acme")).thenReturn(Maybe.just(organization("org-1")));
+        when(environmentService.findByHrid("org-1", "prod")).thenReturn(Maybe.just(environment("env-1")));
+        NewDataPlaneDefinition payload = payload();
+        payload.setOrganizationHrid("acme");
+        payload.setEnvironmentHrid("prod");
+
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        assertThat(captor.getValue().getOrganizationId()).isEqualTo("org-1");
+        assertThat(captor.getValue().getEnvironmentId()).isEqualTo("env-1");
+    }
+
+    @Test
+    void shouldPreferTheIdsOverTheHrids() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setOrganizationId("org-1");
+        payload.setOrganizationHrid("ignored-org");
+        payload.setEnvironmentId("env-1");
+        payload.setEnvironmentHrid("ignored-env");
+
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        assertThat(captor.getValue().getOrganizationId()).isEqualTo("org-1");
+        assertThat(captor.getValue().getEnvironmentId()).isEqualTo("env-1");
+        verify(organizationService, never()).findByHrid(anyString());
+        verify(environmentService, never()).findByHrid(anyString(), anyString());
+    }
+
+    @Test
+    void shouldResolveTheEnvironmentHridWithinTheOrganizationNamedById() {
+        when(environmentService.findByHrid("org-1", "prod")).thenReturn(Maybe.just(environment("env-1")));
+        NewDataPlaneDefinition payload = payload();
+        payload.setOrganizationId("org-1");
+        payload.setEnvironmentHrid("prod");
+
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        assertThat(captor.getValue().getEnvironmentId()).isEqualTo("env-1");
+    }
+
+    @Test
+    void shouldRejectAnUnknownOrganizationHrid() {
+        when(organizationService.findByHrid("nope")).thenReturn(Maybe.empty());
+        NewDataPlaneDefinition payload = payload();
+        payload.setOrganizationHrid("nope");
+
+        assertRejected(payload, InvalidParameterException.class, "Unknown organization hrid [nope]");
+    }
+
+    @Test
+    void shouldRejectAnUnknownEnvironmentHrid() {
+        when(environmentService.findByHrid(Organization.DEFAULT, "nope")).thenReturn(Maybe.empty());
+        NewDataPlaneDefinition payload = payload();
+        payload.setEnvironmentHrid("nope");
+
+        assertRejected(payload, InvalidParameterException.class, "Unknown environment hrid [nope]");
+    }
+
+    @Test
     void shouldRejectAnUnknownOrganization() {
         when(organizationService.findById("org-unknown")).thenReturn(Single.error(new OrganizationNotFoundException("org-unknown")));
         NewDataPlaneDefinition payload = payload();
@@ -403,17 +467,17 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
-    void shouldRejectAnEnvironmentThatIsAlreadyBound() {
-        when(dataPlaneDefinitionRepository.findByEnvironmentId(Environment.DEFAULT))
-                .thenReturn(Maybe.just(definition("dp-existing", Environment.DEFAULT)));
+    void shouldAcceptASecondDefinitionForTheSameEnvironment() {
+        NewDataPlaneDefinition second = payload();
+        second.setId("dp-acme-2");
 
-        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload()).test();
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(second).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
-        observer.assertError(throwable -> throwable instanceof EnvironmentAlreadyBoundToDataPlaneException
-                && throwable.getMessage().contains(Environment.DEFAULT)
-                && throwable.getMessage().contains("dp-existing"));
-        verify(dataPlaneDefinitionRepository, never()).create(any());
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(summary -> "dp-acme-2".equals(summary.id())
+                && Environment.DEFAULT.equals(summary.environmentId()));
     }
 
     @Test
@@ -500,18 +564,6 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
-    void shouldReportABoundEnvironmentWhenTheInsertLosesTheRace() {
-        when(dataPlaneDefinitionRepository.findByEnvironmentId(anyString()))
-                .thenReturn(Maybe.empty())
-                .thenReturn(Maybe.just(definition("dp-other", "env-1")));
-        doReturn(Single.error(new TechnicalManagementException("duplicate key")))
-                .when(dataPlaneDefinitionRepository).create(any());
-
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS)
-                .assertError(EnvironmentAlreadyBoundToDataPlaneException.class);
-    }
-
-    @Test
     void shouldDeleteAndReportAnAudit() {
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
 
@@ -583,6 +635,18 @@ class DataPlaneDefinitionServiceTest {
         payload.setGatewayUrl("https://gw-acme.cloud.gravitee.io");
         payload.setConfiguration(readTree(MONGO_CONFIGURATION));
         return payload;
+    }
+
+    private Organization organization(String id) {
+        Organization organization = new Organization();
+        organization.setId(id);
+        return organization;
+    }
+
+    private Environment environment(String id) {
+        Environment environment = new Environment();
+        environment.setId(id);
+        return environment;
     }
 
     private DataPlaneDefinition definition(String id, String environmentId) {

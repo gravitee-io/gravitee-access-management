@@ -33,5 +33,7 @@ public interface EnvironmentRepository extends CrudRepository<Environment, Strin
 
     Maybe<Environment> findById(String id, String organizationId);
 
+    Maybe<Environment> findByHrid(String organizationId, String hrid);
+
     Single<Long> count();
 }

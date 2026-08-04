@@ -93,9 +93,9 @@ public class JdbcDataPlaneDefinitionRepository extends AbstractJdbcRepository im
     }
 
     @Override
-    public Maybe<DataPlaneDefinition> findByEnvironmentId(String environmentId) {
+    public Flowable<DataPlaneDefinition> findByEnvironmentId(String environmentId) {
         log.debug("findByEnvironmentId({})", environmentId);
-        return findOne(Query.query(where(COL_ENVIRONMENT_ID).is(environmentId)), JdbcDataPlaneDefinition.class)
+        return findAll(Query.query(where(COL_ENVIRONMENT_ID).is(environmentId)), JdbcDataPlaneDefinition.class)
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }

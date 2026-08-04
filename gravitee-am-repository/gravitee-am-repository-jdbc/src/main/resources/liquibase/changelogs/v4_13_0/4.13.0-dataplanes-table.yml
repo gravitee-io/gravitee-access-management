@@ -26,7 +26,8 @@ databaseChangeLog:
             columnNames: id
             tableName: dataplanes
 
-        - addUniqueConstraint:
-            constraintName: uq_dataplanes_environment_id
-            columnNames: environment_id
+        - createIndex:
+            columns:
+              - column: { name: environment_id }
+            indexName: idx_dataplanes_environment_id
             tableName: dataplanes

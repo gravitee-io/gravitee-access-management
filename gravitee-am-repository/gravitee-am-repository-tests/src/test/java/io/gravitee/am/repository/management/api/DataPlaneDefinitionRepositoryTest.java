@@ -23,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -107,21 +109,35 @@ public class DataPlaneDefinitionRepositoryTest extends AbstractManagementTest {
         dataPlaneDefinitionRepository.create(build("dp-env-1", "env-1")).blockingGet();
         dataPlaneDefinitionRepository.create(build("dp-env-2", "env-2")).blockingGet();
 
-        TestObserver<DataPlaneDefinition> obs = dataPlaneDefinitionRepository.findByEnvironmentId("env-2").test();
+        TestObserver<List<DataPlaneDefinition>> obs = dataPlaneDefinitionRepository.findByEnvironmentId("env-2").toList().test();
         obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
-        obs.assertValue(d -> "dp-env-2".equals(d.getId()));
+        obs.assertValue(found -> found.size() == 1 && "dp-env-2".equals(found.get(0).getId()));
+    }
+
+    @Test
+    public void testFindByEnvironmentIdHoldingSeveralDefinitions() {
+        dataPlaneDefinitionRepository.create(build("dp-shared-1", "env-shared")).blockingGet();
+        dataPlaneDefinitionRepository.create(build("dp-shared-2", "env-shared")).blockingGet();
+
+        TestObserver<List<DataPlaneDefinition>> obs = dataPlaneDefinitionRepository.findByEnvironmentId("env-shared").toList().test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(found -> found.stream().map(DataPlaneDefinition::getId).collect(Collectors.toSet())
+                .equals(Set.of("dp-shared-1", "dp-shared-2")));
     }
 
     @Test
     public void testFindByUnknownEnvironmentId() {
-        TestObserver<DataPlaneDefinition> obs = dataPlaneDefinitionRepository.findByEnvironmentId("env-unknown").test();
+        TestObserver<List<DataPlaneDefinition>> obs = dataPlaneDefinitionRepository.findByEnvironmentId("env-unknown").toList().test();
         obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertNoErrors();
-        obs.assertNoValues();
+        obs.assertValue(List::isEmpty);
     }
 
     @Test

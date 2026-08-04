@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author GraviteeSource Team
@@ -27,5 +26,5 @@ public interface DataPlaneDefinitionRepository extends CrudRepository<DataPlaneD
 
     Flowable<DataPlaneDefinition> findAll();
 
-    Maybe<DataPlaneDefinition> findByEnvironmentId(String environmentId);
+    Flowable<DataPlaneDefinition> findByEnvironmentId(String environmentId);
 }

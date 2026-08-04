@@ -20,8 +20,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Payload of the data plane provisioning endpoint. {@code organizationId} and {@code environmentId}
- * are optional and default to {@code DEFAULT}.
+ * Payload of the data plane provisioning endpoint. The organization and the environment are both
+ * optional: an id wins, an hrid is looked up when no id is given, and {@code DEFAULT} is used when
+ * neither is.
  *
  * @author GraviteeSource Team
  */
@@ -39,7 +40,11 @@ public class NewDataPlaneDefinition {
 
     private String organizationId;
 
+    private String organizationHrid;
+
     private String environmentId;
+
+    private String environmentHrid;
 
     /**
      * The {@code dataPlanes[i]} body as it would appear in the gravitee.yml, e.g.

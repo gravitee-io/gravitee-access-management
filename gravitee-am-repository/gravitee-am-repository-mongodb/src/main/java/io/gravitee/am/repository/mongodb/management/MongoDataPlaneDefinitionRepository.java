@@ -50,8 +50,7 @@ public class MongoDataPlaneDefinitionRepository extends AbstractManagementMongoR
     public void init() {
         collection = mongoOperations.getCollection(COLLECTION_NAME, DataPlaneDefinitionMongo.class);
         super.init(collection);
-        // an environment is bound to at most one data plane
-        super.createIndex(collection, Map.of(new Document(FIELD_ENVIRONMENT_ID, 1), new IndexOptions().name("e1").unique(true)));
+        super.createIndex(collection, Map.of(new Document(FIELD_ENVIRONMENT_ID, 1), new IndexOptions().name("e1")));
     }
 
     @Override
@@ -70,9 +69,8 @@ public class MongoDataPlaneDefinitionRepository extends AbstractManagementMongoR
     }
 
     @Override
-    public Maybe<DataPlaneDefinition> findByEnvironmentId(String environmentId) {
-        return Observable.fromPublisher(collection.find(eq(FIELD_ENVIRONMENT_ID, environmentId)).first())
-                .firstElement()
+    public Flowable<DataPlaneDefinition> findByEnvironmentId(String environmentId) {
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_ENVIRONMENT_ID, environmentId))))
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
     }

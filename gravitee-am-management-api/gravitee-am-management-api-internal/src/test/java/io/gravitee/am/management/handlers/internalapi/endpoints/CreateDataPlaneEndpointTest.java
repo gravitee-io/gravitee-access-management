@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
-import io.gravitee.am.service.exception.EnvironmentAlreadyBoundToDataPlaneException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
@@ -208,18 +207,6 @@ class CreateDataPlaneEndpointTest {
 
         verify(response).setStatusCode(409);
         assertThat(responseBody()).contains("dp-acme");
-    }
-
-    @Test
-    void shouldReturn409WhenTheEnvironmentIsAlreadyBound() {
-        when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any()))
-                .thenReturn(Single.error(new EnvironmentAlreadyBoundToDataPlaneException("DEFAULT", "dp-existing")));
-
-        endpoint.handle(routingContext);
-
-        verify(response).setStatusCode(409);
-        assertThat(responseBody()).contains("DEFAULT").contains("dp-existing");
     }
 
     @Test

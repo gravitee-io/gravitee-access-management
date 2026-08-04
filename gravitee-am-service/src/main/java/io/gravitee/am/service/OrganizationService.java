@@ -31,6 +31,8 @@ public interface OrganizationService {
 
     Single<Organization> findById(String organizationId);
 
+    Maybe<Organization> findByHrid(String hrid);
+
     Flowable<Organization> findAll();
 
     Maybe<Organization> createDefault();

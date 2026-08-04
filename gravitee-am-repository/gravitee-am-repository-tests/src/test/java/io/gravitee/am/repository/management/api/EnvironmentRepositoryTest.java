@@ -62,6 +62,44 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByHrid() {
+        Environment environment = buildEnv();
+        Environment envCreated = environmentRepository.create(environment).blockingGet();
+
+        TestObserver<Environment> obs = environmentRepository.findByHrid(envCreated.getOrganizationId(), "Hrid2").test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(e -> e.getId().equals(envCreated.getId()));
+        obs.assertValue(e -> e.getHrids().containsAll(environment.getHrids()));
+    }
+
+    @Test
+    public void testFindByHridOfAnotherOrganization() {
+        Environment envCreated = environmentRepository.create(buildEnv()).blockingGet();
+
+        TestObserver<Environment> obs = environmentRepository.findByHrid(UUID.randomUUID().toString(), "Hrid2").test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoValues();
+        obs.assertNoErrors();
+    }
+
+    @Test
+    public void testFindByUnknownHrid() {
+        Environment envCreated = environmentRepository.create(buildEnv()).blockingGet();
+
+        TestObserver<Environment> obs = environmentRepository.findByHrid(envCreated.getOrganizationId(), "unknown").test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoValues();
+        obs.assertNoErrors();
+    }
+
+    @Test
     public void testNotFoundById() {
         var observer = environmentRepository.findById("unknown").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
