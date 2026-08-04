@@ -2129,6 +2129,23 @@ workflows:
     jobs:
       - setup:
           context: cicd-orchestrator
+      - aikido/docker_image_scan:
+          context: cicd-orchestrator
+          checkout: false
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://_XrkO71xa9HZBwxYoUHX0w/field/password
+                var-name: AIKIDO_API_KEY
+            - attach_workspace:
+                at: /tmp
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo "graviteeio/am-gateway:4.12.0" >>  /tmp/built-docker-images.txt
+          requires:
+            - publish-images-azure-registry
+          built_docker_image_file: /tmp/built-docker-images.txt
+          fail_on: ""
       - pull_requests_ce:
           name: process_pull_request
           requires:
