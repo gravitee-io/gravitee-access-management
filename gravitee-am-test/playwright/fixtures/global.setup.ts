@@ -15,33 +15,10 @@
  */
 import { test as setup } from '@playwright/test';
 import { LoginPage } from '../pages/login.page';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { listDomains, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { ADMIN_PASSWORD } from '../utils/test-constants';
+import { cleanupTestDomains } from './domain-cleanup';
 
 const ADMIN_STORAGE_STATE = 'playwright/fixtures/.auth/admin.json';
-
-/** Prefixes used by Playwright test fixtures for domain names. */
-export const TEST_DOMAIN_PREFIXES = ['pw-', 'cert-'];
-
-/** Delete stale test domains to keep the environment clean. */
-export async function cleanupTestDomains(label: string): Promise<void> {
-  try {
-    const token = await requestAdminAccessToken();
-    const page = await listDomains(token, { size: 200 });
-    const staleDomains = (page.data || []).filter((d) => TEST_DOMAIN_PREFIXES.some((prefix) => d.name?.startsWith(prefix)));
-
-    if (staleDomains.length === 0) return;
-
-    console.log(`[${label}] Cleaning up ${staleDomains.length} stale test domains...`);
-    for (const domain of staleDomains) {
-      await safeDeleteDomain(domain.id, token);
-    }
-    console.log(`[${label}] Stale domain cleanup complete.`);
-  } catch (err) {
-    console.warn(`[${label}] Stale domain cleanup failed (non-fatal):`, err);
-  }
-}
 
 /** Authenticate once and save browser state for all tests. */
 // eslint-disable-next-line playwright/expect-expect -- setup fixture, no assertions needed

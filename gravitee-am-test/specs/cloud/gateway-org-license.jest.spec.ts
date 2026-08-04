@@ -28,15 +28,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import {
-  createDomain,
-  patchDomain,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-} from '@management-commands/domain-management-commands';
-import { createCertificate } from '@management-commands/certificate-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { waitForDomainStart } from '@management-commands/domain-management-commands';
+import { getCertificateApi, getDomainApi, getIdpApi } from '@management-commands/service/utils';
 import { getDomainState } from '@gateway-commands/monitoring-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
@@ -49,6 +42,7 @@ retryImmediatelyForThisFile();
 
 // Computed at module load (not from the async fixture) so it's known before `it`/`it.skip` is chosen below.
 const hasExpiredLicense = Boolean(process.env.AM_ORG_LICENSE_EXPIRED_PATH);
+const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 
 const AZURE_AD_TYPE = 'azure-ad-am-idp';
 const JKS_CONFIG = JSON.stringify({
@@ -68,6 +62,8 @@ let domainId: string;
 let domainHrid: string;
 let eeIdpId: string | null = null;
 
+const orgEnv = () => ({ organizationId: fixture.organizationId, environmentId: fixture.environmentId });
+
 async function getSamlStatus(hrid: string): Promise<number> {
   const res = await fetch(`${process.env.AM_GATEWAY_URL}/${hrid}/saml2/idp/metadata`);
   return res.status;
@@ -81,39 +77,54 @@ async function waitForSamlStatus(hrid: string, expected: number): Promise<void> 
   );
 }
 
+async function patchDomain(body: Record<string, unknown>): Promise<void> {
+  await getDomainApi(fixture.accessToken).patchDomain({
+    ...orgEnv(),
+    domain: domainId,
+    patchDomain: body,
+  });
+}
+
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture();
+  fixture = await setupOrgLicenseFixture('gateway-org-license');
 
   // Set universe license before domain creation so the gateway enforces it when the
   // domain first deploys. License enforcement applies on domain startup/update, not
   // on license change alone.
   await fixture.setUniverseLicense();
 
-  const domain = await createDomain(fixture.accessToken, uniqueName('am7238', true), 'AM-7238 gateway license');
-  domainId = domain.id;
-  domainHrid = domain.hrid;
+  const domainApi = getDomainApi(fixture.accessToken);
+  const domain = await domainApi.createDomain({
+    ...orgEnv(),
+    newDomain: { name: uniqueName('am7238', true), description: 'AM-7238 gateway license', dataPlaneId: DATA_PLANE_ID },
+  });
+  domainId = domain.id!;
+  domainHrid = domain.hrid!;
 
-  const cert = await createCertificate(domainId, fixture.accessToken, {
-    name: uniqueName('saml-cert'),
-    type: 'javakeystore-am-certificate',
-    configuration: JKS_CONFIG,
+  const cert = await getCertificateApi(fixture.accessToken).createCertificate({
+    ...orgEnv(),
+    domain: domainId,
+    newCertificate: {
+      name: uniqueName('saml-cert'),
+      type: 'javakeystore-am-certificate',
+      configuration: JKS_CONFIG,
+    },
   });
 
-  await patchDomain(domainId, fixture.accessToken, {
-    saml: { enabled: true, entityId: domainHrid, certificate: cert.id },
-  });
-
-  await startDomain(domainId, fixture.accessToken);
+  await patchDomain({ saml: { enabled: true, entityId: domainHrid, certificate: cert.id } });
+  await domainApi.patchDomain({ ...orgEnv(), domain: domainId, patchDomain: { enabled: true } });
   await waitForDomainStart(domain);
   await waitForSamlStatus(domainHrid, 200);
 });
 
 afterAll(async () => {
-  if (eeIdpId) {
-    await deleteIdp(domainId, fixture.accessToken, eeIdpId).catch(() => null);
+  if (eeIdpId && fixture) {
+    await getIdpApi(fixture.accessToken)
+      .deleteIdentityProvider({ ...orgEnv(), domain: domainId, identity: eeIdpId })
+      .catch(() => null);
   }
-  await fixture.cleanup();
-  await safeDeleteDomain(domainId, fixture.accessToken);
+  await fixture?.deleteDomain(domainId);
+  await fixture?.cleanup();
 });
 
 describe('SAML metadata — universe org license', () => {
@@ -127,16 +138,20 @@ describe('SAML metadata — universe org license', () => {
 
 describe('SAML metadata — org license removed', () => {
   beforeAll(async () => {
-    const eeIdp = await createIdp(domainId, fixture.accessToken, {
-      name: uniqueName('azure-for-readiness'),
-      type: AZURE_AD_TYPE,
-      configuration: JSON.stringify({ tenantId: 'test', clientId: 'test', clientSecret: 'test' }),
+    const eeIdp = await getIdpApi(fixture.accessToken).createIdentityProvider({
+      ...orgEnv(),
+      domain: domainId,
+      newIdentityProvider: {
+        name: uniqueName('azure-for-readiness'),
+        type: AZURE_AD_TYPE,
+        configuration: JSON.stringify({ tenantId: 'test', clientId: 'test', clientSecret: 'test' }),
+      },
     });
-    eeIdpId = eeIdp.id;
+    eeIdpId = eeIdp.id!;
     // Clear the license then update the domain so the gateway re-evaluates the license
     // on the next sync-deployer redeploy.
     await fixture.clearOrgLicense();
-    await patchDomain(domainId, fixture.accessToken, { description: 'am7238-license-removed-trigger' });
+    await patchDomain({ description: 'am7238-license-removed-trigger' });
     await waitForSamlStatus(domainHrid, 404);
   });
 
@@ -183,7 +198,7 @@ describe('SAML metadata — license restored', () => {
   beforeAll(async () => {
     // Restore the license then update the domain to trigger re-evaluation.
     await fixture.setUniverseLicense();
-    await patchDomain(domainId, fixture.accessToken, { description: 'am7238-license-restored-trigger' });
+    await patchDomain({ description: 'am7238-license-restored-trigger' });
     await waitForSamlStatus(domainHrid, 200);
   });
 
@@ -202,7 +217,7 @@ describe('SAML metadata — expired org license', () => {
     jira`should return 404 when an expired org license is sent (treated same as no license) ${'AM-7238'}`,
     async () => {
       await fixture.setExpiredLicense();
-      await patchDomain(domainId, fixture.accessToken, { description: 'am7238-expired-license-trigger' });
+      await patchDomain({ description: 'am7238-expired-license-trigger' });
       await waitForSamlStatus(domainHrid, 404);
 
       const res = await fetch(`${process.env.AM_GATEWAY_URL}/${domainHrid}/saml2/idp/metadata`);

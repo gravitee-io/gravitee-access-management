@@ -23,6 +23,11 @@ services:
   cockpit-mock:
     build:
       context: ../../../gravitee-am-cockpit-mock
+    # The private key matching the certificate the management API holds under alias 'cockpit-client'.
+    # It lets the mock mint the SSO token AM's /auth/cockpit endpoint accepts, the way real Cockpit does.
+    command: ["--sso-private-key", "/cockpit/cockpit-key.pem"]
+    volumes:
+      - ./cockpit/cockpit-key.pem:/cockpit/cockpit-key.pem:ro
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8085/_control/status"]
       interval: 5s
@@ -39,19 +44,16 @@ services:
       - gravitee_installation_managed_accessPoints_environment_gateway_host={environment}.{organization}.{account}.example.com
       # A managed cloud node has no platform license
       - GRAVITEE_LICENSE_KEY=
-      # Define an inline admin usable against ANY organization, so the cloud specs can drive the organizations
-      # Cockpit creates rather than DEFAULT. The management API offers the providers declared here to
-      # whichever organization is being logged into (`?org=<id>`), creates the user there and grants the
-      # mapped role.
+      # Cockpit signs the SSO token it redirects users into AM with; CockpitAuthenticationFilter verifies
+      # it against the certificate held under alias 'cockpit-client' (its default) in this keystore. The
+      # matching private key is mounted on the cockpit-mock service above.
+      - GRAVITEE_CLOUD_CONNECTOR_WS_SSL_KEYSTORE_TYPE=PKCS12
+      - GRAVITEE_CLOUD_CONNECTOR_WS_SSL_KEYSTORE_PATH=/opt/graviteeio-am-management-api/cockpit/cockpit-truststore.p12
+      - GRAVITEE_CLOUD_CONNECTOR_WS_SSL_KEYSTORE_PASSWORD=cockpit
       - >-
         JAVA_OPTS=-Dgravitee.license=/opt/graviteeio-am-management-api/license/no-platform-license.key
-        -Dsecurity.providers[0].type=memory
-        -Dsecurity.providers[0].enabled=true
-        -Dsecurity.providers[0].users[0].username=admin
-        -Dsecurity.providers[0].users[0].firstname=Administrator
-        -Dsecurity.providers[0].users[0].lastname=Administrator
-        -Dsecurity.providers[0].users[0].password=$$2a$$10$$NG5WLbspq8V1yJDzUKfUK.oum94qL/Ne3B5fQCgekw/Y4aOEaoFZq
-        -Dsecurity.providers[0].users[0].role=ORGANIZATION_PRIMARY_OWNER
+    volumes:
+      - ./cockpit/cockpit-truststore.p12:/opt/graviteeio-am-management-api/cockpit/cockpit-truststore.p12:ro
     depends_on:
       cockpit-mock:
         condition: service_healthy

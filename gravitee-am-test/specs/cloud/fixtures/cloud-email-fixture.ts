@@ -17,6 +17,7 @@ import { getApplicationApi, getDomainApi, getEntrypointsApi, getUserApi } from '
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
+import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import {
   extractXsrfToken,
   extractXsrfTokenAndActionResponse,
@@ -27,6 +28,7 @@ import {
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { retryUntil, withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
+import { CloudOrganizationFixture } from './cloud-organization-fixture';
 import { expect } from '@jest/globals';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
@@ -70,9 +72,10 @@ export interface CloudEmailFixture {
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudEmailFixture = async (accessToken: string): Promise<CloudEmailFixture> => {
-  const organizationId = process.env.AM_DEF_ORG_ID;
-  const environmentId = 'cloud-env-email';
+export const setupCloudEmailFixture = async (organization: CloudOrganizationFixture): Promise<CloudEmailFixture> => {
+  const organizationId = organization.organizationId;
+  const accessToken = organization.accessToken;
+  const environmentId = `${organizationId}-env`;
   const entrypointHost = `${uniqueName('gw', true)}.example.com`;
   const overridingHost = `${uniqueName('custom', true)}.example.com`;
   const entrypointUrl = `https://${entrypointHost}`;
@@ -99,6 +102,9 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
     (entrypoints: any[]) => entrypoints.some((e) => e.url === entrypointUrl) && entrypoints.some((e) => e.url === overridingUrl),
     POLL,
   );
+
+  // 1b. Cockpit grants the environment owner right after creating the environment.
+  await organization.grantEnvironmentOwnership(environmentId);
 
   // 2. A domain in that environment, with SCIM on and a service app able to call it. Configure before
   //    enabling the domain so the initial sync picks everything up.
@@ -413,10 +419,9 @@ export const setupCloudEmailFixture = async (accessToken: string): Promise<Cloud
   // Only the domain. Entrypoints are Cockpit-owned and a managed installation rejects deleting them,
   // so attempting it only ever produces a 400 and a misleading warning.
   // Note: organizations and environments have no delete endpoint in the management API
+  const deleteDomain = bindSafeDeleteCloudDomain({ accessToken, organizationId, environmentId });
   const cleanup = async () => {
-    await domainApi
-      .deleteDomain({ organizationId, environmentId, domain: domain.id })
-      .catch((e) => console.warn(`cleanup: failed to delete domain ${domain.id}: ${e.message}`));
+    await deleteDomain(domain.id);
   };
 
   return {

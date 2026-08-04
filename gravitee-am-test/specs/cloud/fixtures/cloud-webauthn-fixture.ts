@@ -18,8 +18,10 @@ import { getApplicationApi, getDomainApi, getEntrypointsApi } from '@management-
 import { waitForDomainStart } from '@management-commands/domain-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
+import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
+import { CloudOrganizationFixture } from './cloud-organization-fixture';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
@@ -65,8 +67,9 @@ export interface CloudWebAuthnFixture {
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<CloudWebAuthnFixture> => {
-  const organizationId = process.env.AM_DEF_ORG_ID;
+export const setupCloudWebAuthnFixture = async (organization: CloudOrganizationFixture): Promise<CloudWebAuthnFixture> => {
+  const organizationId = organization.organizationId;
+  const accessToken = organization.accessToken;
   const environmentId = uniqueName('env-wa', true);
   // Lowercased: uniqueName capitalises a word, and a host is case-insensitive, so the browser lowercases
   // it when it parses the origin. The relying party id has to match that, not the stored spelling.
@@ -99,6 +102,9 @@ export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<Cl
   };
 
   await resyncAccessPoints({ generated: generatedHost, overriding: overridingHost });
+
+  // Cockpit grants the environment owner right after creating the environment.
+  await organization.grantEnvironmentOwnership(environmentId);
 
   const domainApi = getDomainApi(accessToken);
   const gatewayUrl = process.env.AM_GATEWAY_URL;
@@ -172,12 +178,9 @@ export const setupCloudWebAuthnFixture = async (accessToken: string): Promise<Cl
 
   // The entrypoints this fixture provisions are deliberately left behind: AM-7228 makes them read-only
   // in a managed installation, so deleting them can only ever return 400. The hosts are unique per run.
+  const deleteDomain = bindSafeDeleteCloudDomain({ accessToken, organizationId, environmentId });
   const cleanup = async () => {
-    for (const { domain } of [derived, configured]) {
-      await domainApi
-        .deleteDomain({ organizationId, environmentId, domain: domain.id })
-        .catch((e) => console.warn(`cleanup: failed to delete domain ${domain.id}: ${e.message}`));
-    }
+    await Promise.all([derived, configured].map(({ domain }) => deleteDomain(domain.id)));
   };
 
   return {

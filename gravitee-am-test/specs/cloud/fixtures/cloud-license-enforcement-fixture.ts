@@ -18,6 +18,7 @@ import { getDomainApi } from '@management-commands/service/utils';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { sendCockpitCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
+import { safeDeleteCloudDomains } from '@cloud-commands/domain-commands';
 import { DomainState } from '../../../api/gateway/apis/MonitoringApi';
 import { CloudLicenseFixture, setupCloudLicenseFixture } from './cloud-license-fixture';
 
@@ -75,19 +76,11 @@ export const setupCloudLicenseEnforcementFixture = async (): Promise<CloudLicens
     return getDomainState(domain.id!);
   };
 
-  const safeDelete = async (domain: string): Promise<void> => {
-    try {
-      await domainApi.deleteDomain({ organizationId, environmentId, domain });
-    } catch (err: any) {
-      console.warn(`⚠️  Failed to delete domain ${domain}: ${err.message}`);
-    }
-  };
-
   return {
     ...licenseFixture,
     deployDomain,
     cleanup: async () => {
-      await Promise.all(domainIds.map(safeDelete));
+      await safeDeleteCloudDomains({ accessToken, organizationId, environmentId }, domainIds);
       await licenseFixture.cleanup();
     },
   };

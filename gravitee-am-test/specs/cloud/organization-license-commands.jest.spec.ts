@@ -36,24 +36,24 @@ retryImmediatelyForThisFile();
 let fixture: OrgLicenseFixture;
 
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture();
+  fixture = await setupOrgLicenseFixture('org-license-commands');
   // Start from a clean no-license state so tests are predictable.
   await fixture.clearOrgLicense();
 });
 
 afterAll(async () => {
-  await fixture.cleanup();
+  await fixture?.cleanup();
 });
 
 describe('Cockpit ORGANIZATION command — license set', () => {
   it(jira`should return SUCCEEDED and expose scope ORGANIZATION with tier universe ${'AM-7235'}`, async () => {
-    const id = await sendOrgCommand(fixture.orgId, fixture.universeLicense);
+    const id = await sendOrgCommand(fixture.organizationId, fixture.universeLicense);
     const reply = await waitForCockpitReply(id, { timeoutMillis: 15000 });
 
     expect(reply.commandStatus).toBe('SUCCEEDED');
 
-    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION');
-    const license = await getOrgLicense(fixture.accessToken);
+    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION', undefined, fixture.organizationId);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.scope).toBe('ORGANIZATION');
     expect(license.tier).toBe('universe');
   });
@@ -61,26 +61,26 @@ describe('Cockpit ORGANIZATION command — license set', () => {
 
 describe('Cockpit ORGANIZATION command — license clear', () => {
   it(jira`should return SUCCEEDED and fall back to PLATFORM scope when license field is omitted ${'AM-7235'}`, async () => {
-    const id = await sendOrgCommand(fixture.orgId);
+    const id = await sendOrgCommand(fixture.organizationId);
     const reply = await waitForCockpitReply(id, { timeoutMillis: 15000 });
 
     expect(reply.commandStatus).toBe('SUCCEEDED');
 
-    await waitForOrgLicenseScope(fixture.accessToken, 'PLATFORM');
-    const license = await getOrgLicense(fixture.accessToken);
+    await waitForOrgLicenseScope(fixture.accessToken, 'PLATFORM', undefined, fixture.organizationId);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.scope).toBe('PLATFORM');
   });
 });
 
 describe('Cockpit ORGANIZATION command — idempotency', () => {
   it(jira`should return SUCCEEDED on both sends when the same license is sent twice ${'AM-7235'}`, async () => {
-    const id1 = await sendOrgCommand(fixture.orgId, fixture.universeLicense);
+    const id1 = await sendOrgCommand(fixture.organizationId, fixture.universeLicense);
     const reply1 = await waitForCockpitReply(id1, { timeoutMillis: 15000 });
     expect(reply1.commandStatus).toBe('SUCCEEDED');
 
-    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION');
+    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION', undefined, fixture.organizationId);
 
-    const id2 = await sendOrgCommand(fixture.orgId, fixture.universeLicense);
+    const id2 = await sendOrgCommand(fixture.organizationId, fixture.universeLicense);
     const reply2 = await waitForCockpitReply(id2, { timeoutMillis: 15000 });
     expect(reply2.commandStatus).toBe('SUCCEEDED');
   });
@@ -93,13 +93,13 @@ describe('Cockpit ORGANIZATION command — idempotency', () => {
 describe('Cockpit ORGANIZATION command — fake base64 payload', () => {
   it(jira`should return SUCCEEDED and assign oss tier for a valid-base64 but non-license payload ${'AM-7235'}`, async () => {
     const fakeLicense = Buffer.from('not-a-real-license-payload').toString('base64');
-    const id = await sendOrgCommand(fixture.orgId, fakeLicense);
+    const id = await sendOrgCommand(fixture.organizationId, fakeLicense);
     const reply = await waitForCockpitReply(id, { timeoutMillis: 15000 });
 
     expect(reply.commandStatus).toBe('SUCCEEDED');
 
-    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION');
-    const license = await getOrgLicense(fixture.accessToken);
+    await waitForOrgLicenseScope(fixture.accessToken, 'ORGANIZATION', undefined, fixture.organizationId);
+    const license = await getOrgLicense(fixture.accessToken, fixture.organizationId);
     expect(license.tier).toBe('oss');
   });
 
@@ -110,7 +110,7 @@ describe('Cockpit ORGANIZATION command — fake base64 payload', () => {
 
 describe('Cockpit ORGANIZATION command — blank license', () => {
   it(jira`should return ERROR with the non-blank-base64 message for a blank license value ${'AM-7235'}`, async () => {
-    const id = await sendOrgCommand(fixture.orgId, '');
+    const id = await sendOrgCommand(fixture.organizationId, '');
     const reply = await waitForCockpitReply(id, { timeoutMillis: 15000 });
 
     expect(reply.commandStatus).toBe('ERROR');
@@ -120,7 +120,7 @@ describe('Cockpit ORGANIZATION command — blank license', () => {
 
 describe('Cockpit ORGANIZATION command — non-base64 license', () => {
   it(jira`should return ERROR with the invalid-base64 message for a non-base64 license value ${'AM-7235'}`, async () => {
-    const id = await sendOrgCommand(fixture.orgId, 'not-valid-base64!!!');
+    const id = await sendOrgCommand(fixture.organizationId, 'not-valid-base64!!!');
     const reply = await waitForCockpitReply(id, { timeoutMillis: 15000 });
 
     expect(reply.commandStatus).toBe('ERROR');

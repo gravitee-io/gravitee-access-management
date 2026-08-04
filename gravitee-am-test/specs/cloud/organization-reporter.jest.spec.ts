@@ -15,9 +15,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
+import { cockpitSignIn, waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
 import { listOrgReporters } from '@management-commands/reporter-management-commands';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getAuditApi } from '@management-commands/service/utils';
 import { retryUntil } from '@utils-commands/retry';
 import { CloudOrganizationFixture, setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
@@ -55,7 +54,12 @@ describe('Audit reporting for a Cockpit-created organization', () => {
     const since = Date.now();
     const page = await retryUntil(
       async () => {
-        await requestAdminAccessToken(fixture.organizationId);
+        // sign in again to generate the USER_LOGIN the reporter should have captured
+        await cockpitSignIn({
+          sub: fixture.userId,
+          organizationId: fixture.organizationId,
+          environmentId: fixture.environmentId,
+        });
         return getAuditApi(fixture.accessToken).listOrganizationAudits({
           organizationId: fixture.organizationId,
           type: 'USER_LOGIN',
