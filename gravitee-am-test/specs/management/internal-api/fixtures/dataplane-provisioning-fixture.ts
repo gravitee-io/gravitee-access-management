@@ -22,13 +22,6 @@ import {
   NewDataPlane,
 } from '@management-commands/dataplane-provisioning-commands';
 
-/**
- * An environment can hold at most one data plane, so a case that needs a provisioned one has to own
- * the binding for its duration. Each case releases the binding around itself rather than sharing a
- * row, which keeps the cases independent of each other and of whatever a previous run left behind.
- */
-
-/** Credentials the spec asserts never come back out. */
 export const SECRET_PASSWORD = 'sup3r-s3cret-e2e';
 export const SECRET_USERNAME = 'am-e2e-user';
 
@@ -39,16 +32,11 @@ const MONGO_PORT = 27017;
 const JDBC_HOST = 'postgres';
 const JDBC_PORT = 5432;
 
-/** The credential-free summary each payload below should be reduced to on the way back out. */
 export const MONGO_SUMMARY = { database: DATABASE_NAME, hosts: [`${MONGO_HOST}:${MONGO_PORT}`] };
 export const JDBC_SUMMARY = { database: DATABASE_NAME, hosts: [`${JDBC_HOST}:${JDBC_PORT}`] };
 
 const ENVIRONMENT_ID = process.env.AM_DEF_ENV_ID;
 
-/**
- * Points at the mongo the stack already runs, so the row stays loadable once AM-7260 starts
- * connecting to provisioned data planes.
- */
 export function dataPlanePayload(id: string): NewDataPlane {
   return {
     id,
@@ -67,7 +55,6 @@ export function dataPlanePayload(id: string): NewDataPlane {
   };
 }
 
-/** The same connection expressed as a uri, which carries the credentials inside the uri itself. */
 export function uriFormPayload(id: string): NewDataPlane {
   return {
     id,
@@ -81,7 +68,6 @@ export function uriFormPayload(id: string): NewDataPlane {
   };
 }
 
-/** The other data plane type AM ships, so the endpoints are exercised beyond the mongodb handler. */
 export function jdbcPayload(id: string): NewDataPlane {
   return {
     id,
@@ -100,11 +86,6 @@ export function jdbcPayload(id: string): NewDataPlane {
   };
 }
 
-/**
- * Frees the environment binding, whichever data plane currently holds it. An environment takes one
- * data plane, so a case that leaves its row behind fails the next one with a 409 rather than on its
- * own merits.
- */
 export async function releaseEnvironmentBinding(): Promise<void> {
   const listed = await listDataPlanes();
   const bound = listed.body?.find((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID);
@@ -113,11 +94,6 @@ export async function releaseEnvironmentBinding(): Promise<void> {
   }
 }
 
-/**
- * Provisions the data plane a case needs and returns its summary. Always creates: the binding is
- * released around every case, so the stored settings are known to be the ones just submitted rather
- * than whatever an earlier run happened to leave.
- */
 export async function provisionDataPlane(id: string): Promise<DataPlaneSummary> {
   const created = await createDataPlane(dataPlanePayload(id));
   if (created.status !== 201) {
@@ -126,7 +102,6 @@ export async function provisionDataPlane(id: string): Promise<DataPlaneSummary> 
   return created.body;
 }
 
-/** Every field the summary is allowed to expose. Anything else is a redaction leak. */
 export const ALLOWED_SUMMARY_FIELDS = [
   'id',
   'name',

@@ -44,7 +44,6 @@ setup(60000);
 
 const PROVISIONED_ID = 'dp-e2e-provisioned';
 
-/** Fails the assertion if the serialised payload carries anything credential shaped. */
 function expectNoCredentials(raw: string) {
   expect(raw).not.toContain(SECRET_PASSWORD);
   expect(raw).not.toContain(SECRET_USERNAME);
@@ -53,7 +52,6 @@ function expectNoCredentials(raw: string) {
 }
 
 describe('Data plane provisioning (management technical API)', () => {
-  // an environment holds at most one data plane, so every case starts and ends with it unbound
   beforeEach(releaseEnvironmentBinding);
   afterEach(releaseEnvironmentBinding);
 
@@ -248,7 +246,6 @@ describe('Data plane provisioning (management technical API)', () => {
       const after = await getDataPlane(provisioned.id);
       expect(after.status).toBe(404);
 
-      // the environment binding is released, so provisioning works again
       const recreated = await createDataPlane(dataPlanePayload(PROVISIONED_ID));
       expect(recreated.status).toBe(201);
     });
@@ -263,7 +260,6 @@ describe('Data plane provisioning (management technical API)', () => {
       expect(created.body).toMatchObject(MONGO_SUMMARY);
       expectNoCredentials(created.raw);
 
-      // the credentials live in the uri itself, so the read path has to strip them out again
       const read = await getDataPlane(id);
       expect(read.body).toMatchObject(MONGO_SUMMARY);
       expectNoCredentials(read.raw);
