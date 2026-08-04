@@ -58,6 +58,10 @@ function authHeader(): Record<string, string> {
   return { Authorization: 'Basic ' + btoa(`${username}:${password}`) };
 }
 
+function wrongAuthHeader(): Record<string, string> {
+  return { Authorization: 'Basic ' + btoa(`${username}:not-${password}`) };
+}
+
 async function read<T>(response: Response): Promise<DataPlaneResponse<T>> {
   const raw = await response.text();
   let body: T;
@@ -105,3 +109,21 @@ export const unauthenticated = {
     }),
   delete: (id: string) => fetch(`${basePath}/dataplanes/${id}`, { method: 'DELETE' }),
 };
+
+/** Same requests with a bad password, so a rejection cannot be mistaken for "any header is accepted". */
+export const wrongCredentials = {
+  list: () => fetch(`${basePath}/dataplanes`, { method: 'GET', headers: wrongAuthHeader() }),
+  create: (payload: NewDataPlane) =>
+    fetch(`${basePath}/dataplanes`, {
+      method: 'POST',
+      headers: { ...wrongAuthHeader(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+};
+
+/**
+ * The same path on the console facing port. The technical API is bound to its own port and is not
+ * meant to be reachable from there, so these calls exist to prove the routes did not leak onto it.
+ */
+export const onPublicManagementPort = (path: string) =>
+  fetch(`${process.env.AM_MANAGEMENT_URL}${path}`, { method: 'GET', headers: authHeader() });
