@@ -23,6 +23,7 @@ import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.AuditService;
@@ -73,6 +74,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     private final OrganizationService organizationService;
     private final EnvironmentService environmentService;
     private final DataPlanePluginManager dataPlanePluginManager;
+    private final PluginConfigurationValidatorsRegistry pluginValidatorsRegistry;
     private final List<DataPlaneConfigHandler> configHandlers;
     private final AuditService auditService;
 
@@ -83,6 +85,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                           OrganizationService organizationService,
                                           EnvironmentService environmentService,
                                           DataPlanePluginManager dataPlanePluginManager,
+                                          PluginConfigurationValidatorsRegistry pluginValidatorsRegistry,
                                           List<DataPlaneConfigHandler> configHandlers,
                                           AuditService auditService) {
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
@@ -90,6 +93,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         this.organizationService = organizationService;
         this.environmentService = environmentService;
         this.dataPlanePluginManager = dataPlanePluginManager;
+        this.pluginValidatorsRegistry = pluginValidatorsRegistry;
         this.configHandlers = configHandlers;
         this.auditService = auditService;
     }
@@ -255,7 +259,29 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
             throw new InvalidParameterException("configuration must only declare the '" + handler.blockName() + "' block, found also: " + String.join(", ", foreignBlocks));
         }
 
+        validateAgainstSchema(type, handler.blockName(), configuration.get(handler.blockName()));
         handler.validate(configuration);
+    }
+
+    /**
+     * First pass against the plugin's own {@code schema-form.json}, which owns the shape of the block:
+     * that a port is a number, that a driver is one this plugin can speak. What it cannot express is
+     * left to the type's {@link DataPlaneConfigHandler}, which is why both run and this one runs first.
+     *
+     * A plugin packaged without a schema has no validator registered, and the type-specific pass is
+     * then the only check, as it was before schemas existed.
+     */
+    private void validateAgainstSchema(String type, String blockName, JsonNode block) {
+        if (block == null) {
+            // absent or not an object, which the type-specific pass reports in its own words
+            return;
+        }
+        pluginValidatorsRegistry.get(PLUGIN_ID_PREFIX + type)
+                .map(validator -> validator.validate(block.toString()))
+                .filter(result -> !result.isValid())
+                .ifPresent(result -> {
+                    throw new InvalidParameterException("configuration." + blockName + " is not valid: " + result.getMsg());
+                });
     }
 
     private Optional<DataPlaneConfigHandler> handlerFor(String type) {

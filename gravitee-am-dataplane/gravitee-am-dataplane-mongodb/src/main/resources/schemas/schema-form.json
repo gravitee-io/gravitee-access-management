@@ -1,0 +1,142 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:dataplane:mongodb:MongoDataPlaneConfiguration",
+  "properties": {
+    "uri": {
+      "type": "string",
+      "title": "MongoDB connection URI",
+      "description": "Connection URI used to reach the data plane store. Must name both a host and a database.",
+      "sensitive-uri": true
+    },
+    "host": {
+      "type": "string",
+      "title": "MongoDB connection host",
+      "description": "Not required if the connection URI or a servers list is set."
+    },
+    "port": {
+      "type": "number",
+      "default": 27017,
+      "minimum": 1,
+      "title": "MongoDB connection port"
+    },
+    "dbname": {
+      "type": "string",
+      "title": "Database name",
+      "description": "The database holding this data plane's collections. Not required if the connection URI names one."
+    },
+    "servers": {
+      "type": "array",
+      "title": "Replica set members",
+      "description": "Declared instead of host/port when the data plane store is a replica set.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "Member host"
+          },
+          "port": {
+            "type": "number",
+            "default": 27017,
+            "minimum": 1,
+            "title": "Member port"
+          }
+        },
+        "required": ["host"]
+      }
+    },
+    "username": {
+      "type": "string",
+      "title": "Authentication user"
+    },
+    "password": {
+      "type": "string",
+      "title": "Authentication password",
+      "widget": "password",
+      "sensitive": true
+    },
+    "authSource": {
+      "type": "string",
+      "default": "gravitee-am",
+      "title": "Authentication database"
+    },
+    "connectTimeout": {
+      "type": "number",
+      "default": 5000,
+      "minimum": 0,
+      "title": "Connect timeout (ms)"
+    },
+    "socketTimeout": {
+      "type": "number",
+      "default": 5000,
+      "minimum": 0,
+      "title": "Socket timeout (ms)"
+    },
+    "maxWaitTime": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Maximum wait time (ms)"
+    },
+    "maxConnectionLifeTime": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Maximum connection life time (ms)"
+    },
+    "maxConnectionIdleTime": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Maximum connection idle time (ms)"
+    },
+    "minSize": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Minimum pool size"
+    },
+    "maxSize": {
+      "type": "number",
+      "minimum": 1,
+      "title": "Maximum pool size"
+    },
+    "serverSelectionTimeout": {
+      "type": "number",
+      "default": 1000,
+      "minimum": 0,
+      "title": "Server selection timeout (ms)"
+    },
+    "minHeartbeatFrequency": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Minimum heartbeat frequency (ms)"
+    },
+    "heartbeatFrequency": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Heartbeat frequency (ms)"
+    },
+    "description": {
+      "type": "string",
+      "default": "gravitee.io",
+      "title": "Application name"
+    },
+    "retryWrites": {
+      "type": "boolean",
+      "default": true,
+      "title": "Retry writes"
+    },
+    "sslEnabled": {
+      "type": "boolean",
+      "default": false,
+      "title": "Enable TLS"
+    },
+    "tlsProtocol": {
+      "type": "string",
+      "default": "TLSv1.2",
+      "title": "TLS protocol"
+    },
+    "sslInvalidHostNameAllowed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Allow an invalid host name"
+    }
+  }
+}

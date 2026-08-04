@@ -29,6 +29,8 @@ import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.dataplane.config.JdbcDataPlaneConfigHandler;
@@ -101,6 +103,8 @@ class DataPlaneDefinitionServiceTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final PluginConfigurationValidatorsRegistry validatorsRegistry = new PluginConfigurationValidatorsRegistry();
+
     private DataPlaneDefinitionService service;
 
     @BeforeEach
@@ -111,6 +115,7 @@ class DataPlaneDefinitionServiceTest {
                 organizationService,
                 environmentService,
                 dataPlanePluginManager,
+                validatorsRegistry,
                 List.of(new MongoDataPlaneConfigHandler(), new JdbcDataPlaneConfigHandler()),
                 auditService);
 
@@ -283,6 +288,53 @@ class DataPlaneDefinitionServiceTest {
         payload.setType("cassandra");
 
         assertRejected(payload, InvalidParameterException.class, "No data plane plugin is deployed");
+    }
+
+    @Test
+    void shouldRejectAConfigurationThatFailsThePluginSchema() {
+        registerMongoSchema();
+        NewDataPlaneDefinition payload = payload();
+        payload.setConfiguration(readTree("{\"mongodb\": {\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": \"twenty-seven-thousand\"}}"));
+
+        assertRejected(payload, InvalidParameterException.class, "configuration.mongodb is not valid");
+    }
+
+    @Test
+    void shouldAcceptAConfigurationThatMatchesThePluginSchema() {
+        registerMongoSchema();
+
+        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+    }
+
+    @Test
+    void shouldStillApplyTheTypeSpecificChecksOnceTheSchemaPasses() {
+        registerMongoSchema();
+        NewDataPlaneDefinition payload = payload();
+        // schema-valid, but a mongodb data plane with no dbname would silently land on gravitee-am
+        payload.setConfiguration(readTree("{\"mongodb\": {\"host\": \"mongo\", \"port\": 27017}}"));
+
+        assertRejected(payload, InvalidParameterException.class, "requires either 'uri' or 'dbname'");
+    }
+
+    @Test
+    void shouldSkipTheSchemaPassWhenThePluginShipsNoSchema() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setConfiguration(readTree("{\"mongodb\": {\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": \"twenty-seven-thousand\"}}"));
+
+        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+    }
+
+    private void registerMongoSchema() {
+        validatorsRegistry.put(PluginConfigurationValidator.defaultSchemaValidator("dataplane-am-mongodb", """
+                {
+                  "type": "object",
+                  "properties": {
+                    "dbname": { "type": "string" },
+                    "host": { "type": "string" },
+                    "port": { "type": "number" }
+                  }
+                }
+                """));
     }
 
     @Test
