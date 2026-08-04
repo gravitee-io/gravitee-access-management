@@ -64,11 +64,7 @@ public class DataPlanePluginHandler extends AbstractPluginHandler {
         }
     }
 
-    /**
-     * Publishes the plugin's {@code schemas/schema-form.json} so a data plane definition can be checked
-     * against it before anything type-specific looks at it. A plugin packaged without a schema simply
-     * has no validator, and the type's {@code DataPlaneConfigHandler} remains the only check.
-     */
+    /** Publishes the plugin's {@code schemas/schema-form.json} so definitions can be validated against it. */
     private void registerValidator(Plugin plugin) {
         try {
             validatorsRegistry.put(defaultSchemaValidator(plugin.id(), pluginManager.getSchema(plugin.id())));

@@ -52,9 +52,7 @@ final class DataPlaneConfigs {
         return hasText(node, field) ? node.get(field).asText() : null;
     }
 
-    /**
-     * Re-parses the scheme-specific part so an opaque r2dbc uri becomes hierarchical.
-     */
+    /** Re-parses the scheme-specific part so an opaque r2dbc uri becomes hierarchical. */
     static Optional<URI> parseUri(String uri) {
         try {
             URI parsed = new URI(uri);
@@ -64,21 +62,15 @@ final class DataPlaneConfigs {
         }
     }
 
-    /**
-     * The database segment of a connection uri, i.e. {@code /my-database} becomes {@code my-database}.
-     */
+    /** The database segment of a connection uri, i.e. {@code /my-database} becomes {@code my-database}. */
     static String databaseFromUri(URI uri) {
         String path = uri.getPath();
         return path == null || path.length() <= 1 ? null : path.substring(1);
     }
 
     /**
-     * Whether the uri names its servers at all. {@link #hostFromUri} is not enough to decide this: a
-     * multi-host uri (a replica set) parses to a null host while still naming its servers in the
-     * authority, so keying off the host would reject a valid one. The authority is not enough on its
-     * own either, since {@code //user:password@/db} has one that is nothing but credentials.
-     *
-     * The authority holds the credentials, so callers must not put it in an error message.
+     * Not {@link #hostFromUri}: a replica set uri parses to a null host while still naming its servers
+     * in the authority. The authority holds the credentials, so never put it in an error message.
      */
     static boolean namesAHost(URI uri) {
         String authority = uri.getAuthority();
@@ -90,9 +82,7 @@ final class DataPlaneConfigs {
         return !authority.substring(userInfoEnd + 1).isBlank();
     }
 
-    /**
-     * getHost() only, never getAuthority(), which would return {@code user:password@host}.
-     */
+    /** getHost() only, never getAuthority(), which would return {@code user:password@host}. */
     static String hostFromUri(URI uri) {
         String host = uri.getHost();
         if (host == null) {

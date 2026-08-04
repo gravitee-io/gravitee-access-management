@@ -26,15 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Covers the {@code schema-form.json} each data plane plugin ships, which is the first pass a
- * provisioned definition is checked against.
- *
- * The schemas are read from the plugin modules rather than the classpath because those modules do not
- * depend on the validator, and their own test suites are skipped by default ({@code skip-dataplane-tests},
- * {@code skip-repositories-tests}), so a copy of this living there would never run. A broken schema
- * would otherwise fail silently: the plugin handler logs and carries on, leaving the type-specific
- * handler as the only check.
- *
  * @author GraviteeSource Team
  */
 class DataPlaneSchemaFormTest {
@@ -108,11 +99,6 @@ class DataPlaneSchemaFormTest {
         rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"port\": \"3306\", \"database\": \"acme\"}", "port");
     }
 
-    /**
-     * Neither schema closes {@code additionalProperties}: the providers read more keys than are worth
-     * describing, some of them deprecated, and rejecting an undescribed key would break a definition
-     * that the provider itself would have honoured.
-     */
     @Test
     void schemasToleratePropertiesTheyDoNotDescribe() {
         accepts(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"keystore\": \"/etc/keystore.jks\"}");

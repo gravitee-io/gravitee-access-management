@@ -21,10 +21,8 @@ import lombok.ToString;
 import java.util.Date;
 
 /**
- * A data plane definition persisted in the management repository. It carries the same information
- * as a {@code dataPlanes[i]} entry of the gravitee.yml, plus the environment it is bound to.
- *
- * Not to be confused with {@code io.gravitee.am.dataplane.api.DataPlane}, which is the plugin descriptor.
+ * A {@code dataPlanes[i]} entry of the gravitee.yml persisted in the management repository, plus the
+ * environment it is bound to. Not {@code io.gravitee.am.dataplane.api.DataPlane}, the plugin descriptor.
  *
  * @author GraviteeSource Team
  */
@@ -35,9 +33,7 @@ public class DataPlaneDefinition {
 
     private String name;
 
-    /**
-     * Matches the {@code dataplane-am-<type>} plugin id suffix (mongodb, jdbc, ...).
-     */
+    /** Matches the {@code dataplane-am-<type>} plugin id suffix (mongodb, jdbc, ...). */
     private String type;
 
     private String gatewayUrl;
@@ -46,10 +42,7 @@ public class DataPlaneDefinition {
 
     private String environmentId;
 
-    /**
-     * JSON body of the gravitee.yml {@code dataPlanes[i]} entry, stored verbatim. Can hold
-     * connection credentials, so it is kept out of the generated {@code toString()}.
-     */
+    /** Stored verbatim, can hold credentials, hence excluded from {@code toString()}. */
     @ToString.Exclude
     private String configuration;
 

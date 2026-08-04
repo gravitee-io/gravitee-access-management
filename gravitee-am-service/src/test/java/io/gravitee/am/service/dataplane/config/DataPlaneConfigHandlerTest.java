@@ -37,11 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class DataPlaneConfigHandlerTest {
 
-    /**
-     * The shipped Management API configuration. Its {@code dataPlanes[0]} entry is the reference for
-     * "the same information as the ones provided in the gravitee.yaml": whatever is accepted there
-     * must be accepted here.
-     */
     private static final Path MAPI_GRAVITEE_YML = Path.of("..",
             "gravitee-am-management-api",
             "gravitee-am-management-api-standalone",
@@ -51,8 +46,6 @@ class DataPlaneConfigHandlerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MongoDataPlaneConfigHandler mongoHandler = new MongoDataPlaneConfigHandler();
     private final JdbcDataPlaneConfigHandler jdbcHandler = new JdbcDataPlaneConfigHandler();
-
-    // --- gravitee.yml parity ---------------------------------------------------------------
 
     @Test
     void shouldAcceptTheDataPlaneShippedInTheManagementApiGraviteeYml() {
@@ -107,8 +100,6 @@ class DataPlaneConfigHandlerTest {
                 .hasMessageContaining("jdbc");
     }
 
-    // --- mongodb validation ------------------------------------------------------------------
-
     @Test
     void shouldAcceptAMongoUriNamingADatabase() {
         assertThatCode(() -> mongoHandler.validate(mongo("{\"uri\": \"mongodb://host:27017/gravitee-am-acme\"}")))
@@ -136,10 +127,6 @@ class DataPlaneConfigHandlerTest {
                 .hasMessageContaining("must name a host");
     }
 
-    /**
-     * A replica set uri parses to a null host while still naming its servers, so the host check has
-     * to read the authority rather than the host.
-     */
     @Test
     void shouldAcceptAMultiHostMongoUri() {
         assertThatCode(() -> mongoHandler.validate(
@@ -189,8 +176,6 @@ class DataPlaneConfigHandlerTest {
                 .isInstanceOf(InvalidParameterException.class)
                 .hasMessageContaining("mongodb");
     }
-
-    // --- jdbc validation ---------------------------------------------------------------------
 
     @Test
     void shouldAcceptAJdbcUri() {
@@ -253,8 +238,6 @@ class DataPlaneConfigHandlerTest {
         assertThat(jdbcHandler.supports("mongodb")).isFalse();
     }
 
-    // --- summaries: what a read is allowed to expose -----------------------------------------
-
     @Test
     void shouldSummarizeAMongoConfigurationWithoutItsCredentials() {
         DataPlaneConnectionSummary summary = mongoHandler.summarize(mongo("""
@@ -300,11 +283,8 @@ class DataPlaneConfigHandlerTest {
 
     @Test
     void shouldDropTheHostsOfAMultiHostUriRatherThanRiskTheCredentials() {
-        // java.net cannot give us a host for a comma-separated authority, and we will not pick the
-        // authority apart around the userinfo, so the hosts are simply not reported
         ObjectNode configuration = mongo("{\"uri\": \"mongodb://am-user:sup3r-s3cret@mongo-1:27017,mongo-2:27017/gravitee-am-acme\"}");
 
-        // still a valid definition, it names a database
         assertThatCode(() -> mongoHandler.validate(configuration)).doesNotThrowAnyException();
 
         DataPlaneConnectionSummary summary = mongoHandler.summarize(configuration);
@@ -362,12 +342,6 @@ class DataPlaneConfigHandlerTest {
         assertThat(jdbcHandler.summarize(objectMapper.createObjectNode())).isEqualTo(DataPlaneConnectionSummary.UNKNOWN);
     }
 
-    // --- helpers ---------------------------------------------------------------------------
-
-    /**
-     * Reads {@code dataPlanes[0]} from the shipped gravitee.yml and turns it into the payload the
-     * endpoint expects: everything but the definition's own metadata (id, name, type, gateway).
-     */
     private ObjectNode shippedDataPlaneConfiguration() {
         assertThat(MAPI_GRAVITEE_YML)
                 .describedAs("the shipped Management API gravitee.yml, this test pins the payload contract to it")

@@ -19,11 +19,8 @@ import java.util.List;
 
 /**
  * The credential-free view of a data plane's connection settings: enough to tell which store an
- * environment points at, and nothing else.
- *
- * @param database the database the data plane reads and writes, {@code null} if it cannot be resolved
- * @param hosts    {@code host} or {@code host:port} entries, empty when they cannot be resolved
- *                 without touching the credential-bearing part of a connection uri
+ * environment points at, and nothing else. Either field is empty when it cannot be resolved without
+ * touching the credential-bearing part of a connection uri.
  *
  * @author GraviteeSource Team
  */

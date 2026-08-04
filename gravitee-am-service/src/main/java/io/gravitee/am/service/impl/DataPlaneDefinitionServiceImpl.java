@@ -264,16 +264,13 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     }
 
     /**
-     * First pass against the plugin's own {@code schema-form.json}, which owns the shape of the block:
-     * that a port is a number, that a driver is one this plugin can speak. What it cannot express is
-     * left to the type's {@link DataPlaneConfigHandler}, which is why both run and this one runs first.
-     *
-     * A plugin packaged without a schema has no validator registered, and the type-specific pass is
-     * then the only check, as it was before schemas existed.
+     * The plugin's {@code schema-form.json} owns the shape of the block, the {@link DataPlaneConfigHandler}
+     * owns what a schema cannot express. A plugin packaged without a schema has no validator, leaving
+     * the handler as the only check.
      */
     private void validateAgainstSchema(String type, String blockName, JsonNode block) {
         if (block == null) {
-            // absent or not an object, which the type-specific pass reports in its own words
+            // the type-specific pass reports this in its own words
             return;
         }
         pluginValidatorsRegistry.get(PLUGIN_ID_PREFIX + type)

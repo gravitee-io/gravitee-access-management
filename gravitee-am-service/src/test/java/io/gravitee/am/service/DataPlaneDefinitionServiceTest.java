@@ -130,8 +130,6 @@ class DataPlaneDefinitionServiceTest {
         when(domainRepository.existsByDataPlaneId(anyString())).thenReturn(Single.just(false));
     }
 
-    // --- create ------------------------------------------------------------------------------
-
     @Test
     void shouldCreateWithDefaultOrganizationAndEnvironment() {
         TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload()).test();
@@ -310,7 +308,6 @@ class DataPlaneDefinitionServiceTest {
     void shouldStillApplyTheTypeSpecificChecksOnceTheSchemaPasses() {
         registerMongoSchema();
         NewDataPlaneDefinition payload = payload();
-        // schema-valid, but a mongodb data plane with no dbname would silently land on gravitee-am
         payload.setConfiguration(readTree("{\"mongodb\": {\"host\": \"mongo\", \"port\": 27017}}"));
 
         assertRejected(payload, InvalidParameterException.class, "requires either 'uri' or 'dbname'");
@@ -419,8 +416,6 @@ class DataPlaneDefinitionServiceTest {
         verify(dataPlaneDefinitionRepository, never()).create(any());
     }
 
-    // --- read --------------------------------------------------------------------------------
-
     @Test
     void shouldListTheDefinitionsWithoutTheirCredentials() {
         DataPlaneDefinition withSecrets = definition("dp-acme", "env-1");
@@ -516,8 +511,6 @@ class DataPlaneDefinitionServiceTest {
                 .assertError(EnvironmentAlreadyBoundToDataPlaneException.class);
     }
 
-    // --- delete ------------------------------------------------------------------------------
-
     @Test
     void shouldDeleteAndReportAnAudit() {
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
@@ -572,8 +565,6 @@ class DataPlaneDefinitionServiceTest {
 
         assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
     }
-
-    // --- helpers -----------------------------------------------------------------------------
 
     private void assertRejected(NewDataPlaneDefinition payload, Class<? extends Throwable> type, String messageFragment) {
         TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload).test();

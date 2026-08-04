@@ -22,9 +22,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 /**
- * Every read returns a {@link DataPlaneDefinitionSummary} rather than the stored definition: the
- * {@code configuration} blob can hold connection credentials and must not leave this layer. The
- * data plane loader (AM-7260) reads the repository directly for the raw settings.
+ * Reads return a {@link DataPlaneDefinitionSummary}, never the stored definition: the
+ * {@code configuration} blob can hold credentials and must not leave this layer.
  *
  * @author GraviteeSource Team
  */

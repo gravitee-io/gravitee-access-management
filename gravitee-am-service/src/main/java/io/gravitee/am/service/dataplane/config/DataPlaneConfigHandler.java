@@ -21,37 +21,21 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Knows the shape of one data plane type's connection settings: what makes them valid on write, and
  * what is safe to hand back on read.
  *
- * A new data plane type ships its own handler alongside its plugin.
- *
  * @author GraviteeSource Team
  */
 public interface DataPlaneConfigHandler {
 
-    /**
-     * Name of the top-level block this handler owns, e.g. {@code mongodb}.
-     */
+    /** Name of the top-level block this handler owns, e.g. {@code mongodb}. */
     String blockName();
 
     boolean supports(String type);
 
     /**
-     * The provider plugins resolve their settings from the Spring environment and silently fall back
-     * to defaults when a key is missing (a mongodb data plane with no {@code dbname} ends up on
-     * {@code localhost:27017/gravitee-am}), so write time is the only place a bad definition can be
-     * rejected with a caller to return the error to.
-     *
-     * @param configuration the {@code dataPlanes[i]} body
-     * @throws io.gravitee.am.service.exception.InvalidParameterException if a required key is missing
+     * Providers fall back to driver defaults for missing keys (no {@code dbname} lands on
+     * {@code localhost:27017/gravitee-am}), so write time is the only place to reject a bad definition.
      */
     void validate(JsonNode configuration);
 
-    /**
-     * Extracts the handful of fields that are safe to expose on a read.
-     *
-     * This is an allowlist on purpose. The stored blob can carry credentials in a lot of places —
-     * {@code username}/{@code password}, {@code keystore.password}, {@code keystorePassword},
-     * {@code keyPassword}, {@code truststore.password}, and the userinfo of a connection {@code uri}
-     * — and the key surface keeps growing, so nothing is emitted unless it is named here.
-     */
+    /** Allowlist: the blob carries credentials in too many places to filter by exclusion. */
     DataPlaneConnectionSummary summarize(JsonNode configuration);
 }

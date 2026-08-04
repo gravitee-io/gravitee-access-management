@@ -22,12 +22,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * What a caller of the data plane endpoints is allowed to see.
- *
- * The stored {@code configuration} blob is never part of this: it can hold connection credentials,
- * so it is replaced by the credential-free {@code database} / {@code hosts} pair produced by the
- * type's {@code DataPlaneConfigHandler}. This type exists so the raw blob has no route out of the
- * service layer at all: the one consumer that needs it goes to the repository instead.
+ * What a caller of the data plane endpoints is allowed to see. The {@code configuration} blob is
+ * deliberately absent, so it has no route out of the service layer: the one consumer that needs it
+ * reads the repository instead.
  *
  * @author GraviteeSource Team
  */
