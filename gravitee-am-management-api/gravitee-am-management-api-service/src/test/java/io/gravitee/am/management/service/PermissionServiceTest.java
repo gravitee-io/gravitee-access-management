@@ -28,8 +28,18 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
+<<<<<<< HEAD
 import io.gravitee.am.service.*;
 
+=======
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.EnvironmentNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+>>>>>>> 69920fc17 (fix: permissions key cache)
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -62,6 +72,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -79,11 +90,17 @@ public class PermissionServiceTest {
     public static final String ROLE_ID = "role#1";
     public static final String GROUP_ID = "group#1";
     public static final String DOMAIN_ID = "domain#1";
+    public static final String DOMAIN_ID_NULL = "null";
     public static final String ENVIRONMENT_ID = "environment#1";
+    public static final String ENVIRONMENT_ID2 = "environment#2";
     private static final String ROLE_ID2 = "role#2";
     private static final String ROLE_ID3 = "role#3";
     public static final String APPLICATION_ID = "application#1";
+<<<<<<< HEAD
     public static final String PROTECTED_RESOURCE_ID = "protected-resource#1";
+=======
+    public static final String APPLICATION_ID2 = "application#2";
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
     @Mock
     private MembershipService membershipService;
@@ -282,7 +299,7 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
         when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq(ENVIRONMENT_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(environmentMembership));
@@ -337,7 +354,7 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
         when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
@@ -390,7 +407,7 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
         when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
@@ -431,7 +448,7 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
         when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
@@ -597,7 +614,7 @@ public class PermissionServiceTest {
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -623,6 +640,11 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+<<<<<<< HEAD
+=======
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -638,9 +660,6 @@ public class PermissionServiceTest {
     @Test
     public void haveConsistentIds_domainIdNotConsistent() {
 
-        Application application = new Application();
-        application.setDomain(DOMAIN_ID);
-
         Domain domain = new Domain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId("OTHER_ENVIRONMENT");
@@ -648,7 +667,12 @@ public class PermissionServiceTest {
         Environment environment = new Environment();
         environment.setOrganizationId(ORGANIZATION_ID);
 
+<<<<<<< HEAD
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+=======
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -663,6 +687,7 @@ public class PermissionServiceTest {
     @Test
     public void haveConsistentIds_environmentIdNotConsistent() {
 
+<<<<<<< HEAD
         Application application = new Application();
         application.setDomain(DOMAIN_ID);
 
@@ -671,6 +696,9 @@ public class PermissionServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+=======
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.error(new EnvironmentNotFoundException(ENVIRONMENT_ID)));
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -711,7 +739,7 @@ public class PermissionServiceTest {
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -724,7 +752,7 @@ public class PermissionServiceTest {
 
         verify(applicationService, times(1)).findById(eq(APPLICATION_ID));
         verify(domainService, times(1)).findById(eq(DOMAIN_ID));
-        verify(environmentService, times(1)).findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID));
+        verify(environmentService, times(1)).findById(eq(ENVIRONMENT_ID));
 
         // Second call should hit the cache.
         obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
@@ -740,6 +768,7 @@ public class PermissionServiceTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void haveConsistentIds_protectedResource() {
 
         ProtectedResource protectedResource = new ProtectedResource();
@@ -749,10 +778,14 @@ public class PermissionServiceTest {
         Domain domain = new Domain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId(ENVIRONMENT_ID);
+=======
+    public void shouldNotDenyEnvironmentCheckAfterDomainNamedNullIsInconsistent() {
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         Environment environment = new Environment();
         environment.setOrganizationId(ORGANIZATION_ID);
 
+<<<<<<< HEAD
         when(protectedResourceService.findById(eq(PROTECTED_RESOURCE_ID))).thenReturn(Maybe.just(protectedResource));
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
@@ -853,13 +886,87 @@ public class PermissionServiceTest {
 
     @Test
     public void haveConsistentIds_applicationAndProtectedResource() {
+=======
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
+        when(domainService.findById(eq(DOMAIN_ID_NULL))).thenReturn(Maybe.empty());
+
+        TestObserver<Boolean> inconsistent = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID_NULL, APPLICATION, READ))).test();
+
+        inconsistent.awaitDone(10, TimeUnit.SECONDS);
+        inconsistent.assertComplete();
+        inconsistent.assertValue(false);
+
+        TestObserver<Boolean> consistent = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ))).test();
+
+        consistent.awaitDone(10, TimeUnit.SECONDS);
+        consistent.assertComplete();
+        consistent.assertValue(true);
+    }
+
+    @Test
+    public void shouldPropagateTechnicalErrorInsteadOfDenying() {
+
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.error(new TechnicalManagementException("unable to reach the database")));
+
+        TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    public void shouldNotCacheDenialVerdict() {
+
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID2);
+
+        Environment environment = new Environment();
+        environment.setOrganizationId(ORGANIZATION_ID);
+
+        Environment environment2 = new Environment();
+        environment2.setOrganizationId(ORGANIZATION_ID);
+
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
+        when(environmentService.findById(eq(ENVIRONMENT_ID2))).thenReturn(Single.just(environment2));
+
+        TestObserver<Boolean> denied = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ))).test();
+
+        denied.awaitDone(10, TimeUnit.SECONDS);
+        denied.assertComplete();
+        denied.assertValue(false);
+
+        TestObserver<Boolean> granted = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID2, APPLICATION, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ))).test();
+
+        granted.awaitDone(10, TimeUnit.SECONDS);
+        granted.assertComplete();
+        granted.assertValue(true);
+    }
+
+    @Test
+    public void shouldResolveSharedAncestorsOnlyOnce() {
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         Application application = new Application();
         application.setDomain(DOMAIN_ID);
 
+<<<<<<< HEAD
         ProtectedResource protectedResource = new ProtectedResource();
         protectedResource.setId(PROTECTED_RESOURCE_ID);
         protectedResource.setDomainId(DOMAIN_ID);
+=======
+        Application application2 = new Application();
+        application2.setDomain(DOMAIN_ID);
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         Domain domain = new Domain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
@@ -869,19 +976,64 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+<<<<<<< HEAD
         when(protectedResourceService.findById(eq(PROTECTED_RESOURCE_ID))).thenReturn(Maybe.just(protectedResource));
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+=======
+        when(applicationService.findById(eq(APPLICATION_ID2))).thenReturn(Maybe.just(application2));
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
+
+        TestObserver<Boolean> first = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
+                of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
+
+        first.awaitDone(10, TimeUnit.SECONDS);
+        first.assertValue(true);
+
+        TestObserver<Boolean> second = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
+                of(ReferenceType.APPLICATION, APPLICATION_ID2, APPLICATION, READ))).test();
+
+        second.awaitDone(10, TimeUnit.SECONDS);
+        second.assertValue(true);
+
+        verify(domainService, times(1)).findById(eq(DOMAIN_ID));
+        verify(environmentService, times(1)).findById(eq(ENVIRONMENT_ID));
+    }
+
+    @Test
+    public void shouldNotResolveSpecificAncestorsWhenGeneralCheckFails() {
+
+        Environment environment = new Environment();
+        environment.setOrganizationId("OTHER_ORGANIZATION");
+
+        when(environmentService.findById(eq(ENVIRONMENT_ID))).thenReturn(Single.just(environment));
+>>>>>>> 69920fc17 (fix: permissions key cache)
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
+<<<<<<< HEAD
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ),
                 of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ))).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
+=======
+                of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(false);
+
+        verify(domainService, never()).findById(any());
+        verify(applicationService, never()).findById(any());
+>>>>>>> 69920fc17 (fix: permissions key cache)
     }
 
 }
