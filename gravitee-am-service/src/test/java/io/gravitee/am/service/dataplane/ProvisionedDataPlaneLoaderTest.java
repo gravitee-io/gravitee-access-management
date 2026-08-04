@@ -246,6 +246,41 @@ class ProvisionedDataPlaneLoaderTest {
     }
 
     @Test
+    void should_not_leave_stale_properties_behind_when_a_corrected_definition_replaces_a_failed_one() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        var refused = new ArrayList<String>();
+        loader.load(description -> {
+            if (refused.isEmpty()) {
+                refused.add(description.id());
+                throw new IllegalStateException("No data plane provider could be built for id " + description.id());
+            }
+            loaded.add(description);
+        });
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(
+                Maybe.just(definition("dp-1", "jdbc", "{\"jdbc\":{\"host\":\"h1\",\"collation\":\"latin1\"}}")),
+                Maybe.just(definition("dp-1", "jdbc", "{\"jdbc\":{\"host\":\"h2\"}}")));
+
+        loader.register("dp-1").test().assertComplete();
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.jdbc.host")).isEqualTo("h2");
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.jdbc.collation")).isNull();
+    }
+
+    @Test
+    void should_complete_quietly_when_the_definition_is_missing_at_registration_time() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.load(loaded::add);
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.empty());
+
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(loaded).isEmpty();
+    }
+
+    @Test
     void should_not_fail_the_caller_when_the_definition_cannot_be_read_back() {
         when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
         var loader = loader();

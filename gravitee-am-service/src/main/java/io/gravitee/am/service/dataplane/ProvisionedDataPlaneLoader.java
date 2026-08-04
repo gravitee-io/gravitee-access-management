@@ -31,6 +31,7 @@ import org.springframework.core.env.MapPropertySource;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -42,6 +43,8 @@ import java.util.function.Consumer;
 @CustomLog
 public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
+    // must not be "graviteeYamlConfiguration": gravitee-node's /_node/configuration endpoint dumps that
+    // source key by key, and these definitions carry credentials
     static final String PROPERTY_SOURCE_NAME = "provisionedDataPlanes";
 
     static final String PROPERTIES_BASE = "dataPlanes.provisioned";
@@ -55,7 +58,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
     private final Set<String> registered = ConcurrentHashMap.newKeySet();
-    private volatile Consumer<DataPlaneDescription> storage;
+    private final AtomicReference<Consumer<DataPlaneDescription>> storage = new AtomicReference<>();
 
     public ProvisionedDataPlaneLoader(DataPlaneLoader configurationLoader,
                                       DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
@@ -67,14 +70,14 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
-        this.storage = storage;
+        this.storage.set(storage);
         configurationLoader.load(storage);
         dataPlaneDefinitionRepository.findAll()
                 .blockingForEach(definition -> load(definition, storage));
     }
 
     public Completable register(String dataPlaneId) {
-        var storage = this.storage;
+        var storage = this.storage.get();
 
         if (storage == null || registered.contains(dataPlaneId)) {
             return Completable.complete();
@@ -82,6 +85,8 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
                 .doOnSuccess(definition -> load(definition, storage))
+                // fires only when findById completes empty
+                .doOnComplete(() -> log.warn("Data plane [{}] was not found when read back after being provisioned and will be unavailable until restart", dataPlaneId))
                 .ignoreElement()
                 .doOnError(e -> log.error("Data plane [{}] could not be read back after being provisioned and will be unavailable until restart", dataPlaneId, e))
                 .onErrorComplete();
@@ -100,6 +105,8 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
     private DataPlaneDescription publish(DataPlaneDefinition definition) throws Exception {
         var propertiesBase = PROPERTIES_BASE + "." + definition.getId();
+        // a failed registration leaves its keys published; drop them so a corrected definition cannot resolve stale values
+        properties.keySet().removeIf(key -> key.startsWith(propertiesBase + "."));
         flatten(propertiesBase, objectMapper.readTree(definition.getConfiguration()), properties);
         return new DataPlaneDescription(
                 definition.getId(),
