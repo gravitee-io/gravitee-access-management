@@ -23,17 +23,20 @@ import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
+import io.reactivex.rxjava3.core.Completable;
 import lombok.CustomLog;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
  * Loads the data planes declared in the gravitee.yml, then the ones provisioned through the internal
- * API (AM-7259) and stored in the management repository.
+ * API (AM-7259) and stored in the management repository. {@link #register(String)} adds a definition
+ * provisioned since startup, so a new data plane can be served without restarting the node.
  *
  * A provider never receives its configuration: {@link DataPlaneDescription#propertiesBase()} hands it a
  * property prefix and the plugin resolves the settings out of the Spring environment itself. A stored
@@ -65,6 +68,8 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
             .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
             .build();
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
+    private final Set<String> registered = ConcurrentHashMap.newKeySet();
+    private volatile Consumer<DataPlaneDescription> storage;
 
     public ProvisionedDataPlaneLoader(DataPlaneLoader configurationLoader,
                                       DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
@@ -77,9 +82,32 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
+        // kept so a definition provisioned later reaches the same registry this one is filling
+        this.storage = storage;
         configurationLoader.load(storage);
         dataPlaneDefinitionRepository.findAll()
                 .blockingForEach(definition -> load(definition, storage));
+    }
+
+    /**
+     * Registers a definition provisioned since startup so domains bound to it can be served straight away,
+     * rather than from the next restart.
+     *
+     * Best effort on purpose: the definition is persisted before this runs, so failing here only costs the
+     * node the live registration — the startup load will pick it up next time — and it must not turn a
+     * successful provisioning call into an error.
+     */
+    public Completable register(String dataPlaneId) {
+        var storage = this.storage;
+        // nothing registered yet means no registry to add to; its own load() will read this definition
+        if (storage == null || !registered.add(dataPlaneId)) {
+            return Completable.complete();
+        }
+        return dataPlaneDefinitionRepository.findById(dataPlaneId)
+                .doOnSuccess(definition -> load(definition, storage))
+                .ignoreElement()
+                .doOnError(e -> log.error("Data plane [{}] could not be read back after being provisioned and will be unavailable until restart", dataPlaneId, e))
+                .onErrorComplete();
     }
 
     /**
@@ -91,6 +119,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
     private void load(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
         try {
             storage.accept(publish(definition));
+            registered.add(definition.getId());
             log.info("Data plane [{}] of type [{}] loaded from the management repository", definition.getId(), definition.getType());
         } catch (Exception e) {
             log.error("Data plane [{}] of type [{}] could not be loaded and will be unavailable; domains bound to it cannot be served",

@@ -18,11 +18,13 @@ package io.gravitee.am.management.handlers.internalapi.endpoints;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.gravitee.common.http.HttpMethod;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RequestBody;
@@ -75,6 +77,9 @@ class CreateDataPlaneEndpointTest {
     private DataPlaneDefinitionService dataPlaneDefinitionService;
 
     @Mock
+    private ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
+
+    @Mock
     private RoutingContext routingContext;
 
     @Mock
@@ -89,7 +94,8 @@ class CreateDataPlaneEndpointTest {
         response = mock(HttpServerResponse.class, RETURNS_SELF);
         when(routingContext.body()).thenReturn(requestBody);
         when(routingContext.response()).thenReturn(response);
-        endpoint = new CreateDataPlaneEndpoint(dataPlaneDefinitionService, new ObjectMapper());
+        when(provisionedDataPlaneLoader.register(any())).thenReturn(Completable.complete());
+        endpoint = new CreateDataPlaneEndpoint(dataPlaneDefinitionService, provisionedDataPlaneLoader, new ObjectMapper());
     }
 
     @Test
@@ -138,6 +144,28 @@ class CreateDataPlaneEndpointTest {
         assertThat(payload.getType()).isEqualTo("mongodb");
         assertThat(payload.getGatewayUrl()).isEqualTo("https://gw-acme.cloud.gravitee.io");
         assertThat(payload.getConfiguration().at("/mongodb/dbname").asText()).isEqualTo("gravitee-am-acme");
+    }
+
+    @Test
+    void shouldRegisterTheProvisionedDataPlaneSoItIsUsableWithoutARestart() {
+        when(requestBody.asString()).thenReturn(PAYLOAD);
+        when(dataPlaneDefinitionService.create(any())).thenReturn(Single.just(summary()));
+
+        endpoint.handle(routingContext);
+
+        verify(provisionedDataPlaneLoader).register("dp-acme");
+        verify(response).setStatusCode(201);
+    }
+
+    @Test
+    void shouldNotRegisterADefinitionThatWasNotPersisted() {
+        when(requestBody.asString()).thenReturn(PAYLOAD);
+        when(dataPlaneDefinitionService.create(any()))
+                .thenReturn(Single.error(new DataPlaneDefinitionAlreadyExistsException("dp-acme")));
+
+        endpoint.handle(routingContext);
+
+        verify(provisionedDataPlaneLoader, never()).register(any());
     }
 
     @Test

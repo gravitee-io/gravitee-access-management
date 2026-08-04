@@ -20,6 +20,7 @@ import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -182,5 +186,51 @@ class ProvisionedDataPlaneLoaderTest {
         });
 
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-2");
+    }
+
+    @Test
+    void should_register_a_definition_provisioned_after_startup() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.load(loaded::add);
+        when(dataPlaneDefinitionRepository.findById("dp-1"))
+                .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://h:27017/db");
+    }
+
+    @Test
+    void should_not_register_a_definition_the_startup_load_already_picked_up() {
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
+        verify(dataPlaneDefinitionRepository, never()).findById(any());
+    }
+
+    @Test
+    void should_ignore_a_registration_that_arrives_before_the_registry_has_started() {
+        loader().register("dp-1").test().assertComplete();
+
+        verify(dataPlaneDefinitionRepository, never()).findById(any());
+    }
+
+    @Test
+    void should_not_fail_the_caller_when_the_definition_cannot_be_read_back() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.load(loaded::add);
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.error(new RuntimeException("connection lost")));
+
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(loaded).isEmpty();
     }
 }
