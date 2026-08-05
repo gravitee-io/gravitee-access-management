@@ -23,6 +23,7 @@ import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -42,7 +43,6 @@ import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DataPlaneDefinitionAuditBuilder;
-import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -77,7 +77,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     private final PluginConfigurationValidatorsRegistry pluginValidatorsRegistry;
     private final List<DataPlaneConfigHandler> configHandlers;
     private final AuditService auditService;
-    private final Configuration configuration;
+    private final MultiDataPlaneLoader configurationLoader;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -89,7 +89,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                           PluginConfigurationValidatorsRegistry pluginValidatorsRegistry,
                                           List<DataPlaneConfigHandler> configHandlers,
                                           AuditService auditService,
-                                          Configuration configuration) {
+                                          MultiDataPlaneLoader configurationLoader) {
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
         this.domainRepository = domainRepository;
         this.organizationService = organizationService;
@@ -98,7 +98,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         this.pluginValidatorsRegistry = pluginValidatorsRegistry;
         this.configHandlers = configHandlers;
         this.auditService = auditService;
-        this.configuration = configuration;
+        this.configurationLoader = configurationLoader;
     }
 
     @Override
@@ -246,7 +246,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         if (!hasText(payload.getId())) {
             throw new InvalidParameterException("'id' is required");
         }
-        if (DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(payload.getId()) || isDeclaredInConfiguration(payload.getId())) {
+        if (isReservedByConfiguration(payload.getId())) {
             throw new InvalidParameterException("'" + payload.getId() + "' is reserved for a data plane declared in the gravitee.yml");
         }
         if (!hasText(payload.getName())) {
@@ -273,14 +273,10 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     }
 
     // an id colliding with a gravitee.yml plane would persist but never register: the registry keeps
-    // serving the yml plane, and domains binding to the id would silently land on the wrong store
-    private boolean isDeclaredInConfiguration(String id) {
-        for (int i = 0; configuration.containsProperty("dataPlanes[" + i + "].id"); i++) {
-            if (id.equals(configuration.getProperty("dataPlanes[" + i + "].id", String.class))) {
-                return true;
-            }
-        }
-        return false;
+    // serving the yml plane, and domains binding to the id would silently land on the wrong store.
+    // "default" is spelled out because it is the id the registry falls back to for an unbound domain
+    private boolean isReservedByConfiguration(String id) {
+        return DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(id) || configurationLoader.isDeclared(id);
     }
 
     private void validateConfiguration(String type, JsonNode configuration) {

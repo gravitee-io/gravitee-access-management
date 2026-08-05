@@ -29,6 +29,7 @@ import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
@@ -101,7 +102,7 @@ class DataPlaneDefinitionServiceTest {
     private AuditService auditService;
 
     @Mock
-    private io.gravitee.node.api.configuration.Configuration configuration;
+    private MultiDataPlaneLoader configurationLoader;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -120,7 +121,7 @@ class DataPlaneDefinitionServiceTest {
                 validatorsRegistry,
                 List.of(new MongoDataPlaneConfigHandler(), new JdbcDataPlaneConfigHandler()),
                 auditService,
-                configuration);
+                configurationLoader);
 
         when(dataPlanePluginManager.get("dataplane-am-mongodb")).thenReturn(mock(DataPlane.class));
         when(dataPlanePluginManager.get("dataplane-am-jdbc")).thenReturn(mock(DataPlane.class));
@@ -268,10 +269,7 @@ class DataPlaneDefinitionServiceTest {
 
     @Test
     void shouldRejectAnIdDeclaredInTheGraviteeYml() {
-        when(configuration.containsProperty("dataPlanes[0].id")).thenReturn(true);
-        when(configuration.getProperty("dataPlanes[0].id", String.class)).thenReturn("default");
-        when(configuration.containsProperty("dataPlanes[1].id")).thenReturn(true);
-        when(configuration.getProperty("dataPlanes[1].id", String.class)).thenReturn("dp-yml");
+        when(configurationLoader.isDeclared("dp-yml")).thenReturn(true);
 
         NewDataPlaneDefinition payload = payload();
         payload.setId("dp-yml");
