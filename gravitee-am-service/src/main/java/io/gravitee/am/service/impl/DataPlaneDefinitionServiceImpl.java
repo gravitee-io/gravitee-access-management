@@ -18,10 +18,15 @@ package io.gravitee.am.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
@@ -30,6 +35,7 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.dataplane.config.DataPlaneConfigHandler;
 import io.gravitee.am.service.dataplane.config.DataPlaneConnectionSummary;
@@ -60,8 +66,9 @@ import static io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager.PLUGI
 import static org.springframework.util.StringUtils.hasText;
 
 /**
- * Persists a data plane definition. Persisting is all it does: registering the definition so that
- * domains can be served from it is the loader's job, and nothing here emits a sync event.
+ * Persists a data plane definition and emits the sync event that tells the other management API
+ * instances about it. Registering the definition so that domains can be served from it is the
+ * loader's job on the node handling the request, and the manager's job everywhere else.
  *
  * @author GraviteeSource Team
  */
@@ -77,6 +84,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     private final PluginConfigurationValidatorsRegistry pluginValidatorsRegistry;
     private final List<DataPlaneConfigHandler> configHandlers;
     private final AuditService auditService;
+    private final EventService eventService;
     private final MultiDataPlaneLoader configurationLoader;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -89,6 +97,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                           PluginConfigurationValidatorsRegistry pluginValidatorsRegistry,
                                           List<DataPlaneConfigHandler> configHandlers,
                                           AuditService auditService,
+                                          EventService eventService,
                                           MultiDataPlaneLoader configurationLoader) {
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
         this.domainRepository = domainRepository;
@@ -98,6 +107,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         this.pluginValidatorsRegistry = pluginValidatorsRegistry;
         this.configHandlers = configHandlers;
         this.auditService = auditService;
+        this.eventService = eventService;
         this.configurationLoader = configurationLoader;
     }
 
@@ -117,7 +127,21 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                 }))
                                 .map(this::toSummary))
                         .doOnError(throwable -> reportCreated(toSummary(definition), throwable)))
-                .doOnSuccess(summary -> reportCreated(summary, null));
+                .doOnSuccess(summary -> reportCreated(summary, null))
+                // after the audit: a failed event must not report the creation itself as failed
+                .flatMap(summary -> publishEvent(summary, Action.CREATE).toSingleDefault(summary));
+    }
+
+    /**
+     * Tells the other management API instances to load, or drop, this definition. The node handling
+     * the request registers it itself and does not wait for this.
+     */
+    private Completable publishEvent(DataPlaneDefinitionSummary summary, Action action) {
+        // deferred: chained after andThen, an eager call would emit even when the delete was refused
+        return Completable.defer(() -> {
+            Event event = new Event(Type.DATA_PLANE, new Payload(summary.id(), ReferenceType.ENVIRONMENT, summary.environmentId(), action));
+            return eventService.create(event).ignoreElement();
+        });
     }
 
     private void reportCreated(DataPlaneDefinitionSummary summary, Throwable throwable) {
@@ -150,7 +174,8 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                 .flatMapCompletable(summary -> checkNoDomainUsesIt(id)
                         .andThen(Completable.defer(() -> dataPlaneDefinitionRepository.delete(id)))
                         .doOnComplete(() -> reportDeleted(summary, null))
-                        .doOnError(throwable -> reportDeleted(summary, throwable)));
+                        .doOnError(throwable -> reportDeleted(summary, throwable))
+                        .andThen(publishEvent(summary, Action.DELETE)));
     }
 
     private Completable checkNoDomainUsesIt(String dataPlaneId) {
