@@ -65,14 +65,14 @@ export const setupDomainForTest = async (
  */
 const getDomainDataPlaneId = (): string => process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 
-export const createDomain = (accessToken, name, description): Promise<Domain> =>
+export const createDomain = (accessToken, name, description, dataPlaneId?: string): Promise<Domain> =>
   getDomainApi(accessToken).createDomain({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     newDomain: {
       name: name,
       description: description,
-      dataPlaneId: getDomainDataPlaneId(),
+      dataPlaneId: dataPlaneId ?? getDomainDataPlaneId(),
     },
   });
 

@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -47,20 +46,36 @@ public class MultiDataPlaneLoader implements DataPlaneLoader {
         }
     }
 
+    /**
+     * Whether the configuration declares a data plane under this id. Only the ids are read: a
+     * declaration too broken to describe is the node's problem at startup, not the caller's.
+     */
+    public boolean isDeclared(String id) {
+        for (int i = 0; configuration.containsProperty(propertyBase(i) + ".id"); i++) {
+            if (id.equals(configuration.getProperty(propertyBase(i) + ".id", String.class))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private List<DataPlaneDescription> readList() {
-        Function<Integer, String> propertyResolver = (idx) -> DATA_PLANES_KEY + "[" + idx + "]";
         List<DataPlaneDescription> result = new ArrayList<>();
 
         int i = 0;
-        String base = propertyResolver.apply(i);
+        String base = propertyBase(i);
         while (configuration.containsProperty(base + ".id")) {
             result.add(readSingle(base));
-            base = propertyResolver.apply(++i);
+            base = propertyBase(++i);
         }
         if (result.stream().noneMatch(DataPlaneDescription::isDefault)) {
             throw new IllegalStateException("Default dataPlane is missing");
         }
         return result;
+    }
+
+    private static String propertyBase(int index) {
+        return DATA_PLANES_KEY + "[" + index + "]";
     }
 
     private DataPlaneDescription readSingle(String base) {

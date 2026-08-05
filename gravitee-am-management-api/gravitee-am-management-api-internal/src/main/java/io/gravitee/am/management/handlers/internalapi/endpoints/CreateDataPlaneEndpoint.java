@@ -19,9 +19,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.ext.web.RoutingContext;
 import lombok.CustomLog;
 
@@ -35,10 +37,14 @@ import lombok.CustomLog;
 public class CreateDataPlaneEndpoint extends AbstractInternalApiEndpoint {
 
     private final DataPlaneDefinitionService dataPlaneDefinitionService;
+    private final ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
 
-    public CreateDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService, ObjectMapper objectMapper) {
+    public CreateDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
+                                   ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+                                   ObjectMapper objectMapper) {
         super(objectMapper);
         this.dataPlaneDefinitionService = dataPlaneDefinitionService;
+        this.provisionedDataPlaneLoader = provisionedDataPlaneLoader;
     }
 
     @Override
@@ -68,6 +74,7 @@ public class CreateDataPlaneEndpoint extends AbstractInternalApiEndpoint {
         }
 
         dataPlaneDefinitionService.create(payload)
+                .flatMap(summary -> provisionedDataPlaneLoader.register(summary.id()).andThen(Single.just(summary)))
                 .subscribe(
                         summary -> respond(context, HttpStatusCode.CREATED_201, summary),
                         throwable -> respondFailure(context, throwable, "Unable to create the data plane definition"));

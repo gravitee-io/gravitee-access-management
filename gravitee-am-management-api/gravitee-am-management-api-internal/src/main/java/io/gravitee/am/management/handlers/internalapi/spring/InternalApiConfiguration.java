@@ -22,6 +22,7 @@ import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndp
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,8 +36,10 @@ import org.springframework.context.annotation.Configuration;
 public class InternalApiConfiguration {
 
     @Bean
-    public CreateDataPlaneEndpoint createDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService, ObjectMapper objectMapper) {
-        return new CreateDataPlaneEndpoint(dataPlaneDefinitionService, objectMapper);
+    public CreateDataPlaneEndpoint createDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
+                                                           ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+                                                           ObjectMapper objectMapper) {
+        return new CreateDataPlaneEndpoint(dataPlaneDefinitionService, provisionedDataPlaneLoader, objectMapper);
     }
 
     @Bean

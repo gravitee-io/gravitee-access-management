@@ -27,18 +27,23 @@ import {
 } from '@management-commands/dataplane-provisioning-commands';
 import {
   ALLOWED_SUMMARY_FIELDS,
+  BoundDomain,
+  createDomainOnDataPlane,
   DATABASE_NAME,
   dataPlanePayload,
   deleteProvisionedDataPlanes,
   JDBC_SUMMARY,
   jdbcPayload,
   MONGO_SUMMARY,
+  provisionConnectableDataPlane,
   provisionDataPlane,
+  releaseBoundDomain,
   SECRET_PASSWORD,
   SECRET_USERNAME,
   uriFormPayload,
 } from './fixtures/dataplane-provisioning-fixture';
 import { setup } from '../../test-fixture';
+import { uniqueName } from '@utils-commands/misc';
 
 setup(60000);
 
@@ -296,6 +301,44 @@ describe('Data plane provisioning (management technical API)', () => {
 
       const recreated = await createDataPlane(dataPlanePayload(PROVISIONED_ID));
       expect(recreated.status).toBe(201);
+    });
+
+    it('refuses to delete a data plane a domain still uses, and allows it once the domain is gone', async () => {
+      // unique per attempt: a leaked bound domain wedges its data plane id (the delete guard blocks
+      // cleanup), so reusing a shared id would fail every later test and retry with "already exists"
+      const provisioned = await provisionConnectableDataPlane(uniqueName('dp-e2e-guarded', true));
+      let bound: BoundDomain | undefined;
+
+      try {
+        bound = await createDomainOnDataPlane(provisioned.id);
+
+        const refused = await deleteDataPlane(provisioned.id);
+        expect(refused.status).toBe(409);
+        expect(refused.raw).toContain(provisioned.id);
+      } finally {
+        // before the outer afterEach, which deletes the data plane and would hit the same guard
+        await releaseBoundDomain(bound);
+      }
+
+      const deleted = await deleteDataPlane(provisioned.id);
+      expect(deleted.status).toBe(204);
+    });
+  });
+
+  describe('runtime registration', () => {
+    it('accepts a domain on a data plane provisioned since the node started', async () => {
+      const provisioned = await provisionConnectableDataPlane(uniqueName('dp-e2e-live', true));
+      let bound: BoundDomain | undefined;
+
+      try {
+        // domain creation validates the id against the registry, so this fails unless the definition
+        // was registered when it was provisioned rather than at the next restart
+        bound = await createDomainOnDataPlane(provisioned.id);
+
+        expect(bound.dataPlaneId).toEqual(provisioned.id);
+      } finally {
+        await releaseBoundDomain(bound);
+      }
     });
   });
 

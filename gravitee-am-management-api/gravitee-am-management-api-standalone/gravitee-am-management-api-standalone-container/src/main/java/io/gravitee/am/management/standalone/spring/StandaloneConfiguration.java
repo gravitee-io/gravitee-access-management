@@ -47,6 +47,8 @@ import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.am.repository.ManagementRepositoryScopeProvider;
+import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
+import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.common.event.EventManager;
@@ -67,7 +69,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
@@ -165,7 +169,14 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public DataPlaneRegistry dataPlaneRegistry(MultiDataPlaneLoader loader, DataPlanePluginManager manager) {
+    public ProvisionedDataPlaneLoader provisionedDataPlaneLoader(MultiDataPlaneLoader configurationLoader,
+                                                                @Lazy DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
+                                                                ConfigurableEnvironment environment) {
+        return new ProvisionedDataPlaneLoader(configurationLoader, dataPlaneDefinitionRepository, environment);
+    }
+
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry(ProvisionedDataPlaneLoader loader, DataPlanePluginManager manager) {
         return new DataPlaneRegistryImpl(loader, manager);
     }
 
