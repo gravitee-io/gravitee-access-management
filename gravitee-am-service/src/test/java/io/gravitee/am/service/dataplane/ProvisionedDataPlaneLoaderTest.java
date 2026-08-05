@@ -298,4 +298,56 @@ class ProvisionedDataPlaneLoaderTest {
 
         assertThat(loaded).isEmpty();
     }
+
+    @Test
+    void should_drop_the_published_properties_of_a_forgotten_definition() {
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://gone:27017/db\"}}")));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        loader.forget("dp-1");
+
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isNull();
+    }
+
+    @Test
+    void should_leave_other_definitions_alone_when_one_is_forgotten() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(
+                definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://one:27017/db\"}}"),
+                definition("dp-2", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://two:27017/db\"}}")));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        loader.forget("dp-1");
+
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-2.mongodb.uri")).isEqualTo("mongodb://two:27017/db");
+    }
+
+    @Test
+    void should_let_a_forgotten_id_be_provisioned_again() {
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://old:27017/db\"}}")));
+        var loader = loader();
+        loader.load(loaded::add);
+        loader.forget("dp-1");
+        when(dataPlaneDefinitionRepository.findById("dp-1"))
+                .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://new:27017/db\"}}")));
+
+        loader.register("dp-1").test().assertComplete();
+
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://new:27017/db");
+        assertThat(loaded).hasSize(2);
+    }
+
+    @Test
+    void should_ignore_forgetting_an_unknown_id() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.load(loaded::add);
+
+        loader.forget("never-provisioned");
+
+        assertThat(loaded).isEmpty();
+    }
 }

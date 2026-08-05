@@ -16,7 +16,9 @@
 package io.gravitee.am.management.handlers.internalapi.endpoints;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
 import io.gravitee.common.http.HttpMethod;
@@ -33,8 +35,10 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +53,12 @@ class DeleteDataPlaneEndpointTest {
     private DataPlaneDefinitionService dataPlaneDefinitionService;
 
     @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
+
+    @Mock
+    private ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
+
+    @Mock
     private RoutingContext routingContext;
 
     private HttpServerResponse response;
@@ -59,7 +69,7 @@ class DeleteDataPlaneEndpointTest {
     void setUp() {
         response = mock(HttpServerResponse.class, RETURNS_SELF);
         when(routingContext.response()).thenReturn(response);
-        endpoint = new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, new ObjectMapper());
+        endpoint = new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, dataPlaneRegistry, provisionedDataPlaneLoader, new ObjectMapper());
     }
 
     @Test
@@ -77,6 +87,29 @@ class DeleteDataPlaneEndpointTest {
 
         verify(response).setStatusCode(204);
         verify(response).end();
+    }
+
+    @Test
+    void shouldStopServingTheDataPlaneOnThisNode() {
+        when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
+        when(dataPlaneDefinitionService.delete("dp-acme")).thenReturn(Completable.complete());
+
+        endpoint.handle(routingContext);
+
+        verify(dataPlaneRegistry).unregister("dp-acme");
+        verify(provisionedDataPlaneLoader).forget("dp-acme");
+    }
+
+    @Test
+    void shouldKeepServingTheDataPlaneWhenTheDeletionIsRefused() {
+        when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
+        when(dataPlaneDefinitionService.delete("dp-acme"))
+                .thenReturn(Completable.error(new DataPlaneInUseByDomainsException("dp-acme")));
+
+        endpoint.handle(routingContext);
+
+        verify(dataPlaneRegistry, never()).unregister(any());
+        verify(provisionedDataPlaneLoader, never()).forget(any());
     }
 
     @Test

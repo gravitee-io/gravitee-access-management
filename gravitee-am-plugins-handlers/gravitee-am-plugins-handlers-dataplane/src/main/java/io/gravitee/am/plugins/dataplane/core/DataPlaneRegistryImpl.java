@@ -185,7 +185,8 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
         }
     }
 
-    void register(DataPlaneDescription description){
+    @Override
+    public void register(DataPlaneDescription description){
         if (!hasText(description.id())) {
             throw new IllegalStateException("Invalid data plan definition, id must be specified");
         }
@@ -198,5 +199,22 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
                 .orElseThrow(() -> new IllegalStateException("No data plane provider could be built for id " + description.id()));
         dataPlanProviders.put(description.id(), provider);
         dataPlanDescriptions.put(description.id(), description);
+    }
+
+    @Override
+    public void unregister(String dataPlaneId) {
+        dataPlanDescriptions.remove(dataPlaneId);
+        var provider = dataPlanProviders.remove(dataPlaneId);
+        if (provider == null) {
+            return;
+        }
+        try {
+            provider.stop();
+        } catch (Exception e) {
+            // the id is already free either way, so a provider that will not close must not block a
+            // replacement definition from registering
+            log.error("Data plane [{}] could not be stopped cleanly", dataPlaneId, e);
+        }
+        log.info("Data plane [{}] unregistered", dataPlaneId);
     }
 }
