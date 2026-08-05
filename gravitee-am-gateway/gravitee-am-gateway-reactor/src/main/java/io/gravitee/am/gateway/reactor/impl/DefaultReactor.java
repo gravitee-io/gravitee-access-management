@@ -19,10 +19,10 @@ import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
+import io.gravitee.am.gateway.reactor.impl.router.VHostDomainIndex;
 import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -39,8 +39,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -67,6 +65,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     // Root router is mutated only under this lock; heavy per-domain work
     // (Spring context refresh, component start) happens before, in parallel.
     private final ReentrantLock routerLock = new ReentrantLock();
+
+    // O(1) host-indexed dispatch for vhost-mode domains - see VHostDomainIndex
+    // javadoc for why per-domain route mounting doesn't scale.
+    private final VHostDomainIndex vhostIndex = new VHostDomainIndex();
 
     @Autowired
     private TransactionHandlerFactory transactionHandlerFactory;
@@ -122,16 +124,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
             Domain domain = domainHandler.getDomain();
 
             if (domain.isVhostMode()) {
-                // Mount the same router for each virtual host / path.
-                // Sort vhosts to ensure proper routing order:
-                // - More specific paths (longer) are checked first
-                // - "/" (catch-all) is always checked last
-                List<VirtualHost> sortedVhosts = domain.getVhosts().stream()
-                        .sorted(Comparator.comparing((VirtualHost vhost) -> vhost.getPath().equals("/") ? 1 : 0)
-                                .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
-                        .toList();
-
-                sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(vertx, domain, virtualHost, domainHandler.router())));
+                // Indexed by host instead of mounted as individual Vert.x routes -
+                // see VHostDomainIndex. Per-host ordering (specific path before "/")
+                // is handled inside VHostDomainIndex#mount; no need to pre-sort here.
+                domain.getVhosts().forEach(virtualHost -> vhostIndex.mount(domain, virtualHost, domainHandler.router().getDelegate()));
             } else {
                 this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(vertx, domain, domainHandler.router()));
             }
@@ -153,6 +149,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     public void unMountDomain(VertxSecurityDomainHandler domainHandler) {
         routerLock.lock();
         try {
+            Domain domain = domainHandler.getDomain();
+            if (domain.isVhostMode()) {
+                vhostIndex.unmount(domain.getId());
+            }
             domainHandler.router().clear();
         } finally {
             routerLock.unlock();
@@ -163,6 +163,8 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     public void afterPropertiesSet() {
         router = Router.router(vertx);
         router.route().handler(transactionHandlerFactory.create());
+        // Single route for ALL vhost-mode domains combined - see VHostDomainIndex.
+        router.getDelegate().route().handler(vhostIndex::dispatch);
         router.route().last().handler(context -> sendNotFound(context.response()));
     }
 
