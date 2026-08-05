@@ -28,6 +28,7 @@ import {
 import {
   ALLOWED_SUMMARY_FIELDS,
   BoundDomain,
+  canBindADomainTo,
   createDomainOnDataPlane,
   DATABASE_NAME,
   dataPlanePayload,
@@ -339,6 +340,30 @@ describe('Data plane provisioning (management technical API)', () => {
       } finally {
         await releaseBoundDomain(bound);
       }
+    });
+
+    it('stops accepting domains on a data plane once it is deleted', async () => {
+      const provisioned = await provisionConnectableDataPlane(uniqueName('dp-e2e-undeploy', true));
+      expect(await canBindADomainTo(provisioned.id)).toBe(true);
+
+      const deleted = await deleteDataPlane(provisioned.id);
+      expect(deleted.status).toBe(204);
+
+      // the registry has to give the id up, not just the row: a domain bound to a deleted data plane
+      // would be created against a store nothing is meant to be using
+      expect(await canBindADomainTo(provisioned.id)).toBe(false);
+    });
+
+    it('serves a data plane again when its id is re-provisioned', async () => {
+      const id = uniqueName('dp-e2e-reprovision', true);
+      await provisionConnectableDataPlane(id);
+      expect((await deleteDataPlane(id)).status).toBe(204);
+
+      await provisionConnectableDataPlane(id);
+
+      // the published properties have to be released along with the id, or the second definition
+      // registers against the settings of the one that was deleted
+      expect(await canBindADomainTo(id)).toBe(true);
     });
   });
 

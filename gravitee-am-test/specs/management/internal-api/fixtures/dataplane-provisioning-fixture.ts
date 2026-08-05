@@ -175,6 +175,22 @@ export async function releaseBoundDomain(bound: BoundDomain | undefined): Promis
   }
 }
 
+/**
+ * Whether a domain can still be bound to this data plane id. Domain creation validates the id against
+ * the registry, so this reports whether the node is still serving it, not whether the row exists.
+ */
+export async function canBindADomainTo(dataPlaneId: string): Promise<boolean> {
+  let bound: BoundDomain | undefined;
+  try {
+    bound = await createDomainOnDataPlane(dataPlaneId);
+    return true;
+  } catch (e) {
+    return false;
+  } finally {
+    await releaseBoundDomain(bound);
+  }
+}
+
 export const ALLOWED_SUMMARY_FIELDS = [
   'id',
   'name',
