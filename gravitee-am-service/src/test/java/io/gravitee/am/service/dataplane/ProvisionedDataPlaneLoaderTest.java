@@ -150,6 +150,13 @@ class ProvisionedDataPlaneLoaderTest {
     }
 
     @Test
+    void should_leave_the_environment_alone_until_it_is_loaded() {
+        loader();
+
+        assertThat(environment.getPropertySources().get(ProvisionedDataPlaneLoader.PROPERTY_SOURCE_NAME)).isNull();
+    }
+
+    @Test
     void should_not_expose_the_configuration_through_the_source_the_node_configuration_endpoint_dumps() {
         when(dataPlaneDefinitionRepository.findAll())
                 .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"password\":\"s3cret\"}}")));

@@ -51,6 +51,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
     private final DataPlaneLoader configurationLoader;
     private final DataPlaneDefinitionRepository dataPlaneDefinitionRepository;
+    private final ConfigurableEnvironment environment;
 
     private final ObjectMapper objectMapper = JsonMapper.builder()
             .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
@@ -58,33 +59,36 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
     private final Set<String> registered = ConcurrentHashMap.newKeySet();
-    private final AtomicReference<Consumer<DataPlaneDescription>> storage = new AtomicReference<>();
+    private final AtomicReference<Consumer<DataPlaneDescription>> storageRef = new AtomicReference<>();
 
     public ProvisionedDataPlaneLoader(DataPlaneLoader configurationLoader,
                                       DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
                                       ConfigurableEnvironment environment) {
         this.configurationLoader = configurationLoader;
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
-        environment.getPropertySources().addLast(new MapPropertySource(PROPERTY_SOURCE_NAME, properties));
+        this.environment = environment;
     }
 
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
-        this.storage.set(storage);
+        environment.getPropertySources().addLast(new MapPropertySource(PROPERTY_SOURCE_NAME, properties));
+        storageRef.set(storage);
         configurationLoader.load(storage);
         dataPlaneDefinitionRepository.findAll()
-                .blockingForEach(definition -> load(definition, storage));
+                .blockingForEach(definition -> activate(definition, storage));
     }
 
     public Completable register(String dataPlaneId) {
-        var storage = this.storage.get();
+        var storage = storageRef.get();
 
+        // nothing is lost when the registry has not started yet: load publishes its consumer before
+        // reading the repository, so the definition just persisted is picked up by that read
         if (storage == null || registered.contains(dataPlaneId)) {
             return Completable.complete();
         }
 
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
-                .doOnSuccess(definition -> load(definition, storage))
+                .doOnSuccess(definition -> activate(definition, storage))
                 // fires only when findById completes empty
                 .doOnComplete(() -> log.warn("Data plane [{}] was not found when read back after being provisioned and will be unavailable until restart", dataPlaneId))
                 .ignoreElement()
@@ -92,7 +96,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 .onErrorComplete();
     }
 
-    private void load(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
+    private void activate(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
         try {
             storage.accept(publish(definition));
             registered.add(definition.getId());
