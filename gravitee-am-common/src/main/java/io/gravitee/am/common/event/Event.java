@@ -61,6 +61,7 @@ public abstract class Event {
             case CIMD_METADATA -> CimdMetadataEvent.actionOf(action);
             case LICENSE -> LicenseEvent.actionOf(action);
             case ENTRYPOINT -> EntrypointEvent.actionOf(action);
+            case DATA_PLANE -> DataPlaneEvent.actionOf(action);
             default -> null;
         };
     }
