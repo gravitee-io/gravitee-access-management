@@ -30,6 +30,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -349,5 +350,59 @@ class ProvisionedDataPlaneLoaderTest {
         loader.forget("never-provisioned");
 
         assertThat(loaded).isEmpty();
+    }
+
+    @Test
+    void should_report_it_serves_a_definition_it_has_activated() {
+        var definition = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}");
+        definition.setUpdatedAt(new Date(1000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(definition));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        assertThat(loader.isServing(definition)).isTrue();
+    }
+
+    @Test
+    void should_not_report_it_serves_a_definition_it_has_never_seen() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.load(loaded::add);
+
+        var definition = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}");
+        definition.setUpdatedAt(new Date(1000L));
+
+        assertThat(loader.isServing(definition)).isFalse();
+    }
+
+    /**
+     * A delete and a re-create of one id arrive collapsed as a lone deploy, carrying a definition the
+     * node has not seen. Reporting it as served would leave the node on the definition that has gone.
+     */
+    @Test
+    void should_not_report_it_serves_a_definition_carrying_a_later_timestamp() {
+        var activated = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://old:27017/db\"}}");
+        activated.setUpdatedAt(new Date(1000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(activated));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        var recreated = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://new:27017/db\"}}");
+        recreated.setUpdatedAt(new Date(2000L));
+
+        assertThat(loader.isServing(recreated)).isFalse();
+    }
+
+    @Test
+    void should_not_report_it_serves_a_forgotten_definition() {
+        var definition = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}");
+        definition.setUpdatedAt(new Date(1000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(definition));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        loader.forget("dp-1");
+
+        assertThat(loader.isServing(definition)).isFalse();
     }
 }

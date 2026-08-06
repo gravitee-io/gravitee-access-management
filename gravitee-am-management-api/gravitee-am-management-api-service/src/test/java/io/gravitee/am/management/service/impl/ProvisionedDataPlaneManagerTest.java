@@ -101,11 +101,11 @@ class ProvisionedDataPlaneManagerTest {
 
     /**
      * The sync poll keeps only the latest event per type and id, so a delete and a re-create of one
-     * id inside the poll window arrive as a lone deploy. Skipping an id already held would leave
-     * this node serving the definition that was deleted.
+     * id inside the poll window arrive as a lone deploy. Registering without dropping the id first
+     * would be refused by the registry, which rejects a duplicate id.
      */
     @Test
-    void shouldReplaceAnIdItAlreadyHoldsOnDeploy() throws Exception {
+    void shouldUnregisterBeforeRegisteringOnDeploy() throws Exception {
         when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
 
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
@@ -113,6 +113,45 @@ class ProvisionedDataPlaneManagerTest {
         InOrder inOrder = inOrder(dataPlaneRegistry);
         inOrder.verify(dataPlaneRegistry).unregister("dp-1");
         inOrder.verify(dataPlaneRegistry).register(DESCRIPTION);
+    }
+
+    /**
+     * The management sync is not filtered by origin, so the node that served the provisioning request
+     * reads its own deploy back. It already holds the provider, and rebuilding would close the pool
+     * under any domain already using it.
+     */
+    @Test
+    void shouldIgnoreADeployForTheVersionItAlreadyServes() throws Exception {
+        DataPlaneDefinition definition = definition();
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition));
+        when(provisionedDataPlaneLoader.isServing(definition)).thenReturn(true);
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        verify(dataPlaneRegistry, never()).unregister(any());
+        verify(dataPlaneRegistry, never()).register(any());
+        verify(provisionedDataPlaneLoader, never()).publish(any());
+    }
+
+    @Test
+    void shouldRecordTheVersionItServesOnceRegistered() throws Exception {
+        DataPlaneDefinition definition = definition();
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition));
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        verify(provisionedDataPlaneLoader).markServing(definition);
+    }
+
+    @Test
+    void shouldNotRecordTheVersionWhenTheProviderCannotBeBuilt() throws Exception {
+        DataPlaneDefinition definition = definition();
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition));
+        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).register(DESCRIPTION);
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        verify(provisionedDataPlaneLoader, never()).markServing(any());
     }
 
     @Test
