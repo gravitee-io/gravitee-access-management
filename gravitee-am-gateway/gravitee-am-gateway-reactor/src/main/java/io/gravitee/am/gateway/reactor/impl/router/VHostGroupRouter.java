@@ -18,11 +18,15 @@ package io.gravitee.am.gateway.reactor.impl.router;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.vertx.core.Vertx;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -36,15 +40,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Java stack frame per candidate, which can blow the stack once a few thousand domains share a
  * path.
  *
- * <p>This router instead holds all the candidates for a given path in a flat list and resolves
- * the matching one with a simple iteration, so the request-handling stack depth no longer grows
- * with the number of domains/vhosts sharing that path.
+ * <p>This router instead resolves the matching candidate for a given path in O(1): host-bound
+ * members (regular vhosts) are indexed in a {@link Map} keyed by their literal, lower-cased host
+ * (host matching is an exact comparison, see {@link VHostRouter#hostKey()}), so a request is
+ * resolved with a single lookup instead of a scan. Host-agnostic members (non-vhost-mode
+ * domains) are kept in a small fallback list, checked only when no host-bound member matches.
  *
  * @author GraviteeSource Team
  */
 public class VHostGroupRouter extends RouterImpl {
 
-    private final List<VHostRouter> members = new CopyOnWriteArrayList<>();
+    private final Map<String, VHostRouter> byHost = new ConcurrentHashMap<>();
+    private final List<VHostRouter> hostAgnostic = new CopyOnWriteArrayList<>();
 
     private VHostGroupRouter(Vertx vertx) {
         super(vertx);
@@ -60,49 +67,79 @@ public class VHostGroupRouter extends RouterImpl {
 
     /**
      * Registers a new domain/vhost candidate on this group and returns an opaque handle that
-     * must be kept to later {@link #removeMember(Object)} it (e.g. on domain undeploy).
+     * must be kept to later {@link #removeMember(VHostRouter)} it (e.g. on domain undeploy).
      */
-    public Object addMember(io.vertx.rxjava3.core.Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
-        VHostRouter member = VHostRouter.member(vertx.getDelegate(), domain, vhost, delegate.getDelegate());
-        members.add(member);
+    public VHostRouter addMember(io.vertx.rxjava3.core.Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
+        return register(VHostRouter.member(vertx.getDelegate(), domain, vhost, delegate.getDelegate()));
+    }
+
+    public VHostRouter addMember(io.vertx.rxjava3.core.Vertx vertx, Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
+        return register(VHostRouter.member(vertx.getDelegate(), domain, delegate.getDelegate()));
+    }
+
+    private VHostRouter register(VHostRouter member) {
+        String hostKey = member.hostKey();
+        if (hostKey != null) {
+            // First registration for a given host wins, matching the previous first-match
+            // semantics of the sequential scan this class replaces.
+            byHost.putIfAbsent(hostKey, member);
+        } else {
+            hostAgnostic.add(member);
+        }
         return member;
     }
 
-    public Object addMember(io.vertx.rxjava3.core.Vertx vertx, Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
-        VHostRouter member = VHostRouter.member(vertx.getDelegate(), domain, delegate.getDelegate());
-        members.add(member);
-        return member;
-    }
-
-    public void removeMember(Object member) {
-        if (member instanceof VHostRouter vHostRouter) {
-            members.remove(vHostRouter);
+    public void removeMember(VHostRouter member) {
+        String hostKey = member.hostKey();
+        if (hostKey != null) {
+            byHost.computeIfPresent(hostKey, (key, current) -> current == member ? null : current);
+        } else {
+            hostAgnostic.remove(member);
         }
     }
 
     public boolean isEmpty() {
-        return members.isEmpty();
+        return byHost.isEmpty() && hostAgnostic.isEmpty();
     }
 
     @Override
     public void handleContext(RoutingContext context) {
-        for (VHostRouter member : members) {
-            if (member.matches(context)) {
-                member.dispatch(context);
-                return;
-            }
-        }
-        context.next();
+        dispatchTo(resolve(context), context, false);
     }
 
     @Override
     public void handleFailure(RoutingContext context) {
-        for (VHostRouter member : members) {
+        dispatchTo(resolve(context), context, true);
+    }
+
+    private void dispatchTo(VHostRouter member, RoutingContext context, boolean failure) {
+        if (member == null) {
+            context.next();
+        } else if (failure) {
+            member.dispatchFailure(context);
+        } else {
+            member.dispatch(context);
+        }
+    }
+
+    private VHostRouter resolve(RoutingContext context) {
+        String host = requestHost(context);
+        VHostRouter candidate = host == null ? null : byHost.get(host);
+        if (candidate != null && candidate.matches(context)) {
+            return candidate;
+        }
+
+        for (VHostRouter member : hostAgnostic) {
             if (member.matches(context)) {
-                member.dispatchFailure(context);
-                return;
+                return member;
             }
         }
-        context.next();
+
+        return null;
+    }
+
+    private String requestHost(RoutingContext context) {
+        HostAndPort authority = context.request().authority();
+        return authority == null ? null : authority.toString().toLowerCase(Locale.ROOT);
     }
 }
