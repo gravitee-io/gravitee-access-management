@@ -75,13 +75,30 @@ async function read<T>(response: Response): Promise<DataPlaneResponse<T>> {
   return { status: response.status, body, raw };
 }
 
+/**
+ * Ids provisioned by the spec file that loaded this module. Jest gives each test file its own module
+ * registry, so this stays that file's own list: cleanup can drop what the file made without touching
+ * the data planes a spec running on another worker is still using.
+ */
+const provisionedByThisSpec = new Set<string>();
+
+export const provisionedDataPlaneIds = (): string[] => [...provisionedByThisSpec];
+
+export const forgetDataPlane = (id: string): void => {
+  provisionedByThisSpec.delete(id);
+};
+
 export const createDataPlane = async (payload: NewDataPlane | string): Promise<DataPlaneResponse<any>> => {
   const response = await fetch(`${basePath}/dataplanes`, {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/json' },
     body: typeof payload === 'string' ? payload : JSON.stringify(payload),
   });
-  return read(response);
+  const result = await read<any>(response);
+  if (result.status === 201 && result.body?.id) {
+    provisionedByThisSpec.add(result.body.id);
+  }
+  return result;
 };
 
 export const listDataPlanes = async (): Promise<DataPlaneResponse<DataPlaneSummary[]>> => {
@@ -96,7 +113,11 @@ export const getDataPlane = async (id: string): Promise<DataPlaneResponse<DataPl
 
 export const deleteDataPlane = async (id: string): Promise<DataPlaneResponse<void>> => {
   const response = await fetch(`${basePath}/dataplanes/${id}`, { method: 'DELETE', headers: authHeader() });
-  return read(response);
+  const result = await read<void>(response);
+  if (result.status === 204) {
+    provisionedByThisSpec.delete(id);
+  }
+  return result;
 };
 
 /** Same requests without credentials, to prove the technical API stays behind basic auth. */

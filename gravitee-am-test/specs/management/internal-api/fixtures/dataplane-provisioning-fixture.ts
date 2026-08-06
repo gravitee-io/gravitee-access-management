@@ -18,8 +18,9 @@ import {
   createDataPlane,
   DataPlaneSummary,
   deleteDataPlane,
-  listDataPlanes,
+  forgetDataPlane,
   NewDataPlane,
+  provisionedDataPlaneIds,
 } from '@management-commands/dataplane-provisioning-commands';
 import { createDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -172,18 +173,19 @@ export async function provisionConnectableDataPlane(id: string): Promise<DataPla
   return created.body;
 }
 
+/**
+ * Drops only the data planes this spec file provisioned. Sweeping the whole environment instead would
+ * delete the ones a spec on another jest worker is still using, and that spec then fails to bind a
+ * domain to a data plane that vanished under it.
+ */
 export async function deleteProvisionedDataPlanes(): Promise<void> {
-  const listed = await listDataPlanes();
-  if (listed.status !== 200) {
-    console.warn(`⚠️  Could not list data planes for cleanup: status=${listed.status}`);
-    return;
-  }
-  const provisioned = listed.body.filter((dataPlane) => dataPlane.environmentId === ENVIRONMENT_ID);
-  for (const dataPlane of provisioned) {
-    const deleted = await deleteDataPlane(dataPlane.id);
-    if (deleted.status !== 204) {
-      console.warn(`⚠️  Could not clean up data plane [${dataPlane.id}]: status=${deleted.status} body=${deleted.raw}`);
+  for (const id of provisionedDataPlaneIds()) {
+    const deleted = await deleteDataPlane(id);
+    // 404 is fine: the test deleted it itself, which is what several of them are about
+    if (deleted.status !== 204 && deleted.status !== 404) {
+      console.warn(`⚠️  Could not clean up data plane [${id}]: status=${deleted.status} body=${deleted.raw}`);
     }
+    forgetDataPlane(id);
   }
 }
 
