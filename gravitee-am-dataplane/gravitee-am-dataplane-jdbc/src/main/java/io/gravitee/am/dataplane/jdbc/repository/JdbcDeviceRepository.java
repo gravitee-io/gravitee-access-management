@@ -139,6 +139,17 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     }
 
     @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({} - {})", referenceType, referenceId);
+        return monoToCompletable(getTemplate().delete(JdbcDevice.class)
+                .matching(Query.query(
+                        where(REFERENCE_ID_FIELD).is(referenceId)
+                                .and(where(REF_TYPE_FIELD).is(referenceType.name()))))
+                .all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);

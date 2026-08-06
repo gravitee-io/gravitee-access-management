@@ -128,6 +128,13 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(rememberDeviceMongoCollection.deleteMany(
+                and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
+                .observeOn(Schedulers.computation());
+    }
+
     private Device convert(DeviceMongo entity) {
         return ofNullable(entity).map(device -> new Device().setId(device.getId())
                 .setType(device.getType())

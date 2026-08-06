@@ -18,13 +18,20 @@ package io.gravitee.am.management.service.dataplane;
 
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserActivityManagementService {
+public interface UserActivityManagementService extends DomainDataPlaneCleanup {
+
+    @Override
+    default Completable purgeDataPlane(Domain domain) {
+        return deleteByDomain(domain);
+    }
+
     Completable deleteByDomain(Domain domain);
     Completable deleteByDomainAndUser(Domain domain, String userId);
 }

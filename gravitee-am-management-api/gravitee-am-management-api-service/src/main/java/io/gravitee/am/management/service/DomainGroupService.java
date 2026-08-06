@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -32,7 +33,13 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DomainGroupService {
+public interface DomainGroupService extends DomainDataPlaneCleanup {
+
+    @Override
+    default Completable purgeDataPlane(Domain domain) {
+        return findAll(domain).flatMapCompletable(group -> delete(domain, group.getId(), null));
+    }
+
 
     Single<Page<Group>> findAll(Domain domain, int page, int size);
 

@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.dataplane.api.repository;
+package io.gravitee.am.service.dataplane;
 
-import io.gravitee.am.model.uma.PermissionTicket;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.common.ExpiredDataSweeper;
+import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
 
 /**
- * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * A store in the data plane that holds data of its own for a domain. Implement this on the service
+ * that owns the store, and the domain deletion picks it up: the management API collects every
+ * implementation rather than naming them one by one, so a store added later is purged without
+ * anyone remembering to extend the deletion.
+ *
  * @author GraviteeSource Team
  */
-public interface PermissionTicketRepository extends CrudRepository<PermissionTicket, String>, ExpiredDataSweeper {
+public interface DomainDataPlaneCleanup {
 
-    Completable deleteByDomain(String domain);
+    /**
+     * Remove everything this store holds for the domain. Called once the domain itself is deleted,
+     * on a best effort basis: the data plane may be unreachable, and the domain still has to go.
+     */
+    Completable purgeDataPlane(Domain domain);
 }
