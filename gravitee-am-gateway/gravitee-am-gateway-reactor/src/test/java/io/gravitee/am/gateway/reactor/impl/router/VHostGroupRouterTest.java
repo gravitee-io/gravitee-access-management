@@ -101,11 +101,14 @@ public class VHostGroupRouterTest {
         io.vertx.rxjava3.ext.web.Router delegate = io.vertx.rxjava3.ext.web.Router.newInstance(mock(Router.class));
         var member = group.addMember(vertx, new Domain(), virtualHost("known.gravitee.io", "/"), delegate);
 
-        assertFalse(group.isEmpty());
-        group.removeMember(member);
-        assertTrue(group.isEmpty());
-
         RoutingContext routingContext = routingContext("known.gravitee.io", "/login");
+        group.handleContext(routingContext);
+
+        verify(routingContext, never()).next();
+
+        group.removeMember(member);
+
+        routingContext = routingContext("known.gravitee.io", "/login");
         group.handleContext(routingContext);
 
         verify(routingContext).next();
