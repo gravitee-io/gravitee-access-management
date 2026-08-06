@@ -18,9 +18,11 @@ import { afterEach, describe, expect, it } from '@jest/globals';
 import { deleteDataPlane } from '@management-commands/dataplane-provisioning-commands';
 import { deleteDomain } from '@management-commands/domain-management-commands';
 import {
+  BoundDomain,
   createDomainOnDataPlane,
   deleteProvisionedDataPlanes,
   provisionUnreachableDataPlane,
+  releaseBoundDomain,
 } from './fixtures/dataplane-provisioning-fixture';
 import { setup } from '../../test-fixture';
 import { uniqueName } from '@utils-commands/misc';
@@ -29,15 +31,23 @@ import { uniqueName } from '@utils-commands/misc';
 setup(180000);
 
 describe('Domains bound to an unreachable data plane', () => {
-  afterEach(deleteProvisionedDataPlanes);
+  let bound: BoundDomain | undefined;
+
+  afterEach(async () => {
+    // a domain left bound blocks its data plane from being deleted, which would poison every later run
+    await releaseBoundDomain(bound);
+    bound = undefined;
+    await deleteProvisionedDataPlanes();
+  });
 
   it('deletes the domain anyway, so the data plane can be deleted after it', async () => {
     const dataPlaneId = uniqueName('dp-e2e-unreachable', true);
     await provisionUnreachableDataPlane(dataPlaneId);
-    const bound = await createDomainOnDataPlane(dataPlaneId);
+    bound = await createDomainOnDataPlane(dataPlaneId);
 
     // a domain pins its data plane, so a domain that cannot be deleted wedges the pair for good
     await deleteDomain(bound.domainId, bound.accessToken);
+    bound = undefined;
 
     expect((await deleteDataPlane(dataPlaneId)).status).toBe(204);
   });
