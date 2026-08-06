@@ -750,4 +750,15 @@ public class ScopeServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(isValid -> isValid);
     }
+    @Test
+    public void shouldPurgeTheApprovalsOfADeletedDomain() {
+        when(scopeApprovalRepository.deleteByDomain(DOMAIN.getId())).thenReturn(Completable.complete());
+
+        var testObserver = scopeService.purgeDataPlane(DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(scopeApprovalRepository).deleteByDomain(DOMAIN.getId());
+    }
 }

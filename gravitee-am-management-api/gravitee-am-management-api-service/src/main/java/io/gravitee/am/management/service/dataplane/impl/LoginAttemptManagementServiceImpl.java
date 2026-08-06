@@ -39,6 +39,11 @@ public class LoginAttemptManagementServiceImpl implements LoginAttemptManagement
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Override
+    public Completable purgeDataPlane(Domain domain) {
+        return dataPlaneRegistry.getLoginAttemptRepository(domain).deleteByDomain(domain.getId());
+    }
+
+    @Override
     public Completable reset(Domain domain, LoginAttemptCriteria criteria) {
         log.debug("Delete login attempt for {}", criteria);
         return dataPlaneRegistry.getLoginAttemptRepository(domain).delete(criteria)

@@ -85,6 +85,7 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.CertificateCredentialService;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -171,6 +172,10 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
+
+    /** every store that holds domain data in the data plane, collected rather than named one by one */
+    @Autowired
+    private List<DomainDataPlaneCleanup> dataPlaneCleanups;
 
     @Lazy
     @Autowired
@@ -670,24 +675,6 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deleteRolesCompletable);
                                     })
                             )
-                            //Delete all trace of activity of users for this domain
-                            .andThen(userActivityService.deleteByDomain(domain))
-                            // delete users
-                            // do not delete one by one for memory consumption issue
-                            // https://github.com/gravitee-io/issues/issues/6999
-                            .andThen(dataPlaneRegistry.getUserRepository(domain).deleteByReference(domain.asReference()))
-                            // delete groups
-                            .andThen(domainGroupService.findAll(domain)
-                                    .flatMapCompletable(group ->
-                                            domainGroupService.delete(domain, group.getId(), principal))
-                            )
-                            // delete scopes
-                            .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(domain, s.getId(), true)).toList();
-                                        return Completable.concat(deleteScopesCompletable);
-                                    })
-                            )
                             // delete email templates
                             .andThen(emailTemplateService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(emailTemplate -> emailTemplateService.delete(emailTemplate.getId()))
@@ -716,10 +703,6 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(factorService.findByDomain(domainId)
                                     .flatMapCompletable(factor -> factorService.delete(domainId, factor.getId()))
                             )
-                            // delete uma resources
-                            .andThen(resourceService.findByDomain(domain)
-                                    .flatMapCompletable(resource -> resourceService.delete(domain, resource))
-                            )
                             // delete alert triggers
                             .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
                                     .flatMapCompletable(alertTrigger -> alertTriggerService.delete(alertTrigger.getReferenceType(), alertTrigger.getReferenceId(), alertTrigger.getId(), principal)
@@ -746,16 +729,14 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
                                     )
                             )
-                            .andThen(passwordHistoryService.deleteByReference(domain))
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(serviceResourceService.deleteByDomain(domainId))
                             .andThen(deviceIdentifierService.deleteByDomain(domainId))
-                            // delete certificate credentials
-                            .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
-                            .andThen(cimdClientStateService.deleteByDomain(domain))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
+                            // the domain is gone, so what it left in its data plane can be cleaned up after it
+                            .andThen(clearDataPlane(domainId, domain))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
@@ -775,6 +756,24 @@ public class DomainServiceImpl implements DomainService {
 
                     log.error("An error occurred while trying to delete security domain {}", domainId, ex);
                     return Completable.error(new TechnicalManagementException("An error occurred while trying to delete security domain " + domainId, ex));
+                });
+    }
+
+    /**
+     * Everything the deleted domain leaves in its data plane, from every store that declares itself a
+     * {@link DomainDataPlaneCleanup}. It runs once the domain itself is gone, and a failure is only
+     * logged: a domain pins its data plane, so a domain that cannot be deleted while its store is
+     * unreachable would leave the pair impossible to delete. Stores are purged with delayed errors so
+     * one unreachable repository does not skip the rest.
+     */
+    private Completable clearDataPlane(String domainId, Domain domain) {
+        return Completable.defer(() -> Completable.concatDelayError(dataPlaneCleanups.stream()
+                        .map(store -> store.purgeDataPlane(domain))
+                        .toList()))
+                .onErrorComplete(error -> {
+                    log.warn("Domain {} is deleted but data plane {} could not be cleaned up, that data is left behind",
+                            domainId, domain.getDataPlaneId(), error);
+                    return true;
                 });
     }
 

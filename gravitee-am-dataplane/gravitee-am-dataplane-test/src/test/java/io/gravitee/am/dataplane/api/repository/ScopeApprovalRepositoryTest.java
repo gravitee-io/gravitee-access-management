@@ -205,6 +205,23 @@ public class ScopeApprovalRepositoryTest extends AbstractDataPlaneTest {
                 .forEach(x -> repository.create(x).blockingSubscribe());
     }
 
+    @Test
+    public void shouldDeleteByDomain() {
+        var purged = repository.create(basicApproval()).blockingGet();
+        var otherDomain = basicApproval();
+        otherDomain.setDomain("another-domain");
+        var kept = repository.create(otherDomain).blockingGet();
+
+        repository.deleteByDomain(TEST_DOMAIN)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.findById(purged.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertNoValues();
+        repository.findById(kept.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
+    }
+
     private ScopeApproval basicApproval() {
         var it = new ScopeApproval();
         it.setId(UUID.randomUUID().toString());

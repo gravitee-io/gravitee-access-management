@@ -1953,4 +1953,16 @@ public class ManagementUserServiceTest {
         verify(userRepository).update(userCaptor.capture(), any());
         assertEquals("Dr. John Doe", userCaptor.getValue().getDisplayName());
     }
+    @Test
+    public void shouldPurgeTheUsersOfADeletedDomain() {
+        when(dataPlaneRegistry.getUserRepository(DOMAIN)).thenReturn(userRepository);
+        when(userRepository.deleteByReference(DOMAIN.asReference())).thenReturn(Completable.complete());
+
+        var testObserver = userService.purgeDataPlane(DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userRepository).deleteByReference(DOMAIN.asReference());
+    }
 }

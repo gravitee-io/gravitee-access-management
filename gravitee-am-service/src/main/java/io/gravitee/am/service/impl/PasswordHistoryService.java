@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.Reference;
@@ -50,7 +51,13 @@ import lombok.CustomLog;
  */
 @Component
 @CustomLog
-public class PasswordHistoryService {
+public class PasswordHistoryService implements DomainDataPlaneCleanup {
+
+    @Override
+    public Completable purgeDataPlane(Domain domain) {
+        return deleteByReference(domain);
+    }
+
 
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;

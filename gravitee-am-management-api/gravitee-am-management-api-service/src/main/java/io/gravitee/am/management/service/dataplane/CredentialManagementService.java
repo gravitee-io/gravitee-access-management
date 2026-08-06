@@ -19,6 +19,7 @@ package io.gravitee.am.management.service.dataplane;
 
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -28,7 +29,7 @@ import io.reactivex.rxjava3.core.Maybe;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CredentialManagementService extends CredentialCommonService {
+public interface CredentialManagementService extends CredentialCommonService, DomainDataPlaneCleanup {
 
     Maybe<Credential> findById(Domain domain, String id);
 

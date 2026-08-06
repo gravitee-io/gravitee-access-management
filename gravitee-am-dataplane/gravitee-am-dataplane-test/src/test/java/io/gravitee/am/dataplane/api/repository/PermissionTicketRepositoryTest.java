@@ -92,6 +92,31 @@ public class PermissionTicketRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertNoValues();
     }
 
+    @Test
+    public void deleteByDomain() {
+        String domain = UUID.randomUUID().toString();
+        PermissionTicket purged = repository.create(permissionTicket(domain)).blockingGet();
+        PermissionTicket kept = repository.create(permissionTicket(UUID.randomUUID().toString())).blockingGet();
+
+        TestObserver<Void> testObserver = repository.deleteByDomain(domain).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        repository.findById(purged.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertNoValues();
+        repository.findById(kept.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
+    }
+
+    private PermissionTicket permissionTicket(String domain) {
+        PermissionTicket permissionTicket = new PermissionTicket().setPermissionRequest(Arrays.asList(permission));
+        permissionTicket.setClientId(UUID.randomUUID().toString());
+        permissionTicket.setDomain(domain);
+        permissionTicket.setUserId(UUID.randomUUID().toString());
+        permissionTicket.setCreatedAt(new Date());
+        permissionTicket.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.MINUTES).toEpochMilli()));
+        return permissionTicket;
+    }
+
     private boolean isValid(PermissionTicket pt) {
         return  pt.getPermissionRequest().size() == 1 &&
                 pt.getPermissionRequest().get(0).getResourceId().equals("one") &&

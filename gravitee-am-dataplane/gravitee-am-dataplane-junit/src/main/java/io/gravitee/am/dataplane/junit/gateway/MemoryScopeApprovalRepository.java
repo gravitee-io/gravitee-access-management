@@ -75,6 +75,11 @@ public class MemoryScopeApprovalRepository extends MemoryRepository<ScopeApprova
     }
 
     @Override
+    public Completable deleteByDomain(String domain) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    @Override
     public Completable purgeExpiredData() {
         return ScopeApprovalRepository.super.purgeExpiredData();
     }

@@ -183,6 +183,11 @@ public class CredentialManagementServiceImpl implements CredentialManagementServ
     }
 
     @Override
+    public Completable purgeDataPlane(Domain domain) {
+        return dataPlaneRegistry.getCredentialRepository(domain).deleteByReference(DOMAIN, domain.getId());
+    }
+
+    @Override
     public Completable deleteByUserId(Domain domain, String userId) {
         log.debug("Delete all credentials for domain {} and user {}", domain.getId(), userId);
         return dataPlaneRegistry.getCredentialRepository(domain)

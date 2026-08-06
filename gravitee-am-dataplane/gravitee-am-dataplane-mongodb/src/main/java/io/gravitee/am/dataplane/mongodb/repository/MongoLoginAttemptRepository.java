@@ -119,6 +119,12 @@ public class MongoLoginAttemptRepository extends AbstractDataPlaneMongoRepositor
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(loginAttemptsCollection.deleteMany(eq(FIELD_DOMAIN, domain)))
+                .observeOn(Schedulers.computation());
+    }
+
     private Bson query(LoginAttemptCriteria criteria) {
         List<Bson> filters = new ArrayList<>();
         // domain

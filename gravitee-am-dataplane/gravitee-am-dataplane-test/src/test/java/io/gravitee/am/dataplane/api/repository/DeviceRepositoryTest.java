@@ -67,6 +67,20 @@ public class DeviceRepositoryTest extends AbstractDataPlaneTest {
         observer.assertNoErrors();
     }
 
+    @Test
+    public void testDeleteByReference() {
+        Device device = repository.create(buildDevice()).blockingGet();
+        Device otherDomain = repository.create(buildDevice()).blockingGet();
+
+        var observer = repository.deleteByReference(ReferenceType.DOMAIN, device.getReferenceId()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        repository.findById(device.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertNoValues();
+        repository.findById(otherDomain.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
+    }
+
     private Device buildDevice() {
         return buildDevice(new Date(System.currentTimeMillis() + 10000));
     }
