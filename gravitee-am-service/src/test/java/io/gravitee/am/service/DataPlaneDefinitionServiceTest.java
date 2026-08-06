@@ -20,7 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -102,6 +106,9 @@ class DataPlaneDefinitionServiceTest {
     private AuditService auditService;
 
     @Mock
+    private EventService eventService;
+
+    @Mock
     private MultiDataPlaneLoader configurationLoader;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -121,6 +128,7 @@ class DataPlaneDefinitionServiceTest {
                 validatorsRegistry,
                 List.of(new MongoDataPlaneConfigHandler(), new JdbcDataPlaneConfigHandler()),
                 auditService,
+                eventService,
                 configurationLoader);
 
         when(dataPlanePluginManager.get("dataplane-am-mongodb")).thenReturn(mock(DataPlane.class));
@@ -131,6 +139,7 @@ class DataPlaneDefinitionServiceTest {
         when(dataPlaneDefinitionRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(dataPlaneDefinitionRepository.delete(anyString())).thenReturn(Completable.complete());
         when(domainRepository.existsByDataPlaneId(anyString())).thenReturn(Single.just(false));
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
     }
 
     @Test
@@ -631,6 +640,70 @@ class DataPlaneDefinitionServiceTest {
         service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS);
 
         assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
+    }
+
+    @Test
+    void shouldPublishADeployEventOnCreate() {
+        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        Payload payload = capturedEvent(Type.DATA_PLANE).getPayload();
+        assertThat(payload.getId()).isEqualTo("dp-acme");
+        assertThat(payload.getReferenceType()).isEqualTo(ReferenceType.ENVIRONMENT);
+        assertThat(payload.getReferenceId()).isEqualTo(Environment.DEFAULT);
+        assertThat(payload.getAction()).isEqualTo(Action.CREATE);
+    }
+
+    @Test
+    void shouldPublishAnUndeployEventOnDelete() {
+        when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
+
+        service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        Payload payload = capturedEvent(Type.DATA_PLANE).getPayload();
+        assertThat(payload.getId()).isEqualTo("dp-acme");
+        assertThat(payload.getReferenceType()).isEqualTo(ReferenceType.ENVIRONMENT);
+        assertThat(payload.getReferenceId()).isEqualTo("env-1");
+        assertThat(payload.getAction()).isEqualTo(Action.DELETE);
+    }
+
+    @Test
+    void shouldNotScopeTheEventToASingleDataPlane() {
+        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        Event event = capturedEvent(Type.DATA_PLANE);
+        assertThat(event.getDataPlaneId()).isNull();
+        assertThat(event.getEnvironmentId()).isNull();
+    }
+
+    @Test
+    void shouldFailTheCreationWhenTheEventCannotBeWritten() {
+        doReturn(Single.error(new TechnicalManagementException("events are down"))).when(eventService).create(any());
+
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertError(TechnicalManagementException.class);
+        verify(dataPlaneDefinitionRepository).create(any());
+        assertThat(capturedAudit().getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+    }
+
+    @Test
+    void shouldNotPublishAnEventWhenTheDeleteIsRefused() {
+        when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
+        when(domainRepository.existsByDataPlaneId("dp-acme")).thenReturn(Single.just(true));
+
+        service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(DataPlaneInUseByDomainsException.class);
+
+        verify(eventService, never()).create(any());
+    }
+
+    private Event capturedEvent(Type expectedType) {
+        ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
+        verify(eventService).create(captor.capture());
+        Event event = captor.getValue();
+        assertThat(event.getType()).isEqualTo(expectedType);
+        return event;
     }
 
     private void assertRejected(NewDataPlaneDefinition payload, Class<? extends Throwable> type, String messageFragment) {

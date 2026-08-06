@@ -89,13 +89,6 @@ export function jdbcPayload(id: string): NewDataPlane {
   };
 }
 
-/**
- * A data plane the running stack can genuinely connect to, mirroring its own `dataPlanes[0]`.
- *
- * The payloads above are never dialled, because nothing connects at provisioning time. Registering one
- * does build a provider though, and that needs both a reachable store and the matching
- * ConnectionProvider bean, which only exists for the repository type the stack was started with.
- */
 export function connectablePayload(id: string): NewDataPlane {
   return process.env.REPOSITORY_TYPE === 'jdbc'
     ? {
@@ -158,11 +151,6 @@ export interface BoundDomain {
   accessToken: string;
 }
 
-/**
- * Creates a domain against a data plane provisioned since the node started. Domain creation checks the
- * id against the data plane registry, so this only succeeds once the definition has been registered
- * at runtime rather than at the next restart (AM-7260).
- */
 export async function createDomainOnDataPlane(dataPlaneId: string): Promise<BoundDomain> {
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName('dp-e2e-bound', true), 'Bound to a provisioned data plane', dataPlaneId);
@@ -172,6 +160,22 @@ export async function createDomainOnDataPlane(dataPlaneId: string): Promise<Boun
 export async function releaseBoundDomain(bound: BoundDomain | undefined): Promise<void> {
   if (bound) {
     await safeDeleteDomain(bound.domainId, bound.accessToken);
+  }
+}
+
+export async function canBindADomainTo(dataPlaneId: string): Promise<boolean> {
+  let bound: BoundDomain | undefined;
+  try {
+    bound = await createDomainOnDataPlane(dataPlaneId);
+    return true;
+  } catch (err: any) {
+    // only an unknown data plane means "no": anything else is the test failing for another reason
+    if (err.response?.status !== 400) {
+      throw err;
+    }
+    return false;
+  } finally {
+    await releaseBoundDomain(bound);
   }
 }
 

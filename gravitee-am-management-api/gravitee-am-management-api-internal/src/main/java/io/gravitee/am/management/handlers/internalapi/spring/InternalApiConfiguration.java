@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneE
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import org.springframework.context.annotation.Bean;
@@ -53,8 +54,11 @@ public class InternalApiConfiguration {
     }
 
     @Bean
-    public DeleteDataPlaneEndpoint deleteDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService, ObjectMapper objectMapper) {
-        return new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, objectMapper);
+    public DeleteDataPlaneEndpoint deleteDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
+                                                           DataPlaneRegistry dataPlaneRegistry,
+                                                           ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+                                                           ObjectMapper objectMapper) {
+        return new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, dataPlaneRegistry, provisionedDataPlaneLoader, objectMapper);
     }
 
     @Bean

@@ -29,7 +29,6 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -58,7 +57,8 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
             .build();
 
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
-    private final Set<String> registered = ConcurrentHashMap.newKeySet();
+    // id -> the version of the definition this node serves, so a deploy can be told from a replay
+    private final Map<String, String> registered = new ConcurrentHashMap<>();
     private final AtomicReference<Consumer<DataPlaneDescription>> storageRef = new AtomicReference<>();
 
     public ProvisionedDataPlaneLoader(DataPlaneLoader configurationLoader,
@@ -83,7 +83,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
         // nothing is lost when the registry has not started yet: load publishes its consumer before
         // reading the repository, so the definition just persisted is picked up by that read
-        if (storage == null || registered.contains(dataPlaneId)) {
+        if (storage == null || registered.containsKey(dataPlaneId)) {
             return Completable.complete();
         }
 
@@ -99,7 +99,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
     private void activate(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
         try {
             storage.accept(publish(definition));
-            registered.add(definition.getId());
+            markServing(definition);
             log.info("Data plane [{}] of type [{}] loaded from the management repository", definition.getId(), definition.getType());
         } catch (Exception e) {
             log.error("Data plane [{}] of type [{}] could not be loaded and will be unavailable; domains bound to it cannot be served",
@@ -107,11 +107,40 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
         }
     }
 
-    private DataPlaneDescription publish(DataPlaneDefinition definition) throws Exception {
+    public void forget(String dataPlaneId) {
+        registered.remove(dataPlaneId);
+        properties.keySet().removeIf(key -> key.startsWith(PROPERTIES_BASE + "." + dataPlaneId + "."));
+    }
+
+    /**
+     * Whether this node already serves this exact definition. The node handling a provisioning request
+     * registers it directly and then reads its own event back, since the sync poll is not filtered by
+     * origin. Rebuilding on that event would stop a provider that is already current and close its
+     * connection pool under whatever is using it.
+     */
+    public boolean isServing(DataPlaneDefinition definition) {
+        return versionOf(definition).equals(registered.get(definition.getId()));
+    }
+
+    public void markServing(DataPlaneDefinition definition) {
+        registered.put(definition.getId(), versionOf(definition));
+    }
+
+    /**
+     * A delete and a re-create of one id can reach a node collapsed into a single deploy, and that pair
+     * moves the timestamp, so the replacement is still rebuilt.
+     */
+    private static String versionOf(DataPlaneDefinition definition) {
+        var updatedAt = definition.getUpdatedAt();
+        return updatedAt == null ? "" : Long.toString(updatedAt.getTime());
+    }
+
+    public DataPlaneDescription publish(DataPlaneDefinition definition) throws Exception {
         var propertiesBase = PROPERTIES_BASE + "." + definition.getId();
-        // a failed registration leaves its keys published; drop them so a corrected definition cannot resolve stale values
+
         properties.keySet().removeIf(key -> key.startsWith(propertiesBase + "."));
         flatten(propertiesBase, objectMapper.readTree(definition.getConfiguration()), properties);
+
         return new DataPlaneDescription(
                 definition.getId(),
                 definition.getName(),

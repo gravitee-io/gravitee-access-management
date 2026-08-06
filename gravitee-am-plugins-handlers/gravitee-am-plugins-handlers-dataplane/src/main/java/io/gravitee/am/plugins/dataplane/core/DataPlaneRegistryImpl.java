@@ -185,18 +185,36 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
         }
     }
 
-    void register(DataPlaneDescription description){
+    @Override
+    public void register(DataPlaneDescription description){
         if (!hasText(description.id())) {
             throw new IllegalStateException("Invalid data plan definition, id must be specified");
         }
+
         if (this.dataPlanProviders.containsKey(description.id())) {
             throw new IllegalStateException("Invalid data plan definition, id must be unique");
         }
-        // publishing a description without a provider lets a domain bind to a data plane nothing can
-        // serve, and the domain cannot then be deleted: getProviderById is on the deletion path too
+
         var provider = dataPlanePluginManager.create(description)
                 .orElseThrow(() -> new IllegalStateException("No data plane provider could be built for id " + description.id()));
         dataPlanProviders.put(description.id(), provider);
         dataPlanDescriptions.put(description.id(), description);
+    }
+
+    @Override
+    public void unregister(String dataPlaneId) {
+        dataPlanDescriptions.remove(dataPlaneId);
+        var provider = dataPlanProviders.remove(dataPlaneId);
+        if (provider == null) {
+            return;
+        }
+
+        try {
+            provider.stop();
+        } catch (Exception e) {
+            log.error("Data plane [{}] could not be stopped cleanly", dataPlaneId, e);
+        }
+
+        log.info("Data plane [{}] unregistered", dataPlaneId);
     }
 }

@@ -24,6 +24,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.ClientSecretManager;
 import io.gravitee.am.management.service.impl.OrganizationLicenseManager;
 import io.gravitee.am.management.service.impl.ProtectedResourceSecretManager;
+import io.gravitee.am.management.service.impl.ProvisionedDataPlaneManager;
 import io.gravitee.am.management.service.spring.ManagementUpgraderConfiguration;
 import io.gravitee.am.management.service.tasks.TasksLoader;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
@@ -75,6 +76,7 @@ public class ManagementNode extends JettyNode {
     public List<Class<? extends LifecycleComponent>> components() {
         List<Class<? extends LifecycleComponent>> components = super.components();
         components.add(DataPlaneRegistryImpl.class);
+        components.add(ProvisionedDataPlaneManager.class);
         components.addAll(ManagementUpgraderConfiguration.getComponents());
         components.add(PluginEventListener.class);
         components.add(AuditReporterManager.class);

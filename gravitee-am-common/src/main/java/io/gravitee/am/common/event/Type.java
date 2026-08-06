@@ -56,5 +56,6 @@ public enum Type {
     CIMD_METADATA,
     TRUST_DOMAIN,
     LICENSE,
-    ENTRYPOINT
+    ENTRYPOINT,
+    DATA_PLANE
 }

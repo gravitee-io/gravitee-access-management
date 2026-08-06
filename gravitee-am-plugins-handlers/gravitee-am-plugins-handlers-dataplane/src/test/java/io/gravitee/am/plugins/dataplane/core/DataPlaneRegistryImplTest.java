@@ -28,6 +28,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -101,5 +104,48 @@ class DataPlaneRegistryImplTest {
 
         assertThatCode(() -> registry.register(DESCRIPTION)).doesNotThrowAnyException();
         assertThat(registry.getProviderById("dp-1")).isSameAs(provider);
+    }
+
+    @Test
+    void should_stop_and_drop_an_unregistered_provider() {
+        when(dataPlanePluginManager.create(DESCRIPTION)).thenReturn(Optional.of(provider));
+        DataPlaneRegistryImpl registry = registry();
+        registry.register(DESCRIPTION);
+
+        registry.unregister("dp-1");
+
+        verify(provider).stop();
+        assertThat(registry.getDataPlanes()).isEmpty();
+        assertThatThrownBy(() -> registry.getProviderById("dp-1")).isInstanceOf(IllegalDataPlaneIdException.class);
+    }
+
+    @Test
+    void should_let_an_unregistered_id_be_claimed_again() {
+        // a deleted definition and a new one under the same id must not resolve to the old provider
+        DataPlaneProvider replacement = mock(DataPlaneProvider.class);
+        when(dataPlanePluginManager.create(DESCRIPTION)).thenReturn(Optional.of(provider), Optional.of(replacement));
+        DataPlaneRegistryImpl registry = registry();
+        registry.register(DESCRIPTION);
+
+        registry.unregister("dp-1");
+        registry.register(DESCRIPTION);
+
+        assertThat(registry.getProviderById("dp-1")).isSameAs(replacement);
+    }
+
+    @Test
+    void should_ignore_unregistering_an_unknown_id() {
+        assertThatCode(() -> registry().unregister("never-registered")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void should_free_the_id_even_when_the_provider_will_not_stop() {
+        when(dataPlanePluginManager.create(DESCRIPTION)).thenReturn(Optional.of(provider), Optional.of(provider));
+        doThrow(new IllegalStateException("connection pool is wedged")).when(provider).stop();
+        DataPlaneRegistryImpl registry = registry();
+        registry.register(DESCRIPTION);
+
+        assertThatCode(() -> registry.unregister("dp-1")).doesNotThrowAnyException();
+        assertThatCode(() -> registry.register(DESCRIPTION)).doesNotThrowAnyException();
     }
 }

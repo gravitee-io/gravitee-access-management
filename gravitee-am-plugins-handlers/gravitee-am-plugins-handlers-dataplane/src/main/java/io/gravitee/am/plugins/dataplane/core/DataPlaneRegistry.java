@@ -45,6 +45,10 @@ import java.util.List;
 public interface DataPlaneRegistry {
     List<DataPlaneDescription> getDataPlanes();
 
+    void register(DataPlaneDescription description);
+
+    void unregister(String dataPlaneId);
+
     List<DataPlaneProvider> getAllProviders();
 
     DataPlaneProvider getProvider(Domain domain);
