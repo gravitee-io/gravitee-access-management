@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.oauth2;
 
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.jdbc.common.RetryOnConcurrencyFailureConfiguration;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.jdbc.oauth2.api.JdbcAccessTokenRepository;
@@ -115,6 +116,9 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
                 useLegacyTokenRepositories);
     }
 
-
+    @Bean
+    public RetryOnConcurrencyFailureConfiguration retryOnConcurrencyFailureConfiguration(){
+        return RetryOnConcurrencyFailureConfiguration.defaultCfg();
+    }
 
 }
