@@ -23,9 +23,12 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -50,7 +53,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class VHostGroupRouter extends RouterImpl {
 
-    private final Map<String, VHostRouter> byHost = new ConcurrentHashMap<>();
+    private final Map<String, List<VHostRouter>> byHost = new ConcurrentHashMap<>();
     private final List<VHostRouter> hostAgnostic = new CopyOnWriteArrayList<>();
 
     private VHostGroupRouter(Vertx vertx) {
@@ -82,7 +85,8 @@ public class VHostGroupRouter extends RouterImpl {
         if (hostKey != null) {
             // First registration for a given host wins, matching the previous first-match
             // semantics of the sequential scan this class replaces.
-            byHost.putIfAbsent(hostKey, member);
+            byHost.putIfAbsent(hostKey, Collections.synchronizedList(new ArrayList<>()));
+            byHost.get(hostKey).add(member);
         } else {
             hostAgnostic.add(member);
         }
@@ -92,14 +96,14 @@ public class VHostGroupRouter extends RouterImpl {
     public void removeMember(VHostRouter member) {
         String hostKey = member.hostKey();
         if (hostKey != null) {
-            byHost.computeIfPresent(hostKey, (key, current) -> current == member ? null : current);
+            Optional.ofNullable(byHost.get(hostKey)).ifPresent(list -> list.remove(member));
         } else {
             hostAgnostic.remove(member);
         }
     }
 
     public boolean isEmpty() {
-        return byHost.isEmpty() && hostAgnostic.isEmpty();
+        return byHost.isEmpty()  && hostAgnostic.isEmpty();
     }
 
     @Override
@@ -124,9 +128,13 @@ public class VHostGroupRouter extends RouterImpl {
 
     private VHostRouter resolve(RoutingContext context) {
         String host = requestHost(context);
-        VHostRouter candidate = host == null ? null : byHost.get(host);
-        if (candidate != null && candidate.matches(context)) {
-            return candidate;
+        List<VHostRouter> candidates = host == null ? null : byHost.get(host);
+        if (candidates != null) {
+            for (VHostRouter member : candidates) {
+                if (member.matches(context)) {
+                    return member;
+                }
+            }
         }
 
         for (VHostRouter member : hostAgnostic) {
