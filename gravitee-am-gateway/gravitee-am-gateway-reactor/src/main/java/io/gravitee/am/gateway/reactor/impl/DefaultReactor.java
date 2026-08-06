@@ -36,7 +36,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
-import lombok.CustomLog;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -53,7 +53,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@CustomLog
+@Slf4j
 public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain>, InitializingBean {
 
     @Autowired
