@@ -28,6 +28,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -119,6 +120,16 @@ public class VHostRouter extends RouterImpl {
 
     boolean matches(RoutingContext context) {
         return routerMatches(context);
+    }
+
+    /**
+     * The literal (case-insensitive) host this member is bound to, or {@code null} when this
+     * member has no vhost restriction. {@link VHostGroupRouter} uses this as a map key to
+     * resolve the matching member in O(1) instead of scanning every candidate, since host
+     * matching is an exact comparison (see {@link #vhostPattern}, built with {@link Pattern#quote}).
+     */
+    String hostKey() {
+        return vhost != null ? vhost.getHost().toLowerCase(Locale.ROOT) : null;
     }
 
     void dispatch(RoutingContext context) {
