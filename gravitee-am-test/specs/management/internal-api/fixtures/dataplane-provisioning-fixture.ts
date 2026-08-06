@@ -168,7 +168,11 @@ export async function canBindADomainTo(dataPlaneId: string): Promise<boolean> {
   try {
     bound = await createDomainOnDataPlane(dataPlaneId);
     return true;
-  } catch (e) {
+  } catch (err: any) {
+    // only an unknown data plane means "no": anything else is the test failing for another reason
+    if (err.response?.status !== 400) {
+      throw err;
+    }
     return false;
   } finally {
     await releaseBoundDomain(bound);
