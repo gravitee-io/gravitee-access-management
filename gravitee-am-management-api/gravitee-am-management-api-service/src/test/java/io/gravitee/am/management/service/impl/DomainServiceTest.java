@@ -402,7 +402,7 @@ public class DomainServiceTest {
                 resourceService, passwordHistoryService, certificateCredentialService, cimdClientStateService,
                 credentialService, deviceService, loginAttemptService);
         dataPlaneCleanups.forEach(store ->
-                Mockito.lenient().when(store.purgeDataPlane(any(Domain.class))).thenReturn(Completable.complete()));
+                Mockito.lenient().when(store.purgeDataPlane(any(Domain.class), any())).thenReturn(Completable.complete()));
         ReflectionTestUtils.setField(domainService, "dataPlaneCleanups", dataPlaneCleanups);
     }
 
@@ -1472,6 +1472,7 @@ public class DomainServiceTest {
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(scopeService.deleteByDomain(domain)).thenReturn(complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1488,8 +1489,10 @@ public class DomainServiceTest {
         verify(deviceIdentifierService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(serviceResourceService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(authorizationEngineService, times(1)).deleteByDomain(DOMAIN_ID);
+        // the scopes are control plane rows, so they go before the domain does rather than with the purge
+        verify(scopeService, times(1)).deleteByDomain(domain);
         // every store holding domain data in the data plane is purged, none of them named here
-        dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain));
+        dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
@@ -1530,6 +1533,7 @@ public class DomainServiceTest {
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(scopeService.deleteByDomain(domain)).thenReturn(complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1582,10 +1586,11 @@ public class DomainServiceTest {
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(scopeService.deleteByDomain(domain)).thenReturn(complete());
 
         // every store the domain holds data in is out of reach
         var unreachable = new TechnicalException("Timed out while waiting for a server");
-        dataPlaneCleanups.forEach(store -> when(store.purgeDataPlane(any(Domain.class))).thenReturn(Completable.error(unreachable)));
+        dataPlaneCleanups.forEach(store -> when(store.purgeDataPlane(any(Domain.class), any())).thenReturn(Completable.error(unreachable)));
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1595,8 +1600,10 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).delete(DOMAIN_ID);
         verify(eventService, times(1)).create(any(), any());
+        // the scopes live in the control plane, so an unreachable data plane must not strand them
+        verify(scopeService, times(1)).deleteByDomain(domain);
         // the purge carries on past the stores it cannot reach, rather than stopping at the first
-        dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain));
+        dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
     }
 
     @Test

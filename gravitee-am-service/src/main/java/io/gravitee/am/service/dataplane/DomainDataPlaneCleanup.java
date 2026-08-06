@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.dataplane;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
 
@@ -31,6 +32,8 @@ public interface DomainDataPlaneCleanup {
     /**
      * Remove everything this store holds for the domain. Called once the domain itself is deleted,
      * on a best effort basis: the data plane may be unreachable, and the domain still has to go.
+     *
+     * @param principal who asked for the domain to be deleted, for the stores that audit what they drop
      */
-    Completable purgeDataPlane(Domain domain);
+    Completable purgeDataPlane(Domain domain, User principal);
 }

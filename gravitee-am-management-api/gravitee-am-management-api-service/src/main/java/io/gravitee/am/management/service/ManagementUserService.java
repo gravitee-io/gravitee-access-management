@@ -16,11 +16,11 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.rxjava3.core.Completable;

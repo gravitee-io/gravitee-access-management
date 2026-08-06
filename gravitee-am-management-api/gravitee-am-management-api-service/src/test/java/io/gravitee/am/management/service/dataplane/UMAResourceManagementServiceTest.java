@@ -241,7 +241,7 @@ public class UMAResourceManagementServiceTest {
         when(resourceRepository.delete(RESOURCE_ID)).thenReturn(Completable.complete());
         when(permissionTicketRepository.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
-        var testObserver = service.purgeDataPlane(DOMAIN).test();
+        var testObserver = service.purgeDataPlane(DOMAIN, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();

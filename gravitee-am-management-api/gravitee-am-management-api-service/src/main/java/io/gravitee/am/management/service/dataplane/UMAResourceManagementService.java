@@ -18,10 +18,10 @@ package io.gravitee.am.management.service.dataplane;
 
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;

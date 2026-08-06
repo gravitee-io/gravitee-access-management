@@ -118,7 +118,7 @@ public interface CertificateCredentialService extends DomainDataPlaneCleanup {
     Completable deleteByDomain(Domain domain);
 
     @Override
-    default Completable purgeDataPlane(Domain domain) {
+    default Completable purgeDataPlane(Domain domain, User principal) {
         return deleteByDomain(domain);
     }
 }

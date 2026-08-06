@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CimdClientState;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
@@ -34,7 +35,7 @@ public interface CimdClientStateService extends DomainDataPlaneCleanup {
     Completable deleteByDomain(Domain domain);
 
     @Override
-    default Completable purgeDataPlane(Domain domain) {
+    default Completable purgeDataPlane(Domain domain, User principal) {
         return deleteByDomain(domain);
     }
 }

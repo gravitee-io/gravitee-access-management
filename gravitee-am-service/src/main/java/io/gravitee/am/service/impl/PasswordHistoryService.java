@@ -18,13 +18,13 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -52,12 +52,6 @@ import lombok.CustomLog;
 @Component
 @CustomLog
 public class PasswordHistoryService implements DomainDataPlaneCleanup {
-
-    @Override
-    public Completable purgeDataPlane(Domain domain) {
-        return deleteByReference(domain);
-    }
-
 
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
@@ -173,6 +167,11 @@ public class PasswordHistoryService implements DomainDataPlaneCleanup {
     public Completable deleteByReference(Domain domain) {
         final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
         return repository.deleteByReference(domain.asReference());
+    }
+
+    @Override
+    public Completable purgeDataPlane(Domain domain, User principal) {
+        return deleteByReference(domain);
     }
 
     /**

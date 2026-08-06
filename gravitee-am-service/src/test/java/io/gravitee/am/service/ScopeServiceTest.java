@@ -76,6 +76,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -754,11 +755,31 @@ public class ScopeServiceTest {
     public void shouldPurgeTheApprovalsOfADeletedDomain() {
         when(scopeApprovalRepository.deleteByDomain(DOMAIN.getId())).thenReturn(Completable.complete());
 
-        var testObserver = scopeService.purgeDataPlane(DOMAIN).test();
+        var testObserver = scopeService.purgeDataPlane(DOMAIN, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(scopeApprovalRepository).deleteByDomain(DOMAIN.getId());
+    }
+
+    @Test
+    public void shouldDeleteEveryScopeOfADeletedDomain() {
+        var first = new Scope();
+        first.setId("scope-1");
+        var second = new Scope();
+        second.setId("scope-2");
+        when(scopeRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(List.of(first, second), 0, 2)));
+        when(scopeRepository.delete(anyString())).thenReturn(Completable.complete());
+
+        var testObserver = scopeService.deleteByDomain(DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(scopeRepository).delete("scope-1");
+        verify(scopeRepository).delete("scope-2");
+        // the approvals belong to the data plane, which this must not reach into
+        verifyNoInteractions(scopeApprovalRepository);
     }
 }

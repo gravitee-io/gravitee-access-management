@@ -19,6 +19,7 @@ package io.gravitee.am.management.service.dataplane.impl;
 
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.model.Credential;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -183,7 +184,7 @@ public class CredentialManagementServiceImpl implements CredentialManagementServ
     }
 
     @Override
-    public Completable purgeDataPlane(Domain domain) {
+    public Completable purgeDataPlane(Domain domain, User principal) {
         return dataPlaneRegistry.getCredentialRepository(domain).deleteByReference(DOMAIN, domain.getId());
     }
 

@@ -1958,7 +1958,7 @@ public class ManagementUserServiceTest {
         when(dataPlaneRegistry.getUserRepository(DOMAIN)).thenReturn(userRepository);
         when(userRepository.deleteByReference(DOMAIN.asReference())).thenReturn(Completable.complete());
 
-        var testObserver = userService.purgeDataPlane(DOMAIN).test();
+        var testObserver = userService.purgeDataPlane(DOMAIN, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
