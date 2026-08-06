@@ -130,6 +130,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -158,6 +159,7 @@ import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -1493,6 +1495,10 @@ public class DomainServiceTest {
         verify(scopeService, times(1)).deleteByDomain(domain);
         // every store holding domain data in the data plane is purged, none of them named here
         dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
+        // the purge audits what it drops, so it has to run while the domain's reporters are still there
+        InOrder purgeThenReporters = inOrder(domainGroupService, reporterService);
+        purgeThenReporters.verify(domainGroupService).purgeDataPlane(domain, null);
+        purgeThenReporters.verify(reporterService).delete(REPORTER_ID);
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
@@ -1506,8 +1512,8 @@ public class DomainServiceTest {
         }));
     }
 
-    @Test
-    public void shouldDeleteWithoutRelatedData() {
+    /** A domain with nothing hanging off it, so a delete test can say only what it is about. */
+    private void stubADomainWithNoRelatedData() {
         when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
@@ -1534,6 +1540,11 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scopeService.deleteByDomain(domain)).thenReturn(complete());
+    }
+
+    @Test
+    public void shouldDeleteWithoutRelatedData() {
+        stubADomainWithNoRelatedData();
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1561,32 +1572,7 @@ public class DomainServiceTest {
     @Test
     public void shouldDeleteWhenTheDataPlaneCannotBeReached() {
         // a domain pins its data plane, so a domain that cannot be deleted would wedge the pair for good
-        when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
-        when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
-        when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(reporterService.findByReference(Reference.domain(DOMAIN_ID))).thenReturn(Flowable.empty());
-        when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.empty());
-        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
-        when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());
-        when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
-        when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
-        when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
-        when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
-        when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
-        when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
-        when(scopeService.deleteByDomain(domain)).thenReturn(complete());
+        stubADomainWithNoRelatedData();
 
         // every store the domain holds data in is out of reach
         var unreachable = new TechnicalException("Timed out while waiting for a server");
@@ -1604,6 +1590,23 @@ public class DomainServiceTest {
         verify(scopeService, times(1)).deleteByDomain(domain);
         // the purge carries on past the stores it cannot reach, rather than stopping at the first
         dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
+    }
+
+    @Test
+    public void shouldDeleteWhenAStoreThrowsInsteadOfReturningAnError() {
+        // asking an unreachable data plane for a repository throws there and then, rather than
+        // handing back a Completable that fails later
+        stubADomainWithNoRelatedData();
+        when(domainGroupService.purgeDataPlane(any(Domain.class), any()))
+                .thenThrow(new IllegalStateException("No data plane found for id unreachable-plane"));
+
+        var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).delete(DOMAIN_ID);
     }
 
     @Test
