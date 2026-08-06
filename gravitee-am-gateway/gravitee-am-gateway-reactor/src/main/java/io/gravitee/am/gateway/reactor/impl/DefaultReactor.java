@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.router.VHostGroupRouter;
+import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
@@ -35,6 +36,7 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -51,6 +53,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain>, InitializingBean {
 
     @Autowired
@@ -146,16 +149,20 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
 
                 sortedVhosts.forEach(virtualHost -> {
                     VHostGroupRouter group = groupFor(sanitizePath(virtualHost.getPath()));
-                    Object member = group.addMember(vertx, domain, virtualHost, domainHandler.router());
+                    VHostRouter member = group.addMember(vertx, domain, virtualHost, domainHandler.router());
                     unmountActions.add(() -> group.removeMember(member));
                 });
             } else {
                 VHostGroupRouter group = groupFor(sanitizePath(domain.getPath()));
-                Object member = group.addMember(vertx, domain, domainHandler.router());
+                VHostRouter member = group.addMember(vertx, domain, domainHandler.router());
                 unmountActions.add(() -> group.removeMember(member));
             }
 
-            domainUnmountActions.put(domain.getId(), unmountActions);
+            List<Runnable> previous = domainUnmountActions.put(domain.getId(), unmountActions);
+            if (previous != null) {
+                log.warn("Domain {} was already mounted on a different path. Previous unmount actions will be discarded.", domain.getId());
+                previous.forEach(Runnable::run);
+            }
         } finally {
             routerLock.unlock();
         }
@@ -193,6 +200,8 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
             List<Runnable> unmountActions = domainUnmountActions.remove(domain.getId());
             if (unmountActions != null) {
                 unmountActions.forEach(Runnable::run);
+            } else {
+                log.warn("No unmount actions found for domain {}", domain.getId());
             }
 
             domainHandler.router().clear();
