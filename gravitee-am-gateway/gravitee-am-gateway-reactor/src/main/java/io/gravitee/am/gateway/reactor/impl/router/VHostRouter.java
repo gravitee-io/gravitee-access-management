@@ -89,16 +89,26 @@ public class VHostRouter extends RouterImpl {
         this.delegate = delegate;
     }
 
+    /**
+     * Creates a standalone {@link VHostRouter} member, meant to be aggregated inside a
+     * {@link VHostGroupRouter} instead of being mounted directly on a parent {@link Router}.
+     * This avoids one {@link io.vertx.core.Handler}/{@link Route} entry per domain/vhost on the
+     * parent router, which would otherwise force Vert.x to walk (and recurse into) every entry
+     * sharing the same path when a large number of domains/vhosts are deployed.
+     */
+    static VHostRouter member(Vertx vertx, Domain domain, VirtualHost vhost, Router delegate) {
+        return new VHostRouter(vertx, domain, vhost, delegate);
+    }
+
+    static VHostRouter member(Vertx vertx, Domain domain, Router delegate) {
+        return new VHostRouter(vertx, domain, delegate);
+    }
+
     @Override
     public void handleContext(RoutingContext context) {
 
-        if (routerMatches(context)) {
-            if (vhost != null) {
-                setContextPath(context, vhost.getPath());
-            } else {
-                setContextPath(context, domain.getPath());
-            }
-            delegate.handleContext(context);
+        if (matches(context)) {
+            dispatch(context);
         } else {
             context.next();
         }
@@ -107,11 +117,28 @@ public class VHostRouter extends RouterImpl {
     @Override
     public void handleFailure(RoutingContext context) {
 
-        if (routerMatches(context)) {
-            delegate.handleFailure(context);
+        if (matches(context)) {
+            dispatchFailure(context);
         } else {
             context.next();
         }
+    }
+
+    boolean matches(RoutingContext context) {
+        return routerMatches(context);
+    }
+
+    void dispatch(RoutingContext context) {
+        if (vhost != null) {
+            setContextPath(context, vhost.getPath());
+        } else {
+            setContextPath(context, domain.getPath());
+        }
+        delegate.handleContext(context);
+    }
+
+    void dispatchFailure(RoutingContext context) {
+        delegate.handleFailure(context);
     }
 
     private boolean routerMatches(RoutingContext context) {
