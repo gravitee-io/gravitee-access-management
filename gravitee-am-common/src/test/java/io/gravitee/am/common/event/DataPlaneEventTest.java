@@ -40,11 +40,6 @@ class DataPlaneEventTest {
         assertNull(DataPlaneEvent.actionOf(action));
     }
 
-    /**
-     * A missing case here does not fail loudly: the sync manager logs "Cannot publish event as type
-     * is null" at debug and drops the event, so provisioned data planes would silently never reach
-     * the other management API instances.
-     */
     @Test
     void valueOf_resolvesDataPlaneEvents() {
         assertEquals(DataPlaneEvent.DEPLOY, Event.valueOf(Type.DATA_PLANE, Action.CREATE));

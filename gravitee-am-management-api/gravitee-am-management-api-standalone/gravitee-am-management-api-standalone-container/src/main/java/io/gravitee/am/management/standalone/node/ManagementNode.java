@@ -76,7 +76,6 @@ public class ManagementNode extends JettyNode {
     public List<Class<? extends LifecycleComponent>> components() {
         List<Class<? extends LifecycleComponent>> components = super.components();
         components.add(DataPlaneRegistryImpl.class);
-        // after the registry: it loads the stored definitions on start, this only reacts to changes
         components.add(ProvisionedDataPlaneManager.class);
         components.addAll(ManagementUpgraderConfiguration.getComponents());
         components.add(PluginEventListener.class);

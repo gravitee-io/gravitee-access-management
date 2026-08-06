@@ -24,9 +24,6 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * Removes a provisioned data plane: {@code DELETE /_node/dataplanes/:id}. Refused with a 409 while
- * a domain still points at it.
- *
  * @author GraviteeSource Team
  */
 public class DeleteDataPlaneEndpoint extends AbstractInternalApiEndpoint {
@@ -64,10 +61,11 @@ public class DeleteDataPlaneEndpoint extends AbstractInternalApiEndpoint {
         dataPlaneDefinitionService.delete(id)
                 .subscribe(
                         () -> {
-                            // this node stops serving it now; the others follow on the sync event
                             dataPlaneRegistry.unregister(id);
                             provisionedDataPlaneLoader.forget(id);
-                            context.response().setStatusCode(HttpStatusCode.NO_CONTENT_204).end();
+                            context.response()
+                                    .setStatusCode(HttpStatusCode.NO_CONTENT_204)
+                                    .end();
                         },
                         throwable -> respondFailure(context, throwable, "Unable to delete the data plane definition"));
     }

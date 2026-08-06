@@ -66,10 +66,6 @@ import static io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager.PLUGI
 import static org.springframework.util.StringUtils.hasText;
 
 /**
- * Persists a data plane definition and emits the sync event that tells the other management API
- * instances about it. Registering the definition so that domains can be served from it is the
- * loader's job on the node handling the request, and the manager's job everywhere else.
- *
  * @author GraviteeSource Team
  */
 @Component
@@ -132,12 +128,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                 .flatMap(summary -> publishEvent(summary, Action.CREATE).toSingleDefault(summary));
     }
 
-    /**
-     * Tells the other management API instances to load, or drop, this definition. The node handling
-     * the request registers it itself and does not wait for this.
-     */
     private Completable publishEvent(DataPlaneDefinitionSummary summary, Action action) {
-        // deferred: chained after andThen, an eager call would emit even when the delete was refused
         return Completable.defer(() -> {
             Event event = new Event(Type.DATA_PLANE, new Payload(summary.id(), ReferenceType.ENVIRONMENT, summary.environmentId(), action));
             return eventService.create(event).ignoreElement();
@@ -192,9 +183,6 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                 .throwable(throwable));
     }
 
-    /**
-     * Drops the stored connection settings in favour of the credential-free summary.
-     */
     private DataPlaneDefinitionSummary toSummary(DataPlaneDefinition definition) {
         return DataPlaneDefinitionSummary.of(definition, connectionSummary(definition));
     }

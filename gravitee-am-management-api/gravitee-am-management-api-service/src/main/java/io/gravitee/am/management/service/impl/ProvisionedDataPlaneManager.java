@@ -30,13 +30,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Applies data plane definitions provisioned on another management API instance. The node serving
- * the provisioning request registers the definition itself; every other node only ever learns about
- * it here.
- * <p>
- * There is no initial load to do: {@code DataPlaneRegistryImpl} reads the stored definitions when it
- * starts, and it is listed before this component in the node's components.
- *
  * @author GraviteeSource Team
  */
 @Component
@@ -85,15 +78,11 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
                 .subscribe(
                         this::register,
                         error -> log.error("Data plane [{}] could not be read and will be unavailable until restart", dataPlaneId, error),
-                        // the definition was deleted between the event being written and read back
                         () -> undeploy(dataPlaneId));
     }
 
     private void register(DataPlaneDefinition definition) {
         try {
-            // rebuild rather than skip an id already held: a delete and a re-create of one id can
-            // reach this node collapsed into a single deploy, and the provider held is then the
-            // one belonging to the definition that has gone
             dataPlaneRegistry.unregister(definition.getId());
             dataPlaneRegistry.register(provisionedDataPlaneLoader.publish(definition));
             log.info("Data plane [{}] of type [{}] registered from a sync event", definition.getId(), definition.getType());

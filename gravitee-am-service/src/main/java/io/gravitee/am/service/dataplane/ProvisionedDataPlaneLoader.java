@@ -43,10 +43,7 @@ import java.util.function.Consumer;
 @CustomLog
 public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
-    // must not be "graviteeYamlConfiguration": gravitee-node's /_node/configuration endpoint dumps that
-    // source key by key, and these definitions carry credentials
     static final String PROPERTY_SOURCE_NAME = "provisionedDataPlanes";
-
     static final String PROPERTIES_BASE = "dataPlanes.provisioned";
 
     private final DataPlaneLoader configurationLoader;
@@ -107,25 +104,17 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
         }
     }
 
-    /**
-     * Drops what {@link #publish} put in the environment, so a later definition reusing this id
-     * cannot resolve the settings of the one that has gone.
-     */
     public void forget(String dataPlaneId) {
         registered.remove(dataPlaneId);
         properties.keySet().removeIf(key -> key.startsWith(PROPERTIES_BASE + "." + dataPlaneId + "."));
     }
 
-    /**
-     * Publishes a definition's connection settings under a prefix of its own and describes it in the
-     * terms the plugins expect: they resolve their configuration from the environment rather than
-     * being handed it.
-     */
     public DataPlaneDescription publish(DataPlaneDefinition definition) throws Exception {
         var propertiesBase = PROPERTIES_BASE + "." + definition.getId();
-        // a failed registration leaves its keys published; drop them so a corrected definition cannot resolve stale values
+
         properties.keySet().removeIf(key -> key.startsWith(propertiesBase + "."));
         flatten(propertiesBase, objectMapper.readTree(definition.getConfiguration()), properties);
+
         return new DataPlaneDescription(
                 definition.getId(),
                 definition.getName(),

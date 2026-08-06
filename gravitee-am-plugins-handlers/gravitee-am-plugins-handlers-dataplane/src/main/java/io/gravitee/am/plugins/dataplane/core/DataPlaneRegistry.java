@@ -45,15 +45,8 @@ import java.util.List;
 public interface DataPlaneRegistry {
     List<DataPlaneDescription> getDataPlanes();
 
-    /**
-     * Builds the provider for this description and makes it available. Throws if the id is already
-     * registered, so a caller replacing a definition must {@link #unregister(String)} first.
-     */
     void register(DataPlaneDescription description);
 
-    /**
-     * Stops the provider registered under this id and drops it. Does nothing when the id is unknown.
-     */
     void unregister(String dataPlaneId);
 
     List<DataPlaneProvider> getAllProviders();

@@ -666,10 +666,6 @@ class DataPlaneDefinitionServiceTest {
         assertThat(payload.getAction()).isEqualTo(Action.DELETE);
     }
 
-    /**
-     * The event carries no data plane id, so it reaches every gateway rather than one. They have no
-     * listener for it and drop it, which is what already happens to license events.
-     */
     @Test
     void shouldNotScopeTheEventToASingleDataPlane() {
         service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
@@ -681,16 +677,13 @@ class DataPlaneDefinitionServiceTest {
 
     @Test
     void shouldFailTheCreationWhenTheEventCannotBeWritten() {
-        // doReturn: when(...) would invoke the mock and hit the setUp stub with a null event
         doReturn(Single.error(new TechnicalManagementException("events are down"))).when(eventService).create(any());
 
         TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload()).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertError(TechnicalManagementException.class);
-        // the row is committed and inert: no node registers it until a restart
         verify(dataPlaneDefinitionRepository).create(any());
-        // the audit runs before the event, so the creation is still recorded as the success it was
         assertThat(capturedAudit().getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
     }
 
