@@ -150,7 +150,7 @@ public class DeviceManagementServiceTest {
     public void mustPurgeTheDevicesOfADeletedDomain() {
         doReturn(Completable.complete()).when(deviceRepository).deleteByReference(any(), any());
 
-        TestObserver<Void> testObserver = deviceService.purgeDataPlane(DOMAIN).test();
+        TestObserver<Void> testObserver = deviceService.purgeDataPlane(DOMAIN, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
 

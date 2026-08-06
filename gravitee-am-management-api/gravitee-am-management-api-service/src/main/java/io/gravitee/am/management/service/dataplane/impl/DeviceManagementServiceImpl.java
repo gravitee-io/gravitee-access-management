@@ -62,7 +62,7 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
     }
 
     @Override
-    public Completable purgeDataPlane(Domain domain) {
+    public Completable purgeDataPlane(Domain domain, User principal) {
         return dataPlaneRegistry.getDeviceRepository(domain).deleteByReference(ReferenceType.DOMAIN, domain.getId());
     }
 

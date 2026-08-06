@@ -19,6 +19,7 @@ package io.gravitee.am.management.service.dataplane.impl;
 
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -39,7 +40,7 @@ public class LoginAttemptManagementServiceImpl implements LoginAttemptManagement
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Override
-    public Completable purgeDataPlane(Domain domain) {
+    public Completable purgeDataPlane(Domain domain, User principal) {
         return dataPlaneRegistry.getLoginAttemptRepository(domain).deleteByDomain(domain.getId());
     }
 

@@ -294,9 +294,17 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Completable purgeDataPlane(Domain domain) {
+    public Completable purgeDataPlane(Domain domain, User principal) {
         // the scopes themselves are control plane rows, only what users approved lives out here
         return dataPlaneRegistry.getScopeApprovalRepository(domain).deleteByDomain(domain.getId());
+    }
+
+    @Override
+    public Completable deleteByDomain(Domain domain) {
+        log.debug("Delete every scope of domain {}", domain.getId());
+        return scopeRepository.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
+                .flatMapCompletable(scopes -> Completable.concat(
+                        scopes.getData().stream().map(scope -> scopeRepository.delete(scope.getId())).toList()));
     }
 
     @Override

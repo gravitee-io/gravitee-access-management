@@ -16,10 +16,10 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.reactivex.rxjava3.core.Completable;
@@ -36,10 +36,9 @@ import java.util.List;
 public interface DomainGroupService extends DomainDataPlaneCleanup {
 
     @Override
-    default Completable purgeDataPlane(Domain domain) {
-        return findAll(domain).flatMapCompletable(group -> delete(domain, group.getId(), null));
+    default Completable purgeDataPlane(Domain domain, io.gravitee.am.identityprovider.api.User principal) {
+        return findAll(domain).flatMapCompletable(group -> delete(domain, group.getId(), principal));
     }
-
 
     Single<Page<Group>> findAll(Domain domain, int page, int size);
 
