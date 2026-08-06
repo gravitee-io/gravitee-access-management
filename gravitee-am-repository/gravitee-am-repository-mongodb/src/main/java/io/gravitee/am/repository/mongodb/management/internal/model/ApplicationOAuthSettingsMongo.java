@@ -96,6 +96,7 @@ public class ApplicationOAuthSettingsMongo {
     private String backchannelClientNotificationEndpoint;
     private String backchannelAuthRequestSignAlg;
     private boolean backchannelUserCodeParameter;
+    private String commandEndpoint;
 
     private boolean disableRefreshTokenRotation;
 
@@ -645,6 +646,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setBackchannelClientNotificationEndpoint(String backchannelClientNotificationEndpoint) {
         this.backchannelClientNotificationEndpoint = backchannelClientNotificationEndpoint;
+    }
+
+    public String getCommandEndpoint() {
+        return commandEndpoint;
+    }
+
+    public void setCommandEndpoint(String commandEndpoint) {
+        this.commandEndpoint = commandEndpoint;
     }
 
     public String getBackchannelAuthRequestSignAlg() {

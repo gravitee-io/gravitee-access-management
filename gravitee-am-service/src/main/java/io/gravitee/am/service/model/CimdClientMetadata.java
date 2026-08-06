@@ -59,6 +59,7 @@ public record CimdClientMetadata(
         String backchannelClientNotificationEndpoint,
         String backchannelAuthRequestSignAlg,
         Boolean backchannelUserCodeParameter,
+        String commandEndpoint,
         String requestObjectSigningAlg,
         Missing missing,
         String metadataJson,

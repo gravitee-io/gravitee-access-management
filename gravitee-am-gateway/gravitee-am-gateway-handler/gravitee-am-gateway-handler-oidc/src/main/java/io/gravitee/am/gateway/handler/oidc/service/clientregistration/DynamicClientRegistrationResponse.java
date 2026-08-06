@@ -227,6 +227,13 @@ public class DynamicClientRegistrationResponse {
     private boolean backchannelUserCodeParameter;
 
     /*******************************************************************************
+     * OpenID Provider Commands 1.0 (draft) metadata
+     * https://openid.net/specs/openid-provider-commands-1_0.html
+     ********************************************************************************/
+    @JsonProperty("command_endpoint")
+    private String commandEndpoint;
+
+    /*******************************************************************************
      * Additional metadata
      ********************************************************************************/
 
@@ -649,6 +656,14 @@ public class DynamicClientRegistrationResponse {
         return backchannelUserCodeParameter;
     }
 
+    public String getCommandEndpoint() {
+        return commandEndpoint;
+    }
+
+    public void setCommandEndpoint(String commandEndpoint) {
+        this.commandEndpoint = commandEndpoint;
+    }
+
     public void setBackchannelUserCodeParameter(boolean backchannelUserCodeParameter) {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
@@ -708,6 +723,7 @@ public class DynamicClientRegistrationResponse {
         response.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
         response.setBackchannelAuthRequestSignAlg(client.getBackchannelAuthRequestSignAlg());
         response.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
+        response.setCommandEndpoint(client.getCommandEndpoint());
         return response;
     }
 

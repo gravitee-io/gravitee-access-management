@@ -43,6 +43,14 @@ public interface ManagementUserService {
 
     Single<User> updateStatus(Domain domain, String id, boolean isUserEnabled, io.gravitee.am.identityprovider.api.User principal);
 
+    /**
+     * Terminates the user's access everywhere: destroys AM SSO sessions (lazily, via
+     * the lastLogoutAt not-before check), revokes all tokens, and dispatches the
+     * OpenID Provider Commands "invalidate" command to the applications of the domain
+     * that registered a command_endpoint.
+     */
+    Completable revokeSessions(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal);
+
     Completable resetPassword(Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Completable sendRegistrationConfirmation(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal);
