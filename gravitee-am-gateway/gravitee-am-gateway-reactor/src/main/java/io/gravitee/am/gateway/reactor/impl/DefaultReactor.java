@@ -19,7 +19,7 @@ import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
-import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
+import io.gravitee.am.gateway.reactor.impl.router.VHostGroupRouter;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
@@ -39,8 +39,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -67,6 +70,15 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     // Root router is mutated only under this lock; heavy per-domain work
     // (Spring context refresh, component start) happens before, in parallel.
     private final ReentrantLock routerLock = new ReentrantLock();
+
+    // One VHostGroupRouter per distinct mount path, shared by every domain/vhost mounted on
+    // that path, so that the number of routes registered on the root router (and therefore the
+    // request-handling recursion depth) no longer grows with the number of domains.
+    private final Map<String, VHostGroupRouter> pathGroups = new ConcurrentHashMap<>();
+
+    // Handles removing a domain's members from the VHostGroupRouter(s) it was mounted on, keyed
+    // by domain id, so undeploy actually forgets the domain instead of only clearing its router.
+    private final Map<String, List<Runnable>> domainUnmountActions = new ConcurrentHashMap<>();
 
     @Autowired
     private TransactionHandlerFactory transactionHandlerFactory;
@@ -120,6 +132,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         routerLock.lock();
         try {
             Domain domain = domainHandler.getDomain();
+            List<Runnable> unmountActions = new ArrayList<>();
 
             if (domain.isVhostMode()) {
                 // Mount the same router for each virtual host / path.
@@ -131,13 +144,35 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
                                 .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
                         .toList();
 
-                sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(vertx, domain, virtualHost, domainHandler.router())));
+                sortedVhosts.forEach(virtualHost -> {
+                    VHostGroupRouter group = groupFor(sanitizePath(virtualHost.getPath()));
+                    Object member = group.addMember(vertx, domain, virtualHost, domainHandler.router());
+                    unmountActions.add(() -> group.removeMember(member));
+                });
             } else {
-                this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(vertx, domain, domainHandler.router()));
+                VHostGroupRouter group = groupFor(sanitizePath(domain.getPath()));
+                Object member = group.addMember(vertx, domain, domainHandler.router());
+                unmountActions.add(() -> group.removeMember(member));
             }
+
+            domainUnmountActions.put(domain.getId(), unmountActions);
         } finally {
             routerLock.unlock();
         }
+    }
+
+    /**
+     * Returns the {@link VHostGroupRouter} handling the given (already sanitized) mount path,
+     * creating and mounting it on the root router the first time it is requested. Every
+     * domain/vhost sharing this path is later registered on the very same group, instead of
+     * each getting its own entry on the root router.
+     */
+    private VHostGroupRouter groupFor(String path) {
+        return pathGroups.computeIfAbsent(path, p -> {
+            VHostGroupRouter group = VHostGroupRouter.create(vertx);
+            this.router.route(p).subRouter(group.asRxRouter());
+            return group;
+        });
     }
 
     private String sanitizePath(String path) {
@@ -153,6 +188,13 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     public void unMountDomain(VertxSecurityDomainHandler domainHandler) {
         routerLock.lock();
         try {
+            Domain domain = domainHandler.getDomain();
+
+            List<Runnable> unmountActions = domainUnmountActions.remove(domain.getId());
+            if (unmountActions != null) {
+                unmountActions.forEach(Runnable::run);
+            }
+
             domainHandler.router().clear();
         } finally {
             routerLock.unlock();
