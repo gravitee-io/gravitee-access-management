@@ -665,6 +665,8 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(formService.findByDomain(domainId)
                                     .flatMapCompletable(formTemplate -> formService.delete(domainId, formTemplate.getId()))
                             )
+                            // clear the data plane while the domain's reporters are still around to audit it
+                            .andThen(clearDataPlane(domain, principal))
                             // delete reporters
                             .andThen(reporterService.findByReference(Reference.domain(domainId))
                                     .flatMapCompletable(reporter ->
@@ -717,8 +719,6 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
-                            // the domain is gone, so what it left in its data plane can be cleaned up after it
-                            .andThen(clearDataPlane(domain, principal))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
@@ -742,18 +742,22 @@ public class DomainServiceImpl implements DomainService {
     }
 
     /**
-     * Everything the deleted domain leaves in its data plane, from every store that declares itself a
-     * {@link DomainDataPlaneCleanup}. It runs once the domain itself is gone, and a failure is only
-     * logged: a domain pins its data plane, so a domain that cannot be deleted while its store is
-     * unreachable would leave the pair impossible to delete. Stores are purged with delayed errors so
-     * one unreachable repository does not skip the rest.
+     * Everything the domain holds in its data plane, from every store that declares itself a
+     * {@link DomainDataPlaneCleanup}. A failure is only logged rather than propagated: a domain pins its
+     * data plane, so a domain that could not be deleted while its store is unreachable would leave the
+     * pair impossible to delete. Stores are purged with delayed errors so one unreachable repository does
+     * not skip the rest. It runs before the reporters are deleted, because the stores that audit what
+     * they drop need somewhere to report it.
+     * <p>
+     * Deferred on purpose: asking a store for its repository can throw when the data plane is unreachable,
+     * and outside the defer that throw would escape before onErrorComplete is attached and fail the delete.
      */
     private Completable clearDataPlane(Domain domain, User principal) {
-        return Completable.concatDelayError(dataPlaneCleanups.stream()
+        return Completable.defer(() -> Completable.concatDelayError(dataPlaneCleanups.stream()
                         .map(store -> store.purgeDataPlane(domain, principal))
-                        .toList())
+                        .toList()))
                 .onErrorComplete(error -> {
-                    log.warn("Domain {} is deleted but data plane {} could not be cleaned up, that data is left behind",
+                    log.warn("Domain {} is being deleted but data plane {} could not be cleaned up, that data is left behind",
                             domain.getId(), domain.getDataPlaneId(), error);
                     return true;
                 });
