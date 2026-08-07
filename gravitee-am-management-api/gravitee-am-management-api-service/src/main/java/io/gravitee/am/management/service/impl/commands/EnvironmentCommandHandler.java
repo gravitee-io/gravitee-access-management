@@ -72,6 +72,14 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
             return Single.just(new EnvironmentReply(command.getId(), validationError.get()));
         }
 
+        // Cockpit is told the command failed rather than left believing it provisioned a gateway URL
+        // that AM silently dropped.
+        if (hasGatewayAccessPointWithoutHost(environmentPayload)) {
+            String accessPointError = "Environment command rejected due to a GATEWAY access point with a missing or blank host.";
+            log.warn("{} Environment id [{}].", accessPointError, environmentPayload.id());
+            return Single.just(new EnvironmentReply(command.getId(), accessPointError));
+        }
+
         NewEnvironment newEnvironment = new NewEnvironment();
         newEnvironment.setHrids(environmentPayload.hrids());
         newEnvironment.setName(environmentPayload.name());
@@ -79,7 +87,7 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         if (environmentPayload.accessPoints() != null && !CloudProperties.isManagedCloudEnabled(environment)) {
             newEnvironment.setDomainRestrictions(environmentPayload.accessPoints()
                     .stream()
-                    .filter(accessPoint -> accessPoint.getTarget() == AccessPoint.Target.GATEWAY)
+                    .filter(this::isUsableGatewayAccessPoint)
                     .map(AccessPoint::getHost)
                     .collect(Collectors.toList()));
         }
@@ -103,7 +111,7 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         List<AccessPoint> gatewayAccessPoints = environmentPayload.accessPoints() == null
                 ? List.of()
                 : environmentPayload.accessPoints().stream()
-                        .filter(accessPoint -> accessPoint.getTarget() == AccessPoint.Target.GATEWAY)
+                        .filter(this::isUsableGatewayAccessPoint)
                         .collect(Collectors.toList());
 
         return entrypointService.findByEnvironment(organizationId, environmentId)
@@ -111,6 +119,24 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
                 .andThen(Completable.defer(() -> Completable.merge(gatewayAccessPoints.stream()
                         .map(accessPoint -> createEntrypoint(organizationId, environmentId, accessPoint))
                         .collect(Collectors.toList()))));
+    }
+
+    private boolean hasGatewayAccessPointWithoutHost(EnvironmentCommandPayload environmentPayload) {
+        return environmentPayload.accessPoints() != null
+                && environmentPayload.accessPoints().stream()
+                        .anyMatch(accessPoint -> accessPoint.getTarget() == AccessPoint.Target.GATEWAY && !hasHost(accessPoint));
+    }
+
+    private boolean isUsableGatewayAccessPoint(AccessPoint accessPoint) {
+        if (accessPoint.getTarget() != AccessPoint.Target.GATEWAY) {
+            return false;
+        }
+
+        return hasHost(accessPoint);
+    }
+
+    private boolean hasHost(AccessPoint accessPoint) {
+        return accessPoint.getHost() != null && !accessPoint.getHost().isBlank();
     }
 
     private Completable createEntrypoint(String organizationId, String environmentId, AccessPoint accessPoint) {

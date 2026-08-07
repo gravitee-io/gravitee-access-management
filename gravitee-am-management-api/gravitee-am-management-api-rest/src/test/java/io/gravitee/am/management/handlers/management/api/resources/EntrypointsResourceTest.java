@@ -83,6 +83,30 @@ public class EntrypointsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldGetEntrypoints_oneEntrypointWithoutName() {
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        // A GATEWAY access point pushed by Cockpit with a null host persists an entrypoint with no name.
+        final Entrypoint namelessEntrypoint = new Entrypoint();
+        namelessEntrypoint.setId("entrypoint#2");
+        namelessEntrypoint.setUrl("https://null");
+        namelessEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        doReturn(Flowable.just(entrypoint, namelessEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final Response response = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("entrypoints").request().get();
+
+        // One malformed record must not take down the listing for the whole organization.
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(2, readEntity(response, List.class).size());
+    }
+
+    @Test
     public void shouldGetEntrypoints_technicalManagementException() {
         doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(entrypointService).findAll(anyString());
 

@@ -339,6 +339,79 @@ class EnvironmentCommandHandlerTest {
                 .build(), true);
     }
 
+    private EnvironmentCommand commandWithAccessPoints(AccessPoint... accessPoints) {
+        return new EnvironmentCommand(EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
+                .organizationId("orga#1")
+                .description("Environment description")
+                .name("Environment name")
+                .accessPoints(List.of(accessPoints))
+                .build());
+    }
+
+    private void assertRejectedForMissingHost(EnvironmentCommand command) {
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(environmentService, entrypointService);
+    }
+
+    /**
+     * A host-less GATEWAY access point yields url "https://null" and a null name, and that nameless
+     * entrypoint then breaks the organization-wide entrypoint listing. Cockpit is told the command
+     * failed rather than left believing the gateway URL was provisioned.
+     */
+    @Test
+    void handleCloudMode_nullHostAccessPoint_isRejected() {
+        enableCloudMode();
+
+        assertRejectedForMissingHost(commandWithAccessPoints(
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host(null).secured(true).build()));
+    }
+
+    @Test
+    void handleNonCloudMode_nullHostAccessPoint_isRejected() {
+        // A null reaching domainRestrictions blows up InternetDomainName.from during host validation.
+        assertRejectedForMissingHost(commandWithAccessPoints(
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host(null).build()));
+    }
+
+    @Test
+    void handleCloudMode_blankHostAccessPoint_isRejected() {
+        enableCloudMode();
+
+        assertRejectedForMissingHost(commandWithAccessPoints(
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("  ").build()));
+    }
+
+    @Test
+    void handleCloudMode_oneValidAndOneHostlessAccessPoint_rejectsTheWholeCommand() {
+        enableCloudMode();
+
+        assertRejectedForMissingHost(commandWithAccessPoints(
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host(null).build()));
+    }
+
+    @Test
+    void handleNullHostConsoleAccessPoint_isAccepted() {
+        // Only GATEWAY access points become entrypoints, so a host-less CONSOLE one must not block the command.
+        EnvironmentCommand command = commandWithAccessPoints(
+                AccessPoint.builder().target(AccessPoint.Target.CONSOLE).host(null).build());
+
+        when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
+
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
+        verify(environmentService).createOrUpdate(eq("orga#1"), eq("env#1"),
+                argThat(newEnvironment -> newEnvironment.getDomainRestrictions().isEmpty()), isNull());
+    }
+
     @Test
     void handleCloudMode_entrypointSyncFailure_propagatesAsErrorReply() {
         enableCloudMode();
