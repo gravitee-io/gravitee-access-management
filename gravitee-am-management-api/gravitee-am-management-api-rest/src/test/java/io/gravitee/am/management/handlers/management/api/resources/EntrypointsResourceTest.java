@@ -32,8 +32,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -80,6 +82,35 @@ public class EntrypointsResourceTest extends JerseySpringTest {
 
         final List<Entrypoint> responseEntity = readEntity(response, List.class);
         assertEquals(2, responseEntity.size());
+    }
+
+    @Test
+    public void shouldGetEntrypoints_oneEntrypointWithoutName() {
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        // Stands in for a record persisted before the handler started rejecting host-less access points.
+        final Entrypoint namelessEntrypoint = new Entrypoint();
+        namelessEntrypoint.setId("entrypoint#2");
+        namelessEntrypoint.setUrl("https://null");
+        namelessEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        // Nameless first, so the assertion below fails if the comparator stops reordering.
+        doReturn(Flowable.just(namelessEntrypoint, entrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final Response response = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("entrypoints").request().get();
+
+        // One malformed record must not take down the listing for the whole organization.
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final List<Map<String, Object>> entrypoints = readEntity(response, List.class);
+        assertEquals(2, entrypoints.size());
+        assertEquals("entrypoint-1-name", entrypoints.get(0).get("name"));
+        assertNull(entrypoints.get(1).get("name"));
     }
 
     @Test
