@@ -95,4 +95,16 @@ public class LoginAttemptManagementServiceTest {
 
         verify(loginAttemptRepository).delete(any(LoginAttemptCriteria.class));
     }
+
+    @Test
+    public void should_purge_the_login_attempts_of_a_deleted_domain() {
+        when(loginAttemptRepository.deleteByDomain("domain-1")).thenReturn(Completable.complete());
+
+        var testObserver = service.purgeDataPlane(new Domain("domain-1"), null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(loginAttemptRepository).deleteByDomain("domain-1");
+    }
 }

@@ -198,6 +198,12 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(eq(FIELD_DOMAIN, domain)))
+                .observeOn(Schedulers.computation());
+    }
+
     private ScopeApproval convert(ScopeApprovalMongo scopeApprovalMongo) {
         if (scopeApprovalMongo == null) {
             return null;

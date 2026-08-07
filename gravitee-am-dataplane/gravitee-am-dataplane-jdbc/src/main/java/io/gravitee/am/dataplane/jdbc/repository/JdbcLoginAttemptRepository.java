@@ -111,6 +111,14 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
     }
 
     @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class)
+                .matching(Query.query(where("domain").is(domain))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<LoginAttempt> findById(String id) {
         LOGGER.debug("findById({})", id);
         LocalDateTime now = LocalDateTime.now(UTC);

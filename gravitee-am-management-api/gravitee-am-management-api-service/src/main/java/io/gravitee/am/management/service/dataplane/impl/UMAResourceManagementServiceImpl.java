@@ -116,6 +116,15 @@ public class UMAResourceManagementServiceImpl implements UMAResourceManagementSe
     }
 
     @Override
+    public Completable purgeDataPlane(Domain domain, io.gravitee.am.identityprovider.api.User principal) {
+        // a permission ticket outlives neither its resource nor the domain, but it is keyed by domain
+        // rather than by resource, so it has to be dropped in its own right
+        return findByDomain(domain)
+                .flatMapCompletable(resource -> delete(domain, resource))
+                .andThen(dataPlaneRegistry.getPermissionTicketRepository(domain).deleteByDomain(domain.getId()));
+    }
+
+    @Override
     public Completable delete(Domain domain, Resource resource) {
         log.debug("Deleting resource id {} on domain {}", resource.getId(), resource.getDomain());
         // delete policies and then the resource

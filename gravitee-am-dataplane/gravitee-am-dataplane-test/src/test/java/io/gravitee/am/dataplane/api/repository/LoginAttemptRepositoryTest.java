@@ -181,6 +181,21 @@ public class LoginAttemptRepositoryTest extends AbstractDataPlaneTest {
     }
 
 
+    @Test
+    public void shouldDeleteByDomain() {
+        LoginAttempt attempt = buildLoginAttempt();
+        attempt.setDomain("domain-to-purge");
+        LoginAttempt purged = repository.create(attempt).blockingGet();
+        LoginAttempt kept = repository.create(buildLoginAttempt()).blockingGet();
+
+        TestObserver<Void> deleteObserver = repository.deleteByDomain("domain-to-purge").test();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
+        deleteObserver.assertNoErrors();
+
+        repository.findById(purged.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertNoValues();
+        repository.findById(kept.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
+    }
+
     private void assertEqualsTo(LoginAttempt attempt, TestObserver<LoginAttempt> testObserver) {
         testObserver.assertValue(l -> l.getAttempts() == attempt.getAttempts());
         testObserver.assertValue(l -> l.getClient().equals(attempt.getClient()));

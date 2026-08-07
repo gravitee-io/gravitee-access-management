@@ -22,7 +22,11 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainGroupService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.DeviceManagementService;
+import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
@@ -96,6 +100,7 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidDomainException;
@@ -125,12 +130,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import io.gravitee.am.service.EntryPointManager;
 
@@ -152,6 +159,7 @@ import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -367,9 +375,37 @@ public class DomainServiceTest {
     @Mock
     private io.gravitee.am.service.CimdClientStateService cimdClientStateService;
 
+    @Mock
+    private ManagementUserService managementUserService;
+
+    @Mock
+    private CredentialManagementService credentialService;
+
+    @Mock
+    private DeviceManagementService deviceService;
+
+    @Mock
+    private LoginAttemptManagementService loginAttemptService;
+
+    private List<DomainDataPlaneCleanup> dataPlaneCleanups;
+
     @BeforeEach
     void stubCimdClientStateServiceDefaults() {
         Mockito.lenient().when(cimdClientStateService.deleteByDomain(any(Domain.class))).thenReturn(Completable.complete());
+    }
+
+    /**
+     * The stores the domain deletion purges are collected by Spring, so the test has to hand them over
+     * itself. Every one of them completes unless a test says otherwise.
+     */
+    @BeforeEach
+    void stubDataPlaneCleanups() {
+        dataPlaneCleanups = List.of(userActivityService, managementUserService, domainGroupService, scopeService,
+                resourceService, passwordHistoryService, certificateCredentialService, cimdClientStateService,
+                credentialService, deviceService, loginAttemptService);
+        dataPlaneCleanups.forEach(store ->
+                Mockito.lenient().when(store.purgeDataPlane(any(Domain.class), any())).thenReturn(Completable.complete()));
+        ReflectionTestUtils.setField(domainService, "dataPlaneCleanups", dataPlaneCleanups);
     }
 
     @Test
@@ -1387,7 +1423,6 @@ public class DomainServiceTest {
         final AuthenticationDeviceNotifier authDeviceNotifier = new AuthenticationDeviceNotifier();
         authDeviceNotifier.setId(AUTH_DEVICE_ID);
 
-        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
@@ -1404,14 +1439,6 @@ public class DomainServiceTest {
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
-        when(userRepository.deleteByReference(any())).thenReturn(complete());
-        when(userActivityService.deleteByDomain(any())).thenReturn(complete());
-        when(scope.getId()).thenReturn(SCOPE_ID);
-        when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope), 0, 1)));
-        when(scopeService.delete(any(), eq(SCOPE_ID), eq(true))).thenReturn(complete());
-        when(group.getId()).thenReturn(GROUP_ID);
-        when(domainGroupService.findAll(any())).thenReturn(Flowable.just(group));
-        when(domainGroupService.delete(any(), anyString(), any())).thenReturn(complete());
         when(form.getId()).thenReturn(FORM_ID);
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(form));
         when(formService.delete(eq(DOMAIN_ID), anyString())).thenReturn(complete());
@@ -1432,8 +1459,6 @@ public class DomainServiceTest {
         when(factor.getId()).thenReturn(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
         when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(complete());
-        when(resourceService.findByDomain(any())).thenReturn(Flowable.just(resource));
-        when(resourceService.delete(any(), any())).thenReturn(complete());
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.just(alertTrigger));
         when(alertTriggerService.delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ALERT_TRIGGER_ID), isNull())).thenReturn(complete());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.just(alertNotifier));
@@ -1442,15 +1467,14 @@ public class DomainServiceTest {
         when(authenticationDeviceNotifierService.delete(any(), eq(AUTH_DEVICE_ID), any())).thenReturn(complete());
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(new I18nDictionary()));
         when(i18nDictionaryService.delete(eq(DOMAIN), eq(DOMAIN_ID), any(), any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
-        when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(scopeService.deleteByDomain(domain)).thenReturn(complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1464,13 +1488,17 @@ public class DomainServiceTest {
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
-        verify(userRepository, times(1)).deleteByReference(any());
-        verify(userActivityService, times(1)).deleteByDomain(any());
         verify(deviceIdentifierService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(serviceResourceService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(authorizationEngineService, times(1)).deleteByDomain(DOMAIN_ID);
-        verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
-        verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
+        // the scopes are control plane rows, so they go before the domain does rather than with the purge
+        verify(scopeService, times(1)).deleteByDomain(domain);
+        // every store holding domain data in the data plane is purged, none of them named here
+        dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
+        // the purge audits what it drops, so it has to run while the domain's reporters are still there
+        InOrder purgeThenReporters = inOrder(domainGroupService, reporterService);
+        purgeThenReporters.verify(domainGroupService).purgeDataPlane(domain, null);
+        purgeThenReporters.verify(reporterService).delete(REPORTER_ID);
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
@@ -1484,10 +1512,9 @@ public class DomainServiceTest {
         }));
     }
 
-    @Test
-    public void shouldDeleteWithoutRelatedData() {
+    /** A domain with nothing hanging off it, so a delete test can say only what it is about. */
+    private void stubADomainWithNoRelatedData() {
         when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
@@ -1495,30 +1522,29 @@ public class DomainServiceTest {
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 1)));
-        when(userRepository.deleteByReference(any())).thenReturn(complete());
-        when(userActivityService.deleteByDomain(any())).thenReturn(complete());
-        when(domainGroupService.findAll(any())).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(reporterService.findByReference(Reference.domain(DOMAIN_ID))).thenReturn(Flowable.empty());
         when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.empty());
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(resourceService.findByDomain(any())).thenReturn(Flowable.empty());
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());
         when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
-        when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
-        when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(scopeService.deleteByDomain(domain)).thenReturn(complete());
+    }
+
+    @Test
+    public void shouldDeleteWithoutRelatedData() {
+        stubADomainWithNoRelatedData();
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1541,6 +1567,46 @@ public class DomainServiceTest {
         verify(alertTriggerService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
         verify(alertNotifierService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
         verify(eventService, times(1)).create(any(), any());
+    }
+
+    @Test
+    public void shouldDeleteWhenTheDataPlaneCannotBeReached() {
+        // a domain pins its data plane, so a domain that cannot be deleted would wedge the pair for good
+        stubADomainWithNoRelatedData();
+
+        // every store the domain holds data in is out of reach
+        var unreachable = new TechnicalException("Timed out while waiting for a server");
+        dataPlaneCleanups.forEach(store -> when(store.purgeDataPlane(any(Domain.class), any())).thenReturn(Completable.error(unreachable)));
+
+        var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).delete(DOMAIN_ID);
+        verify(eventService, times(1)).create(any(), any());
+        // the scopes live in the control plane, so an unreachable data plane must not strand them
+        verify(scopeService, times(1)).deleteByDomain(domain);
+        // the purge carries on past the stores it cannot reach, rather than stopping at the first
+        dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
+    }
+
+    @Test
+    public void shouldDeleteWhenAStoreThrowsInsteadOfReturningAnError() {
+        // asking an unreachable data plane for a repository throws there and then, rather than
+        // handing back a Completable that fails later
+        stubADomainWithNoRelatedData();
+        when(domainGroupService.purgeDataPlane(any(Domain.class), any()))
+                .thenThrow(new IllegalStateException("No data plane found for id unreachable-plane"));
+
+        var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).delete(DOMAIN_ID);
     }
 
     @Test

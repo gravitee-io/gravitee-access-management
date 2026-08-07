@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
@@ -58,6 +59,11 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
             log.error("An error occurs while trying to find Devices by {} {}", domain, userId, ex);
             return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find Devices by %s %s", domain, userId), ex));
         });
+    }
+
+    @Override
+    public Completable purgeDataPlane(Domain domain, User principal) {
+        return dataPlaneRegistry.getDeviceRepository(domain).deleteByReference(ReferenceType.DOMAIN, domain.getId());
     }
 
     @Override

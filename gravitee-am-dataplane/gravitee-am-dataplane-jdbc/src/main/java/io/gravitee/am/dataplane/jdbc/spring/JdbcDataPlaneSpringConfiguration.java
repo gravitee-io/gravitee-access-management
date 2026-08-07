@@ -90,7 +90,14 @@ public class JdbcDataPlaneSpringConfiguration extends AbstractRepositoryConfigur
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getPoolWrapper(), environment, description.propertiesBase() + ".jdbc.");
+    public void afterPropertiesSet() {
+        // resolved outside the catch, is required for API to run
+        var poolWrapper = getPoolWrapper();
+        try {
+            initializeDatabaseSchema(poolWrapper, environment, description.propertiesBase() + ".jdbc.");
+        } catch (Exception e) {
+            LOGGER.error("Schema initialisation failed for data plane [{}], which cannot serve a domain until its database is reachable and the schema is up to date",
+                    description.id(), e);
+        }
     }
 }

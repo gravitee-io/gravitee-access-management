@@ -46,4 +46,6 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
 
     Completable deleteByDomainAndClient(String domain, String clientId);
 
+    Completable deleteByDomain(String domain);
+
 }

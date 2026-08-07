@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -33,7 +34,7 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UMAResourceManagementService {
+public interface UMAResourceManagementService extends DomainDataPlaneCleanup {
     Flowable<AccessPolicy> findAccessPoliciesByResources(Domain domain, List<String> resourceIds);
     Maybe<AccessPolicy> findAccessPolicy(Domain domain, String accessPolicy);
     Maybe<Resource> findByDomainAndClientResource(Domain domain, String client, String resourceId);

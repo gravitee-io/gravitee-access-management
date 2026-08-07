@@ -180,6 +180,14 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     }
 
     @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
+                .matching(Query.query(domain(domain))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<ScopeApproval> findById(String id) {
         LOGGER.debug("findById({})", id);
         LocalDateTime now = LocalDateTime.now(UTC);

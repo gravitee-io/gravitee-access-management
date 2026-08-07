@@ -20,6 +20,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.rxjava3.core.Completable;
@@ -32,7 +33,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ManagementUserService {
+public interface ManagementUserService extends DomainDataPlaneCleanup {
     Single<User> updateUsername(Domain domain, String id, String username, io.gravitee.am.identityprovider.api.User principal);
 
     Maybe<User> findById(Domain domain, String id);

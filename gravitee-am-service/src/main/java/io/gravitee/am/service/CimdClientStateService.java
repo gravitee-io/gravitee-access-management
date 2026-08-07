@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CimdClientState;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -24,11 +26,16 @@ import io.reactivex.rxjava3.core.Single;
 /**
  * @author GraviteeSource Team
  */
-public interface CimdClientStateService {
+public interface CimdClientStateService extends DomainDataPlaneCleanup {
 
     Maybe<CimdClientState> findByDomainAndClientId(Domain domain, String clientId);
 
     Single<CimdClientState> upsert(Domain domain, String clientId, String monitoredPropertiesHash);
 
     Completable deleteByDomain(Domain domain);
+
+    @Override
+    default Completable purgeDataPlane(Domain domain, User principal) {
+        return deleteByDomain(domain);
+    }
 }

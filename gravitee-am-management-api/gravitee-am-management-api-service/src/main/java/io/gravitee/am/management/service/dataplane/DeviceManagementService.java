@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -28,7 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceManagementService {
+public interface DeviceManagementService extends DomainDataPlaneCleanup {
 
     Flowable<Device> findByDomainAndUser(Domain domain, UserId user);
 

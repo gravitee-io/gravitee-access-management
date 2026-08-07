@@ -43,6 +43,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 
 /**
@@ -89,6 +90,12 @@ public class MongoPermissionTicketRepository extends AbstractDataPlaneMongoRepos
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(permissionTicketCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(permissionTicketCollection.deleteMany(eq(FIELD_DOMAIN, domain)))
                 .observeOn(Schedulers.computation());
     }
 

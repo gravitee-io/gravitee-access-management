@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.management.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.impl.DomainGroupServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -290,6 +292,30 @@ public class DomainGroupServiceTest {
         testObserver.assertNoErrors();
 
         verify(groupRepository, times(1)).delete("my-group");
+    }
+
+    @Test
+    public void shouldPurgeEveryGroupOfADeletedDomain() {
+        var principal = new DefaultUser("an-admin");
+        principal.setId("admin-id");
+        Group group = new Group();
+        group.setId("my-group");
+        group.setReferenceId(DOMAIN);
+        group.setReferenceType(ReferenceType.DOMAIN);
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(group));
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(group));
+        when(groupRepository.delete("my-group")).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = domainGroupService.purgeDataPlane(DOMAIN_ENTITY, principal).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(groupRepository, times(1)).delete("my-group");
+        // the audit has to name whoever deleted the domain, not nobody
+        verify(auditService, times(1)).report(argThat(builder ->
+                principal.getId().equals(builder.build(new ObjectMapper()).getActor().getId())));
     }
 
     @Test
