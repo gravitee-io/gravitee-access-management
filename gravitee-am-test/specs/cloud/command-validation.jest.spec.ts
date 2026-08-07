@@ -102,5 +102,15 @@ describe('Cloud command payload validation (Cockpit -> AM)', () => {
 
       expect(reply.commandStatus).toBe('SUCCEEDED');
     });
+
+    // The counterpart to the rejections above: the guard must not turn away a GATEWAY access point
+    // that is perfectly usable, which is the regression it could plausibly introduce.
+    it('accepts a GATEWAY access point that has a host', async () => {
+      const reply = await sendEnvironment('cloud-env-ap-valid-gateway', [
+        { target: 'GATEWAY', host: 'gw-am7443.example.com' },
+      ]);
+
+      expect(reply.commandStatus).toBe('SUCCEEDED');
+    });
   });
 });
