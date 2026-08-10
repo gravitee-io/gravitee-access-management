@@ -329,4 +329,16 @@ public class CredentialManagementServiceTest {
         verify(credentialRepository, times(1)).deleteByUserId(ReferenceType.DOMAIN, DOMAIN, userId);
     }
 
+    @Test
+    public void shouldPurgeTheWebAuthnCredentialsOfADeletedDomain() {
+        when(credentialRepository.deleteByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Completable.complete());
+
+        TestObserver testObserver = credentialService.purgeDataPlane(domain, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(credentialRepository, times(1)).deleteByReference(ReferenceType.DOMAIN, DOMAIN);
+    }
+
 }

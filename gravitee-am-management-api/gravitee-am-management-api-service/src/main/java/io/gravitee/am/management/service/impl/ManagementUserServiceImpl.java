@@ -176,6 +176,13 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     private EventService eventService;
 
     @Override
+    public Completable purgeDataPlane(Domain domain, io.gravitee.am.identityprovider.api.User principal) {
+        // not one by one, for memory consumption reasons
+        // https://github.com/gravitee-io/issues/issues/6999
+        return dataPlaneRegistry.getUserRepository(domain).deleteByReference(domain.asReference());
+    }
+
+    @Override
     public Single<Page<User>> search(Domain domain, String query, int page, int size) {
         return dataPlaneRegistry.getUserRepository(domain).search(domain.asReference(), query, page, size);
     }

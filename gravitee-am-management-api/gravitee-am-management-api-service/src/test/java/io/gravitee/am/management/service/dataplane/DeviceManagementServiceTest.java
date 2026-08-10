@@ -146,4 +146,15 @@ public class DeviceManagementServiceTest {
         verify(auditService, times(1)).report(any());
     }
 
+    @Test
+    public void mustPurgeTheDevicesOfADeletedDomain() {
+        doReturn(Completable.complete()).when(deviceRepository).deleteByReference(any(), any());
+
+        TestObserver<Void> testObserver = deviceService.purgeDataPlane(DOMAIN, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        verify(deviceRepository, times(1)).deleteByReference(ReferenceType.DOMAIN, DOMAIN.getId());
+    }
+
 }

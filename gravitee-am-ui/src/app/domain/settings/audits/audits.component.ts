@@ -29,6 +29,11 @@ import { AuthService } from '../../../services/auth.service';
 import { availableTimeRanges, defaultTimeRangeId } from '../../../utils/time-range-utils';
 import { EnvironmentService } from '../../../services/environment.service';
 
+// Targets with no page of their own in the console: the generic link builder would send environments
+// and data planes to a route that does not exist, and entrypoints to the standalone editor, which is
+// read-only and out of context once these are provisioned outside the console.
+const UNLINKABLE_TARGET_TYPES = ['MEMBERSHIP', 'ENVIRONMENT', 'DATA_PLANE', 'ENTRYPOINT'];
+
 @Component({
   selector: 'app-audits',
   templateUrl: './audits.component.html',
@@ -143,8 +148,7 @@ export class AuditsComponent implements OnInit {
   }
 
   getTargetUrl(row): string[] {
-    if (row.target.type === 'MEMBERSHIP') {
-      // Membership doesn't have link
+    if (UNLINKABLE_TARGET_TYPES.includes(row.target.type)) {
       return [];
     }
     return this.buildLink(row);

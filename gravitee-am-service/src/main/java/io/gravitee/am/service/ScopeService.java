@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchScope;
@@ -36,7 +37,7 @@ import java.util.List;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public interface ScopeService {
+public interface ScopeService extends DomainDataPlaneCleanup {
 
     Maybe<Scope> findById(String id);
 
@@ -57,6 +58,13 @@ public interface ScopeService {
     Single<Scope> update(Domain domain, String id, UpdateSystemScope updateScope);
 
     Completable delete(Domain domain, String scopeId, boolean force, User principal);
+
+    /**
+     * Drop every scope of the domain. Unlike {@link #delete(Domain, String, boolean, User)} this stays in the
+     * control plane: it does not unpick the scope from roles and applications, which go with the domain anyway,
+     * and it leaves the approvals to {@link #purgeDataPlane(Domain, User)}.
+     */
+    Completable deleteByDomain(Domain domain);
 
     Single<Page<Scope>> search(String domain, String query, int page, int size);
 

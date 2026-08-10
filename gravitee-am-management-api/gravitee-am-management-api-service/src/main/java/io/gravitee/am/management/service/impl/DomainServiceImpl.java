@@ -28,10 +28,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
-import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
-import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
@@ -84,7 +81,7 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.CertificateCredentialService;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -97,7 +94,6 @@ import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
-import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.AutomationNewDomain;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
@@ -172,15 +168,16 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
 
+    /** every store that holds domain data in the data plane, collected rather than named one by one */
+    @Autowired
+    private List<DomainDataPlaneCleanup> dataPlaneCleanups;
+
     @Lazy
     @Autowired
     private DomainRepository domainRepository;
 
     @Autowired
     private DomainReadService domainReadService;
-
-    @Autowired
-    private UserActivityManagementService userActivityService;
 
     @Autowired
     private DomainValidator domainValidator;
@@ -213,9 +210,6 @@ public class DomainServiceImpl implements DomainService {
     private ScopeService scopeService;
 
     @Autowired
-    private DomainGroupService domainGroupService;
-
-    @Autowired
     private EmailTemplateService emailTemplateService;
 
     @Autowired
@@ -243,9 +237,6 @@ public class DomainServiceImpl implements DomainService {
     private EnvironmentService environmentService;
 
     @Autowired
-    private UMAResourceManagementService resourceService;
-
-    @Autowired
     private AlertTriggerService alertTriggerService;
 
     @Autowired
@@ -261,13 +252,7 @@ public class DomainServiceImpl implements DomainService {
     private ThemeService themeService;
 
     @Autowired
-    private PasswordHistoryService passwordHistoryService;
-
-    @Autowired
     private PasswordPolicyService passwordPolicyService;
-
-    @Autowired
-    private CertificateCredentialService certificateCredentialService;
 
     @Autowired
     private EntrypointService entrypointService;
@@ -670,24 +655,8 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deleteRolesCompletable);
                                     })
                             )
-                            //Delete all trace of activity of users for this domain
-                            .andThen(userActivityService.deleteByDomain(domain))
-                            // delete users
-                            // do not delete one by one for memory consumption issue
-                            // https://github.com/gravitee-io/issues/issues/6999
-                            .andThen(dataPlaneRegistry.getUserRepository(domain).deleteByReference(domain.asReference()))
-                            // delete groups
-                            .andThen(domainGroupService.findAll(domain)
-                                    .flatMapCompletable(group ->
-                                            domainGroupService.delete(domain, group.getId(), principal))
-                            )
-                            // delete scopes
-                            .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(domain, s.getId(), true)).toList();
-                                        return Completable.concat(deleteScopesCompletable);
-                                    })
-                            )
+                            // delete scopes, which are control plane rows: their approvals go with the data plane
+                            .andThen(scopeService.deleteByDomain(domain))
                             // delete email templates
                             .andThen(emailTemplateService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(emailTemplate -> emailTemplateService.delete(emailTemplate.getId()))
@@ -696,6 +665,8 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(formService.findByDomain(domainId)
                                     .flatMapCompletable(formTemplate -> formService.delete(domainId, formTemplate.getId()))
                             )
+                            // clear the data plane while the domain's reporters are still around to audit it
+                            .andThen(clearDataPlane(domain, principal))
                             // delete reporters
                             .andThen(reporterService.findByReference(Reference.domain(domainId))
                                     .flatMapCompletable(reporter ->
@@ -715,10 +686,6 @@ public class DomainServiceImpl implements DomainService {
                             // delete factors
                             .andThen(factorService.findByDomain(domainId)
                                     .flatMapCompletable(factor -> factorService.delete(domainId, factor.getId()))
-                            )
-                            // delete uma resources
-                            .andThen(resourceService.findByDomain(domain)
-                                    .flatMapCompletable(resource -> resourceService.delete(domain, resource))
                             )
                             // delete alert triggers
                             .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
@@ -746,14 +713,10 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
                                     )
                             )
-                            .andThen(passwordHistoryService.deleteByReference(domain))
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(serviceResourceService.deleteByDomain(domainId))
                             .andThen(deviceIdentifierService.deleteByDomain(domainId))
-                            // delete certificate credentials
-                            .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
-                            .andThen(cimdClientStateService.deleteByDomain(domain))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
@@ -775,6 +738,28 @@ public class DomainServiceImpl implements DomainService {
 
                     log.error("An error occurred while trying to delete security domain {}", domainId, ex);
                     return Completable.error(new TechnicalManagementException("An error occurred while trying to delete security domain " + domainId, ex));
+                });
+    }
+
+    /**
+     * Everything the domain holds in its data plane, from every store that declares itself a
+     * {@link DomainDataPlaneCleanup}. A failure is only logged rather than propagated: a domain pins its
+     * data plane, so a domain that could not be deleted while its store is unreachable would leave the
+     * pair impossible to delete. Stores are purged with delayed errors so one unreachable repository does
+     * not skip the rest. It runs before the reporters are deleted, because the stores that audit what
+     * they drop need somewhere to report it.
+     * <p>
+     * Deferred on purpose: asking a store for its repository can throw when the data plane is unreachable,
+     * and outside the defer that throw would escape before onErrorComplete is attached and fail the delete.
+     */
+    private Completable clearDataPlane(Domain domain, User principal) {
+        return Completable.defer(() -> Completable.concatDelayError(dataPlaneCleanups.stream()
+                        .map(store -> store.purgeDataPlane(domain, principal))
+                        .toList()))
+                .onErrorComplete(error -> {
+                    log.warn("Domain {} is being deleted but data plane {} could not be cleaned up, that data is left behind",
+                            domain.getId(), domain.getDataPlaneId(), error);
+                    return true;
                 });
     }
 

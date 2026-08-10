@@ -32,4 +32,6 @@ public interface LoginAttemptRepository extends CrudRepository<LoginAttempt, Str
 
     Completable delete(LoginAttemptCriteria criteria);
 
+    Completable deleteByDomain(String domain);
+
 }

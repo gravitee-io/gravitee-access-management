@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CertificateCredential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -26,7 +27,7 @@ import io.reactivex.rxjava3.core.Single;
 /**
  * @author GraviteeSource Team
  */
-public interface CertificateCredentialService {
+public interface CertificateCredentialService extends DomainDataPlaneCleanup {
 
     /**
      * Enroll a certificate for a user.
@@ -115,5 +116,10 @@ public interface CertificateCredentialService {
      * @return completable
      */
     Completable deleteByDomain(Domain domain);
+
+    @Override
+    default Completable purgeDataPlane(Domain domain, User principal) {
+        return deleteByDomain(domain);
+    }
 }
 

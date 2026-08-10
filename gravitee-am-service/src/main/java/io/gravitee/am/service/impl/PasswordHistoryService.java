@@ -24,6 +24,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -50,7 +51,7 @@ import lombok.CustomLog;
  */
 @Component
 @CustomLog
-public class PasswordHistoryService {
+public class PasswordHistoryService implements DomainDataPlaneCleanup {
 
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
@@ -166,6 +167,11 @@ public class PasswordHistoryService {
     public Completable deleteByReference(Domain domain) {
         final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
         return repository.deleteByReference(domain.asReference());
+    }
+
+    @Override
+    public Completable purgeDataPlane(Domain domain, User principal) {
+        return deleteByReference(domain);
     }
 
     /**

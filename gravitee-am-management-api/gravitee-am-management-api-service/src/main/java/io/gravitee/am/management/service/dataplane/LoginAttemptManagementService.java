@@ -18,8 +18,9 @@ package io.gravitee.am.management.service.dataplane;
 
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 
-public interface LoginAttemptManagementService {
+public interface LoginAttemptManagementService extends DomainDataPlaneCleanup {
     Completable reset(Domain domain, LoginAttemptCriteria criteria);
 }

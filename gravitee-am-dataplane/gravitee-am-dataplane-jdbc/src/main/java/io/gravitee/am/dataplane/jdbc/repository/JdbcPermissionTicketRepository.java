@@ -151,6 +151,14 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
     }
 
     @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(getTemplate().delete(JdbcPermissionTicket.class)
+                .matching(Query.query(where(COL_DOMAIN).is(domain))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);

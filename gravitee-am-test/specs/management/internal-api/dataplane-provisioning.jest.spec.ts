@@ -32,6 +32,7 @@ import {
   createDomainOnDataPlane,
   DATABASE_NAME,
   dataPlanePayload,
+  dataPlanesOfferedByTheConsole,
   deleteProvisionedDataPlanes,
   JDBC_SUMMARY,
   jdbcPayload,
@@ -352,6 +353,16 @@ describe('Data plane provisioning (management technical API)', () => {
       // the registry has to give the id up, not just the row: a domain bound to a deleted data plane
       // would be created against a store nothing is meant to be using
       expect(await canBindADomainTo(provisioned.id)).toBe(false);
+    });
+
+    it('stops offering a deleted data plane to the console', async () => {
+      const provisioned = await provisionConnectableDataPlane(uniqueName('dp-e2e-offered', true));
+      expect(await dataPlanesOfferedByTheConsole()).toContain(provisioned.id);
+
+      expect((await deleteDataPlane(provisioned.id)).status).toBe(204);
+
+      // the new domain form lists the registry, so a deleted plane left in it is one a user can pick
+      expect(await dataPlanesOfferedByTheConsole()).not.toContain(provisioned.id);
     });
 
     it('serves a data plane again when its id is re-provisioned', async () => {

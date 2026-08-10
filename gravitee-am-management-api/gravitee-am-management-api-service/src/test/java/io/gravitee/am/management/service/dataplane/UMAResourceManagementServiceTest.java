@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.dataplane;
 
 
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
+import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
 import io.gravitee.am.dataplane.api.repository.ResourceRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.management.service.dataplane.impl.UMAResourceManagementServiceImpl;
@@ -30,6 +31,7 @@ import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -76,6 +78,9 @@ public class UMAResourceManagementServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PermissionTicketRepository permissionTicketRepository;
 
     @InjectMocks
     private UMAResourceManagementService service = new UMAResourceManagementServiceImpl();
@@ -226,5 +231,22 @@ public class UMAResourceManagementServiceTest {
         when(applicationService.findByIdIn(anyList())).thenReturn(Flowable.just(new Application()));
         TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN, resources).test();
         testObserver.assertComplete().assertNoErrors();
+    }
+    @Test
+    public void purgeDataPlane_dropsTheResourcesAndTheTicketsTheyLeaveBehind() {
+        var resource = new Resource().setId(RESOURCE_ID).setDomain(DOMAIN_ID);
+        when(dataPlaneRegistry.getPermissionTicketRepository(any())).thenReturn(permissionTicketRepository);
+        when(resourceRepository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(resource));
+        when(accessPolicyRepository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID)).thenReturn(Flowable.empty());
+        when(resourceRepository.delete(RESOURCE_ID)).thenReturn(Completable.complete());
+        when(permissionTicketRepository.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+
+        var testObserver = service.purgeDataPlane(DOMAIN, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(resourceRepository).delete(RESOURCE_ID);
+        verify(permissionTicketRepository).deleteByDomain(DOMAIN_ID);
     }
 }
