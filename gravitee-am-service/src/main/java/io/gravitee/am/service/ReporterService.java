@@ -60,8 +60,6 @@ public interface ReporterService {
      */
     Completable delete(String reporterId, User principal, boolean removeSystemReporter);
 
-    String createReporterConfig(Reference reference);
-
     default NewReporter createInternal() {
         return createInternal(new Reference(ReferenceType.PLATFORM, Platform.DEFAULT));
     }
