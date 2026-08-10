@@ -17,6 +17,7 @@ package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.management.service.spring.ManagementServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
@@ -103,7 +104,7 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public Node node() {
+    public AmNode node() {
         return new ManagementNode();
     }
 
