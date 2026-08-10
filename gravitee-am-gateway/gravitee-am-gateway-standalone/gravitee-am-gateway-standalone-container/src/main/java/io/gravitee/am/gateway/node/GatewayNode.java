@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.node;
 
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
@@ -34,7 +35,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GatewayNode extends AbstractNode {
+public class GatewayNode extends AbstractNode implements AmNode {
 
     @Autowired
     private NodeMetadataResolver nodeMetadataResolver;
@@ -49,6 +50,11 @@ public class GatewayNode extends AbstractNode {
     @Override
     public String application() {
         return "gio-am-gateway";
+    }
+
+    @Override
+    public boolean isGateway() {
+        return true;
     }
 
     @Override
