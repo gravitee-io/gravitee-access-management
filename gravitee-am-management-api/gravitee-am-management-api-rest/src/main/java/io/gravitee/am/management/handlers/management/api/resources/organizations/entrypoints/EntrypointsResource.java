@@ -49,6 +49,7 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Comparator;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -82,7 +83,7 @@ public class EntrypointsResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.LIST)
                 .andThen(entrypointService.findAll(organizationId))
                 .map(this::filterEntrypointInfos)
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                .sorted(Comparator.comparing(Entrypoint::getName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .toList()
                 .subscribe(response::resume, response::resume);
     }
