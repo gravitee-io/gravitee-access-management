@@ -32,6 +32,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -45,6 +46,7 @@ import io.gravitee.am.reporter.mongodb.audit.model.AuditAccessPointMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditEntityMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditOutcomeMongo;
+import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.common.service.AbstractService;
@@ -122,7 +124,10 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     private MongoReporterConfiguration configuration;
 
     @Value("${repositories.management.mongodb.ensureIndexOnStart:${management.mongodb.ensureIndexOnStart:true}}")
-    private boolean ensureIndexOnStart;
+    private boolean globalEnsureIndexOnStart;
+
+    @Value("${reporters.mongodb.ensureIndexOnStart:true}")
+    private boolean reporterEnsureIndexOnStart;
 
     @Value("${repositories.management.mongodb.cursorMaxTime:${management.mongodb.cursorMaxTime:60000}}")
     private int cursorMaxTimeInMs;
@@ -135,6 +140,9 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Value("${reporters.mongodb.readPreferenceMaxStaleness:90000}")
     private Long readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
+
+    @Autowired
+    private AmNode node;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -222,7 +230,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         reportableCollection = this.clientWrapper.getClient().getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
         // init indexes
-        initIndexes();
+        if(node.isManagementNode() && globalEnsureIndexOnStart && reporterEnsureIndexOnStart) {
+            logger.debug("Triggering reporter index manipulation, coll={}", this.configuration.getReportableCollection());
+            initIndexes();
+        } else {
+            logger.debug("Skipping reporter index manipulation, coll={}", this.configuration.getReportableCollection());
+        }
 
         // init bulk processor
         disposable = bulkProcessor.buffer(
@@ -260,37 +273,27 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     }
 
     private void initIndexes() {
-        if (ensureIndexOnStart) {
-            // drop old indexes
-            // see : https://github.com/gravitee-io/issues/issues/7136
-            Completable deleteOldIndexes = Observable.fromPublisher(reportableCollection.listIndexes())
-                    .map(document -> document.getString("name"))
-                    .flatMapCompletable(indexName -> {
-                        if (OLD_INDICES.contains(indexName)) {
-                            return Completable.fromPublisher(reportableCollection.dropIndex(indexName));
-                        }
-                        return Completable.complete();
-                    });
+        // drop old indexes
+        // see : https://github.com/gravitee-io/issues/issues/7136
+        Completable deleteOldIndexes = MongoUtils.dropIndexes(reportableCollection, OLD_INDICES::contains);
 
-            // create new indexes
-            List<IndexModel> indexes = new ArrayList<>();
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME).partialFilterExpression(new Document(FIELD_STATUS, new Document("$eq", "SUCCESS"))).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME).background(true)));
-            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME).background(true)));
-            Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
-                    .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
-                    .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));
+        // create new indexes
+        List<IndexModel> indexes = new ArrayList<>();
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TIMESTAMP_NAME).background(true)));
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_TIMESTAMP_NAME).background(true)));
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME).partialFilterExpression(new Document(FIELD_STATUS, new Document("$eq", "SUCCESS"))).background(true)));
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME).background(true)));
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME).background(true)));
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME).background(true)));
+        indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME).background(true)));
+        Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
+                .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
+                .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));
 
-            // process indexes
-            deleteOldIndexes
-                    .andThen(createNewIndexes)
-                    .subscribe();
-
-        }
+        // process indexes
+        deleteOldIndexes
+                .andThen(createNewIndexes)
+                .subscribe();
     }
 
     private Single<Map<Object, Object>> executeHistogram(AuditReportableCriteria criteria, Bson query) {
