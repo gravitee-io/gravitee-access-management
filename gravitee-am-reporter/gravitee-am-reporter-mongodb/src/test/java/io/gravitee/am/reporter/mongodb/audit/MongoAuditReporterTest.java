@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.reporter.mongodb.audit;
 
+import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -26,6 +28,8 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
+import io.gravitee.am.reporter.mongodb.MongoReporterConfiguration;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -38,6 +42,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -53,6 +58,10 @@ import static io.gravitee.am.common.audit.EventType.USER_CBA_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_MAGIC_LINK_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TIMESTAMP_NAME;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -659,6 +668,48 @@ public class MongoAuditReporterTest {
         searchAfterPurge.assertNoErrors();
         searchAfterPurge.assertValue(page -> page.getTotalCount() == 1);
         searchAfterPurge.assertValue(page -> page.getData().stream().findFirst().get().getId().equals(recentAudit.getId()));
+    }
+
+    @Test
+    public void shouldCreateIndexesOnlyOnManagementNode() throws Exception {
+        final String gatewayCollection = "reporter_audits_gateway_node";
+        final String managementCollection = "reporter_audits_management_node";
+
+        startReporter(gatewayCollection, false);
+        startReporter(managementCollection, true);
+
+        // index creation is asynchronous, the management collection acts as the control group
+        Thread.sleep(5000);
+
+        assertTrue(indexNames(managementCollection).contains(INDEX_REFERENCE_TIMESTAMP_NAME));
+        assertTrue(indexNames(gatewayCollection).isEmpty());
+    }
+
+    private void startReporter(String collection, boolean managementNode) throws Exception {
+        MongoReporterConfiguration configuration = new MongoReporterConfiguration();
+        configuration.setDatabase(MongoReporterJUnitConfiguration.DATABASE);
+        configuration.setReportableCollection(collection);
+        configuration.setBulkActions(1000);
+        configuration.setFlushInterval(1L);
+
+        AmNode node = mock(AmNode.class);
+        when(node.isManagementNode()).thenReturn(managementNode);
+
+        MongoAuditReporter reporter = new MongoAuditReporter();
+        context.getAutowireCapableBeanFactory().autowireBean(reporter);
+        ReflectionTestUtils.setField(reporter, "configuration", configuration);
+        ReflectionTestUtils.setField(reporter, "node", node);
+        reporter.afterPropertiesSet();
+    }
+
+    private List<String> indexNames(String collection) {
+        return Flowable.fromPublisher(context.getBean(MongoClient.class)
+                        .getDatabase(MongoReporterJUnitConfiguration.DATABASE)
+                        .getCollection(collection)
+                        .listIndexes())
+                .map(index -> index.getString("name"))
+                .toList()
+                .blockingGet();
     }
 
     protected void waitBulkLoadFlush() {
