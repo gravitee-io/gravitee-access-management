@@ -122,9 +122,14 @@ describe('SAML permissive config - NameID and audiences', () => {
 });
 
 describe('SAML permissive config - legacy encryption algorithm', () => {
-  it(jira`should authenticate with RSA1_5 key transport for encrypted assertions ${'AM-7107'}`, async () => {
+  it(jira`should accept RSA1_5 key transport configuration without refusing the login ${'AM-7107'}`, async () => {
     // RSA1_5 is a deprecated key transport algorithm, still present in the allow-list
-    // at ApplicationServiceImpl. Authentication succeeds rather than being refused.
+    // at ApplicationServiceImpl, and the management API accepts it.
+    //
+    // This asserts only that the configuration does not break authentication. The
+    // fixture runs on HTTP-Redirect binding, where the response builder ignores the
+    // encryption settings entirely, so no encryption is actually applied here —
+    // saml-encryption.jest.spec.ts covers the algorithms under HTTP-POST.
     await fixture.setSamlSettings({
       nameIdMapping: SAML_LOOPBACK_TEST.EL_USERNAME,
       wantAssertionsEncrypted: true,
