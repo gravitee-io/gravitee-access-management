@@ -31,6 +31,7 @@ import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
+import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -83,6 +84,9 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private SystemReporterConfigResolver systemReporterConfigResolver;
 
     private final ConcurrentMap<io.gravitee.am.model.Reporter, Reporter> auditReporters = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, io.gravitee.am.model.Reporter> reporters = new ConcurrentHashMap<>();
@@ -354,7 +358,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         public void accept(GraviteeContext graviteeContext) throws Exception {
             if (graviteeContext != null) {
                 if (reporter.isEnabled()) {
-                    var providerConfig = new ReporterProviderConfiguration(reporter, graviteeContext);
+                    var providerConfig = new ReporterProviderConfiguration(systemReporterConfigResolver.resolve(reporter), graviteeContext);
                     var auditReporter = reporterPluginManager.create(providerConfig);
                     if (auditReporter == null) {
                         logger.warn("Couldn't create a {} reporter for context {}", providerConfig.getType(), providerConfig.getGraviteeContext());
