@@ -28,6 +28,7 @@ import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
+import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -75,7 +76,7 @@ class ReporterServiceTest {
     private final MockEnvironment environment = new MockEnvironment();
 
     @InjectMocks
-    private ReporterService reporterService = new ReporterServiceImpl(new RepositoriesEnvironment(environment), reporterRepository, null, null, validationService);
+    private ReporterService reporterService = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), reporterRepository, null, null, validationService);
 
 
     @Test
@@ -336,34 +337,6 @@ class ReporterServiceTest {
                 .assertError(t -> t.getMessage().contains("System reporter cannot be deleted."));
     }
 
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void default_reporter_config_has_null_port_when_mongo_servers_are_defined() throws Exception {
-        environment.setProperty("repositories.management.mongodb.servers[0].host", "localhost");
-        environment.setProperty("repositories.management.mongodb.servers[0].port", 27017);
-        environment.setProperty("repositories.management.mongodb.port", 99999); // this value should be ignored
-
-        String reporterConfig = reporterService.createReporterConfig(Reference.domain("test"));
-        Map<String, Object> test = new ObjectMapper().readValue(reporterConfig, Map.class);
-
-        assertNull(test.get("port"));
-        assertEquals("mongodb://localhost:27017/gravitee-am?connectTimeoutMS=5000&socketTimeoutMS=5000", test.get("uri"));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void default_reporter_config_when_mongo_servers_are_not_defined() throws Exception {
-        environment.setProperty("repositories.management.mongodb.host", "localhost");
-        environment.setProperty("repositories.management.mongodb.port", 27017);
-
-        String reporterConfig = reporterService.createReporterConfig(Reference.domain("test"));
-        Map<String, Object> test = new ObjectMapper().readValue(reporterConfig, Map.class);
-
-        assertEquals("localhost", (String) test.get("host"));
-        assertEquals(27017, test.get("port"));
-        assertEquals("mongodb://localhost:27017/gravitee-am?connectTimeoutMS=5000&socketTimeoutMS=5000", test.get("uri"));
-    }
 
     private NewReporter randomTestFileReporter(String name) {
         var reporter = new NewReporter();
