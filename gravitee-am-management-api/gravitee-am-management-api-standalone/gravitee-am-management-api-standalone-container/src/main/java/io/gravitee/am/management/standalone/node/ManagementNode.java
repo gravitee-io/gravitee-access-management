@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.standalone.node;
 
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.management.service.AlertTriggerManager;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuthorizationEngineManager;
@@ -42,7 +43,7 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ManagementNode extends JettyNode {
+public class ManagementNode extends JettyNode implements AmNode {
 
     @Autowired
     private NodeMetadataResolver nodeMetadataResolver;
@@ -57,6 +58,11 @@ public class ManagementNode extends JettyNode {
     @Override
     public String application() {
         return "gio-am-management";
+    }
+
+    @Override
+    public boolean isManagementNode() {
+        return true;
     }
 
     @Override
