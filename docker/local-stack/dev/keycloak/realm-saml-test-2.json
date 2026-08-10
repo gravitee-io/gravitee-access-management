@@ -1,0 +1,6 @@
+{
+  "realm": "saml-test-2",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false
+}

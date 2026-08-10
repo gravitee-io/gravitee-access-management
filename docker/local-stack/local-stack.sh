@@ -102,13 +102,13 @@ FULL=0
 DETACH=1
 LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
-WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0
+WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0
 
 want_set() { # want_set <name> <value>
   case "$1" in
     ui) WANT_UI="$2" ;; wiremock) WANT_WIREMOCK="$2" ;; ciba) WANT_CIBA="$2" ;;
     openfga) WANT_OPENFGA="$2" ;; kafka) WANT_KAFKA="$2" ;; mtls) WANT_MTLS="$2" ;;
-    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; *) return 1 ;;
+    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; keycloak) WANT_KEYCLOAK="$2" ;; *) return 1 ;;
   esac
 }
 
@@ -142,7 +142,9 @@ SERVICES
   --full               UI + wiremock + ciba + openfga + kafka + mtls
                        (the union the jest gateway + playwright suites need)
   --with a,b,...       opt-in extras individually:
-                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud
+                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,keycloak
+  --keycloak           start Keycloak on :8180 as a third-party SAML IdP
+                       (realms saml-test / saml-test-2 imported at start-up)
   --cloud              managed-cloud mode: start the cockpit mock and point the
                        management API at it (console/cloud command path, e.g.
                        Cockpit access points -> entrypoints)
@@ -200,6 +202,7 @@ while [ $# -gt 0 ]; do
                    want_set "$s" 1 || die "unknown --with service: $s"
                  done; shift 2 ;;
     --cloud)     WANT_CLOUD=1; shift ;;
+    --keycloak)  WANT_KEYCLOAK=1; shift ;;
     --build)     BUILD_MODE="force"; shift ;;
     --quick|--no-build) BUILD_MODE="skip"; shift ;;
     --license)   LICENSE_FILE="${2:?--license needs a path}"; shift 2 ;;
@@ -251,6 +254,7 @@ build_compose_files() {
   if [ "$WANT_UI" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ui.yml"); fi
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
+  if [ "$WANT_KEYCLOAK" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.keycloak.yml"); fi
   if [ "$PULLED" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.images.yml"); fi
   if [ -f "$LOCAL_OVERRIDE" ]; then COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE"); fi   # per-dev overrides win
 }
@@ -268,6 +272,7 @@ build_service_list() {
   [ "$WANT_KAFKA" -eq 1 ]    && SERVICES+=(kafka)
   [ "$WANT_MTLS" -eq 1 ]     && SERVICES+=(gateway-mtls)
   [ "$WANT_CLOUD" -eq 1 ]    && SERVICES+=(cockpit-mock)
+  [ "$WANT_KEYCLOAK" -eq 1 ] && SERVICES+=(keycloak)
   if [ "$WANT_SPIRE" -eq 1 ]; then
     SERVICES+=(spire-perms-init spire-server spire-bootstrap spire-agent spire-oidc)
   fi
@@ -491,6 +496,7 @@ print_ready() {
   printf '  Gateway        http://localhost:8092\n'
   printf '  Management API http://localhost:8093/management\n'
   [ "$WANT_UI" -eq 1 ] && printf '  Console UI     http://localhost:4200\n'
+  [ "$WANT_KEYCLOAK" -eq 1 ] && printf '  Keycloak       http://localhost:8180  (admin/admin)\n'
   printf '  Mailbox        http://localhost:5080\n'
   printf '  Admin login    admin / adminadmin   (org/env: DEFAULT)\n'
   printf '%s  Stop with: ./local-stack.sh down%s\n\n' "$C_DIM" "$C_RST"
