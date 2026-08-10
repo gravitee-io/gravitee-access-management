@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.reporter.mongodb.MongoReporterConfiguration;
 import io.gravitee.am.reporter.mongodb.tool.TestMongoConnectionProvider;
 import io.gravitee.am.repository.mongodb.provider.impl.MongoClientWrapper;
@@ -35,6 +36,8 @@ import java.util.Collections;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -87,5 +90,12 @@ public class MongoReporterJUnitConfiguration {
     @Bean
     public ConnectionProvider connectionProvider(MongoClient mongoClient) {
         return new TestMongoConnectionProvider(new MongoClientWrapper(mongoClient, DATABASE));
+    }
+
+    @Bean
+    public AmNode node() {
+        AmNode node = mock(AmNode.class);
+        when(node.isManagementNode()).thenReturn(true);
+        return node;
     }
 }
