@@ -171,6 +171,24 @@ describe('SAML Encryption - signing and encryption combinations', () => {
   });
 });
 
+describe('SAML Signing - HTTP-POST binding', () => {
+  it(jira`should not sign the response or the assertion when both signing flags are disabled ${'AM-2564'}`, async () => {
+    // The equivalent scenario under HTTP-Redirect refuses the login, because signing
+    // there happens at the binding layer. On the HTTP-POST path the flags reach the
+    // response builder instead, so the response is simply emitted unsigned.
+    await fixture.setSamlSettings({
+      wantResponseSigned: false,
+      wantAssertionsSigned: false,
+      wantAssertionsEncrypted: false,
+    });
+
+    const xml = await captureResponse();
+
+    expect(signatureLevels(xml)).toEqual({ response: false, assertion: false });
+    expect(hasPlaintextAssertion(xml)).toBe(true);
+  });
+});
+
 describe('SAML Encryption - disabled', () => {
   it(jira`should emit a readable assertion when encryption is disabled ${'AM-7111'}`, async () => {
     await fixture.setSamlSettings({ wantAssertionsEncrypted: false });

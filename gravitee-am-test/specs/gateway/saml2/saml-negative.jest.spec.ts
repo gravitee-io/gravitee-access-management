@@ -17,6 +17,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/glo
 import { jira } from '@specs-utils/jira';
 
 import { SamlLoopbackFixture, setupSamlLoopbackFixture, TEST_USER } from './fixtures/saml-loopback-fixture';
+import { initiateSamlFlow } from './fixtures/saml-response-capture';
 import { setup } from '../../test-fixture';
 
 /**
@@ -75,6 +76,24 @@ describe('SAML Negative - SP cannot validate the response signature', () => {
     const response = await fixture.attemptLogin(TEST_USER.username, TEST_USER.password);
 
     expect(response.text).toContain('social_authentication_failed');
+    expect(await fixture.findFederatedUsers()).toHaveLength(0);
+  });
+});
+
+describe('SAML Negative - SP entity ID the IdP cannot resolve', () => {
+  it(jira`should refuse the AuthnRequest when the SP entity ID is unknown to the IdP ${'AM-6960'}`, async () => {
+    // The IdP resolves the requesting SP by matching the AuthnRequest issuer against the
+    // application's SAML entityId. Changing it leaves the SP unregistered as far as the
+    // IdP is concerned, and the flow fails before any login form is presented.
+    await fixture.setSamlSettings({ entityId: 'unknown-sp-entity-id', assertionAttributes: null });
+
+    const { locations } = await initiateSamlFlow(fixture.saml.domains, fixture.saml.clientOpenIdConfiguration);
+    // The failure is reported on the error redirect, form-encoded, so '+' must become
+    // whitespace before decoding.
+    const surfaced = decodeURIComponent(locations.join(' ').replace(/\+/g, ' '));
+
+    expect(surfaced).toContain('error=technical_error');
+    expect(surfaced).toContain('can not be found');
     expect(await fixture.findFederatedUsers()).toHaveLength(0);
   });
 });

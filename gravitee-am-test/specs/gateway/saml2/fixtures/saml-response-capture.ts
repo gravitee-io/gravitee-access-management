@@ -176,3 +176,44 @@ export function signatureLevels(xml: string): { response: boolean; assertion: bo
     assertion: xml.slice(assertionStart).includes('<ds:Signature'),
   };
 }
+
+/**
+ * Start the SAML flow and return the response at the point it stops progressing,
+ * without asserting success.
+ *
+ * Some misconfigurations (an SP entity ID the IdP cannot resolve, for example) fail
+ * while the AuthnRequest is being handled — before any login form is shown — so the
+ * error never reaches a test that drives the full credential flow.
+ */
+export async function initiateSamlFlow(
+  domains: SamlTestDomains,
+  clientOpenIdConfiguration: any,
+): Promise<{ response: BasicResponse; locations: string[] }> {
+  const authorizeResponse = await initiateLoginFlow(
+    domains.clientApplication.settings.oauth.clientId,
+    clientOpenIdConfiguration,
+    domains.clientDomain,
+  );
+  const cookies = authorizeResponse.headers['set-cookie'];
+  const headers = cookies ? { Cookie: cookies } : {};
+
+  const loginPage = await performGet(authorizeResponse.headers['location'], '', headers).expect(200);
+  const samlProviderLink = findSamlProviderLink(loginPage.text);
+  expect(samlProviderLink).toEqual(expect.any(String));
+
+  let current: BasicResponse = await performGet(samlProviderLink!, '', headers);
+  // Errors are frequently carried in the redirect URL rather than the final page body,
+  // so every hop's Location is returned alongside the response that ends the chain.
+  const locations: string[] = [];
+
+  for (let hop = 0; hop < MAX_REDIRECTS; hop++) {
+    const nextLocation = current.headers?.location;
+    if (!nextLocation) {
+      return { response: current, locations };
+    }
+    locations.push(nextLocation);
+    const hopCookies = current.headers['set-cookie'] ?? cookies;
+    current = await performGet(nextLocation, '', hopCookies ? { Cookie: hopCookies } : {});
+  }
+  return { response: current, locations };
+}
