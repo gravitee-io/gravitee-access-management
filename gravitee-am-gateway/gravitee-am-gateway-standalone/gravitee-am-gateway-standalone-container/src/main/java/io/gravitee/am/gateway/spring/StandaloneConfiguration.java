@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.node.AmNode;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
@@ -130,7 +131,7 @@ public class StandaloneConfiguration {
     public static final int DEFAULT_SMTP_BULK_EXECUTOR_THREADS = 10;
 
     @Bean
-    public Node node() {
+    public AmNode node() {
         return new GatewayNode();
     }
 
