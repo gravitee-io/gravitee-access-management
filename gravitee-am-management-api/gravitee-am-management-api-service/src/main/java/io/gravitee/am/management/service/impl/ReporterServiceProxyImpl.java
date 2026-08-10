@@ -125,11 +125,6 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public String createReporterConfig(Reference reference) {
-        return reporterService.createReporterConfig(reference);
-    }
-
-    @Override
     public Completable notifyInheritedReporters(Reference parentReference, Reference affectedReference, Action action) {
         return reporterService.notifyInheritedReporters(parentReference, affectedReference, action);
     }
