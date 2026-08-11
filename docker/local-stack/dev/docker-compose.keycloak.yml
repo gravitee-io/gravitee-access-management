@@ -39,11 +39,11 @@
 #
 
 services:
-  # A signed SAML assertion from a real IdP is far larger than the Vert.x form-attribute
-  # default (8192) and larger still than the 2048 the Helm chart ships: Keycloak's is
-  # around 12 KB. Without raising this the gateway rejects the POST binding callback with
-  # a Netty "Size exceed allowed maximum capacity" and a 400. Real deployments federating
-  # to a third-party SAML IdP have to raise it too.
+  # A signed SAML assertion from a real IdP exceeds the gateway's default form-attribute
+  # limit: Keycloak's measures 12,004 bytes, and the Helm chart ships 2048. Without
+  # raising this the gateway rejects the POST binding callback with a Netty
+  # "Size exceed allowed maximum capacity" and a 400. Real deployments federating to a
+  # third-party SAML IdP have to raise it too.
   gateway:
     environment:
       GRAVITEE_HTTP_MAXFORMATTRIBUTESIZE: 65536
