@@ -14,6 +14,7 @@
     "stack:ci:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml up -d",
     "stack:ci:setup:cloud:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose.cloud.yml up -d",
     "stack:ci:setup:cloud:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.cloud.yml up -d",
+    "stack:ci:setup:keycloak:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose.keycloak.yml up -d",
     "stack:ci:pw:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml up -d",
     "stack:ci:pw:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml up -d",
     "stack:ci:pw:setup:cloud:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml -f dev/docker-compose.cloud.yml up -d",
@@ -23,10 +24,8 @@
     "stack:dev:spire": "docker compose -f dev/docker-compose.spire.yml up -d",
     "stack:dev:setup:kerberos": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-kerberos.yml up -d",
     "stack:dev:setup:psql": "JDBC_PLUGINS=./plugins/jdbc docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
-
     "stack:dev:pw:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml up -d",
     "stack:dev:pw:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml up -d",
-
     "stack:dev:mongo": "yarn run stack:init:ciba && yarn run stack:init:build && yarn run stack:dev:setup:mongo",
     "stack:dev:psql": "yarn run stack:init:ciba && yarn run stack:init:plugins:psql && yarn run stack:init:build && yarn run stack:dev:setup:psql",
     "stack:dev:mailbox": "docker compose -f dev/docker-compose.yml up -d smtp",

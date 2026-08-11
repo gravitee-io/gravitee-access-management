@@ -1,0 +1,89 @@
+{
+  "realm": "saml-test",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "testuser@example.com",
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Test1234!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-saml-test"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "http://localhost/am",
+      "name": "Gravitee AM (SAML SP)",
+      "enabled": true,
+      "protocol": "saml",
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:8092/*",
+        "http://gateway:8092/*"
+      ],
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.server.signature": "true",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml_name_id_format": "email",
+        "saml_force_name_id_format": "true",
+        "saml.client.signature": "false",
+        "saml.force.post.binding": "true",
+        "saml.authnstatement": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "email",
+            "friendly.name": "email",
+            "attribute.name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+            "attribute.nameformat": "URI Reference"
+          }
+        },
+        {
+          "name": "given name",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "firstName",
+            "friendly.name": "givenName",
+            "attribute.name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+            "attribute.nameformat": "URI Reference"
+          }
+        },
+        {
+          "name": "family name",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "lastName",
+            "friendly.name": "surname",
+            "attribute.name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+            "attribute.nameformat": "URI Reference"
+          }
+        }
+      ]
+    }
+  ]
+}
