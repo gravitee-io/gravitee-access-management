@@ -37,14 +37,22 @@ import java.util.Set;
 public class DummyHttpResponse implements HttpServerResponse {
 
     private final io.vertx.core.MultiMap headers = MultiMap.caseInsensitiveMultiMap();
-    private boolean ended;
-    private int statusCode;
+    private final Object endLock = new Object();
+    private volatile boolean ended;
+    private volatile int statusCode;
     private Handler<Void> endHandler;
 
     private void markEnded() {
-        this.ended = true;
-        if (endHandler != null) {
-            endHandler.handle(null);
+        final Handler<Void> handler;
+        synchronized (endLock) {
+            if (ended) {
+                return;
+            }
+            ended = true;
+            handler = endHandler;
+        }
+        if (handler != null) {
+            handler.handle(null);
         }
     }
 
@@ -165,7 +173,14 @@ public class DummyHttpResponse implements HttpServerResponse {
 
     @Override
     public HttpServerResponse endHandler(Handler<Void> handler) {
-        this.endHandler = handler;
+        final boolean alreadyEnded;
+        synchronized (endLock) {
+            this.endHandler = handler;
+            alreadyEnded = ended;
+        }
+        if (alreadyEnded && handler != null) {
+            handler.handle(null);
+        }
         return this;
     }
 
