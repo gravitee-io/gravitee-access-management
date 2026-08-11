@@ -45,7 +45,7 @@ describe('Kafka Reporter - Org Level Gateway', () => {
 
       const received: KafkaAuditPayload = await waitForKafkaMessage(
         topic,
-        { predicate: (msg) => msg.type === 'USER_LOGIN' },
+        { predicate: (msg) => msg.type === 'USER_LOGIN' && msg.referenceId === fixture.domain.id },
         () =>
           loginUserNameAndPassword(
             fixture.application.settings.oauth.clientId,
