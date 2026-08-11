@@ -15,7 +15,6 @@
     "stack:ci:setup:cloud:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose.cloud.yml up -d",
     "stack:ci:setup:cloud:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.cloud.yml up -d",
     "stack:ci:setup:keycloak:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose.keycloak.yml up -d",
-    "stack:ci:setup:keycloak:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.keycloak.yml up -d",
     "stack:ci:pw:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml up -d",
     "stack:ci:pw:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml up -d",
     "stack:ci:pw:setup:cloud:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml -f dev/docker-compose.cloud.yml up -d",

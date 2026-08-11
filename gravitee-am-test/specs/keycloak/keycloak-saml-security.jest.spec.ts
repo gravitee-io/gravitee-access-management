@@ -51,6 +51,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await fixture.resetToBaseline();
+  await fixture.waitForSamlIdpReady();
   await fixture.clearFederatedUsers();
 });
 
@@ -107,6 +108,7 @@ describe('Keycloak SAML - federated user lifecycle', () => {
 describe('Keycloak SAML - HTTP-POST AuthnRequest binding', () => {
   it(jira`should authenticate when the AuthnRequest is sent over HTTP-POST ${'AM-6819'}`, async () => {
     await fixture.setSamlIdpConfig(fixture.manualConfigWith({ protocolBinding: HTTP_POST_BINDING }));
+    await fixture.waitForSamlIdpReady();
 
     const response = await fixture.login(KEYCLOAK_TEST.USERNAME, KEYCLOAK_TEST.PASSWORD);
 

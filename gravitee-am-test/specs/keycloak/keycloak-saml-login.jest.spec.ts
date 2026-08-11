@@ -45,6 +45,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await fixture.resetToBaseline();
+  await fixture.waitForSamlIdpReady();
   await fixture.clearFederatedUsers();
 });
 
@@ -73,6 +74,7 @@ describe('Keycloak SAML - authentication against a third-party IdP', () => {
     // Instead of each endpoint being entered by hand, AM reads Keycloak's descriptor and
     // derives the SSO endpoints and signing certificate from it.
     await fixture.setSamlIdpConfig(metadataUrlModeConfig(KEYCLOAK_TEST.REALM, fixture.signingCertificateId));
+    await fixture.waitForSamlIdpReady();
 
     const response = await fixture.login(KEYCLOAK_TEST.USERNAME, KEYCLOAK_TEST.PASSWORD);
 
@@ -87,6 +89,7 @@ describe('Keycloak SAML - misconfiguration', () => {
     // signature validation cannot succeed.
     const otherRealmCertificate = await fixture.certificateFor(KEYCLOAK_TEST.SECOND_REALM);
     await fixture.setSamlIdpConfig(fixture.manualConfigWith({ signingCertificate: otherRealmCertificate }));
+    await fixture.waitForSamlIdpReady();
 
     const response = await fixture.login(KEYCLOAK_TEST.USERNAME, KEYCLOAK_TEST.PASSWORD);
 

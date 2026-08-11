@@ -70,6 +70,8 @@ export interface KeycloakSamlFixture {
   findSamlSignInLink: () => Promise<string | undefined>;
   /** Restore the IdP configuration captured at setup. */
   resetToBaseline: () => Promise<void>;
+  /** Block until the SAML sign-in link renders, redeploying the IdP if the fetch lost. */
+  waitForSamlIdpReady: () => Promise<void>;
   /** Remove every federated user, so each scenario starts clean. */
   clearFederatedUsers: () => Promise<void>;
   /** Signing certificate of any realm, read from its descriptor. */
@@ -283,6 +285,28 @@ export const setupKeycloakSamlFixture = async (
       tamper: (xml: string) => string,
     ): Promise<BasicResponse> => login(username, password, tamper);
 
+    /**
+     * Wait for the SAML IdP to be usable.
+     *
+     * In METADATA_URL mode the IdP fetches the descriptor once, at deploy time. Under load
+     * that fetch can lose, leaving the IdP with no signInUrl so the sign-in link never
+     * renders — the test then fails for a reason unrelated to what it asserts. Re-saving
+     * the configuration re-initialises the IdP and re-runs the fetch.
+     */
+    const waitForSamlIdpReady = async (): Promise<void> => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        for (let poll = 0; poll < 10; poll++) {
+          if (await findSamlSignInLink()) {
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        const current = JSON.parse(samlIdp.configuration);
+        await setSamlIdpConfig(current);
+      }
+      throw new Error('SAML IdP never became ready — the sign-in link did not render');
+    };
+
     const findFederatedUsers = async (query?: string): Promise<User[]> => {
       // An empty query does not list everything — fall back to the full listing.
       const page = query ? await listUsers(domain!.id, accessToken!, query) : await getAllUsers(domain!.id, accessToken!);
@@ -313,6 +337,7 @@ export const setupKeycloakSamlFixture = async (
       findFederatedUsers,
       findSamlSignInLink,
       resetToBaseline,
+      waitForSamlIdpReady,
       clearFederatedUsers,
       certificateFor,
       loginWithTamperedAssertion,
