@@ -145,20 +145,8 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
     }
 
     private void awaitResponseEnd(SpyRoutingContext spyRoutingContext) {
-        Completable completable = spyRoutingContext.ended() 
-            ? Completable.complete()
-            : Completable.create(emitter -> {
-                spyRoutingContext.response().endHandler(v -> {
-                    if (!emitter.isDisposed()) {
-                        emitter.onComplete();
-                    }
-                });
-                // Handle race condition: end() called between initial check and setting handler
-                if (spyRoutingContext.ended() && !emitter.isDisposed()) {
-                    emitter.onComplete();
-                }
-            });
-        
+        Completable completable = Completable.create(emitter ->
+                spyRoutingContext.response().endHandler(v -> emitter.onComplete()));
         TestObserver<Void> testObserver = completable.test();
         testObserver.awaitDone(20, TimeUnit.SECONDS);
         testObserver.assertComplete();
