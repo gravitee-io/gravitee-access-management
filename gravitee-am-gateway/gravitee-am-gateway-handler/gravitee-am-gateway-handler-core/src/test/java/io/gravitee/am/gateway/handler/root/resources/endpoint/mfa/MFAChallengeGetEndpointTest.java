@@ -144,6 +144,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         when(domainDataPlane.getDomain()).thenReturn(domain);
     }
 
+<<<<<<< HEAD
     // Register the end handler before handle() so the response completion signal can't be missed,
     // even when the endpoint ends the response on a Schedulers.io() thread.
     private void handleAndAwaitEnd(SpyRoutingContext spyRoutingContext) throws InterruptedException {
@@ -151,6 +152,15 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         spyRoutingContext.response().endHandler(v -> responseEnded.countDown());
         mfaChallengeGetEndpoint.handle(spyRoutingContext);
         Assert.assertTrue("response did not end within 20s", responseEnded.await(20, TimeUnit.SECONDS));
+=======
+    private void awaitResponseEnd(SpyRoutingContext spyRoutingContext) {
+        Completable completable = Completable.create(emitter ->
+                spyRoutingContext.response().endHandler(v -> emitter.onComplete()));
+        TestObserver<Void> testObserver = completable.test();
+        testObserver.awaitDone(20, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+>>>>>>> db3317512 (chore: fix mfa flaky test)
     }
 
     @Test
