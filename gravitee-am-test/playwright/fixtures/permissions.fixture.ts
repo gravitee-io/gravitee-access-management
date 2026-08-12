@@ -32,6 +32,7 @@ import { createTestApp } from '@utils-commands/application-commands';
 import { ListRolesTypeEnum } from '@management-apis/RoleApi';
 import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
+import type { RoleEntity } from '@management-models/RoleEntity';
 import { ConsolePersona, createConsolePersona, signInToConsole, workerScope } from '../utils/permissions-helpers';
 import { quietly, uniqueTestName } from '../utils/fixture-helpers';
 
@@ -51,6 +52,10 @@ export interface PermissionsWorld {
   appOwner: ConsolePersona;
   /** Custom APPLICATION-assignable role with only APPLICATION[READ] on `ownedApplication`. */
   appViewer: ConsolePersona;
+  /** The built-in APPLICATION_OWNER role, for tests that assign it themselves. */
+  applicationOwnerRole: RoleEntity;
+  /** The custom read-only application role, for tests that assign it themselves. */
+  applicationViewerRole: RoleEntity;
 }
 
 export type PermissionsFixtures = {
@@ -95,7 +100,16 @@ export const test = base.extend<PermissionsFixtures>({
       addApplicationMembership(domain.id, ownedApplication.id, adminToken, userMembership(appViewer.userId, applicationViewerRole.id)),
     );
 
-    await use({ adminToken, domain, ownedApplication, otherApplication, appOwner, appViewer });
+    await use({
+      adminToken,
+      domain,
+      ownedApplication,
+      otherApplication,
+      appOwner,
+      appViewer,
+      applicationOwnerRole,
+      applicationViewerRole,
+    });
 
     // Domain deletion cascades applications and their memberships; organization users and the
     // custom role live outside the domain and must be removed explicitly.
