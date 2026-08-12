@@ -118,3 +118,40 @@ export const getGroupRoles = (domainId: string, accessToken: string, groupId: st
     domain: domainId,
     group: groupId,
   });
+
+// --- Organization-level groups ----------------------------------------------------------------
+// The commands above are domain-scoped. Console users are grouped at organization level, and a
+// role assigned to such a group applies to every member of it.
+
+/**
+ * The create endpoint declares no response body, so the SDK returns `void` and the new group's id
+ * has to be recovered by name — the same shape as organization role creation.
+ */
+export const createOrganizationGroup = async (accessToken: string, name: string) => {
+  await getGroupApi(accessToken).createPlatformGroup({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    newGroup: { name },
+  });
+  // listGroups() is typed as returning an array, but the endpoint answers with a page object, so
+  // the generated transformer throws. Read the raw response instead of going through it.
+  const listing = await getGroupApi(accessToken).listGroupsRaw({ organizationId: process.env.AM_DEF_ORG_ID, size: 1000 });
+  const body = await listing.raw.json();
+  const created = (body.data ?? body).find((group) => group.name === name);
+  if (!created) {
+    throw new Error(`Organization group "${name}" was not found after creation`);
+  }
+  return created;
+};
+
+export const addOrganizationGroupMember = (accessToken: string, groupId: string, memberId: string) =>
+  getGroupApi(accessToken).addGroupMember1({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    group: groupId,
+    member: memberId,
+  });
+
+export const deleteOrganizationGroup = (accessToken: string, groupId: string) =>
+  getGroupApi(accessToken).deleteOrganizationGroup({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    group: groupId,
+  });
