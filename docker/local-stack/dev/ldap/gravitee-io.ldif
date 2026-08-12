@@ -1,0 +1,205 @@
+# Seed directory for the AM LDAP regression suite (AM-7447).
+#
+# Layout
+#   dc=gravitee,dc=io
+#     ou=people   users that authenticate against the LDAP IdP
+#     ou=groups   groups referenced by the IdP role mappers
+#
+# Group membership is deliberately expressed TWICE on each group entry:
+#   member:    <full user DN>  -> feeds the memberof overlay, so the user entry
+#                                 carries memberOf: cn=<GROUP>,ou=groups,dc=gravitee,dc=io
+#   memberUid: <bare uid>      -> matched by the group search filter (memberuid={0}),
+#                                 which makes AM fetch the group as its bare CN
+#
+# That is what lets a single directory exercise all three IdP configurations:
+#   1. Fetch user groups OFF  -> role mapper "memberOf=cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io"
+#   2. Fetch user groups ON   -> same full-DN mapper still matches
+#   3. Fetch user groups ON + group search base "ou=groups" + filter "(memberuid={0})"
+#                             -> role mapper "memberOf=GRAVITEE_ADMINS" matches
+#
+# groupOfNames and posixGroup are both STRUCTURAL, so a single entry cannot be both.
+# extensibleObject is auxiliary and permits memberUid alongside groupOfNames.
+#
+# NOTE: the GROUPS are deliberately NOT in this file — see ldap/groups.ldif.
+# The memberof overlay only stamps memberOf onto a user when the group naming it
+# is written AFTER the overlay is installed. Groups therefore have to be added by
+# openldap-init once the overlay is in place; seeding them here would leave every
+# user without memberOf.
+
+dn: dc=gravitee,dc=io
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: Gravitee
+dc: gravitee
+
+dn: ou=people,dc=gravitee,dc=io
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=gravitee,dc=io
+objectClass: organizationalUnit
+ou: groups
+
+# Second user subtree, standing in for a SEPARATE directory (AM-5385). An IdP
+# pointed at ou=people2 is a different provider resolving the same username as the
+# one pointed at ou=people, which is what account linking needs. Two subtrees are
+# used rather than two servers because the bug depends on two providers, not two
+# hosts.
+dn: ou=people2,dc=gravitee,dc=io
+objectClass: organizationalUnit
+ou: people2
+
+# --- users -------------------------------------------------------------------
+
+# Primary test user. Member of GRAVITEE_ADMINS -> used by every role-mapper case.
+dn: uid=ldap-admin,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: ldap-admin
+cn: LDAP Admin
+sn: Admin
+givenName: Ldap
+displayName: LDAP Admin
+mail: ldap-admin@gravitee.io
+uidNumber: 1000
+gidNumber: 1000
+homeDirectory: /home/ldap-admin
+userPassword: ldap-admin
+
+# Member of GRAVITEE_USERS only. Proves a mapper scoped to GRAVITEE_ADMINS does
+# NOT fire for a user in a different group.
+dn: uid=jdoe,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: jdoe
+cn: John Doe
+sn: Doe
+givenName: John
+displayName: John Doe
+mail: jdoe@gravitee.io
+uidNumber: 1001
+gidNumber: 1001
+homeDirectory: /home/jdoe
+userPassword: password
+
+# Password stored HASHED rather than in the clear, which is how real directories
+# hold credentials. slapd verifies the hash itself during the bind, so this proves
+# AM never depends on reading a plaintext userPassword.
+#
+# The hash is {SSHA} of 'HashedP@ss1', generated with:
+#   slappasswd -h '{SSHA}' -s 'HashedP@ss1'
+# SSHA is salted, so regenerating it produces a different (equally valid) string.
+dn: uid=hasheduser,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: hasheduser
+cn: Hashed User
+sn: User
+givenName: Hashed
+displayName: Hashed User
+mail: hasheduser@gravitee.io
+uidNumber: 1003
+gidNumber: 1003
+homeDirectory: /home/hasheduser
+userPassword: {SSHA}28ay6L4jWODkjHO1bvkAR6VTR4GU8xWP
+
+# Compare-mode users. Instead of binding, AM hashes the submitted password itself
+# and asks the directory to COMPARE the result against userPassword.
+#
+# CompareAuthHandler builds the compared value as:
+#     hashEncodedByThirdParty ? <encoded>
+#                             : "{" + schemeLabel + "}" + <encoded>
+# so the stored form must match the flag:
+#   - flag false (default) -> "{SHA}<base64>"   <- compareuser below
+#   - flag true            -> "<base64>"        <- compareuser3p below
+#
+#   python3 -c "import hashlib,base64;print(base64.b64encode(hashlib.sha1(b'ComparePass1').digest()).decode())"
+dn: uid=compareuser,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: compareuser
+cn: Compare User
+sn: User
+givenName: Compare
+displayName: Compare User
+mail: compareuser@gravitee.io
+uidNumber: 1004
+gidNumber: 1004
+homeDirectory: /home/compareuser
+userPassword: {SHA}OtlZUsn+TT8bVanOmoXVcXG76ag=
+
+# Same digest, stored WITHOUT the {SHA} prefix — the layout that requires
+# hashEncodedByThirdParty=true.
+dn: uid=compareuser3p,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: compareuser3p
+cn: Compare User ThirdParty
+sn: User
+givenName: Compare
+displayName: Compare User ThirdParty
+mail: compareuser3p@gravitee.io
+uidNumber: 1005
+gidNumber: 1005
+homeDirectory: /home/compareuser3p
+userPassword: OtlZUsn+TT8bVanOmoXVcXG76ag=
+
+# AM-5385: the same username exists in BOTH subtrees, so the account-linking
+# policy can match them by username. Only the ou=people copy is a member of the
+# 'workers' group, so only the IdP pointed there produces dynamic roles.
+dn: uid=john,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: john
+cn: John Doe
+sn: Doe
+givenName: John
+displayName: John Doe
+mail: john@gravitee.io
+uidNumber: 1006
+gidNumber: 1006
+homeDirectory: /home/john
+userPassword: test
+
+# The ou=people2 copy — same username, deliberately in no group at all, so an IdP
+# pointed here can never contribute roles of its own.
+dn: uid=john,ou=people2,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: john
+cn: John Doe
+sn: Doe
+givenName: John
+displayName: John Doe
+mail: john@gravitee.io
+uidNumber: 1007
+gidNumber: 1007
+homeDirectory: /home/john2
+userPassword: test
+
+# Belongs to NO group. Authenticates successfully but must receive no dynamic
+# roles under any of the three configurations.
+dn: uid=nogroup,ou=people,dc=gravitee,dc=io
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: nogroup
+cn: No Group
+sn: Group
+givenName: No
+displayName: No Group
+mail: nogroup@gravitee.io
+uidNumber: 1002
+gidNumber: 1002
+homeDirectory: /home/nogroup
+userPassword: nogroup
+
+# Groups live in ldap/groups.ldif and are applied by openldap-init.
