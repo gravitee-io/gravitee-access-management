@@ -133,6 +133,89 @@ public class RevocationServiceTest {
 
     }
 
+    /**
+     * RFC 7009 section 2.1: if the server cannot locate the token using the given hint, it MUST
+     * extend its search across all supported token types.
+     */
+    @Test
+    public void shouldRevoke_accessToken_whenHintIncorrectlySaysRefreshToken() {
+        final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
+        revocationTokenRequest.setHint(TokenTypeHint.REFRESH_TOKEN);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        AccessToken accessToken = new AccessToken("token");
+        accessToken.setClientId("client-id");
+
+        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.empty());
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(accessToken));
+        when(tokenService.deleteAccessToken("token")).thenReturn(Completable.complete());
+
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenService, times(1)).getRefreshToken("token", client);
+        verify(tokenService, times(1)).getAccessToken("token", client);
+        verify(tokenService, times(1)).deleteAccessToken("token");
+        verify(tokenService, never()).deleteRefreshToken(anyString());
+    }
+
+    @Test
+    public void shouldRevoke_refreshToken_whenNoHintProvided() {
+        final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        Token refreshToken = new RefreshToken("token");
+        refreshToken.setClientId("client-id");
+
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.empty());
+        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.just(refreshToken));
+        when(tokenService.deleteRefreshToken("token")).thenReturn(Completable.complete());
+
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenService, times(1)).getAccessToken("token", client);
+        verify(tokenService, times(1)).getRefreshToken("token", client);
+        verify(tokenService, times(1)).deleteRefreshToken("token");
+        verify(tokenService, never()).deleteAccessToken(anyString());
+    }
+
+    /**
+     * The cross-client guard exists separately on the refresh-token path, so it needs its own
+     * coverage — shouldNotRevoke_WrongRequestedClientId only exercises the access-token path.
+     */
+    @Test
+    public void shouldNotRevoke_refreshToken_WrongRequestedClientId() {
+        final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
+        revocationTokenRequest.setHint(TokenTypeHint.REFRESH_TOKEN);
+
+        Token refreshToken = new RefreshToken("token");
+        refreshToken.setClientId("client-id");
+
+        Client client = new Client();
+        client.setClientId("wrong-client-id");
+
+        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.just(refreshToken));
+
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidGrantException.class);
+
+        verify(tokenService, times(1)).getRefreshToken("token", client);
+        verify(tokenService, never()).deleteRefreshToken(anyString());
+        verify(tokenService, never()).getAccessToken(anyString(), any());
+        verify(tokenService, never()).deleteAccessToken(anyString());
+    }
+
     @Test
     public void shouldRevoke_refreshToken() {
         final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
