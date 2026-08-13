@@ -31,8 +31,12 @@ setup(200000);
 const UPSTREAM_PROVIDER_TOKENS = ['op_id_token', 'op_access_token'] as const;
 /** Timing claims AM sets itself, so the token carries AM's value rather than the planted one. */
 const AM_GENERATED_TIMING_CLAIMS = ['iat', 'exp', 'auth_time'] as const;
-/** Timing claims AM puts in no ID token at all, planted or otherwise. */
-const TIMING_CLAIMS_NEVER_IN_ID_TOKEN = ['nbf', 'updated_at'] as const;
+/**
+ * Timing claims the `full_profile` path strips via ID_TOKEN_EXCLUDED_CLAIMS.
+ * Not "never in an ID token" - `updated_at` is present under the narrower `profile`
+ * scope, which the seconds-vs-milliseconds test lower down relies on.
+ */
+const TIMING_CLAIMS_STRIPPED_BY_FULL_PROFILE = ['nbf', 'updated_at'] as const;
 
 /** Any timestamp AM generates during the run is far larger than the planted constants. */
 const PLAUSIBLE_RECENT_EPOCH = 1_700_000_000;
@@ -92,13 +96,13 @@ describe('Internal claim exposure - a stored profile cannot dictate token timing
     }
   });
 
-  it('leaves out entirely the timing claims an ID token never carries', async () => {
+  it('strips the excluded timing claims when the whole profile is copied', async () => {
     const tokens = await fixture.passwordGrantFor(fixture.leakyUser, 'openid full_profile');
     const idToken = decodeToken(tokens.id_token).payload;
 
     expect(idToken.leak_probe_marker).toEqual(LEAKY_PROFILE_CLAIMS.leak_probe_marker);
 
-    for (const claim of TIMING_CLAIMS_NEVER_IN_ID_TOKEN) {
+    for (const claim of TIMING_CLAIMS_STRIPPED_BY_FULL_PROFILE) {
       expect(idToken).not.toHaveProperty(claim);
     }
   });

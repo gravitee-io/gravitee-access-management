@@ -291,6 +291,33 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       return response.body;
     };
 
+    /**
+     * A user is created before the domain starts, but the gateway does not always
+     * serve the stored profile on the very first authentication - the attributes can
+     * come back undefined under load. Rather than hand back a fixture that is only
+     * probably ready, block until the profile is genuinely visible.
+     *
+     * `full_profile` copies the whole stored profile into the token, so a planted
+     * attribute appearing there is proof the gateway can read it.
+     */
+    const waitForUserProfileVisible = async (attributeName: string) => {
+      const deadline = Date.now() + 20_000;
+      for (;;) {
+        const tokens = await passwordGrantFor(user, 'openid full_profile');
+        if (decodeToken(tokens.id_token).payload[attributeName] !== undefined) {
+          return;
+        }
+        if (Date.now() > deadline) {
+          throw new Error(`gateway still not serving user attribute "${attributeName}" after 20s`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    };
+
+    if (options.userAttributes) {
+      await waitForUserProfileVisible(Object.keys(options.userAttributes)[0]);
+    }
+
     const userinfo = async (accessTokenValue: string) => {
       const response = await performGet(oidc.userinfo_endpoint, '', {
         Authorization: `Bearer ${accessTokenValue}`,

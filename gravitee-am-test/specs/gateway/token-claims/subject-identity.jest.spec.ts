@@ -134,8 +134,19 @@ describe('Subject identity - a profile attribute cannot impersonate the subject'
 
     expect(accessToken.sub).not.toEqual(SPOOFED_PROFILE_CLAIMS.sub);
     expect(idToken.sub).not.toEqual(SPOOFED_PROFILE_CLAIMS.sub);
-    // AM's own derivation still holds for this user.
+
+    // `sub` must be a derived UUID rather than the planted string passed through.
+    expect(accessToken.sub).toMatch(UUID_V3);
     expect(accessToken.sub).toEqual(nameUuidFromBytes(accessToken.gis));
+
+    // The planted `gis` itself is discarded - AM builds its own from source and
+    // external id. Note the external id here IS the planted `sub`: the Mongo
+    // provider treats a profile `sub` as the user's identifier in that IdP
+    // (MongoAuthenticationProvider:184), which is what `externalId` means. So the
+    // guard being tested is that the profile cannot dictate the `sub` *claim*,
+    // not that it cannot influence the external identity.
+    expect(accessToken.gis).not.toEqual(SPOOFED_PROFILE_CLAIMS.gis);
+    expect(accessToken.gis.startsWith(`${fixture.spoofedUser.source}:`)).toBe(true);
   });
 
   it('ignores a sub supplied by the identity provider at the userinfo endpoint', async () => {

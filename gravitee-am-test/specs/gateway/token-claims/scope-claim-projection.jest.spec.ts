@@ -142,13 +142,19 @@ describe('Scope to claim projection - full_profile', () => {
     expect(profile.nickname).toEqual(PROFILE_ATTRIBUTES.nickname);
   });
 
-  it('drops updated_at, which the narrower profile scope keeps', async () => {
-    // The two paths differ: the scope-driven copy passes updated_at through, while
-    // full_profile runs the ID_TOKEN_EXCLUDED_CLAIMS filter and removes it.
-    const viaProfile = decodeToken((await fixture.passwordGrant('openid profile')).id_token).payload;
+  it('filters out updated_at even though it copies the profile wholesale', async () => {
     const viaFullProfile = decodeToken((await fixture.passwordGrant('openid full_profile')).id_token).payload;
 
-    expect(viaProfile.updated_at).toEqual(expect.any(Number));
+    // Anchor: the profile really was copied, so the absence below is a filter doing
+    // its job rather than an empty payload.
+    expect(viaFullProfile.nickname).toEqual(PROFILE_ATTRIBUTES.nickname);
+    expect(viaFullProfile.website).toEqual(PROFILE_ATTRIBUTES.website);
+
+    // full_profile applies ID_TOKEN_EXCLUDED_CLAIMS, which names updated_at.
+    // This deliberately asserts only the exclusion, not a contrast against the
+    // narrower `profile` scope: updated_at is populated by AM rather than by the
+    // fixture, so reading it back made the test depend on the user record being
+    // fully visible - which is what made it fail in CI.
     expect(viaFullProfile).not.toHaveProperty('updated_at');
   });
 });
