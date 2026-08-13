@@ -54,8 +54,17 @@ afterAll(async () => {
 
 describe('Claims request parameter - naming claims instead of a scope', () => {
   it('puts the named claims in the ID token without granting the profile scope', async () => {
+    // TEMPORARY DIAGNOSTIC - these three tests pass locally and fail in CI. Compare
+    // what the two flows see so the difference is visible in the CI log, then remove.
+    const viaPasswordGrant = await fixture.passwordGrant('openid full_profile');
+    console.log('[diag] password grant, full_profile ID token:', JSON.stringify(decodeToken(viaPasswordGrant.id_token).payload));
+    console.log('[diag] password grant userinfo:', JSON.stringify(await fixture.userinfo(viaPasswordGrant.access_token)));
+
     const tokens = await fixture.authorizationCodeFlow(`scope=openid&${claimsParameter({ id_token: { nickname: null, website: null } })}`);
     const idToken = decodeToken(tokens.id_token).payload;
+    console.log('[diag] auth code + claims=, granted scope:', tokens.scope);
+    console.log('[diag] auth code ID token:', JSON.stringify(idToken));
+    console.log('[diag] auth code userinfo:', JSON.stringify(await fixture.userinfo(tokens.access_token)));
 
     // Only openid was granted, so nothing arrived by way of a scope.
     expect(tokens.scope).toEqual('openid');
@@ -66,6 +75,12 @@ describe('Claims request parameter - naming claims instead of a scope', () => {
   it('returns the named claims from userinfo without granting the phone scope', async () => {
     const tokens = await fixture.authorizationCodeFlow(`scope=openid&${claimsParameter({ userinfo: { phone_number: null } })}`);
     const profile = await fixture.userinfo(tokens.access_token);
+
+    // TEMPORARY DIAGNOSTIC - this is the only failing test that exercises the
+    // `userinfo` section of the claims parameter, so it needs its own dump.
+    console.log('[diag] userinfo-section granted scope:', tokens.scope);
+    console.log('[diag] userinfo-section response:', JSON.stringify(profile));
+    console.log('[diag] userinfo-section ID token:', JSON.stringify(decodeToken(tokens.id_token).payload));
 
     expect(tokens.scope).toEqual('openid');
     expect(profile.phone_number).toEqual(PROFILE_ATTRIBUTES.phone_number);
