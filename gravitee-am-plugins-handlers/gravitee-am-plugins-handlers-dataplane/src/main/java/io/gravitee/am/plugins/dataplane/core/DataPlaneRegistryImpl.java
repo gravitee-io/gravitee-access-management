@@ -33,6 +33,7 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.exceptions.IllegalDataPlaneIdException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.rxjava3.core.Completable;
 import lombok.CustomLog;
 
 import java.util.List;
@@ -54,9 +55,12 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
 
     private Map<String, DataPlaneDescription> dataPlanDescriptions = new ConcurrentHashMap<>();
 
-    public DataPlaneRegistryImpl(DataPlaneLoader dataPlaneLoader, DataPlanePluginManager dataPlanePluginManager) {
+    private final DataPlaneVerifier verifier;
+
+    public DataPlaneRegistryImpl(DataPlaneLoader dataPlaneLoader, DataPlanePluginManager dataPlanePluginManager, DataPlaneVerifier verifier) {
         this.dataPlaneLoader = dataPlaneLoader;
         this.dataPlanePluginManager = dataPlanePluginManager;
+        this.verifier = verifier;
     }
 
     public List<DataPlaneDescription> getDataPlanes() {
@@ -202,7 +206,19 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     }
 
     @Override
+    public void requireVerification(String dataPlaneId) {
+        verifier.require(dataPlaneId, getProviderById(dataPlaneId));
+    }
+
+    @Override
+    public Completable verified(String dataPlaneId) {
+        return verifier.verified(dataPlaneId);
+    }
+
+    @Override
     public void unregister(String dataPlaneId) {
+        // a re-provisioned id has to be checked again rather than inherit the outgoing definition's result
+        verifier.forget(dataPlaneId);
         dataPlanDescriptions.remove(dataPlaneId);
         var provider = dataPlanProviders.remove(dataPlaneId);
         if (provider == null) {

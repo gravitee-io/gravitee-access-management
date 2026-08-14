@@ -49,7 +49,7 @@ class DataPlaneRegistryImplTest {
     private DataPlaneProvider provider;
 
     private DataPlaneRegistryImpl registry() {
-        return new DataPlaneRegistryImpl(storage -> {}, dataPlanePluginManager);
+        return new DataPlaneRegistryImpl(storage -> {}, dataPlanePluginManager, new DataPlaneVerifierImpl(false, 5000, 10000));
     }
 
     @Test

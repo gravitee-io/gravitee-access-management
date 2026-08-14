@@ -33,6 +33,8 @@ import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneVerifier;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneVerifierImpl;
 import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
@@ -177,8 +179,20 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public DataPlaneRegistry dataPlaneRegistry(ProvisionedDataPlaneLoader loader, DataPlanePluginManager manager) {
-        return new DataPlaneRegistryImpl(loader, manager);
+    public DataPlaneVerifier dataPlaneVerifier(ConfigurableEnvironment environment) {
+        return new DataPlaneVerifierImpl(
+                environment.getProperty("dataPlaneVerification.enabled", Boolean.class, true),
+                environment.getProperty("dataPlaneVerification.timeout", Long.class, 5000L),
+                environment.getProperty("dataPlaneVerification.retryAfter", Long.class, 10000L));
+    }
+
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry(ProvisionedDataPlaneLoader loader, DataPlanePluginManager manager, DataPlaneVerifier verifier) {
+        var registry = new DataPlaneRegistryImpl(loader, manager, verifier);
+        // the loader needs the registry to put the definitions it activates under verification, and the
+        // registry is built from the loader, so the two are tied together here rather than by injection
+        loader.setRegistry(registry);
+        return registry;
     }
 
     /**

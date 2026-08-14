@@ -36,6 +36,9 @@ import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.r2dbc.spi.ConnectionFactory;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
 import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
@@ -105,6 +108,15 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
     @Override
     public void stop() {
 
+    }
+
+    @Override
+    public Completable healthCheck() {
+        return Single.fromPublisher(clientWrapper.create())
+                .flatMapCompletable(connection -> Flowable.fromPublisher(connection.createStatement("SELECT 1").execute())
+                        .flatMap(result -> Flowable.fromPublisher(result.map((row, metadata) -> 1)))
+                        .ignoreElements()
+                        .doFinally(() -> Completable.fromPublisher(connection.close()).onErrorComplete().subscribe()));
     }
 
     @Override

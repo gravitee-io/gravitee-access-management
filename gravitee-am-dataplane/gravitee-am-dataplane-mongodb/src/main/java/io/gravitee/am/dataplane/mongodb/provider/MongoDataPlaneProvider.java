@@ -34,7 +34,10 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.reactivex.rxjava3.core.Completable;
+import org.bson.Document;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
+import io.reactivex.rxjava3.core.Completable;
 import lombok.Getter;
 import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
@@ -96,8 +99,17 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Qualifier("dataplaneUpgraderRepository")
     private UpgraderRepository upgraderRepository;
 
+    /**
+     * Held for as long as the provider is, which is what {@link #stop()} releases. Taking it here
+     * rather than per call keeps the wrapper's reference count matched: the wrapper closes the client
+     * once its count reaches zero, so a caller that borrows and returns one around a short operation
+     * is one miscount away from closing a client the repositories are still using.
+     */
+    private MongoClient mongoClient;
+
     @Override
     public void afterPropertiesSet() throws Exception {
+        this.mongoClient = mongoClientWrapper.getClient();
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
     }
 
@@ -106,6 +118,14 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
         if (mongoClientWrapper != null) {
             mongoClientWrapper.releaseClient();
         }
+    }
+
+    @Override
+    public Completable healthCheck() {
+        // the driver authenticates while it establishes the connection, so wrong credentials surface
+        // here even though the command itself needs no privilege
+        return Completable.defer(() -> Completable.fromPublisher(mongoClient.getDatabase(mongoClientWrapper.getDatabaseName())
+                .runCommand(new Document("ping", 1))));
     }
 
     @Override
@@ -187,4 +207,5 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     public PermissionTicketRepository getPermissionTicketRepository() {
         return permissionTicketRepository;
     }
+
 }
