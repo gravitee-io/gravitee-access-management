@@ -202,6 +202,34 @@ class ProvisionedDataPlaneManagerTest {
         verify(dataPlaneRegistry).register(DESCRIPTION);
     }
 
+    @Test
+    void shouldClaimTheDataPlaneBeforeRegisteringIt() {
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        // a domain creation landing between the two must not read the gap as "nothing to check"
+        InOrder inOrder = inOrder(dataPlaneRegistry);
+        inOrder.verify(dataPlaneRegistry).reserveVerification("dp-1");
+        inOrder.verify(dataPlaneRegistry).register(DESCRIPTION);
+        inOrder.verify(dataPlaneRegistry).requireVerification("dp-1");
+    }
+
+    @Test
+    void shouldReleaseTheClaimWhenTheProviderCannotBeBuilt() {
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
+        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).register(DESCRIPTION);
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        // the claim must not outlive the failed registration, or the id stays refused for good
+        InOrder inOrder = inOrder(dataPlaneRegistry);
+        inOrder.verify(dataPlaneRegistry).reserveVerification("dp-1");
+        inOrder.verify(dataPlaneRegistry).register(DESCRIPTION);
+        inOrder.verify(dataPlaneRegistry).unregister("dp-1");
+        verify(dataPlaneRegistry, never()).requireVerification(any());
+    }
+
     private static SimpleEvent<DataPlaneEvent, Payload> event(DataPlaneEvent type, String dataPlaneId) {
         Action action = switch (type) {
             case DEPLOY -> Action.CREATE;

@@ -28,6 +28,13 @@ import io.reactivex.rxjava3.core.Completable;
 public interface DataPlaneVerifier {
 
     /**
+     * Claims an id ahead of the provider being built, so that the moment between registering a data
+     * plane and putting it under verification cannot be read as "nothing to check". A claimed id is
+     * refused until {@link #require} attaches its provider.
+     */
+    void reserve(String dataPlaneId);
+
+    /**
      * Puts this data plane under verification and starts the check without waiting for it. Only the
      * provisioned data planes are put under it: the ones the gravitee.yml declares are the node's own
      * configuration and keep serving domains without a check.

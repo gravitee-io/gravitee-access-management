@@ -34,10 +34,10 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
-import io.reactivex.rxjava3.core.Completable;
-import org.bson.Document;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Completable;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import org.bson.Document;
 import lombok.Getter;
 import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
@@ -100,16 +100,16 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     private UpgraderRepository upgraderRepository;
 
     /**
-     * Held for as long as the provider is, which is what {@link #stop()} releases. Taking it here
-     * rather than per call keeps the wrapper's reference count matched: the wrapper closes the client
-     * once its count reaches zero, so a caller that borrows and returns one around a short operation
-     * is one miscount away from closing a client the repositories are still using.
+     * The database the repositories were given, which already holds the wrapper's single reference.
+     * Taking another one here would leave {@link #stop()} one release short of the count the wrapper
+     * closes its client on, so an unregistered data plane would keep its connection pool open.
      */
-    private MongoClient mongoClient;
+    @Autowired
+    @Qualifier("dataPlaneMongoDatabase")
+    private MongoDatabase mongoDatabase;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.mongoClient = mongoClientWrapper.getClient();
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
     }
 
@@ -124,8 +124,7 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     public Completable healthCheck() {
         // the driver authenticates while it establishes the connection, so wrong credentials surface
         // here even though the command itself needs no privilege
-        return Completable.defer(() -> Completable.fromPublisher(mongoClient.getDatabase(mongoClientWrapper.getDatabaseName())
-                .runCommand(new Document("ping", 1))));
+        return Completable.defer(() -> Completable.fromPublisher(mongoDatabase.runCommand(new Document("ping", 1))));
     }
 
     @Override
@@ -207,5 +206,4 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     public PermissionTicketRepository getPermissionTicketRepository() {
         return permissionTicketRepository;
     }
-
 }

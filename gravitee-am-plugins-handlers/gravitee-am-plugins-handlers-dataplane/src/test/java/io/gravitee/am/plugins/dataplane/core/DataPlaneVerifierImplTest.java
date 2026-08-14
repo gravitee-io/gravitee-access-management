@@ -17,6 +17,7 @@ package io.gravitee.am.plugins.dataplane.core;
 
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.subjects.CompletableSubject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -127,5 +128,62 @@ class DataPlaneVerifierImplTest {
 
         // the id is free again, so a re-provisioned data plane is not answered from the old refusal
         verifier.verified(DATA_PLANE_ID).test().assertComplete();
+    }
+
+    @Test
+    void should_refuse_a_reserved_data_plane_until_its_provider_arrives() {
+        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+
+        verifier.reserve(DATA_PLANE_ID);
+
+        // the gap between registering a data plane and putting it under verification must not read
+        // as "nothing to check"
+        verifier.verified(DATA_PLANE_ID).test().assertError(IllegalStateException.class);
+        assertThat(checks).hasValue(0);
+    }
+
+    @Test
+    void should_serve_a_reserved_data_plane_once_its_provider_has_answered() {
+        when(provider.healthCheck()).thenReturn(answering(Completable.complete()));
+        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+
+        verifier.reserve(DATA_PLANE_ID);
+        verifier.require(DATA_PLANE_ID, provider);
+
+        verifier.verified(DATA_PLANE_ID).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        assertThat(checks).hasValue(1);
+    }
+
+    @Test
+    void should_release_a_reservation_that_was_forgotten() {
+        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        verifier.reserve(DATA_PLANE_ID);
+
+        verifier.forget(DATA_PLANE_ID);
+
+        // a registration that failed must not leave the id refused for good
+        verifier.verified(DATA_PLANE_ID).test().assertComplete();
+    }
+
+    @Test
+    void should_ignore_a_refusal_belonging_to_a_definition_that_was_already_replaced() {
+        var inFlight = CompletableSubject.create();
+        when(provider.healthCheck()).thenReturn(answering(inFlight));
+        var verifier = new DataPlaneVerifierImpl(true, 5000, 60000);
+        verifier.require(DATA_PLANE_ID, provider);
+        // subscribed here rather than left to the background check, so the store is asked before the
+        // definition is replaced whichever way the scheduler runs
+        var waiting = verifier.verified(DATA_PLANE_ID).test();
+        assertThat(checks).hasValue(1);
+
+        // the definition is replaced by one that works while its check is still waiting on the store
+        verifier.forget(DATA_PLANE_ID);
+        when(provider.healthCheck()).thenReturn(answering(Completable.complete()));
+        verifier.require(DATA_PLANE_ID, provider);
+        inFlight.onError(new IOException("refused"));
+        waiting.awaitDone(5, TimeUnit.SECONDS).assertError(IOException.class);
+
+        // the outgoing definition's refusal must not be recorded against the one that replaced it
+        verifier.verified(DATA_PLANE_ID).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
     }
 }

@@ -75,7 +75,7 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
 
     @Bean
     public DataPlaneRegistry dataPlaneRegistry() {
-        return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class), new DataPlaneVerifierImpl(true, 5000,10000));
+        return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class), new DataPlaneVerifierImpl(true, 5000, 10000));
     }
 
     @Bean

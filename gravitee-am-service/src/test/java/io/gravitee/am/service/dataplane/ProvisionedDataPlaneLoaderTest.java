@@ -18,12 +18,14 @@ package io.gravitee.am.service.dataplane;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -35,6 +37,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -177,6 +181,39 @@ class ProvisionedDataPlaneLoaderTest {
         loader().load(loaded::add);
 
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-2");
+    }
+
+    @Test
+    void should_claim_a_definition_before_it_is_registered() {
+        var registry = mock(DataPlaneRegistry.class);
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+        var loader = loader();
+        loader.setRegistry(registry);
+
+        loader.load(loaded::add);
+
+        // a domain creation landing between the two must not read the gap as "nothing to check"
+        InOrder inOrder = inOrder(registry);
+        inOrder.verify(registry).reserveVerification("dp-1");
+        inOrder.verify(registry).requireVerification("dp-1");
+    }
+
+    @Test
+    void should_release_the_claim_on_a_definition_the_registry_refuses() {
+        var registry = mock(DataPlaneRegistry.class);
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-rejected", "gone", "{\"gone\":{\"host\":\"h\"}}")));
+        var loader = loader();
+        loader.setRegistry(registry);
+
+        loader.load(description -> {
+            throw new IllegalStateException("No data plan provider is registered for type gone");
+        });
+
+        // the claim must not outlive the failed activation, or the id stays refused for good
+        verify(registry).unregister("dp-rejected");
+        verify(registry, never()).requireVerification(any());
     }
 
     @Test

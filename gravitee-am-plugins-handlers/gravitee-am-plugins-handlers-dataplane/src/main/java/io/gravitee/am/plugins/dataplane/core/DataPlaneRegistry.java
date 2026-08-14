@@ -50,6 +50,8 @@ public interface DataPlaneRegistry {
 
     void unregister(String dataPlaneId);
 
+    void reserveVerification(String dataPlaneId);
+
     void requireVerification(String dataPlaneId);
 
     Completable verified(String dataPlaneId);

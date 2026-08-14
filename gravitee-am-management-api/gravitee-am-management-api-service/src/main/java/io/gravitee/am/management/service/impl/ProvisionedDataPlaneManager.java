@@ -89,6 +89,9 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
         }
         try {
             dataPlaneRegistry.unregister(definition.getId());
+            // claimed before the plane is registered, so the moment in between cannot be read as
+            // "nothing to check" by a domain creation landing at the same time
+            dataPlaneRegistry.reserveVerification(definition.getId());
             dataPlaneRegistry.register(provisionedDataPlaneLoader.publish(definition));
             provisionedDataPlaneLoader.markServing(definition);
             // the node that provisioned it goes through the loader, every other node arrives here instead
@@ -97,6 +100,8 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
         } catch (Exception e) {
             log.error("Data plane [{}] could not be registered and will be unavailable; domains bound to it cannot be served",
                     definition.getId(), e);
+            // otherwise the claim outlives the failed registration and the id stays refused for good
+            dataPlaneRegistry.unregister(definition.getId());
         }
     }
 

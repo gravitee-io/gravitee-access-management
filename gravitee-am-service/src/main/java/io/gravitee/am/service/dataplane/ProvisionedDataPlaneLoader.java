@@ -104,18 +104,31 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
     }
 
     private void activate(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
+        // only the provisioned definitions reach here, which is what keeps the gravitee.yml ones exempt
+        var registry = registryRef.get();
+        if (registry == null) {
+            log.warn("Data plane [{}] is being loaded before the registry was wired in, so it will serve domains without being checked",
+                    definition.getId());
+        }
         try {
+            // claimed before the plane is registered, so the moment in between cannot be read as
+            // "nothing to check" by a domain creation landing at the same time
+            if (registry != null) {
+                registry.reserveVerification(definition.getId());
+            }
             storage.accept(publish(definition));
             markServing(definition);
             log.info("Data plane [{}] of type [{}] loaded from the management repository", definition.getId(), definition.getType());
-            // only the provisioned definitions reach here, which is what keeps the gravitee.yml ones exempt
-            var registry = registryRef.get();
             if (registry != null) {
                 registry.requireVerification(definition.getId());
             }
         } catch (Exception e) {
             log.error("Data plane [{}] of type [{}] could not be loaded and will be unavailable; domains bound to it cannot be served",
                     definition.getId(), definition.getType(), e);
+            // otherwise the claim outlives the failed activation and the id stays refused for good
+            if (registry != null) {
+                registry.unregister(definition.getId());
+            }
         }
     }
 

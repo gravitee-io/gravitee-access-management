@@ -222,7 +222,6 @@ public class StandaloneConfiguration {
 
     @Bean
     public DataPlaneRegistry dataPlaneRegistry(SingleDataPlaneLoader loader, DataPlanePluginManager manager, DataPlaneVerifier verifier) {
-        // the gateway only loads what the gravitee.yml declares, so nothing is ever put under verification
         return new DataPlaneRegistryImpl(loader, manager, verifier);
     }
 
