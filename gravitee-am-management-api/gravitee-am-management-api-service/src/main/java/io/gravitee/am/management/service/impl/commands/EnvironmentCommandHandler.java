@@ -49,7 +49,7 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
     private static final String MISSING_HOST_ERROR = "Environment command rejected due to a GATEWAY access point with a missing or blank host.";
     private static final String NO_ACCESS_POINT_ERROR = "Environment command rejected due to missing or empty accessPoints.";
     private static final String NO_GATEWAY_ACCESS_POINT_ERROR = "Environment command rejected due to no GATEWAY access point among accessPoints.";
-    private static final String NO_DEFAULT_GATEWAY_ACCESS_POINT_ERROR = "Environment command rejected because every GATEWAY access point is overriding, one non-overriding access point is required.";
+    private static final String NO_DEFAULT_GATEWAY_ACCESS_POINT_ERROR = "Environment command rejected because every GATEWAY access point is overriding, one non-overriding GATEWAY access point is required.";
 
     private final EnvironmentService environmentService;
     private final EntrypointService entrypointService;
