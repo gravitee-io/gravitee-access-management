@@ -106,7 +106,7 @@ public class PermissionService {
     public Flowable<String> getReferenceIdsWithPermission(User user, ReferenceType referenceType, Permission permission, Set<Acl> acls) {
         return findMembershipPermissions(user, referenceType)
                 .flattenStreamAsFlowable(map -> map.entrySet().stream()
-                        .filter(entry -> entry.getValue().get(permission).containsAll(acls))
+                        .filter(entry -> entry.getValue().getOrDefault(permission, Set.of()).containsAll(acls))
                         .map(entry -> entry.getKey().getReferenceId()));
     }
 
