@@ -29,6 +29,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.service.exception.LastDefaultEntrypointException;
 import io.gravitee.am.service.impl.EntrypointServiceImpl;
 import io.gravitee.am.service.model.NewEntrypoint;
@@ -45,6 +46,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,8 +59,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -91,8 +96,19 @@ public class EntrypointServiceTest {
     @Before
     public void before() {
 
-        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io");
+        cut = newEntrypointService(new MockEnvironment());
         lenient().when(eventService.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+    }
+
+    private EntrypointService newEntrypointService(Environment environment) {
+        return new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io", environment);
+    }
+
+    private EntrypointService cloudModeEntrypointService() {
+        MockEnvironment cloudEnvironment = new MockEnvironment();
+        cloudEnvironment.setProperty("cloud.enabled", "true");
+        cloudEnvironment.setProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED);
+        return newEntrypointService(cloudEnvironment);
     }
 
     @Test
@@ -222,7 +238,8 @@ public class EntrypointServiceTest {
     public void shouldDeleteDefaultFlaggedEnvironmentEntrypoint() {
         // Cockpit's generated access point is now stored as a default entrypoint, and every ENVIRONMENT
         // command deletes the environment's entrypoints before recreating them. That delete goes through
-        // the last-default guard, which passes because the organization keeps its own default entrypoint.
+        // the last-default guard, which passes here because this organization keeps its own default
+        // entrypoint. Cloud organizations no longer have one, see cloudMode_deletesTheLastDefaultEntrypoint.
         Entrypoint environmentEntrypoint = new Entrypoint();
         environmentEntrypoint.setId(ENTRYPOINT_ID);
         environmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
@@ -760,5 +777,61 @@ public class EntrypointServiceTest {
                         && "env#1".equals(event.getPayload().getReferenceId())
                         && "env#1".equals(event.getEnvironmentId())
                         && event.getDataPlaneId() != null));
+    }
+
+    @Test
+    public void cloudMode_createDefaults_createsNoOrganizationEntrypoint() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+
+        TestSubscriber<Entrypoint> obs = cloudModeEntrypointService().createDefaults(organization).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoValues();
+
+        verifyNoInteractions(entrypointRepository);
+        verifyNoInteractions(auditService);
+    }
+
+    @Test
+    public void cloudMode_createDefaultsWithDomainRestrictions_createsNoOrganizationEntrypoint() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+        organization.setDomainRestrictions(Arrays.asList("domain1.gravitee.io", "domain2.gravitee.io"));
+
+        TestSubscriber<Entrypoint> obs = cloudModeEntrypointService().createDefaults(organization).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoValues();
+
+        verifyNoInteractions(entrypointRepository);
+    }
+
+    @Test
+    public void cloudMode_deletesTheLastDefaultEntrypoint() {
+        // Without an org-level default, an ENVIRONMENT re-sync for a single-environment organization
+        // deletes the only default entrypoint there is. The guard would reject that and fail the command,
+        // so cloud skips it.
+        Entrypoint environmentEntrypoint = new Entrypoint();
+        environmentEntrypoint.setId(ENTRYPOINT_ID);
+        environmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        environmentEntrypoint.setEnvironmentId("env#1");
+        environmentEntrypoint.setDefaultEntrypoint(true);
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(environmentEntrypoint));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+
+        TestObserver<Void> obs = cloudModeEntrypointService().delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        verify(entrypointRepository, times(1)).delete(ENTRYPOINT_ID);
+        // the guard is what reads every entrypoint in the organization
+        verify(entrypointRepository, never()).findAll(ORGANIZATION_ID);
     }
 }
