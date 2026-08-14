@@ -98,7 +98,12 @@ describe('Cloud command payload validation (Cockpit -> AM)', () => {
     });
 
     it('accepts a CONSOLE access point with no host, since it never becomes an entrypoint', async () => {
-      const reply = await sendEnvironment('cloud-env-ap-console-no-host', [{ target: 'CONSOLE', host: null }]);
+      // The GATEWAY access point alongside it is what makes the payload otherwise valid; on its own a
+      // CONSOLE access point leaves the environment with no gateway URL and is rejected below.
+      const reply = await sendEnvironment('cloud-env-ap-console-no-host', [
+        { target: 'CONSOLE', host: null },
+        { target: 'GATEWAY', host: 'gw-console-companion.example.com' },
+      ]);
 
       expect(reply.commandStatus).toBe('SUCCEEDED');
     });
@@ -106,8 +111,78 @@ describe('Cloud command payload validation (Cockpit -> AM)', () => {
     // The counterpart to the rejections above: the guard must not turn away a GATEWAY access point
     // that is perfectly usable, which is the regression it could plausibly introduce.
     it('accepts a GATEWAY access point that has a host', async () => {
-      const reply = await sendEnvironment('cloud-env-ap-valid-gateway', [
-        { target: 'GATEWAY', host: 'gw-am7443.example.com' },
+      const reply = await sendEnvironment('cloud-env-ap-valid-gateway', [{ target: 'GATEWAY', host: 'gw-am7443.example.com' }]);
+
+      expect(reply.commandStatus).toBe('SUCCEEDED');
+    });
+  });
+
+  // A cloud environment resolves its gateway URL from the access points and from nothing else, so a
+  // payload carrying none would leave it with no entrypoint at all. Cockpit is told the command failed
+  // instead of ending up with an environment it cannot route to.
+  describe('ENVIRONMENT without a usable gateway access point', () => {
+    const organizationId = 'cloud-env-no-accesspoint-validation';
+
+    const sendEnvironment = async (id: string, accessPoints?: unknown[]) => {
+      const commandId = await sendCockpitCommand({
+        type: 'ENVIRONMENT',
+        payload: {
+          id,
+          organizationId,
+          hrids: [id],
+          name: `No access point validation ${id}`,
+          ...(accessPoints === undefined ? {} : { accessPoints }),
+        },
+      });
+      return waitForCockpitReply(commandId);
+    };
+
+    beforeAll(async () => {
+      const commandId = await sendCockpitCommand({
+        type: 'ORGANIZATION',
+        payload: { id: organizationId, name: 'No access point validation org', hrids: [organizationId] },
+      });
+      const reply = await waitForCockpitReply(commandId);
+      expect(reply.commandStatus).toBe('SUCCEEDED');
+    });
+
+    it('rejects a command with no accessPoints field at all', async () => {
+      const reply = await sendEnvironment('cloud-env-no-ap-absent');
+
+      expect(reply.commandStatus).toBe('ERROR');
+      expect(reply.errorDetails).toContain('missing or empty accessPoints');
+    });
+
+    it('rejects a command with an empty accessPoints array', async () => {
+      const reply = await sendEnvironment('cloud-env-no-ap-empty', []);
+
+      expect(reply.commandStatus).toBe('ERROR');
+      expect(reply.errorDetails).toContain('missing or empty accessPoints');
+    });
+
+    it('rejects a command whose only access point is a CONSOLE one', async () => {
+      const reply = await sendEnvironment('cloud-env-no-ap-console-only', [{ target: 'CONSOLE', host: 'console-only.example.com' }]);
+
+      expect(reply.commandStatus).toBe('ERROR');
+      expect(reply.errorDetails).toContain('no GATEWAY access point');
+    });
+
+    // Resolution drops the generated default whenever an overriding access point exists, so an
+    // environment holding only overriding ones would resolve to nothing once the default is gone.
+    it('rejects a command whose GATEWAY access points are all overriding', async () => {
+      const reply = await sendEnvironment('cloud-env-no-ap-all-overriding', [
+        { target: 'GATEWAY', host: 'auth.acme.example.com', overriding: true },
+        { target: 'GATEWAY', host: 'login.acme.example.com', overriding: true },
+      ]);
+
+      expect(reply.commandStatus).toBe('ERROR');
+      expect(reply.errorDetails).toContain('every GATEWAY access point is overriding');
+    });
+
+    it('accepts an overriding access point alongside the generated default', async () => {
+      const reply = await sendEnvironment('cloud-env-no-ap-override-plus-default', [
+        { target: 'GATEWAY', host: 'env-acme.example.com' },
+        { target: 'GATEWAY', host: 'auth.acme.example.com', overriding: true },
       ]);
 
       expect(reply.commandStatus).toBe('SUCCEEDED');
