@@ -58,6 +58,8 @@ export const setupCloudLicenseEnforcementFixture = async (): Promise<CloudLicens
       organizationId,
       hrids: [environmentId],
       name: `License enforcement env ${environmentId}`,
+      // Required: cloud mode rejects an ENVIRONMENT command with no non-overriding GATEWAY access point.
+      accessPoints: [{ target: 'GATEWAY', host: `${environmentId}.example.com` }],
     },
   }).then(waitForCockpitReply);
   if (environmentReply.commandStatus !== 'SUCCEEDED') {
