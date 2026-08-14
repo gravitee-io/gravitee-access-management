@@ -2089,18 +2089,40 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_noOrganizationDefault_returnsEmptyWithoutError() {
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_noOrganizationDefault_fallsBackToDataPlaneGatewayUrl() {
+        enableCloudMode();
+
+        // The normal state for a cloud organization since AM-7354: createDefaults no longer gives it an
+        // org-level default, so the data plane gateway url is all that is left to answer with.
+        final Domain mockDomain = cloudDomain();
+        when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
+        doReturn(Flowable.empty()).when(entrypointService).findAll(ORGANIZATION_ID);
+        when(dataPlaneRegistry.getDescription(mockDomain))
+                .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", "http://gateway:8092"));
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+
+        subscriber.assertNoErrors();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && "http://gateway:8092".equals(entrypoints.get(0).getUrl())
+                && entrypoints.get(0).isDefaultEntrypoint());
+    }
+
+    @Test
+    public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_noOrganizationDefault_noDataPlaneUrl_fallsBackToConfiguredGatewayUrl() {
         enableCloudMode();
 
         final Domain mockDomain = cloudDomain();
         when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
         doReturn(Flowable.empty()).when(entrypointService).findAll(ORGANIZATION_ID);
+        when(dataPlaneRegistry.getDescription(mockDomain))
+                .thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
 
         final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
-        // createDefaults gives every organization a default entrypoint and the last-default guard stops
-        // it being removed, so this should be unreachable, it just must not blow up if it ever is.
-        subscriber.assertNoErrors();
-        subscriber.assertValue(List::isEmpty);
+
+        // Never an empty list, whatever the data plane says.
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1
+                && "http://localhost:8092".equals(entrypoints.get(0).getUrl()));
     }
 
     @Test
