@@ -261,20 +261,37 @@ export async function releaseBoundDomain(bound: BoundDomain | undefined): Promis
   }
 }
 
-export async function canBindADomainTo(dataPlaneId: string): Promise<boolean> {
-  let bound: BoundDomain | undefined;
+/**
+ * The outcome of binding a domain, with the domain released again either way. The generated sdk
+ * resolves with the parsed domain and throws on anything else, so a bind that worked carries no
+ * status to assert on: `bound` is what says it worked, and the status belongs to the refusal.
+ */
+export type BindAttempt = { bound: true; domainId: string } | { bound: false; status: number | undefined; body: string };
+
+export async function attemptBindingADomainTo(dataPlaneId: string): Promise<BindAttempt> {
+  let domain: BoundDomain | undefined;
   try {
-    bound = await createDomainOnDataPlane(dataPlaneId);
-    return true;
+    domain = await createDomainOnDataPlane(dataPlaneId);
+    return { bound: true, domainId: domain.domainId };
   } catch (err: any) {
-    // only an unknown data plane means "no": anything else is the test failing for another reason
-    if (err.response?.status !== 400) {
-      throw err;
-    }
-    return false;
+    // the sdk reads the body into the message itself, so the response cannot be read a second time
+    return { bound: false, status: err.response?.status, body: err.message };
   } finally {
-    await releaseBoundDomain(bound);
+    // a domain left bound blocks its data plane from being deleted, which would poison every later run
+    await releaseBoundDomain(domain);
   }
+}
+
+export async function canBindADomainTo(dataPlaneId: string): Promise<boolean> {
+  const attempt = await attemptBindingADomainTo(dataPlaneId);
+  if (attempt.bound) {
+    return true;
+  }
+  // only an unknown data plane means "no": anything else is the test failing for another reason
+  if (attempt.status !== 400) {
+    throw new Error(`Binding a domain to data plane [${dataPlaneId}] failed with status=${attempt.status}: ${attempt.body}`);
+  }
+  return false;
 }
 
 export const ALLOWED_SUMMARY_FIELDS = [

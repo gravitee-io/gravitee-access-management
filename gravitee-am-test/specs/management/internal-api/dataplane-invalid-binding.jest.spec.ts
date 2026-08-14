@@ -17,13 +17,11 @@
 import { afterEach, describe, expect, it } from '@jest/globals';
 import { deleteDataPlane } from '@management-commands/dataplane-provisioning-commands';
 import {
-  BoundDomain,
-  createDomainOnDataPlane,
+  attemptBindingADomainTo,
   deleteProvisionedDataPlanes,
   provisionConnectableDataPlane,
   provisionUnreachableDataPlane,
   provisionWrongCredentialsDataPlane,
-  releaseBoundDomain,
 } from './fixtures/dataplane-provisioning-fixture';
 import { setup } from '../../test-fixture';
 import { uniqueName } from '@utils-commands/misc';
@@ -34,20 +32,6 @@ setup(60000);
 /** AM-7489: a data plane whose store does not answer must not be bindable. */
 const UNVERIFIED_DATA_PLANE = 'did not answer with the settings it was provisioned with';
 
-async function bindDomainTo(dataPlaneId: string): Promise<{ status: number; body: string }> {
-  let bound: BoundDomain | undefined;
-  try {
-    bound = await createDomainOnDataPlane(dataPlaneId);
-    return { status: 201, body: `domain [${bound.domainId}] was created on data plane [${bound.dataPlaneId}]` };
-  } catch (err: any) {
-    // the sdk reads the body into the message itself, so the response cannot be read a second time
-    return { status: err.response?.status, body: err.message };
-  } finally {
-    // a domain left bound blocks its data plane from being deleted, which would poison every later run
-    await releaseBoundDomain(bound);
-  }
-}
-
 describe('Domain creation against a data plane that cannot be used', () => {
   afterEach(deleteProvisionedDataPlanes);
 
@@ -55,44 +39,44 @@ describe('Domain creation against a data plane that cannot be used', () => {
     const dataPlaneId = uniqueName('dp-e2e-badcreds', true);
     await provisionWrongCredentialsDataPlane(dataPlaneId);
 
-    const attempt = await bindDomainTo(dataPlaneId);
+    const attempt = await attemptBindingADomainTo(dataPlaneId);
 
-    expect(attempt.status).toBe(400);
-    expect(attempt.body).toContain(UNVERIFIED_DATA_PLANE);
+    expect(attempt).toMatchObject({ bound: false, status: 400 });
+    expect(attempt).toHaveProperty('body', expect.stringContaining(UNVERIFIED_DATA_PLANE));
   });
 
   it('rejects a data plane whose store cannot be reached', async () => {
     const dataPlaneId = uniqueName('dp-e2e-unreachable-bind', true);
     await provisionUnreachableDataPlane(dataPlaneId);
 
-    const attempt = await bindDomainTo(dataPlaneId);
+    const attempt = await attemptBindingADomainTo(dataPlaneId);
 
-    expect(attempt.status).toBe(400);
-    expect(attempt.body).toContain(UNVERIFIED_DATA_PLANE);
+    expect(attempt).toMatchObject({ bound: false, status: 400 });
+    expect(attempt).toHaveProperty('body', expect.stringContaining(UNVERIFIED_DATA_PLANE));
   });
 
   it('accepts the same id once it is re-provisioned with settings that work', async () => {
     const dataPlaneId = uniqueName('dp-e2e-corrected', true);
     await provisionWrongCredentialsDataPlane(dataPlaneId);
-    expect((await bindDomainTo(dataPlaneId)).status).toBe(400);
+    expect(await attemptBindingADomainTo(dataPlaneId)).toMatchObject({ bound: false, status: 400 });
 
     expect((await deleteDataPlane(dataPlaneId)).status).toBe(204);
     await provisionConnectableDataPlane(dataPlaneId);
 
     // a rejection has to be forgotten with the definition that caused it, or correcting the settings
     // leaves the id unusable until the node is restarted
-    expect((await bindDomainTo(dataPlaneId)).status).toBe(201);
+    expect(await attemptBindingADomainTo(dataPlaneId)).toMatchObject({ bound: true });
   });
 
   it('still accepts a data plane the store answers for', async () => {
     const dataPlaneId = uniqueName('dp-e2e-verified', true);
     await provisionConnectableDataPlane(dataPlaneId);
 
-    expect((await bindDomainTo(dataPlaneId)).status).toBe(201);
+    expect(await attemptBindingADomainTo(dataPlaneId)).toMatchObject({ bound: true });
   });
 
   it('does not check the data plane the gravitee.yml declares', async () => {
     // the node's own configuration is not provisioned, so it is served without a check
-    expect((await bindDomainTo('default')).status).toBe(201);
+    expect(await attemptBindingADomainTo('default')).toMatchObject({ bound: true });
   });
 });
