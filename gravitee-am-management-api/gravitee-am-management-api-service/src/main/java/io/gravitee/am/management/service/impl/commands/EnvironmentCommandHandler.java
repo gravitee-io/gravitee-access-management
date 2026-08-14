@@ -47,6 +47,9 @@ import java.util.stream.Collectors;
 public class EnvironmentCommandHandler implements CommandHandler<EnvironmentCommand, EnvironmentReply> {
 
     private static final String MISSING_HOST_ERROR = "Environment command rejected due to a GATEWAY access point with a missing or blank host.";
+    private static final String NO_ACCESS_POINT_ERROR = "Environment command rejected due to missing or empty accessPoints.";
+    private static final String NO_GATEWAY_ACCESS_POINT_ERROR = "Environment command rejected due to no GATEWAY access point among accessPoints.";
+    private static final String NO_DEFAULT_GATEWAY_ACCESS_POINT_ERROR = "Environment command rejected because every GATEWAY access point is overriding, one non-overriding access point is required.";
 
     private final EnvironmentService environmentService;
     private final EntrypointService entrypointService;
@@ -78,6 +81,17 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         if (hasGatewayAccessPointWithoutHost(environmentPayload)) {
             log.warn(MISSING_HOST_ERROR + " Environment id [{}].", environmentPayload.id());
             return Single.just(new EnvironmentReply(command.getId(), MISSING_HOST_ERROR));
+        }
+
+        // Only a cloud environment takes its gateway URL from the access points, so only it needs one. The
+        // missing-host check above stays unconditional because a host-less access point breaks domain
+        // restriction validation in every mode.
+        if (CloudProperties.isManagedCloudEnabled(environment)) {
+            Optional<String> accessPointError = validateGatewayAccessPoints(environmentPayload);
+            if (accessPointError.isPresent()) {
+                log.warn("{} Environment id [{}].", accessPointError.get(), environmentPayload.id());
+                return Single.just(new EnvironmentReply(command.getId(), accessPointError.get()));
+            }
         }
 
         NewEnvironment newEnvironment = new NewEnvironment();
@@ -119,6 +133,24 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
                 .andThen(Completable.defer(() -> Completable.merge(gatewayAccessPoints.stream()
                         .map(accessPoint -> createEntrypoint(organizationId, environmentId, accessPoint))
                         .collect(Collectors.toList()))));
+    }
+
+    private Optional<String> validateGatewayAccessPoints(EnvironmentCommandPayload environmentPayload) {
+        List<AccessPoint> accessPoints = environmentPayload.accessPoints();
+        if (accessPoints == null || accessPoints.isEmpty()) {
+            return Optional.of(NO_ACCESS_POINT_ERROR);
+        }
+
+        List<AccessPoint> gatewayAccessPoints = accessPoints.stream()
+                .filter(this::isGatewayAccessPoint)
+                .collect(Collectors.toList());
+        if (gatewayAccessPoints.isEmpty()) {
+            return Optional.of(NO_GATEWAY_ACCESS_POINT_ERROR);
+        }
+        if (gatewayAccessPoints.stream().allMatch(AccessPoint::isOverriding)) {
+            return Optional.of(NO_DEFAULT_GATEWAY_ACCESS_POINT_ERROR);
+        }
+        return Optional.empty();
     }
 
     private boolean hasGatewayAccessPointWithoutHost(EnvironmentCommandPayload environmentPayload) {
