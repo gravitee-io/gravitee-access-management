@@ -116,9 +116,8 @@ export const setupCloudOrganizationFixture = async (name: string): Promise<Cloud
   // Not optional — CockpitAuthenticationFilter resolves the token's `env` claim through
   // environmentService.findById, which errors when the environment is missing, and the filter turns any
   // exception into a 403. An organization with no environment cannot be signed into.
-  // The access point is required, not decoration: in cloud mode AM rejects an ENVIRONMENT command that
-  // carries no non-overriding GATEWAY access point (AM-7354). Specs needing entrypoints of their own
-  // provision a separate environment, so this host only has to exist and be unique to the organization.
+  // Required: cloud mode rejects an ENVIRONMENT command with no non-overriding GATEWAY access point.
+  // Specs needing entrypoints of their own provision a separate environment, so this host just has to exist.
   await awaitCommand('ENVIRONMENT', {
     id: environmentId,
     organizationId,

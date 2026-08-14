@@ -83,9 +83,7 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
             return Single.just(new EnvironmentReply(command.getId(), MISSING_HOST_ERROR));
         }
 
-        // Only a cloud environment takes its gateway URL from the access points, so only it needs one. The
-        // missing-host check above stays unconditional because a host-less access point breaks domain
-        // restriction validation in every mode.
+        // Cloud-gated, unlike the check above: only a cloud environment resolves its gateway URL from the access points.
         if (CloudProperties.isManagedCloudEnabled(environment)) {
             Optional<String> accessPointError = validateGatewayAccessPoints(environmentPayload);
             if (accessPointError.isPresent()) {

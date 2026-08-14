@@ -311,8 +311,7 @@ class EnvironmentCommandHandlerTest {
     void handleCloudMode_overridingAccessPoint_isNotTheDefaultEntrypoint() {
         enableCloudMode();
 
-        // The overriding access point needs a non-overriding companion, otherwise the payload is rejected
-        // for carrying no default GATEWAY access point.
+        // The non-overriding companion is what keeps the payload valid.
         assertPersistedDefaultFlag(List.of(
                 AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("auth.acme.com").overriding(true).build(),
                 AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("env-acme.gravitee.io").build()),
@@ -405,8 +404,7 @@ class EnvironmentCommandHandlerTest {
         enableCloudMode();
 
         // The guard runs before the reactive chain is built, so a null entry would escape handle() as a
-        // synchronous throw rather than reaching onErrorReturn. A list holding only a null entry carries
-        // no GATEWAY access point, so the reply is an ERROR.
+        // synchronous throw rather than reaching onErrorReturn.
         assertRejectedInCloudMode(commandWithAccessPoints(new AccessPoint[]{null}));
     }
 
@@ -416,7 +414,6 @@ class EnvironmentCommandHandlerTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
-        // the environment is neither created nor updated when the payload is rejected
         verifyNoInteractions(environmentService, entrypointService);
     }
 
@@ -451,8 +448,7 @@ class EnvironmentCommandHandlerTest {
     void handleCloudMode_onlyOverridingGatewayAccessPoints_isRejected() {
         enableCloudMode();
 
-        // An environment must always carry the non-overriding access point Cockpit generates; without it
-        // resolution drops the override and the environment has no entrypoint left.
+        // Resolution drops the default whenever an override exists, so overriding-only would leave nothing.
         assertRejectedInCloudMode(commandWithAccessPoints(
                 AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("auth.acme.com").overriding(true).build(),
                 AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("login.acme.com").overriding(true).build()));

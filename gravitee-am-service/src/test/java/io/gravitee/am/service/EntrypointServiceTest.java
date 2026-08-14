@@ -238,8 +238,7 @@ public class EntrypointServiceTest {
     public void shouldDeleteDefaultFlaggedEnvironmentEntrypoint() {
         // Cockpit's generated access point is now stored as a default entrypoint, and every ENVIRONMENT
         // command deletes the environment's entrypoints before recreating them. That delete goes through
-        // the last-default guard, which passes here because this organization keeps its own default
-        // entrypoint. Cloud organizations no longer have one, see cloudMode_deletesTheLastDefaultEntrypoint.
+        // the last-default guard, which passes because the organization keeps its own default entrypoint.
         Entrypoint environmentEntrypoint = new Entrypoint();
         environmentEntrypoint.setId(ENTRYPOINT_ID);
         environmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
@@ -813,9 +812,7 @@ public class EntrypointServiceTest {
 
     @Test
     public void cloudMode_deletesTheLastDefaultEntrypoint() {
-        // Without an org-level default, an ENVIRONMENT re-sync for a single-environment organization
-        // deletes the only default entrypoint there is. The guard would reject that and fail the command,
-        // so cloud skips it.
+        // An ENVIRONMENT re-sync for a single-environment organization deletes the only default entrypoint there is.
         Entrypoint environmentEntrypoint = new Entrypoint();
         environmentEntrypoint.setId(ENTRYPOINT_ID);
         environmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
@@ -831,7 +828,7 @@ public class EntrypointServiceTest {
         obs.assertComplete();
 
         verify(entrypointRepository, times(1)).delete(ENTRYPOINT_ID);
-        // the guard is what reads every entrypoint in the organization
+        // findAll is the guard's read, so never calling it is how we know the guard was skipped
         verify(entrypointRepository, never()).findAll(ORGANIZATION_ID);
     }
 }

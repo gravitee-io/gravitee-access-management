@@ -135,8 +135,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     @Override
     public Flowable<Entrypoint> createDefaults(Organization organization) {
 
-        // A cloud environment takes its entrypoints from the access points Cockpit sends, so an org-level
-        // default would never be resolved and only shows up on the org settings screen.
+        // In cloud every entrypoint comes from an environment access point, so an org-level default is never resolved.
         if (managedCloudEnabled) {
             return Flowable.empty();
         }
@@ -207,9 +206,8 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     private Single<Entrypoint> deleteEntrypoint(Entrypoint e) {
-        // The guard protects a user from deleting the organization's last default entrypoint by hand. In
-        // cloud the set is Cockpit's to own, and EnvironmentCommandHandler deletes every environment
-        // entrypoint before recreating them, which trips the guard now that no org-level default backs it.
+        // Skipped in cloud: EnvironmentCommandHandler deletes every environment entrypoint before recreating
+        // them, and with no org-level default left the last delete would trip this guard.
         if (e.isDefaultEntrypoint() && !managedCloudEnabled) {
             return isNotTheLastDefaultEntryPoint(e)
                     .flatMap(notLast -> notLast ? Single.just(e) : Single.error(new LastDefaultEntrypointException("You cannot remove the last default entrypoint")));
