@@ -280,6 +280,40 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldReturnBadRequest_listWithoutType() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnNotFound_listWithUnknownType() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .queryParam("type", "NOT_A_TYPE")
+                .request().get();
+
+        // JAX-RS maps a failed query param conversion to 404
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
     public void shouldApplyDefaultSortValue(){
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();

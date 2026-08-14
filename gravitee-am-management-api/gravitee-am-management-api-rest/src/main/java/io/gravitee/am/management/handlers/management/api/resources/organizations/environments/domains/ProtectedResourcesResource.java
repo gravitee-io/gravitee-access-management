@@ -47,8 +47,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.model.ProtectedResource.Type.fromString;
-
 @Tag(name = "protected-resource")
 public class ProtectedResourcesResource extends AbstractDomainResource {
 
@@ -134,14 +132,13 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @QueryParam("q") String query,
-            @QueryParam("type") String type,
+            @NotNull @QueryParam("type") ProtectedResource.Type type,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("50") int size,
             @Parameter(schema = @Schema(type = "string"))
             @QueryParam("sort") @DefaultValue("updatedAt.desc") SortParam sort,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
-        ProtectedResource.Type resourceType = fromString(type);
 
         PageSortRequest pageSortRequest = PageSortRequest.builder()
                 .page(page)
@@ -158,12 +155,12 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                             if (query != null && !query.isEmpty()) {
                                 return service.search(domainId, query, pageSortRequest);
                             }
-                            return service.findByDomainAndType(domainId, resourceType, pageSortRequest);
+                            return service.findByDomainAndType(domainId, type, pageSortRequest);
                         })
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.PROTECTED_RESOURCE, Permission.PROTECTED_RESOURCE, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> service.findByDomainAndTypeAndIds(domainId, resourceType, ids, pageSortRequest))))
+                                        .flatMap(ids -> service.findByDomainAndTypeAndIds(domainId, type, ids, pageSortRequest))))
                 .subscribe(response::resume, response::resume);
     }
 

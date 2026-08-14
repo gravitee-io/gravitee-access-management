@@ -47,7 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static io.gravitee.am.model.Acl.READ;
 import static io.gravitee.am.model.Acl.UPDATE;
 import static io.gravitee.am.model.Acl.DELETE;
-import static io.gravitee.am.model.ProtectedResource.Type.fromString;
 
 public class ProtectedResourceResource extends AbstractDomainResource {
 
@@ -91,12 +90,10 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("protected-resource") String protectedResourceId,
-            @QueryParam("type") String type,
+            @NotNull @QueryParam("type") ProtectedResource.Type type,
             @Suspended final AsyncResponse response) {
-        ProtectedResource.Type resourceType = fromString(type);
-
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, READ)
-                .andThen(service.findByDomainAndIdAndType(domainId, protectedResourceId, resourceType)
+                .andThen(service.findByDomainAndIdAndType(domainId, protectedResourceId, type)
                         .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId))))
                 .subscribe(response::resume, response::resume);
     }
@@ -189,14 +186,13 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("protected-resource") String protectedResourceId,
-            @QueryParam("type") String type,
+            @NotNull @QueryParam("type") ProtectedResource.Type type,
             @Suspended final AsyncResponse response) {
-        ProtectedResource.Type resourceType = fromString(type);
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
                 .andThen(checkDomainExists(domainId))
-                .flatMapCompletable(domain -> service.delete(domain, protectedResourceId, resourceType, authenticatedUser))
+                .flatMapCompletable(domain -> service.delete(domain, protectedResourceId, type, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
