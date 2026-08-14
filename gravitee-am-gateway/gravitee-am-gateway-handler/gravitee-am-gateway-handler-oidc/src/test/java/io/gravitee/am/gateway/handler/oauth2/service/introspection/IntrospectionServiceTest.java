@@ -180,6 +180,54 @@ public class IntrospectionServiceTest {
                 && "the-jkt".equals(cnf.get(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT)));
     }
 
+    /**
+     * A client_credentials token has no end user behind it, so the introspection response must not
+     * carry a username claim at all. Emitting one would let a resource server attribute a machine
+     * call to a person. shouldNotSearchForAUser_clientCredentials covers the lookup being skipped;
+     * this covers the observable output.
+     */
+    @Test
+    public void shouldNotExposeUsernameForClientCredentialsToken() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("client-id");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        when(tokenService.introspect(token, (String) null)).thenReturn(Maybe.just(accessToken));
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token(token).build();
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(IntrospectionResponse::isActive);
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.getUsername() == null);
+        testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey("username"));
+    }
+
+    /**
+     * RFC 7662 requires an unusable token to be reported as inactive rather than as an error, and
+     * IntrospectionEndpoint has no failure handler for anything other than InvalidClientException /
+     * InvalidRequestException. So an unexpected error escaping this service would surface to the
+     * caller as a 500 instead of {"active": false}.
+     */
+    @Test
+    public void shouldReturnInactiveResponseWhenTokenIntrospectionFails() {
+        final String token = "token";
+        when(tokenService.introspect(token, (String) null))
+                .thenReturn(Maybe.error(new RuntimeException("unexpected introspection failure")));
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token(token).build();
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> !introspectionResponse.isActive());
+    }
+
     @Test
     public void shouldReturnAudClaim_IfConfigSetTrue() {
         final String token = "token";
