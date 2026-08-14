@@ -15,7 +15,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { setup } from '../../test-fixture';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 import { createPersona, Persona, RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import {
   addApplicationMembership,
@@ -36,7 +36,10 @@ import { ListRolesTypeEnum } from '@management-apis/RoleApi';
 import { uniqueName } from '@utils-commands/misc';
 import type { RoleEntity } from '@management-models/RoleEntity';
 
-setup();
+setup(200000);
+// These cases run as one ordered narrative, so a retry must not resume after a later step has
+// already mutated the state an earlier one asserts against (GUIDELINES §3).
+retryImmediatelyForThisFile();
 
 let fixture: RbacFixture;
 let member: Persona;
@@ -182,9 +185,10 @@ describe('Protected resource tier - membership grants and revokes access', () =>
 
   it('should remove them from the resource when the membership is deleted', async () => {
     const { memberships } = await listProtectedResourceMemberships(fixture.domain.id, protectedResourceId, fixture.adminToken);
-    const theirs = memberships.find((membership) => membership.memberId === member.userId);
+    const theirs = memberships.filter((membership) => membership.memberId === member.userId);
+    expect(theirs).toHaveLength(1);
 
-    await removeProtectedResourceMembership(fixture.domain.id, protectedResourceId, fixture.adminToken, theirs.id);
+    await removeProtectedResourceMembership(fixture.domain.id, protectedResourceId, fixture.adminToken, theirs[0].id);
 
     const after = await listProtectedResourceMemberships(fixture.domain.id, protectedResourceId, fixture.adminToken);
     expect(after.memberships.map((membership) => membership.memberId)).not.toContain(member.userId);
@@ -195,9 +199,10 @@ describe('Protected resource tier - membership grants and revokes access', () =>
     // resource membership does not take it back. DOMAIN_USER carries protected_resource_list, so
     // the resource is still listed — the caller has lost the resource, not the domain.
     const { memberships } = await listDomainMemberships(fixture.domain.id, fixture.adminToken);
-    const domainMembership = memberships.find((membership) => membership.memberId === member.userId);
+    const domainMembership = memberships.filter((membership) => membership.memberId === member.userId);
+    expect(domainMembership).toHaveLength(1);
 
-    expect(domainMembership.roleId).toEqual(fixture.roles.domainUser.id);
+    expect(domainMembership[0].roleId).toEqual(fixture.roles.domainUser.id);
     expect((await listResourcesAs(member.token)).status).toBe(200);
   });
 
@@ -205,9 +210,10 @@ describe('Protected resource tier - membership grants and revokes access', () =>
     // Only when both are gone is the access actually revoked, which is the part an administrator
     // revoking someone from a resource would most easily miss.
     const { memberships } = await listDomainMemberships(fixture.domain.id, fixture.adminToken);
-    const domainMembership = memberships.find((membership) => membership.memberId === member.userId);
+    const domainMembership = memberships.filter((membership) => membership.memberId === member.userId);
+    expect(domainMembership).toHaveLength(1);
 
-    await removeDomainMembership(fixture.domain.id, fixture.adminToken, domainMembership.id);
+    await removeDomainMembership(fixture.domain.id, fixture.adminToken, domainMembership[0].id);
 
     const response = await listResourcesAs(member.token);
     expect(response.status).toBe(403);

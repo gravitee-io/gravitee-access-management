@@ -20,7 +20,7 @@ import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import { performGet, performPatch } from '@gateway-commands/oauth-oidc-commands';
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 

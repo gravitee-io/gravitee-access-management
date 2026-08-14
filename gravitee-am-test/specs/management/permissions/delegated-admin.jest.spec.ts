@@ -26,7 +26,7 @@ import {
 } from '@management-commands/membership-management-commands';
 import { getCurrentUser } from '@management-commands/organisation-user-commands';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 

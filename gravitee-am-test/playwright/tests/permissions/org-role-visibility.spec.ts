@@ -20,12 +20,12 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { linkJira } from '../../utils/jira';
 import { uniqueTestName } from '../../utils/fixture-helpers';
 import { workerScope } from '../../utils/permissions-helpers';
-import { MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { CREATE_FAB_SELECTOR, domainListPath, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
 
 type Page = import('@playwright/test').Page;
 
 const ROLES_PAGE = '/settings/roles';
-const DOMAIN_LIST = '/environments/default/domains';
+const DOMAIN_LIST = domainListPath();
 
 /** The five permission columns in the role editor, in the order the grid renders them. */
 const ACL_COLUMN = { create: 0, read: 1, list: 2, update: 3, delete: 4 };
@@ -33,6 +33,11 @@ const ACL_COLUMN = { create: 0, read: 1, list: 2, update: 3, delete: 4 };
 /** A row of the role editor's permission grid, addressed by the permission it carries. */
 const permissionRow = (page: Page, permission: string) =>
   page.locator('tr').filter({ has: page.locator('td').filter({ hasText: new RegExp(`^${permission}$`) }) });
+
+// Every test here builds its own permissions world (domains, roles, personas) and that setup
+// counts against the test timeout, so the extended budget applies to all of them rather than to
+// the one that happened to ask for it.
+test.beforeEach(({}, testInfo) => testInfo.setTimeout(MULTI_PHASE_TEST_TIMEOUT));
 
 /**
  * These run as the administrator, using the signed-in state the setup project produces. The
@@ -42,7 +47,6 @@ const permissionRow = (page: Page, permission: string) =>
 test.describe('Organization-level roles - administering roles in the Console', () => {
   test('AM-6031: an organization administrator can create a custom role carrying a chosen permission', async ({ page }, testInfo) => {
     linkJira(testInfo, 'AM-6031');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     const roleName = uniqueTestName(workerScope('Org-QA-Auditor'));
 
@@ -128,7 +132,7 @@ test.describe('Organization-level roles - what a restricted organization user re
     // They cannot reach the domain list at all — the Console reports no environment rather than
     // showing an empty one, so there is nowhere to offer a create control.
     await expect(page.getByText(/you don't have any environment yet/i)).toBeVisible();
-    await expect(page.locator('a[mat-fab], button[mat-fab]')).toHaveCount(0);
+    await expect(page.locator(CREATE_FAB_SELECTOR)).toHaveCount(0);
   });
 
   test('AM-6031: a custom organization role granting only DOMAIN[READ] exposes no domains and no way to create one', async ({
@@ -150,6 +154,6 @@ test.describe('Organization-level roles - what a restricted organization user re
     // not even stay on that URL, nothing lists the domain, and no control creates one.
     await expect(page).not.toHaveURL(/\/domains\/?$/);
     await expect(page.getByRole('link', { name: orgWorld.domain.name, exact: true })).toHaveCount(0);
-    await expect(page.locator('a[mat-fab], button[mat-fab]')).toHaveCount(0);
+    await expect(page.locator(CREATE_FAB_SELECTOR)).toHaveCount(0);
   });
 });

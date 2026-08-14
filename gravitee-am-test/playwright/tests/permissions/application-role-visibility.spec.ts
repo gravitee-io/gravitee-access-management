@@ -18,15 +18,18 @@ import { test, expect } from '../../fixtures/permissions.fixture';
 import { ApplicationGeneralSettingsPage } from '../../pages/application-general-settings.page';
 import { Oauth2SettingsPage } from '../../pages/oauth2-settings.page';
 import { linkJira } from '../../utils/jira';
-import { MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { submenuItem } from '../../utils/permissions-helpers';
+import { APPLICATION_OVERVIEW_URL, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
 
 // Each test signs in as its own persona, so no shared authenticated state.
 test.use({ storageState: { cookies: [], origins: [] } });
 
-type Page = import('@playwright/test').Page;
+// Every test here builds its own permissions world (domains, applications, personas, memberships)
+// and that setup counts against the test timeout, so the extended budget applies to all of them
+// rather than to the few that happened to ask for it.
+test.beforeEach(({}, testInfo) => testInfo.setTimeout(MULTI_PHASE_TEST_TIMEOUT));
 
-/** A submenu entry in the application sidebar, rendered as <a title="{label}">. */
-const submenuItem = (page: Page, label: string) => page.locator(`.gv-submenu a[title="${label}"]`);
+type Page = import('@playwright/test').Page;
 
 /** An application row in the list, rendered as <a [routerLink]="[row.id]">{{ row.name }}</a>. */
 const applicationLink = (page: Page, name: string) => page.getByRole('link', { name, exact: true });
@@ -40,7 +43,6 @@ const oauthSaveButton = (page: Page) => page.getByRole('button', { name: /^SAVE$
 test.describe('Application-level roles - Console visibility', () => {
   test('AM-6036: an application owner can rename the application they own', async ({ page, permissionsWorld, signInAs }, testInfo) => {
     linkJira(testInfo, 'AM-6036');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     await signInAs(permissionsWorld.appOwner);
 
@@ -61,7 +63,6 @@ test.describe('Application-level roles - Console visibility', () => {
     signInAs,
   }, testInfo) => {
     linkJira(testInfo, 'AM-6036');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     await signInAs(permissionsWorld.appOwner);
 
@@ -100,7 +101,7 @@ test.describe('Application-level roles - Console visibility', () => {
     await signInAs(permissionsWorld.appViewer);
 
     await applicationLink(page, permissionsWorld.ownedApplication.name).click();
-    await page.waitForURL(/.*\/applications\/.*\/overview.*/i);
+    await page.waitForURL(APPLICATION_OVERVIEW_URL);
 
     // Anchor on the menus a reader is entitled to before asserting the rest are absent.
     await expect(submenuItem(page, 'Overview')).toBeVisible();
@@ -122,7 +123,7 @@ test.describe('Application-level roles - Console visibility', () => {
     await signInAs(permissionsWorld.appOwner);
 
     await applicationLink(page, permissionsWorld.ownedApplication.name).click();
-    await page.waitForURL(/.*\/applications\/.*\/overview.*/i);
+    await page.waitForURL(APPLICATION_OVERVIEW_URL);
 
     await expect(submenuItem(page, 'Overview')).toBeVisible();
     await expect(submenuItem(page, 'Settings')).toBeVisible();

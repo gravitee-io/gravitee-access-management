@@ -172,13 +172,27 @@ export const setupRbacFixture = async (): Promise<RbacFixture> => {
       findOrganizationRoleByName(adminToken, 'APPLICATION_OWNER', ListRolesTypeEnum.Application),
     ]);
 
-    const [orgUser, domainOwnerPersona, appOwner, assignee] = await Promise.all([
-      createPersona(adminToken, 'orguser'),
-      createPersona(adminToken, 'domainowner'),
-      createPersona(adminToken, 'appowner'),
-      createPersona(adminToken, 'assignee'),
+    // Each persona is registered for cleanup the moment it resolves, not once all four have.
+    // `Promise.all` would reject on the first failure and skip the registration entirely, leaking
+    // the users that had already been created; `allSettled` additionally guarantees that none is
+    // still in flight when the catch block below starts deleting.
+    const trackPersona = async (token: string, label: string): Promise<Persona> => {
+      const persona = await createPersona(token, label);
+      personas.push(persona);
+      return persona;
+    };
+
+    const created = await Promise.allSettled([
+      trackPersona(adminToken, 'orguser'),
+      trackPersona(adminToken, 'domainowner'),
+      trackPersona(adminToken, 'appowner'),
+      trackPersona(adminToken, 'assignee'),
     ]);
-    personas.push(orgUser, domainOwnerPersona, appOwner, assignee);
+    const failed = created.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+    if (failed) {
+      throw failed.reason;
+    }
+    const [orgUser, domainOwnerPersona, appOwner, assignee] = created.map((result) => (result as PromiseFulfilledResult<Persona>).value);
 
     // ORGANIZATION_USER is already granted at user creation; these calls are upserts that make the
     // starting point explicit, matching how the manual test cases describe the setup.

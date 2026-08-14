@@ -18,12 +18,17 @@ import { test, expect } from '../../fixtures/domain-permissions.fixture';
 import { ApplicationCreationPage } from '../../pages/application-creation.page';
 import { linkJira } from '../../utils/jira';
 import { uniqueTestName } from '../../utils/fixture-helpers';
-import { MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { CREATE_FAB_SELECTOR, domainListPath, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
 
 // Every test signs in as its own persona, so no shared authenticated state.
 test.use({ storageState: { cookies: [], origins: [] } });
 
-const DOMAIN_LIST = '/environments/default/domains';
+// Every test here builds its own permissions world (domains, applications, personas, memberships)
+// and that setup counts against the test timeout, so the extended budget applies to all of them
+// rather than to the few that happened to ask for it.
+test.beforeEach(({}, testInfo) => testInfo.setTimeout(MULTI_PHASE_TEST_TIMEOUT));
+
+const DOMAIN_LIST = domainListPath();
 
 /** Left-hand navigation entries for the domain a user is currently inside. */
 const domainMenuLink = (page: import('@playwright/test').Page, label: string) => page.getByRole('link', { name: label, exact: true });
@@ -31,11 +36,10 @@ const domainMenuLink = (page: import('@playwright/test').Page, label: string) =>
 test.describe('Domain-level roles - Console visibility', () => {
   test('AM-6032: a domain owner can create an application inside their own domain', async ({ page, domainWorld, signInAs }, testInfo) => {
     linkJira(testInfo, 'AM-6032');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     await signInAs(domainWorld.devManager);
 
-    await page.goto(`/environments/default/domains/${domainWorld.devDomain.id}/applications`);
+    await page.goto(`${domainListPath()}/${domainWorld.devDomain.id}/applications`);
     const wizard = new ApplicationCreationPage(page);
     await wizard.openWizard();
 
@@ -49,7 +53,7 @@ test.describe('Domain-level roles - Console visibility', () => {
     // The wizard's own route is .../applications/new, so waiting for an /applications/ URL would
     // match before anything happened. Go back to the list instead and look for the application:
     // it appearing there is the outcome the scenario actually asks for.
-    await page.goto(`/environments/default/domains/${domainWorld.devDomain.id}/applications`);
+    await page.goto(`${domainListPath()}/${domainWorld.devDomain.id}/applications`);
     await expect(page.getByRole('link', { name: created, exact: true })).toBeVisible();
   });
 
@@ -73,7 +77,7 @@ test.describe('Domain-level roles - Console visibility', () => {
     await expect(page.getByRole('link', { name: domainWorld.qaDomain.name, exact: true })).toBeVisible();
     // DOMAIN[CREATE] is authorised at environment and organization level, never at domain level,
     // so a domain owner never gets the affordance regardless of what their role carries.
-    await expect(page.locator('a[mat-fab], button[mat-fab]')).toHaveCount(0);
+    await expect(page.locator(CREATE_FAB_SELECTOR)).toHaveCount(0);
   });
 
   test('AM-6032: a user holding only the default organization role reaches no domain at all', async ({

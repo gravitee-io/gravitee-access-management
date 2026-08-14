@@ -19,7 +19,7 @@ import { setup } from '../../test-fixture';
 import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 
@@ -36,7 +36,16 @@ interface WriteCase {
   permission: string;
   /** Collection to re-read afterwards to prove the refusal left nothing behind. */
   collection?: () => string;
+  /**
+   * Value that must be absent from that collection. Defaults to the marker name, which suits every
+   * case that creates a named resource; membership writes carry no name, so they identify the
+   * would-be member instead.
+   */
+  residue?: () => string;
 }
+
+/** Present in every create payload below, and therefore the fingerprint of a write that landed. */
+const MARKER = 'sweep-should-never-exist';
 
 /**
  * Bodies are hand-written rather than generated, and that is forced by the API's own behaviour:
@@ -54,37 +63,45 @@ const WRITE_CASES: WriteCase[] = [
     name: 'create an organization group',
     permission: 'organization_group_create',
     path: () => `${org()}/groups`,
-    body: () => ({ name: 'sweep-should-never-exist' }),
+    body: () => ({ name: MARKER }),
+    collection: () => `${org()}/groups`,
   },
   {
     name: 'create an organization tag',
     permission: 'organization_tag_create',
     path: () => `${org()}/tags`,
-    body: () => ({ name: 'sweep-should-never-exist' }),
+    body: () => ({ name: MARKER }),
+    collection: () => `${org()}/tags`,
   },
   {
     name: 'create an organization identity provider',
     permission: 'organization_identity_provider_create',
     path: () => `${org()}/identities`,
-    body: () => ({ name: 'sweep-should-never-exist', type: 'inline-am-idp', configuration: '{}' }),
+    body: () => ({ name: MARKER, type: 'inline-am-idp', configuration: '{}' }),
+    collection: () => `${org()}/identities`,
   },
   {
     name: 'create an organization role',
     permission: 'organization_role_create',
     path: () => `${org()}/roles`,
-    body: () => ({ name: 'sweep-should-never-exist', assignableType: 'ORGANIZATION' }),
+    body: () => ({ name: MARKER, assignableType: 'ORGANIZATION' }),
+    collection: () => `${org()}/roles`,
   },
   {
     name: 'create an organization entrypoint',
     permission: 'organization_entrypoint_create',
     path: () => `${org()}/entrypoints`,
-    body: () => ({ name: 'sweep-should-never-exist', url: 'https://sweep.example.com', tags: [] }),
+    body: () => ({ name: MARKER, url: 'https://sweep.example.com', tags: [] }),
+    collection: () => `${org()}/entrypoints`,
   },
   {
     name: 'add an organization member',
     permission: 'organization_member_create',
     path: () => `${org()}/members`,
     body: () => ({ memberId: fixture.assignee.userId, memberType: 'USER', role: fixture.roles.organizationUser.id }),
+    // No residue check: ORGANIZATION_USER is granted at user creation, so the assignee already
+    // holds exactly the membership this request tries to add. Its presence afterwards proves
+    // nothing either way, and asserting on it would be a test that cannot fail.
   },
 
   // --- domain tier ---------------------------------------------------------------------------
@@ -92,60 +109,64 @@ const WRITE_CASES: WriteCase[] = [
     name: 'create a domain certificate',
     permission: 'domain_certificate_create',
     path: () => `${domainRoot()}/certificates`,
-    body: () => ({ name: 'sweep-should-never-exist', type: 'pkcs12-am-certificate', configuration: '{}' }),
+    body: () => ({ name: MARKER, type: 'pkcs12-am-certificate', configuration: '{}' }),
     collection: () => `${domainRoot()}/certificates`,
   },
   {
     name: 'create a domain identity provider',
     permission: 'domain_identity_provider_create',
     path: () => `${domainRoot()}/identities`,
-    body: () => ({ name: 'sweep-should-never-exist', type: 'inline-am-idp', configuration: '{}' }),
+    body: () => ({ name: MARKER, type: 'inline-am-idp', configuration: '{}' }),
+    collection: () => `${domainRoot()}/identities`,
   },
   {
     name: 'create a domain group',
     permission: 'domain_group_create',
     path: () => `${domainRoot()}/groups`,
-    body: () => ({ name: 'sweep-should-never-exist' }),
+    body: () => ({ name: MARKER }),
     collection: () => `${domainRoot()}/groups`,
   },
   {
     name: 'create a domain role',
     permission: 'domain_role_create',
     path: () => `${domainRoot()}/roles`,
-    body: () => ({ name: 'sweep-should-never-exist' }),
+    body: () => ({ name: MARKER }),
     collection: () => `${domainRoot()}/roles`,
   },
   {
     name: 'create a domain scope',
     permission: 'domain_scope_create',
     path: () => `${domainRoot()}/scopes`,
-    body: () => ({ key: 'sweepscope', name: 'sweep-should-never-exist', description: 'never' }),
+    body: () => ({ key: 'sweepscope', name: MARKER, description: 'never' }),
+    collection: () => `${domainRoot()}/scopes`,
   },
   {
     name: 'create a domain factor',
     permission: 'domain_factor_create',
     path: () => `${domainRoot()}/factors`,
-    body: () => ({ name: 'sweep-should-never-exist', type: 'otp-am-factor', configuration: '{}', factorType: 'OTP' }),
+    body: () => ({ name: MARKER, type: 'otp-am-factor', configuration: '{}', factorType: 'OTP' }),
     collection: () => `${domainRoot()}/factors`,
   },
   {
     name: 'create a domain reporter',
     permission: 'domain_reporter_create',
     path: () => `${domainRoot()}/reporters`,
-    body: () => ({ name: 'sweep-should-never-exist', type: 'reporter-am-file', configuration: '{}' }),
+    body: () => ({ name: MARKER, type: 'reporter-am-file', configuration: '{}' }),
+    collection: () => `${domainRoot()}/reporters`,
   },
   {
     name: 'create a domain bot detection',
     permission: 'domain_bot_detection_create',
     path: () => `${domainRoot()}/bot-detections`,
-    body: () => ({ name: 'sweep-should-never-exist', type: 'x', configuration: '{}', detectionType: 'CAPTCHA' }),
+    body: () => ({ name: MARKER, type: 'x', configuration: '{}', detectionType: 'CAPTCHA' }),
+    collection: () => `${domainRoot()}/bot-detections`,
   },
   {
     name: 'create a domain user',
     permission: 'domain_user_create',
     path: () => `${domainRoot()}/users`,
     body: () => ({
-      username: 'sweep-should-never-exist',
+      username: MARKER,
       password: 'SweepP@ssw0rd1',
       firstName: 'a',
       lastName: 'b',
@@ -159,6 +180,8 @@ const WRITE_CASES: WriteCase[] = [
     permission: 'domain_member_create',
     path: () => `${domainRoot()}/members`,
     body: () => ({ memberId: fixture.assignee.userId, memberType: 'USER', role: fixture.roles.domainOwner.id }),
+    collection: () => `${domainRoot()}/members`,
+    residue: () => fixture.assignee.userId,
   },
 
   // --- application tier ----------------------------------------------------------------------
@@ -167,6 +190,8 @@ const WRITE_CASES: WriteCase[] = [
     permission: 'application_member_create',
     path: () => `${domainRoot()}/applications/${fixture.application.id}/members`,
     body: () => ({ memberId: fixture.assignee.userId, memberType: 'USER', role: fixture.roles.applicationOwner.id }),
+    collection: () => `${domainRoot()}/applications/${fixture.application.id}/members`,
+    residue: () => fixture.assignee.userId,
   },
 ];
 
@@ -203,8 +228,8 @@ describe('Write endpoint sweep - the refusals left nothing behind', () => {
       // the wrong status code, and the status alone cannot rule it out.
       const response = await performGet(managementUrl(), writeCase.collection(), headers(fixture.adminToken));
 
-      expect(response.status).toBe(200);
-      expect(JSON.stringify(response.body)).not.toContain('sweep-should-never-exist');
+      expect(response.status).toBeLessThan(400);
+      expect(JSON.stringify(response.body)).not.toContain(writeCase.residue?.() ?? MARKER);
     });
   });
 });

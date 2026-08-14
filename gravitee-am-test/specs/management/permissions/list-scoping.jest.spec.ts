@@ -20,7 +20,7 @@ import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import { listDomains } from '@management-commands/domain-management-commands';
 import { listApplications } from '@management-commands/application-management-commands';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 

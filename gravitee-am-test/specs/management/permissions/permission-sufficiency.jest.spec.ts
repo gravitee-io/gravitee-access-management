@@ -17,7 +17,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { createPersona, Persona, RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
-import { PERMISSION_ENDPOINTS, PermissionEndpoint } from './fixtures/permission-endpoints.generated';
+import { PERMISSION_ENDPOINTS } from './fixtures/permission-endpoints.generated';
+import { EXCLUDED_ROUTES, SUFFICIENCY_ONLY_EXCLUDED, requiredPermission } from './fixtures/permission-sweep-tables';
 import {
   createCustomOrganizationRole,
   deleteOrganizationRole,
@@ -29,7 +30,7 @@ import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import type { RoleEntity } from '@management-models/RoleEntity';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 let holder: Persona;
@@ -45,48 +46,9 @@ const fill = (route: string) =>
     .replace('{domain}', fixture.domain.id)
     .replace('{application}', fixture.application.id);
 
-/** See endpoint-permission-sweep for why each of these cannot be driven generically. */
-const EXCLUDED: Record<string, string> = {
-  '/organizations/{organizationId}/forms': 'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/forms': 'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/emails': 'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms':
-    'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails':
-    'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/analytics': 'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics':
-    'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor':
-    'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources':
-    'AM-7476: type query parameter parsed before the permission check',
-  // INSTALLATION is only relevant to the PLATFORM tier, so it cannot be granted by an
-  // organization-assignable role and this technique cannot reach it.
-  '/platform/installation': 'PLATFORM-tier permission, not grantable at organization level',
-  // Guarded by DOMAIN_FACTOR instead of DOMAIN_RESOURCE, so the documented permission does not
-  // open it. Re-include once AM-7478 is fixed — asserting today's behaviour would enshrine it.
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources': 'AM-7478: guarded by the wrong permission',
-};
-
-/**
- * The OpenAPI description misnames the permission for these routes; each was found by this sweep
- * and confirmed against the guard in the resource class.
- *  - groups/tags are documented as ORGANIZATION[LIST] but check the resource-specific permission
- *  - entrypoints is documented as ORGANIZATION[LIST] but checks ORGANIZATION_ENTRYPOINT[LIST]
- *  - device-identifiers documents DOMAIN_DEVICE_IDENTIFIERS, which is not a permission at all —
- *    the enum constant is singular, and the plural form makes role updates fail outright (AM-7477)
- */
-const DOCUMENTED_PERMISSION_OVERRIDES: Record<string, string> = {
-  '/organizations/{organizationId}/groups': 'organization_group_list',
-  '/organizations/{organizationId}/tags': 'organization_tag_list',
-  '/organizations/{organizationId}/entrypoints': 'organization_entrypoint_list',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers': 'domain_device_identifier_list',
-};
-
-const requiredPermission = (endpoint: PermissionEndpoint) => DOCUMENTED_PERMISSION_OVERRIDES[endpoint.route] ?? endpoint.permission;
-
-const candidates = PERMISSION_ENDPOINTS.filter((endpoint) => endpoint.method === 'GET' && !EXCLUDED[endpoint.route]);
+const candidates = PERMISSION_ENDPOINTS.filter(
+  (endpoint) => endpoint.method === 'GET' && !EXCLUDED_ROUTES[endpoint.route] && !SUFFICIENCY_ONLY_EXCLUDED[endpoint.route],
+);
 
 beforeAll(async () => {
   fixture = await setupRbacFixture();

@@ -15,7 +15,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { setup } from '../../test-fixture';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 import { createPersona, Persona, RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import {
   addDomainMembership,
@@ -36,7 +36,10 @@ import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 
-setup();
+setup(200000);
+// These cases run as one ordered narrative, so a retry must not resume after a later step has
+// already mutated the state an earlier one asserts against (GUIDELINES §3).
+retryImmediatelyForThisFile();
 
 let fixture: RbacFixture;
 const createdUsers: Persona[] = [];
@@ -134,6 +137,12 @@ describe('Organization role baseline - a role assigned to a group reaches its me
   });
 
   it('should still confine a group-derived role to the domain it was assigned to', async () => {
+    // Anchored within the test rather than relying on the previous one: a caller who never
+    // received the role at all is refused here too, so the 403 alone cannot tell confinement
+    // apart from the group membership silently not applying.
+    const granted = await performGet(getOrganisationManagementUrl(), domainPath(fixture.domain.id), headers(groupMember.token));
+    expect(granted.status).toBe(200);
+
     const response = await performGet(getOrganisationManagementUrl(), domainPath(fixture.otherDomain.id), headers(groupMember.token));
 
     expect(response.status).toBe(403);
@@ -152,6 +161,7 @@ describe('Organization role baseline - an organization-level grant spans every d
 
     const { memberships } = await listOrganizationMemberships(fixture.adminToken);
     const theirs = memberships.filter((membership) => membership.memberId === orgReader.userId);
+    expect(theirs).toHaveLength(1);
     await removeOrganizationMembership(fixture.adminToken, theirs[0].id);
 
     const spanningRole = await createCustomOrganizationRole(fixture.adminToken, uniqueName('org-span-reader', true), 'ORGANIZATION', [

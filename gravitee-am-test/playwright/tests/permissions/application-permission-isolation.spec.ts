@@ -19,9 +19,13 @@ import { addApplicationMembership, userMembership } from '@management-commands/m
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
 import { ConsolePersona, createConsolePersona, submenuItem } from '../../utils/permissions-helpers';
 import { linkJira } from '../../utils/jira';
-import { MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { APPLICATION_OVERVIEW_URL, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
 
 test.use({ storageState: { cookies: [], origins: [] } });
+
+// Every test here builds its own permissions world, and that setup counts against the test
+// timeout, so the extended budget applies uniformly across the file.
+test.beforeEach(({}, testInfo) => testInfo.setTimeout(MULTI_PHASE_TEST_TIMEOUT));
 
 /**
  * One user, two applications, a different role on each. This is the case the Console is most
@@ -54,7 +58,7 @@ test.describe('Application permission isolation - moving between applications', 
 
   const openApplication = async (page: import('@playwright/test').Page, name: string) => {
     await page.getByRole('link', { name, exact: true }).click();
-    await page.waitForURL(/.*\/applications\/.*\/overview.*/i);
+    await page.waitForURL(APPLICATION_OVERVIEW_URL);
   };
 
   const backToApplicationList = async (page: import('@playwright/test').Page, domainId: string) => {
@@ -68,7 +72,6 @@ test.describe('Application permission isolation - moving between applications', 
     signInAs,
   }, testInfo) => {
     linkJira(testInfo, 'AM-7473');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     const { domain, ownedApplication, otherApplication } = permissionsWorld;
 
@@ -92,7 +95,6 @@ test.describe('Application permission isolation - moving between applications', 
     signInAs,
   }, testInfo) => {
     linkJira(testInfo, 'AM-7473');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     const { domain, ownedApplication, otherApplication } = permissionsWorld;
 
@@ -114,7 +116,6 @@ test.describe('Application permission isolation - moving between applications', 
     signInAs,
   }, testInfo) => {
     linkJira(testInfo, 'AM-7473');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     const { domain, ownedApplication, otherApplication } = permissionsWorld;
 

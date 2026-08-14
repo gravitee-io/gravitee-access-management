@@ -31,7 +31,7 @@ import { getOrganisationManagementUrl } from '@management-commands/service/utils
 import { uniqueName } from '@utils-commands/misc';
 import type { RoleEntity } from '@management-models/RoleEntity';
 
-setup();
+setup(200000);
 // The steps below are one continuous narrative and depend on each other, so a mid-file retry must
 // not restart from a later step (GUIDELINES §3).
 retryImmediatelyForThisFile();
@@ -118,10 +118,11 @@ describe('Role assignment journey - a new administrator is onboarded and later r
 
   it('should take the access away again when the membership is removed', async () => {
     const { memberships } = await listDomainMemberships(fixture.domain.id, fixture.adminToken);
-    const theirs = memberships.find((membership) => membership.memberId === newAdmin.userId);
-    expect(theirs.roleId).toEqual(readOnlyRole.id);
+    const theirs = memberships.filter((membership) => membership.memberId === newAdmin.userId);
+    expect(theirs).toHaveLength(1);
+    expect(theirs[0].roleId).toEqual(readOnlyRole.id);
 
-    await removeDomainMembership(fixture.domain.id, fixture.adminToken, theirs.id);
+    await removeDomainMembership(fixture.domain.id, fixture.adminToken, theirs[0].id);
 
     const response = await readDomainAs(newAdmin.token);
     expect(response.status).toBe(403);

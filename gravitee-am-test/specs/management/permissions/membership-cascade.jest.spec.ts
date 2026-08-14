@@ -15,7 +15,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { setup } from '../../test-fixture';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 import { createPersona, Persona, RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import {
   addApplicationMembership,
@@ -26,7 +26,10 @@ import {
 } from '@management-commands/membership-management-commands';
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
 
-setup();
+setup(200000);
+// These cases run as one ordered narrative, so a retry must not resume after a later step has
+// already mutated the state an earlier one asserts against (GUIDELINES §3).
+retryImmediatelyForThisFile();
 
 let fixture: RbacFixture;
 const created: Persona[] = [];

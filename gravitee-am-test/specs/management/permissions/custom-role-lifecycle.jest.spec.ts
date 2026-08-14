@@ -16,7 +16,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { RoleFixture, setupRoleFixture } from './fixtures/role-fixture';
 import {
   createOrganizationRole,
   deleteOrganizationRole,
@@ -28,29 +28,18 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { ListRolesTypeEnum } from '@management-apis/RoleApi';
-import { JWT_FORMAT } from '@specs-utils/jwt-format';
 
-setup();
+setup(200000);
 
-let accessToken: string;
-const createdRoleIds: string[] = [];
-
-const newRoleNamed = async (label: string, assignableType: 'DOMAIN' | 'APPLICATION' | 'ORGANIZATION' = 'DOMAIN') => {
-  const name = uniqueName(label, true);
-  await createOrganizationRole(accessToken, { name, assignableType });
-  const role = await findOrganizationRoleByName(accessToken, name);
-  createdRoleIds.push(role.id);
-  return role;
-};
+let fixture: RoleFixture;
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken();
-  expect(accessToken).toMatch(JWT_FORMAT);
+  fixture = await setupRoleFixture();
 });
 
 afterAll(async () => {
-  for (const id of createdRoleIds) {
-    await deleteOrganizationRole(accessToken, id).catch(() => undefined);
+  if (fixture) {
+    await fixture.cleanup();
   }
 });
 
@@ -65,7 +54,7 @@ describe('Custom role lifecycle - permissions are applied by a second call, neve
       getOrganisationManagementUrl(),
       '/roles',
       { name: uniqueName('rejected-at-create', true), assignableType: 'DOMAIN', permissions: ['domain_read'] },
-      { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      { 'Content-Type': 'application/json', Authorization: `Bearer ${fixture.adminToken}` },
     );
 
     expect(response.status).toBe(400);
@@ -73,15 +62,15 @@ describe('Custom role lifecycle - permissions are applied by a second call, neve
   });
 
   it('should create the role carrying no permissions at all', async () => {
-    const role = await newRoleNamed('lifecycle-empty');
+    const role = await fixture.createRole('lifecycle-empty');
 
     expect(role.permissions ?? []).toEqual([]);
   });
 
   it('should apply permissions on update', async () => {
-    const role = await newRoleNamed('lifecycle-updated');
+    const role = await fixture.createRole('lifecycle-updated');
 
-    const updated = await updateOrganizationRole(accessToken, role.id, {
+    const updated = await updateOrganizationRole(fixture.adminToken, role.id, {
       name: role.name,
       permissions: ['domain_read'],
     });
@@ -97,9 +86,9 @@ describe('Custom role lifecycle - permissions are applied by a second call, neve
  */
 describe('Custom role lifecycle - permissions are not validated against the assignable type', () => {
   it('should accept an application permission on a domain-assignable role', async () => {
-    const role = await newRoleNamed('lifecycle-mismatched');
+    const role = await fixture.createRole('lifecycle-mismatched');
 
-    const updated = await updateOrganizationRole(accessToken, role.id, {
+    const updated = await updateOrganizationRole(fixture.adminToken, role.id, {
       name: role.name,
       permissions: ['domain_read', 'application_read'],
     });
@@ -114,20 +103,20 @@ describe('Custom role lifecycle - permissions are not validated against the assi
 
 describe('Custom role lifecycle - naming and deletion', () => {
   it('should refuse a second role with a name already in use', async () => {
-    const role = await newRoleNamed('lifecycle-duplicate');
+    const role = await fixture.createRole('lifecycle-duplicate');
 
-    await expect(createOrganizationRole(accessToken, { name: role.name, assignableType: 'DOMAIN' })).rejects.toMatchObject({
+    await expect(createOrganizationRole(fixture.adminToken, { name: role.name, assignableType: 'DOMAIN' })).rejects.toMatchObject({
       response: { status: 400 },
       message: expect.stringContaining('already exists'),
     });
   });
 
   it('should delete a custom role and stop resolving it afterwards', async () => {
-    const role = await newRoleNamed('lifecycle-deleted');
+    const role = await fixture.createRole('lifecycle-deleted');
 
-    await deleteOrganizationRole(accessToken, role.id);
+    await deleteOrganizationRole(fixture.adminToken, role.id);
 
-    await expect(getOrganizationRole(accessToken, role.id)).rejects.toMatchObject({ response: { status: 404 } });
+    await expect(getOrganizationRole(fixture.adminToken, role.id)).rejects.toMatchObject({ response: { status: 404 } });
   });
 });
 
@@ -139,24 +128,24 @@ describe('Custom role lifecycle - naming and deletion', () => {
  */
 describe('Custom role lifecycle - built-in roles resist modification', () => {
   it('should refuse to update a system role', async () => {
-    const systemRole = await findOrganizationRoleByName(accessToken, 'ORGANIZATION_PRIMARY_OWNER');
+    const systemRole = await findOrganizationRoleByName(fixture.adminToken, 'ORGANIZATION_PRIMARY_OWNER');
 
     await expect(
-      updateOrganizationRole(accessToken, systemRole.id, { name: 'ORGANIZATION_PRIMARY_OWNER', permissions: [] }),
+      updateOrganizationRole(fixture.adminToken, systemRole.id, { name: 'ORGANIZATION_PRIMARY_OWNER', permissions: [] }),
     ).rejects.toMatchObject({ response: { status: 404 } });
   });
 
   it('should refuse to delete a system role', async () => {
-    const systemRole = await findOrganizationRoleByName(accessToken, 'ORGANIZATION_PRIMARY_OWNER');
+    const systemRole = await findOrganizationRoleByName(fixture.adminToken, 'ORGANIZATION_PRIMARY_OWNER');
 
-    await expect(deleteOrganizationRole(accessToken, systemRole.id)).rejects.toMatchObject({ response: { status: 404 } });
+    await expect(deleteOrganizationRole(fixture.adminToken, systemRole.id)).rejects.toMatchObject({ response: { status: 404 } });
   });
 
   it('should refuse to rename a default role', async () => {
-    const defaultRole = await findOrganizationRoleByName(accessToken, 'DOMAIN_USER', ListRolesTypeEnum.Domain);
+    const defaultRole = await findOrganizationRoleByName(fixture.adminToken, 'DOMAIN_USER', ListRolesTypeEnum.Domain);
 
     await expect(
-      updateOrganizationRole(accessToken, defaultRole.id, { name: 'RENAMED_DOMAIN_USER', permissions: ['domain_read'] }),
+      updateOrganizationRole(fixture.adminToken, defaultRole.id, { name: 'RENAMED_DOMAIN_USER', permissions: ['domain_read'] }),
     ).rejects.toMatchObject({
       response: { status: 400 },
       message: expect.stringContaining('name cannot be updated'),
@@ -164,7 +153,7 @@ describe('Custom role lifecycle - built-in roles resist modification', () => {
   });
 
   it('should leave the default role untouched after the rejected rename', async () => {
-    const defaultRole = await findOrganizationRoleByName(accessToken, 'DOMAIN_USER', ListRolesTypeEnum.Domain);
+    const defaultRole = await findOrganizationRoleByName(fixture.adminToken, 'DOMAIN_USER', ListRolesTypeEnum.Domain);
 
     expect(defaultRole.name).toEqual('DOMAIN_USER');
     expect(defaultRole.defaultRole).toBe(true);

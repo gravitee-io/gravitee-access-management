@@ -125,12 +125,22 @@ ${entries}
 `;
 }
 
-const rows = collect();
-fs.writeFileSync(OUT, render(rows));
-// The repo lints every .ts file, generated or not, so format the output here rather than leaving
-// whoever regenerates it to discover a prettier failure afterwards.
-require('child_process').execSync(`npx prettier --write ${JSON.stringify(OUT)}`, { stdio: 'ignore' });
-const byMethod = rows.reduce((acc, row) => ({ ...acc, [row.method]: (acc[row.method] || 0) + 1 }), {});
-console.log(`Wrote ${rows.length} endpoints to ${path.relative(process.cwd(), OUT)}`);
-console.log('  by method   :', byMethod);
-console.log('  permissions :', new Set(rows.map((row) => row.permission)).size);
+function write() {
+  const rows = collect();
+  fs.writeFileSync(OUT, render(rows));
+  // The repo lints every .ts file, generated or not, so format the output here rather than leaving
+  // whoever regenerates it to discover a prettier failure afterwards.
+  require('child_process').execSync(`npx prettier --write ${JSON.stringify(OUT)}`, { stdio: 'ignore' });
+  const byMethod = rows.reduce((acc, row) => ({ ...acc, [row.method]: (acc[row.method] || 0) + 1 }), {});
+  console.log(`Wrote ${rows.length} endpoints to ${path.relative(process.cwd(), OUT)}`);
+  console.log('  by method   :', byMethod);
+  console.log('  permissions :', new Set(rows.map((row) => row.permission)).size);
+}
+
+// Only regenerate when run as a script. Importing this module must stay side-effect free so
+// permission-table-freshness.jest.spec.ts can call collect() to compare against the committed file.
+if (require.main === module) {
+  write();
+}
+
+module.exports = { collect, render, write, SPEC, OUT };

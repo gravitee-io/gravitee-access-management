@@ -21,9 +21,13 @@ import { createConsolePersona, submenuItem } from '../../utils/permissions-helpe
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
 import { linkJira } from '../../utils/jira';
 import { uniqueTestName } from '../../utils/fixture-helpers';
-import { MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { APPLICATION_OVERVIEW_URL, CREATE_FAB_SELECTOR, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
 
 test.use({ storageState: { cookies: [], origins: [] } });
+
+// Every test here builds its own permissions world, and that setup counts against the test
+// timeout, so the extended budget applies uniformly across the file.
+test.beforeEach(({}, testInfo) => testInfo.setTimeout(MULTI_PHASE_TEST_TIMEOUT));
 
 const managementUrl = () => `${process.env.AM_MANAGEMENT_URL}/management`;
 const authHeaders = (token: string) => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` });
@@ -44,13 +48,12 @@ const applicationPath = (domainId: string, applicationId: string) =>
 test.describe('UI and API parity - the Console agrees with the management API', () => {
   test('AM-7472: a control the Console withholds is also refused by the API', async ({ page, permissionsWorld, signInAs }, testInfo) => {
     linkJira(testInfo, 'AM-7472');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     const { appViewer, domain, ownedApplication } = permissionsWorld;
 
     await signInAs(appViewer);
     await page.getByRole('link', { name: ownedApplication.name, exact: true }).click();
-    await page.waitForURL(/.*\/applications\/.*\/overview.*/i);
+    await page.waitForURL(APPLICATION_OVERVIEW_URL);
 
     // Anchor on what this role is entitled to before asserting what it is not offered.
     await expect(submenuItem(page, 'Overview')).toBeVisible();
@@ -71,13 +74,12 @@ test.describe('UI and API parity - the Console agrees with the management API', 
 
   test('AM-7472: a control the Console offers is accepted by the API', async ({ page, permissionsWorld, signInAs }, testInfo) => {
     linkJira(testInfo, 'AM-7472');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     const { appOwner, domain, ownedApplication } = permissionsWorld;
 
     await signInAs(appOwner);
     await page.getByRole('link', { name: ownedApplication.name, exact: true }).click();
-    await page.waitForURL(/.*\/applications\/.*\/overview.*/i);
+    await page.waitForURL(APPLICATION_OVERVIEW_URL);
 
     await expect(submenuItem(page, 'Settings')).toBeVisible();
 
@@ -104,7 +106,6 @@ test.describe('UI and API parity - the Console agrees with the management API', 
     signInAs,
   }, testInfo) => {
     linkJira(testInfo, 'AM-7472');
-    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
     // A user holding nothing but the default organization role, created here because this is the
     // only case that needs one.
@@ -114,7 +115,7 @@ test.describe('UI and API parity - the Console agrees with the management API', 
       await signInAs(bareUser);
 
       // Nothing anywhere offers domain creation to them.
-      await expect(page.locator('a[mat-fab], button[mat-fab]')).toHaveCount(0);
+      await expect(page.locator(CREATE_FAB_SELECTOR)).toHaveCount(0);
 
       const token = await requestAccessToken(bareUser.username, bareUser.password);
       const response = await performPost(

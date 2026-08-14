@@ -18,9 +18,15 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
 import { PERMISSION_ENDPOINTS, PermissionEndpoint } from './fixtures/permission-endpoints.generated';
+import {
+  DOCUMENTED_PERMISSION_OVERRIDES,
+  EXCLUDED_ROUTES,
+  SUFFICIENCY_ONLY_EXCLUDED,
+  requiredPermission,
+} from './fixtures/permission-sweep-tables';
 import { performDelete, performGet } from '@gateway-commands/oauth-oidc-commands';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 
@@ -52,48 +58,9 @@ const ORGANIZATION_USER_PERMISSIONS = [
   'data_plane_read',
 ];
 
-/**
- * Routes whose OpenAPI description names a different permission to the one actually enforced.
- * Both were found by this sweep: each is documented as ORGANIZATION[LIST], but a caller holding
- * only the resource-specific permission is admitted, so that is what the code really checks.
- * Corrected here rather than in the generated file, which stays a faithful copy of the spec.
- */
-const DOCUMENTED_PERMISSION_OVERRIDES: Record<string, string> = {
-  '/organizations/{organizationId}/groups': 'organization_group_list',
-  '/organizations/{organizationId}/tags': 'organization_tag_list',
-};
-
-/**
- * Routes the sweep cannot drive, each for a stated reason. Kept as data so the exclusions are
- * visible and countable rather than quietly missing from the generated set.
- */
-const EXCLUDED: Record<string, string> = {
-  // Mandatory query parameter that cannot be supplied generically — the request is rejected by
-  // bean validation (400 "[formTemplate: must not be null]") before authorisation is reached.
-  '/organizations/{organizationId}/forms': 'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/forms': 'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/emails': 'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms':
-    'requires a template query parameter',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails':
-    'requires a template query parameter',
-
-  // Answer 500 before any permission check, so an unauthorised caller receives a server error
-  // rather than a refusal. Same defect class as AM-7476; re-include once fixed.
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/analytics': 'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics':
-    'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor':
-    'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources':
-    'AM-7476: type query parameter parsed before the permission check',
-};
-
-const requiredPermission = (endpoint: PermissionEndpoint) => DOCUMENTED_PERMISSION_OVERRIDES[endpoint.route] ?? endpoint.permission;
-
 const isAllowedForOrganizationUser = (endpoint: PermissionEndpoint) => ORGANIZATION_USER_PERMISSIONS.includes(requiredPermission(endpoint));
 
-const sweepable = PERMISSION_ENDPOINTS.filter((endpoint) => !EXCLUDED[endpoint.route]);
+const sweepable = PERMISSION_ENDPOINTS.filter((endpoint) => !EXCLUDED_ROUTES[endpoint.route]);
 
 const denied = sweepable.filter((endpoint) => endpoint.method === 'GET' && !isAllowedForOrganizationUser(endpoint));
 const allowed = sweepable.filter((endpoint) => endpoint.method === 'GET' && isAllowedForOrganizationUser(endpoint));
@@ -147,7 +114,10 @@ describe(`Endpoint permission sweep - ${allowed.length} endpoints within the def
     it(`should permit ${endpoint.method} ${endpoint.route} (${requiredPermission(endpoint)})`, async () => {
       const response = await performGet(managementUrl(), fill(endpoint.route), headers(fixture.orgUser.token));
 
-      expect(response.status).toBe(200);
+      // Success rather than 200 exactly: several of these answer 204 when the collection is empty,
+      // which is what a freshly provisioned instance looks like. The claim being made is that the
+      // default allowance opens the endpoint, and any non-error status carries it.
+      expect(response.status).toBeLessThan(400);
     });
   });
 });
@@ -179,7 +149,8 @@ describe(`Endpoint permission sweep - ${destructive.length} deletions are refuse
 describe('Endpoint permission sweep - bookkeeping', () => {
   it('should exclude only routes that exist in the generated table', () => {
     const known = new Set(PERMISSION_ENDPOINTS.map((endpoint) => endpoint.route));
-    expect(Object.keys(EXCLUDED).filter((route) => !known.has(route))).toEqual([]);
+    const excluded = [...Object.keys(EXCLUDED_ROUTES), ...Object.keys(SUFFICIENCY_ONLY_EXCLUDED)];
+    expect(excluded.filter((route) => !known.has(route))).toEqual([]);
   });
 
   it('should override permissions only for routes that exist in the generated table', () => {

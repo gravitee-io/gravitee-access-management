@@ -21,6 +21,9 @@ import {
   addApplicationMembership,
   addDomainMembership,
   addOrganizationMembership,
+  listApplicationMemberships,
+  listDomainMemberships,
+  listOrganizationMemberships,
   userMembership,
 } from '@management-commands/membership-management-commands';
 import { createCustomOrganizationRole, deleteOrganizationRole } from '@management-commands/role-management-commands';
@@ -30,7 +33,7 @@ import { getOrganisationManagementUrl } from '@management-commands/service/utils
 import { uniqueName } from '@utils-commands/misc';
 import type { RoleEntity } from '@management-models/RoleEntity';
 
-setup();
+setup(200000);
 
 let fixture: RbacFixture;
 let domainCreatorRole: RoleEntity;
@@ -84,12 +87,25 @@ afterAll(async () => {
  * independent gates confining a role to its scope.
  */
 describe('Role scope confinement - a role can only be assigned at its own tier', () => {
+  // Each accept case reads the membership back rather than relying on the call not throwing:
+  // a create that silently stopped persisting would leave the negative cases below passing and
+  // this half of the matrix green, which is precisely the regression the file exists to catch.
   it('should accept an ORGANIZATION-assignable role at organization level', async () => {
     await addOrganizationMembership(fixture.adminToken, userMembership(fixture.assignee.userId, fixture.roles.organizationUser.id));
+
+    const { memberships } = await listOrganizationMemberships(fixture.adminToken);
+    expect(memberships).toContainEqual(
+      expect.objectContaining({ memberId: fixture.assignee.userId, roleId: fixture.roles.organizationUser.id }),
+    );
   });
 
   it('should accept a DOMAIN-assignable role at domain level', async () => {
     await addDomainMembership(fixture.domain.id, fixture.adminToken, userMembership(fixture.assignee.userId, fixture.roles.domainOwner.id));
+
+    const { memberships } = await listDomainMemberships(fixture.domain.id, fixture.adminToken);
+    expect(memberships).toContainEqual(
+      expect.objectContaining({ memberId: fixture.assignee.userId, roleId: fixture.roles.domainOwner.id }),
+    );
   });
 
   it('should accept an APPLICATION-assignable role at application level', async () => {
@@ -98,6 +114,11 @@ describe('Role scope confinement - a role can only be assigned at its own tier',
       fixture.application.id,
       fixture.adminToken,
       userMembership(fixture.assignee.userId, fixture.roles.applicationOwner.id),
+    );
+
+    const { memberships } = await listApplicationMemberships(fixture.domain.id, fixture.application.id, fixture.adminToken);
+    expect(memberships).toContainEqual(
+      expect.objectContaining({ memberId: fixture.assignee.userId, roleId: fixture.roles.applicationOwner.id }),
     );
   });
 

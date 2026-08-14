@@ -77,5 +77,5 @@ export async function signInToConsole(page: Page, persona: ConsolePersona): Prom
   await page.waitForURL((url) => !/\/login/.test(url.pathname) && !/\/oauth\/authorize/.test(url.pathname));
 }
 
-/** A submenu entry in the Console sidebar, rendered as <a title="{label}">. */
-export const submenuItem = (page: Page, label: string) => page.locator(`.gv-submenu a[title="${label}"]`);
+// Re-exported from the suite-wide helper so there is one definition of this locator.
+export { submenuItem } from './selectors';
