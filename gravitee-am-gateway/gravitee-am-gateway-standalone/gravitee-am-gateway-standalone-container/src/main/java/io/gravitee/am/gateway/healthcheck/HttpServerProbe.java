@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.healthcheck;
 
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.net.NetClient;
@@ -42,6 +43,8 @@ public class HttpServerProbe implements Probe {
     @Autowired
     private Vertx vertx;
 
+    private volatile NetClient client;
+
     @Override
     public String id() {
         return "http-server";
@@ -51,14 +54,24 @@ public class HttpServerProbe implements Probe {
     public CompletableFuture<Result> check() {
         final CompletableFuture<Result> future = new CompletableFuture<>();
 
-        NetClientOptions options = new NetClientOptions().setConnectTimeout(500);
-        NetClient client = vertx.createNetClient(options);
-
-        client.rxConnect(port, host)
-                .doFinally(client::close)
+        netClient()
+                .rxConnect(port, host)
+                .flatMap(socket -> socket.rxClose().andThen(Single.just(Result.healthy())))
                 .subscribe(
-                        socket -> future.complete(Result.healthy()),
-                        error -> future.complete(Result.unhealthy(error.getCause())));
+                        future::complete,
+                        error -> future.complete(Result.unhealthy(error)));
         return future;
+    }
+
+    /**
+     * Vert.x holds on to every client it creates until the owner it was created from is closed, so a client per
+     * check would accumulate for as long as the node runs. A single client serves them all and is released when
+     * Vert.x itself stops.
+     */
+    private synchronized NetClient netClient() {
+        if (client == null) {
+            client = vertx.createNetClient(new NetClientOptions().setConnectTimeout(500));
+        }
+        return client;
     }
 }
