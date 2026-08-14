@@ -842,7 +842,7 @@ export interface DeleteProtectedResourceRequest {
   environmentId: string;
   domain: string;
   protectedResource: string;
-  type?: string;
+  type: DeleteProtectedResourceTypeEnum;
 }
 
 export interface DeleteResourceRequest {
@@ -1019,7 +1019,7 @@ export interface FindProtectedResourceRequest {
   environmentId: string;
   domain: string;
   protectedResource: string;
-  type?: string;
+  type: FindProtectedResourceTypeEnum;
 }
 
 export interface FindRoleRequest {
@@ -1469,7 +1469,7 @@ export interface ListProtectedResourcesRequest {
   environmentId: string;
   domain: string;
   q?: string;
-  type?: string;
+  type: ListProtectedResourcesTypeEnum;
   page?: number;
   size?: number;
   sort?: string;
@@ -6914,6 +6914,13 @@ export class DomainApi extends runtime.BaseAPI {
       );
     }
 
+    if (requestParameters.type === null || requestParameters.type === undefined) {
+      throw new runtime.RequiredError(
+        'type',
+        'Required parameter requestParameters.type was null or undefined when calling deleteProtectedResource.',
+      );
+    }
+
     const queryParameters: any = {};
 
     if (requestParameters.type !== undefined) {
@@ -8763,6 +8770,13 @@ export class DomainApi extends runtime.BaseAPI {
       throw new runtime.RequiredError(
         'protectedResource',
         'Required parameter requestParameters.protectedResource was null or undefined when calling findProtectedResource.',
+      );
+    }
+
+    if (requestParameters.type === null || requestParameters.type === undefined) {
+      throw new runtime.RequiredError(
+        'type',
+        'Required parameter requestParameters.type was null or undefined when calling findProtectedResource.',
       );
     }
 
@@ -13441,6 +13455,13 @@ export class DomainApi extends runtime.BaseAPI {
       throw new runtime.RequiredError(
         'domain',
         'Required parameter requestParameters.domain was null or undefined when calling listProtectedResources.',
+      );
+    }
+
+    if (requestParameters.type === null || requestParameters.type === undefined) {
+      throw new runtime.RequiredError(
+        'type',
+        'Required parameter requestParameters.type was null or undefined when calling listProtectedResources.',
       );
     }
 
@@ -19745,6 +19766,13 @@ export class DomainApi extends runtime.BaseAPI {
 /**
  * @export
  */
+export const DeleteProtectedResourceTypeEnum = {
+  McpServer: 'MCP_SERVER',
+} as const;
+export type DeleteProtectedResourceTypeEnum = typeof DeleteProtectedResourceTypeEnum[keyof typeof DeleteProtectedResourceTypeEnum];
+/**
+ * @export
+ */
 export const FindApplicationEmailTemplateEnum = {
   Login: 'LOGIN',
   Registration: 'REGISTRATION',
@@ -19865,6 +19893,13 @@ export type FindFormTemplateEnum = typeof FindFormTemplateEnum[keyof typeof Find
 /**
  * @export
  */
+export const FindProtectedResourceTypeEnum = {
+  McpServer: 'MCP_SERVER',
+} as const;
+export type FindProtectedResourceTypeEnum = typeof FindProtectedResourceTypeEnum[keyof typeof FindProtectedResourceTypeEnum];
+/**
+ * @export
+ */
 export const ListApplicationsTypeEnum = {
   Web: 'WEB',
   Native: 'NATIVE',
@@ -19874,6 +19909,13 @@ export const ListApplicationsTypeEnum = {
   Agent: 'AGENT',
 } as const;
 export type ListApplicationsTypeEnum = typeof ListApplicationsTypeEnum[keyof typeof ListApplicationsTypeEnum];
+/**
+ * @export
+ */
+export const ListProtectedResourcesTypeEnum = {
+  McpServer: 'MCP_SERVER',
+} as const;
+export type ListProtectedResourcesTypeEnum = typeof ListProtectedResourcesTypeEnum[keyof typeof ListProtectedResourcesTypeEnum];
 /**
  * @export
  */

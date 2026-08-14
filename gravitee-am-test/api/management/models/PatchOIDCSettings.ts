@@ -47,6 +47,13 @@ import {
   PatchSpiffeDomainSettingsToJSON,
   PatchSpiffeDomainSettingsToJSONTyped,
 } from './PatchSpiffeDomainSettings';
+import type { PatchDPoPSettings } from './PatchDPoPSettings';
+import {
+  PatchDPoPSettingsFromJSON,
+  PatchDPoPSettingsFromJSONTyped,
+  PatchDPoPSettingsToJSON,
+  PatchDPoPSettingsToJSONTyped,
+} from './PatchDPoPSettings';
 import type { PatchClientRegistrationSettings } from './PatchClientRegistrationSettings';
 import {
   PatchClientRegistrationSettingsFromJSON,
@@ -86,6 +93,12 @@ export interface PatchOIDCSettings {
    * @memberof PatchOIDCSettings
    */
   clientRegistrationSettings?: PatchClientRegistrationSettings;
+  /**
+   *
+   * @type {PatchDPoPSettings}
+   * @memberof PatchOIDCSettings
+   */
+  dpopSettings?: PatchDPoPSettings;
   /**
    *
    * @type {Array<string>}
@@ -222,6 +235,7 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     cimdSettings: json['cimdSettings'] == null ? undefined : PatchCIMDSettingsFromJSON(json['cimdSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : PatchClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    dpopSettings: json['dpopSettings'] == null ? undefined : PatchDPoPSettingsFromJSON(json['dpopSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
@@ -246,6 +260,7 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
     cibaSettings: PatchCIBASettingsToJSON(value['cibaSettings']),
     cimdSettings: PatchCIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: PatchClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
+    dpopSettings: PatchDPoPSettingsToJSON(value['dpopSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],

@@ -184,6 +184,12 @@ export interface ApplicationOAuthSettings {
    * @type {boolean}
    * @memberof ApplicationOAuthSettings
    */
+  dpopBoundAccessTokens?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ApplicationOAuthSettings
+   */
   enhanceScopesWithUserPermissions?: boolean;
   /**
    *
@@ -527,6 +533,7 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
+    dpopBoundAccessTokens: json['dpopBoundAccessTokens'] == null ? undefined : json['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions:
       json['enhanceScopesWithUserPermissions'] == null ? undefined : json['enhanceScopesWithUserPermissions'],
     forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
@@ -616,6 +623,7 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     defaultMaxAge: value['defaultMaxAge'],
     defaultScopes: value['defaultScopes'],
     disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
+    dpopBoundAccessTokens: value['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],
     forcePKCE: value['forcePKCE'],
     forceS256CodeChallengeMethod: value['forceS256CodeChallengeMethod'],
