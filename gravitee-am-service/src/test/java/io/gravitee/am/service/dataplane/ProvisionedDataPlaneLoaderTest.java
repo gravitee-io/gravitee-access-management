@@ -25,7 +25,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -37,7 +36,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -184,7 +184,7 @@ class ProvisionedDataPlaneLoaderTest {
     }
 
     @Test
-    void should_claim_a_definition_before_it_is_registered() {
+    void should_register_a_provisioned_definition_as_one_that_must_be_verified() {
         var registry = mock(DataPlaneRegistry.class);
         when(dataPlaneDefinitionRepository.findAll())
                 .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
@@ -193,10 +193,9 @@ class ProvisionedDataPlaneLoaderTest {
 
         loader.load(loaded::add);
 
-        // a domain creation landing between the two must not read the gap as "nothing to check"
-        InOrder inOrder = inOrder(registry);
-        inOrder.verify(registry).reserveVerification("dp-1");
-        inOrder.verify(registry).requireVerification("dp-1");
+        // the consumer is the unchecked path, and a provisioned plane may not take it
+        verify(registry).registerProvisioned(argThat(description -> "dp-1".equals(description.id())));
+        assertThat(loaded).isEmpty();
     }
 
     @Test
@@ -204,16 +203,30 @@ class ProvisionedDataPlaneLoaderTest {
         var registry = mock(DataPlaneRegistry.class);
         when(dataPlaneDefinitionRepository.findAll())
                 .thenReturn(Flowable.just(definition("dp-rejected", "gone", "{\"gone\":{\"host\":\"h\"}}")));
+        doThrow(new IllegalStateException("No data plan provider is registered for type gone"))
+                .when(registry).registerProvisioned(any());
         var loader = loader();
         loader.setRegistry(registry);
 
-        loader.load(description -> {
-            throw new IllegalStateException("No data plan provider is registered for type gone");
-        });
+        loader.load(loaded::add);
 
         // the claim must not outlive the failed activation, or the id stays refused for good
         verify(registry).unregister("dp-rejected");
-        verify(registry, never()).requireVerification(any());
+    }
+
+    @Test
+    void should_leave_a_configuration_definition_on_the_unchecked_path() {
+        var registry = mock(DataPlaneRegistry.class);
+        fromConfiguration.add(new DataPlaneDescription("default", "Default", "mongodb", "dataPlanes[0]", null));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.setRegistry(registry);
+
+        loader.load(loaded::add);
+
+        // the gravitee.yml planes stay exempt: they reach the consumer, never the verified path
+        assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("default");
+        verify(registry, never()).registerProvisioned(any());
     }
 
     @Test

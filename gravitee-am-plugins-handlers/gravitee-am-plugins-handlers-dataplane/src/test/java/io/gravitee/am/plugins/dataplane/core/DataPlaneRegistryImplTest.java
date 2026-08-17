@@ -20,6 +20,7 @@ import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.exceptions.IllegalDataPlaneIdException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -28,8 +29,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,8 +52,11 @@ class DataPlaneRegistryImplTest {
     @Mock
     private DataPlaneProvider provider;
 
+    @Mock
+    private DataPlaneVerifier verifier;
+
     private DataPlaneRegistryImpl registry() {
-        return new DataPlaneRegistryImpl(storage -> {}, dataPlanePluginManager, new DataPlaneVerifierImpl(false, 5000, 10000));
+        return new DataPlaneRegistryImpl(storage -> {}, dataPlanePluginManager, verifier);
     }
 
     @Test
@@ -115,6 +122,8 @@ class DataPlaneRegistryImplTest {
         registry.unregister("dp-1");
 
         verify(provider).stop();
+        // a re-provisioned id must be checked again, not inherit the outgoing definition's result
+        verify(verifier).forget("dp-1");
         assertThat(registry.getDataPlanes()).isEmpty();
         assertThatThrownBy(() -> registry.getProviderById("dp-1")).isInstanceOf(IllegalDataPlaneIdException.class);
     }
@@ -131,6 +140,44 @@ class DataPlaneRegistryImplTest {
         registry.register(DESCRIPTION);
 
         assertThat(registry.getProviderById("dp-1")).isSameAs(replacement);
+    }
+
+    @Test
+    void should_claim_a_provisioned_plane_before_registering_it() {
+        // a domain creation landing between the two must not read the gap as "nothing to check"
+        when(dataPlanePluginManager.create(DESCRIPTION)).thenReturn(Optional.of(provider));
+        DataPlaneRegistryImpl registry = registry();
+
+        registry.registerProvisioned(DESCRIPTION);
+
+        InOrder inOrder = inOrder(verifier, dataPlanePluginManager);
+        inOrder.verify(verifier).reserve("dp-1");
+        inOrder.verify(dataPlanePluginManager).create(DESCRIPTION);
+        inOrder.verify(verifier).require("dp-1", provider);
+    }
+
+    @Test
+    void should_release_the_claim_when_a_provisioned_plane_cannot_be_built() {
+        // the claim must not outlive the failed registration, or the id stays refused for good
+        when(dataPlanePluginManager.create(DESCRIPTION)).thenReturn(Optional.empty());
+        DataPlaneRegistryImpl registry = registry();
+
+        assertThatThrownBy(() -> registry.registerProvisioned(DESCRIPTION))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(verifier).forget("dp-1");
+        verify(verifier, never()).require(any(), any());
+    }
+
+    @Test
+    void should_not_claim_a_plane_registered_without_verification() {
+        // the gravitee.yml planes are exempt, and go through register rather than registerProvisioned
+        when(dataPlanePluginManager.create(DESCRIPTION)).thenReturn(Optional.of(provider));
+
+        registry().register(DESCRIPTION);
+
+        verify(verifier, never()).reserve(any());
+        verify(verifier, never()).require(any(), any());
     }
 
     @Test

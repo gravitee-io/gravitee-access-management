@@ -206,13 +206,15 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     }
 
     @Override
-    public void reserveVerification(String dataPlaneId) {
-        verifier.reserve(dataPlaneId);
-    }
-
-    @Override
-    public void requireVerification(String dataPlaneId) {
-        verifier.require(dataPlaneId, getProviderById(dataPlaneId));
+    public void registerProvisioned(DataPlaneDescription description) {
+        verifier.reserve(description.id());
+        try {
+            register(description);
+        } catch (RuntimeException e) {
+            verifier.forget(description.id());
+            throw e;
+        }
+        verifier.require(description.id(), getProviderById(description.id()));
     }
 
     @Override

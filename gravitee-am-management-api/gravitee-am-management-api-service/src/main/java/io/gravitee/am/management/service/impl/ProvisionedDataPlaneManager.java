@@ -89,13 +89,8 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
         }
         try {
             dataPlaneRegistry.unregister(definition.getId());
-            // claimed before the plane is registered, so the moment in between cannot be read as
-            // "nothing to check" by a domain creation landing at the same time
-            dataPlaneRegistry.reserveVerification(definition.getId());
-            dataPlaneRegistry.register(provisionedDataPlaneLoader.publish(definition));
+            dataPlaneRegistry.registerProvisioned(provisionedDataPlaneLoader.publish(definition));
             provisionedDataPlaneLoader.markServing(definition);
-            // the node that provisioned it goes through the loader, every other node arrives here instead
-            dataPlaneRegistry.requireVerification(definition.getId());
             log.info("Data plane [{}] of type [{}] registered from a sync event", definition.getId(), definition.getType());
         } catch (Exception e) {
             log.error("Data plane [{}] could not be registered and will be unavailable; domains bound to it cannot be served",

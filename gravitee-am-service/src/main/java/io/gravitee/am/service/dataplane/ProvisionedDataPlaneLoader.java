@@ -111,17 +111,15 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                     definition.getId());
         }
         try {
-            // claimed before the plane is registered, so the moment in between cannot be read as
-            // "nothing to check" by a domain creation landing at the same time
+            // the consumer is the unchecked path the gravitee.yml planes take, so a provisioned one
+            // goes to the registry directly to be checked before it serves anything
             if (registry != null) {
-                registry.reserveVerification(definition.getId());
+                registry.registerProvisioned(publish(definition));
+            } else {
+                storage.accept(publish(definition));
             }
-            storage.accept(publish(definition));
             markServing(definition);
             log.info("Data plane [{}] of type [{}] loaded from the management repository", definition.getId(), definition.getType());
-            if (registry != null) {
-                registry.requireVerification(definition.getId());
-            }
         } catch (Exception e) {
             log.error("Data plane [{}] of type [{}] could not be loaded and will be unavailable; domains bound to it cannot be served",
                     definition.getId(), definition.getType(), e);
