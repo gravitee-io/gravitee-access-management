@@ -86,8 +86,7 @@ describe('Cloud domain entrypoint URL (management API)', () => {
   });
 
   it('resolves every overriding access point when the customer has several custom domains', async () => {
-    // The non-overriding access point is mandatory: a command whose GATEWAY access points are all
-    // overriding is rejected, so Cockpit always sends the one it generated alongside the custom domains.
+    // A command whose GATEWAY access points are all overriding is rejected, hence the generated host.
     const generatedHost = fixture.uniqueHost();
     const first = fixture.uniqueHost();
     const second = fixture.uniqueHost();
@@ -120,6 +119,5 @@ describe('Cloud domain entrypoint URL (management API)', () => {
     expect(urls).toEqual([expectedUrl]);
   });
 
-  // The empty-entrypoint fallback to the data plane gateway url is covered by DomainServiceTest: in
-  // cloud mode an environment cannot be left with no entrypoints, so no spec can reach that state.
+  // The empty-entrypoint fallback is unreachable in cloud, DomainServiceTest covers it instead.
 });

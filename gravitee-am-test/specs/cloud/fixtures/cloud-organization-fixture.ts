@@ -117,7 +117,6 @@ export const setupCloudOrganizationFixture = async (name: string): Promise<Cloud
   // environmentService.findById, which errors when the environment is missing, and the filter turns any
   // exception into a 403. An organization with no environment cannot be signed into.
   // Required: cloud mode rejects an ENVIRONMENT command with no non-overriding GATEWAY access point.
-  // Specs needing entrypoints of their own provision a separate environment, so this host just has to exist.
   await awaitCommand('ENVIRONMENT', {
     id: environmentId,
     organizationId,

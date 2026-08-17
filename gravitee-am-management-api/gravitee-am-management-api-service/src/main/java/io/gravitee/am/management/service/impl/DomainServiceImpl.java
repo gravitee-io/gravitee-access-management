@@ -846,12 +846,6 @@ public class DomainServiceImpl implements DomainService {
                 .doOnComplete(() -> log.debug("Organization {} has no default entrypoint, domain {} falls back to the data plane gateway url", organizationId, domain.getId()));
     }
 
-    /**
-     * Last resort when neither the environment nor the organization has an entrypoint. A cloud organization
-     * gets no org-level default from {@code createDefaults} any more, and its environments carry one each,
-     * so this is reached only while an environment is still waiting for Cockpit to sync its access points.
-     * Callers dereference a url, so this must never be empty.
-     */
     private Entrypoint dataPlaneEntrypoint(Domain domain, String organizationId) {
         Entrypoint entrypoint = new Entrypoint();
         entrypoint.setName("Default");

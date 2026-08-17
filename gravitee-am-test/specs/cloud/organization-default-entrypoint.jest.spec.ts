@@ -25,9 +25,8 @@ setup(120000);
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 
-// Fixed id, as the organization fixture explains, and organizations survive the run because AM cannot delete
-// one. So this id must stay unused by other specs, and by any earlier AM version: createDefaults runs once at
-// creation, so an organization first created before AM-7354 keeps its default entrypoint and fails here.
+// Organizations outlive the run and createDefaults only runs at creation, so this id must stay unused by
+// other specs and by any AM version predating AM-7354.
 const ORGANIZATION_NAME = 'cloud-org-default-entrypoint';
 
 let organization: CloudOrganizationFixture;

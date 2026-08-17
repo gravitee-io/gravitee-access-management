@@ -206,8 +206,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     private Single<Entrypoint> deleteEntrypoint(Entrypoint e) {
-        // Skipped in cloud: EnvironmentCommandHandler deletes every environment entrypoint before recreating
-        // them, and with no org-level default left the last delete would trip this guard.
+        // Skipped in cloud, where EnvironmentCommandHandler deletes every environment entrypoint to recreate them.
         if (e.isDefaultEntrypoint() && !managedCloudEnabled) {
             return isNotTheLastDefaultEntryPoint(e)
                     .flatMap(notLast -> notLast ? Single.just(e) : Single.error(new LastDefaultEntrypointException("You cannot remove the last default entrypoint")));

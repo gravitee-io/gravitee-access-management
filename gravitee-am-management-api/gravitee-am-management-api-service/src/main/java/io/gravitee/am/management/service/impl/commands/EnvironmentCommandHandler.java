@@ -83,7 +83,6 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
             return Single.just(new EnvironmentReply(command.getId(), MISSING_HOST_ERROR));
         }
 
-        // Cloud-gated, unlike the check above: only a cloud environment resolves its gateway URL from the access points.
         if (CloudProperties.isManagedCloudEnabled(environment)) {
             Optional<String> accessPointError = validateGatewayAccessPoints(environmentPayload);
             if (accessPointError.isPresent()) {

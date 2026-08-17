@@ -64,7 +64,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class EnvironmentCommandHandlerTest {
 
-    /** How long a handle() call gets to terminate before the assertion is treated as a failure. */
     private static final long HANDLE_TIMEOUT_SECONDS = 10;
 
     @Mock

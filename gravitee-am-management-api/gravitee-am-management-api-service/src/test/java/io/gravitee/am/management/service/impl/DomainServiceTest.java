@@ -2092,8 +2092,6 @@ public class DomainServiceTest {
     public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_noOrganizationDefault_fallsBackToDataPlaneGatewayUrl() {
         enableCloudMode();
 
-        // An environment still waiting for Cockpit to sync its access points: since AM-7354 createDefaults
-        // gives a cloud organization no org-level default, so the data plane gateway url is all that is left.
         final Domain mockDomain = cloudDomain();
         when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
         doReturn(Flowable.empty()).when(entrypointService).findAll(ORGANIZATION_ID);
@@ -2121,7 +2119,6 @@ public class DomainServiceTest {
 
         final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
 
-        // Never an empty list, whatever the data plane says.
         subscriber.assertValue(entrypoints -> entrypoints.size() == 1
                 && "http://configured-gateway:8092".equals(entrypoints.get(0).getUrl()));
     }
