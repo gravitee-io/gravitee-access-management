@@ -212,6 +212,12 @@ public class DomainServiceTest {
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
+    private io.gravitee.am.service.DataPlaneDefinitionService dataPlaneDefinitionService;
+
+    @Mock
+    private io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader dataPlaneConfigurationLoader;
+
+    @Mock
     private DomainValidator domainValidator;
 
     @Mock
@@ -690,6 +696,187 @@ public class DomainServiceTest {
 
         testObserver.assertError(DomainAlreadyExistsException.class);
         testObserver.assertNotComplete();
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    // --- AM-7262: dataPlaneId resolution during domain creation ---
+
+    private void stubCreateDomainPersistence(String hrid) {
+        Domain persisted = new Domain();
+        persisted.setId("domain-id");
+        persisted.setReferenceType(ReferenceType.ENVIRONMENT);
+        persisted.setReferenceId(ENVIRONMENT_ID);
+        persisted.setVersion(DomainVersion.V2_0);
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, hrid)).thenReturn(Maybe.empty());
+        when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(persisted));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
+        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
+        when(defaultIdentityProviderService.create(any())).thenReturn(Single.just(new IdentityProvider()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+    }
+
+    private io.gravitee.am.service.model.DataPlaneDefinitionSummary dpSummary(String id) {
+        return new io.gravitee.am.service.model.DataPlaneDefinitionSummary(
+                id, id, "mongodb", null, ORGANIZATION_ID, ENVIRONMENT_ID, null, List.of(), null, null);
+    }
+
+    @Test
+    public void shouldCreate_standalone_omittedId_resolvesToDefault() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        // dataPlaneId intentionally not set
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Flowable.empty());
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        when(dataPlaneRegistry.verified(DataPlaneDescription.DEFAULT_DATA_PLANE_ID))
+                .thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_standalone_omittedId_extraDpDeclared() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Flowable.empty());
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "extra-dp"));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(io.gravitee.am.service.exception.InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldReject_standalone_omittedId_provisionedDpLinked() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(io.gravitee.am.service.exception.InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldReject_standalone_suppliedId_unknown() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("ghost");
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(
+                new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "default", "mongodb", "test", null)));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(io.gravitee.am.service.exception.InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_cloud_omittedId_singleLinkedDp() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+        when(dataPlaneRegistry.verified("env-dp")).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> "env-dp".equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_cloud_omittedId_noLinkedDp() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Flowable.empty());
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(io.gravitee.am.service.exception.InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldReject_cloud_omittedId_multipleLinkedDps() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("dp-a"), dpSummary("dp-b")));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(io.gravitee.am.service.exception.InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_cloud_suppliedId_matchesLinked() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("env-dp");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+        when(dataPlaneRegistry.verified("env-dp")).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> "env-dp".equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_cloud_suppliedId_notLinked() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("other-dp");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(io.gravitee.am.service.exception.InvalidDataPlaneException.class);
 
         verify(domainRepository, never()).create(any(Domain.class));
     }

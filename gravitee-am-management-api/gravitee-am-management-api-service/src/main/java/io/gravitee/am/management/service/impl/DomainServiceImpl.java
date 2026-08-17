@@ -49,6 +49,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
@@ -61,6 +62,7 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.CimdClientStateService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -95,6 +97,7 @@ import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.model.AutomationNewDomain;
+import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -131,6 +134,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -167,6 +171,12 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
+
+    @Autowired
+    private DataPlaneDefinitionService dataPlaneDefinitionService;
+
+    @Autowired
+    private MultiDataPlaneLoader dataPlaneConfigurationLoader;
 
     /** every store that holds domain data in the data plane, collected rather than named one by one */
     @Autowired
@@ -367,18 +377,77 @@ public class DomainServiceImpl implements DomainService {
         var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
         String hrid = IdGenerator.generate(newDomain.getName());
 
-        if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
-            return Single.error(new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
-        }
+        return resolveDataPlaneId(environmentId, newDomain.getDataPlaneId())
+                .flatMap(resolvedId -> {
+                    newDomain.setDataPlaneId(resolvedId);
+                    return dataPlaneRegistry.verified(resolvedId)
+                            .onErrorResumeNext(error -> {
+                                log.error("Failed to verify Data Plane configuration", error);
+                                return Completable.error(new InvalidDataPlaneException(
+                                        "An error occurred while trying to create a domain. Data Plane [" + resolvedId
+                                                + "] did not answer with the settings it was provisioned with."));
+                            })
+                            .andThen(createDomain(organizationId, environmentId, newDomain, principal, automationDomain, hrid));
+                });
+    }
 
-        return dataPlaneRegistry.verified(newDomain.getDataPlaneId())
-                .onErrorResumeNext(error -> {
-                    log.error("Failed to verify Data Plane configuration", error);
-                    return Completable.error(new InvalidDataPlaneException(
-                            "An error occurred while trying to create a domain. Data Plane [" + newDomain.getDataPlaneId()
-                                    + "] did not answer with the settings it was provisioned with."));
-                })
-                .andThen(createDomain(organizationId, environmentId, newDomain, principal, automationDomain, hrid));
+    /**
+     * Picks the data plane a new domain will bind to. Cloud mode drives everything off the DPs
+     * provisioned against the environment; standalone falls back to {@code default} when the caller
+     * hasn't asked for anything and only {@code default} is declared in {@code gravitee.yml}.
+     */
+    private Single<String> resolveDataPlaneId(String environmentId, String requestedId) {
+        boolean cloudEnabled = CloudProperties.isManagedCloudEnabled(springEnvironment);
+        // Standalone with an explicit id doesn't need the environment's linked planes: the id has
+        // to exist in the registry, and that's the whole check. Save the repository round-trip.
+        if (!cloudEnabled && StringUtils.hasText(requestedId)) {
+            return resolveDataPlaneIdForStandalone(requestedId, List.of());
+        }
+        return dataPlaneDefinitionService.findByEnvironmentId(environmentId)
+                .map(DataPlaneDefinitionSummary::id)
+                .toList()
+                .flatMap(linkedForEnv -> cloudEnabled
+                        ? resolveDataPlaneIdForCloud(requestedId, linkedForEnv)
+                        : resolveDataPlaneIdForStandalone(requestedId, linkedForEnv));
+    }
+
+    private Single<String> resolveDataPlaneIdForCloud(String requestedId, List<String> linkedForEnv) {
+        if (!StringUtils.hasText(requestedId)) {
+            if (linkedForEnv.isEmpty()) {
+                return Single.error(new InvalidDataPlaneException(
+                        "No data plane is linked to this environment; a domain cannot be created without one."));
+            }
+            if (linkedForEnv.size() > 1) {
+                return Single.error(new InvalidDataPlaneException(
+                        "Multiple data planes are linked to this environment; dataPlaneId must be provided."));
+            }
+            return Single.just(linkedForEnv.get(0));
+        }
+        if (!linkedForEnv.contains(requestedId)) {
+            return Single.error(new InvalidDataPlaneException(
+                    "Data Plane [" + requestedId + "] is not linked to this environment."));
+        }
+        return Single.just(requestedId);
+    }
+
+    private Single<String> resolveDataPlaneIdForStandalone(String requestedId, List<String> linkedForEnv) {
+        if (StringUtils.hasText(requestedId)) {
+            boolean known = dataPlaneRegistry.getDataPlanes().stream()
+                    .map(DataPlaneDescription::id)
+                    .anyMatch(requestedId::equals);
+            if (!known) {
+                return Single.error(new InvalidDataPlaneException(
+                        "An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
+            }
+            return Single.just(requestedId);
+        }
+        boolean onlyDefaultDeclared = Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)
+                .equals(dataPlaneConfigurationLoader.declaredIds());
+        if (!linkedForEnv.isEmpty() || !onlyDefaultDeclared) {
+            return Single.error(new InvalidDataPlaneException(
+                    "dataPlaneId is required when the environment has linked data planes or gravitee.yml declares non-default planes."));
+        }
+        return Single.just(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
     }
 
     private Single<Domain> createDomain(String organizationId, String environmentId, NewDomain newDomain, User principal, AutomationNewDomain automationDomain, String hrid) {

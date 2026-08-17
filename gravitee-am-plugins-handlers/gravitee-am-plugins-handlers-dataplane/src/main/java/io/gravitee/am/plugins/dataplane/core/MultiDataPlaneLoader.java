@@ -23,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static org.springframework.util.StringUtils.hasText;
@@ -57,6 +59,14 @@ public class MultiDataPlaneLoader implements DataPlaneLoader {
             }
         }
         return false;
+    }
+
+    public Set<String> declaredIds() {
+        Set<String> ids = new LinkedHashSet<>();
+        for (int i = 0; configuration.containsProperty(propertyBase(i) + ".id"); i++) {
+            ids.add(configuration.getProperty(propertyBase(i) + ".id", String.class));
+        }
+        return ids;
     }
 
     private List<DataPlaneDescription> readList() {
