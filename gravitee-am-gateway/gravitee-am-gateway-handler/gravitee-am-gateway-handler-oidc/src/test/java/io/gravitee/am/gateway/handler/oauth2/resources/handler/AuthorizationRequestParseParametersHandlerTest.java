@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
@@ -30,9 +31,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.ext.auth.impl.UserImpl;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.ext.auth.User;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -42,6 +46,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
@@ -61,14 +66,24 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     @Mock
     private Session session;
 
+    private final AtomicReference<String> resolvedClaims = new AtomicReference<>();
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new RedirectUriValidationHandler(domain))
-                .handler(rc -> rc.response().end())
+                .handler(rc -> {
+                    resolvedClaims.set(rc.request().params().get(io.gravitee.am.common.oidc.Parameters.CLAIMS));
+                    rc.response().end();
+                })
                 .failureHandler(rc -> rc.response().setStatusCode(400).end());
+    }
+
+    @After
+    public void restoreDefaultJsonMapper() {
+        DatabindCodec.mapper().setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
     }
 
     @Test
@@ -176,6 +191,58 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
                 "/oauth/authorize?response_type=code&redirect_uri=https://callback/strict&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
                 null,
                 HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldKeepNullClaimValues() throws Exception {
+        DatabindCodec.mapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        prepareClaimsRequest();
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback&claims={\"id_token\":{\"given_name\":null},\"userinfo\":{\"email\":null}}",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        JsonObject claims = new JsonObject(resolvedClaims.get());
+        JsonObject idTokenClaims = claims.getJsonObject("id_token");
+        assertTrue(idTokenClaims.containsKey("given_name"));
+        assertNull(idTokenClaims.getValue("given_name"));
+        JsonObject userInfoClaims = claims.getJsonObject("userinfo");
+        assertTrue(userInfoClaims.containsKey("email"));
+        assertNull(userInfoClaims.getValue("email"));
+    }
+
+    @Test
+    public void shouldKeepIndividualClaimRequest() throws Exception {
+        DatabindCodec.mapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        prepareClaimsRequest();
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        JsonObject claims = new JsonObject(resolvedClaims.get());
+        JsonObject acr = claims.getJsonObject("id_token").getJsonObject("acr");
+        assertEquals("urn:mace:incommon:iap:silver", acr.getString("value"));
+        assertEquals(Boolean.TRUE, acr.getBoolean("essential"));
+        assertNull(claims.getJsonObject("userinfo"));
+    }
+
+    private void prepareClaimsRequest() {
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        openIDProviderMetadata.setResponseTypesSupported(Collections.singletonList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
     }
 
     @Test
