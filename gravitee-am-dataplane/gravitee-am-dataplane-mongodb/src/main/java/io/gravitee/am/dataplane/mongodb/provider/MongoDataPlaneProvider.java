@@ -99,11 +99,6 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Qualifier("dataplaneUpgraderRepository")
     private UpgraderRepository upgraderRepository;
 
-    /**
-     * The database the repositories were given, which already holds the wrapper's single reference.
-     * Taking another one here would leave {@link #stop()} one release short of the count the wrapper
-     * closes its client on, so an unregistered data plane would keep its connection pool open.
-     */
     @Autowired
     @Qualifier("dataPlaneMongoDatabase")
     private MongoDatabase mongoDatabase;
@@ -122,8 +117,6 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
 
     @Override
     public Completable healthCheck() {
-        // the driver authenticates while it establishes the connection, so wrong credentials surface
-        // here even though the command itself needs no privilege
         return Completable.defer(() -> Completable.fromPublisher(mongoDatabase.runCommand(new Document("ping", 1))));
     }
 
