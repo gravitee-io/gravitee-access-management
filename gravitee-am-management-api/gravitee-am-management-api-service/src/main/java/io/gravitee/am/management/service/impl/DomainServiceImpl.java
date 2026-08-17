@@ -278,7 +278,7 @@ public class DomainServiceImpl implements DomainService {
     private boolean createDefaultIdentityProvider = true;
 
     @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl = "http://localhost:8092";
+    private String gatewayUrl;
 
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
@@ -847,8 +847,9 @@ public class DomainServiceImpl implements DomainService {
     }
 
     /**
-     * Last resort when neither the environment nor the organization has an entrypoint, which is the normal
-     * state for a cloud organization: {@code createDefaults} no longer gives those an org-level default.
+     * Last resort when neither the environment nor the organization has an entrypoint. A cloud organization
+     * gets no org-level default from {@code createDefaults} any more, and its environments carry one each,
+     * so this is reached only while an environment is still waiting for Cockpit to sync its access points.
      * Callers dereference a url, so this must never be empty.
      */
     private Entrypoint dataPlaneEntrypoint(Domain domain, String organizationId) {

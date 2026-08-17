@@ -64,6 +64,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class EnvironmentCommandHandlerTest {
 
+    /** How long a handle() call gets to terminate before the assertion is treated as a failure. */
+    private static final long HANDLE_TIMEOUT_SECONDS = 10;
+
     @Mock
     private EnvironmentService environmentService;
 
@@ -106,7 +109,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         // non-cloud mode: entrypoint sync must be entirely skipped
@@ -128,7 +131,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
     }
@@ -139,7 +142,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
         verifyNoInteractions(environmentService, entrypointService);
@@ -156,7 +159,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
         verifyNoInteractions(environmentService, entrypointService);
@@ -173,7 +176,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
         verifyNoInteractions(environmentService, entrypointService);
@@ -214,7 +217,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         verify(entrypointService, times(1)).delete("entrypoint#1", "orga#1", null);
@@ -251,7 +254,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         verify(entrypointService, never()).delete(any(), any(), any());
@@ -275,7 +278,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         verifyNoInteractions(entrypointService);
@@ -301,7 +304,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(new EnvironmentCommand(environmentPayload)).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
         verify(entrypointService, times(1)).create(eq("orga#1"),
                 argThat(newEntrypoint -> newEntrypoint.getName().equals(host)), eq(expectedDefaultFlag), isNull());
@@ -356,7 +359,7 @@ class EnvironmentCommandHandlerTest {
     private void assertRejectedForMissingHost(EnvironmentCommand command) {
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
         verifyNoInteractions(environmentService, entrypointService);
@@ -411,7 +414,7 @@ class EnvironmentCommandHandlerTest {
     private void assertRejectedInCloudMode(EnvironmentCommand command) {
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
         verifyNoInteractions(environmentService, entrypointService);
@@ -467,7 +470,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
         verifyNoInteractions(entrypointService);
     }
@@ -481,7 +484,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
         verifyNoInteractions(entrypointService);
     }
@@ -496,7 +499,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
         verify(environmentService).createOrUpdate(eq("orga#1"), eq("env#1"),
                 argThat(newEnvironment -> newEnvironment.getDomainRestrictions().isEmpty()), isNull());
@@ -521,7 +524,7 @@ class EnvironmentCommandHandlerTest {
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
-        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
     }
