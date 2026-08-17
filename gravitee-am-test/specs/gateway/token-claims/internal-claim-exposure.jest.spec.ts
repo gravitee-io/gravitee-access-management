@@ -143,11 +143,6 @@ describe('Internal claim exposure - what a relying party can see today', () => {
     const idTokenUpdatedAt = decodeToken(tokens.id_token).payload.updated_at;
     const userinfoUpdatedAt = (await fixture.userinfo(tokens.access_token)).updated_at;
 
-    // TEMPORARY DIAGNOSTIC - passes locally, fails on the JDBC job. Show both
-    // payloads so the CI log says whether updated_at is absent or a different type.
-    console.log('[diag] ID token:', JSON.stringify(decodeToken(tokens.id_token).payload));
-    console.log('[diag] userinfo:', JSON.stringify(await fixture.userinfo(tokens.access_token)));
-
     // The same instant, expressed in different units on the two surfaces.
     expect(userinfoUpdatedAt).toEqual(expect.any(Number));
     expect(Math.floor(userinfoUpdatedAt / 1000)).toEqual(idTokenUpdatedAt);
