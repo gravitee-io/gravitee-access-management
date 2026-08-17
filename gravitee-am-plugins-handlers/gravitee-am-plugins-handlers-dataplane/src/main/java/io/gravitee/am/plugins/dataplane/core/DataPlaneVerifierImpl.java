@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @CustomLog
 public class DataPlaneVerifierImpl implements DataPlaneVerifier {
 
-    private final boolean enabled;
     private final long timeoutMillis;
     private final long retryAfterMillis;
 
@@ -64,25 +63,18 @@ public class DataPlaneVerifierImpl implements DataPlaneVerifier {
 
     private record Failure(long at, Throwable cause) {}
 
-    public DataPlaneVerifierImpl(boolean enabled, long timeoutMillis, long retryAfterMillis) {
-        this.enabled = enabled;
+    public DataPlaneVerifierImpl(long timeoutMillis, long retryAfterMillis) {
         this.timeoutMillis = timeoutMillis;
         this.retryAfterMillis = retryAfterMillis;
     }
 
     @Override
     public void reserve(String dataPlaneId) {
-        if (!enabled) {
-            return;
-        }
         reserved.add(dataPlaneId);
     }
 
     @Override
     public void require(String dataPlaneId, DataPlaneProvider provider) {
-        if (!enabled) {
-            return;
-        }
         generations.put(dataPlaneId, generator.incrementAndGet());
         required.put(dataPlaneId, provider);
         reserved.remove(dataPlaneId);

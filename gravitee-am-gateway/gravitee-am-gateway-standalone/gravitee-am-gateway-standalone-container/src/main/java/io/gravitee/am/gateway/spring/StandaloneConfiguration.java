@@ -44,7 +44,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneVerifier;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneVerifierImpl;
+import io.gravitee.am.plugins.dataplane.core.NoOpDataPlaneVerifier;
 import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneLoader;
 import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
 import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
@@ -217,7 +217,7 @@ public class StandaloneConfiguration {
     @Bean
     public DataPlaneVerifier dataPlaneVerifier() {
         // the gateway loads only what the gravitee.yml declares, so nothing is ever put under verification
-        return new DataPlaneVerifierImpl(false, 0, 0);
+        return new NoOpDataPlaneVerifier();
     }
 
     @Bean

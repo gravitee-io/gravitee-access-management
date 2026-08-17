@@ -71,7 +71,7 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
 
     @Bean
     public DataPlaneRegistry dataPlaneRegistry() {
-        return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class), new DataPlaneVerifierImpl(true, 5000, 10000));
+        return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class), new DataPlaneVerifierImpl(5000, 10000));
     }
 
     @Bean

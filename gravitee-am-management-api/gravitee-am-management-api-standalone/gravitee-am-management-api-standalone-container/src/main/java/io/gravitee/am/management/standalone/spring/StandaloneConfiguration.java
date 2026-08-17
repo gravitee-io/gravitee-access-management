@@ -35,6 +35,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneVerifier;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneVerifierImpl;
+import io.gravitee.am.plugins.dataplane.core.NoOpDataPlaneVerifier;
 import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
@@ -180,8 +181,10 @@ public class StandaloneConfiguration {
 
     @Bean
     public DataPlaneVerifier dataPlaneVerifier(ConfigurableEnvironment environment) {
+        if (!environment.getProperty("dataPlaneVerification.enabled", Boolean.class, true)) {
+            return new NoOpDataPlaneVerifier();
+        }
         return new DataPlaneVerifierImpl(
-                environment.getProperty("dataPlaneVerification.enabled", Boolean.class, true),
                 environment.getProperty("dataPlaneVerification.timeout", Long.class, 5000L),
                 environment.getProperty("dataPlaneVerification.retryAfter", Long.class, 10000L));
     }

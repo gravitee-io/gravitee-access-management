@@ -53,7 +53,7 @@ class DataPlaneVerifierImplTest {
 
     @Test
     void should_serve_a_data_plane_that_was_never_required() {
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        var verifier = new DataPlaneVerifierImpl(5000, 10000);
 
         verifier.verified(DATA_PLANE_ID).test().assertComplete();
     }
@@ -61,7 +61,7 @@ class DataPlaneVerifierImplTest {
     @Test
     void should_ask_the_store_once_and_reuse_the_answer() {
         when(provider.healthCheck()).thenReturn(answering(Completable.complete()));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        var verifier = new DataPlaneVerifierImpl(5000, 10000);
 
         verifier.require(DATA_PLANE_ID, provider);
         verifier.verified(DATA_PLANE_ID).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
@@ -73,7 +73,7 @@ class DataPlaneVerifierImplTest {
     @Test
     void should_refuse_a_data_plane_whose_store_does_not_answer() {
         when(provider.healthCheck()).thenReturn(answering(Completable.error(new IOException("refused"))));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        var verifier = new DataPlaneVerifierImpl(5000, 10000);
 
         verifier.require(DATA_PLANE_ID, provider);
 
@@ -83,7 +83,7 @@ class DataPlaneVerifierImplTest {
     @Test
     void should_answer_from_the_refusal_rather_than_ask_again_within_the_cooldown() {
         when(provider.healthCheck()).thenReturn(answering(Completable.error(new IOException("refused"))));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 60000);
+        var verifier = new DataPlaneVerifierImpl(5000, 60000);
 
         verifier.require(DATA_PLANE_ID, provider);
         verifier.verified(DATA_PLANE_ID).test().awaitDone(5, TimeUnit.SECONDS).assertError(IOException.class);
@@ -97,7 +97,7 @@ class DataPlaneVerifierImplTest {
     @Test
     void should_ask_the_store_again_once_the_cooldown_has_passed() {
         when(provider.healthCheck()).thenReturn(answering(Completable.error(new IOException("refused"))));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 0);
+        var verifier = new DataPlaneVerifierImpl(5000, 0);
 
         verifier.require(DATA_PLANE_ID, provider);
         verifier.verified(DATA_PLANE_ID).test().awaitDone(5, TimeUnit.SECONDS).assertError(IOException.class);
@@ -108,19 +108,9 @@ class DataPlaneVerifierImplTest {
     }
 
     @Test
-    void should_serve_everything_when_verification_is_disabled() {
-        var verifier = new DataPlaneVerifierImpl(false, 5000, 10000);
-
-        verifier.require(DATA_PLANE_ID, provider);
-
-        verifier.verified(DATA_PLANE_ID).test().assertComplete();
-        assertThat(checks).hasValue(0);
-    }
-
-    @Test
     void should_forget_a_refusal_along_with_the_data_plane() {
         when(provider.healthCheck()).thenReturn(answering(Completable.error(new IOException("refused"))));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 60000);
+        var verifier = new DataPlaneVerifierImpl(5000, 60000);
         verifier.require(DATA_PLANE_ID, provider);
         verifier.verified(DATA_PLANE_ID).test().awaitDone(5, TimeUnit.SECONDS).assertError(IOException.class);
 
@@ -132,7 +122,7 @@ class DataPlaneVerifierImplTest {
 
     @Test
     void should_refuse_a_reserved_data_plane_until_its_provider_arrives() {
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        var verifier = new DataPlaneVerifierImpl(5000, 10000);
 
         verifier.reserve(DATA_PLANE_ID);
 
@@ -145,7 +135,7 @@ class DataPlaneVerifierImplTest {
     @Test
     void should_serve_a_reserved_data_plane_once_its_provider_has_answered() {
         when(provider.healthCheck()).thenReturn(answering(Completable.complete()));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        var verifier = new DataPlaneVerifierImpl(5000, 10000);
 
         verifier.reserve(DATA_PLANE_ID);
         verifier.require(DATA_PLANE_ID, provider);
@@ -156,7 +146,7 @@ class DataPlaneVerifierImplTest {
 
     @Test
     void should_release_a_reservation_that_was_forgotten() {
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 10000);
+        var verifier = new DataPlaneVerifierImpl(5000, 10000);
         verifier.reserve(DATA_PLANE_ID);
 
         verifier.forget(DATA_PLANE_ID);
@@ -169,7 +159,7 @@ class DataPlaneVerifierImplTest {
     void should_ignore_a_refusal_belonging_to_a_definition_that_was_already_replaced() {
         var inFlight = CompletableSubject.create();
         when(provider.healthCheck()).thenReturn(answering(inFlight));
-        var verifier = new DataPlaneVerifierImpl(true, 5000, 60000);
+        var verifier = new DataPlaneVerifierImpl(5000, 60000);
         verifier.require(DATA_PLANE_ID, provider);
         // subscribed here rather than left to the background check, so the store is asked before the
         // definition is replaced whichever way the scheduler runs
