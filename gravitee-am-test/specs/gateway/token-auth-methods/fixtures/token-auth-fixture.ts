@@ -27,7 +27,10 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { Fixture } from '../../../test-fixture';
+
+const FORM = 'application/x-www-form-urlencoded';
 
 export interface TokenAuthFixture extends Fixture {
   domain: Domain;
@@ -122,4 +125,17 @@ export const setupTokenAuthFixture = async (settings: TokenAuthSettings = {}): P
     }
     throw error;
   }
+};
+
+/** Mints an access token via client_secret_post, using the fixture's client_id/client_secret in the request body. */
+export const mintClientSecretPostToken = async (fixture: TokenAuthFixture): Promise<string> => {
+  const response = await performPost(
+    fixture.oidc.token_endpoint,
+    '',
+    `grant_type=client_credentials&client_id=${encodeURIComponent(fixture.clientId)}&client_secret=${encodeURIComponent(
+      fixture.clientSecret,
+    )}`,
+    { 'Content-type': FORM },
+  ).expect(200);
+  return response.body.access_token;
 };

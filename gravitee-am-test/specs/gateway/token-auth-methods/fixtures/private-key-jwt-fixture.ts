@@ -26,7 +26,14 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { privateJwk } from '@api-fixtures/oidc';
+import * as jose from 'jose';
+import crypto from 'crypto';
 import { Fixture } from '../../../test-fixture';
+
+const FORM = 'application/x-www-form-urlencoded';
+const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 
 export interface PrivateKeyJwtFixture extends Fixture {
   domain: Domain;
@@ -102,4 +109,36 @@ export const setupPrivateKeyJwtFixture = async (): Promise<PrivateKeyJwtFixture>
     }
     throw error;
   }
+};
+
+/** Mints an access token via private_key_jwt, signing a fresh client assertion for the fixture's client. */
+export const mintPrivateKeyJwtToken = async (fixture: PrivateKeyJwtFixture): Promise<string> => {
+  const assertion = await signClientAssertion(fixture);
+  const response = await performPost(
+    fixture.oidc.token_endpoint,
+    '',
+    `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(
+      CLIENT_ASSERTION_TYPE,
+    )}&client_assertion=${encodeURIComponent(assertion)}`,
+    { 'Content-type': FORM },
+  ).expect(200);
+  return response.body.access_token;
+};
+
+/** Signs a client assertion JWT for the fixture's client, using the registered key by default. */
+export const signClientAssertion = async (
+  fixture: PrivateKeyJwtFixture,
+  key: jose.JWK = privateJwk as jose.JWK,
+): Promise<string> => {
+  const privateKey = await jose.importJWK(key, 'RS256');
+  const now = Math.floor(Date.now() / 1000);
+  return new jose.SignJWT({})
+    .setProtectedHeader({ alg: 'RS256', kid: '123' })
+    .setIssuer(fixture.clientId)
+    .setSubject(fixture.clientId)
+    .setAudience(fixture.oidc.token_endpoint)
+    .setJti(crypto.randomUUID())
+    .setIssuedAt(now)
+    .setExpirationTime(now + 300)
+    .sign(privateKey);
 };
