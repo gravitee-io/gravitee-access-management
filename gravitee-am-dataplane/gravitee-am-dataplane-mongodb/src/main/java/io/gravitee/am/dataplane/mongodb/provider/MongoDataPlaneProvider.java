@@ -35,6 +35,9 @@ import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
+import io.reactivex.rxjava3.core.Completable;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import org.bson.Document;
 import lombok.Getter;
 import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
@@ -96,6 +99,10 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Qualifier("dataplaneUpgraderRepository")
     private UpgraderRepository upgraderRepository;
 
+    @Autowired
+    @Qualifier("dataPlaneMongoDatabase")
+    private MongoDatabase mongoDatabase;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
@@ -106,6 +113,11 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
         if (mongoClientWrapper != null) {
             mongoClientWrapper.releaseClient();
         }
+    }
+
+    @Override
+    public Completable healthCheck() {
+        return Completable.defer(() -> Completable.fromPublisher(mongoDatabase.runCommand(new Document("ping", 1))));
     }
 
     @Override

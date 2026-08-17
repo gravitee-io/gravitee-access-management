@@ -89,12 +89,14 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
         }
         try {
             dataPlaneRegistry.unregister(definition.getId());
-            dataPlaneRegistry.register(provisionedDataPlaneLoader.publish(definition));
+            dataPlaneRegistry.registerProvisioned(provisionedDataPlaneLoader.publish(definition));
             provisionedDataPlaneLoader.markServing(definition);
             log.info("Data plane [{}] of type [{}] registered from a sync event", definition.getId(), definition.getType());
         } catch (Exception e) {
             log.error("Data plane [{}] could not be registered and will be unavailable; domains bound to it cannot be served",
                     definition.getId(), e);
+            // otherwise the claim outlives the failed registration and the id stays refused for good
+            dataPlaneRegistry.unregister(definition.getId());
         }
     }
 

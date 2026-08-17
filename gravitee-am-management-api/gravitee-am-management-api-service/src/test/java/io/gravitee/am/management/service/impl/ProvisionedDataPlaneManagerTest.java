@@ -96,7 +96,7 @@ class ProvisionedDataPlaneManagerTest {
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
 
         verify(provisionedDataPlaneLoader).publish(definition);
-        verify(dataPlaneRegistry).register(DESCRIPTION);
+        verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
     }
 
     /**
@@ -112,7 +112,7 @@ class ProvisionedDataPlaneManagerTest {
 
         InOrder inOrder = inOrder(dataPlaneRegistry);
         inOrder.verify(dataPlaneRegistry).unregister("dp-1");
-        inOrder.verify(dataPlaneRegistry).register(DESCRIPTION);
+        inOrder.verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
     }
 
     /**
@@ -129,7 +129,7 @@ class ProvisionedDataPlaneManagerTest {
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
 
         verify(dataPlaneRegistry, never()).unregister(any());
-        verify(dataPlaneRegistry, never()).register(any());
+        verify(dataPlaneRegistry, never()).registerProvisioned(any());
         verify(provisionedDataPlaneLoader, never()).publish(any());
     }
 
@@ -147,7 +147,7 @@ class ProvisionedDataPlaneManagerTest {
     void shouldNotRecordTheVersionWhenTheProviderCannotBeBuilt() throws Exception {
         DataPlaneDefinition definition = definition();
         when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition));
-        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).register(DESCRIPTION);
+        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
 
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
 
@@ -160,7 +160,7 @@ class ProvisionedDataPlaneManagerTest {
 
         manager.onEvent(event(DataPlaneEvent.UPDATE, "dp-1"));
 
-        verify(dataPlaneRegistry).register(DESCRIPTION);
+        verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
     }
 
     @Test
@@ -180,7 +180,7 @@ class ProvisionedDataPlaneManagerTest {
 
         verify(dataPlaneRegistry).unregister("dp-1");
         verify(provisionedDataPlaneLoader).forget("dp-1");
-        verify(dataPlaneRegistry, never()).register(any());
+        verify(dataPlaneRegistry, never()).registerProvisioned(any());
     }
 
     @Test
@@ -189,17 +189,41 @@ class ProvisionedDataPlaneManagerTest {
 
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
 
-        verify(dataPlaneRegistry, never()).register(any());
+        verify(dataPlaneRegistry, never()).registerProvisioned(any());
     }
 
     @Test
     void shouldNotFailWhenTheProviderCannotBeBuilt() {
         when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
-        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).register(DESCRIPTION);
+        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
 
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
 
-        verify(dataPlaneRegistry).register(DESCRIPTION);
+        verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
+    }
+
+    @Test
+    void shouldRegisterTheDataPlaneAsOneThatMustBeVerified() {
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        // register alone would serve the plane unchecked, which only the gravitee.yml ones may do
+        verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
+        verify(dataPlaneRegistry, never()).register(any());
+    }
+
+    @Test
+    void shouldDropTheDataPlaneWhenTheProviderCannotBeBuilt() {
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
+        doThrow(new IllegalStateException("no provider for type mongodb")).when(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        // nothing of the failed registration may outlive it, or the id stays refused for good
+        InOrder inOrder = inOrder(dataPlaneRegistry);
+        inOrder.verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
+        inOrder.verify(dataPlaneRegistry).unregister("dp-1");
     }
 
     private static SimpleEvent<DataPlaneEvent, Payload> event(DataPlaneEvent type, String dataPlaneId) {

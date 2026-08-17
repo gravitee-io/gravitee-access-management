@@ -363,9 +363,22 @@ public class DomainServiceImpl implements DomainService {
         log.debug("Create a new domain: {}", newDomain);
         var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
         String hrid = IdGenerator.generate(newDomain.getName());
+
         if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
             return Single.error(new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
         }
+
+        return dataPlaneRegistry.verified(newDomain.getDataPlaneId())
+                .onErrorResumeNext(error -> {
+                    log.error("Failed to verify Data Plane configuration", error);
+                    return Completable.error(new InvalidDataPlaneException(
+                            "An error occurred while trying to create a domain. Data Plane [" + newDomain.getDataPlaneId()
+                                    + "] did not answer with the settings it was provisioned with."));
+                })
+                .andThen(createDomain(organizationId, environmentId, newDomain, principal, automationDomain, hrid));
+    }
+
+    private Single<Domain> createDomain(String organizationId, String environmentId, NewDomain newDomain, User principal, AutomationNewDomain automationDomain, String hrid) {
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()
                 .flatMap(empty -> {

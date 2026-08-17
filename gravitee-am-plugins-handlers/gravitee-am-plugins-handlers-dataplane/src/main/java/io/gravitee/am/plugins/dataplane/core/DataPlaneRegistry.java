@@ -33,6 +33,7 @@ import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Completable;
 
 import java.util.List;
 
@@ -47,7 +48,11 @@ public interface DataPlaneRegistry {
 
     void register(DataPlaneDescription description);
 
+    void registerProvisioned(DataPlaneDescription description);
+
     void unregister(String dataPlaneId);
+
+    Completable verified(String dataPlaneId);
 
     List<DataPlaneProvider> getAllProviders();
 

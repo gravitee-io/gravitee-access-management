@@ -30,10 +30,13 @@ import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
+import io.reactivex.rxjava3.core.Completable;
 
 public interface DataPlaneProvider {
 
     void stop();
+
+    Completable healthCheck();
 
     DataPlaneDescription getDataPlaneDescription();
 
