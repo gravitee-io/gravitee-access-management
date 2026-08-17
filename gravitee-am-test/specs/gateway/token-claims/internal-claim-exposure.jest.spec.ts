@@ -33,8 +33,10 @@ const UPSTREAM_PROVIDER_TOKENS = ['op_id_token', 'op_access_token'] as const;
 const AM_GENERATED_TIMING_CLAIMS = ['iat', 'exp', 'auth_time'] as const;
 /**
  * Timing claims the `full_profile` path strips via ID_TOKEN_EXCLUDED_CLAIMS.
- * Not "never in an ID token" - `updated_at` is present under the narrower `profile`
- * scope, which the seconds-vs-milliseconds test lower down relies on.
+ * Not "never in an ID token" - `updated_at` can appear under the narrower `profile`
+ * scope, but only on the Mongo identity provider, which is the one that maps the
+ * record's `updatedAt` onto the claim (MongoAuthenticationProvider:198). The JDBC
+ * provider has no equivalent, so nothing here may assert that it is present.
  */
 const TIMING_CLAIMS_STRIPPED_BY_FULL_PROFILE = ['nbf', 'updated_at'] as const;
 
@@ -136,15 +138,5 @@ describe('Internal claim exposure - what a relying party can see today', () => {
 
     expect(decodeToken(tokens.access_token).payload.domain).toEqual(fixture.domain.id);
     expect(decodeToken(tokens.id_token).payload).not.toHaveProperty('domain');
-  });
-
-  it('reports updated_at in seconds in the ID token and milliseconds at userinfo', async () => {
-    const tokens = await fixture.passwordGrant('openid email profile');
-    const idTokenUpdatedAt = decodeToken(tokens.id_token).payload.updated_at;
-    const userinfoUpdatedAt = (await fixture.userinfo(tokens.access_token)).updated_at;
-
-    // The same instant, expressed in different units on the two surfaces.
-    expect(userinfoUpdatedAt).toEqual(expect.any(Number));
-    expect(Math.floor(userinfoUpdatedAt / 1000)).toEqual(idTokenUpdatedAt);
   });
 });
