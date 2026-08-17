@@ -116,11 +116,13 @@ export const setupCloudOrganizationFixture = async (name: string): Promise<Cloud
   // Not optional — CockpitAuthenticationFilter resolves the token's `env` claim through
   // environmentService.findById, which errors when the environment is missing, and the filter turns any
   // exception into a 403. An organization with no environment cannot be signed into.
+  // Required: cloud mode rejects an ENVIRONMENT command with no non-overriding GATEWAY access point.
   await awaitCommand('ENVIRONMENT', {
     id: environmentId,
     organizationId,
     hrids: [environmentId],
     name: `Cloud test home environment ${environmentId}`,
+    accessPoints: [{ target: 'GATEWAY', host: `${environmentId}.example.com` }],
   });
   await grantEnvironmentOwnership(environmentId);
 

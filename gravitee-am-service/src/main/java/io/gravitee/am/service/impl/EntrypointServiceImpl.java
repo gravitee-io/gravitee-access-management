@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
@@ -46,6 +47,7 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -70,19 +72,22 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final VirtualHostValidator virtualHostValidator;
     private final EventService eventService;
     private final String gatewayUrl;
+    private final boolean managedCloudEnabled;
 
     public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository,
                                  @Lazy OrganizationService organizationService,
                                  AuditService auditService,
                                  VirtualHostValidator virtualHostValidator,
                                  EventService eventService,
-                                 @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+                                 @Value("${gateway.url:http://localhost:8092}") String gatewayUrl,
+                                 Environment environment) {
         this.entrypointRepository = entrypointRepository;
         this.organizationService = organizationService;
         this.auditService = auditService;
         this.virtualHostValidator = virtualHostValidator;
         this.eventService = eventService;
         this.gatewayUrl = gatewayUrl;
+        this.managedCloudEnabled = CloudProperties.isManagedCloudEnabled(environment);
     }
 
     @Override
@@ -129,6 +134,11 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     @Override
     public Flowable<Entrypoint> createDefaults(Organization organization) {
+
+        // In cloud every entrypoint comes from an environment access point, so an org-level default is never resolved.
+        if (managedCloudEnabled) {
+            return Flowable.empty();
+        }
 
         List<Single<Entrypoint>> toCreateObsList = new ArrayList<>();
 
@@ -196,7 +206,8 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     private Single<Entrypoint> deleteEntrypoint(Entrypoint e) {
-        if (e.isDefaultEntrypoint()) {
+        // Skipped in cloud, where EnvironmentCommandHandler deletes every environment entrypoint to recreate them.
+        if (e.isDefaultEntrypoint() && !managedCloudEnabled) {
             return isNotTheLastDefaultEntryPoint(e)
                     .flatMap(notLast -> notLast ? Single.just(e) : Single.error(new LastDefaultEntrypointException("You cannot remove the last default entrypoint")));
         } else {

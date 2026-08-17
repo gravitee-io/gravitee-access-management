@@ -51,6 +51,19 @@ class DataPlaneVerifierImplTest {
         });
     }
 
+    /**
+     * Callers share one cached check, so the store may be asked by the background check {@code require}
+     * starts rather than by the caller subscribing here. The ask then lands on another thread and is not
+     * visible the moment {@code test()} returns.
+     */
+    private void awaitAsked(int expected) {
+        var deadline = System.currentTimeMillis() + 5000;
+        while (checks.get() < expected && System.currentTimeMillis() < deadline) {
+            Thread.onSpinWait();
+        }
+        assertThat(checks).hasValue(expected);
+    }
+
     @Test
     void should_serve_a_data_plane_that_was_never_required() {
         var verifier = new DataPlaneVerifierImpl(5000, 10000);
@@ -161,10 +174,9 @@ class DataPlaneVerifierImplTest {
         when(provider.healthCheck()).thenReturn(answering(inFlight));
         var verifier = new DataPlaneVerifierImpl(5000, 60000);
         verifier.require(DATA_PLANE_ID, provider);
-        // subscribed here rather than left to the background check, so the store is asked before the
-        // definition is replaced whichever way the scheduler runs
+        // the store must have been asked before the definition is replaced, whichever way the scheduler runs
         var waiting = verifier.verified(DATA_PLANE_ID).test();
-        assertThat(checks).hasValue(1);
+        awaitAsked(1);
 
         // the definition is replaced by one that works while its check is still waiting on the store
         verifier.forget(DATA_PLANE_ID);

@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -45,6 +46,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,8 +59,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -91,8 +96,19 @@ public class EntrypointServiceTest {
     @Before
     public void before() {
 
-        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io");
+        cut = newEntrypointService(new MockEnvironment());
         lenient().when(eventService.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+    }
+
+    private EntrypointService newEntrypointService(Environment environment) {
+        return new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io", environment);
+    }
+
+    private EntrypointService cloudModeEntrypointService() {
+        MockEnvironment cloudEnvironment = new MockEnvironment();
+        cloudEnvironment.setProperty("cloud.enabled", "true");
+        cloudEnvironment.setProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED);
+        return newEntrypointService(cloudEnvironment);
     }
 
     @Test
@@ -760,5 +776,59 @@ public class EntrypointServiceTest {
                         && "env#1".equals(event.getPayload().getReferenceId())
                         && "env#1".equals(event.getEnvironmentId())
                         && event.getDataPlaneId() != null));
+    }
+
+    @Test
+    public void cloudMode_createDefaults_createsNoOrganizationEntrypoint() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+
+        TestSubscriber<Entrypoint> obs = cloudModeEntrypointService().createDefaults(organization).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoValues();
+
+        verifyNoInteractions(entrypointRepository);
+        verifyNoInteractions(auditService);
+    }
+
+    @Test
+    public void cloudMode_createDefaultsWithDomainRestrictions_createsNoOrganizationEntrypoint() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+        organization.setDomainRestrictions(Arrays.asList("domain1.gravitee.io", "domain2.gravitee.io"));
+
+        TestSubscriber<Entrypoint> obs = cloudModeEntrypointService().createDefaults(organization).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoValues();
+
+        verifyNoInteractions(entrypointRepository);
+    }
+
+    @Test
+    public void cloudMode_deletesTheLastDefaultEntrypoint() {
+        // An ENVIRONMENT re-sync for a single-environment organization deletes the only default entrypoint there is.
+        Entrypoint environmentEntrypoint = new Entrypoint();
+        environmentEntrypoint.setId(ENTRYPOINT_ID);
+        environmentEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        environmentEntrypoint.setEnvironmentId("env#1");
+        environmentEntrypoint.setDefaultEntrypoint(true);
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(environmentEntrypoint));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+
+        TestObserver<Void> obs = cloudModeEntrypointService().delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+
+        verify(entrypointRepository, times(1)).delete(ENTRYPOINT_ID);
+        // findAll is the guard's read, so never calling it is how we know the guard was skipped
+        verify(entrypointRepository, never()).findAll(ORGANIZATION_ID);
     }
 }
