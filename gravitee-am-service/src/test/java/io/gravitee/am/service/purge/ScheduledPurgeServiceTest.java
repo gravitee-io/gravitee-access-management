@@ -32,8 +32,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -67,18 +69,18 @@ public class ScheduledPurgeServiceTest {
     }
 
     @Test
-    public void shouldPurgeEverySupportedTargetWhenNothingIsExcluded() {
+    public void shouldRequestPurgeOfEverySupportedTargetWhenNothingIsExcluded() {
         ExpiredDataSweeper sweeper = sweeperReturning(Completable.complete());
         when(sweeperProvider.getExpiredDataSweeper(any())).thenReturn(sweeper);
 
         purgeServiceWithExclusions(List.of()).run();
 
         SUPPORTED_TARGETS.forEach(target -> verify(sweeperProvider).getExpiredDataSweeper(target));
-        verify(sweeper, org.mockito.Mockito.times(SUPPORTED_TARGETS.size())).purgeExpiredData();
+        verify(sweeper, times(SUPPORTED_TARGETS.size())).purgeExpiredData();
     }
 
     @Test
-    public void shouldNotPurgeAnExcludedTarget() {
+    public void shouldNotRequestPurgeOfAnExcludedTarget() {
         ExpiredDataSweeper sweeper = sweeperReturning(Completable.complete());
         when(sweeperProvider.getExpiredDataSweeper(any())).thenReturn(sweeper);
 
@@ -121,7 +123,7 @@ public class ScheduledPurgeServiceTest {
         service.start();
 
         ArgumentCaptor<CronTrigger> trigger = ArgumentCaptor.forClass(CronTrigger.class);
-        verify(taskScheduler).schedule(org.mockito.ArgumentMatchers.eq(service), trigger.capture());
+        verify(taskScheduler).schedule(eq(service), trigger.capture());
         assertThat(trigger.getValue().getExpression()).isEqualTo(CRON);
     }
 

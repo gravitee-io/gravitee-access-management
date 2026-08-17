@@ -32,7 +32,7 @@ import static org.awaitility.Awaitility.await;
  * Repositories declare their indexes in {@code @PostConstruct} hooks that delegate to
  * {@link MongoUtils#createIndex}, which subscribes without blocking and only logs failures. A node
  * whose index creation failed still starts and reports itself healthy, so reading the index
- * catalogue back out of the database is the only way to know the declaration took effect.
+ * catalog back out of the database is the only way to know the declaration took effect.
  *
  * @author GraviteeSource Team
  */

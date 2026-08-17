@@ -40,7 +40,7 @@ import static org.awaitility.Awaitility.await;
  * <p>
  * These are the paths an upgrade actually takes. {@link MongoUtils#dropIndexes} in particular is
  * destructive, carries its own retry and already-removed handling, and is used to sweep obsolete
- * indexes on startup - so its behaviour is worth pinning.
+ * indexes on startup - so its behavior is worth pinning.
  *
  * @author GraviteeSource Team
  */

@@ -15,31 +15,41 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.gateway.AbstractGatewayMongoRepository;
 import io.gravitee.am.repository.mongodb.management.AbstractManagementMongoRepository;
 import io.gravitee.am.repository.mongodb.oauth2.AbstractOAuth2MongoRepository;
+import io.reactivex.rxjava3.core.Flowable;
+import org.bson.Document;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.util.ReflectionUtils;
 
-import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.when;
 
 /**
  * Pins which configuration keys switch MongoDB index creation on and off, per repository scope.
  * <p>
- * Index creation never fails loudly - {@code MongoUtils.createIndex} subscribes without blocking and
+ * Index creation never fails loudly - {@link MongoUtils#createIndex} subscribes without blocking and
  * only logs - so an operator who disables it by accident gets a healthy-looking node whose token
  * collections silently stop self-cleaning. The keys are worth pinning because they are not
  * consistent between scopes: each scope resolves a different chain, and two of the combinations
  * asserted below are surprising enough that they have caused production incidents.
  * <p>
- * The {@code @Value} expressions are read off the production fields by reflection rather than
- * copied, so this test cannot drift away from the annotations it describes.
+ * Each scope is exercised through its real resolution path rather than by inspecting the flag.
+ * Management and oauth2 read a {@code @Value} field that only Spring populates, so those run in a
+ * small application context and assert the observable outcome - whether indexes are actually
+ * created on the collection. Gateway resolves through a method, so it is called directly.
  *
  * @author GraviteeSource Team
  */
@@ -55,49 +65,49 @@ public class EnsureIndexOnStartResolutionTest {
 
     @Test
     public void managementIndexesAreCreatedByDefault() {
-        assertThat(managementResolves(env())).isTrue();
+        assertThat(managementCreatesIndexes()).isTrue();
     }
 
     @Test
     public void managementIndexesAreDisabledByItsModernKey() {
-        assertThat(managementResolves(env(MODERN_MANAGEMENT_KEY, "false"))).isFalse();
+        assertThat(managementCreatesIndexes(MODERN_MANAGEMENT_KEY, "false")).isFalse();
     }
 
     @Test
     public void managementIndexesAreDisabledByItsLegacyKey() {
-        assertThat(managementResolves(env(LEGACY_MANAGEMENT_KEY, "false"))).isFalse();
+        assertThat(managementCreatesIndexes(LEGACY_MANAGEMENT_KEY, "false")).isFalse();
     }
 
     @Test
     public void managementModernKeyTakesPrecedenceOverItsLegacyKey() {
-        assertThat(managementResolves(env(MODERN_MANAGEMENT_KEY, "true", LEGACY_MANAGEMENT_KEY, "false"))).isTrue();
+        assertThat(managementCreatesIndexes(MODERN_MANAGEMENT_KEY, "true", LEGACY_MANAGEMENT_KEY, "false")).isTrue();
     }
 
     // --- oauth2 scope (the token stores) ----------------------------------------------------
 
     @Test
     public void tokenStoreIndexesAreCreatedByDefault() {
-        assertThat(oauth2Resolves(env())).isTrue();
+        assertThat(oauth2CreatesIndexes()).isTrue();
     }
 
     @Test
     public void tokenStoreIndexesAreDisabledByTheLegacyOauth2Key() {
-        assertThat(oauth2Resolves(env(LEGACY_OAUTH2_KEY, "false"))).isFalse();
+        assertThat(oauth2CreatesIndexes(LEGACY_OAUTH2_KEY, "false")).isFalse();
     }
 
     /**
      * The token stores read the legacy key only. Setting the modern, scope-prefixed key that every
-     * other repository honours leaves index creation switched on - including the TTL indexes that
-     * are the only thing deleting expired tokens on MongoDB. An operator who standardises on the
+     * other repository honors leaves index creation switched on - including the TTL indexes that are
+     * the only thing deleting expired tokens on MongoDB. An operator who standardizes on the
      * {@code repositories.*} naming will believe they have disabled index creation when they have not.
      */
     @Test
     public void tokenStoreIndexesIgnoreTheModernOauth2Key() {
         // asserted as a contrast so this cannot pass merely because true is also the default
-        assertThat(oauth2Resolves(env(LEGACY_OAUTH2_KEY, "false")))
+        assertThat(oauth2CreatesIndexes(LEGACY_OAUTH2_KEY, "false"))
                 .as("the legacy key must switch token store indexes off")
                 .isFalse();
-        assertThat(oauth2Resolves(env(MODERN_OAUTH2_KEY, "false")))
+        assertThat(oauth2CreatesIndexes(MODERN_OAUTH2_KEY, "false"))
                 .as("the modern scope-prefixed key must be ignored by the token stores")
                 .isTrue();
     }
@@ -106,12 +116,12 @@ public class EnsureIndexOnStartResolutionTest {
 
     @Test
     public void gatewayIndexesAreCreatedByDefault() {
-        assertThat(gatewayResolves(env())).isTrue();
+        assertThat(gatewayResolves()).isTrue();
     }
 
     @Test
     public void gatewayIndexesAreDisabledByItsOwnKey() {
-        assertThat(gatewayResolves(env(MODERN_GATEWAY_KEY, "false"))).isFalse();
+        assertThat(gatewayResolves(MODERN_GATEWAY_KEY, "false")).isFalse();
     }
 
     /**
@@ -120,50 +130,98 @@ public class EnsureIndexOnStartResolutionTest {
      */
     @Test
     public void gatewayIndexesAreAlsoDisabledByTheLegacyOauth2Key() {
-        assertThat(gatewayResolves(env(LEGACY_OAUTH2_KEY, "false"))).isFalse();
+        assertThat(gatewayResolves(LEGACY_OAUTH2_KEY, "false")).isFalse();
     }
 
     @Test
     public void gatewayFallsBackToManagementWhenNoGatewayOrOauth2KeyIsSet() {
-        assertThat(gatewayResolves(env(MODERN_MANAGEMENT_KEY, "false"))).isFalse();
-        assertThat(gatewayResolves(env(LEGACY_MANAGEMENT_KEY, "false"))).isFalse();
+        assertThat(gatewayResolves(MODERN_MANAGEMENT_KEY, "false")).isFalse();
+        assertThat(gatewayResolves(LEGACY_MANAGEMENT_KEY, "false")).isFalse();
     }
 
     @Test
     public void gatewayPrefersTheLegacyOauth2KeyOverTheManagementFallback() {
-        assertThat(gatewayResolves(env(LEGACY_OAUTH2_KEY, "true", MODERN_MANAGEMENT_KEY, "false"))).isTrue();
+        assertThat(gatewayResolves(LEGACY_OAUTH2_KEY, "true", MODERN_MANAGEMENT_KEY, "false")).isTrue();
     }
+
+    // --- probes -----------------------------------------------------------------------------
+
+    /** Drives the real {@code createIndex} of the management scope. */
+    public static class ManagementProbe extends AbstractManagementMongoRepository {
+        void createIndexOn(MongoCollection<?> collection) {
+            createIndex(collection, SOME_INDEX);
+        }
+    }
+
+    /** Drives the real {@code createIndex} of the oauth2 scope, whose flag is private. */
+    public static class OAuth2Probe extends AbstractOAuth2MongoRepository {
+        void createIndexOn(MongoCollection<?> collection) {
+            createIndex(collection, SOME_INDEX);
+        }
+    }
+
+    /** The gateway scope resolves through a method, so the probe just exposes it. */
+    public static class GatewayProbe extends AbstractGatewayMongoRepository {
+        boolean ensureIndexOnStart() {
+            return getEnsureIndexOnStart();
+        }
+    }
+
+    private static final Map<Document, IndexOptions> SOME_INDEX =
+            Map.of(new Document("field", 1), new IndexOptions().name("i1"));
 
     // --- helpers ----------------------------------------------------------------------------
 
-    private static boolean managementResolves(MockEnvironment environment) {
-        return resolveValueAnnotation(AbstractManagementMongoRepository.class, "ensureIndexOnStart", environment);
+    private static boolean managementCreatesIndexes(String... properties) {
+        return createsIndexes(ManagementProbe.class, "managementMongoTemplate",
+                (probe, collection) -> ((ManagementProbe) probe).createIndexOn(collection), properties);
     }
 
-    private static boolean oauth2Resolves(MockEnvironment environment) {
-        return resolveValueAnnotation(AbstractOAuth2MongoRepository.class, "ensureIndexOnStart", environment);
-    }
-
-    private static boolean gatewayResolves(MockEnvironment environment) {
-        AbstractGatewayMongoRepository repository = new AbstractGatewayMongoRepository() {
-        };
-        ReflectionTestUtils.setField(repository, "environment", new RepositoriesEnvironment(environment));
-        return Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(repository, "getEnsureIndexOnStart"));
+    private static boolean oauth2CreatesIndexes(String... properties) {
+        return createsIndexes(OAuth2Probe.class, "oauth2MongoTemplate",
+                (probe, collection) -> ((OAuth2Probe) probe).createIndexOn(collection), properties);
     }
 
     /**
-     * Resolves the {@code @Value} expression declared on the production field, exactly as Spring
-     * would when building the bean.
+     * Builds a minimal context so Spring resolves the {@code @Value} exactly as it would at runtime,
+     * then reports whether the repository actually asked the collection to create its indexes.
      */
-    private static boolean resolveValueAnnotation(Class<?> type, String fieldName, MockEnvironment environment) {
-        Field field = ReflectionUtils.findField(type, fieldName);
-        assertThat(field).as("field '%s' no longer exists on %s", fieldName, type.getSimpleName()).isNotNull();
+    private static boolean createsIndexes(Class<?> probeType, String templateBeanName,
+                                          BiConsumer<Object, MongoCollection<?>> driveCreateIndex,
+                                          String... properties) {
+        MongoCollection<?> collection = mockCollection();
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.setEnvironment(env(properties));
+            context.registerBean(FilterCriteriaParser.class, () -> new FilterCriteriaParser());
+            context.registerBean(templateBeanName, MongoDatabase.class, () -> mock(MongoDatabase.class));
+            context.register(probeType);
+            context.refresh();
 
-        Value value = field.getAnnotation(Value.class);
-        assertThat(value).as("field '%s' of %s is no longer configured via @Value", fieldName, type.getSimpleName())
-                .isNotNull();
+            driveCreateIndex.accept(context.getBean(probeType), collection);
+        }
+        return mockingDetails(collection).getInvocations().stream()
+                .anyMatch(invocation -> "createIndexes".equals(invocation.getMethod().getName()));
+    }
 
-        return Boolean.parseBoolean(environment.resolvePlaceholders(value.value()));
+    @SuppressWarnings("unchecked")
+    private static MongoCollection<?> mockCollection() {
+        MongoCollection<Document> collection = mock(MongoCollection.class);
+        when(collection.createIndexes(any())).thenReturn(Flowable.empty());
+        return collection;
+    }
+
+    private static boolean gatewayResolves(String... properties) {
+        MockEnvironment environment = env(properties);
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.setEnvironment(environment);
+            context.registerBean(FilterCriteriaParser.class, () -> new FilterCriteriaParser());
+            context.registerBean("gatewayMongoTemplate", MongoDatabase.class, () -> mock(MongoDatabase.class));
+            context.registerBean(RepositoriesEnvironment.class, () -> new RepositoriesEnvironment(environment));
+            context.register(GatewayProbe.class);
+            context.refresh();
+
+            return context.getBean(GatewayProbe.class).ensureIndexOnStart();
+        }
     }
 
     private static MockEnvironment env(String... keyValuePairs) {

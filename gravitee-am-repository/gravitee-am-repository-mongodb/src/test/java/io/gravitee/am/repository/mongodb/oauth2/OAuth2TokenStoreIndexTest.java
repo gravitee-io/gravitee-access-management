@@ -35,7 +35,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoIndexAssertions.asse
  * these collections: {@code GatewayPurgeServiceConfiguration} enables the scheduled purge service
  * only when the gateway or oauth2 repository type is {@code jdbc}, and none of the Mongo token
  * repositories implement a purge. Losing one means expired tokens accumulate forever with no second
- * line of defence and no error anywhere.
+ * line of defense and no error anywhere.
  *
  * @author GraviteeSource Team
  */
