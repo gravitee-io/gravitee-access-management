@@ -278,7 +278,7 @@ public class DomainServiceImpl implements DomainService {
     private boolean createDefaultIdentityProvider = true;
 
     @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
+    String gatewayUrl;
 
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;

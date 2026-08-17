@@ -2109,7 +2109,7 @@ public class DomainServiceTest {
     @Test
     public void shouldGetEntrypoint_cloud_noEnvironmentEntrypoint_noOrganizationDefault_noDataPlaneUrl_fallsBackToConfiguredGatewayUrl() {
         enableCloudMode();
-        ReflectionTestUtils.setField(domainService, "gatewayUrl", "http://configured-gateway:8092");
+        domainService.gatewayUrl = "http://configured-gateway:8092";
 
         final Domain mockDomain = cloudDomain();
         when(entryPointManager.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(List.of());
