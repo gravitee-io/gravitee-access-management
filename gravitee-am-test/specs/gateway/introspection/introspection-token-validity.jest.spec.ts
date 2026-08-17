@@ -75,19 +75,7 @@ describe('Introspection - expired tokens', () => {
   it('reports a token as inactive once its lifetime has elapsed', async () => {
     const token = await fixture.issueShortLivedToken();
 
-    // The JWT's own exp is what makes this inactive, so a short wait past the token
-    // lifetime is enough — no dependency on the revocation-check configuration.
     await delay((SHORT_TOKEN_VALIDITY_SECONDS + 2) * 1000);
-
-    const body = await fixture.introspect(token);
-
-    expect(body.active).toBe(false);
-  });
-
-  it('keeps reporting an expired token as inactive after the token store is consulted', async () => {
-    const token = await fixture.issueShortLivedToken();
-
-    await fixture.waitUntilTokenStoreIsConsulted(token);
 
     const body = await fixture.introspect(token);
 
@@ -101,10 +89,6 @@ describe('Introspection - revoked tokens', () => {
     expect((await fixture.introspect(token)).active).toBe(true);
 
     await fixture.revokeToken(token, fixture.issuer);
-    // Wait out the product-default offline-verification window so the assertion holds
-    // whether or not the environment has shortened it.
-    await fixture.waitUntilTokenStoreIsConsulted(token);
-
     const body = await fixture.introspect(token);
 
     expect(body.active).toBe(false);

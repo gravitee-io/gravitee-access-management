@@ -208,10 +208,7 @@ public class IntrospectionServiceTest {
     }
 
     /**
-     * RFC 7662 requires an unusable token to be reported as inactive rather than as an error, and
-     * IntrospectionEndpoint has no failure handler for anything other than InvalidClientException /
-     * InvalidRequestException. So an unexpected error escaping this service would surface to the
-     * caller as a 500 instead of {"active": false}.
+     * RFC 7662 requires an unusable token to be reported as inactive rather than as an error.
      */
     @Test
     public void shouldReturnInactiveResponseWhenTokenIntrospectionFails() {

@@ -16,12 +16,15 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import * as jose from 'jose';
-import crypto from 'crypto';
 import { setup } from '../../test-fixture';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
-import { privateJwk } from '@api-fixtures/oidc';
-import { setupTokenAuthFixture, TokenAuthFixture } from '../token-auth-methods/fixtures/token-auth-fixture';
-import { PrivateKeyJwtFixture, setupPrivateKeyJwtFixture } from '../token-auth-methods/fixtures/private-key-jwt-fixture';
+import { mintClientSecretPostToken, setupTokenAuthFixture, TokenAuthFixture } from '../token-auth-methods/fixtures/token-auth-fixture';
+import {
+  mintPrivateKeyJwtToken,
+  PrivateKeyJwtFixture,
+  setupPrivateKeyJwtFixture,
+  signClientAssertion,
+} from '../token-auth-methods/fixtures/private-key-jwt-fixture';
 
 // The introspection endpoint shares the gateway's clientAuthHandler with the token endpoint
 // (OAuth2Provider.java), and discovery advertises the same
@@ -49,20 +52,8 @@ describe('Introspection - client_secret_post authentication', () => {
     }
   });
 
-  const mintToken = async (): Promise<string> => {
-    const response = await performPost(
-      fixture.oidc.token_endpoint,
-      '',
-      `grant_type=client_credentials&client_id=${encodeURIComponent(fixture.clientId)}&client_secret=${encodeURIComponent(
-        fixture.clientSecret,
-      )}`,
-      { 'Content-type': FORM },
-    ).expect(200);
-    return response.body.access_token;
-  };
-
   it('accepts credentials supplied in the request body', async () => {
-    const accessToken = await mintToken();
+    const accessToken = await mintClientSecretPostToken(fixture);
 
     const response = await performPost(
       fixture.oidc.introspection_endpoint,
@@ -78,7 +69,7 @@ describe('Introspection - client_secret_post authentication', () => {
   });
 
   it('rejects a wrong client secret supplied in the request body', async () => {
-    const accessToken = await mintToken();
+    const accessToken = await mintClientSecretPostToken(fixture);
 
     const response = await performPost(
       fixture.oidc.introspection_endpoint,
@@ -104,36 +95,9 @@ describe('Introspection - private_key_jwt authentication', () => {
     }
   });
 
-  const clientAssertion = async (audience: string, key: jose.JWK = privateJwk as jose.JWK): Promise<string> => {
-    const privateKey = await jose.importJWK(key, 'RS256');
-    const now = Math.floor(Date.now() / 1000);
-    return new jose.SignJWT({})
-      .setProtectedHeader({ alg: 'RS256', kid: '123' })
-      .setIssuer(fixture.clientId)
-      .setSubject(fixture.clientId)
-      .setAudience(audience)
-      .setJti(crypto.randomUUID())
-      .setIssuedAt(now)
-      .setExpirationTime(now + 300)
-      .sign(privateKey);
-  };
-
-  const mintToken = async (): Promise<string> => {
-    const assertion = await clientAssertion(fixture.oidc.token_endpoint);
-    const response = await performPost(
-      fixture.oidc.token_endpoint,
-      '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(
-        CLIENT_ASSERTION_TYPE,
-      )}&client_assertion=${encodeURIComponent(assertion)}`,
-      { 'Content-type': FORM },
-    ).expect(200);
-    return response.body.access_token;
-  };
-
   it('accepts a client assertion signed with the registered key', async () => {
-    const accessToken = await mintToken();
-    const assertion = await clientAssertion(fixture.oidc.token_endpoint);
+    const accessToken = await mintPrivateKeyJwtToken(fixture);
+    const assertion = await signClientAssertion(fixture);
 
     const response = await performPost(
       fixture.oidc.introspection_endpoint,
@@ -149,10 +113,10 @@ describe('Introspection - private_key_jwt authentication', () => {
   });
 
   it('rejects a client assertion signed with an unregistered key', async () => {
-    const accessToken = await mintToken();
+    const accessToken = await mintPrivateKeyJwtToken(fixture);
     const { privateKey: unregisteredKey } = await jose.generateKeyPair('RS256', { extractable: true });
     const unregisteredJwk = await jose.exportJWK(unregisteredKey);
-    const assertion = await clientAssertion(fixture.oidc.token_endpoint, unregisteredJwk);
+    const assertion = await signClientAssertion(fixture, unregisteredJwk as jose.JWK);
 
     const response = await performPost(
       fixture.oidc.introspection_endpoint,

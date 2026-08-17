@@ -23,11 +23,7 @@ import { applicationBase64Token } from '@gateway-commands/utils';
 
 // RFC 9449 sender-constrained tokens are only enforceable if the resource server can discover the
 // key a token is bound to. A resource server that does not parse the JWT itself learns this from
-// the introspection response's `cnf.jkt` — so that claim has to survive the round trip through
-// IntrospectionServiceImpl, which copies it from the AccessToken's confirmation method.
-//
-// The existing DPoP suite reads `cnf.jkt` off the raw access token, which proves the token endpoint
-// binds correctly but says nothing about what introspection reports. That is the gap these cover.
+// the introspection response's `cnf.jkt`, so that claim has to survive the round trip.
 
 setup(200000);
 

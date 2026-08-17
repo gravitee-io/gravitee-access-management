@@ -20,8 +20,7 @@ import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domai
 import { performPost, requestClientCredentialsToken } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { createTestApp } from '@utils-commands/application-commands';
-import { uniqueName, delay } from '@utils-commands/misc';
-import { decodeJwt } from '@utils-commands/jwt';
+import { uniqueName } from '@utils-commands/misc';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { Fixture } from '../../../test-fixture';
@@ -29,16 +28,11 @@ import { Fixture } from '../../../test-fixture';
 /**
  * BaseIntrospectionTokenService skips the database revocation check for a window after a
  * token is issued (handlers.oauth2.introspect.offlineVerificationTimerSeconds), because the
- * async token store may not have caught up yet. The product default is 10s, but the local
- * stack pins it to 0 (docker/local-stack/dev/docker-compose.yml) so revocation is visible
- * immediately.
- *
- * Tests here must not depend on which of those two settings is in force, so anything that
- * needs the token store to have been consulted waits out the *default* window first — that
- * is correct under both configurations. The window's own behaviour is unit-tested in
- * IntrospectionAccessTokenServiceTest and is deliberately not re-asserted here.
+ * async token store may not have caught up yet. The local stack pins this to 0
+ * (docker/local-stack/dev/docker-compose.yml), so revocation and expiry are visible on the
+ * very next introspection call with no wait required. The window's own behaviour is
+ * unit-tested in IntrospectionAccessTokenServiceTest and is deliberately not re-asserted here.
  */
-export const OFFLINE_VERIFICATION_WINDOW_SECONDS = 10;
 
 /** Access token lifetime for the short-lived issuer, in seconds. */
 export const SHORT_TOKEN_VALIDITY_SECONDS = 5;
@@ -66,8 +60,6 @@ export interface IntrospectionTokenValidityFixture extends Fixture {
   introspect: (token: string) => Promise<any>;
   /** Revokes a token using the credentials of the client that issued it. */
   revokeToken: (token: string, issuingApp: Application) => Promise<void>;
-  /** Sleeps until introspecting the given token is guaranteed to consult the token store. */
-  waitUntilTokenStoreIsConsulted: (token: string) => Promise<void>;
 }
 
 function oauthSettings(accessTokenValiditySeconds?: number) {
@@ -136,17 +128,6 @@ export const setupIntrospectionTokenValidityFixture = async (): Promise<Introspe
       }).expect(200);
     };
 
-    // Anchored on the token's own iat rather than a fixed sleep, so the wait stays
-    // correct regardless of how long the preceding calls took.
-    const waitUntilTokenStoreIsConsulted = async (token: string): Promise<void> => {
-      const { iat } = decodeJwt(token);
-      const windowClosesAtMs = (iat + OFFLINE_VERIFICATION_WINDOW_SECONDS) * 1000;
-      const remainingMs = windowClosesAtMs - Date.now();
-      if (remainingMs > 0) {
-        await delay(remainingMs + 1000);
-      }
-    };
-
     const cleanUp = async () => {
       await safeDeleteDomain(domain?.id, accessToken);
     };
@@ -162,7 +143,6 @@ export const setupIntrospectionTokenValidityFixture = async (): Promise<Introspe
       issueShortLivedToken: () => mint(shortLivedIssuer),
       introspect,
       revokeToken,
-      waitUntilTokenStoreIsConsulted,
       cleanUp,
     };
   } catch (error) {

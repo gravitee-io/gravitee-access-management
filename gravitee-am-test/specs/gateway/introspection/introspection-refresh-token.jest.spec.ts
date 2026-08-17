@@ -18,19 +18,14 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
-import { decodeJwt } from '@utils-commands/jwt';
-import { delay } from '@utils-commands/misc';
 import { setupTokenAuthFixture, TokenAuthFixture } from '../token-auth-methods/fixtures/token-auth-fixture';
 
 // RFC 7662 §2.1 makes token_type_hint an optimisation, not a filter: the server must still find the
 // token if the hint is absent or wrong. TokenServiceImpl implements that by trying the hinted type
-// first and falling back (introspectAsRefreshTokenFirst / introspectAsAccessTokenFirst), but the
-// only coverage of that dispatch is IntrospectionEndpointTest, which mocks the service entirely.
+// first and falling back (introspectAsRefreshTokenFirst / introspectAsAccessTokenFirst).
 // Nothing exercised a real refresh token through the endpoint until now.
 
 setup(200000);
-
-const OFFLINE_VERIFICATION_WINDOW_SECONDS = 10;
 
 let fixture: TokenAuthFixture;
 let basicAuth: string;
@@ -74,15 +69,6 @@ const revoke = async (token: string, tokenTypeHint: string): Promise<void> => {
   }).expect(200);
 };
 
-/** Waits out the product-default offline-verification window so the token store is consulted. */
-const waitUntilTokenStoreIsConsulted = async (token: string): Promise<void> => {
-  const { iat } = decodeJwt(token);
-  const remainingMs = (iat + OFFLINE_VERIFICATION_WINDOW_SECONDS) * 1000 - Date.now();
-  if (remainingMs > 0) {
-    await delay(remainingMs + 1000);
-  }
-};
-
 describe('Introspection - refresh tokens', () => {
   it('reports an active refresh token when the refresh_token hint is given', async () => {
     const { refreshToken } = await passwordGrantTokens();
@@ -118,7 +104,6 @@ describe('Introspection - revoked refresh tokens', () => {
     expect((await introspect(refreshToken, 'refresh_token')).active).toBe(true);
 
     await revoke(refreshToken, 'refresh_token');
-    await waitUntilTokenStoreIsConsulted(refreshToken);
 
     const body = await introspect(refreshToken, 'refresh_token');
 
