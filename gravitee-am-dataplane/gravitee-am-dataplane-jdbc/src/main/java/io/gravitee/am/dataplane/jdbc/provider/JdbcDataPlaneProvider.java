@@ -35,13 +35,17 @@ import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ValidationDepth;
+import io.reactivex.rxjava3.core.Completable;
 import lombok.Getter;
 import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
+import reactor.core.publisher.Mono;
 
 @CustomLog
 @Import({JdbcDataPlaneSpringConfiguration.class})
@@ -105,6 +109,18 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
     @Override
     public void stop() {
 
+    }
+
+    @Override
+    public Completable healthCheck() {
+        // the driver's own round trip rather than a query, so no dialect has to accept the statement
+        return Completable.fromPublisher(
+                Mono.usingWhen(
+                        clientWrapper.create(),
+                        connection -> Mono.from(connection.validate(ValidationDepth.REMOTE))
+                                .filter(Boolean.TRUE::equals)
+                                .switchIfEmpty(Mono.error(() -> new IllegalStateException("R2DBC connection validation failed"))),
+                        Connection::close));
     }
 
     @Override

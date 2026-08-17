@@ -18,6 +18,7 @@ package io.gravitee.am.service.dataplane;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -35,6 +36,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -177,6 +181,52 @@ class ProvisionedDataPlaneLoaderTest {
         loader().load(loaded::add);
 
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-2");
+    }
+
+    @Test
+    void should_register_a_provisioned_definition_as_one_that_must_be_verified() {
+        var registry = mock(DataPlaneRegistry.class);
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+        var loader = loader();
+        loader.setRegistry(registry);
+
+        loader.load(loaded::add);
+
+        // the consumer is the unchecked path, and a provisioned plane may not take it
+        verify(registry).registerProvisioned(argThat(description -> "dp-1".equals(description.id())));
+        assertThat(loaded).isEmpty();
+    }
+
+    @Test
+    void should_release_the_claim_on_a_definition_the_registry_refuses() {
+        var registry = mock(DataPlaneRegistry.class);
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-rejected", "gone", "{\"gone\":{\"host\":\"h\"}}")));
+        doThrow(new IllegalStateException("No data plan provider is registered for type gone"))
+                .when(registry).registerProvisioned(any());
+        var loader = loader();
+        loader.setRegistry(registry);
+
+        loader.load(loaded::add);
+
+        // the claim must not outlive the failed activation, or the id stays refused for good
+        verify(registry).unregister("dp-rejected");
+    }
+
+    @Test
+    void should_leave_a_configuration_definition_on_the_unchecked_path() {
+        var registry = mock(DataPlaneRegistry.class);
+        fromConfiguration.add(new DataPlaneDescription("default", "Default", "mongodb", "dataPlanes[0]", null));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        loader.setRegistry(registry);
+
+        loader.load(loaded::add);
+
+        // the gravitee.yml planes stay exempt: they reach the consumer, never the verified path
+        assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("default");
+        verify(registry, never()).registerProvisioned(any());
     }
 
     @Test

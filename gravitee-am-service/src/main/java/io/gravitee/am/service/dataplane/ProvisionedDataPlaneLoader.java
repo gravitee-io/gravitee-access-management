@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.reactivex.rxjava3.core.Completable;
 import lombok.CustomLog;
@@ -60,6 +61,12 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
     // id -> the version of the definition this node serves, so a deploy can be told from a replay
     private final Map<String, String> registered = new ConcurrentHashMap<>();
     private final AtomicReference<Consumer<DataPlaneDescription>> storageRef = new AtomicReference<>();
+    // set after construction: the registry is built from this loader, so it cannot be a constructor argument
+    private final AtomicReference<DataPlaneRegistry> registryRef = new AtomicReference<>();
+
+    public void setRegistry(DataPlaneRegistry registry) {
+        this.registryRef.set(registry);
+    }
 
     public ProvisionedDataPlaneLoader(DataPlaneLoader configurationLoader,
                                       DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
@@ -97,13 +104,29 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
     }
 
     private void activate(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
+        // only the provisioned definitions reach here, which is what keeps the gravitee.yml ones exempt
+        var registry = registryRef.get();
+        if (registry == null) {
+            log.warn("Data plane [{}] is being loaded before the registry was wired in, so it will serve domains without being checked",
+                    definition.getId());
+        }
         try {
-            storage.accept(publish(definition));
+            // the consumer is the unchecked path the gravitee.yml planes take, so a provisioned one
+            // goes to the registry directly to be checked before it serves anything
+            if (registry != null) {
+                registry.registerProvisioned(publish(definition));
+            } else {
+                storage.accept(publish(definition));
+            }
             markServing(definition);
             log.info("Data plane [{}] of type [{}] loaded from the management repository", definition.getId(), definition.getType());
         } catch (Exception e) {
             log.error("Data plane [{}] of type [{}] could not be loaded and will be unavailable; domains bound to it cannot be served",
                     definition.getId(), definition.getType(), e);
+            // otherwise the claim outlives the failed activation and the id stays refused for good
+            if (registry != null) {
+                registry.unregister(definition.getId());
+            }
         }
     }
 

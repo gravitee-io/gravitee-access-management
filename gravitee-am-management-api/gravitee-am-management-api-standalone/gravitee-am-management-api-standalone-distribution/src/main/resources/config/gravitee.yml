@@ -470,6 +470,14 @@ dataPlanes:
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
 
+# A provisioned data plane has to answer before a domain can be bound to it. Only the data planes
+# provisioned over the technical API are checked: the ones declared above are the node's own
+# configuration and are served without a check.
+#dataPlaneVerification:
+#  enabled: true       # false accepts a domain on any provisioned data plane, as before this check existed
+#  timeout: 5000       # how long the store has to answer, in ms
+#  retryAfter: 10000   # how long a refusal answers later callers before the store is asked again, in ms
+
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092
