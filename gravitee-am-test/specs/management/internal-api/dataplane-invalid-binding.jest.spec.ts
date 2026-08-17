@@ -29,7 +29,6 @@ import { uniqueName } from '@utils-commands/misc';
 // each rejected bind waits out the verification timeout before it answers
 setup(60000);
 
-/** AM-7489: a data plane whose store does not answer must not be bindable. */
 const UNVERIFIED_DATA_PLANE = 'did not answer with the settings it was provisioned with';
 
 describe('Domain creation against a data plane that cannot be used', () => {
