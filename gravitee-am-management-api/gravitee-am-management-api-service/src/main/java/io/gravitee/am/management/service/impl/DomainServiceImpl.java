@@ -390,12 +390,18 @@ public class DomainServiceImpl implements DomainService {
 
     /**
      * Picks the data plane a new domain will bind to. Both modes hold a supplied id to the planes
-     * provisioned against the environment; cloud requires one, while standalone falls back to
-     * {@code default} when the environment has none and only {@code default} is declared in
-     * {@code gravitee.yml}.
+     * provisioned against the environment; cloud requires the domain to land on one of them, while
+     * standalone also serves the planes {@code gravitee.yml} declares and falls back to
+     * {@code default} when the environment has none and only {@code default} is declared.
      */
     private Single<String> resolveDataPlaneId(String environmentId, String requestedId) {
         boolean cloudEnabled = CloudProperties.isManagedCloudEnabled(springEnvironment);
+        // A standalone caller naming a plane is not held to the environment's links: the planes
+        // gravitee.yml declares serve every environment, so `default` stays a valid choice for an
+        // environment that also has one provisioned against it. Saves the repository round-trip too.
+        if (!cloudEnabled && StringUtils.hasText(requestedId)) {
+            return resolveDataPlaneIdForStandalone(requestedId, List.of());
+        }
         return dataPlaneDefinitionService.findByEnvironmentId(environmentId)
                 .map(DataPlaneDefinitionSummary::id)
                 .toList()
@@ -425,12 +431,6 @@ public class DomainServiceImpl implements DomainService {
 
     private Single<String> resolveDataPlaneIdForStandalone(String requestedId, List<String> linkedForEnv) {
         if (StringUtils.hasText(requestedId)) {
-            // The environment's links win whenever it has any, so a domain and the entrypoint events
-            // for its environment (which EntrypointServiceImpl routes by the same links) agree on the plane.
-            if (!linkedForEnv.isEmpty() && !linkedForEnv.contains(requestedId)) {
-                return Single.error(new InvalidDataPlaneException(
-                        "Data Plane [" + requestedId + "] is not linked to this environment."));
-            }
             return requireLoadedOnThisNode(requestedId);
         }
         boolean onlyDefaultDeclared = Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)

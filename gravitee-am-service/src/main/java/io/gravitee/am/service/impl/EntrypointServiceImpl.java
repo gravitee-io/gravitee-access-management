@@ -253,11 +253,11 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     /**
-     * Route an entrypoint event to every data plane its environment is linked to, so whichever gateway
-     * serves that environment picks it up (SyncManager polls events by data-plane id). One event per
-     * plane rather than one for the first row: an environment may hold several linked planes, and a
-     * gateway pinned to any other one would never see the change. Falls back to {@code default} for
-     * org-scoped entrypoints, or when the environment has no linked data plane.
+     * Route an entrypoint event to every data plane that can serve a domain in this environment, so
+     * whichever gateway holds one picks it up (SyncManager polls events by data-plane id). One event
+     * per plane rather than one for the first row: an environment may hold several linked planes, and
+     * a gateway pinned to any other one would never see the change. Org-scoped entrypoints go to
+     * {@code default}.
      */
     private Single<List<String>> resolveDataPlaneIds(Entrypoint entrypoint) {
         if (entrypoint.getEnvironmentId() == null) {
@@ -266,7 +266,24 @@ public class EntrypointServiceImpl implements EntrypointService {
         return dataPlaneDefinitionService.findByEnvironmentId(entrypoint.getEnvironmentId())
                 .map(DataPlaneDefinitionSummary::id)
                 .toList()
-                .map(linked -> linked.isEmpty() ? List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID) : linked);
+                .map(this::targetPlanes);
+    }
+
+    private List<String> targetPlanes(List<String> linkedForEnv) {
+        // Cloud binds every domain to one of the environment's linked planes, so those are the only
+        // gateways that can be serving it.
+        if (managedCloudEnabled) {
+            return linkedForEnv.isEmpty() ? List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID) : linkedForEnv;
+        }
+        // Standalone also serves the planes gravitee.yml declares, and a domain may sit on one of
+        // those while the environment has another provisioned against it. Dropping `default` here
+        // strands the entrypoints of every domain bound to it.
+        if (linkedForEnv.contains(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)) {
+            return linkedForEnv;
+        }
+        List<String> targets = new ArrayList<>(linkedForEnv);
+        targets.add(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        return targets;
     }
 
     private Completable validate(Entrypoint entrypoint) {

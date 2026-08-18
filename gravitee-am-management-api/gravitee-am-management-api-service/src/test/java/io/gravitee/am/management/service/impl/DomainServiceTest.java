@@ -882,19 +882,24 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldReject_standalone_suppliedId_notLinkedToEnvironment() {
+    public void shouldCreate_standalone_suppliedDefault_whileEnvironmentHasAProvisionedPlane() {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
         newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
-        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+        // A plane provisioned against the environment must not stop a domain landing on a gravitee.yml
+        // one. Lenient because resolution short-circuits before the lookup, which is the point.
+        Mockito.lenient().when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
                 .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.verified(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
 
         domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
-                .assertError(InvalidDataPlaneException.class);
+                .assertComplete();
 
-        verify(domainRepository, never()).create(any(Domain.class));
+        verify(domainRepository).create(argThat(d -> DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(d.getDataPlaneId())));
     }
 
     @Test
