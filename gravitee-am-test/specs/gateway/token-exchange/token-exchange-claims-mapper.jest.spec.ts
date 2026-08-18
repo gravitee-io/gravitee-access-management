@@ -18,69 +18,69 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { setup } from '../../test-fixture';
-import { setupTokenExchangeFixture, TokenExchangeFixture, TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
+import { ClaimMapping, setupTokenExchangeFixture, TokenExchangeFixture, TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
 
-setup(120000);
+setup(180000);
 
 const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
 const ID_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id_token';
 
-let mapperFixture: TokenExchangeFixture;
-let delegationMapperFixture: TokenExchangeFixture;
-let precedenceFixture: TokenExchangeFixture;
+// jti is used as the source claim because it is always present and its value differs between the
+// subject token and the token the exchange issues. That difference is what proves the mapper read
+// the subject token rather than the issued one.
+const MAPPINGS: ClaimMapping[] = [
+  { source: 'SUBJECT_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_subject_jti' },
+  { source: 'ACTOR_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_actor_jti' },
+  { source: 'SUBJECT_TOKEN', sourceClaim: 'no_such_claim', tokenClaim: 'never_appears' },
+];
+
+const CONTESTED: ClaimMapping[] = [{ source: 'SUBJECT_TOKEN', sourceClaim: 'jti', tokenClaim: 'contested_claim' }];
+
+/**
+ * The same scenarios run twice: once with the mapper on the application, once with it on the domain
+ * defaults and the application inheriting. Both must behave identically.
+ */
+type Placement = 'application' | 'domain';
+
+const PLACEMENTS: Placement[] = ['application', 'domain'];
+
+const mapperConfig = (placement: Placement, mappings: ClaimMapping[]) =>
+  placement === 'application' ? { claimsMapper: mappings } : { domainClaimsMapper: mappings };
+
+const fixtures: Record<Placement, { main: TokenExchangeFixture; precedence: TokenExchangeFixture }> = {} as any;
 
 beforeAll(async () => {
-  // No EL written at all — the mapper alone must copy the claim.
-  mapperFixture = await setupTokenExchangeFixture({
-    domainNamePrefix: 'tx-mapper-impersonation',
-    domainDescription: 'Token exchange declarative claims mapper (impersonation)',
-    clientName: 'tx-mapper-impersonation-client',
-    allowImpersonation: true,
-    allowDelegation: false,
-    claimsMapper: [
-      { source: 'SUBJECT_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_subject_jti' },
-      { source: 'SUBJECT_TOKEN', sourceClaim: 'no_such_claim', tokenClaim: 'mapped_absent' },
-      // resolves to nothing during impersonation: there is no actor token
-      { source: 'ACTOR_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_actor_jti' },
-    ],
-  });
+  for (const placement of PLACEMENTS) {
+    const main = await setupTokenExchangeFixture({
+      domainNamePrefix: `tx-mapper-${placement}`,
+      domainDescription: `Token exchange claims mapper on the ${placement}`,
+      clientName: `tx-mapper-${placement}-client`,
+      allowImpersonation: true,
+      allowDelegation: true,
+      allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+      maxDelegationDepth: 3,
+      ...mapperConfig(placement, MAPPINGS),
+    });
 
-  delegationMapperFixture = await setupTokenExchangeFixture({
-    domainNamePrefix: 'tx-mapper-delegation',
-    domainDescription: 'Token exchange declarative claims mapper (delegation)',
-    clientName: 'tx-mapper-delegation-client',
-    allowImpersonation: true,
-    allowDelegation: true,
-    allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
-    maxDelegationDepth: 3,
-    claimsMapper: [
-      { source: 'SUBJECT_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_subject_jti' },
-      { source: 'ACTOR_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_actor_jti' },
-    ],
-  });
+    const precedence = await setupTokenExchangeFixture({
+      domainNamePrefix: `tx-mapper-${placement}-precedence`,
+      domainDescription: `Custom token claim overrides the ${placement} mapper`,
+      clientName: `tx-mapper-${placement}-precedence-client`,
+      allowImpersonation: true,
+      allowDelegation: false,
+      tokenCustomClaims: [{ claimName: 'contested_claim', claimValue: 'from-custom-claim', tokenType: 'ACCESS_TOKEN' }],
+      ...mapperConfig(placement, CONTESTED),
+    });
 
-  // A custom claim of the same name must beat the mapper.
-  precedenceFixture = await setupTokenExchangeFixture({
-    domainNamePrefix: 'tx-mapper-precedence',
-    domainDescription: 'Token exchange claims mapper overridden by a custom token claim',
-    clientName: 'tx-mapper-precedence-client',
-    allowImpersonation: true,
-    allowDelegation: false,
-    claimsMapper: [{ source: 'SUBJECT_TOKEN', sourceClaim: 'jti', tokenClaim: 'contested_claim' }],
-    tokenCustomClaims: [{ claimName: 'contested_claim', claimValue: 'from-custom-claim', tokenType: 'ACCESS_TOKEN' }],
-  });
+    fixtures[placement] = { main, precedence };
+  }
 });
 
 afterAll(async () => {
-  if (mapperFixture) {
-    await mapperFixture.cleanup();
-  }
-  if (delegationMapperFixture) {
-    await delegationMapperFixture.cleanup();
-  }
-  if (precedenceFixture) {
-    await precedenceFixture.cleanup();
+  for (const placement of PLACEMENTS) {
+    await fixtures[placement]?.main?.cleanup();
+    await fixtures[placement]?.precedence?.cleanup();
   }
 });
 
@@ -97,12 +97,12 @@ const exchange = async (fixture: TokenExchangeFixture, subjectToken: string, ext
   return response.body;
 };
 
-describe('Token Exchange declarative claims mapper (RFC 8693)', () => {
-  it('should copy a subject token claim with no expression language configured', async () => {
-    const { obtainSubjectToken } = mapperFixture;
-    const { accessToken: subjectToken } = await obtainSubjectToken();
+describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (placement) => {
+  it('should copy a subject token claim onto the exchanged access token', async () => {
+    const fixture = fixtures[placement].main;
+    const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(mapperFixture, subjectToken);
+    const body = await exchange(fixture, subjectToken);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['mapped_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
@@ -110,47 +110,42 @@ describe('Token Exchange declarative claims mapper (RFC 8693)', () => {
   });
 
   it('should skip a mapping whose source claim is absent and still issue the token', async () => {
-    const { obtainSubjectToken } = mapperFixture;
-    const { accessToken: subjectToken } = await obtainSubjectToken();
+    const fixture = fixtures[placement].main;
+    const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(mapperFixture, subjectToken);
-    const exchanged = parseJwt(body.access_token);
+    const body = await exchange(fixture, subjectToken);
 
     expect(body.access_token).toBeDefined();
-    expect(exchanged.payload).not.toHaveProperty('mapped_absent');
+    expect(parseJwt(body.access_token).payload).not.toHaveProperty('never_appears');
   });
 
   it('should resolve an actor token mapping to nothing during impersonation', async () => {
-    const { obtainSubjectToken } = mapperFixture;
-    const { accessToken: subjectToken } = await obtainSubjectToken();
+    const fixture = fixtures[placement].main;
+    const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(mapperFixture, subjectToken);
-    const exchanged = parseJwt(body.access_token);
+    const body = await exchange(fixture, subjectToken);
 
-    expect(exchanged.payload).not.toHaveProperty('mapped_actor_jti');
+    expect(parseJwt(body.access_token).payload).not.toHaveProperty('mapped_actor_jti');
   });
 
   it('should copy both subject and actor claims during delegation', async () => {
-    const { obtainSubjectToken, obtainActorToken } = delegationMapperFixture;
-    const { accessToken: subjectToken } = await obtainSubjectToken();
-    const { accessToken: actorToken } = await obtainActorToken();
+    const fixture = fixtures[placement].main;
+    const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
+    const { accessToken: actorToken } = await fixture.obtainActorToken();
 
-    const body = await exchange(
-      delegationMapperFixture,
-      subjectToken,
-      `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`,
-    );
+    const body = await exchange(fixture, subjectToken, `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['mapped_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
     expect(exchanged.payload['mapped_actor_jti']).toEqual(parseJwt(actorToken).payload['jti']);
+    expect(exchanged.payload['mapped_subject_jti']).not.toEqual(exchanged.payload['mapped_actor_jti']);
   });
 
   it('should copy a mapped claim onto an exchanged id_token', async () => {
-    const { obtainSubjectToken } = mapperFixture;
-    const { accessToken: subjectToken } = await obtainSubjectToken();
+    const fixture = fixtures[placement].main;
+    const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(mapperFixture, subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
+    const body = await exchange(fixture, subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
     const issued = parseJwt(body.access_token);
 
     expect(body.issued_token_type).toEqual(ID_TOKEN_TYPE);
@@ -158,13 +153,45 @@ describe('Token Exchange declarative claims mapper (RFC 8693)', () => {
   });
 
   it('should let a custom token claim override a mapping of the same name', async () => {
-    const { obtainSubjectToken } = precedenceFixture;
-    const { accessToken: subjectToken } = await obtainSubjectToken();
+    const fixture = fixtures[placement].precedence;
+    const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(precedenceFixture, subjectToken);
+    const body = await exchange(fixture, subjectToken);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['contested_claim']).toEqual('from-custom-claim');
     expect(exchanged.payload['contested_claim']).not.toEqual(parseJwt(subjectToken).payload['jti']);
+  });
+});
+
+describe('Token Exchange claims mapper inheritance', () => {
+  let overrideFixture: TokenExchangeFixture;
+
+  beforeAll(async () => {
+    // The domain defines a mapper. The application overrides with its own settings but defines no
+    // mapper of its own. Inheritance is wholesale, so the domain's mapper must not apply.
+    overrideFixture = await setupTokenExchangeFixture({
+      domainNamePrefix: 'tx-mapper-override-empty',
+      domainDescription: 'Application override drops the domain mapper',
+      clientName: 'tx-mapper-override-empty-client',
+      allowImpersonation: true,
+      allowDelegation: false,
+      domainClaimsMapper: MAPPINGS,
+      claimsMapper: [],
+    });
+  });
+
+  afterAll(async () => {
+    await overrideFixture?.cleanup();
+  });
+
+  it('should not apply the domain mapper to an application that overrides without one', async () => {
+    const { accessToken: subjectToken } = await overrideFixture.obtainSubjectToken();
+
+    const body = await exchange(overrideFixture, subjectToken);
+    const exchanged = parseJwt(body.access_token);
+
+    expect(body.access_token).toBeDefined();
+    expect(exchanged.payload).not.toHaveProperty('mapped_subject_jti');
   });
 });
