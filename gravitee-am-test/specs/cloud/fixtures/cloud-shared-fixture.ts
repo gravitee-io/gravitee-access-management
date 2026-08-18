@@ -31,6 +31,26 @@ const ENVIRONMENT_ID = 'cloud-shared-env';
 const USER_ID = 'cloud-shared-owner';
 const DATA_PLANE_ID = 'cloud-test';
 
+// The definition has to name the same store the gateway is configured with, otherwise the management
+// API writes users the gateway then cannot read. Both stacks run one database, so the branch follows
+// REPOSITORY_TYPE the same way the internal-api data plane fixtures do.
+const dataPlaneStore = () =>
+  process.env.REPOSITORY_TYPE === 'jdbc'
+    ? {
+        type: 'jdbc',
+        configuration: {
+          jdbc: {
+            driver: 'postgresql',
+            host: 'postgres',
+            port: 5432,
+            database: 'postgres',
+            username: 'postgres',
+            password: 'postgres',
+          },
+        },
+      }
+    : { type: 'mongodb', configuration: { mongodb: { dbname: 'graviteeam', host: 'mongodb', port: 27017 } } };
+
 export interface CloudSharedFixture extends CloudOrganizationFixture {
   /** Id of the data plane linked to the shared environment, and the one the gateway is pinned to. */
   dataPlaneId: string;
@@ -103,10 +123,9 @@ const provision = async (): Promise<CloudSharedFixture> => {
   const dpResponse = await createDataPlane({
     id: DATA_PLANE_ID,
     name: 'Cloud shared data plane',
-    type: 'mongodb',
     organizationId: ORGANIZATION_ID,
     environmentId: ENVIRONMENT_ID,
-    configuration: { mongodb: { dbname: 'graviteeam', host: 'mongodb', port: 27017 } },
+    ...dataPlaneStore(),
   });
   if (dpResponse.status !== 201 && dpResponse.status !== 409) {
     throw new Error(`Failed to provision shared data plane: status=${dpResponse.status} body=${dpResponse.raw}`);
