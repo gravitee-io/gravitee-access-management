@@ -53,20 +53,14 @@ afterAll(async () => {
 });
 
 /**
- * The three tests below are skipped pending AM-7525.
- *
- * `AuthorizationRequestParseParametersHandler` re-encodes the claims parameter with
- * the process-global Vert.x mapper. A call to `/_node*` reconfigures that same mapper
- * with NON_NULL inclusion, and a voluntary claim is expressed as JSON null - so every
- * requested claim name is stripped before the parameter is stored. The token is still
- * issued and /oidc/userinfo still returns 200; the claims are simply absent.
- *
- * It is order-dependent per JVM, which is why these pass locally and fail in CI.
- *
- * Remove `.skip` once AM-7525 is fixed - the assertions are unchanged and should pass.
+ * These three regressed under AM-7525: the claims parameter was re-encoded with the
+ * process-global Vert.x mapper, which a `/_node*` call reconfigures with NON_NULL
+ * inclusion. A voluntary claim is expressed as JSON null, so every requested claim
+ * name was stripped before the parameter was stored. Fixed by giving the handler its
+ * own mapper; these guard against it returning.
  */
 describe('Claims request parameter - naming claims instead of a scope', () => {
-  it.skip('puts the named claims in the ID token without granting the profile scope', async () => {
+  it('puts the named claims in the ID token without granting the profile scope', async () => {
     const tokens = await fixture.authorizationCodeFlow(`scope=openid&${claimsParameter({ id_token: { nickname: null, website: null } })}`);
     const idToken = decodeToken(tokens.id_token).payload;
 
@@ -76,7 +70,7 @@ describe('Claims request parameter - naming claims instead of a scope', () => {
     expect(idToken.website).toEqual(PROFILE_ATTRIBUTES.website);
   });
 
-  it.skip('returns the named claims from userinfo without granting the phone scope', async () => {
+  it('returns the named claims from userinfo without granting the phone scope', async () => {
     const tokens = await fixture.authorizationCodeFlow(`scope=openid&${claimsParameter({ userinfo: { phone_number: null } })}`);
     const profile = await fixture.userinfo(tokens.access_token);
 
@@ -84,7 +78,7 @@ describe('Claims request parameter - naming claims instead of a scope', () => {
     expect(profile.phone_number).toEqual(PROFILE_ATTRIBUTES.phone_number);
   });
 
-  it.skip('keeps the two sections apart, so each surface gets only its own claims', async () => {
+  it('keeps the two sections apart, so each surface gets only its own claims', async () => {
     const tokens = await fixture.authorizationCodeFlow(
       `scope=openid&${claimsParameter({ id_token: { nickname: null }, userinfo: { phone_number: null } })}`,
     );
