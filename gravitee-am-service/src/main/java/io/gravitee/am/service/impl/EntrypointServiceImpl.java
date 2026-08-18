@@ -30,8 +30,10 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
 import io.gravitee.am.service.exception.LastDefaultEntrypointException;
@@ -71,6 +73,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final AuditService auditService;
     private final VirtualHostValidator virtualHostValidator;
     private final EventService eventService;
+    private final DataPlaneDefinitionService dataPlaneDefinitionService;
     private final String gatewayUrl;
     private final boolean managedCloudEnabled;
 
@@ -79,6 +82,7 @@ public class EntrypointServiceImpl implements EntrypointService {
                                  AuditService auditService,
                                  VirtualHostValidator virtualHostValidator,
                                  EventService eventService,
+                                 @Lazy DataPlaneDefinitionService dataPlaneDefinitionService,
                                  @Value("${gateway.url:http://localhost:8092}") String gatewayUrl,
                                  Environment environment) {
         this.entrypointRepository = entrypointRepository;
@@ -86,6 +90,7 @@ public class EntrypointServiceImpl implements EntrypointService {
         this.auditService = auditService;
         this.virtualHostValidator = virtualHostValidator;
         this.eventService = eventService;
+        this.dataPlaneDefinitionService = dataPlaneDefinitionService;
         this.gatewayUrl = gatewayUrl;
         this.managedCloudEnabled = CloudProperties.isManagedCloudEnabled(environment);
     }
@@ -240,10 +245,25 @@ public class EntrypointServiceImpl implements EntrypointService {
         ReferenceType referenceType = entrypoint.getEnvironmentId() != null ? ReferenceType.ENVIRONMENT : ReferenceType.ORGANIZATION;
         String referenceId = entrypoint.getEnvironmentId() != null ? entrypoint.getEnvironmentId() : entrypoint.getOrganizationId();
         Payload payload = new Payload(entrypoint.getId(), referenceType, referenceId, action);
-        // Tag with a data-plane id so the gateway sync (which polls events by data-plane) picks it up.
-        // No environment->data-plane mapping exists; sharded multi-data-plane is out of scope (AM-7226).
-        Event event = new Event(Type.ENTRYPOINT, payload, DataPlaneDescription.DEFAULT_DATA_PLANE_ID, entrypoint.getEnvironmentId());
-        return eventService.create(event).ignoreElement();
+        return resolveDataPlaneId(entrypoint)
+                .map(dataPlaneId -> new Event(Type.ENTRYPOINT, payload, dataPlaneId, entrypoint.getEnvironmentId()))
+                .flatMap(event -> eventService.create(event))
+                .ignoreElement();
+    }
+
+    /**
+     * Route an entrypoint event to the data plane its environment is linked to, so the gateway serving
+     * that environment picks it up (SyncManager polls events by data-plane id). Falls back to
+     * {@code default} for org-scoped entrypoints, or when the environment has no linked data plane.
+     */
+    private Single<String> resolveDataPlaneId(Entrypoint entrypoint) {
+        if (entrypoint.getEnvironmentId() == null) {
+            return Single.just(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        }
+        return dataPlaneDefinitionService.findByEnvironmentId(entrypoint.getEnvironmentId())
+                .map(DataPlaneDefinitionSummary::id)
+                .defaultIfEmpty(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)
+                .firstOrError();
     }
 
     private Completable validate(Entrypoint entrypoint) {

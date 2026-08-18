@@ -91,6 +91,9 @@ public class EntrypointServiceTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private io.gravitee.am.service.DataPlaneDefinitionService dataPlaneDefinitionService;
+
     private EntrypointService cut;
 
     @Before
@@ -98,10 +101,11 @@ public class EntrypointServiceTest {
 
         cut = newEntrypointService(new MockEnvironment());
         lenient().when(eventService.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+        lenient().when(dataPlaneDefinitionService.findByEnvironmentId(any())).thenReturn(io.reactivex.rxjava3.core.Flowable.empty());
     }
 
     private EntrypointService newEntrypointService(Environment environment) {
-        return new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io", environment);
+        return new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, dataPlaneDefinitionService, "https://gravitee.io", environment);
     }
 
     private EntrypointService cloudModeEntrypointService() {
