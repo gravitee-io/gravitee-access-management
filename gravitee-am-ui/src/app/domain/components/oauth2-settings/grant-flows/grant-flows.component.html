@@ -104,6 +104,78 @@
             </mat-select>
             <mat-hint>Controls how scopes are narrowed during token exchange.</mat-hint>
           </mat-form-field>
+
+          <div class="gv-form-section-title" style="margin-top: 16px">
+            <h5>Claims Mapper</h5>
+            <small>Copy a claim from the validated subject or actor token onto the issued token.</small>
+            <mat-divider></mat-divider>
+          </div>
+
+          <table mat-table [dataSource]="tokenExchangeClaimsMapper" *ngIf="tokenExchangeClaimsMapper.length > 0">
+            <ng-container matColumnDef="source">
+              <th mat-header-cell *matHeaderCellDef>Source token</th>
+              <td mat-cell *matCellDef="let mapping">{{ mapping.source === 'ACTOR_TOKEN' ? 'Actor token' : 'Subject token' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="sourceClaim">
+              <th mat-header-cell *matHeaderCellDef>Source claim</th>
+              <td mat-cell *matCellDef="let mapping">{{ mapping.sourceClaim }}</td>
+            </ng-container>
+            <ng-container matColumnDef="tokenClaim">
+              <th mat-header-cell *matHeaderCellDef>Target claim</th>
+              <td mat-cell *matCellDef="let mapping">{{ mapping.tokenClaim }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let mapping; let i = index">
+                <button mat-icon-button type="button" [disabled]="readonly" (click)="removeClaimMapping(i)" aria-label="Delete mapping">
+                  <mat-icon svgIcon="gio:trash"></mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="['source', 'sourceClaim', 'tokenClaim', 'actions']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['source', 'sourceClaim', 'tokenClaim', 'actions']"></tr>
+          </table>
+
+          <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="flex-start flex-start" style="margin-top: 16px">
+            <mat-form-field appearance="outline" fxFlex="3 1 0">
+              <mat-label>Source token</mat-label>
+              <mat-select name="appClaimMappingSource" [(ngModel)]="newClaimMapping.source" [disabled]="readonly">
+                <mat-option *ngFor="let opt of TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS" [value]="opt.value">{{ opt.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" fxFlex="3 1 0">
+              <input
+                matInput
+                name="appClaimMappingSourceClaim"
+                placeholder="Source claim"
+                [(ngModel)]="newClaimMapping.sourceClaim"
+                [disabled]="readonly"
+              />
+              <mat-hint>The claim's name on the source token.</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" fxFlex="3 1 0">
+              <input
+                matInput
+                name="appClaimMappingTokenClaim"
+                placeholder="Target claim"
+                [(ngModel)]="newClaimMapping.tokenClaim"
+                [disabled]="readonly"
+              />
+              <mat-hint>The claim's name on the issued token.</mat-hint>
+            </mat-form-field>
+            <button
+              style="margin-top: 7px"
+              mat-stroked-button
+              type="button"
+              [disabled]="readonly || !isNewClaimMappingValid()"
+              (click)="addClaimMapping()"
+            >
+              <mat-icon svgIcon="gio:plus"></mat-icon>ADD
+            </button>
+          </div>
+          <mat-hint style="font-size: 75%">
+            A claim that is absent from its source token is skipped. A custom token claim of the same name overrides the mapping.
+          </mat-hint>
         </div>
       </div>
 

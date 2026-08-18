@@ -17,11 +17,32 @@
 /** Scope handling mode for token exchange. */
 export type TokenExchangeScopeHandling = 'downscoping' | 'permissive';
 
+/** Which validated token a claim mapping reads from. */
+export const CLAIM_SOURCE_SUBJECT_TOKEN = 'SUBJECT_TOKEN';
+export const CLAIM_SOURCE_ACTOR_TOKEN = 'ACTOR_TOKEN';
+export type TokenExchangeClaimSource = typeof CLAIM_SOURCE_SUBJECT_TOKEN | typeof CLAIM_SOURCE_ACTOR_TOKEN;
+
+/** Copies one claim from a validated token onto the issued token. */
+export interface TokenExchangeClaimMapping {
+  source: TokenExchangeClaimSource;
+  /** Claim name on the source token. */
+  sourceClaim: string;
+  /** Claim name on the issued token. */
+  tokenClaim: string;
+}
+
+export const TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS: readonly { label: string; value: TokenExchangeClaimSource }[] = [
+  { label: 'Subject token', value: CLAIM_SOURCE_SUBJECT_TOKEN },
+  { label: 'Actor token', value: CLAIM_SOURCE_ACTOR_TOKEN },
+];
+
 /** Per-application or domain-default token exchange OAuth settings. */
 export interface TokenExchangeOAuthSettings {
   /** When true, effective settings are resolved from the domain default. */
   inherited: boolean;
   scopeHandling: TokenExchangeScopeHandling;
+  /** Claims copied from the subject or actor token onto the issued token. */
+  claimsMapper?: TokenExchangeClaimMapping[];
 }
 
 export const DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING: TokenExchangeScopeHandling = 'downscoping';
