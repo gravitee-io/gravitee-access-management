@@ -23,6 +23,7 @@ import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.path.PathValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
+import io.gravitee.am.service.validators.webprotection.CspSettingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,14 +45,17 @@ public class DomainValidatorImpl implements DomainValidator {
     private final PathValidator pathValidator;
     private final VirtualHostValidator virtualHostValidator;
     private final ClientRegistrationSettingsValidator clientRegistrationSettingsValidator;
+    private final CspSettingsValidator cspSettingsValidator;
 
     @Autowired
     public DomainValidatorImpl(PathValidator pathValidator,
                                VirtualHostValidator virtualHostValidator,
-                               ClientRegistrationSettingsValidator clientRegistrationSettingsValidator ){
+                               ClientRegistrationSettingsValidator clientRegistrationSettingsValidator,
+                               CspSettingsValidator cspSettingsValidator){
         this.pathValidator = pathValidator;
         this.virtualHostValidator = virtualHostValidator;
         this.clientRegistrationSettingsValidator = clientRegistrationSettingsValidator;
+        this.cspSettingsValidator = cspSettingsValidator;
     }
 
     @Override
@@ -114,6 +118,7 @@ public class DomainValidatorImpl implements DomainValidator {
         }
 
         chain.add(validateCertificateBasedAuthSettings(domain));
+        chain.add(validateCspSettings(domain));
 
         return Completable.merge(chain);
     }
@@ -139,6 +144,13 @@ public class DomainValidatorImpl implements DomainValidator {
         }
 
         return Completable.complete();
+    }
+
+    private Completable validateCspSettings(Domain domain) {
+        if (domain.getWebProtectionSettings() == null || domain.getWebProtectionSettings().getCsp() == null) {
+            return Completable.complete();
+        }
+        return cspSettingsValidator.validate(domain.getWebProtectionSettings().getCsp());
     }
 
 }

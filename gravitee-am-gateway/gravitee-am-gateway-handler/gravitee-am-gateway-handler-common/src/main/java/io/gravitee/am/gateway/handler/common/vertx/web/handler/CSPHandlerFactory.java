@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp.CspHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp.NoOpCspHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.webprotection.CspDirective;
 import io.gravitee.am.model.webprotection.CspSettings;
 import io.gravitee.am.model.webprotection.WebProtectionResolution;
 import org.slf4j.Logger;
@@ -31,8 +32,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Objects.isNull;
 
 /**
@@ -69,6 +72,9 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
                     domain.getName());
             return createFromEnvironment();
         }
+        if (missingReportTarget(settings.isReportOnly(), directives)) {
+            return new NoOpCspHandler();
+        }
         return new CspHandlerImpl(settings.isReportOnly(), directives, settings.isScriptInlineNonce());
     }
 
@@ -81,7 +87,31 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
         if ((isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) || notEnabled) {
             return new NoOpCspHandler();
         }
+        if (missingReportTarget(TRUE.equals(reportOnly), directives)) {
+            return new NoOpCspHandler();
+        }
         return new CspHandlerImpl(reportOnly, directives, scriptInlineNonce);
+    }
+
+    /**
+     * Vert.x fails the request with HTTP 500 when report-only is set and the policy carries neither
+     * {@code report-uri} nor {@code report-to}, so send no CSP header at all to avoid breaking the login page.
+     */
+    private boolean missingReportTarget(boolean reportOnly, List<String> directives) {
+        if (!reportOnly) {
+            return false;
+        }
+        final boolean hasReportTarget = directives != null && directives.stream()
+                .map(CspDirective::parse)
+                .filter(Objects::nonNull)
+                .anyMatch(directive -> directive.isReportTarget() && directive.hasValue());
+        if (!hasReportTarget) {
+            logger.error("CSP is report-only for domain: {} but no report-uri or report-to directive is configured. " +
+                    "No Content-Security-Policy header will be sent. Add a report target or disable report-only.",
+                    domain.getName());
+            return true;
+        }
+        return false;
     }
 
     private List<String> resolveDirectives(List<String> domainDirectives) {

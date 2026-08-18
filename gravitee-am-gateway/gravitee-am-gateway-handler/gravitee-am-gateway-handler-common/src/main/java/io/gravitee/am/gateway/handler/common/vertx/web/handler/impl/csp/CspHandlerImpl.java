@@ -18,11 +18,13 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp;
 
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
+import io.gravitee.am.model.webprotection.CspDirective;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CSP_SCRIPT_INLINE_NONCE;
@@ -51,7 +53,7 @@ public class CspHandlerImpl implements CSPHandler {
     }
 
     private void addDirectives(List<String> directives) {
-        if (nonNull(directives) && directives.size() > 0) {
+        if (nonNull(directives) && !directives.isEmpty()) {
             final Map<String, String> mapOfDirectives = buildDirectivesMap(directives);
 
             if (mapOfDirectives.containsKey(SCRIPT_SRC_DIRECTIVE)) {
@@ -59,24 +61,20 @@ public class CspHandlerImpl implements CSPHandler {
             }
 
             mapOfDirectives.entrySet().stream()
-                    .filter(e -> !e.getKey().isEmpty() && !e.getValue().isEmpty())
+                    .filter(e -> !e.getKey().isEmpty())
                     .forEach(e -> this.delegate.addDirective(e.getKey(), e.getValue()));
         }
     }
 
     private Map<String, String> buildDirectivesMap(List<String> directives) {
-        return directives.stream().map(directive -> directive.split("[ \t]", 2))
-                .filter(directive -> directive.length == 2)
-                .map(this::getDirectiveEntry)
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
-    }
-
-    private Entry<String, String> getDirectiveEntry(String[] directive) {
-        var value = directive[1].trim();
-        if (value.endsWith(";")) {
-            value = value.substring(0, value.length() - 1);
-        }
-        return Map.entry(directive[0].trim(), value.trim());
+        return directives.stream()
+                .map(CspDirective::parse)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        CspDirective::canonicalName,
+                        CspDirective::value,
+                        (first, last) -> last,
+                        LinkedHashMap::new));
     }
 
     @Override

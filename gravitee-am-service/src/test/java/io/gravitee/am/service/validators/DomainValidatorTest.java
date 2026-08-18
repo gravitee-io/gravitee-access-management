@@ -18,6 +18,8 @@ package io.gravitee.am.service.validators;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.webprotection.CspSettings;
+import io.gravitee.am.model.webprotection.WebProtectionSettings;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.domain.DomainValidator;
@@ -25,6 +27,8 @@ import io.gravitee.am.service.validators.domain.DomainValidatorImpl;
 import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
+import io.gravitee.am.service.validators.webprotection.CspSettingsValidator;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +39,9 @@ import java.util.Set;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -44,6 +51,7 @@ import static org.mockito.Mockito.when;
 public class DomainValidatorTest {
 
     private DomainValidator domainValidator;
+    private CspSettingsValidator cspSettingsValidator;
 
     @Before
     public void before(){
@@ -53,7 +61,8 @@ public class DomainValidatorTest {
         when(applicationService.findByDomain(Mockito.anyString())).thenReturn(Single.just(Set.of()));
         ClientRegistrationSettingsValidator clientRegistrationSettingsValidator = new ClientRegistrationSettingsValidator(applicationService);
 
-        domainValidator = new DomainValidatorImpl(pathValidator, new VirtualHostValidatorImpl(pathValidator), clientRegistrationSettingsValidator);
+        cspSettingsValidator = Mockito.mock(CspSettingsValidator.class);
+        domainValidator = new DomainValidatorImpl(pathValidator, new VirtualHostValidatorImpl(pathValidator), clientRegistrationSettingsValidator, cspSettingsValidator);
     }
 
     @Test
@@ -193,6 +202,65 @@ public class DomainValidatorTest {
         domain.setLoginSettings(loginSettings);
 
         domainValidator.validate(domain, emptyList()).test().assertNoErrors();
+    }
+
+    @Test
+    public void validate_noCspSettings_doesNotCallCspValidator() {
+        domainValidator.validate(getValidDomain(), emptyList()).test().assertNoErrors();
+
+        verify(cspSettingsValidator, never()).validate(any());
+    }
+
+    @Test
+    public void validate_nullCspSettings_doesNotCallCspValidator() {
+        Domain domain = getValidDomain();
+        domain.setWebProtectionSettings(new WebProtectionSettings());
+
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
+
+        verify(cspSettingsValidator, never()).validate(any());
+    }
+
+    @Test
+    public void validate_cspSettings_callsCspValidator() {
+        CspSettings cspSettings = new CspSettings();
+        Domain domain = domainWithCsp(cspSettings);
+        when(cspSettingsValidator.validate(cspSettings)).thenReturn(Completable.complete());
+
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
+
+        verify(cspSettingsValidator).validate(cspSettings);
+    }
+
+    @Test
+    public void validate_cspSettingsError_surfacesValidatorMessage() {
+        assertCspErrorPropagates(new InvalidDomainException("duplicate directive"), InvalidDomainException.class, "duplicate directive");
+    }
+
+    @Test
+    public void validate_cspSettingsUnexpectedError_isNotDisguisedAsAValidationFailure() {
+        // An unexpected validator fault is a bug, not bad input, so it must not become a 400.
+        assertCspErrorPropagates(new IllegalStateException("validator failed"), IllegalStateException.class, "validator failed");
+    }
+
+    private void assertCspErrorPropagates(Throwable validatorError, Class<? extends Throwable> expectedType, String expectedMessage) {
+        CspSettings cspSettings = new CspSettings();
+        Domain domain = domainWithCsp(cspSettings);
+        when(cspSettingsValidator.validate(cspSettings)).thenReturn(Completable.error(validatorError));
+
+        domainValidator.validate(domain, emptyList()).test()
+                .assertError(expectedType)
+                .assertError(throwable -> expectedMessage.equals(throwable.getMessage()));
+
+        verify(cspSettingsValidator).validate(cspSettings);
+    }
+
+    private Domain domainWithCsp(CspSettings cspSettings) {
+        Domain domain = getValidDomain();
+        WebProtectionSettings webProtectionSettings = new WebProtectionSettings();
+        webProtectionSettings.setCsp(cspSettings);
+        domain.setWebProtectionSettings(webProtectionSettings);
+        return domain;
     }
 
     private Domain getValidDomain() {
