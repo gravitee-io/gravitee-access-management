@@ -136,6 +136,12 @@ export interface PatchApplicationOAuthSettings {
    * @type {boolean}
    * @memberof PatchApplicationOAuthSettings
    */
+  dpopBoundAccessTokens?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationOAuthSettings
+   */
   enhanceScopesWithUserPermissions?: boolean;
   /**
    *
@@ -446,6 +452,7 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
     defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
     disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
+    dpopBoundAccessTokens: json['dpopBoundAccessTokens'] == null ? undefined : json['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions:
       json['enhanceScopesWithUserPermissions'] == null ? undefined : json['enhanceScopesWithUserPermissions'],
     forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
@@ -526,6 +533,7 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     defaultACRvalues: value['defaultACRvalues'],
     defaultMaxAge: value['defaultMaxAge'],
     disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
+    dpopBoundAccessTokens: value['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],
     forcePKCE: value['forcePKCE'],
     forceS256CodeChallengeMethod: value['forceS256CodeChallengeMethod'],

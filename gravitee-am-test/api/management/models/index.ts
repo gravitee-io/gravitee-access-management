@@ -78,6 +78,11 @@ export * from './ClientSecret';
 export * from './CookieSettings';
 export * from './CorsSettings';
 export * from './Credential';
+<<<<<<< HEAD
+=======
+export * from './CspSettings';
+export * from './DPoPSettings';
+>>>>>>> 9fecaba (fix: avoid NPE on list endpoints when a scoped role carries no matching permission (#8406))
 export * from './DataPlane';
 export * from './DataSource';
 export * from './DeviceIdentifier';
@@ -175,6 +180,7 @@ export * from './PatchCIBASettings';
 export * from './PatchCIMDSettings';
 export * from './PatchChallengeSettings';
 export * from './PatchClientRegistrationSettings';
+export * from './PatchDPoPSettings';
 export * from './PatchDomain';
 export * from './PatchEnrollSettings';
 export * from './PatchEnrollmentSettings';
