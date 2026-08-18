@@ -68,3 +68,4 @@ services:
       # A managed cloud node has no platform license
       - GRAVITEE_LICENSE_KEY=
       - JAVA_OPTS=-Dgravitee.license=/opt/graviteeio-am-gateway/license/no-platform-license.key
+      - GRAVITEE_REPOSITORIES_GATEWAY_DATAPLANE_ID=cloud-test
