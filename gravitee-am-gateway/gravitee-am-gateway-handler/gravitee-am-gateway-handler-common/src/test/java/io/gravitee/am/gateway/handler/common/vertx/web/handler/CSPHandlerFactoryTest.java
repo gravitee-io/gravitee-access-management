@@ -101,4 +101,87 @@ public class CSPHandlerFactoryTest {
 
         assertTrue(factory.getObject() instanceof CspHandlerImpl);
     }
+
+    @Test
+    public void shouldSendNoHeaderWhenDomainIsReportOnlyWithoutReportTarget() {
+        final CspSettings cspSettings = new CspSettings();
+        cspSettings.setInherited(false);
+        cspSettings.setEnabled(true);
+        cspSettings.setReportOnly(true);
+        cspSettings.setDirectives(List.of("default-src 'self'"));
+
+        final WebProtectionSettings webProtectionSettings = new WebProtectionSettings();
+        webProtectionSettings.setCsp(cspSettings);
+
+        when(domain.getWebProtectionSettings()).thenReturn(webProtectionSettings);
+
+        assertTrue(factory.getObject() instanceof NoOpCspHandler);
+    }
+
+    @Test
+    public void shouldBuildHandlerWhenDomainIsReportOnlyWithReportUri() {
+        assertReportOnlyDomainAccepts("report-uri /csp-reports");
+    }
+
+    @Test
+    public void shouldBuildHandlerWhenDomainIsReportOnlyWithReportTo() {
+        assertReportOnlyDomainAccepts("report-to csp-endpoint");
+    }
+
+    @Test
+    public void shouldSendNoHeaderWhenDomainReportTargetHasNoValue() {
+        final CspSettings cspSettings = new CspSettings();
+        cspSettings.setInherited(false);
+        cspSettings.setEnabled(true);
+        cspSettings.setReportOnly(true);
+        cspSettings.setDirectives(List.of("default-src 'self'", "report-uri"));
+
+        final WebProtectionSettings webProtectionSettings = new WebProtectionSettings();
+        webProtectionSettings.setCsp(cspSettings);
+
+        when(domain.getWebProtectionSettings()).thenReturn(webProtectionSettings);
+
+        assertTrue(factory.getObject() instanceof NoOpCspHandler);
+    }
+
+    @Test
+    public void shouldSendNoHeaderWhenEnvironmentIsReportOnlyWithoutReportTarget() {
+        when(domain.getWebProtectionSettings()).thenReturn(null);
+        when(environment.getProperty("http.csp.reportOnly", Boolean.class)).thenReturn(true);
+
+        assertTrue(factory.getObject() instanceof NoOpCspHandler);
+    }
+
+    @Test
+    public void shouldSendNoHeaderWhenDomainIsReportOnlyAndDirectivesFallBackToDefaults() {
+        // An empty domain list resolves to the bundled default-csp-directives.properties, which carries no
+        // report target — the safety net has to look at the resolved list, not the configured one.
+        final CspSettings cspSettings = new CspSettings();
+        cspSettings.setInherited(false);
+        cspSettings.setEnabled(true);
+        cspSettings.setReportOnly(true);
+        cspSettings.setDirectives(List.of());
+
+        final WebProtectionSettings webProtectionSettings = new WebProtectionSettings();
+        webProtectionSettings.setCsp(cspSettings);
+
+        when(domain.getWebProtectionSettings()).thenReturn(webProtectionSettings);
+
+        assertTrue(factory.getObject() instanceof NoOpCspHandler);
+    }
+
+    private void assertReportOnlyDomainAccepts(String reportDirective) {
+        final CspSettings cspSettings = new CspSettings();
+        cspSettings.setInherited(false);
+        cspSettings.setEnabled(true);
+        cspSettings.setReportOnly(true);
+        cspSettings.setDirectives(List.of("default-src 'self'", reportDirective));
+
+        final WebProtectionSettings webProtectionSettings = new WebProtectionSettings();
+        webProtectionSettings.setCsp(cspSettings);
+
+        when(domain.getWebProtectionSettings()).thenReturn(webProtectionSettings);
+
+        assertTrue(factory.getObject() instanceof CspHandlerImpl);
+    }
 }

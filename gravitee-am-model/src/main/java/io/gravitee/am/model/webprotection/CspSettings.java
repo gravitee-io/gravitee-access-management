@@ -47,8 +47,12 @@ public class CspSettings {
             defaultValue = "true")
     private boolean scriptInlineNonce = true;
 
-    @Schema(description = "CSP directives, each in the form \"directive-name value;\".",
-            example = "[\"default-src 'self';\", \"script-src 'self';\"]")
+    @Schema(description = "CSP directives, one per entry, in the form \"directive-name value\". A trailing " +
+            "semicolon is optional. Directive names must be valid CSP tokens and must not repeat; values are " +
+            "not interpreted. Directives that take no value, such as \"upgrade-insecure-requests\", may be " +
+            "supplied on their own. When reportOnly is enabled, a \"report-uri\" or \"report-to\" directive " +
+            "is required.",
+            example = "[\"default-src 'self'\", \"script-src 'self'\", \"upgrade-insecure-requests\"]")
     private List<String> directives;
 
     public CspSettings() {
