@@ -245,25 +245,28 @@ public class EntrypointServiceImpl implements EntrypointService {
         ReferenceType referenceType = entrypoint.getEnvironmentId() != null ? ReferenceType.ENVIRONMENT : ReferenceType.ORGANIZATION;
         String referenceId = entrypoint.getEnvironmentId() != null ? entrypoint.getEnvironmentId() : entrypoint.getOrganizationId();
         Payload payload = new Payload(entrypoint.getId(), referenceType, referenceId, action);
-        return resolveDataPlaneId(entrypoint)
-                .map(dataPlaneId -> new Event(Type.ENTRYPOINT, payload, dataPlaneId, entrypoint.getEnvironmentId()))
-                .flatMap(event -> eventService.create(event))
-                .ignoreElement();
+        return resolveDataPlaneIds(entrypoint)
+                .flatMapCompletable(dataPlaneIds -> Flowable.fromIterable(dataPlaneIds)
+                        .flatMapCompletable(dataPlaneId -> eventService
+                                .create(new Event(Type.ENTRYPOINT, payload, dataPlaneId, entrypoint.getEnvironmentId()))
+                                .ignoreElement()));
     }
 
     /**
-     * Route an entrypoint event to the data plane its environment is linked to, so the gateway serving
-     * that environment picks it up (SyncManager polls events by data-plane id). Falls back to
-     * {@code default} for org-scoped entrypoints, or when the environment has no linked data plane.
+     * Route an entrypoint event to every data plane its environment is linked to, so whichever gateway
+     * serves that environment picks it up (SyncManager polls events by data-plane id). One event per
+     * plane rather than one for the first row: an environment may hold several linked planes, and a
+     * gateway pinned to any other one would never see the change. Falls back to {@code default} for
+     * org-scoped entrypoints, or when the environment has no linked data plane.
      */
-    private Single<String> resolveDataPlaneId(Entrypoint entrypoint) {
+    private Single<List<String>> resolveDataPlaneIds(Entrypoint entrypoint) {
         if (entrypoint.getEnvironmentId() == null) {
-            return Single.just(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+            return Single.just(List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
         }
         return dataPlaneDefinitionService.findByEnvironmentId(entrypoint.getEnvironmentId())
                 .map(DataPlaneDefinitionSummary::id)
-                .defaultIfEmpty(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)
-                .firstOrError();
+                .toList()
+                .map(linked -> linked.isEmpty() ? List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID) : linked);
     }
 
     private Completable validate(Entrypoint entrypoint) {

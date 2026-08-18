@@ -378,31 +378,24 @@ public class DomainServiceImpl implements DomainService {
         String hrid = IdGenerator.generate(newDomain.getName());
 
         return resolveDataPlaneId(environmentId, newDomain.getDataPlaneId())
-                .flatMap(resolvedId -> {
-                    newDomain.setDataPlaneId(resolvedId);
-                    return dataPlaneRegistry.verified(resolvedId)
-                            .onErrorResumeNext(error -> {
-                                log.error("Failed to verify Data Plane configuration", error);
-                                return Completable.error(new InvalidDataPlaneException(
-                                        "An error occurred while trying to create a domain. Data Plane [" + resolvedId
-                                                + "] did not answer with the settings it was provisioned with."));
-                            })
-                            .andThen(createDomain(organizationId, environmentId, newDomain, principal, automationDomain, hrid));
-                });
+                .flatMap(resolvedId -> dataPlaneRegistry.verified(resolvedId)
+                        .onErrorResumeNext(error -> {
+                            log.error("Failed to verify Data Plane configuration", error);
+                            return Completable.error(new InvalidDataPlaneException(
+                                    "An error occurred while trying to create a domain. Data Plane [" + resolvedId
+                                            + "] did not answer with the settings it was provisioned with."));
+                        })
+                        .andThen(createDomain(organizationId, environmentId, newDomain, resolvedId, principal, automationDomain, hrid)));
     }
 
     /**
-     * Picks the data plane a new domain will bind to. Cloud mode drives everything off the DPs
-     * provisioned against the environment; standalone falls back to {@code default} when the caller
-     * hasn't asked for anything and only {@code default} is declared in {@code gravitee.yml}.
+     * Picks the data plane a new domain will bind to. Both modes hold a supplied id to the planes
+     * provisioned against the environment; cloud requires one, while standalone falls back to
+     * {@code default} when the environment has none and only {@code default} is declared in
+     * {@code gravitee.yml}.
      */
     private Single<String> resolveDataPlaneId(String environmentId, String requestedId) {
         boolean cloudEnabled = CloudProperties.isManagedCloudEnabled(springEnvironment);
-        // Standalone with an explicit id doesn't need the environment's linked planes: the id has
-        // to exist in the registry, and that's the whole check. Save the repository round-trip.
-        if (!cloudEnabled && StringUtils.hasText(requestedId)) {
-            return resolveDataPlaneIdForStandalone(requestedId, List.of());
-        }
         return dataPlaneDefinitionService.findByEnvironmentId(environmentId)
                 .map(DataPlaneDefinitionSummary::id)
                 .toList()
@@ -421,25 +414,24 @@ public class DomainServiceImpl implements DomainService {
                 return Single.error(new InvalidDataPlaneException(
                         "Multiple data planes are linked to this environment; dataPlaneId must be provided."));
             }
-            return Single.just(linkedForEnv.get(0));
+            return requireLoadedOnThisNode(linkedForEnv.get(0));
         }
         if (!linkedForEnv.contains(requestedId)) {
             return Single.error(new InvalidDataPlaneException(
                     "Data Plane [" + requestedId + "] is not linked to this environment."));
         }
-        return Single.just(requestedId);
+        return requireLoadedOnThisNode(requestedId);
     }
 
     private Single<String> resolveDataPlaneIdForStandalone(String requestedId, List<String> linkedForEnv) {
         if (StringUtils.hasText(requestedId)) {
-            boolean known = dataPlaneRegistry.getDataPlanes().stream()
-                    .map(DataPlaneDescription::id)
-                    .anyMatch(requestedId::equals);
-            if (!known) {
+            // The environment's links win whenever it has any, so a domain and the entrypoint events
+            // for its environment (which EntrypointServiceImpl routes by the same links) agree on the plane.
+            if (!linkedForEnv.isEmpty() && !linkedForEnv.contains(requestedId)) {
                 return Single.error(new InvalidDataPlaneException(
-                        "An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
+                        "Data Plane [" + requestedId + "] is not linked to this environment."));
             }
-            return Single.just(requestedId);
+            return requireLoadedOnThisNode(requestedId);
         }
         boolean onlyDefaultDeclared = Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)
                 .equals(dataPlaneConfigurationLoader.declaredIds());
@@ -450,7 +442,23 @@ public class DomainServiceImpl implements DomainService {
         return Single.just(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
     }
 
-    private Single<Domain> createDomain(String organizationId, String environmentId, NewDomain newDomain, User principal, AutomationNewDomain automationDomain, String hrid) {
+    /**
+     * A linked definition only means the id is claimed, not that this node serves it: activation can
+     * fail, and {@code verified()} answers complete for an id it was never handed. Without this the
+     * domain would be persisted against a plane nothing can read or write.
+     */
+    private Single<String> requireLoadedOnThisNode(String dataPlaneId) {
+        boolean known = dataPlaneRegistry.getDataPlanes().stream()
+                .map(DataPlaneDescription::id)
+                .anyMatch(dataPlaneId::equals);
+        if (!known) {
+            return Single.error(new InvalidDataPlaneException(
+                    "An error occurred while trying to create a domain. Data Plane [" + dataPlaneId + "] is not loaded on this node."));
+        }
+        return Single.just(dataPlaneId);
+    }
+
+    private Single<Domain> createDomain(String organizationId, String environmentId, NewDomain newDomain, String dataPlaneId, User principal, AutomationNewDomain automationDomain, String hrid) {
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()
                 .flatMap(empty -> {
@@ -473,7 +481,7 @@ public class DomainServiceImpl implements DomainService {
                         domain.setReferenceId(environmentId);
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
-                        domain.setDataPlaneId(newDomain.getDataPlaneId());
+                        domain.setDataPlaneId(dataPlaneId);
                         if (automationDomain != null) {
                             domain.setManagedBy(ManagedBy.AUTOMATION_API);
                             domain.setAutomationKey(automationDomain.getAutomationKey());
