@@ -178,7 +178,7 @@
                 <mat-slide-toggle
                   [(ngModel)]="domain.webProtectionSettings.csp.reportOnly"
                   name="cspReportOnly"
-                  (ngModelChange)="updateFormState()"
+                  (ngModelChange)="directiveChanged()"
                   [disabled]="readonly"
                 >
                   Report only
@@ -198,31 +198,84 @@
                 <mat-hint style="font-size: 75%">Include a nonce in the script-src directive for inline scripts.</mat-hint>
               </div>
 
-              <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>Directives</mat-label>
-                <mat-chip-grid #directives aria-label="cspDirectives" [disabled]="readonly">
-                  <mat-chip-row
-                    *ngFor="let directive of domain.webProtectionSettings.csp.directives"
-                    [removable]="!readonly"
-                    (removed)="removeDirective(directive)"
-                  >
-                    {{ directive }}
-                    <mat-icon matChipRemove>cancel</mat-icon>
-                  </mat-chip-row>
-                  <input
-                    matInput
-                    type="text"
-                    placeholder="default-src 'self';"
-                    name="cspDirective"
-                    [matChipInputFor]="directives"
-                    (keydown.enter)="addDirective($event)"
-                    [value]="directiveValue || ''"
-                    (input)="directiveValue = $any($event.target).value"
-                    [disabled]="readonly"
-                  />
-                </mat-chip-grid>
-                <mat-hint>Each directive must follow the format "directive-name value;". Press Enter to add.</mat-hint>
-              </mat-form-field>
+              <div class="directives-actions">
+                <span>Directives</span>
+                <button (click)="addDirective(); $event.preventDefault()" mat-button *hasPermission="['domain_settings_update']">
+                  <mat-icon>add_circle_outline</mat-icon>
+                </button>
+              </div>
+
+              <ng-container *ngFor="let directive of cspDirectives; let i = index; trackBy: trackByIndex">
+                <div fxLayout="row" fxLayoutAlign="start start" class="directive-row">
+                  <div class="directive-remove">
+                    <button (click)="removeDirective(i); $event.preventDefault()" mat-button *hasPermission="['domain_settings_update']">
+                      <mat-icon>remove_circle_outline</mat-icon>
+                    </button>
+                  </div>
+
+                  <mat-form-field appearance="outline" floatLabel="always" class="form-field" fxFlex="40">
+                    <mat-label>Name</mat-label>
+                    <input
+                      matInput
+                      type="text"
+                      placeholder="default-src"
+                      [name]="'cspDirectiveName' + i"
+                      [(ngModel)]="directive.name"
+                      (ngModelChange)="directiveChanged(directive)"
+                      required
+                      [pattern]="cspNamePattern"
+                      [readonly]="readonly"
+                      [errorStateMatcher]="duplicateErrorStateMatcher(i)"
+                      [matAutocomplete]="directiveName"
+                      #directiveNameModel="ngModel"
+                    />
+                    <mat-icon
+                      matSuffix
+                      class="directive-hint-icon"
+                      *ngIf="isUnknownDirective(i)"
+                      matTooltip="This is not a directive we recognize. It will be saved as entered so check spelling."
+                      >warning_outline</mat-icon
+                    >
+                    <mat-autocomplete #directiveName="matAutocomplete">
+                      <mat-option *ngFor="let name of filteredDirectiveNames(directive)" [value]="name">{{ name }}</mat-option>
+                    </mat-autocomplete>
+                    <mat-error *ngIf="directiveNameModel.errors?.required">Enter a directive name</mat-error>
+                    <mat-error *ngIf="directiveNameModel.errors?.pattern">Use letters, digits and hyphens only</mat-error>
+                    <mat-error *ngIf="!directiveNameModel.errors && isDuplicateDirective(i)"
+                      >This directive is already configured</mat-error
+                    >
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" floatLabel="always" class="form-field" fxFlex>
+                    <mat-label>Value</mat-label>
+                    <input
+                      matInput
+                      type="text"
+                      [placeholder]="isDirectiveValueAllowed(directive) ? '\'self\' https://cdn.example.com' : 'No value required'"
+                      [name]="'cspDirectiveValue' + i"
+                      [(ngModel)]="directive.value"
+                      (ngModelChange)="directiveChanged()"
+                      [required]="isDirectiveValueRequired(directive)"
+                      [pattern]="cspValuePattern"
+                      [disabled]="readonly || !isDirectiveValueAllowed(directive)"
+                      #directiveValueModel="ngModel"
+                    />
+                    <mat-icon
+                      matSuffix
+                      class="directive-hint-icon"
+                      *ngIf="needsReportingEndpoint(i)"
+                      matTooltip="report-to needs a Reporting-Endpoints header, which AM does not send. Add report-uri as well, or have a proxy supply the header."
+                      >info_outline</mat-icon
+                    >
+                    <mat-error *ngIf="directiveValueModel.errors?.required">Enter a value</mat-error>
+                    <mat-error *ngIf="directiveValueModel.errors?.pattern"
+                      >Use one directive per row, without ";" or control characters</mat-error
+                    >
+                  </mat-form-field>
+                </div>
+              </ng-container>
+
+              <p class="directive-form-error" *ngFor="let error of cspFormErrors">{{ error }}</p>
             </ng-container>
           </ng-container>
         </div>
@@ -311,7 +364,7 @@
         </div>
 
         <div *hasPermission="['domain_settings_update']">
-          <button mat-raised-button color="primary" [disabled]="!domainForm.valid || !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="!domainForm.valid || !formChanged || cspInvalid" type="submit">SAVE</button>
         </div>
       </form>
     </div>
@@ -321,9 +374,26 @@
         <p>Configure HTTP security headers and CORS for your security domain.</p>
         <p>Changes take effect without restarting the system.</p>
         <p>
-          By default, each setting follows the platform configuration. Turn off inherit to customise or disable a protection for this
+          By default, each setting follows the platform configuration. Turn off inherit to customize or disable a protection for this
           security domain only.
         </p>
+        <h4>CSP directives</h4>
+        <p>CSP directive values are saved exactly as you type them, so quoting matters:</p>
+        <ul>
+          <li>
+            Keywords and tokens need single quotes — <code>'self'</code>, <code>'none'</code>, <code>'unsafe-inline'</code>,
+            <code>'strict-dynamic'</code>, as well as nonces or hashes.
+          </li>
+          <li>
+            URLs, hostnames, schemes and paths must be unquoted — <code>https://cdn.example.com</code>, <code>*.example.com</code>,
+            <code>data:</code>, <code>/csp-reports</code>.
+          </li>
+          <li>Separate multiple sources with spaces, for example <code>'self' https://cdn.example.com data:</code>.</li>
+          <li>
+            Use one directive per row and leave semicolons out — they are added for you. A few directives, such as
+            <code>upgrade-insecure-requests</code>, take no value at all.
+          </li>
+        </ul>
       </div>
     </div>
   </div>

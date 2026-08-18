@@ -1,1 +1,52 @@
-/* Empty: inherits shared page layout styles */
+.directives-actions {
+  span {
+    padding-right: 10px;
+    color: grey;
+  }
+
+  height: 30px;
+  margin-bottom: 15px;
+}
+
+.directive-row {
+  .directive-remove {
+    display: flex;
+    height: var(--mat-form-field-container-height, 56px);
+    align-items: center;
+    margin-top: 0.45em;
+  }
+
+  .mat-mdc-icon-button {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+.form-field {
+  padding-left: 12px;
+}
+
+mat-icon {
+  color: grey;
+}
+
+.directive-hint-icon {
+  color: grey;
+}
+
+.directive-form-error {
+  margin: 0 0 8px;
+  color: var(--mat-sys-error, #b3261e);
+  font-family: Roboto, 'Helvetica Neue Light', sans-serif;
+  font-size: 75%;
+}
+
+.gv-page-description-content {
+  code {
+    font-size: 90%;
+  }
+
+  ul {
+    padding-left: 18px;
+  }
+}
