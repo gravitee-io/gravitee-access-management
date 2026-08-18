@@ -107,14 +107,13 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
-  // Create a User
-  await createUser(domain.id, managementApiAccessToken, user);
-
   await waitForDomainStart(domain).then((started) => {
     domain = started.domain;
     openIdConfiguration = started.oidcConfig;
     expect(openIdConfiguration).toBeDefined();
   });
+
+  await createUser(domain.id, managementApiAccessToken, user);
 });
 
 describe('SelfAccount - Change Password', () => {
