@@ -391,14 +391,14 @@ public class DomainServiceImpl implements DomainService {
     /**
      * Picks the data plane a new domain will bind to. Both modes hold a supplied id to the planes
      * provisioned against the environment; cloud requires the domain to land on one of them, while
-     * standalone also serves the planes {@code gravitee.yml} declares and falls back to
-     * {@code default} when the environment has none and only {@code default} is declared.
+     * standalone also serves the planes the node's configuration declares and falls back to
+     * {@code default} when the environment has none loaded here and only {@code default} is declared.
      */
     private Single<String> resolveDataPlaneId(String environmentId, String requestedId) {
         boolean cloudEnabled = CloudProperties.isManagedCloudEnabled(springEnvironment);
-        // A standalone caller naming a plane is not held to the environment's links: the planes
-        // gravitee.yml declares serve every environment, so `default` stays a valid choice for an
-        // environment that also has one provisioned against it. Saves the repository round-trip too.
+        // A standalone caller naming a plane is not held to the environment's links: the planes the
+        // node's configuration declares serve every environment, so `default` stays a valid choice for
+        // an environment that also has one provisioned against it. Saves the repository round-trip too.
         if (!cloudEnabled && StringUtils.hasText(requestedId)) {
             return resolveDataPlaneIdForStandalone(requestedId, List.of());
         }
@@ -435,9 +435,12 @@ public class DomainServiceImpl implements DomainService {
         }
         boolean onlyDefaultDeclared = Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)
                 .equals(dataPlaneConfigurationLoader.declaredIds());
-        if (!linkedForEnv.isEmpty() || !onlyDefaultDeclared) {
+        // A linked plane this node has not loaded cannot take the domain anyway, so it does not stop
+        // the fall back to `default`.
+        boolean linkedAndLoaded = linkedForEnv.stream().anyMatch(this::isLoadedOnThisNode);
+        if (linkedAndLoaded || !onlyDefaultDeclared) {
             return Single.error(new InvalidDataPlaneException(
-                    "dataPlaneId is required when the environment has linked data planes or gravitee.yml declares non-default planes."));
+                    "dataPlaneId is required when the environment has linked data planes or the node's configuration declares non-default planes."));
         }
         return Single.just(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
     }
@@ -448,14 +451,17 @@ public class DomainServiceImpl implements DomainService {
      * domain would be persisted against a plane nothing can read or write.
      */
     private Single<String> requireLoadedOnThisNode(String dataPlaneId) {
-        boolean known = dataPlaneRegistry.getDataPlanes().stream()
-                .map(DataPlaneDescription::id)
-                .anyMatch(dataPlaneId::equals);
-        if (!known) {
+        if (!isLoadedOnThisNode(dataPlaneId)) {
             return Single.error(new InvalidDataPlaneException(
                     "An error occurred while trying to create a domain. Data Plane [" + dataPlaneId + "] is not loaded on this node."));
         }
         return Single.just(dataPlaneId);
+    }
+
+    private boolean isLoadedOnThisNode(String dataPlaneId) {
+        return dataPlaneRegistry.getDataPlanes().stream()
+                .map(DataPlaneDescription::id)
+                .anyMatch(dataPlaneId::equals);
     }
 
     private Single<Domain> createDomain(String organizationId, String environmentId, NewDomain newDomain, String dataPlaneId, User principal, AutomationNewDomain automationDomain, String hrid) {

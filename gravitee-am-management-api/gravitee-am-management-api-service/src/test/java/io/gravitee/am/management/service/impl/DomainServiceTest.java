@@ -779,13 +779,14 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldReject_standalone_omittedId_provisionedDpLinked() {
+    public void shouldReject_standalone_omittedId_provisionedDpLinkedAndLoaded() {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
         when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
                 .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
         when(dataPlaneConfigurationLoader.declaredIds())
                 .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "provisioned-dp");
 
         domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
                 .test()
@@ -793,6 +794,29 @@ public class DomainServiceTest {
                 .assertError(InvalidDataPlaneException.class);
 
         verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_standalone_omittedId_resolvesToDefault_whenLinkedDpNotLoadedOnThisNode() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        // Linked to the environment but not loaded here: it cannot take the domain, so it does not
+        // count against the fall back to default.
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.verified(DataPlaneDescription.DEFAULT_DATA_PLANE_ID))
+                .thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(d.getDataPlaneId())));
     }
 
     @Test
@@ -886,7 +910,7 @@ public class DomainServiceTest {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
         newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
-        // A plane provisioned against the environment must not stop a domain landing on a gravitee.yml
+        // A plane provisioned against the environment must not stop a domain landing on a declared
         // one. Lenient because resolution short-circuits before the lookup, which is the point.
         Mockito.lenient().when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
                 .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
