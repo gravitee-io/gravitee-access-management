@@ -14,12 +14,27 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
+import { AbstractControl } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
 import { DomainStoreService } from '../../../stores/domain.store';
+
+import {
+  allowsValue,
+  analyzeCspDirectives,
+  CSP_DIRECTIVE_NAME_PATTERN,
+  CSP_DIRECTIVE_NAMES,
+  CSP_DIRECTIVE_VALUE_PATTERN,
+  CspAnalysis,
+  CspDirectiveRow,
+  parseCspDirectives,
+  requiresValue,
+  serializeCspDirectives,
+} from './csp-directives';
 
 @Component({
   selector: 'app-domain-web-protection',
@@ -35,7 +50,12 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
   xframeActions: string[] = ['DENY', 'SAMEORIGIN'];
   headerValue: string;
   originValue: string;
-  directiveValue: string;
+  cspDirectives: CspDirectiveRow[] = [];
+  cspAnalysis: CspAnalysis = { rows: [], formErrors: [], hasBlockingIssue: false };
+  readonly cspDirectiveNames = CSP_DIRECTIVE_NAMES;
+  readonly cspNamePattern = CSP_DIRECTIVE_NAME_PATTERN;
+  readonly cspValuePattern = CSP_DIRECTIVE_VALUE_PATTERN;
+  private readonly duplicateMatchers = new Map<number, ErrorStateMatcher>();
 
   private readonly defaultCorsConfiguration = {
     inherited: true,
@@ -114,6 +134,9 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
     if (this.domain.corsSettings.maxAge === 0) {
       this.domain.corsSettings.maxAge = null;
     }
+
+    this.cspDirectives = parseCspDirectives(this.domain.webProtectionSettings.csp.directives);
+    this.revalidateCsp();
   }
 
   private normalizeInherited(settings: { inherited?: boolean; enabled?: boolean }): void {
@@ -124,6 +147,7 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
 
   update(): void {
     this.flushPendingChipValues();
+    this.domain.webProtectionSettings.csp.directives = serializeCspDirectives(this.cspDirectives);
     this.domainService.patchWebProtectionSettings(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       this.domainStore.set(response);
@@ -144,6 +168,7 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
       settings.enabled = false;
     }
     this.formChanged = true;
+    this.revalidateCsp();
   }
 
   enableCorsSettings(event: any): void {
@@ -228,6 +253,7 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
   enableCspSettings(event: any): void {
     this.domain.webProtectionSettings.csp.enabled = event.checked;
     this.formChanged = true;
+    this.revalidateCsp();
   }
 
   isCspSettingsEnabled(): boolean {
@@ -236,32 +262,96 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
 
   addDirective(event?: Event): void {
     event?.preventDefault();
-    this.addDirectiveValue();
+    this.cspDirectives = [...this.cspDirectives, { name: '', value: '' }];
+    this.formChanged = true;
+    this.revalidateCsp();
   }
 
-  private addDirectiveValue(): void {
-    const value = this.directiveValue?.trim();
-    if (!value) {
+  removeDirective(index: number): void {
+    this.cspDirectives = this.cspDirectives.filter((_, i) => i !== index);
+    this.formChanged = true;
+    this.revalidateCsp();
+  }
+
+  directiveChanged(row?: CspDirectiveRow): void {
+    // Switching to a directive that takes no value would otherwise leave the old value behind and
+    // serialize it back out, e.g. "upgrade-insecure-requests 'self'".
+    if (row && !allowsValue(row.name)) {
+      row.value = '';
+    }
+    this.formChanged = true;
+    this.revalidateCsp();
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  /**
+   * Autocomplete options for a row, narrowed by whatever has been typed so far. Free text is still
+   * accepted — the list is a convenience, not a whitelist.
+   */
+  filteredDirectiveNames(row: CspDirectiveRow): string[] {
+    const typed = (row?.name ?? '').trim().toLowerCase();
+    if (!typed) {
+      return this.cspDirectiveNames;
+    }
+    return this.cspDirectiveNames.filter((name) => name.includes(typed));
+  }
+
+  isDirectiveValueRequired(row: CspDirectiveRow): boolean {
+    return requiresValue(row?.name);
+  }
+
+  isDirectiveValueAllowed(row: CspDirectiveRow): boolean {
+    return allowsValue(row?.name);
+  }
+
+  isDuplicateDirective(index: number): boolean {
+    return this.cspAnalysis.rows[index]?.duplicate === true;
+  }
+
+  isUnknownDirective(index: number): boolean {
+    return this.cspAnalysis.rows[index]?.unknownName === true;
+  }
+
+  needsReportingEndpoint(index: number): boolean {
+    return this.cspAnalysis.rows[index]?.reportToNeedsEndpoint === true;
+  }
+
+  get cspFormErrors(): string[] {
+    return this.cspAnalysis.formErrors;
+  }
+
+  /**
+   * Duplicates are the one rule a single field cannot detect, so the error state is supplied rather
+   * than derived from the control. Stored duplicates are flagged immediately instead of waiting for
+   * the operator to touch the field.
+   */
+  duplicateErrorStateMatcher(index: number): ErrorStateMatcher {
+    if (!this.duplicateMatchers.has(index)) {
+      this.duplicateMatchers.set(index, {
+        isErrorState: (control: AbstractControl | null): boolean =>
+          this.isDuplicateDirective(index) || (!!control && control.invalid && (control.dirty || control.touched)),
+      });
+    }
+    return this.duplicateMatchers.get(index);
+  }
+
+  /**
+   * Cross-row rules (duplicates, report targets, at least one directive) cannot be expressed with
+   * template-driven validators, so they are recomputed here and block the save separately.
+   */
+  private revalidateCsp(): void {
+    if (this.isInherited(this.domain.webProtectionSettings?.csp) || !this.isCspSettingsEnabled()) {
+      this.cspAnalysis = { rows: [], formErrors: [], hasBlockingIssue: false };
       return;
     }
-    const directives = this.domain.webProtectionSettings.csp.directives;
-    if (!directives.some((el) => el === value)) {
-      directives.push(value);
-      this.domain.webProtectionSettings.csp.directives = [...directives];
-      this.formChanged = true;
-      this.directiveValue = '';
-    } else {
-      this.snackbarService.open(`Error : Directive "${value}" already exists`);
-    }
+    this.cspAnalysis = analyzeCspDirectives(this.cspDirectives, this.domain.webProtectionSettings?.csp?.reportOnly);
   }
 
-  removeDirective(directive: string): void {
-    const directives = this.domain.webProtectionSettings.csp.directives;
-    const index = directives.indexOf(directive);
-    if (index > -1) {
-      directives.splice(index, 1);
-      this.formChanged = true;
-    }
+  get cspInvalid(): boolean {
+    return this.cspAnalysis.hasBlockingIssue;
   }
 
   enableXFrameSettings(event: any): void {
@@ -292,9 +382,6 @@ export class DomainSettingsWebProtectionComponent implements OnInit {
     }
     if (this.headerValue?.trim()) {
       this.addHeaderValue();
-    }
-    if (this.directiveValue?.trim()) {
-      this.addDirectiveValue();
     }
   }
 }
