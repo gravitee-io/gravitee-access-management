@@ -39,7 +39,12 @@ const DATA_PLANE_ID = 'cloud-test';
 
 // The definition has to name the same store the gateway is configured with, otherwise the management
 // API writes users the gateway then cannot read. Both stacks run one database, so the branch follows
-// REPOSITORY_TYPE the same way the internal-api data plane fixtures do.
+// REPOSITORY_TYPE the same way the internal-api data plane fixtures do. The store details are the
+// local stack's own (docker-compose.mongo.yml / docker-compose.postgres.yml), which is the only thing
+// that runs the cloud stack today; the hosts take the same overrides as the internal-api fixtures for
+// a stack that runs the stores elsewhere.
+const MONGO_HOST = process.env.AM_DATAPLANE_MONGO_HOST ?? 'mongodb';
+const JDBC_HOST = process.env.AM_DATAPLANE_JDBC_HOST ?? 'postgres';
 const dataPlaneStore = () =>
   process.env.REPOSITORY_TYPE === 'jdbc'
     ? {
@@ -47,7 +52,7 @@ const dataPlaneStore = () =>
         configuration: {
           jdbc: {
             driver: 'postgresql',
-            host: 'postgres',
+            host: JDBC_HOST,
             port: 5432,
             database: 'postgres',
             username: 'postgres',
@@ -55,7 +60,7 @@ const dataPlaneStore = () =>
           },
         },
       }
-    : { type: 'mongodb', configuration: { mongodb: { dbname: 'graviteeam', host: 'mongodb', port: 27017 } } };
+    : { type: 'mongodb', configuration: { mongodb: { dbname: 'graviteeam', host: MONGO_HOST, port: 27017 } } };
 
 export interface CloudSharedFixture extends CloudOrganizationFixture {
   /** Id of the data plane linked to the shared environment, and the one the gateway is pinned to. */
