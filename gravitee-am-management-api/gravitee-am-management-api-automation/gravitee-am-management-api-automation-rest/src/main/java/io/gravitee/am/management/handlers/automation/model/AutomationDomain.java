@@ -113,14 +113,14 @@ public class AutomationDomain {
     private List<VirtualHost> vhosts;
 
     /**
-     * Required and immutable after creation. The domain cannot be created without a
-     * valid data plane, and it cannot be changed afterwards; it is part of the full
+     * Immutable after creation. Optional on create: when omitted the data plane is resolved from the
+     * ones linked to the environment, the same way the Management API does it. It is part of the full
      * desired-state document but is never re-applied on update.
      */
-    @NotNull
-    @Size(min = 1, max = 255)
-    @Schema(description = "Identifier of the data plane this domain is connected to. Required at creation and " +
-            "immutable afterwards; included in the desired-state document but never re-applied on update.",
+    @Size(max = 255)
+    @Schema(description = "Identifier of the data plane this domain is connected to. Optional at creation, " +
+            "resolved from the environment's data planes when omitted, and immutable afterwards; included in the " +
+            "desired-state document but never re-applied on update.",
             example = "default")
     private String dataPlaneId;
 

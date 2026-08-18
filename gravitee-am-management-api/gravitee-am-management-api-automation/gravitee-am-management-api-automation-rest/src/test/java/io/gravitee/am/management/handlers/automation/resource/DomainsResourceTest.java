@@ -30,6 +30,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -98,6 +99,24 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void put_creates_without_data_plane_id_and_lets_the_service_resolve_it() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain created = domain(domainId, "customer-auth");
+        AutomationDomain definition = definition("customer-auth");
+        definition.setDataPlaneId(null);
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.create(eq(ORG_ID), eq(ENV_ID), argThat(newDomain -> newDomain.getDataPlaneId() == null), any()))
+                .thenReturn(Single.just(created));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(created));
+
+        Response response = put(domainsTarget(), definition);
+
+        assertEquals(200, response.getStatus());
+        assertEquals("customer-auth", readEntity(response, AutomationDomain.class).getAutomationKey());
+    }
+
+    @Test
     void put_updates_when_domain_present() {
         String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
         Domain existing = domain(domainId, "customer-auth");
@@ -138,7 +157,7 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
     @Test
     void put_is_rejected_when_required_fields_missing() {
         AutomationDomain invalid = new AutomationDomain();
-        invalid.setAutomationKey("customer-auth"); // name, path, dataPlaneId missing
+        invalid.setAutomationKey("customer-auth"); // name and path missing
 
         Response response = put(domainsTarget(), invalid);
 

@@ -98,8 +98,8 @@ public class DomainsResource extends AbstractAutomationResource {
     @Operation(operationId = "automationCreateOrUpdateDomain",
             summary = "Create or update a domain",
             description = "Idempotent create-or-update. Uses the key field in the body to identify the domain. " +
-                    "On first apply the domain is created; subsequent applies update it. dataPlaneId is required " +
-                    "at creation and immutable afterwards.")
+                    "On first apply the domain is created; subsequent applies update it. dataPlaneId is optional " +
+                    "at creation, resolved from the environment's data planes when omitted, and immutable afterwards.")
     @ApiResponse(responseCode = "200", description = "The created or updated domain",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationDomain.class)))

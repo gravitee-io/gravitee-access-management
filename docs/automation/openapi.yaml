@@ -124,9 +124,10 @@ paths:
       tags:
       - Domains
     put:
-      description: Idempotent create-or-update. Uses the key field in the body to
-        identify the domain. On first apply the domain is created; subsequent applies
-        update it. dataPlaneId is required at creation and immutable afterwards.
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the domain. On first apply the domain is created; subsequent applies\
+        \ update it. dataPlaneId is optional at creation, resolved from the environment's\
+        \ data planes when omitted, and immutable afterwards."
       operationId: automationCreateOrUpdateDomain
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -1724,12 +1725,13 @@ components:
           readOnly: true
         dataPlaneId:
           type: string
-          description: Identifier of the data plane this domain is connected to. Required
-            at creation and immutable afterwards; included in the desired-state document
-            but never re-applied on update.
+          description: "Identifier of the data plane this domain is connected to.\
+            \ Optional at creation, resolved from the environment's data planes when\
+            \ omitted, and immutable afterwards; included in the desired-state document\
+            \ but never re-applied on update."
           example: default
           maxLength: 255
-          minLength: 1
+          minLength: 0
         description:
           type: string
           description: Human-readable description of the domain.
@@ -1816,7 +1818,6 @@ components:
         webProtectionSettings:
           $ref: "#/components/schemas/WebProtectionSettings"
       required:
-      - dataPlaneId
       - key
       - name
       - path
