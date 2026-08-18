@@ -25,6 +25,8 @@ process.env.AM_MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL || 'http://localho
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_ENDPOINT || process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
 process.env.AM_GATEWAY_NODE_MONITORING_URL = process.env.AM_GATEWAY_NODE_MONITORING_URL || 'http://localhost:18092/_node';
+// Management technical API — the cloud fixtures provision their data plane through it.
+process.env.AM_MANAGEMENT_NODE_URL = process.env.AM_MANAGEMENT_NODE_URL || 'http://localhost:18093/_node';
 process.env.AM_ADMIN_USERNAME = process.env.AM_ADMIN_USERNAME || 'admin';
 process.env.AM_ADMIN_PASSWORD = process.env.AM_ADMIN_PASSWORD || 'adminadmin';
 process.env.AM_DEF_ORG_ID = process.env.AM_DEF_ORG_ID || 'DEFAULT';
@@ -92,7 +94,7 @@ export default defineConfig({
     // Cloud specs need a managed-cloud stack (cockpit-mock + empty platform license — see
     // docker-compose.cloud.yml) and are excluded from the 'chromium' project above. Run
     // explicitly via `pw:ci:cloud` / `--project=cloud` against `local-stack.sh up --cloud --ui`.
-   {
+    {
       name: 'cloud',
       testMatch: '**/cloud/**',
       use: {
