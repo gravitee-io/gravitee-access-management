@@ -323,6 +323,7 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
+                Map.of(),
                 Set.of()
         );
 
@@ -390,6 +391,7 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
+                Map.of(),
                 Set.of()
         );
 
@@ -462,6 +464,7 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
+                Map.of(),
                 Set.of()
         );
 
@@ -534,6 +537,7 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
+                Map.of(),
                 Set.of()
         );
 

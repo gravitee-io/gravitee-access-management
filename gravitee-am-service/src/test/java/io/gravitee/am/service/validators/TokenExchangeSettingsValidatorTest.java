@@ -20,6 +20,7 @@ import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.service.exception.InvalidDomainException;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidatorImpl;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -40,7 +41,7 @@ class TokenExchangeSettingsValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new TokenExchangeSettingsValidatorImpl(5);
+        validator = new TokenExchangeSettingsValidatorImpl(5, new TokenExchangeClaimsMapperValidator());
     }
 
     // --- Disabled / null settings ---

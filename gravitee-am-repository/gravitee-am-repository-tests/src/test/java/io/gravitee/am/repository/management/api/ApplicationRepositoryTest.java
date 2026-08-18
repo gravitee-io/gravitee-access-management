@@ -34,6 +34,8 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.TokenExchangeClaimMapping;
+import io.gravitee.am.model.application.TokenExchangeClaimSource;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.common.Page;
@@ -250,6 +252,17 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings().getOauth().getTokenExchangeOAuthSettings() != null
                 && a.getSettings().getOauth().getTokenExchangeOAuthSettings().getScopeHandling() == TokenExchangeScopeHandling.PERMISSIVE
                 && !a.getSettings().getOauth().getTokenExchangeOAuthSettings().isInherited());
+        testObserver.assertValue(a -> {
+            var mappings = a.getSettings().getOauth().getTokenExchangeOAuthSettings().getClaimsMapper();
+            return mappings != null
+                    && mappings.size() == 2
+                    && mappings.get(0).getSource() == TokenExchangeClaimSource.SUBJECT_TOKEN
+                    && "claim_id".equals(mappings.get(0).getSourceClaim())
+                    && "claim_id".equals(mappings.get(0).getTokenClaim())
+                    && mappings.get(1).getSource() == TokenExchangeClaimSource.ACTOR_TOKEN
+                    && "email".equals(mappings.get(1).getSourceClaim())
+                    && "actor_email".equals(mappings.get(1).getTokenClaim());
+        });
     }
 
     private static Application buildApplication() {
@@ -307,6 +320,15 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         TokenExchangeOAuthSettings teSettings = new TokenExchangeOAuthSettings();
         teSettings.setInherited(false);
         teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+        TokenExchangeClaimMapping subjectMapping = new TokenExchangeClaimMapping();
+        subjectMapping.setSource(TokenExchangeClaimSource.SUBJECT_TOKEN);
+        subjectMapping.setSourceClaim("claim_id");
+        subjectMapping.setTokenClaim("claim_id");
+        TokenExchangeClaimMapping actorMapping = new TokenExchangeClaimMapping();
+        actorMapping.setSource(TokenExchangeClaimSource.ACTOR_TOKEN);
+        actorMapping.setSourceClaim("email");
+        actorMapping.setTokenClaim("actor_email");
+        teSettings.setClaimsMapper(List.of(subjectMapping, actorMapping));
         oauth.setTokenExchangeOAuthSettings(teSettings);
 
         final AccountSettings account = new AccountSettings();

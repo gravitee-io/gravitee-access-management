@@ -31,6 +31,7 @@ import java.util.*;
  * @param actorTokenType the type of the actor token
  * @param actorInfo information about the actor for delegation scenarios (null for impersonation)
  * @param subjectInfo information about the subject, exposed to EL custom token claims
+ * @param mappedClaims claims resolved from the declarative claims mapper, copied onto the issued token
  */
 public record TokenExchangeResult(
         User user,
@@ -42,6 +43,7 @@ public record TokenExchangeResult(
         String actorTokenType,
         ActorTokenInfo actorInfo,
         SubjectTokenInfo subjectInfo,
+        Map<String, Object> mappedClaims,
         Set<String> jtisOfParents
 ) {
 
@@ -77,9 +79,11 @@ public record TokenExchangeResult(
             String subjectTokenId,
             String subjectTokenType,
             SubjectTokenInfo subjectInfo,
+            Map<String, Object> mappedClaims,
             Set<String> parentJtisOfSubjectToken) {
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, null, null, null, subjectInfo, parentJtisOfSubjectToken == null ? Set.of() : Set.copyOf(parentJtisOfSubjectToken));
+                subjectTokenId, subjectTokenType, null, null, null, subjectInfo, mappedClaims == null ? Map.of() : mappedClaims,
+                parentJtisOfSubjectToken == null ? Set.of() : Set.copyOf(parentJtisOfSubjectToken));
     }
 
     /**
@@ -95,6 +99,7 @@ public record TokenExchangeResult(
             String actorTokenType,
             ActorTokenInfo actorInfo,
             SubjectTokenInfo subjectInfo,
+            Map<String, Object> mappedClaims,
             Set<String> parentJtisOfSubjectToken,
             Set<String> parentJtisOfActorToken) {
         Set<String> allParents = parentJtisOfSubjectToken == null ? new HashSet<>() : new HashSet<>(parentJtisOfSubjectToken);
@@ -102,6 +107,7 @@ public record TokenExchangeResult(
             allParents.addAll(parentJtisOfActorToken);
         }
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, subjectInfo, allParents);
+                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, subjectInfo,
+                mappedClaims == null ? Map.of() : mappedClaims, allParents);
     }
 }

@@ -36,6 +36,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.TokenExchangeClaimMapping;
+import io.gravitee.am.model.application.TokenExchangeClaimSource;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
@@ -319,6 +321,33 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return new SubjectTokenInfo(subjectToken.getSubject(), extractGis(subjectToken), subjectToken.getClaims());
     }
 
+    /**
+     * Resolve the declarative claims mapper against the validated tokens. A mapping whose source
+     * claim is absent from its source token is skipped, so the issued token omits it rather than
+     * failing. During impersonation there is no actor token, so ACTOR_TOKEN mappings resolve to
+     * nothing.
+     */
+    private Map<String, Object> resolveMappedClaims(Client client, Domain domain,
+                                                    ValidatedToken subjectToken, ValidatedToken actorToken) {
+        List<TokenExchangeClaimMapping> mappings = TokenExchangeOAuthSettings.getInstance(domain, client).getClaimsMapper();
+        if (mappings == null || mappings.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> mappedClaims = new HashMap<>();
+        for (TokenExchangeClaimMapping mapping : mappings) {
+            ValidatedToken source = mapping.getSource() == TokenExchangeClaimSource.ACTOR_TOKEN ? actorToken : subjectToken;
+            if (source == null || mapping.getSourceClaim() == null || mapping.getTokenClaim() == null) {
+                continue;
+            }
+            Object value = source.getClaim(mapping.getSourceClaim());
+            if (value != null) {
+                mappedClaims.put(mapping.getTokenClaim(), value);
+            }
+        }
+        return mappedClaims;
+    }
+
     private String extractSubProfile(ValidatedToken token) {
         Object subProfile = token.getClaim(Claims.SUB_PROFILE);
         return subProfile instanceof String ? (String) subProfile : null;
@@ -477,6 +506,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     subjectToken.getTokenId(),
                                     parsedRequest.subjectTokenType(),
                                     extractSubjectInfo(subjectToken),
+                                    resolveMappedClaims(client, domain, subjectToken, null),
                                     subjectToken.getDomainParentJtis());
                         })
                 );
@@ -510,6 +540,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     parsedRequest.actorTokenType(),
                                     actorInfo,
                                     extractSubjectInfo(subjectToken),
+                                    resolveMappedClaims(client, domain, subjectToken, actorToken),
                                     subjectToken.getDomainParentJtis(),
                                     actorToken.getDomainParentJtis());
                         }));

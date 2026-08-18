@@ -70,6 +70,7 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -190,11 +191,15 @@ public class ApplicationServiceTest {
     @Spy
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
+    @Mock
+    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator;
+
     private final static Domain DOMAIN = new Domain("domain1");
 
     @Before
     public void setUp() throws Exception {
         when(oAuthClientUniquenessValidator.checkClientIdUniqueness(any(), any())).thenReturn(Completable.complete());
+        when(tokenExchangeClaimsMapperValidator.validate(any())).thenReturn(TokenExchangeClaimsMapperValidator.ValidationResult.valid());
     }
 
     @Test

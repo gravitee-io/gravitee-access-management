@@ -118,6 +118,7 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 subjectInfo(Map.of()),
+                Map.of(),
                 Set.of()
         );
 
@@ -179,6 +180,7 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 subjectInfo(Map.of()),
+                Map.of(),
                 Set.of()
         );
 
@@ -226,6 +228,7 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 actorInfo,
                 subjectInfo(Map.of()),
+                Map.of(),
                 Set.of(),
                 Set.of());
 
@@ -275,6 +278,7 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 actorInfo,
                 subjectInfo(Map.of()),
+                Map.of(),
                 Set.of(),
                 Set.of());
 
@@ -310,6 +314,7 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 new SubjectTokenInfo("subject-sub", "source:subject-id", subjectClaims),
+                Map.of(),
                 Set.of());
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
@@ -351,6 +356,7 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 actorInfo,
                 new SubjectTokenInfo("subject-sub", null, subjectClaims),
+                Map.of(),
                 Set.of(),
                 Set.of());
 
@@ -384,6 +390,7 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 new SubjectTokenInfo("subject-sub", null, Map.of()),
+                Map.of(),
                 Set.of());
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))

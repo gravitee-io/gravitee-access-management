@@ -86,6 +86,7 @@ import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidato
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -194,6 +195,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationTokenCustomClaimsValidator customClaimsValidator;
+
+    @Autowired
+    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator;
 
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
@@ -815,6 +819,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
                     }
 
+                    var mapperValidation = tokenExchangeClaimsMapperValidator.validate(tokenExchangeClaimsMapperOf(toPatch));
+                    if (mapperValidation.isInvalid()) {
+                        return Single.error(new InvalidParameterException("Invalid token exchange claim mappings: " + mapperValidation.invalidClaims()));
+                    }
+
                     final AccountSettings accountSettings = toPatch.getSettings() != null ? toPatch.getSettings().getAccount() : null;
                     if (accountSettings != null && Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
@@ -851,6 +860,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private static boolean hasClientSecret(Application existingApplication) {
         return existingApplication.getSettings() != null && existingApplication.getSettings().getOauth() != null && existingApplication.getSettings().getOauth().getClientSecret() != null;
+    }
+
+    private static List<TokenExchangeClaimMapping> tokenExchangeClaimsMapperOf(Application application) {
+        return Optional.ofNullable(application.getSettings())
+                .map(ApplicationSettings::getOauth)
+                .map(ApplicationOAuthSettings::getTokenExchangeOAuthSettings)
+                .map(TokenExchangeOAuthSettings::getClaimsMapper)
+                .orElse(null);
     }
 
     @Override
