@@ -28,11 +28,10 @@ import {
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { retryUntil, withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
-import { CloudOrganizationFixture } from './cloud-organization-fixture';
+import { setupCloudSharedFixture } from './cloud-shared-fixture';
 import { expect } from '@jest/globals';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 const SCIM_CUSTOM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:extension:custom:2.0:User';
 const RESET_REDIRECT_URI = 'http://localhost:4000';
 const LOGIN_PASSWORD = 'Password123!';
@@ -72,17 +71,16 @@ export interface CloudEmailFixture {
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudEmailFixture = async (organization: CloudOrganizationFixture): Promise<CloudEmailFixture> => {
-  const organizationId = organization.organizationId;
-  const accessToken = organization.accessToken;
-  const environmentId = `${organizationId}-env`;
+export const setupCloudEmailFixture = async (): Promise<CloudEmailFixture> => {
+  const shared = await setupCloudSharedFixture();
+  const { organizationId, environmentId, accessToken, dataPlaneId } = shared;
   const entrypointHost = `${uniqueName('gw', true)}.example.com`;
   const overridingHost = `${uniqueName('custom', true)}.example.com`;
   const entrypointUrl = `https://${entrypointHost}`;
   const overridingUrl = `https://${overridingHost}`;
 
-  // 1. Cockpit provisions the environment. The access point it generates itself is the environment's
-  //    default entrypoint; the customer's overriding one is what resolution prefers.
+  // 1. Set this spec's access points on the shared env. The access point Cockpit generates itself is
+  //    the environment's default entrypoint; the customer's overriding one is what resolution prefers.
   await sendCockpitCommand({
     type: 'ENVIRONMENT',
     payload: {
@@ -103,16 +101,13 @@ export const setupCloudEmailFixture = async (organization: CloudOrganizationFixt
     POLL,
   );
 
-  // 1b. Cockpit grants the environment owner right after creating the environment.
-  await organization.grantEnvironmentOwnership(environmentId);
-
   // 2. A domain in that environment, with SCIM on and a service app able to call it. Configure before
   //    enabling the domain so the initial sync picks everything up.
   const domainApi = getDomainApi(accessToken);
   const domain = await domainApi.createDomain({
     organizationId,
     environmentId,
-    newDomain: { name: uniqueName('email-entrypoint-domain', true), dataPlaneId: DATA_PLANE_ID },
+    newDomain: { name: uniqueName('email-entrypoint-domain', true), dataPlaneId },
   });
 
   await domainApi.patchDomain({

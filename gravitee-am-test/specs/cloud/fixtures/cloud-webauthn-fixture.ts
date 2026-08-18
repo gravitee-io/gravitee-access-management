@@ -21,10 +21,9 @@ import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
 import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
-import { CloudOrganizationFixture } from './cloud-organization-fixture';
+import { setupCloudSharedFixture } from './cloud-shared-fixture';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 const REDIRECT_URI = 'https://callback.example.com';
 const PATH_LOGIN_CREDENTIALS = '/webauthn/login/credentials';
 const CONFIGURED_RELYING_PARTY_ID = 'configured.example.com';
@@ -67,10 +66,9 @@ export interface CloudWebAuthnFixture {
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudWebAuthnFixture = async (organization: CloudOrganizationFixture): Promise<CloudWebAuthnFixture> => {
-  const organizationId = organization.organizationId;
-  const accessToken = organization.accessToken;
-  const environmentId = uniqueName('env-wa', true);
+export const setupCloudWebAuthnFixture = async (): Promise<CloudWebAuthnFixture> => {
+  const shared = await setupCloudSharedFixture();
+  const { organizationId, environmentId, accessToken, dataPlaneId } = shared;
   // Lowercased: uniqueName capitalises a word, and a host is case-insensitive, so the browser lowercases
   // it when it parses the origin. The relying party id has to match that, not the stored spelling.
   const uniqueHost = () => `${uniqueName('gw', true)}.example.com`.toLowerCase();
@@ -103,9 +101,6 @@ export const setupCloudWebAuthnFixture = async (organization: CloudOrganizationF
 
   await resyncAccessPoints({ generated: generatedHost, overriding: overridingHost });
 
-  // Cockpit grants the environment owner right after creating the environment.
-  await organization.grantEnvironmentOwnership(environmentId);
-
   const domainApi = getDomainApi(accessToken);
   const gatewayUrl = process.env.AM_GATEWAY_URL;
 
@@ -115,7 +110,7 @@ export const setupCloudWebAuthnFixture = async (organization: CloudOrganizationF
     const domain = await domainApi.createDomain({
       organizationId,
       environmentId,
-      newDomain: { name: uniqueName(namePrefix, true), dataPlaneId: DATA_PLANE_ID },
+      newDomain: { name: uniqueName(namePrefix, true), dataPlaneId },
     });
     await domainApi.patchDomain({
       organizationId,
