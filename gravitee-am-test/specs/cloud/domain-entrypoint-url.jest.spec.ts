@@ -86,9 +86,12 @@ describe('Cloud domain entrypoint URL (management API)', () => {
   });
 
   it('resolves every overriding access point when the customer has several custom domains', async () => {
+    // A command whose GATEWAY access points are all overriding is rejected, hence the generated host.
+    const generatedHost = fixture.uniqueHost();
     const first = fixture.uniqueHost();
     const second = fixture.uniqueHost();
     await fixture.resyncAccessPoints([
+      { host: generatedHost, overriding: false },
       { host: first, overriding: true },
       { host: second, overriding: true },
     ]);
@@ -101,6 +104,7 @@ describe('Cloud domain entrypoint URL (management API)', () => {
     );
 
     expect([...urls].sort()).toEqual(expected);
+    expect(urls).not.toContain(`https://${generatedHost}`);
   });
 
   it('resolves the environment access-point URL when the environment has a single access point', async () => {
@@ -115,20 +119,5 @@ describe('Cloud domain entrypoint URL (management API)', () => {
     expect(urls).toEqual([expectedUrl]);
   });
 
-  it('falls back to an organization entrypoint when the environment has no access points', async () => {
-    await fixture.resyncAccessPoints([]);
-
-    // Once the environment entrypoint is evicted, the endpoint degrades to the organization
-    // resolution: still exactly one entrypoint (never an empty list — that would crash the UI),
-    // carrying the DataPlane gatewayUrl or the org default entrypoint's url. Either way the url
-    // is a real URL, never null (the UI builds links from it), and no longer an environment host.
-    const urls = await retryUntil(
-      () => domainEntrypointUrls(),
-      (resolved) => resolved.length === 1 && resolved[0] != null && !resolved[0].endsWith('.example.com'),
-      POLL,
-    );
-
-    expect(urls).toHaveLength(1);
-    expect(urls[0]).toMatch(/^https?:\/\//);
-  });
+  // The empty-entrypoint fallback is unreachable in cloud, DomainServiceTest covers it instead.
 });

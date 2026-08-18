@@ -277,6 +277,9 @@ public class DomainServiceImpl implements DomainService {
     @Value("${domains.identities.default.enabled:true}")
     private boolean createDefaultIdentityProvider = true;
 
+    @Value("${gateway.url:http://localhost:8092}")
+    String gatewayUrl;
+
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
     @Autowired
@@ -795,6 +798,9 @@ public class DomainServiceImpl implements DomainService {
                         || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag))))
                 .toList()
                 .map(filteredEntrypoints -> {
+                    if (filteredEntrypoints.isEmpty()) {
+                        return filteredEntrypoints;
+                    }
                     if (filteredEntrypoints.size() > 1) {
                         // Remove default entrypoint if another entrypoint has matched.
                         filteredEntrypoints.removeIf(Entrypoint::isDefaultEntrypoint);
@@ -814,8 +820,8 @@ public class DomainServiceImpl implements DomainService {
             List<Entrypoint> environmentEntrypoints = entryPointManager.findByEnvironmentId(domain.getReferenceId());
             if (environmentEntrypoints.isEmpty()) {
                 return getOrganizationDefaultEntrypoint(domain, organizationId)
-                        .<List<Entrypoint>>map(List::of)
-                        .defaultIfEmpty(List.of());
+                        .switchIfEmpty(Single.fromCallable(() -> dataPlaneEntrypoint(domain, organizationId)))
+                        .map(List::of);
             }
             return Single.just(environmentEntrypoints);
         });
@@ -837,7 +843,17 @@ public class DomainServiceImpl implements DomainService {
                             .ifPresent(entrypoint::setUrl);
                     return entrypoint;
                 })
-                .doOnComplete(() -> log.warn("Organization {} has no default entrypoint; domain {} resolves to no entrypoint at all", organizationId, domain.getId()));
+                .doOnComplete(() -> log.debug("Organization {} has no default entrypoint, domain {} falls back to the data plane gateway url", organizationId, domain.getId()));
+    }
+
+    private Entrypoint dataPlaneEntrypoint(Domain domain, String organizationId) {
+        Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setName("Default");
+        entrypoint.setDescription("Default entrypoint");
+        entrypoint.setOrganizationId(organizationId);
+        entrypoint.setDefaultEntrypoint(true);
+        entrypoint.setUrl(ofNullable(dataPlaneRegistry.getDescription(domain).gatewayUrl()).orElse(gatewayUrl));
+        return entrypoint;
     }
 
     private Single<Domain> createSystemScopes(Domain domain) {
