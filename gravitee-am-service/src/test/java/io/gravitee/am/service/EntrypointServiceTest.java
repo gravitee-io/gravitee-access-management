@@ -805,7 +805,7 @@ public class EntrypointServiceTest {
                 event.getType() == Type.ENTRYPOINT && "dp-a".equals(event.getDataPlaneId())));
         verify(eventService, times(1)).create(argThat(event ->
                 event.getType() == Type.ENTRYPOINT && "dp-b".equals(event.getDataPlaneId())));
-        // standalone domains can sit on a gravitee.yml plane, so default is a target as well
+        // outside managed cloud a domain can sit on a plane the node declares itself, so default is a target as well
         verify(eventService, times(1)).create(argThat(event ->
                 DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(event.getDataPlaneId())));
     }

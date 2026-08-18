@@ -58,7 +58,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -259,9 +261,9 @@ public class EntrypointServiceImpl implements EntrypointService {
      * a gateway pinned to any other one would never see the change. Org-scoped entrypoints go to
      * {@code default}.
      */
-    private Single<List<String>> resolveDataPlaneIds(Entrypoint entrypoint) {
+    private Single<Set<String>> resolveDataPlaneIds(Entrypoint entrypoint) {
         if (entrypoint.getEnvironmentId() == null) {
-            return Single.just(List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+            return Single.just(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
         }
         return dataPlaneDefinitionService.findByEnvironmentId(entrypoint.getEnvironmentId())
                 .map(DataPlaneDefinitionSummary::id)
@@ -269,20 +271,15 @@ public class EntrypointServiceImpl implements EntrypointService {
                 .map(this::targetPlanes);
     }
 
-    private List<String> targetPlanes(List<String> linkedForEnv) {
+    private Set<String> targetPlanes(List<String> linkedForEnv) {
+        Set<String> targets = new LinkedHashSet<>(linkedForEnv);
         // Cloud binds every domain to one of the environment's linked planes, so those are the only
-        // gateways that can be serving it.
-        if (managedCloudEnabled) {
-            return linkedForEnv.isEmpty() ? List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID) : linkedForEnv;
+        // gateways that can be serving it. Outside managed cloud a domain may also sit on a plane the
+        // node's configuration declares while the environment has another provisioned against it, and
+        // dropping `default` there strands the entrypoints of every domain bound to it.
+        if (!managedCloudEnabled || targets.isEmpty()) {
+            targets.add(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         }
-        // Standalone also serves the planes gravitee.yml declares, and a domain may sit on one of
-        // those while the environment has another provisioned against it. Dropping `default` here
-        // strands the entrypoints of every domain bound to it.
-        if (linkedForEnv.contains(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)) {
-            return linkedForEnv;
-        }
-        List<String> targets = new ArrayList<>(linkedForEnv);
-        targets.add(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         return targets;
     }
 

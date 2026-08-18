@@ -53,14 +53,10 @@ public class MultiDataPlaneLoader implements DataPlaneLoader {
      * declaration too broken to describe is the node's problem at startup, not the caller's.
      */
     public boolean isDeclared(String id) {
-        for (int i = 0; configuration.containsProperty(propertyBase(i) + ".id"); i++) {
-            if (id.equals(configuration.getProperty(propertyBase(i) + ".id", String.class))) {
-                return true;
-            }
-        }
-        return false;
+        return declaredIds().contains(id);
     }
 
+    /** Ids of every data plane the configuration declares, in declaration order. */
     public Set<String> declaredIds() {
         Set<String> ids = new LinkedHashSet<>();
         for (int i = 0; configuration.containsProperty(propertyBase(i) + ".id"); i++) {
