@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -35,7 +38,6 @@ import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
-import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -64,6 +66,8 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
  * @author GraviteeSource Team
  */
 public class AuthorizationRequestParseParametersHandler extends AbstractAuthorizationRequestHandler implements Handler<RoutingContext> {
+
+    private static final ObjectMapper CLAIMS_MAPPER = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private final Domain domain;
@@ -237,8 +241,8 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
                     }
                 }
                 // save claims request as json string value (will be use for id_token and/or UserInfo endpoint)
-                context.request().params().set(Parameters.CLAIMS, Json.encode(claimsRequest));
-            } catch (ClaimsRequestSyntaxException e) {
+                context.request().params().set(Parameters.CLAIMS, CLAIMS_MAPPER.writeValueAsString(claimsRequest));
+            } catch (ClaimsRequestSyntaxException | JsonProcessingException e) {
                 throw new InvalidRequestException("Invalid parameter: claims");
             }
         }

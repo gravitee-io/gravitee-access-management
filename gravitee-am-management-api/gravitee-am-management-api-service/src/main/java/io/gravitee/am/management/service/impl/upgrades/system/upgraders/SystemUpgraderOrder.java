@@ -21,7 +21,6 @@ package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
  */
 public final class SystemUpgraderOrder {
     public static final int DEFAULT_IDP_UPGRADER = 1;
-    public static final int DEFAULT_REPORTER_UPGRADER = 2;
 
     private SystemUpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");

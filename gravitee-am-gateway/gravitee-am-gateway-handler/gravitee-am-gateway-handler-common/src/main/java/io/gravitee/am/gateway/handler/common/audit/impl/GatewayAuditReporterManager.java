@@ -34,6 +34,7 @@ import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -81,6 +82,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private SystemReporterConfigResolver systemReporterConfigResolver;
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
@@ -244,7 +248,15 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
         domainReadinessService.initPluginSync(domain.getId(), reporter.getId(), io.gravitee.am.common.event.Type.REPORTER.name());
-        var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
+        Reporter resolved;
+        try {
+            resolved = systemReporterConfigResolver.resolve(reporter);
+        } catch (Exception ex) {
+            logger.error("Unable to resolve configuration for reporter {}", reporter.getId(), ex);
+            domainReadinessService.pluginFailed(domain.getId(), reporter.getId(), ex.getMessage());
+            return false;
+        }
+        var providerConfiguration = new ReporterProviderConfiguration(resolved, context);
         io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 
         if (reporterProvider != null) {
