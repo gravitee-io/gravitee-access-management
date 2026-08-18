@@ -44,6 +44,8 @@ import {
   SecurityProfileSettingsToJSON,
   SecurityProfileSettingsToJSONTyped,
 } from './SecurityProfileSettings';
+import type { DPoPSettings } from './DPoPSettings';
+import { DPoPSettingsFromJSON, DPoPSettingsFromJSONTyped, DPoPSettingsToJSON, DPoPSettingsToJSONTyped } from './DPoPSettings';
 import type { SpiffeDomainSettings } from './SpiffeDomainSettings';
 import {
   SpiffeDomainSettingsFromJSON,
@@ -76,6 +78,12 @@ export interface OIDCSettings {
    * @memberof OIDCSettings
    */
   clientRegistrationSettings?: ClientRegistrationSettings;
+  /**
+   *
+   * @type {DPoPSettings}
+   * @memberof OIDCSettings
+   */
+  dpopSettings?: DPoPSettings;
   /**
    * URLs to which a relying party may request the user be redirected after logout, via the post_logout_redirect_uri parameter.
    * @type {Array<string>}
@@ -128,6 +136,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     cimdSettings: json['cimdSettings'] == null ? undefined : CIMDSettingsFromJSON(json['cimdSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    dpopSettings: json['dpopSettings'] == null ? undefined : DPoPSettingsFromJSON(json['dpopSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
@@ -151,6 +160,7 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
     cibaSettings: CIBASettingsToJSON(value['cibaSettings']),
     cimdSettings: CIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
+    dpopSettings: DPoPSettingsToJSON(value['dpopSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],

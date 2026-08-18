@@ -96,6 +96,7 @@ models/CookieSettings.ts
 models/CorsSettings.ts
 models/Credential.ts
 models/CspSettings.ts
+models/DPoPSettings.ts
 models/DataPlane.ts
 models/DataSource.ts
 models/DeviceIdentifier.ts
@@ -194,6 +195,7 @@ models/PatchCIBASettings.ts
 models/PatchCIMDSettings.ts
 models/PatchChallengeSettings.ts
 models/PatchClientRegistrationSettings.ts
+models/PatchDPoPSettings.ts
 models/PatchDomain.ts
 models/PatchEnrollSettings.ts
 models/PatchEnrollmentSettings.ts

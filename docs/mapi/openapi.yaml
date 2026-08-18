@@ -6553,8 +6553,11 @@ paths:
           type: string
       - in: query
         name: type
+        required: true
         schema:
           type: string
+          enum:
+          - MCP_SERVER
       - in: query
         name: page
         schema:
@@ -6655,8 +6658,11 @@ paths:
           type: string
       - in: query
         name: type
+        required: true
         schema:
           type: string
+          enum:
+          - MCP_SERVER
       responses:
         "204":
           description: Protected Resource successfully deleted
@@ -6699,8 +6705,11 @@ paths:
           type: string
       - in: query
         name: type
+        required: true
         schema:
           type: string
+          enum:
+          - MCP_SERVER
       responses:
         "200":
           content:
