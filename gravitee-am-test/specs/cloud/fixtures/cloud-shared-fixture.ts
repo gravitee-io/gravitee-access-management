@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-import { cockpitSignIn, CockpitQueueEntry, sendCockpitCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
-import { createDataPlane } from '@management-commands/dataplane-provisioning-commands';
+import {
+  cockpitSignIn,
+  CockpitQueueEntry,
+  sendCockpitCommand,
+  waitForCockpitConnection,
+  waitForCockpitReply,
+} from '@cloud-commands/cockpit-commands';
+import { createDataPlane, getDataPlane } from '@management-commands/dataplane-provisioning-commands';
 import { CloudOrganizationFixture } from './cloud-organization-fixture';
 
 /**
@@ -87,6 +93,10 @@ const provision = async (): Promise<CloudSharedFixture> => {
       ...payload,
     });
 
+  // Before the first command, not after: waitForCockpitReply gives up at 15s while AM's websocket
+  // to the mock can take up to 30s to come up on a cold --cloud stack.
+  await waitForCockpitConnection();
+
   await resync();
   await awaitCommand('USER', {
     id: USER_ID,
@@ -103,13 +113,16 @@ const provision = async (): Promise<CloudSharedFixture> => {
     userId: USER_ID,
     role: 'ORGANIZATION_PRIMARY_OWNER',
   });
-  await awaitCommand('ENVIRONMENT', {
-    id: ENVIRONMENT_ID,
-    organizationId: ORGANIZATION_ID,
-    hrids: [ENVIRONMENT_ID],
-    name: `Cloud shared environment ${ENVIRONMENT_ID}`,
-    accessPoints: [{ target: 'GATEWAY', host: `${ENVIRONMENT_ID}.example.com` }],
-  });
+  const syncEnvironment = (): Promise<CockpitQueueEntry> =>
+    awaitCommand('ENVIRONMENT', {
+      id: ENVIRONMENT_ID,
+      organizationId: ORGANIZATION_ID,
+      hrids: [ENVIRONMENT_ID],
+      name: `Cloud shared environment ${ENVIRONMENT_ID}`,
+      accessPoints: [{ target: 'GATEWAY', host: `${ENVIRONMENT_ID}.example.com` }],
+    });
+
+  await syncEnvironment();
   const grantEnvironmentOwnership = (environmentId: string): Promise<CockpitQueueEntry> =>
     awaitCommand('MEMBERSHIP', {
       organizationId: ORGANIZATION_ID,
@@ -120,16 +133,33 @@ const provision = async (): Promise<CloudSharedFixture> => {
     });
   await grantEnvironmentOwnership(ENVIRONMENT_ID);
 
+  // The data plane can only be created once the environment exists: DataPlaneDefinitionServiceImpl
+  // resolves environmentId and rejects an unknown one.
+  const store = dataPlaneStore();
   const dpResponse = await createDataPlane({
     id: DATA_PLANE_ID,
     name: 'Cloud shared data plane',
     organizationId: ORGANIZATION_ID,
     environmentId: ENVIRONMENT_ID,
-    ...dataPlaneStore(),
+    ...store,
   });
-  if (dpResponse.status !== 201 && dpResponse.status !== 409) {
+  if (dpResponse.status === 409) {
+    // A row left by an earlier run under the other REPOSITORY_TYPE points at a store the gateway is
+    // not reading, and the suite then fails much later with users the gateway cannot see.
+    const existing = await getDataPlane(DATA_PLANE_ID);
+    if (existing.body?.type !== store.type) {
+      throw new Error(
+        `Data plane ${DATA_PLANE_ID} already exists with type=${existing.body?.type}, expected ${store.type}. ` +
+          `Reset the stack (local-stack.sh down) before switching REPOSITORY_TYPE.`,
+      );
+    }
+  } else if (dpResponse.status !== 201) {
     throw new Error(`Failed to provision shared data plane: status=${dpResponse.status} body=${dpResponse.raw}`);
   }
+
+  // The ENVIRONMENT command above created the entrypoints while the environment had no linked plane,
+  // so those events went to `default`. Replay it now the link exists and they route to DATA_PLANE_ID.
+  await syncEnvironment();
 
   const accessToken = await cockpitSignIn({ sub: USER_ID, organizationId: ORGANIZATION_ID, environmentId: ENVIRONMENT_ID });
 
