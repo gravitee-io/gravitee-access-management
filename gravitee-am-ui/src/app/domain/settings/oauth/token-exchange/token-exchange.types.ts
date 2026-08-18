@@ -18,8 +18,8 @@
 export type TokenExchangeScopeHandling = 'downscoping' | 'permissive';
 
 /** Which validated token a claim mapping reads from. */
-export const CLAIM_SOURCE_SUBJECT_TOKEN = 'SUBJECT_TOKEN';
-export const CLAIM_SOURCE_ACTOR_TOKEN = 'ACTOR_TOKEN';
+export const CLAIM_SOURCE_SUBJECT_TOKEN = 'subject_token';
+export const CLAIM_SOURCE_ACTOR_TOKEN = 'actor_token';
 export type TokenExchangeClaimSource = typeof CLAIM_SOURCE_SUBJECT_TOKEN | typeof CLAIM_SOURCE_ACTOR_TOKEN;
 
 /** Copies one claim from a validated token onto the issued token. */

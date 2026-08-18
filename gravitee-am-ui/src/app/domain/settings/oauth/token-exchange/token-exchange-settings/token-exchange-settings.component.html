@@ -182,7 +182,7 @@
           <table mat-table [dataSource]="claimsMapper" *ngIf="claimsMapper.length > 0">
             <ng-container matColumnDef="source">
               <th mat-header-cell *matHeaderCellDef>Source token</th>
-              <td mat-cell *matCellDef="let mapping">{{ mapping.source === 'ACTOR_TOKEN' ? 'Actor token' : 'Subject token' }}</td>
+              <td mat-cell *matCellDef="let mapping">{{ mapping.source === 'actor_token' ? 'Actor token' : 'Subject token' }}</td>
             </ng-container>
             <ng-container matColumnDef="sourceClaim">
               <th mat-header-cell *matHeaderCellDef>Source claim</th>
