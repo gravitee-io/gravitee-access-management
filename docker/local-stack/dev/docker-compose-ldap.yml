@@ -23,7 +23,7 @@
 # extra plugin zip needs mounting into the gateway or management containers.
 #
 # IdP configuration that matches this service:
-#   URL                    ldap://openldap:389
+#   URL                    ldap://openldap:1389
 #   Base DN                dc=gravitee,dc=io
 #   Bind DN                cn=admin,dc=gravitee,dc=io
 #   Bind password          admin
@@ -125,25 +125,48 @@ services:
         # The overlay only stamps memberOf on writes that happen while it is
         # installed. If the groups already existed from a previous run that had no
         # overlay, they carry no memberOf — rewrite them so they do.
+        #
+        # Every group in the ldif is deleted, not a hardcoded subset: a hardcoded
+        # list silently rots as groups are added, and because ldapadd stops at the
+        # first "already exists" (68) a single surviving group prevents every later
+        # one from being rewritten. -c makes the re-add continue past entries that
+        # are already present.
         if ! ldapsearch -x -LLL -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
                -b "uid=ldap-admin,ou=people,dc=gravitee,dc=io" -s base memberOf \
              | grep -q "memberOf:"; then
           echo "groups predate the overlay — rewriting them"
-          ldapdelete -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
-            "cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io" \
-            "cn=GRAVITEE_USERS,ou=groups,dc=gravitee,dc=io"
+          grep '^dn: ' /ldifs/groups.ldif | sed 's/^dn: //' | while read -r group_dn; do
+            ldapdelete -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin "$$group_dn" || true
+          done
           apply "groups (rewrite)" \
-            ldapadd -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
+            ldapadd -c -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
               -f /ldifs/groups.ldif
         fi
 
         # Hard gate. A silent miss here surfaces much later as an inexplicable
-        # role-mapper failure, so assert the exact value the mappers depend on.
-        ldapsearch -x -LLL -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
-          -b "uid=ldap-admin,ou=people,dc=gravitee,dc=io" -s base memberOf \
-          | grep -q "^memberOf: cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io$" \
-          || { echo "FATAL: memberof overlay did not populate memberOf"; exit 1; }
-        echo "LDAP ready: memberof overlay active, groups loaded, memberOf verified"
+        # role-mapper failure, so assert the exact values the mappers depend on.
+        # BOTH users are checked: ldap-admin drives the role-mapping specs and john
+        # drives the account-linking ones, and a rewrite that skipped john's group
+        # would otherwise pass here and fail obscurely much later.
+        assert_member_of() { # assert_member_of <user-dn> <expected memberOf value>
+          ldapsearch -x -LLL -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
+            -b "$$1" -s base memberOf \
+            | grep -q "^memberOf: $$2$$" \
+            || { echo "FATAL: $$1 is missing memberOf: $$2"; exit 1; }
+        }
+        assert_member_of "uid=ldap-admin,ou=people,dc=gravitee,dc=io" "cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io"
+        assert_member_of "uid=john,ou=people,dc=gravitee,dc=io"       "cn=workers,ou=groups,dc=gravitee,dc=io"
+
+        # The NESTED relationship, asserted separately because it is the one thing a
+        # group rewrite can quietly lose: GRAVITEE_ADMINS is itself a member of
+        # GRAVITEE_SUPER_ADMINS, and recursiveGroupFetch walks that link.
+        #
+        # Deleting a group does NOT currently strip it from its parent's member list
+        # — that is the refint overlay's job and only memberof is installed here. But
+        # this suite must not depend on that staying true across image or OpenLDAP
+        # versions, so the chain is verified rather than assumed.
+        assert_member_of "cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io" "cn=GRAVITEE_SUPER_ADMINS,ou=groups,dc=gravitee,dc=io"
+        echo "LDAP ready: memberof overlay active, groups loaded, memberOf verified (incl. nested)"
 
   # Gate stack readiness on the directory being seeded AND the overlay applied, so
   # a test can never race the import. Deliberately hung off am-wait rather than

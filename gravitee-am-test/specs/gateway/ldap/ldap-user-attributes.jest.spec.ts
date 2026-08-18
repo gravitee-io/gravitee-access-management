@@ -17,11 +17,19 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/glo
 import { login, getHeaderLocation } from '@gateway-commands/login-commands';
 import { performGet, logoutUser } from '@gateway-commands/oauth-oidc-commands';
 import { deleteUser, listUsers } from '@management-commands/user-management-commands';
-import { setup } from '../../test-fixture';
+import { setup, retryImmediatelyForThisFile } from '../../test-fixture';
 import { jira } from '@specs-utils/jira';
 import { LdapFixture, setupLdapFixture, LDAP_ADMIN, REDIRECT_URI } from './fixtures/ldap-fixture';
 
 setup(200000);
+
+/**
+ * Each test re-applies its own mappers and beforeEach drops the user, so a deferred
+ * retry would still be correct here. Retrying in place anyway keeps every spec in
+ * this folder consistent, and absorbs the window where the gateway has reported the
+ * domain synced but has not yet rebuilt the identity provider.
+ */
+retryImmediatelyForThisFile();
 
 let fixture: LdapFixture;
 
