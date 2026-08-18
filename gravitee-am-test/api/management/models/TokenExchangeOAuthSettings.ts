@@ -26,12 +26,26 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { TokenExchangeClaimMapping } from './TokenExchangeClaimMapping';
+import {
+  TokenExchangeClaimMappingFromJSON,
+  TokenExchangeClaimMappingFromJSONTyped,
+  TokenExchangeClaimMappingToJSON,
+  TokenExchangeClaimMappingToJSONTyped,
+} from './TokenExchangeClaimMapping';
+
 /**
  * OAuth-specific token-exchange behavior, such as how scopes are handled, with optional inheritance from domain defaults.
  * @export
  * @interface TokenExchangeOAuthSettings
  */
 export interface TokenExchangeOAuthSettings {
+  /**
+   * Claims copied from the validated subject or actor token onto the issued token. A claim that is absent from its source token is skipped.
+   * @type {Array<TokenExchangeClaimMapping>}
+   * @memberof TokenExchangeOAuthSettings
+   */
+  claimsMapper?: Array<TokenExchangeClaimMapping>;
   /**
    * Whether these settings are inherited from the domain defaults rather than defined here.
    * @type {boolean}
@@ -72,6 +86,7 @@ export function TokenExchangeOAuthSettingsFromJSONTyped(json: any, ignoreDiscrim
     return json;
   }
   return {
+    claimsMapper: json['claimsMapper'] == null ? undefined : (json['claimsMapper'] as Array<any>).map(TokenExchangeClaimMappingFromJSON),
     inherited: json['inherited'] == null ? undefined : json['inherited'],
     scopeHandling: json['scopeHandling'] == null ? undefined : json['scopeHandling'],
   };
@@ -90,6 +105,7 @@ export function TokenExchangeOAuthSettingsToJSONTyped(
   }
 
   return {
+    claimsMapper: value['claimsMapper'] == null ? undefined : (value['claimsMapper'] as Array<any>).map(TokenExchangeClaimMappingToJSON),
     inherited: value['inherited'],
     scopeHandling: value['scopeHandling'],
   };
