@@ -195,6 +195,62 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldReturnBadRequest_getWithoutType() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnBadRequest_deleteWithoutType() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .request().delete();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnBadRequest_whenTypeMissingAndPermissionDenied() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(io.reactivex.rxjava3.core.Single.just(false)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .request().get();
+
+        // a malformed request is rejected before the permission check, so 400 wins over 403
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
     public void shouldPatchProtectedResource_basicTest() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();

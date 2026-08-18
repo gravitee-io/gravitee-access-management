@@ -42,6 +42,18 @@ import {
   SecurityProfileSettingsToJSON,
   SecurityProfileSettingsToJSONTyped,
 } from './SecurityProfileSettings';
+<<<<<<< HEAD
+=======
+import type { DPoPSettings } from './DPoPSettings';
+import { DPoPSettingsFromJSON, DPoPSettingsFromJSONTyped, DPoPSettingsToJSON, DPoPSettingsToJSONTyped } from './DPoPSettings';
+import type { SpiffeDomainSettings } from './SpiffeDomainSettings';
+import {
+  SpiffeDomainSettingsFromJSON,
+  SpiffeDomainSettingsFromJSONTyped,
+  SpiffeDomainSettingsToJSON,
+  SpiffeDomainSettingsToJSONTyped,
+} from './SpiffeDomainSettings';
+>>>>>>> 9fecaba (fix: avoid NPE on list endpoints when a scoped role carries no matching permission (#8406))
 
 /**
  *
@@ -63,6 +75,15 @@ export interface OIDCSettings {
   clientRegistrationSettings?: ClientRegistrationSettings;
   /**
    *
+<<<<<<< HEAD
+=======
+   * @type {DPoPSettings}
+   * @memberof OIDCSettings
+   */
+  dpopSettings?: DPoPSettings;
+  /**
+   * URLs to which a relying party may request the user be redirected after logout, via the post_logout_redirect_uri parameter.
+>>>>>>> 9fecaba (fix: avoid NPE on list endpoints when a scoped role carries no matching permission (#8406))
    * @type {Array<string>}
    * @memberof OIDCSettings
    */
@@ -106,6 +127,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     cibaSettings: json['cibaSettings'] == null ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    dpopSettings: json['dpopSettings'] == null ? undefined : DPoPSettingsFromJSON(json['dpopSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
@@ -126,6 +148,7 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
   return {
     cibaSettings: CIBASettingsToJSON(value['cibaSettings']),
     clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
+    dpopSettings: DPoPSettingsToJSON(value['dpopSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],

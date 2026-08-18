@@ -6253,12 +6253,24 @@ paths:
         in: query
         schema:
           type: string
+<<<<<<< HEAD
       - name: type
         in: query
         schema:
           type: string
       - name: page
         in: query
+=======
+      - in: query
+        name: type
+        required: true
+        schema:
+          type: string
+          enum:
+          - MCP_SERVER
+      - in: query
+        name: page
+>>>>>>> 9fecaba (fix: avoid NPE on list endpoints when a scoped role carries no matching permission (#8406))
         schema:
           type: integer
           format: int32
@@ -6324,7 +6336,54 @@ paths:
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}:
+<<<<<<< HEAD
     get:
+=======
+    delete:
+      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[DELETE] permission on the specified organization. "
+      operationId: deleteProtectedResource
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: protected-resource
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: type
+        required: true
+        schema:
+          type: string
+          enum:
+          - MCP_SERVER
+      responses:
+        "204":
+          description: Protected Resource successfully deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Protected Resource not found
+        "500":
+          description: Internal server error
+      summary: Delete a Protected Resource
+>>>>>>> 9fecaba (fix: avoid NPE on list endpoints when a scoped role carries no matching permission (#8406))
       tags:
       - protected-resource
       - domain
@@ -6355,10 +6414,18 @@ paths:
         required: true
         schema:
           type: string
+<<<<<<< HEAD
       - name: type
         in: query
+=======
+      - in: query
+        name: type
+        required: true
+>>>>>>> 9fecaba (fix: avoid NPE on list endpoints when a scoped role carries no matching permission (#8406))
         schema:
           type: string
+          enum:
+          - MCP_SERVER
       responses:
         "200":
           description: Protected Resource

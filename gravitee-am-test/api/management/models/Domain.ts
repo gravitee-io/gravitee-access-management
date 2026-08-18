@@ -260,6 +260,12 @@ export interface Domain {
   referenceType?: DomainReferenceTypeEnum;
   /**
    *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  requireDpopForAll?: boolean;
+  /**
+   *
    * @type {SAMLSettings}
    * @memberof Domain
    */
@@ -402,6 +408,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    requireDpopForAll: json['requireDpopForAll'] == null ? undefined : json['requireDpopForAll'],
     saml: json['saml'] == null ? undefined : SAMLSettingsFromJSON(json['saml']),
     scim: json['scim'] == null ? undefined : SCIMSettingsFromJSON(json['scim']),
     secretExpirationSettings:
@@ -458,6 +465,7 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
+    requireDpopForAll: value['requireDpopForAll'],
     saml: SAMLSettingsToJSON(value['saml']),
     scim: SCIMSettingsToJSON(value['scim']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
