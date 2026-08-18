@@ -196,6 +196,8 @@ export interface TokenExchangeFixtureConfig {
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   tokenCustomClaims?: TokenClaim[];
+  /** Declarative token exchange claim mappings, set on the application with inherited: false. */
+  claimsMapper?: { source: 'SUBJECT_TOKEN' | 'ACTOR_TOKEN'; sourceClaim: string; tokenClaim: string }[];
   allowedSubjectTokenTypes?: string[];
   // Delegation settings
   allowImpersonation?: boolean;
@@ -223,6 +225,7 @@ export const setupTokenExchangeFixture = async (
       grantTypes = TOKEN_EXCHANGE_TEST.DEFAULT_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
       tokenCustomClaims,
+      claimsMapper,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
       allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
       allowImpersonation = true,
@@ -264,6 +267,7 @@ export const setupTokenExchangeFixture = async (
           grantTypes,
           scopeSettings: scopes,
           tokenCustomClaims,
+          ...(claimsMapper ? { tokenExchangeOAuthSettings: { inherited: false, claimsMapper } } : {}),
         },
       },
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
