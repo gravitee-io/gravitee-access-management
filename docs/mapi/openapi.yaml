@@ -18040,11 +18040,36 @@ components:
           - ACCESS_TOKEN
           - REFRESH_TOKEN
           - ID_TOKEN
+    TokenExchangeClaimMapping:
+      type: object
+      description: Copies a claim from the validated subject or actor token onto the
+        issued token.
+      properties:
+        source:
+          type: string
+          default: SUBJECT_TOKEN
+          description: The validated token the claim is read from.
+          enum:
+          - SUBJECT_TOKEN
+          - ACTOR_TOKEN
+        sourceClaim:
+          type: string
+          description: The name of the claim on the source token.
+        tokenClaim:
+          type: string
+          description: The name the claim takes on the issued token.
+      title: Token exchange claim mapping
     TokenExchangeOAuthSettings:
       type: object
       description: "OAuth-specific token-exchange behavior, such as how scopes are\
         \ handled, with optional inheritance from domain defaults."
       properties:
+        claimsMapper:
+          type: array
+          description: Claims copied from the validated subject or actor token onto
+            the issued token. A claim that is absent from its source token is skipped.
+          items:
+            $ref: "#/components/schemas/TokenExchangeClaimMapping"
         inherited:
           type: boolean
           default: true
