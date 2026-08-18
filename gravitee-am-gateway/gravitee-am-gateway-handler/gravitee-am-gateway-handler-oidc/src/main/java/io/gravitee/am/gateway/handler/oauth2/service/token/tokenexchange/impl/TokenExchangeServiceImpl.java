@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.SubjectTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
@@ -310,6 +311,14 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return new ActorTokenInfo(subject, gis, subProfile, subjectTokenActClaim, actorTokenActClaim, delegationDepth, claims);
     }
 
+    /**
+     * Extract subject information from the validated subject token, so its claims can be
+     * referenced by EL custom token claims on the issued token.
+     */
+    private SubjectTokenInfo extractSubjectInfo(ValidatedToken subjectToken) {
+        return new SubjectTokenInfo(subjectToken.getSubject(), extractGis(subjectToken), subjectToken.getClaims());
+    }
+
     private String extractSubProfile(ValidatedToken token) {
         Object subProfile = token.getClaim(Claims.SUB_PROFILE);
         return subProfile instanceof String ? (String) subProfile : null;
@@ -467,6 +476,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     subjectToken.getExpiration(),
                                     subjectToken.getTokenId(),
                                     parsedRequest.subjectTokenType(),
+                                    extractSubjectInfo(subjectToken),
                                     subjectToken.getDomainParentJtis());
                         })
                 );
@@ -499,6 +509,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     actorToken.getTokenId(),
                                     parsedRequest.actorTokenType(),
                                     actorInfo,
+                                    extractSubjectInfo(subjectToken),
                                     subjectToken.getDomainParentJtis(),
                                     actorToken.getDomainParentJtis());
                         }));

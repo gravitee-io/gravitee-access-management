@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.SubjectTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.model.Domain;
@@ -116,6 +117,7 @@ class TokenExchangeStrategyTest {
                 expiration,
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
+                subjectInfo(Map.of()),
                 Set.of()
         );
 
@@ -176,6 +178,7 @@ class TokenExchangeStrategyTest {
                 expiration,
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
+                subjectInfo(Map.of()),
                 Set.of()
         );
 
@@ -222,6 +225,7 @@ class TokenExchangeStrategyTest {
                 "actor-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 actorInfo,
+                subjectInfo(Map.of()),
                 Set.of(),
                 Set.of());
 
@@ -270,6 +274,7 @@ class TokenExchangeStrategyTest {
                 "actor-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 actorInfo,
+                subjectInfo(Map.of()),
                 Set.of(),
                 Set.of());
 
@@ -285,7 +290,86 @@ class TokenExchangeStrategyTest {
     }
 
     @Test
-    void shouldNotAddActorInformationToExecutionContextForImpersonation() {
+    @SuppressWarnings("unchecked")
+    void shouldAddSubjectInformationButNoActorToExecutionContextForImpersonation() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        User user = new User();
+        user.setId("user-id");
+
+        Date expiration = new Date(System.currentTimeMillis() + 3600000);
+        Map<String, Object> subjectClaims = Map.of(
+                Claims.SUB, "subject-sub",
+                "claim_id", "dynamic-value",
+                "jti", "subject-token-id");
+        TokenExchangeResult exchangeResult = TokenExchangeResult.forImpersonation(
+                user,
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                expiration,
+                "subject-token-id",
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                new SubjectTokenInfo("subject-sub", "source:subject-id", subjectClaims),
+                Set.of());
+
+        when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
+                .thenReturn(Single.just(exchangeResult));
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertTrue(result.executionContext().containsKey("token_exchange"));
+        Map<String, Object> tokenExchangeContext = (Map<String, Object>) result.executionContext().get("token_exchange");
+        assertFalse(tokenExchangeContext.containsKey("actor"));
+
+        Map<String, Object> subjectContext = (Map<String, Object>) tokenExchangeContext.get("subject");
+        assertEquals("subject-sub", subjectContext.get(Claims.SUB));
+        assertEquals("source:subject-id", subjectContext.get(Claims.GIO_INTERNAL_SUB));
+        assertEquals(subjectClaims, subjectContext.get("subject_token_claims"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldAddBothSubjectAndActorInformationToExecutionContextForDelegation() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        User user = new User();
+        user.setId("user-id");
+
+        Date expiration = new Date(System.currentTimeMillis() + 3600000);
+        Map<String, Object> subjectClaims = Map.of(Claims.SUB, "subject-sub", "claim_id", "dynamic-value");
+        Map<String, Object> actorClaims = Map.of(Claims.SUB, "actor-sub", "email", "alice@example.com");
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", null, null, null, null, 1, actorClaims);
+
+        TokenExchangeResult exchangeResult = TokenExchangeResult.forDelegation(
+                user,
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                expiration,
+                "subject-token-id",
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                "actor-token-id",
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                actorInfo,
+                new SubjectTokenInfo("subject-sub", null, subjectClaims),
+                Set.of(),
+                Set.of());
+
+        when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
+                .thenReturn(Single.just(exchangeResult));
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        Map<String, Object> tokenExchangeContext = (Map<String, Object>) result.executionContext().get("token_exchange");
+        Map<String, Object> subjectContext = (Map<String, Object>) tokenExchangeContext.get("subject");
+        Map<String, Object> actorContext = (Map<String, Object>) tokenExchangeContext.get("actor");
+
+        assertEquals(subjectClaims, subjectContext.get("subject_token_claims"));
+        assertEquals(actorClaims, actorContext.get("actor_token_claims"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldOmitSubjectTokenClaimsEntryWhenSubjectClaimsEmpty() {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
 
@@ -299,6 +383,7 @@ class TokenExchangeStrategyTest {
                 expiration,
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
+                new SubjectTokenInfo("subject-sub", null, Map.of()),
                 Set.of());
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
@@ -306,6 +391,14 @@ class TokenExchangeStrategyTest {
 
         TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
 
-        assertFalse(result.executionContext().containsKey("token_exchange"));
+        Map<String, Object> tokenExchangeContext = (Map<String, Object>) result.executionContext().get("token_exchange");
+        Map<String, Object> subjectContext = (Map<String, Object>) tokenExchangeContext.get("subject");
+        assertEquals("subject-sub", subjectContext.get(Claims.SUB));
+        assertFalse(subjectContext.containsKey("subject_token_claims"));
+        assertFalse(subjectContext.containsKey(Claims.GIO_INTERNAL_SUB));
+    }
+
+    private static SubjectTokenInfo subjectInfo(Map<String, Object> claims) {
+        return new SubjectTokenInfo("subject-sub", null, claims);
     }
 }

@@ -40,6 +40,9 @@ import java.util.Map;
  * @param delegationDepth the current delegation depth (number of nested "act" claims + 1)
  * @param claims the full claims map of the validated actor token. Exposed to EL custom token
  *               claims via {@code #context.attributes['token_exchange']['actor']['actor_token_claims']['<name>']}.
+ *               The subject token equivalent is {@code ['token_exchange']['subject']['subject_token_claims']['<name>']},
+ *               see {@link SubjectTokenInfo}. "actor" is present for delegation only, "subject" for both
+ *               delegation and impersonation, so test {@code ['token_exchange']['actor'] != null} to detect delegation.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.1">RFC 8693 Section 4.1</a>
  * @author GraviteeSource Team
@@ -90,7 +93,11 @@ public record ActorTokenInfo(
         return claims != null && !claims.isEmpty();
     }
 
-    public Map<String, Object> buildTokenExchangeExecutionContext( ) {
+    /**
+     * Build the "actor" entry of the token exchange execution context.
+     * The enclosing "token_exchange" wrapper is added by {@link TokenExchangeResult#buildExecutionContext()}.
+     */
+    public Map<String, Object> buildContext() {
         Map<String, Object> actorContext = new HashMap<>();
         actorContext.put(Claims.SUB, subject());
         actorContext.put("delegation_depth", delegationDepth());
@@ -111,6 +118,6 @@ public record ActorTokenInfo(
             actorContext.put("actor_token_claims", claims());
         }
 
-        return Map.of("token_exchange", Map.of("actor", actorContext));
+        return actorContext;
     }
 }

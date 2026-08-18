@@ -20,14 +20,11 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.HashMap;
-import java.util.Map;
 import lombok.CustomLog;
 
 /**
@@ -83,7 +80,7 @@ public class TokenExchangeStrategy implements GrantStrategy {
                         result.actorTokenType(),
                         result.actorInfo(),
                         result.jtisOfParents(),
-                        result.actorInfo() == null ? Map.of() : result.actorInfo().buildTokenExchangeExecutionContext()
+                        result.buildExecutionContext()
                 ));
     }
 

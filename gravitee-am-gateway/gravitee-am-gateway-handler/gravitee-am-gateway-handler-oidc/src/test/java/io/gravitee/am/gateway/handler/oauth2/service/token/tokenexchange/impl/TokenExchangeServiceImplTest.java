@@ -1062,6 +1062,70 @@ public class TokenExchangeServiceImplTest {
     }
 
     @Test
+    public void shouldCarrySubjectTokenClaimsInSubjectInfoForImpersonation() throws Exception {
+        TokenValidator validatorWithClaims = new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
+                Map<String, Object> claims = new HashMap<>();
+                claims.put(Claims.SUB, "subject-sub");
+                claims.put("claim_id", "dynamic-value");
+                claims.put(Claims.GIO_INTERNAL_SUB, "source-id:subject-external-id");
+
+                return Single.just(ValidatedToken.builder()
+                        .subject("subject-sub")
+                        .claims(claims)
+                        .scopes(Set.of("openid"))
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.ACCESS_TOKEN)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+
+        service = createService(List.of(validatorWithClaims));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isFalse();
+        assertThat(result.subjectInfo()).isNotNull();
+        assertThat(result.subjectInfo().subject()).isEqualTo("subject-sub");
+        assertThat(result.subjectInfo().gis()).isEqualTo("source-id:subject-external-id");
+        assertThat(result.subjectInfo().claims()).containsEntry("claim_id", "dynamic-value");
+    }
+
+    @Test
+    public void shouldCarrySubjectTokenClaimsInSubjectInfoForDelegation() throws Exception {
+        service = createService(List.of(new FixedSubjectTokenValidator()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.subjectInfo()).isNotNull();
+        assertThat(result.subjectInfo().subject()).isEqualTo("subject");
+        assertThat(result.actorInfo()).isNotNull();
+    }
+
+    @Test
     public void shouldHandleActorTokenWithoutGis() throws Exception {
         // Actor token without gis claim should have null gis in actorInfo
         service = createService(List.of(new FixedSubjectTokenValidator()));
