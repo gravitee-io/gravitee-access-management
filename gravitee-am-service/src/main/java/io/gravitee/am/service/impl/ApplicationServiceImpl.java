@@ -86,6 +86,7 @@ import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidato
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -194,6 +195,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationTokenCustomClaimsValidator customClaimsValidator;
+
+    @Autowired
+    private TokenExchangeClaimMappingsValidator tokenExchangeClaimMappingsValidator;
 
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
@@ -810,11 +814,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                         toPatch.getSettings().getOauth().setClientSecret(null);
                     }
 
-                    ValidationResult claimValidation = customClaimsValidator.validate(toPatch);
-                    if (claimValidation.isInvalid()) {
-                        return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
-                    }
-
                     final AccountSettings accountSettings = toPatch.getSettings() != null ? toPatch.getSettings().getAccount() : null;
                     if (accountSettings != null && Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
@@ -851,6 +850,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private static boolean hasClientSecret(Application existingApplication) {
         return existingApplication.getSettings() != null && existingApplication.getSettings().getOauth() != null && existingApplication.getSettings().getOauth().getClientSecret() != null;
+    }
+
+    private static List<TokenExchangeClaimMapping> tokenExchangeClaimMappingsOf(Application application) {
+        return Optional.ofNullable(application.getSettings())
+                .map(ApplicationSettings::getOauth)
+                .map(ApplicationOAuthSettings::getTokenExchangeOAuthSettings)
+                .map(TokenExchangeOAuthSettings::getClaimMappings)
+                .orElse(null);
     }
 
     @Override
@@ -1140,7 +1147,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (app.getSettings().getOauth() == null) {
                         return Single.just(app);
                     }
-                    return GrantTypeUtils.validateGrantTypes(app)
+                    return validateTokenCustomClaims(app)
+                            .flatMap(this::validateTokenExchangeClaimMappings)
+                            .flatMap(GrantTypeUtils::validateGrantTypes)
                             .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
                             .flatMap(this::validateScopes)
                             .flatMap(this::validateTokenEndpointAuthMethod)
@@ -1150,6 +1159,20 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(this::validateAgentSettings)
                             .flatMap(this::validateSpiffeSettings);
                 });
+    }
+
+    private Single<Application> validateTokenCustomClaims(Application application) {
+        ValidationResult claimValidation = customClaimsValidator.validate(application);
+        return claimValidation.isInvalid()
+                ? Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()))
+                : Single.just(application);
+    }
+
+    private Single<Application> validateTokenExchangeClaimMappings(Application application) {
+        var mapperValidation = tokenExchangeClaimMappingsValidator.validate(tokenExchangeClaimMappingsOf(application));
+        return mapperValidation.isInvalid()
+                ? Single.error(new InvalidParameterException(mapperValidation.describe()))
+                : Single.just(application);
     }
 
     /**

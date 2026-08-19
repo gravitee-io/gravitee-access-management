@@ -216,6 +216,97 @@ describe('GrantFlowsComponent', () => {
       expect(emitSpy).toHaveBeenCalled();
     });
 
+    it('enableTokenExchangeInherit seeds the domain claim mappings when toggled off', () => {
+      mockDomainStoreService.current = {
+        ...defaultDomainCurrent(),
+        tokenExchangeSettings: {
+          enabled: true,
+          tokenExchangeOAuthSettings: {
+            scopeHandling: 'permissive',
+            claimMappings: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }],
+          },
+        },
+      };
+
+      component.enableTokenExchangeInherit({ checked: false });
+
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.claimMappings).toEqual([
+        { source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' },
+      ]);
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.scopeHandling).toBe('permissive');
+    });
+
+    it('enableTokenExchangeInherit keeps existing mappings on a later toggle', () => {
+      component.oauthSettings.tokenExchangeOAuthSettings = {
+        inherited: false,
+        scopeHandling: 'downscoping',
+        claimMappings: [{ source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'agent' }],
+      };
+      mockDomainStoreService.current = {
+        ...defaultDomainCurrent(),
+        tokenExchangeSettings: {
+          enabled: true,
+          tokenExchangeOAuthSettings: { claimMappings: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }] },
+        },
+      };
+
+      component.enableTokenExchangeInherit({ checked: false });
+
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.claimMappings).toEqual([
+        { source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'agent' },
+      ]);
+    });
+
+    it('addClaimMapping appends the trimmed mapping and resets the form', () => {
+      component.newClaimMapping = { source: 'subject_token', sourceClaim: '  tenant  ', tokenClaim: '  business_id  ' };
+
+      component.addClaimMapping();
+
+      expect(component.tokenExchangeClaimMappings).toEqual([{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }]);
+      expect(component.newClaimMapping).toEqual({ source: 'subject_token', sourceClaim: '', tokenClaim: '' });
+    });
+
+    it('removeClaimMapping drops the mapping at the given index', () => {
+      component.oauthSettings.tokenExchangeOAuthSettings = {
+        inherited: false,
+        scopeHandling: 'downscoping',
+        claimMappings: [
+          { source: 'subject_token', sourceClaim: 'a', tokenClaim: 'one' },
+          { source: 'subject_token', sourceClaim: 'b', tokenClaim: 'two' },
+        ],
+      };
+
+      component.removeClaimMapping(0);
+
+      expect(component.tokenExchangeClaimMappings).toEqual([{ source: 'subject_token', sourceClaim: 'b', tokenClaim: 'two' }]);
+    });
+
+    it('isNewClaimMappingValid rejects a reserved target claim', () => {
+      component.newClaimMapping = { source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'sub' };
+
+      expect(component.isNewClaimMappingValid()).toBe(false);
+      expect(component.newClaimMappingError()).toBe('"sub" is reserved by Access Management and cannot be a target claim.');
+    });
+
+    it('isNewClaimMappingValid rejects a target claim that is already mapped', () => {
+      component.oauthSettings.tokenExchangeOAuthSettings = {
+        inherited: false,
+        scopeHandling: 'downscoping',
+        claimMappings: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }],
+      };
+      component.newClaimMapping = { source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'business_id' };
+
+      expect(component.isNewClaimMappingValid()).toBe(false);
+      expect(component.newClaimMappingError()).toBe('"business_id" is already mapped.');
+    });
+
+    it('isNewClaimMappingValid accepts an unused, unreserved target claim', () => {
+      component.newClaimMapping = { source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' };
+
+      expect(component.isNewClaimMappingValid()).toBe(true);
+      expect(component.newClaimMappingError()).toBeNull();
+    });
+
     it('ngOnInit initialises tokenExchangeOAuthSettings when absent', () => {
       component.oauthSettings = { grantTypes: [] };
       component.ngOnInit();

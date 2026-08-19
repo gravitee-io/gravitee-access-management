@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.SubjectTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
@@ -35,6 +36,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.TokenExchangeClaimMapping;
+import io.gravitee.am.model.application.TokenExchangeClaimSource;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
@@ -310,6 +313,53 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return new ActorTokenInfo(subject, gis, subProfile, subjectTokenActClaim, actorTokenActClaim, delegationDepth, claims);
     }
 
+    /**
+     * Extract subject information from the validated subject token, so its claims can be
+     * referenced by EL custom token claims on the issued token.
+     */
+    private SubjectTokenInfo extractSubjectInfo(ValidatedToken subjectToken) {
+        return new SubjectTokenInfo(subjectToken.getSubject(), extractGis(subjectToken), subjectToken.getClaims());
+    }
+
+    /**
+     * Resolve the declarative claims mapper against the validated tokens. A mapping whose source
+     * claim is absent from its source token is skipped, so the issued token omits it rather than
+     * failing. During impersonation there is no actor token, so ACTOR_TOKEN mappings resolve to
+     * nothing.
+     */
+    private Map<String, Object> resolveMappedClaims(Client client, Domain domain,
+                                                    ValidatedToken subjectToken, ValidatedToken actorToken) {
+        List<TokenExchangeClaimMapping> mappings = TokenExchangeOAuthSettings.getInstance(domain, client).getClaimMappings();
+        if (mappings == null || mappings.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> mappedClaims = new HashMap<>();
+        for (TokenExchangeClaimMapping mapping : mappings) {
+            ValidatedToken source = mapping.getSource() == TokenExchangeClaimSource.ACTOR_TOKEN ? actorToken : subjectToken;
+            // trim to the same form the management API validated, so a padded name cannot reach the
+            // issued token under a spelling the reserved-claim check never saw
+            String sourceClaim = trimmedOrNull(mapping.getSourceClaim());
+            String tokenClaim = trimmedOrNull(mapping.getTokenClaim());
+            if (source == null || sourceClaim == null || tokenClaim == null) {
+                continue;
+            }
+            Object value = source.getClaim(sourceClaim);
+            if (value != null) {
+                mappedClaims.put(tokenClaim, value);
+            }
+        }
+        return mappedClaims;
+    }
+
+    private static String trimmedOrNull(String claimName) {
+        if (claimName == null) {
+            return null;
+        }
+        String trimmed = claimName.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
     private String extractSubProfile(ValidatedToken token) {
         Object subProfile = token.getClaim(Claims.SUB_PROFILE);
         return subProfile instanceof String ? (String) subProfile : null;
@@ -467,6 +517,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     subjectToken.getExpiration(),
                                     subjectToken.getTokenId(),
                                     parsedRequest.subjectTokenType(),
+                                    extractSubjectInfo(subjectToken),
+                                    resolveMappedClaims(client, domain, subjectToken, null),
                                     subjectToken.getDomainParentJtis());
                         })
                 );
@@ -499,6 +551,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     actorToken.getTokenId(),
                                     parsedRequest.actorTokenType(),
                                     actorInfo,
+                                    extractSubjectInfo(subjectToken),
+                                    resolveMappedClaims(client, domain, subjectToken, actorToken),
                                     subjectToken.getDomainParentJtis(),
                                     actorToken.getDomainParentJtis());
                         }));

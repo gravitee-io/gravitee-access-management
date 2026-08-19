@@ -19,7 +19,11 @@ import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.application.TokenExchangeClaimMapping;
+import io.gravitee.am.model.application.TokenExchangeClaimSource;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.service.exception.InvalidDomainException;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidatorImpl;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -40,7 +44,7 @@ class TokenExchangeSettingsValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new TokenExchangeSettingsValidatorImpl(5);
+        validator = new TokenExchangeSettingsValidatorImpl(5, new TokenExchangeClaimMappingsValidator(20));
     }
 
     // --- Disabled / null settings ---
@@ -381,6 +385,53 @@ class TokenExchangeSettingsValidatorTest {
         validator.validate(settings).test().assertComplete();
     }
 
+    // --- Claims mapper ---
+
+    @Test
+    void validate_claimMappingsOntoAReservedClaimIsInvalid() {
+        var settings = enabledSettings();
+        settings.setTokenExchangeOAuthSettings(mapperSettings(
+                claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "sub")));
+
+        assertError(settings, "Invalid token exchange claim mappings: [sub]");
+    }
+
+    @Test
+    void validate_claimMappingsOntoAnAgentIdentityClaimIsInvalid() {
+        var settings = enabledSettings();
+        settings.setTokenExchangeOAuthSettings(mapperSettings(
+                claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "client_profile")));
+
+        assertError(settings, "Invalid token exchange claim mappings: [client_profile]");
+    }
+
+    @Test
+    void validate_claimMappingsWithDuplicateTargetsIsInvalid() {
+        var settings = enabledSettings();
+        settings.setTokenExchangeOAuthSettings(mapperSettings(
+                claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id"),
+                claimMapping(TokenExchangeClaimSource.ACTOR_TOKEN, "agent_id", "business_id")));
+
+        assertError(settings, "Duplicate token exchange claim mappings: [business_id]");
+    }
+
+    @Test
+    void validate_claimMappingsOntoAnOrdinaryClaimIsValid() {
+        var settings = enabledSettings();
+        settings.setTokenExchangeOAuthSettings(mapperSettings(
+                claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id")));
+
+        validator.validate(settings).test().assertComplete();
+    }
+
+    @Test
+    void validate_nullOauthSettingsIsValid() {
+        var settings = enabledSettings();
+        settings.setTokenExchangeOAuthSettings(null);
+
+        validator.validate(settings).test().assertComplete();
+    }
+
     // --- Helpers ---
 
     private void assertError(TokenExchangeSettings settings, String expectedMessage) {
@@ -388,6 +439,21 @@ class TokenExchangeSettingsValidatorTest {
         observer.assertError(throwable ->
                 throwable instanceof InvalidDomainException
                         && throwable.getMessage().contains(expectedMessage));
+    }
+
+    private static TokenExchangeOAuthSettings mapperSettings(TokenExchangeClaimMapping... mappings) {
+        var oauthSettings = new TokenExchangeOAuthSettings();
+        oauthSettings.setInherited(false);
+        oauthSettings.setClaimMappings(List.of(mappings));
+        return oauthSettings;
+    }
+
+    private static TokenExchangeClaimMapping claimMapping(TokenExchangeClaimSource source, String sourceClaim, String tokenClaim) {
+        var mapping = new TokenExchangeClaimMapping();
+        mapping.setSource(source);
+        mapping.setSourceClaim(sourceClaim);
+        mapping.setTokenClaim(tokenClaim);
+        return mapping;
     }
 
     private static TokenExchangeSettings enabledSettings() {

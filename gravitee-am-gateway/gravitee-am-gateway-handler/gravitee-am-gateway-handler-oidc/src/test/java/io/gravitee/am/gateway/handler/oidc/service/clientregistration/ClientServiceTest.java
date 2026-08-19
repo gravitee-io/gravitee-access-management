@@ -17,6 +17,9 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.application.TokenExchangeClaimMapping;
+import io.gravitee.am.model.application.TokenExchangeClaimSource;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Form;
@@ -40,6 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -160,6 +164,33 @@ public class ClientServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
+    }
+
+    @Test
+    public void update_preservesTokenExchangeSettings() {
+        when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
+
+        TokenExchangeClaimMapping mapping = new TokenExchangeClaimMapping();
+        mapping.setSource(TokenExchangeClaimSource.SUBJECT_TOKEN);
+        mapping.setSourceClaim("tenant");
+        mapping.setTokenClaim("business_id");
+
+        TokenExchangeOAuthSettings tokenExchangeSettings = new TokenExchangeOAuthSettings();
+        tokenExchangeSettings.setInherited(false);
+        tokenExchangeSettings.setClaimMappings(List.of(mapping));
+
+        Client toUpdate = new Client();
+        toUpdate.setDomain(DOMAIN.getId());
+        toUpdate.setRedirectUris(Collections.singletonList("https://callback"));
+        toUpdate.setTokenExchangeOAuthSettings(tokenExchangeSettings);
+
+        TestObserver testObserver = clientService.update(toUpdate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationService, times(1)).update(captor.capture());
+        Assert.assertEquals(tokenExchangeSettings, captor.getValue().getSettings().getOauth().getTokenExchangeOAuthSettings());
     }
 
     @Test

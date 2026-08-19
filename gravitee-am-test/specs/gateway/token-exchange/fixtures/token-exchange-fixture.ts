@@ -15,15 +15,10 @@
  */
 
 import { expect } from '@jest/globals';
-import {
-  createDomain,
-  safeDeleteDomain,
-  startDomain,
-  waitFor,
-  waitForOidcReady
-} from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitFor, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
+import { TokenExchangeClaimMapping } from '@management-models/TokenExchangeClaimMapping';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { introspectToken as introspectOidcToken, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -95,11 +90,7 @@ export interface TokenExchangeFixture {
   revokeToken: (token: string, tokenTypeHint: 'access_token' | 'refresh_token') => Promise<void>;
 
   // Helper method to exchange token (impersonation/delegation)
-  exchangeToken: (
-    subjectToken: string,
-    subjectTokenType: 'access_token' | 'refresh_token',
-    actorToken?: string,
-  ) => Promise<string>;
+  exchangeToken: (subjectToken: string, subjectTokenType: 'access_token' | 'refresh_token', actorToken?: string) => Promise<string>;
 }
 
 /**
@@ -122,10 +113,7 @@ export const TOKEN_EXCHANGE_TEST = {
     'urn:ietf:params:oauth:token-type:id_token',
     'urn:ietf:params:oauth:token-type:jwt',
   ],
-  DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES: [
-    'urn:ietf:params:oauth:token-type:access_token',
-    'urn:ietf:params:oauth:token-type:id_token',
-  ],
+  DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES: ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:id_token'],
   DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES: [
     'urn:ietf:params:oauth:token-type:access_token',
     'urn:ietf:params:oauth:token-type:id_token',
@@ -135,10 +123,15 @@ export const TOKEN_EXCHANGE_TEST = {
   REDIRECT_URI: 'https://gravitee.io/callback',
 };
 
+/** One declarative claim mapping, as the management SDK models it. */
+export type ClaimMapping = TokenExchangeClaimMapping;
+
 /**
  * Token exchange settings for domain configuration
  */
 interface TokenExchangeSettingsConfig {
+  /** Claims mapper set on the DOMAIN defaults, which an application inherits unless it overrides. */
+  domainClaimMappings?: ClaimMapping[];
   allowedSubjectTokenTypes?: string[];
   allowImpersonation?: boolean;
   allowDelegation?: boolean;
@@ -150,13 +143,9 @@ interface TokenExchangeSettingsConfig {
 /**
  * Enable token exchange for a domain
  */
-async function enableTokenExchange(
-  domainId: string,
-  token: string,
-  config: TokenExchangeSettingsConfig = {},
-
-): Promise<void> {
+async function enableTokenExchange(domainId: string, token: string, config: TokenExchangeSettingsConfig = {}): Promise<void> {
   const {
+    domainClaimMappings,
     allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
     allowImpersonation = true,
     allowDelegation = false,
@@ -178,6 +167,10 @@ async function enableTokenExchange(
     tokenExchangeSettings.maxDelegationDepth = maxDelegationDepth;
   }
 
+  if (domainClaimMappings) {
+    tokenExchangeSettings.tokenExchangeOAuthSettings = { inherited: false, claimMappings: domainClaimMappings };
+  }
+
   await request(getDomainManagerUrl(domainId))
     .patch('')
     .set('Authorization', `Bearer ${token}`)
@@ -196,6 +189,10 @@ export interface TokenExchangeFixtureConfig {
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   tokenCustomClaims?: TokenClaim[];
+  /** Claim mappings set on the APPLICATION, with inherited: false. */
+  claimMappings?: ClaimMapping[];
+  /** Claim mappings set on the DOMAIN defaults; the application inherits them. */
+  domainClaimMappings?: ClaimMapping[];
   allowedSubjectTokenTypes?: string[];
   // Delegation settings
   allowImpersonation?: boolean;
@@ -208,9 +205,7 @@ export interface TokenExchangeFixtureConfig {
 /**
  * Setup token exchange test fixture
  */
-export const setupTokenExchangeFixture = async (
-  config: TokenExchangeFixtureConfig = {},
-): Promise<TokenExchangeFixture> => {
+export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConfig = {}): Promise<TokenExchangeFixture> => {
   let domain: Domain | null = null;
   let accessToken: string | null = null;
 
@@ -223,6 +218,8 @@ export const setupTokenExchangeFixture = async (
       grantTypes = TOKEN_EXCHANGE_TEST.DEFAULT_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
       tokenCustomClaims,
+      claimMappings,
+      domainClaimMappings,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
       allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
       allowImpersonation = true,
@@ -248,6 +245,7 @@ export const setupTokenExchangeFixture = async (
 
     // Enable token exchange
     await enableTokenExchange(createdDomain.id, accessToken, {
+      domainClaimMappings,
       allowedSubjectTokenTypes,
       allowedRequestedTokenTypes,
       allowImpersonation,
@@ -264,6 +262,7 @@ export const setupTokenExchangeFixture = async (
           grantTypes,
           scopeSettings: scopes,
           tokenCustomClaims,
+          ...(claimMappings ? { tokenExchangeOAuthSettings: { inherited: false, claimMappings } } : {}),
         },
       },
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
@@ -311,15 +310,10 @@ export const setupTokenExchangeFixture = async (
     const introspectToken = (token: string): Promise<any> => introspectOidcToken(oidc.introspection_endpoint, token, basicAuth);
 
     const revokeToken = async (token: string, tokenTypeHint: 'access_token' | 'refresh_token'): Promise<void> => {
-      await performPost(
-        oidc.revocation_endpoint,
-        '',
-        `token=${token}&token_type_hint=${tokenTypeHint}`,
-        {
-          'Content-type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${basicAuth}`,
-        },
-      ).expect(200);
+      await performPost(oidc.revocation_endpoint, '', `token=${token}&token_type_hint=${tokenTypeHint}`, {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      }).expect(200);
     };
 
     const exchangeToken = async (
@@ -327,17 +321,15 @@ export const setupTokenExchangeFixture = async (
       subjectTokenType: 'access_token' | 'refresh_token',
       actorToken?: string,
     ): Promise<string> => {
-      const actorParams = actorToken
-        ? `&actor_token=${actorToken}&actor_token_type=urn:ietf:params:oauth:token-type:access_token`
-        : '';
+      const actorParams = actorToken ? `&actor_token=${actorToken}&actor_token_type=urn:ietf:params:oauth:token-type:access_token` : '';
 
       const response = await performPost(
         oidc.token_endpoint,
         '',
         `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:${subjectTokenType}` +
-        actorParams,
+          `&subject_token=${subjectToken}` +
+          `&subject_token_type=urn:ietf:params:oauth:token-type:${subjectTokenType}` +
+          actorParams,
         {
           'Content-type': 'application/x-www-form-urlencoded',
           Authorization: `Basic ${basicAuth}`,

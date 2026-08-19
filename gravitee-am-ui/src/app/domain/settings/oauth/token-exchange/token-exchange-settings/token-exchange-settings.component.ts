@@ -24,8 +24,11 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
 import {
   TrustedIssuer,
   TokenExchangeOAuthSettings,
+  TokenExchangeClaimMapping,
+  CLAIM_SOURCE_SUBJECT_TOKEN,
   DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
   TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
+  TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS,
 } from '../token-exchange.types';
 
 interface TokenExchangeSettings {
@@ -51,6 +54,8 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
   readonly minDelegationDepth = 1;
   readonly defaultDelegationDepth = 25;
   readonly TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS = TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS;
+  readonly TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS = TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS;
+  newClaimMapping: TokenExchangeClaimMapping = this.emptyClaimMapping();
   domainId: string;
   domain: any = {};
   formChanged = false;
@@ -118,6 +123,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
     normalizedSettings.tokenExchangeOAuthSettings = {
       scopeHandling: tokenExchangeSettings.tokenExchangeOAuthSettings?.scopeHandling ?? DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
       inherited: false,
+      claimMappings: tokenExchangeSettings.tokenExchangeOAuthSettings?.claimMappings ?? [],
     };
 
     this.domain.tokenExchangeSettings = normalizedSettings;
@@ -133,7 +139,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowDelegation: false,
       maxDelegationDepth: this.defaultDelegationDepth,
       trustedIssuers: [],
-      tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false },
+      tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false, claimMappings: [] },
     };
   }
 
@@ -207,5 +213,37 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
 
   modelChanged(): void {
     this.formChanged = true;
+  }
+
+  get claimMappings(): TokenExchangeClaimMapping[] {
+    return this.domain.tokenExchangeSettings?.tokenExchangeOAuthSettings?.claimMappings ?? [];
+  }
+
+  isNewClaimMappingValid(): boolean {
+    return !!this.newClaimMapping.sourceClaim?.trim() && !!this.newClaimMapping.tokenClaim?.trim();
+  }
+
+  addClaimMapping(): void {
+    const settings = this.domain.tokenExchangeSettings.tokenExchangeOAuthSettings;
+    settings.claimMappings = [
+      ...(settings.claimMappings ?? []),
+      {
+        source: this.newClaimMapping.source,
+        sourceClaim: this.newClaimMapping.sourceClaim.trim(),
+        tokenClaim: this.newClaimMapping.tokenClaim.trim(),
+      },
+    ];
+    this.newClaimMapping = this.emptyClaimMapping();
+    this.modelChanged();
+  }
+
+  removeClaimMapping(index: number): void {
+    const settings = this.domain.tokenExchangeSettings.tokenExchangeOAuthSettings;
+    settings.claimMappings = settings.claimMappings.filter((_, i) => i !== index);
+    this.modelChanged();
+  }
+
+  private emptyClaimMapping(): TokenExchangeClaimMapping {
+    return { source: CLAIM_SOURCE_SUBJECT_TOKEN, sourceClaim: '', tokenClaim: '' };
   }
 }

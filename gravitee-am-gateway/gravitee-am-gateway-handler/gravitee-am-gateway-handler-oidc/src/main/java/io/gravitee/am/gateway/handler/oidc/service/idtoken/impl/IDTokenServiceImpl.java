@@ -252,6 +252,12 @@ public class IDTokenServiceImpl implements IDTokenService {
             }
         }
 
+        // Token Exchange (RFC 8693) - copy the claims resolved by the declarative mapper.
+        // Applied before the custom claims so a tokenCustomClaims entry of the same name wins.
+        if (oAuth2Request.getTokenExchangeMappedClaims() != null && !oAuth2Request.getTokenExchangeMappedClaims().isEmpty()) {
+            oAuth2Request.getTokenExchangeMappedClaims().forEach(idToken::put);
+        }
+
         // 4. Enhance ID token with custom claims
         enhanceIDToken(idToken, client.getTokenCustomClaims(), executionContext);
 

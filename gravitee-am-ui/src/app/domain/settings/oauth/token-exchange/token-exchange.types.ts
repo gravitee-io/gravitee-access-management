@@ -17,11 +17,60 @@
 /** Scope handling mode for token exchange. */
 export type TokenExchangeScopeHandling = 'downscoping' | 'permissive';
 
+/** Which validated token a claim mapping reads from. */
+export const CLAIM_SOURCE_SUBJECT_TOKEN = 'subject_token';
+export const CLAIM_SOURCE_ACTOR_TOKEN = 'actor_token';
+export type TokenExchangeClaimSource = typeof CLAIM_SOURCE_SUBJECT_TOKEN | typeof CLAIM_SOURCE_ACTOR_TOKEN;
+
+/** Copies one claim from a validated token onto the issued token. */
+export interface TokenExchangeClaimMapping {
+  source: TokenExchangeClaimSource;
+  sourceClaim: string;
+  tokenClaim: string;
+}
+
+/** Target claim names the management API rejects, mirroring TokenExchangeClaimMappingsValidator. */
+export const RESERVED_TOKEN_CLAIMS: readonly string[] = [
+  'iss',
+  'sub',
+  'gis',
+  'aud',
+  'exp',
+  'nbf',
+  'iat',
+  'jti',
+  'act',
+  'scope',
+  'client_id',
+  'cnf',
+  'domain',
+  'auth_time',
+  'updated_at',
+  'claims_request_parameter',
+  'ip_address',
+  'user_agent',
+  'nonce',
+  'acr',
+  'amr',
+  'azp',
+  'permissions',
+  'authorization_details',
+  'client_profile',
+  'sub_profile',
+];
+
+export const TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS: readonly { label: string; value: TokenExchangeClaimSource }[] = [
+  { label: 'Subject token', value: CLAIM_SOURCE_SUBJECT_TOKEN },
+  { label: 'Actor token', value: CLAIM_SOURCE_ACTOR_TOKEN },
+];
+
 /** Per-application or domain-default token exchange OAuth settings. */
 export interface TokenExchangeOAuthSettings {
   /** When true, effective settings are resolved from the domain default. */
   inherited: boolean;
   scopeHandling: TokenExchangeScopeHandling;
+  /** Claims copied from the subject or actor token onto the issued token. */
+  claimMappings?: TokenExchangeClaimMapping[];
 }
 
 export const DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING: TokenExchangeScopeHandling = 'downscoping';
