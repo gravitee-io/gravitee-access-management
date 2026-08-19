@@ -82,6 +82,7 @@ import java.util.concurrent.TimeUnit;
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
@@ -154,15 +155,97 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
+    }
+
+    @Test
+    public void shouldStoreAccessAndRefreshTokenInSingleBatch() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setSupportRefreshToken(true);
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.AccessToken> accessTokenCaptor =
+                ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.AccessToken.class);
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> refreshTokenCaptor =
+                ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
+
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeTokens(accessTokenCaptor.capture(), refreshTokenCaptor.capture());
+        assertNotNull(refreshTokenCaptor.getValue());
+        assertEquals(refreshTokenCaptor.getValue().getToken(), accessTokenCaptor.getValue().getRefreshToken());
+
+        expectTokenCreatedAuditLog();
+    }
+
+    @Test
+    public void shouldStoreAccessTokenWithoutRefreshTokenWhenNotSupported() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> refreshTokenCaptor =
+                ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
+
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeTokens(any(), refreshTokenCaptor.capture());
+        assertNull(refreshTokenCaptor.getValue());
+
+        expectTokenCreatedAuditLog();
+    }
+
+    @Test
+    public void shouldNotReturnTokenWhenBatchStoreFails() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setSupportRefreshToken(true);
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.error(new TechnicalException("batch insert failed"))).when(tokenManager).storeTokens(any(), any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertError(TechnicalException.class);
+        testObserver.assertNoValues();
+
+        verify(tokenManager, times(1)).storeTokens(any(), any());
+
+        expectTokenCreatedFailedAuditLog();
     }
 
     @Test
@@ -180,13 +263,13 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(token -> token.getAdditionalInformation().containsKey("key"));
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
@@ -206,7 +289,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -243,7 +326,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -283,7 +366,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -318,7 +401,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -349,7 +432,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -379,7 +462,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -412,14 +495,14 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         testObserver.assertValue(token -> token.getAdditionalInformation().isEmpty());
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
         verify(subjectManager).updateJWT(any(), any());
 
@@ -442,14 +525,14 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         testObserver.assertValue(token -> token.getAdditionalInformation().isEmpty());
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
@@ -470,12 +553,12 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
@@ -505,12 +588,12 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(accessToken));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
@@ -538,12 +621,12 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
         verify(jwtService).encodeJwt(argThat(jwt -> jwt.get(Claims.AUD) instanceof List
                 && jwt.getAud().equals(((List) jwt.get(Claims.AUD)).get(0))
@@ -565,13 +648,13 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.error(new TechnicalException())).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.error(new TechnicalException())).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(TechnicalException.class);
 
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedFailedAuditLog();
@@ -591,14 +674,14 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         JWT jwt = jwtCaptor.getValue();
         assertTrue(jwt != null && jwt.get("permissions") != null);
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
@@ -633,7 +716,7 @@ public class TokenServiceTest {
         when(jwtService.encodeJwt(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
-        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        doReturn(Completable.complete()).when(tokenManager).storeTokens(any(), any());
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
@@ -643,7 +726,7 @@ public class TokenServiceTest {
         assertNotNull(jwt);
         assertTrue(jwt.get("iss") != null && "https://custom-iss".equals(jwt.get("iss")));
         assertTrue(jwt.get("aud") != null && "my-api".equals(jwt.get("aud")));
-        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(tokenManager, times(1)).storeTokens(any(), any());
         verify(tokenRepository, never()).deleteByJti(anyString());
         verify(executionContext).setAttribute(eq(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY), any());
 

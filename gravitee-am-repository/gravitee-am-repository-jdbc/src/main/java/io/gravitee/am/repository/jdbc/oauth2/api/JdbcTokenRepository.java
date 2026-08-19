@@ -31,8 +31,10 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 
@@ -40,6 +42,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,13 +54,41 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 @Repository
-public class JdbcTokenRepository extends AbstractJdbcRepository implements TokenRepository {
+public class JdbcTokenRepository extends AbstractJdbcRepository implements TokenRepository, InitializingBean {
 
     @Autowired
     private SpringTokenRepository spring;
 
     @Autowired
     private RetryOnConcurrencyFailureConfiguration retryOnConcurrencyFailureConfiguration;
+
+    private static final String ACCESS_TOKEN_PREFIX = "at_";
+    private static final String REFRESH_TOKEN_PREFIX = "rt_";
+
+    private static final List<FieldSpec<JdbcToken, ?>> TOKEN_FIELDS = List.of(
+            new FieldSpec<>("id", JdbcToken::getId, String.class),
+            new FieldSpec<>("domain", JdbcToken::getDomain, String.class),
+            new FieldSpec<>("client", JdbcToken::getClient, String.class),
+            new FieldSpec<>(SUBJECT, JdbcToken::getSubject, String.class),
+            new FieldSpec<>("token", JdbcToken::getToken, String.class),
+            new FieldSpec<>("created_at", JdbcToken::getCreatedAt, LocalDateTime.class),
+            new FieldSpec<>("expire_at", JdbcToken::getExpireAt, LocalDateTime.class),
+            new FieldSpec<>("authorization_code", JdbcToken::getAuthorizationCode, String.class),
+            new FieldSpec<>("refresh_token", JdbcToken::getRefreshToken, String.class),
+            new FieldSpec<>("type", JdbcToken::getType, String.class),
+            new FieldSpec<>("parent_jti_1", JdbcToken::getParentJti1, String.class),
+            new FieldSpec<>("parent_jti_2", JdbcToken::getParentJti2, String.class),
+            new FieldSpec<>("jkt", JdbcToken::getJkt, String.class));
+
+    private static final List<FieldSpec<JdbcToken, ?>> ACCESS_TOKEN_FIELDS = prefixed(ACCESS_TOKEN_PREFIX);
+    private static final List<FieldSpec<JdbcToken, ?>> REFRESH_TOKEN_FIELDS = prefixed(REFRESH_TOKEN_PREFIX);
+
+    private String batchInsertStatement;
+
+    @Override
+    public void afterPropertiesSet() {
+        this.batchInsertStatement = createBatchInsertStatement();
+    }
 
     @Override
     public Maybe<RefreshToken> findRefreshTokenByJti(String jti) {
@@ -95,6 +126,48 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
                 .map(this::toAccessToken)
                 .doOnError(error -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error))
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable create(AccessToken accessToken, RefreshToken refreshToken) {
+        if (refreshToken == null) {
+            return create(accessToken).ignoreElement();
+        }
+        accessToken.setId(accessToken.getId() == null ? RandomString.generate() : accessToken.getId());
+        refreshToken.setId(refreshToken.getId() == null ? RandomString.generate() : refreshToken.getId());
+        LOGGER.debug("Create accessToken with id {} and refreshToken with id {}", accessToken.getId(), refreshToken.getId());
+
+        DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(batchInsertStatement);
+        spec = addQuotedFields(spec, ACCESS_TOKEN_FIELDS, toJdbcEntity(accessToken));
+        spec = addQuotedFields(spec, REFRESH_TOKEN_FIELDS, toJdbcEntity(refreshToken));
+
+        return monoToCompletable(spec.fetch().rowsUpdated())
+                .doOnError(error -> LOGGER.error("Unable to create accessToken with id {} and refreshToken with id {}",
+                        accessToken.getId(), refreshToken.getId(), error))
+                .observeOn(Schedulers.computation());
+    }
+
+    private String createBatchInsertStatement() {
+        String columns = TOKEN_FIELDS.stream()
+                .map(FieldSpec::columnName)
+                .map(SqlIdentifier::quoted)
+                .map(databaseDialectHelper::toSql)
+                .collect(Collectors.joining(","));
+        return "INSERT INTO tokens (" + columns + ") VALUES ("
+                + bindMarkers(ACCESS_TOKEN_FIELDS) + "),("
+                + bindMarkers(REFRESH_TOKEN_FIELDS) + ")";
+    }
+
+    private static String bindMarkers(List<FieldSpec<JdbcToken, ?>> fields) {
+        return fields.stream().map(field -> ":" + field.columnName()).collect(Collectors.joining(","));
+    }
+
+    private static List<FieldSpec<JdbcToken, ?>> prefixed(String prefix) {
+        return TOKEN_FIELDS.stream().<FieldSpec<JdbcToken, ?>>map(field -> withPrefix(prefix, field)).toList();
+    }
+
+    private static <T> FieldSpec<JdbcToken, T> withPrefix(String prefix, FieldSpec<JdbcToken, T> field) {
+        return new FieldSpec<>(prefix + field.columnName(), field.valueGetter(), field.valueType());
     }
 
     @Override
