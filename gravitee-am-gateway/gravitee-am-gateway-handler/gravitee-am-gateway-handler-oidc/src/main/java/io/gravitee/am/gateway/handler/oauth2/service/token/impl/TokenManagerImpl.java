@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.service.AbstractService;
@@ -41,12 +40,7 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
     }
 
     @Override
-    public Completable storeAccessToken(AccessToken accessToken) {
-        return tokenRepository.create(accessToken).ignoreElement();
-    }
-
-    @Override
-    public Completable storeRefreshToken(RefreshToken refreshToken) {
-        return tokenRepository.create(refreshToken).ignoreElement();
+    public Completable storeTokens(AccessToken accessToken, RefreshToken refreshToken) {
+        return tokenRepository.create(accessToken, refreshToken);
     }
 }
