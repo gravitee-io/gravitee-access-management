@@ -104,7 +104,8 @@ export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtu
       configuration: JSON.stringify({
         publicKeyResolver: 'GIVEN_KEY',
         publicKey: ASSERTION_SECRET,
-        claimMappings: [{ assertion_claim: ASSERTION_CLAIM, token_claim: ASSERTION_CLAIM }],
+        // the extension grant plugin's own property, unrelated to token exchange claimMappings
+        claimsMapper: [{ assertion_claim: ASSERTION_CLAIM, token_claim: ASSERTION_CLAIM }],
       }),
     });
 
