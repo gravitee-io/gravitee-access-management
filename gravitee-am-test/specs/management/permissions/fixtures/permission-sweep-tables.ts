@@ -69,15 +69,12 @@ export const EXCLUDED_ROUTES: Record<string, string> = {
 /**
  * Additional exclusions that apply only when a test *grants* the documented permission and expects
  * to be admitted. They are deliberately not in the shared table above: a caller who holds nothing
- * is still correctly refused on both routes, so the negative sweep must keep covering them.
+ * is still correctly refused on that route, so the negative sweep must keep covering it.
  */
 export const SUFFICIENCY_ONLY_EXCLUDED: Record<string, string> = {
   // INSTALLATION is only relevant to the PLATFORM tier, so it cannot be granted by an
   // organization-assignable role and this technique cannot reach it.
   '/platform/installation': 'PLATFORM-tier permission, not grantable at organization level',
-  // Guarded by DOMAIN_FACTOR instead of DOMAIN_RESOURCE, so the documented permission does not
-  // open it. Re-include once AM-7478 is fixed — asserting today's behaviour would enshrine it.
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources': 'AM-7478: guarded by the wrong permission',
 };
 
 /** The permission a route really enforces, preferring a confirmed override over the spec. */
