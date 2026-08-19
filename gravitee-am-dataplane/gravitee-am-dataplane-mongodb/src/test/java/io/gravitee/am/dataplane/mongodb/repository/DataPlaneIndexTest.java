@@ -143,6 +143,33 @@ public class DataPlaneIndexTest {
         assertLookupIndexes("scope_approvals", expected);
     }
 
+    @Test
+    public void theUserStoreCarriesItsUniqueIndex() throws Exception {
+        awaitIndex("users", "rt1ri1u1s1_unique");
+
+        Document index = indexesByName("users").get("rt1ri1u1s1_unique");
+        assertKeyEquals("users.rt1ri1u1s1_unique",
+                referenceTypeFirst().append("username", 1).append("source", 1),
+                index.get("key", Document.class));
+        assertEquals("users.rt1ri1u1s1_unique is no longer unique - duplicate users can now be stored",
+                Boolean.TRUE, index.getBoolean("unique"));
+    }
+
+    @Test
+    public void theUserStoreCarriesItsLookupIndexes() throws Exception {
+        Map<String, Document> expected = new LinkedHashMap<>();
+        expected.put("rt1ri1e1", referenceTypeFirst().append("email", 1));
+        expected.put("rt1ri1ae1", referenceTypeFirst().append("additionalInformation.email", 1));
+        expected.put("rt1ri1d1", referenceTypeFirst().append("displayName", 1));
+        expected.put("rt1ri1f1", referenceTypeFirst().append("firstName", 1));
+        expected.put("rt1ri1l1", referenceTypeFirst().append("lastName", 1));
+        expected.put("rt1ri1ext1s1", referenceTypeFirst().append("externalId", 1).append("source", 1));
+        expected.put("rt1ri1iu1ip1", referenceTypeFirst()
+                .append("identities.username", 1).append("identities.providerId", 1));
+
+        assertLookupIndexes("users", expected);
+    }
+
     // ---------------------------------------------------------------- helpers
 
     /** Asserts that a collection carries exactly the lookup indexes expected, keys compared in order. */

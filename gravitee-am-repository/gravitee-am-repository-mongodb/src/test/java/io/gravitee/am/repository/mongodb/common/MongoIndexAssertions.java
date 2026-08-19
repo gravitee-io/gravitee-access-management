@@ -20,7 +20,10 @@ import io.reactivex.rxjava3.core.Flowable;
 import org.bson.Document;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,6 +88,27 @@ public final class MongoIndexAssertions {
         assertThat(index.getBoolean("unique", false))
                 .as("index '%s' of '%s' is no longer unique - duplicates can now be stored", indexName, collection)
                 .isTrue();
+    }
+
+    /** Asserts that no two indexes of {@code collection} are built over the same key. */
+    public static void assertNoDuplicateIndexKeys(MongoDatabase database, String collection) {
+        Map<String, String> byKey = new LinkedHashMap<>();
+        for (Document index : listIndexes(database, collection)) {
+            String key = orderedKey(index);
+            String previous = byKey.putIfAbsent(key, index.getString("name"));
+            assertThat(previous)
+                    .as("indexes '%s' and '%s' of '%s' are both built on %s - MongoDB refuses both, and the collection ends up with no indexes at all",
+                            previous, index.getString("name"), collection, key)
+                    .isNull();
+        }
+    }
+
+    /** Keys as an ordered rendering: for a compound index the field order is the semantics. */
+    private static String orderedKey(Document index) {
+        Document key = index.get("key", Document.class);
+        return key.entrySet().stream()
+                .map(entry -> entry.getKey() + ":" + entry.getValue())
+                .collect(Collectors.joining(","));
     }
 
     private static Document awaitIndex(MongoDatabase database, String collection, String indexName, String consequence) {

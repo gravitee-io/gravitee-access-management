@@ -652,14 +652,12 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
     private void createOrUpdateIndex() {
         if (ensureIndexOnStart) {
             dropIndexes(usersCollection, UNUSED_INDEXES::contains)
-                    .doOnComplete(() -> {
-                        try {
-                            super.createIndex(usersCollection, Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
-                                    new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true)));
-                        } catch (Exception e) {
-                            log.error("An error has occurred while creating index {} with unique constraints", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE, e);
-                        }
-                    })
+                    .doOnError(error -> log.error("Unable to sweep the retired indexes of the organization_users collection", error))
+                    // a sweep that failed must not stop the current indexes from being declared
+                    .onErrorComplete()
+                    .doOnComplete(() -> super.createIndex(usersCollection,
+                            Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
+                                    new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true))))
                     .subscribe();
         }
     }

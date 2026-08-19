@@ -83,24 +83,20 @@ public final class MongoUtils {
                 );
     }
 
+    /**
+     * Declares the indexes {@code collection} should carry.
+     */
     public static void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
         if (ensure) {
             var indexesModel = indexes.entrySet()
                     .stream()
                     .map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true)))
                     .toList();
-            Completable.fromPublisher(collection.createIndexes(indexesModel))
-                    .retryWhen(th -> th
-                            .zipWith(Flowable.range(1, 3), (error, attempt) -> attempt) // 3 attempts
-                            .flatMap(attempt -> {
-                                log.debug("Retrying index creation for {}, attempt={}/3", collection.getNamespace().getCollectionName(), attempt);
-                                return Flowable.timer(attempt, TimeUnit.SECONDS); // delayed backoff
-                            }))
+            MongoIndexManager.ensureIndexes(collection, indexesModel)
                     .subscribe(
-                            () -> log.debug("{} indexes created", collection.getNamespace().getCollectionName()),
+                            () -> log.debug("Indexes ensured for {}", collection.getNamespace().getCollectionName()),
                             throwable -> log.error("Error occurred during indexes creation for {}", collection.getNamespace().getCollectionName(), throwable)
                     );
-
         }
     }
 
