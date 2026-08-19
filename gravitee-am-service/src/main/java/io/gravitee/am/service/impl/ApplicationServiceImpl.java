@@ -821,7 +821,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                     var mapperValidation = tokenExchangeClaimsMapperValidator.validate(tokenExchangeClaimsMapperOf(toPatch));
                     if (mapperValidation.isInvalid()) {
-                        return Single.error(new InvalidParameterException("Invalid token exchange claim mappings: " + mapperValidation.invalidClaims()));
+                        return Single.error(new InvalidParameterException(mapperValidation.describe()));
                     }
 
                     final AccountSettings accountSettings = toPatch.getSettings() != null ? toPatch.getSettings().getAccount() : null;

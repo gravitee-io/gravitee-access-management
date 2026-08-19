@@ -79,7 +79,7 @@ public class TokenExchangeSettingsValidatorImpl implements TokenExchangeSettings
         if (oauthSettings != null) {
             var mapperValidation = claimsMapperValidator.validate(oauthSettings.getClaimsMapper());
             if (mapperValidation.isInvalid()) {
-                return error("Invalid token exchange claim mappings: " + mapperValidation.invalidClaims());
+                return error(mapperValidation.describe());
             }
         }
 

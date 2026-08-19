@@ -51,7 +51,8 @@ class TokenExchangeClaimsMapperValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"gis", "sub", "iss", "aud", "exp", "iat", "nbf", "jti", "act", "client_id", "scope"})
+    @ValueSource(strings = {"gis", "sub", "iss", "aud", "exp", "iat", "nbf", "jti", "act", "client_id", "scope",
+            "auth_time", "nonce", "acr", "amr", "azp", "client_profile", "sub_profile"})
     void shouldRejectReservedTargetClaim(String reserved) {
         var result = validator.validate(List.of(mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", reserved)));
 
@@ -82,6 +83,60 @@ class TokenExchangeClaimsMapperValidatorTest {
         var result = validator.validate(List.of(mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", null)));
 
         assertThat(result.isInvalid()).isFalse();
+    }
+
+    @Test
+    void shouldIgnoreMappingWithBlankTargetClaim() {
+        var result = validator.validate(List.of(mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "   ")));
+
+        assertThat(result.isInvalid()).isFalse();
+        assertThat(result.invalidClaims()).isEmpty();
+    }
+
+    @Test
+    void shouldRejectTwoMappingsOntoTheSameTargetClaim() {
+        var result = validator.validate(List.of(
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id"),
+                mapping(TokenExchangeClaimSource.ACTOR_TOKEN, "agent_id", "business_id")));
+
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.duplicateClaims()).containsExactly("business_id");
+        assertThat(result.invalidClaims()).isEmpty();
+    }
+
+    @Test
+    void shouldReportADuplicatedTargetClaimOnce() {
+        var result = validator.validate(List.of(
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "business_id"),
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "b", "business_id"),
+                mapping(TokenExchangeClaimSource.ACTOR_TOKEN, "c", "business_id")));
+
+        assertThat(result.duplicateClaims()).containsExactly("business_id");
+    }
+
+    @Test
+    void shouldTreatTargetClaimsDifferingOnlyByWhitespaceAsDuplicates() {
+        var result = validator.validate(List.of(
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "business_id"),
+                mapping(TokenExchangeClaimSource.ACTOR_TOKEN, "b", "  business_id  ")));
+
+        assertThat(result.duplicateClaims()).containsExactly("business_id");
+    }
+
+    @Test
+    void shouldDescribeAReservedTargetClaim() {
+        var result = validator.validate(List.of(mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "sub")));
+
+        assertThat(result.describe()).isEqualTo("Invalid token exchange claim mappings: [sub]");
+    }
+
+    @Test
+    void shouldDescribeADuplicateTargetClaim() {
+        var result = validator.validate(List.of(
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "business_id"),
+                mapping(TokenExchangeClaimSource.ACTOR_TOKEN, "b", "business_id")));
+
+        assertThat(result.describe()).isEqualTo("Duplicate token exchange claim mappings: [business_id]");
     }
 
     private static TokenExchangeClaimMapping mapping(TokenExchangeClaimSource source, String sourceClaim, String tokenClaim) {

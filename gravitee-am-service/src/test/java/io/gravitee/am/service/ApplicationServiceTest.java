@@ -42,6 +42,9 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.TokenExchangeClaimMapping;
+import io.gravitee.am.model.application.TokenExchangeClaimSource;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -191,15 +194,14 @@ public class ApplicationServiceTest {
     @Spy
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
-    @Mock
-    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator;
+    @Spy
+    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator();
 
     private final static Domain DOMAIN = new Domain("domain1");
 
     @Before
     public void setUp() throws Exception {
         when(oAuthClientUniquenessValidator.checkClientIdUniqueness(any(), any())).thenReturn(Completable.complete());
-        when(tokenExchangeClaimsMapperValidator.validate(any())).thenReturn(TokenExchangeClaimsMapperValidator.ValidationResult.valid());
     }
 
     @Test
@@ -1022,6 +1024,81 @@ public class ApplicationServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(err -> err instanceof InvalidParameterException);
+    }
+
+    @Test
+    public void shouldInvalidatePatch_claims_mapper_reserved_target() {
+        Application toPatch = appWithClaimsMapper(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "sub"));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimsMapperPatch(), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidParameterException
+                && err.getMessage().equals("Invalid token exchange claim mappings: [sub]"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_claims_mapper_agent_identity_target() {
+        Application toPatch = appWithClaimsMapper(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "client_profile"));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimsMapperPatch(), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidParameterException
+                && err.getMessage().equals("Invalid token exchange claim mappings: [client_profile]"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_claims_mapper_duplicate_target() {
+        Application toPatch = appWithClaimsMapper(
+                claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id"),
+                claimMapping(TokenExchangeClaimSource.ACTOR_TOKEN, "agent_id", "business_id"));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimsMapperPatch(), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidParameterException
+                && err.getMessage().equals("Duplicate token exchange claim mappings: [business_id]"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    private static PatchApplication claimsMapperPatch() {
+        PatchApplication patchClient = new PatchApplication();
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
+        patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
+        patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+        return patchClient;
+    }
+
+    private static Application appWithClaimsMapper(TokenExchangeClaimMapping... mappings) {
+        TokenExchangeOAuthSettings tokenExchangeOAuthSettings = new TokenExchangeOAuthSettings();
+        tokenExchangeOAuthSettings.setInherited(false);
+        tokenExchangeOAuthSettings.setClaimsMapper(List.of(mappings));
+
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setTokenExchangeOAuthSettings(tokenExchangeOAuthSettings);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setSettings(settings);
+        return toPatch;
+    }
+
+    private static TokenExchangeClaimMapping claimMapping(TokenExchangeClaimSource source, String sourceClaim, String tokenClaim) {
+        TokenExchangeClaimMapping mapping = new TokenExchangeClaimMapping();
+        mapping.setSource(source);
+        mapping.setSourceClaim(sourceClaim);
+        mapping.setTokenClaim(tokenClaim);
+        return mapping;
     }
 
     private Optional<Set<PatchApplicationIdentityProvider>> getApplicationIdentityProviders() {

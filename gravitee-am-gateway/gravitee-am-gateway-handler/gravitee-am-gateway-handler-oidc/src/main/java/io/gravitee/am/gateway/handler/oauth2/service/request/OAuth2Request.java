@@ -227,6 +227,7 @@ public class OAuth2Request extends BaseRequest {
         this.issuedTokenType = other.issuedTokenType;
         this.exchangeExpiration = other.exchangeExpiration;
         this.actClaim = other.actClaim;
+        this.tokenExchangeMappedClaims = other.tokenExchangeMappedClaims;
         this.delegation = other.delegation;
         this.subjectTokenId = other.subjectTokenId;
         this.subjectTokenType = other.subjectTokenType;

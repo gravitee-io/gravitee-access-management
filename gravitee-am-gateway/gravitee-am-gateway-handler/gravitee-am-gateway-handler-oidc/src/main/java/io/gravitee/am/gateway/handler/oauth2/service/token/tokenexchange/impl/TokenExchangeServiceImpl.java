@@ -337,15 +337,27 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         Map<String, Object> mappedClaims = new HashMap<>();
         for (TokenExchangeClaimMapping mapping : mappings) {
             ValidatedToken source = mapping.getSource() == TokenExchangeClaimSource.ACTOR_TOKEN ? actorToken : subjectToken;
-            if (source == null || mapping.getSourceClaim() == null || mapping.getTokenClaim() == null) {
+            // trim to the same form the management API validated, so a padded name cannot reach the
+            // issued token under a spelling the reserved-claim check never saw
+            String sourceClaim = trimmedOrNull(mapping.getSourceClaim());
+            String tokenClaim = trimmedOrNull(mapping.getTokenClaim());
+            if (source == null || sourceClaim == null || tokenClaim == null) {
                 continue;
             }
-            Object value = source.getClaim(mapping.getSourceClaim());
+            Object value = source.getClaim(sourceClaim);
             if (value != null) {
-                mappedClaims.put(mapping.getTokenClaim(), value);
+                mappedClaims.put(tokenClaim, value);
             }
         }
         return mappedClaims;
+    }
+
+    private static String trimmedOrNull(String claimName) {
+        if (claimName == null) {
+            return null;
+        }
+        String trimmed = claimName.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String extractSubProfile(ValidatedToken token) {
