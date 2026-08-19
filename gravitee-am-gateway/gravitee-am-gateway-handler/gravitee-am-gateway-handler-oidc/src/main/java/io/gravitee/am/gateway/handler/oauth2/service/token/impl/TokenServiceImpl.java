@@ -330,13 +330,9 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
-        // store access token
-        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request, user));
-        // store refresh token (if exists)
-        if (refreshToken != null) {
-            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request)));
-        }
-        return persistAccessToken;
+        return tokenManager.storeTokens(
+                convert(accessToken, refreshToken, oAuth2Request, user),
+                refreshToken != null ? convert(refreshToken, user, oAuth2Request) : null);
     }
 
     private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
