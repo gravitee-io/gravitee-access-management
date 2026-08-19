@@ -240,9 +240,9 @@ export class GrantFlowsComponent implements OnInit {
     // an override replaces the domain configuration wholesale, so seed it from the domain rather
     // than presenting an empty table that reads as "nothing configured yet"
     const current = this.oauthSettings.tokenExchangeOAuthSettings;
-    // claimsMapper is undefined until the application overrides for the first time, so this seeds
+    // claimMappings is undefined until the application overrides for the first time, so this seeds
     // the domain configuration once and leaves later edits alone
-    const seedFromDomain = !event.checked && current?.claimsMapper === undefined;
+    const seedFromDomain = !event.checked && current?.claimMappings === undefined;
     const domainSettings = this.domainStore.current?.tokenExchangeSettings?.tokenExchangeOAuthSettings;
     this.oauthSettings.tokenExchangeOAuthSettings = {
       ...current,
@@ -250,7 +250,7 @@ export class GrantFlowsComponent implements OnInit {
       ...(seedFromDomain
         ? {
             scopeHandling: domainSettings?.scopeHandling ?? current?.scopeHandling ?? this.DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
-            claimsMapper: [...(domainSettings?.claimsMapper ?? [])],
+            claimMappings: [...(domainSettings?.claimMappings ?? [])],
           }
         : {}),
     };
@@ -265,8 +265,8 @@ export class GrantFlowsComponent implements OnInit {
     this.modelChanged();
   }
 
-  get tokenExchangeClaimsMapper(): TokenExchangeClaimMapping[] {
-    return this.oauthSettings.tokenExchangeOAuthSettings?.claimsMapper ?? [];
+  get tokenExchangeClaimMappings(): TokenExchangeClaimMapping[] {
+    return this.oauthSettings.tokenExchangeOAuthSettings?.claimMappings ?? [];
   }
 
   isNewClaimMappingValid(): boolean {
@@ -281,7 +281,7 @@ export class GrantFlowsComponent implements OnInit {
     if (RESERVED_TOKEN_CLAIMS.includes(target)) {
       return `"${target}" is reserved by Access Management and cannot be a target claim.`;
     }
-    if (this.tokenExchangeClaimsMapper.some((mapping) => mapping.tokenClaim === target)) {
+    if (this.tokenExchangeClaimMappings.some((mapping) => mapping.tokenClaim === target)) {
       return `"${target}" is already mapped.`;
     }
     return null;
@@ -290,8 +290,8 @@ export class GrantFlowsComponent implements OnInit {
   addClaimMapping() {
     this.oauthSettings.tokenExchangeOAuthSettings = {
       ...this.oauthSettings.tokenExchangeOAuthSettings,
-      claimsMapper: [
-        ...this.tokenExchangeClaimsMapper,
+      claimMappings: [
+        ...this.tokenExchangeClaimMappings,
         {
           source: this.newClaimMapping.source,
           sourceClaim: this.newClaimMapping.sourceClaim.trim(),
@@ -306,7 +306,7 @@ export class GrantFlowsComponent implements OnInit {
   removeClaimMapping(index: number) {
     this.oauthSettings.tokenExchangeOAuthSettings = {
       ...this.oauthSettings.tokenExchangeOAuthSettings,
-      claimsMapper: this.tokenExchangeClaimsMapper.filter((_, i) => i !== index),
+      claimMappings: this.tokenExchangeClaimMappings.filter((_, i) => i !== index),
     };
     this.modelChanged();
   }

@@ -109,12 +109,12 @@
           </mat-form-field>
 
           <div class="gv-form-section-title" style="margin-top: 16px">
-            <h5>Claims Mapper</h5>
+            <h5>Claim Mappings</h5>
             <small>Copy a claim from the validated subject or actor token onto the issued token.</small>
             <mat-divider></mat-divider>
           </div>
 
-          <table mat-table [dataSource]="tokenExchangeClaimsMapper" *ngIf="tokenExchangeClaimsMapper.length > 0">
+          <table mat-table [dataSource]="tokenExchangeClaimMappings" *ngIf="tokenExchangeClaimMappings.length > 0">
             <ng-container matColumnDef="source">
               <th mat-header-cell *matHeaderCellDef>Source token</th>
               <td mat-cell *matCellDef="let mapping">{{ mapping.source === 'actor_token' ? 'Actor token' : 'Subject token' }}</td>

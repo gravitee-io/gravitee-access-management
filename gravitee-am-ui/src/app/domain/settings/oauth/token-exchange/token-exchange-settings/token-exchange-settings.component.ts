@@ -123,7 +123,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
     normalizedSettings.tokenExchangeOAuthSettings = {
       scopeHandling: tokenExchangeSettings.tokenExchangeOAuthSettings?.scopeHandling ?? DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
       inherited: false,
-      claimsMapper: tokenExchangeSettings.tokenExchangeOAuthSettings?.claimsMapper ?? [],
+      claimMappings: tokenExchangeSettings.tokenExchangeOAuthSettings?.claimMappings ?? [],
     };
 
     this.domain.tokenExchangeSettings = normalizedSettings;
@@ -139,7 +139,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowDelegation: false,
       maxDelegationDepth: this.defaultDelegationDepth,
       trustedIssuers: [],
-      tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false, claimsMapper: [] },
+      tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false, claimMappings: [] },
     };
   }
 
@@ -215,8 +215,8 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
     this.formChanged = true;
   }
 
-  get claimsMapper(): TokenExchangeClaimMapping[] {
-    return this.domain.tokenExchangeSettings?.tokenExchangeOAuthSettings?.claimsMapper ?? [];
+  get claimMappings(): TokenExchangeClaimMapping[] {
+    return this.domain.tokenExchangeSettings?.tokenExchangeOAuthSettings?.claimMappings ?? [];
   }
 
   isNewClaimMappingValid(): boolean {
@@ -225,8 +225,8 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
 
   addClaimMapping(): void {
     const settings = this.domain.tokenExchangeSettings.tokenExchangeOAuthSettings;
-    settings.claimsMapper = [
-      ...(settings.claimsMapper ?? []),
+    settings.claimMappings = [
+      ...(settings.claimMappings ?? []),
       {
         source: this.newClaimMapping.source,
         sourceClaim: this.newClaimMapping.sourceClaim.trim(),
@@ -239,7 +239,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
 
   removeClaimMapping(index: number): void {
     const settings = this.domain.tokenExchangeSettings.tokenExchangeOAuthSettings;
-    settings.claimsMapper = settings.claimsMapper.filter((_, i) => i !== index);
+    settings.claimMappings = settings.claimMappings.filter((_, i) => i !== index);
     this.modelChanged();
   }
 

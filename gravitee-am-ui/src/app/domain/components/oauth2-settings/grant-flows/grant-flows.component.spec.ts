@@ -223,14 +223,14 @@ describe('GrantFlowsComponent', () => {
           enabled: true,
           tokenExchangeOAuthSettings: {
             scopeHandling: 'permissive',
-            claimsMapper: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }],
+            claimMappings: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }],
           },
         },
       };
 
       component.enableTokenExchangeInherit({ checked: false });
 
-      expect(component.oauthSettings.tokenExchangeOAuthSettings.claimsMapper).toEqual([
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.claimMappings).toEqual([
         { source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' },
       ]);
       expect(component.oauthSettings.tokenExchangeOAuthSettings.scopeHandling).toBe('permissive');
@@ -240,19 +240,19 @@ describe('GrantFlowsComponent', () => {
       component.oauthSettings.tokenExchangeOAuthSettings = {
         inherited: false,
         scopeHandling: 'downscoping',
-        claimsMapper: [{ source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'agent' }],
+        claimMappings: [{ source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'agent' }],
       };
       mockDomainStoreService.current = {
         ...defaultDomainCurrent(),
         tokenExchangeSettings: {
           enabled: true,
-          tokenExchangeOAuthSettings: { claimsMapper: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }] },
+          tokenExchangeOAuthSettings: { claimMappings: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }] },
         },
       };
 
       component.enableTokenExchangeInherit({ checked: false });
 
-      expect(component.oauthSettings.tokenExchangeOAuthSettings.claimsMapper).toEqual([
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.claimMappings).toEqual([
         { source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'agent' },
       ]);
     });
@@ -262,7 +262,7 @@ describe('GrantFlowsComponent', () => {
 
       component.addClaimMapping();
 
-      expect(component.tokenExchangeClaimsMapper).toEqual([{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }]);
+      expect(component.tokenExchangeClaimMappings).toEqual([{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }]);
       expect(component.newClaimMapping).toEqual({ source: 'subject_token', sourceClaim: '', tokenClaim: '' });
     });
 
@@ -270,7 +270,7 @@ describe('GrantFlowsComponent', () => {
       component.oauthSettings.tokenExchangeOAuthSettings = {
         inherited: false,
         scopeHandling: 'downscoping',
-        claimsMapper: [
+        claimMappings: [
           { source: 'subject_token', sourceClaim: 'a', tokenClaim: 'one' },
           { source: 'subject_token', sourceClaim: 'b', tokenClaim: 'two' },
         ],
@@ -278,7 +278,7 @@ describe('GrantFlowsComponent', () => {
 
       component.removeClaimMapping(0);
 
-      expect(component.tokenExchangeClaimsMapper).toEqual([{ source: 'subject_token', sourceClaim: 'b', tokenClaim: 'two' }]);
+      expect(component.tokenExchangeClaimMappings).toEqual([{ source: 'subject_token', sourceClaim: 'b', tokenClaim: 'two' }]);
     });
 
     it('isNewClaimMappingValid rejects a reserved target claim', () => {
@@ -292,7 +292,7 @@ describe('GrantFlowsComponent', () => {
       component.oauthSettings.tokenExchangeOAuthSettings = {
         inherited: false,
         scopeHandling: 'downscoping',
-        claimsMapper: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }],
+        claimMappings: [{ source: 'subject_token', sourceClaim: 'tenant', tokenClaim: 'business_id' }],
       };
       component.newClaimMapping = { source: 'actor_token', sourceClaim: 'agent_id', tokenClaim: 'business_id' };
 

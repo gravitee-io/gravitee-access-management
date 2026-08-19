@@ -29,7 +29,7 @@ export interface TokenExchangeClaimMapping {
   tokenClaim: string;
 }
 
-/** Target claim names the management API rejects, mirroring TokenExchangeClaimsMapperValidator. */
+/** Target claim names the management API rejects, mirroring TokenExchangeClaimMappingsValidator. */
 export const RESERVED_TOKEN_CLAIMS: readonly string[] = [
   'iss',
   'sub',
@@ -70,7 +70,7 @@ export interface TokenExchangeOAuthSettings {
   inherited: boolean;
   scopeHandling: TokenExchangeScopeHandling;
   /** Claims copied from the subject or actor token onto the issued token. */
-  claimsMapper?: TokenExchangeClaimMapping[];
+  claimMappings?: TokenExchangeClaimMapping[];
 }
 
 export const DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING: TokenExchangeScopeHandling = 'downscoping';
