@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TokenExchangeClaimsMapperValidatorTest {
 
-    private final TokenExchangeClaimsMapperValidator validator = new TokenExchangeClaimsMapperValidator();
+    private final TokenExchangeClaimsMapperValidator validator = new TokenExchangeClaimsMapperValidator(20);
 
     @Test
     void shouldAcceptNullMappings() {
@@ -139,6 +139,30 @@ class TokenExchangeClaimsMapperValidatorTest {
                 mapping(TokenExchangeClaimSource.ACTOR_TOKEN, "b", "business_id")));
 
         assertThat(result.describe()).isEqualTo("Duplicate token exchange claim mappings: [business_id]");
+    }
+
+    @Test
+    void shouldRejectMoreMappingsThanTheConfiguredMaximum() {
+        var validatorWithSmallMax = new TokenExchangeClaimsMapperValidator(2);
+
+        var result = validatorWithSmallMax.validate(List.of(
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "one"),
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "b", "two"),
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "c", "three")));
+
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.describe()).isEqualTo("Maximum number of token exchange claim mappings exceeded (max: 2)");
+    }
+
+    @Test
+    void shouldAcceptExactlyTheConfiguredMaximum() {
+        var validatorWithSmallMax = new TokenExchangeClaimsMapperValidator(2);
+
+        var result = validatorWithSmallMax.validate(List.of(
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "one"),
+                mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "b", "two")));
+
+        assertThat(result.isInvalid()).isFalse();
     }
 
     private static TokenExchangeClaimMapping mapping(TokenExchangeClaimSource source, String sourceClaim, String tokenClaim) {

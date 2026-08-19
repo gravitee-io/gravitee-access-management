@@ -44,7 +44,7 @@ class TokenExchangeSettingsValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new TokenExchangeSettingsValidatorImpl(5, new TokenExchangeClaimsMapperValidator());
+        validator = new TokenExchangeSettingsValidatorImpl(5, new TokenExchangeClaimsMapperValidator(20));
     }
 
     // --- Disabled / null settings ---

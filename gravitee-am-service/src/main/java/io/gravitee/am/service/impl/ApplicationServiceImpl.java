@@ -814,16 +814,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                         toPatch.getSettings().getOauth().setClientSecret(null);
                     }
 
-                    ValidationResult claimValidation = customClaimsValidator.validate(toPatch);
-                    if (claimValidation.isInvalid()) {
-                        return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
-                    }
-
-                    var mapperValidation = tokenExchangeClaimsMapperValidator.validate(tokenExchangeClaimsMapperOf(toPatch));
-                    if (mapperValidation.isInvalid()) {
-                        return Single.error(new InvalidParameterException(mapperValidation.describe()));
-                    }
-
                     final AccountSettings accountSettings = toPatch.getSettings() != null ? toPatch.getSettings().getAccount() : null;
                     if (accountSettings != null && Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
@@ -1157,7 +1147,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (app.getSettings().getOauth() == null) {
                         return Single.just(app);
                     }
-                    return GrantTypeUtils.validateGrantTypes(app)
+                    return validateTokenCustomClaims(app)
+                            .flatMap(this::validateTokenExchangeClaimsMapper)
+                            .flatMap(GrantTypeUtils::validateGrantTypes)
                             .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
                             .flatMap(this::validateScopes)
                             .flatMap(this::validateTokenEndpointAuthMethod)
@@ -1167,6 +1159,20 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(this::validateAgentSettings)
                             .flatMap(this::validateSpiffeSettings);
                 });
+    }
+
+    private Single<Application> validateTokenCustomClaims(Application application) {
+        ValidationResult claimValidation = customClaimsValidator.validate(application);
+        return claimValidation.isInvalid()
+                ? Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()))
+                : Single.just(application);
+    }
+
+    private Single<Application> validateTokenExchangeClaimsMapper(Application application) {
+        var mapperValidation = tokenExchangeClaimsMapperValidator.validate(tokenExchangeClaimsMapperOf(application));
+        return mapperValidation.isInvalid()
+                ? Single.error(new InvalidParameterException(mapperValidation.describe()))
+                : Single.just(application);
     }
 
     /**

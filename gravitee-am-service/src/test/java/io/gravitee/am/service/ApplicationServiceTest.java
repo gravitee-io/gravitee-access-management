@@ -195,7 +195,7 @@ public class ApplicationServiceTest {
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
     @Spy
-    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator();
+    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator(20);
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -1064,6 +1064,22 @@ public class ApplicationServiceTest {
 
         testObserver.assertError(err -> err instanceof InvalidParameterException
                 && err.getMessage().equals("Duplicate token exchange claim mappings: [business_id]"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidateUpdate_claims_mapper_reserved_target() {
+        Application toUpdate = appWithClaimsMapper(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "cnf"));
+        toUpdate.getSettings().getOauth().setGrantTypes(List.of("implicit"));
+        toUpdate.getSettings().getOauth().setResponseTypes(List.of("token"));
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.update(toUpdate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidParameterException
+                && err.getMessage().equals("Invalid token exchange claim mappings: [cnf]"));
         verify(applicationRepository, never()).update(any(Application.class));
     }
 

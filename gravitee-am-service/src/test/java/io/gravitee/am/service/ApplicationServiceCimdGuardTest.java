@@ -119,7 +119,7 @@ public class ApplicationServiceCimdGuardTest {
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
     @Spy
-    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator();
+    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator(20);
 
     @Before
     public void setUp() {

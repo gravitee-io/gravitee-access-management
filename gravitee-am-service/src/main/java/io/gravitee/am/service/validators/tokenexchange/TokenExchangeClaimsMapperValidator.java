@@ -18,6 +18,7 @@ package io.gravitee.am.service.validators.tokenexchange;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.model.application.TokenExchangeClaimMapping;
 import io.gravitee.am.service.validators.Validator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -77,17 +78,26 @@ public class TokenExchangeClaimsMapperValidator implements Validator<List<TokenE
         return Set.copyOf(reserved);
     }
 
-    public record ValidationResult(List<String> invalidClaims, List<String> duplicateClaims) {
+    private final int maxCount;
+
+    public TokenExchangeClaimsMapperValidator(@Value("${domain.tokenExchange.claimsMapper.maxCount:20}") int maxCount) {
+        this.maxCount = maxCount;
+    }
+
+    public record ValidationResult(List<String> invalidClaims, List<String> duplicateClaims, Integer exceededMaxCount) {
 
         public boolean isInvalid() {
-            return !invalidClaims.isEmpty() || !duplicateClaims.isEmpty();
+            return !invalidClaims.isEmpty() || !duplicateClaims.isEmpty() || exceededMaxCount != null;
         }
 
         public static ValidationResult valid() {
-            return new ValidationResult(List.of(), List.of());
+            return new ValidationResult(List.of(), List.of(), null);
         }
 
         public String describe() {
+            if (exceededMaxCount != null) {
+                return "Maximum number of token exchange claim mappings exceeded (max: " + exceededMaxCount + ")";
+            }
             return invalidClaims.isEmpty()
                     ? "Duplicate token exchange claim mappings: " + duplicateClaims
                     : "Invalid token exchange claim mappings: " + invalidClaims;
@@ -98,6 +108,9 @@ public class TokenExchangeClaimsMapperValidator implements Validator<List<TokenE
     public ValidationResult validate(List<TokenExchangeClaimMapping> mappings) {
         if (mappings == null || mappings.isEmpty()) {
             return ValidationResult.valid();
+        }
+        if (mappings.size() > maxCount) {
+            return new ValidationResult(List.of(), List.of(), maxCount);
         }
 
         // a mapping without a target claim is ignored rather than rejected, matching the gateway,
@@ -119,6 +132,6 @@ public class TokenExchangeClaimsMapperValidator implements Validator<List<TokenE
                 .distinct()
                 .toList();
 
-        return new ValidationResult(invalidClaims, duplicateClaims);
+        return new ValidationResult(invalidClaims, duplicateClaims, null);
     }
 }
