@@ -18,7 +18,6 @@ import { afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { getDomainApi } from '@management-commands/service/utils';
 import { safeDeleteCloudDomains } from '@cloud-commands/domain-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { jira } from '@specs-utils/jira';
 import { setup } from '../test-fixture';
 import { CloudSharedFixture, setupCloudSharedFixture } from './fixtures/cloud-shared-fixture';
 
@@ -42,7 +41,7 @@ describe('AM - Cloud - data plane resolution on domain creation', () => {
     await safeDeleteCloudDomains(shared, createdDomainIds.splice(0));
   });
 
-  it(jira`should resolve the environment's data plane when dataPlaneId is omitted ${'AM-7262'}`, async () => {
+  it("should resolve the environment's data plane when dataPlaneId is omitted", async () => {
     const domain = await getDomainApi(shared.accessToken).createDomain({
       organizationId: shared.organizationId,
       environmentId: shared.environmentId,
@@ -53,7 +52,7 @@ describe('AM - Cloud - data plane resolution on domain creation', () => {
     expect(domain.dataPlaneId).toEqual(shared.dataPlaneId);
   });
 
-  it(jira`should accept the environment's data plane when supplied explicitly ${'AM-7262'}`, async () => {
+  it("should accept the environment's data plane when supplied explicitly", async () => {
     const domain = await getDomainApi(shared.accessToken).createDomain({
       organizationId: shared.organizationId,
       environmentId: shared.environmentId,
@@ -64,7 +63,7 @@ describe('AM - Cloud - data plane resolution on domain creation', () => {
     expect(domain.dataPlaneId).toEqual(shared.dataPlaneId);
   });
 
-  it(jira`should reject a data plane that is not linked to the environment ${'AM-7262'}`, async () => {
+  it('should reject a data plane that is not linked to the environment', async () => {
     const created = getDomainApi(shared.accessToken).createDomain({
       organizationId: shared.organizationId,
       environmentId: shared.environmentId,

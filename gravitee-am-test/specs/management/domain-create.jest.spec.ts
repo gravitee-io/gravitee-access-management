@@ -55,7 +55,7 @@ describe('Domain Create', () => {
     expect(fetched.description).toEqual(description);
   });
 
-  it(jira`should default dataPlaneId when omitted on a standalone stack ${'AM-7262'}`, async () => {
+  it('should default dataPlaneId when omitted on a standalone stack', async () => {
     const name = uniqueName('domain-create-nodp', true);
 
     // Bypass the helper: send NewDomain without dataPlaneId at all.
@@ -71,7 +71,7 @@ describe('Domain Create', () => {
     expect(created.dataPlaneId).toBe('default');
   });
 
-  it(jira`should reject an unknown dataPlaneId ${'AM-7262'}`, async () => {
+  it('should reject an unknown dataPlaneId', async () => {
     const name = uniqueName('domain-create-baddp', true);
 
     let status: number | undefined;
