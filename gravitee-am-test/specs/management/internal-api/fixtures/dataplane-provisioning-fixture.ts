@@ -33,13 +33,15 @@ export const DATABASE_NAME = 'gravitee-am-e2e-dataplane';
 
 /**
  * The store as the management API reaches it, which is a docker service name when it runs in the
- * stack and localhost when it is run natively against a standalone container. Only the checks that
- * expect a store to answer care, but they all read the same value so a definition cannot be half
- * reachable.
+ * stack and localhost when it is run natively, so it comes from the setup files' AM_INTERNAL_* pair
+ * falling back to the runner's view, same as idps-commands.ts and the cloud fixture. Only the checks
+ * that expect a store to answer care, but they all read the same value so a definition cannot be half
+ * reachable. The payloads take a host and port rather than a uri, hence the parse.
  */
-const MONGO_HOST = process.env.AM_DATAPLANE_MONGO_HOST ?? 'mongodb';
-const MONGO_PORT = 27017;
-const JDBC_HOST = process.env.AM_DATAPLANE_JDBC_HOST ?? 'postgres';
+const mongoUri = new URL(process.env.AM_INTERNAL_MONGODB_URI ?? process.env.AM_MONGODB_URI);
+const MONGO_HOST = mongoUri.hostname;
+const MONGO_PORT = Number(mongoUri.port);
+const JDBC_HOST = process.env.AM_INTERNAL_POSTGRES_HOST ?? process.env.AM_POSTGRES_HOST;
 const JDBC_PORT = 5432;
 
 export const MONGO_SUMMARY = { database: DATABASE_NAME, hosts: [`${MONGO_HOST}:${MONGO_PORT}`] };
@@ -135,7 +137,7 @@ export function unreachablePayload(id: string): NewDataPlane {
         configuration: {
           jdbc: {
             driver: 'postgresql',
-            host: 'postgres',
+            host: JDBC_HOST,
             port: 9999,
             database: 'postgres',
             username: 'postgres',
@@ -147,7 +149,7 @@ export function unreachablePayload(id: string): NewDataPlane {
         id,
         name: 'E2E unreachable data plane',
         type: 'mongodb',
-        configuration: { mongodb: { dbname: 'gravitee-am', host: 'mongodb', port: 9999 } },
+        configuration: { mongodb: { dbname: 'gravitee-am', host: MONGO_HOST, port: 9999 } },
       };
 }
 
