@@ -98,61 +98,62 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theRemainingExpiringCollectionsCarryTheirLookupIndexes() throws Exception {
-        Map<String, Map<String, Document>> expected = new LinkedHashMap<>();
-
-        Map<String, Document> userActivities = new LinkedHashMap<>();
-        userActivities.put("rt1ri1", referenceTypeFirst());
-        userActivities.put("rt1ri1uat1uak1", referenceTypeFirst()
-                .append("userActivityType", 1).append("userActivityKey", 1));
-        userActivities.put("c1", new Document("createdAt", 1));
-        expected.put("user_activities", userActivities);
-
-        Map<String, Document> loginAttempts = new LinkedHashMap<>();
-        loginAttempts.put("d1c1u1", new Document("domain", 1).append("client", 1).append("username", 1));
-        expected.put("login_attempts", loginAttempts);
-
-        Map<String, Document> scopeApprovals = new LinkedHashMap<>();
-        scopeApprovals.put("t1", new Document("transactionId", 1));
-        scopeApprovals.put("d1u1", new Document("domain", 1).append("userId", 1));
-        scopeApprovals.put("d1c1u1s1", new Document("domain", 1)
-                .append("clientId", 1).append("userId", 1).append("scope", 1));
-        scopeApprovals.put("d1ue1us1", new Document("domain", 1)
-                .append("userExternalId", 1).append("userSource", 1));
-        scopeApprovals.put("d1c1ue1us1s1", new Document("domain", 1)
-                .append("clientId", 1).append("userExternalId", 1).append("userSource", 1).append("scope", 1));
-        expected.put("scope_approvals", scopeApprovals);
-
-        for (Map.Entry<String, Map<String, Document>> collection : expected.entrySet()) {
-            for (String name : collection.getValue().keySet()) {
-                awaitIndex(collection.getKey(), name);
-            }
-            Map<String, Document> actual = indexesByName(collection.getKey());
-            collection.getValue().forEach((name, key) ->
-                    assertKeyEquals(collection.getKey() + "." + name, key,
-                            actual.get(name).get("key", Document.class)));
-        }
-    }
-
-    @Test
     public void theDeviceStoreCarriesItsLookupIndexes() throws Exception {
-        Map<String, Document> expected = new HashMap<>();
+        Map<String, Document> expected = new LinkedHashMap<>();
         expected.put("ri1rt1", reference());
         expected.put("ri1rt1u1", reference().append("userId", 1));
         expected.put("ri1rt1c1d1", reference().append("client", 1).append("deviceId", 1));
         expected.put("ri1rt1c1u1di1d1", reference()
                 .append("client", 1).append("userId", 1).append("deviceIdentifierId", 1).append("deviceId", 1));
 
-        for (String name : expected.keySet()) {
-            awaitIndex("devices", name);
-        }
+        assertLookupIndexes("devices", expected);
+    }
 
-        Map<String, Document> actual = indexesByName("devices");
-        expected.forEach((name, key) ->
-                assertKeyEquals("devices." + name, key, actual.get(name).get("key", Document.class)));
+    @Test
+    public void theUserActivityStoreCarriesItsLookupIndexes() throws Exception {
+        Map<String, Document> expected = new LinkedHashMap<>();
+        expected.put("rt1ri1", referenceTypeFirst());
+        expected.put("rt1ri1uat1uak1", referenceTypeFirst()
+                .append("userActivityType", 1).append("userActivityKey", 1));
+        expected.put("c1", new Document("createdAt", 1));
+
+        assertLookupIndexes("user_activities", expected);
+    }
+
+    @Test
+    public void theLoginAttemptStoreCarriesItsLookupIndexes() throws Exception {
+        Map<String, Document> expected = new LinkedHashMap<>();
+        expected.put("d1c1u1", new Document("domain", 1).append("client", 1).append("username", 1));
+
+        assertLookupIndexes("login_attempts", expected);
+    }
+
+    @Test
+    public void theScopeApprovalStoreCarriesItsLookupIndexes() throws Exception {
+        Map<String, Document> expected = new LinkedHashMap<>();
+        expected.put("t1", new Document("transactionId", 1));
+        expected.put("d1u1", new Document("domain", 1).append("userId", 1));
+        expected.put("d1c1u1s1", new Document("domain", 1)
+                .append("clientId", 1).append("userId", 1).append("scope", 1));
+        expected.put("d1ue1us1", new Document("domain", 1)
+                .append("userExternalId", 1).append("userSource", 1));
+        expected.put("d1c1ue1us1s1", new Document("domain", 1)
+                .append("clientId", 1).append("userExternalId", 1).append("userSource", 1).append("scope", 1));
+
+        assertLookupIndexes("scope_approvals", expected);
     }
 
     // ---------------------------------------------------------------- helpers
+
+    /** Asserts that a collection carries exactly the lookup indexes expected, keys compared in order. */
+    private void assertLookupIndexes(String collection, Map<String, Document> expected) throws Exception {
+        for (String name : expected.keySet()) {
+            awaitIndex(collection, name);
+        }
+        Map<String, Document> actual = indexesByName(collection);
+        expected.forEach((name, key) ->
+                assertKeyEquals(collection + "." + name, key, actual.get(name).get("key", Document.class)));
+    }
 
     /** devices keys referenceId first. */
     private Document reference() {
