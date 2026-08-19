@@ -55,6 +55,11 @@ public class BackwardCompatibleTokenRepository implements TokenRepository {
     }
 
     @Override
+    public Completable create(AccessToken accessToken, RefreshToken refreshToken) {
+        return tokenRepository.create(accessToken, refreshToken);
+    }
+
+    @Override
     public Observable<AccessToken> findAccessTokenByAuthorizationCode(String authorizationCode) {
         return tokenRepository.findAccessTokenByAuthorizationCode(authorizationCode)
                 .switchIfEmpty(maintainLegacyTokenRepositories ? accessTokenRepository.findByAuthorizationCode(authorizationCode) : Observable.empty());
