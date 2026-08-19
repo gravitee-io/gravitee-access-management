@@ -66,7 +66,7 @@ export interface JwtBearerSubjectFixture {
 
 export interface JwtBearerSubjectFixtureConfig {
   /** Mappings set on the exchange application. Defaults to claim_id -> business_claim_id. */
-  claimsMapper?: ClaimMapping[];
+  claimMappings?: ClaimMapping[];
 }
 
 /**
@@ -74,7 +74,7 @@ export interface JwtBearerSubjectFixtureConfig {
  * extension grant turns it into a subject token, and token exchange issues the final token.
  */
 export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtureConfig = {}): Promise<JwtBearerSubjectFixture> => {
-  const { claimsMapper = [{ source: 'SUBJECT_TOKEN', sourceClaim: ASSERTION_CLAIM, tokenClaim: MAPPED_CLAIM }] } = config;
+  const { claimMappings = [{ source: 'SUBJECT_TOKEN', sourceClaim: ASSERTION_CLAIM, tokenClaim: MAPPED_CLAIM }] } = config;
 
   const accessToken = await requestAdminAccessToken();
   let domain: Domain | null = null;
@@ -104,7 +104,7 @@ export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtu
       configuration: JSON.stringify({
         publicKeyResolver: 'GIVEN_KEY',
         publicKey: ASSERTION_SECRET,
-        claimsMapper: [{ assertion_claim: ASSERTION_CLAIM, token_claim: ASSERTION_CLAIM }],
+        claimMappings: [{ assertion_claim: ASSERTION_CLAIM, token_claim: ASSERTION_CLAIM }],
       }),
     });
 
@@ -131,7 +131,7 @@ export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtu
         oauth: {
           grantTypes: [TOKEN_EXCHANGE_GRANT],
           scopeSettings: [{ scope: 'openid', defaultScope: true }],
-          tokenExchangeOAuthSettings: { inherited: false, claimsMapper },
+          tokenExchangeOAuthSettings: { inherited: false, claimMappings },
           // The declarative mapper and the expression language read the same subject token, so both
           // routes are covered against a subject token the JWT Bearer grant issued.
           tokenCustomClaims: [

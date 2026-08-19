@@ -46,7 +46,7 @@ type Placement = 'application' | 'domain';
 const PLACEMENTS: Placement[] = ['application', 'domain'];
 
 const mapperConfig = (placement: Placement, mappings: ClaimMapping[]) =>
-  placement === 'application' ? { claimsMapper: mappings } : { domainClaimsMapper: mappings };
+  placement === 'application' ? { claimMappings: mappings } : { domainClaimMappings: mappings };
 
 const fixtures: Record<Placement, { main: TokenExchangeFixture; precedence: TokenExchangeFixture }> = {} as any;
 
@@ -176,8 +176,8 @@ describe('Token Exchange claims mapper inheritance', () => {
       clientName: 'tx-mapper-override-empty-client',
       allowImpersonation: true,
       allowDelegation: false,
-      domainClaimsMapper: MAPPINGS,
-      claimsMapper: [],
+      domainClaimMappings: MAPPINGS,
+      claimMappings: [],
     });
   });
 

@@ -38,7 +38,7 @@ const MAPPINGS: ClaimMapping[] = [
 let fixture: TrustedIssuerFixture;
 
 beforeAll(async () => {
-  fixture = await setupTrustedIssuerFixture({ claimsMapper: MAPPINGS });
+  fixture = await setupTrustedIssuerFixture({ claimMappings: MAPPINGS });
 });
 
 afterAll(async () => {

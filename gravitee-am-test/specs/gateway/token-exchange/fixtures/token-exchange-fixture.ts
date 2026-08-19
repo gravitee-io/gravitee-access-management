@@ -131,7 +131,7 @@ export type ClaimMapping = TokenExchangeClaimMapping;
  */
 interface TokenExchangeSettingsConfig {
   /** Claims mapper set on the DOMAIN defaults, which an application inherits unless it overrides. */
-  domainClaimsMapper?: ClaimMapping[];
+  domainClaimMappings?: ClaimMapping[];
   allowedSubjectTokenTypes?: string[];
   allowImpersonation?: boolean;
   allowDelegation?: boolean;
@@ -145,7 +145,7 @@ interface TokenExchangeSettingsConfig {
  */
 async function enableTokenExchange(domainId: string, token: string, config: TokenExchangeSettingsConfig = {}): Promise<void> {
   const {
-    domainClaimsMapper,
+    domainClaimMappings,
     allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
     allowImpersonation = true,
     allowDelegation = false,
@@ -167,8 +167,8 @@ async function enableTokenExchange(domainId: string, token: string, config: Toke
     tokenExchangeSettings.maxDelegationDepth = maxDelegationDepth;
   }
 
-  if (domainClaimsMapper) {
-    tokenExchangeSettings.tokenExchangeOAuthSettings = { inherited: false, claimsMapper: domainClaimsMapper };
+  if (domainClaimMappings) {
+    tokenExchangeSettings.tokenExchangeOAuthSettings = { inherited: false, claimMappings: domainClaimMappings };
   }
 
   await request(getDomainManagerUrl(domainId))
@@ -190,9 +190,9 @@ export interface TokenExchangeFixtureConfig {
   scopes?: { scope: string; defaultScope: boolean }[];
   tokenCustomClaims?: TokenClaim[];
   /** Claim mappings set on the APPLICATION, with inherited: false. */
-  claimsMapper?: ClaimMapping[];
+  claimMappings?: ClaimMapping[];
   /** Claim mappings set on the DOMAIN defaults; the application inherits them. */
-  domainClaimsMapper?: ClaimMapping[];
+  domainClaimMappings?: ClaimMapping[];
   allowedSubjectTokenTypes?: string[];
   // Delegation settings
   allowImpersonation?: boolean;
@@ -218,8 +218,8 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       grantTypes = TOKEN_EXCHANGE_TEST.DEFAULT_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
       tokenCustomClaims,
-      claimsMapper,
-      domainClaimsMapper,
+      claimMappings,
+      domainClaimMappings,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
       allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
       allowImpersonation = true,
@@ -245,7 +245,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
 
     // Enable token exchange
     await enableTokenExchange(createdDomain.id, accessToken, {
-      domainClaimsMapper,
+      domainClaimMappings,
       allowedSubjectTokenTypes,
       allowedRequestedTokenTypes,
       allowImpersonation,
@@ -262,7 +262,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
           grantTypes,
           scopeSettings: scopes,
           tokenCustomClaims,
-          ...(claimsMapper ? { tokenExchangeOAuthSettings: { inherited: false, claimsMapper } } : {}),
+          ...(claimMappings ? { tokenExchangeOAuthSettings: { inherited: false, claimMappings } } : {}),
         },
       },
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),

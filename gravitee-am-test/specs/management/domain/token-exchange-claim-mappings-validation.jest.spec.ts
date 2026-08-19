@@ -67,19 +67,19 @@ const patchApplicationRaw = (domainId: string, appId: string, token: string, bod
     .set('Content-Type', 'application/json')
     .send(body);
 
-const domainSettings = (claimsMapper: unknown) => ({
+const domainSettings = (claimMappings: unknown) => ({
   tokenExchangeSettings: {
     enabled: true,
     allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
     allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
     allowImpersonation: true,
     allowDelegation: false,
-    tokenExchangeOAuthSettings: { inherited: false, claimsMapper },
+    tokenExchangeOAuthSettings: { inherited: false, claimMappings },
   },
 });
 
-const applicationSettings = (claimsMapper: unknown) => ({
-  settings: { oauth: { tokenExchangeOAuthSettings: { inherited: false, claimsMapper } } },
+const applicationSettings = (claimMappings: unknown) => ({
+  settings: { oauth: { tokenExchangeOAuthSettings: { inherited: false, claimMappings } } },
 });
 
 beforeAll(async () => {
@@ -152,7 +152,7 @@ describe('Token exchange claims mapper validation - application level', () => {
 
     const response = await patchApplicationRaw(domain.id, application.id, accessToken, applicationSettings([mapping])).expect(200);
 
-    expect(response.body.settings.oauth.tokenExchangeOAuthSettings.claimsMapper).toEqual([
+    expect(response.body.settings.oauth.tokenExchangeOAuthSettings.claimMappings).toEqual([
       { source: 'subject_token', sourceClaim: 'claim_id', tokenClaim: 'business_claim_id' },
     ]);
   });
@@ -189,7 +189,7 @@ describe('Token exchange claims mapper validation - domain level', () => {
       domainSettings([{ source: 'ACTOR_TOKEN', sourceClaim: 'email', tokenClaim: 'agent_email' }]),
     ).expect(200);
 
-    expect(response.body.tokenExchangeSettings.tokenExchangeOAuthSettings.claimsMapper).toEqual([
+    expect(response.body.tokenExchangeSettings.tokenExchangeOAuthSettings.claimMappings).toEqual([
       { source: 'actor_token', sourceClaim: 'email', tokenClaim: 'agent_email' },
     ]);
   });

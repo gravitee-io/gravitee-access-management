@@ -45,7 +45,7 @@ export interface TokenExchangeOAuthSettings {
    * @type {Array<TokenExchangeClaimMapping>}
    * @memberof TokenExchangeOAuthSettings
    */
-  claimsMapper?: Array<TokenExchangeClaimMapping>;
+  claimMappings?: Array<TokenExchangeClaimMapping>;
   /**
    * Whether these settings are inherited from the domain defaults rather than defined here.
    * @type {boolean}
@@ -86,7 +86,7 @@ export function TokenExchangeOAuthSettingsFromJSONTyped(json: any, ignoreDiscrim
     return json;
   }
   return {
-    claimsMapper: json['claimsMapper'] == null ? undefined : (json['claimsMapper'] as Array<any>).map(TokenExchangeClaimMappingFromJSON),
+    claimMappings: json['claimMappings'] == null ? undefined : (json['claimMappings'] as Array<any>).map(TokenExchangeClaimMappingFromJSON),
     inherited: json['inherited'] == null ? undefined : json['inherited'],
     scopeHandling: json['scopeHandling'] == null ? undefined : json['scopeHandling'],
   };
@@ -105,7 +105,7 @@ export function TokenExchangeOAuthSettingsToJSONTyped(
   }
 
   return {
-    claimsMapper: value['claimsMapper'] == null ? undefined : (value['claimsMapper'] as Array<any>).map(TokenExchangeClaimMappingToJSON),
+    claimMappings: value['claimMappings'] == null ? undefined : (value['claimMappings'] as Array<any>).map(TokenExchangeClaimMappingToJSON),
     inherited: value['inherited'],
     scopeHandling: value['scopeHandling'],
   };
