@@ -36,13 +36,17 @@ import {
   performPatch,
   performPost,
 } from '@gateway-commands/oauth-oidc-commands';
-import { withRetry } from '@utils-commands/retry';
+import { retryUntil, withRetry } from '@utils-commands/retry';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { decodeJwt } from '@utils-commands/jwt';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
+// Type-only: jest's moduleNameMapper has no @management-models entry, so a value import from here
+// resolves under tsc but blows up at runtime. Keep every model import in a type position.
+import type { NewApplication } from '@management-models/NewApplication';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { User } from '@management-models/User';
 import request from 'supertest';
@@ -122,6 +126,14 @@ export interface RevocationFixture {
   createAdditionalUser: (index: number) => Promise<User>;
   /** Run the authorization_code flow as an arbitrary user, defaulting to the fixture's primary client. */
   obtainAuthorizationCodeTokensAs: (asUser: User, client?: RevocationClient) => Promise<SubjectTokens>;
+  /**
+   * Poll until the gateway rejects this token at the userinfo endpoint. Use instead of a fixed
+   * wait when asserting a token has been revoked — it tolerates slow propagation and still fails
+   * honestly, because a token that was never revoked keeps returning 200 until the timeout.
+   */
+  waitUntilTokenRejected: (token: string) => Promise<void>;
+  /** As `waitUntilTokenRejected`, but polls the introspection endpoint for `active: false`. */
+  waitUntilTokenInactive: (token: string) => Promise<void>;
   /** Present only when the fixture was built with `withScim: true`. */
   scim?: {
     endpoint: string;
@@ -131,20 +143,35 @@ export interface RevocationFixture {
   };
 }
 
-/** Default of `handlers.oauth2.introspect.offlineVerificationTimerSeconds`, plus a second of slack. */
-const OFFLINE_VERIFICATION_WINDOW_MS = 11000;
+/**
+ * `handlers.oauth2.introspect.offlineVerificationTimerSeconds`. Within this many seconds of a
+ * token being issued the gateway trusts the JWT and never looks it up, so a revoked token still
+ * works. The stack these tests run against disables it
+ * (`GRAVITEE_HANDLERS_OAUTH2_INTROSPECT_OFFLINEVERIFICATIONTIMERSECONDS=0` in
+ * docker/local-stack/dev/docker-compose.yml, which the CI compose layers), hence the default of 0
+ * here. Override to match if you point the suite at a stack that leaves the product default of 10.
+ */
+const OFFLINE_VERIFICATION_SECONDS = Number(process.env.AM_OFFLINE_VERIFICATION_SECONDS ?? 0);
+
+/** Headroom for the revoke event to reach the gateway and the delete to land. */
+const REVOKE_PROPAGATION_SETTLE_MS = 2000;
+
+/** How long to keep polling before deciding a token was never revoked. */
+const REVOCATION_POLL_TIMEOUT_MS = 20000;
 
 /**
- * Block until the gateway will consult the token store for this token rather than trusting the
- * JWT alone. Deliberately a wait and not a poll: the point is to reach a state where a single
- * check is meaningful, and polling for a status would mask a token that is still valid.
+ * Wait until the gateway will consult the token store for this token rather than trusting the JWT.
+ *
+ * Only needed before asserting a token is STILL VALID. Inside the offline-verification window such
+ * an assertion is meaningless — the JWT is trusted, so it passes even if the token has been revoked.
+ * To assert a token HAS been revoked, poll with `waitUntilTokenRejected` / `waitUntilTokenInactive`
+ * instead: polling for the revoked state cannot produce a false pass, because a token that was
+ * never revoked simply stays valid until the timeout.
  */
 export const waitPastOfflineVerification = async (token: string): Promise<void> => {
   const { iat } = decodeJwt(token) as { iat: number };
-  const remainingMs = iat * 1000 + OFFLINE_VERIFICATION_WINDOW_MS - Date.now();
-  if (remainingMs > 0) {
-    await new Promise((resolve) => setTimeout(resolve, remainingMs));
-  }
+  const remainingWindowMs = Math.max(0, (iat + OFFLINE_VERIFICATION_SECONDS) * 1000 - Date.now());
+  await new Promise((resolve) => setTimeout(resolve, remainingWindowMs + REVOKE_PROPAGATION_SETTLE_MS));
 };
 
 const REVOCATION_TEST = {
@@ -304,20 +331,28 @@ const buildAuthorizationCodeFlow =
  * Service application used to obtain a SCIM bearer token. Mirrors specs/gateway/scim/fixture.
  */
 const setupScimApp = async (domainId: string, accessToken: string): Promise<Application> => {
-  const createAppRequest: Application = {
+  // OAuth settings can't be supplied at create time, hence create-then-update.
+  const createAppRequest: NewApplication = {
     name: uniqueName('revocation-scim-app', true),
     type: 'SERVICE',
-    settings: {
-      oauth: {
-        grantTypes: ['client_credentials'],
-        tokenCustomClaim: [],
-        accessTokenValiditySeconds: 7200,
-        scopeSettings: [{ scope: 'scim', defaultScope: true }],
-      },
-    },
   };
   const app = await createApplication(domainId, accessToken, createAppRequest);
-  await updateApplication(domainId, accessToken, createAppRequest, app.id);
+
+  await updateApplication(
+    domainId,
+    accessToken,
+    {
+      settings: {
+        oauth: {
+          grantTypes: ['client_credentials'],
+          accessTokenValiditySeconds: 7200,
+          scopeSettings: [{ scope: 'scim', defaultScope: true }],
+        },
+      },
+    },
+    app.id,
+  );
+
   return app;
 };
 
@@ -445,13 +480,10 @@ export const setupRevocationFixture = async (options: RevocationFixtureOptions =
       namePrefix: string = REVOCATION_TEST.SECONDARY_CLIENT_NAME,
       clientOptions: { exactName?: boolean } = {},
     ): Promise<RevocationClient> => {
-      const additionalApplication = await createRevocationApp(
-        namePrefix,
-        startedDomain,
-        accessToken!,
-        defaultIdp,
-        enableTokenExchange,
-        clientOptions.exactName,
+      // Callers run an authorization_code flow against this client straight away, so it has to be
+      // on the gateway before we hand it back — createTestApp does not wait.
+      const additionalApplication = await waitForSyncAfter(startedDomain.id, () =>
+        createRevocationApp(namePrefix, startedDomain, accessToken!, defaultIdp, enableTokenExchange, clientOptions.exactName),
       );
       const additionalBasicAuth = applicationBase64Token(additionalApplication);
 
@@ -460,6 +492,25 @@ export const setupRevocationFixture = async (options: RevocationFixtureOptions =
         basicAuth: additionalBasicAuth,
         obtainAuthorizationCodeTokens: buildAuthorizationCodeFlow(oidc, additionalApplication, additionalBasicAuth, user),
       };
+    };
+
+    const waitUntilTokenRejected = async (token: string): Promise<void> => {
+      await retryUntil(
+        () => getUserInfo(token).then((response) => response.status),
+        (status) => status === 401,
+        { timeoutMillis: REVOCATION_POLL_TIMEOUT_MS, intervalMillis: 250 },
+      );
+    };
+
+    const waitUntilTokenInactive = async (token: string): Promise<void> => {
+      await retryUntil(
+        () => introspectToken(token).then((body) => body.active),
+        (active) => active === false,
+        {
+          timeoutMillis: REVOCATION_POLL_TIMEOUT_MS,
+          intervalMillis: 250,
+        },
+      );
     };
 
     const createAdditionalUser = async (index: number): Promise<User> => {
@@ -518,6 +569,8 @@ export const setupRevocationFixture = async (options: RevocationFixtureOptions =
       createAdditionalClient,
       createAdditionalUser,
       obtainAuthorizationCodeTokensAs,
+      waitUntilTokenRejected,
+      waitUntilTokenInactive,
       scim,
       cleanup,
     };

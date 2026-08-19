@@ -28,10 +28,11 @@ setup(200000);
  * or the user — so once past the offline-verification window, a rejected token can only have been
  * removed from the token store. No re-enable step is needed to make these assertions meaningful.
  *
- * Note the window itself is not asserted: a token stays usable for up to
- * `handlers.oauth2.introspect.offlineVerificationTimerSeconds` (default 10s) after revocation, and
- * pinning that would mean asserting a response inside a race against wall-clock time. The tests
- * below therefore always wait past it and assert the settled outcome.
+ * The offline-verification window itself is not asserted: pinning it would mean asserting a
+ * response inside a race against wall-clock time. Instead, assertions that a token is now rejected
+ * poll (`waitUntilTokenRejected` / `waitUntilTokenInactive`), and assertions that a token is still
+ * valid first clear the window (`waitPastOfflineVerification`) so they cannot pass on a trusted
+ * JWT alone. See the fixture for how that window is configured.
  */
 let fixture: RevocationFixture;
 
@@ -57,7 +58,7 @@ describe('Revocation endpoint - access token', () => {
     const revocation = await fixture.revokeToken(tokens.accessToken);
     expect(revocation.status).toBe(200);
 
-    await waitPastOfflineVerification(tokens.accessToken);
+    await fixture.waitUntilTokenRejected(tokens.accessToken);
 
     expect((await fixture.getUserInfo(tokens.accessToken)).status).toBe(401);
   });
@@ -69,7 +70,7 @@ describe('Revocation endpoint - access token', () => {
     const revocation = await fixture.revokeToken(tokens.accessToken);
     expect(revocation.status).toBe(200);
 
-    await waitPastOfflineVerification(tokens.accessToken);
+    await fixture.waitUntilTokenInactive(tokens.accessToken);
 
     expect((await fixture.introspectToken(tokens.accessToken)).active).toBe(false);
   });
@@ -87,7 +88,7 @@ describe('Revocation endpoint - access token', () => {
     const revocation = await fixture.revokeToken(tokens.accessToken);
     expect(revocation.status).toBe(200);
 
-    await waitPastOfflineVerification(tokens.accessToken);
+    await fixture.waitUntilTokenRejected(tokens.accessToken);
     expect((await fixture.getUserInfo(tokens.accessToken)).status).toBe(401);
 
     const refreshed = await performPost(fixture.oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refreshToken}`, {

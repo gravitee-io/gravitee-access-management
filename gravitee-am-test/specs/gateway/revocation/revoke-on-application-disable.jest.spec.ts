@@ -17,9 +17,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
-import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
-import { retryUntil } from '@utils-commands/retry';
+import { withRetry } from '@utils-commands/retry';
 import { setup } from '../../test-fixture';
 import { setupRevocationFixture, waitPastOfflineVerification, RevocationFixture, SubjectTokens } from './fixtures/revocation-fixture';
 
@@ -33,12 +32,11 @@ setup(200000);
  * Both are asserted here, along with the blast radius: another application in the same
  * domain must be unaffected.
  *
- * Revocation is not immediate — `handlers.oauth2.introspect.offlineVerificationTimerSeconds`
- * (default 10s) lets the gateway skip the token-store lookup for freshly issued tokens.
- * Post-disable assertions therefore poll rather than checking once.
+ * Assertions that a token is now rejected poll (`waitUntilTokenRejected`). Assertions that a token
+ * is still valid first clear the offline-verification window (`waitPastOfflineVerification`),
+ * without which the gateway may still be trusting the JWT and the assertion would hold even for a
+ * revoked token. See the fixture for how that window is configured.
  */
-const REVOCATION_TIMEOUT_MS = 30000;
-
 let fixture: RevocationFixture;
 let disabledAppTokens: SubjectTokens;
 let otherAppTokens: SubjectTokens;
@@ -57,10 +55,10 @@ beforeAll(async () => {
   expect((await fixture.getUserInfo(disabledAppTokens.accessToken)).status).toBe(200);
   expect((await fixture.getUserInfo(otherAppTokens.accessToken)).status).toBe(200);
 
-  await waitForSyncAfter(fixture.domain.id, () =>
-    patchApplication(fixture.domain.id, fixture.accessToken, { enabled: false }, fixture.application.id),
-  );
-  // Sync completion does not imply the gateway has finished rebuilding its routes (GUIDELINES §3).
+  // Not wrapped in waitForSyncAfter: disabling an application does not reliably advance the
+  // domain's `lastSync`, so that helper can wait 90s for a signal that never arrives. Every
+  // assertion below polls for the outcome instead. See the comment on the re-enable test.
+  await patchApplication(fixture.domain.id, fixture.accessToken, { enabled: false }, fixture.application.id);
   await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 });
 
@@ -78,13 +76,9 @@ describe('Application disable - tokens already issued', () => {
    * what the 'survives the application being re-enabled' test below is for.
    */
   it('should reject the access token at the userinfo endpoint', async () => {
-    const status = await retryUntil(
-      () => fixture.getUserInfo(disabledAppTokens.accessToken).then((response) => response.status),
-      (responseStatus) => responseStatus === 401,
-      { timeoutMillis: REVOCATION_TIMEOUT_MS, intervalMillis: 500 },
-    );
+    await fixture.waitUntilTokenRejected(disabledAppTokens.accessToken);
 
-    expect(status).toBe(401);
+    expect((await fixture.getUserInfo(disabledAppTokens.accessToken)).status).toBe(401);
   });
 
   it('should refuse to mint a new access token from the refresh token', async () => {
@@ -132,21 +126,24 @@ describe('Application disable - tokens are revoked, not just unresolvable', () =
     const preDisableTokens = await client.obtainAuthorizationCodeTokens();
     expect((await fixture.getUserInfo(preDisableTokens.accessToken)).status).toBe(200);
 
-    await waitForSyncAfter(fixture.domain.id, () =>
-      patchApplication(fixture.domain.id, fixture.accessToken, { enabled: false }, client.application.id),
-    );
-    await waitForSyncAfter(fixture.domain.id, () =>
-      patchApplication(fixture.domain.id, fixture.accessToken, { enabled: true }, client.application.id),
-    );
+    // waitForSyncAfter is not usable around these: an application enable/disable does not reliably
+    // advance the domain's `lastSync`, so it waits 90s for a signal that never arrives (measured —
+    // lastSync held steady for 24s after a disable while the domain reported stable + synchronized).
+    // Sequence on the observable outcome instead. The wait between disable and enable is load
+    // bearing: without it the BY_CLIENT revoke event can land after the new token is minted and
+    // revoke that one too.
+    await patchApplication(fixture.domain.id, fixture.accessToken, { enabled: false }, client.application.id);
+    await fixture.waitUntilTokenRejected(preDisableTokens.accessToken);
+
+    await patchApplication(fixture.domain.id, fixture.accessToken, { enabled: true }, client.application.id);
     await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 
     // The client is usable again — proves any 401 below is about the token, not the application.
-    const postEnableTokens = await client.obtainAuthorizationCodeTokens();
+    const postEnableTokens = await withRetry(() => client.obtainAuthorizationCodeTokens(), 40, 500);
     expect((await fixture.getUserInfo(postEnableTokens.accessToken)).status).toBe(200);
 
-    // Both tokens must be past their offline-verification window, otherwise the gateway short
-    // circuits on the JWT alone and never looks either of them up in the token store.
-    await waitPastOfflineVerification(preDisableTokens.accessToken);
+    // The surviving token must clear the offline-verification window, otherwise the gateway short
+    // circuits on the JWT alone and this assertion would hold even if it had been revoked.
     await waitPastOfflineVerification(postEnableTokens.accessToken);
 
     // Same client, same audience, same signing certificate — so the only difference the gateway
@@ -158,6 +155,10 @@ describe('Application disable - tokens are revoked, not just unresolvable', () =
 
 describe('Application disable - blast radius', () => {
   it('should keep the access token issued to another application in the domain valid', async () => {
+    // Without this the gateway may still be trusting the JWT, so the assertion would hold even if
+    // disabling the first application had wrongly revoked this token too.
+    await waitPastOfflineVerification(otherAppTokens.accessToken);
+
     const response = await fixture.getUserInfo(otherAppTokens.accessToken);
 
     expect(response.status).toBe(200);

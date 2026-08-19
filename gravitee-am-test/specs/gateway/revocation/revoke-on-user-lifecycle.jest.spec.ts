@@ -17,13 +17,14 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { deleteUser, resetUserPassword } from '@management-commands/user-management-commands';
 import { setup } from '../../test-fixture';
-import { setupRevocationFixture, waitPastOfflineVerification, RevocationFixture } from './fixtures/revocation-fixture';
+import { setupRevocationFixture, RevocationFixture } from './fixtures/revocation-fixture';
 
 setup(200000);
 
 /**
  * Admin lifecycle actions that revoke tokens, separate from the enable/disable status changes in
- * revoke-on-user-status-change. Both emit BY_USER (ManagementUserServiceImpl lines 486 and 838).
+ * revoke-on-user-status-change. Both emit BY_USER, from ManagementUserServiceImpl#resetPassword
+ * and ManagementUserServiceImpl#delete.
  */
 const NEW_PASSWORD = 'An0therP@ssw0rd!';
 
@@ -50,7 +51,7 @@ describe('Admin password reset', () => {
 
     await resetUserPassword(fixture.domain.id, fixture.accessToken, user.id, NEW_PASSWORD);
 
-    await waitPastOfflineVerification(tokens.accessToken);
+    await fixture.waitUntilTokenRejected(tokens.accessToken);
 
     // The user is untouched otherwise — still present and enabled — so a 401 means the token was
     // removed from the store, not that the subject lookup failed.
@@ -75,7 +76,7 @@ describe('User deletion', () => {
 
     await deleteUser(fixture.domain.id, fixture.accessToken, user.id);
 
-    await waitPastOfflineVerification(tokens.accessToken);
+    await fixture.waitUntilTokenInactive(tokens.accessToken);
 
     expect((await fixture.introspectToken(tokens.accessToken)).active).toBe(false);
   });

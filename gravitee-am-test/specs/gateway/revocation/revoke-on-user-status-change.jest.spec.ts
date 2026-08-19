@@ -58,19 +58,27 @@ describe('User disable - scope across applications', () => {
     await updateUserStatus(fixture.domain.id, fixture.accessToken, fixture.user.id, false);
     await updateUserStatus(fixture.domain.id, fixture.accessToken, fixture.user.id, true);
 
-    await waitPastOfflineVerification(primaryTokens.accessToken);
-    await waitPastOfflineVerification(secondaryTokens.accessToken);
+    await fixture.waitUntilTokenRejected(primaryTokens.accessToken);
+    await fixture.waitUntilTokenRejected(secondaryTokens.accessToken);
 
     expect((await fixture.getUserInfo(primaryTokens.accessToken)).status).toBe(401);
     expect((await fixture.getUserInfo(secondaryTokens.accessToken)).status).toBe(401);
   });
 
-  it('should let the re-enabled user obtain a working token again', async () => {
-    const freshTokens = await fixture.obtainAuthorizationCodeTokens();
+  it('should let the user obtain a working token again once re-enabled', async () => {
+    const user = await fixture.createAdditionalUser(4);
+    const tokensBeforeDisable = await fixture.obtainAuthorizationCodeTokensAs(user);
+    expect((await fixture.getUserInfo(tokensBeforeDisable.accessToken)).status).toBe(200);
 
-    await waitPastOfflineVerification(freshTokens.accessToken);
+    await updateUserStatus(fixture.domain.id, fixture.accessToken, user.id, false);
+    await fixture.waitUntilTokenRejected(tokensBeforeDisable.accessToken);
 
-    expect((await fixture.getUserInfo(freshTokens.accessToken)).status).toBe(200);
+    await updateUserStatus(fixture.domain.id, fixture.accessToken, user.id, true);
+
+    const tokensAfterEnable = await fixture.obtainAuthorizationCodeTokensAs(user);
+    await waitPastOfflineVerification(tokensAfterEnable.accessToken);
+
+    expect((await fixture.getUserInfo(tokensAfterEnable.accessToken)).status).toBe(200);
   });
 });
 
@@ -88,7 +96,8 @@ describe('User disable - scope across users', () => {
     await updateUserStatus(fixture.domain.id, fixture.accessToken, disabledUser.id, false);
     await updateUserStatus(fixture.domain.id, fixture.accessToken, disabledUser.id, true);
 
-    await waitPastOfflineVerification(disabledUserTokens.accessToken);
+    await fixture.waitUntilTokenRejected(disabledUserTokens.accessToken);
+    // The surviving token must clear the offline-verification window before it proves anything.
     await waitPastOfflineVerification(untouchedUserTokens.accessToken);
 
     expect((await fixture.getUserInfo(disabledUserTokens.accessToken)).status).toBe(401);

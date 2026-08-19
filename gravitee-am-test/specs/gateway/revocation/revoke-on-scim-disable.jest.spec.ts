@@ -58,7 +58,7 @@ describe('SCIM disable - token revocation', () => {
     expect(reactivate.status).toBe(200);
     expect(reactivate.body.active).toBe(true);
 
-    await waitPastOfflineVerification(tokens.accessToken);
+    await fixture.waitUntilTokenRejected(tokens.accessToken);
 
     expect((await fixture.getUserInfo(tokens.accessToken)).status).toBe(401);
   });

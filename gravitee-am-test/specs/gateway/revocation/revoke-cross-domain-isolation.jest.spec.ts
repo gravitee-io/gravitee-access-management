@@ -53,6 +53,13 @@ afterAll(async () => {
 });
 
 describe('Revocation isolation - across domains', () => {
+  /**
+   * Weak by construction, kept for symmetry with the BY_CLIENT case below. The two domains' users
+   * are separate records with different UUIDs, so even `deleteByUser` — which calls
+   * `deleteByUserId` with no domain predicate, unlike every other path in
+   * RevokeTokenGatewayServiceImpl — would only ever match domain A's user. This passes whether or
+   * not domain scoping works. The BY_CLIENT test below is the one that would catch a regression.
+   */
   it('should not revoke tokens in another domain when a user is disabled', async () => {
     const tokensA = await domainA.obtainAuthorizationCodeTokens();
     const tokensB = await domainB.obtainAuthorizationCodeTokens();
@@ -63,7 +70,8 @@ describe('Revocation isolation - across domains', () => {
     await updateUserStatus(domainA.domain.id, domainA.accessToken, domainA.user.id, false);
     await updateUserStatus(domainA.domain.id, domainA.accessToken, domainA.user.id, true);
 
-    await waitPastOfflineVerification(tokensA.accessToken);
+    await domainA.waitUntilTokenRejected(tokensA.accessToken);
+    // The surviving token must clear the offline-verification window before it proves anything.
     await waitPastOfflineVerification(tokensB.accessToken);
 
     expect((await domainA.getUserInfo(tokensA.accessToken)).status).toBe(401);
@@ -83,12 +91,16 @@ describe('Revocation isolation - across domains', () => {
     expect((await domainA.getUserInfo(tokensA.accessToken)).status).toBe(200);
     expect((await domainB.getUserInfo(tokensB.accessToken)).status).toBe(200);
 
+    // Deliberately not wrapped in waitForSyncAfter. Disabling an application does not advance the
+    // domain's `lastSync`, so that helper waits for a signal that never arrives and times out after
+    // 90s — measured: lastSync held steady for 24s afterwards while the domain reported
+    // stable + synchronized. The propagation guard here is waitUntilTokenRejected below, which
+    // polls, so there is no fixed-sleep race to lose.
     await patchApplication(domainA.domain.id, domainA.accessToken, { enabled: false }, clientA.application.id);
     await waitForOidcReady(domainA.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 
-    // No explicit sync wait: the offline-verification wait below is an order of magnitude longer
-    // than a gateway sync cycle, so the disable has certainly propagated by the time we assert.
-    await waitPastOfflineVerification(tokensA.accessToken);
+    await domainA.waitUntilTokenRejected(tokensA.accessToken);
+    // The surviving token must clear the offline-verification window before it proves anything.
     await waitPastOfflineVerification(tokensB.accessToken);
 
     expect((await domainA.getUserInfo(tokensA.accessToken)).status).toBe(401);
