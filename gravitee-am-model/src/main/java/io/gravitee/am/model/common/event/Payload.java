@@ -18,6 +18,7 @@ package io.gravitee.am.model.common.event;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.command.CommandRequest;
 import io.gravitee.am.model.token.RevokeToken;
 
 import java.util.HashMap;
@@ -34,6 +35,12 @@ public class Payload extends HashMap<String, Object> {
     private static final String REFERENCE_ID = "referenceId";
     private static final String ACTION = "action";
     public static final String REVOKE_TOKEN_DEFINITION = "revokeTokenDef";
+    // OpenID Provider Command attributes, kept flat (scalar values only) so the
+    // payload survives Mongo/JDBC serialization without dedicated converters
+    private static final String COMMAND = "command";
+    private static final String COMMAND_USER_ID = "commandUserId";
+    private static final String COMMAND_PRINCIPAL_ID = "commandPrincipalId";
+    private static final String COMMAND_PRINCIPAL_USERNAME = "commandPrincipalUsername";
 
     public Payload(String id, Reference reference, Action action) {
         this(id, reference.type(), reference.id(), action);
@@ -83,6 +90,36 @@ public class Payload extends HashMap<String, Object> {
         data.put(REFERENCE_ID, request.getDomainId());
         data.put(ACTION, Action.DELETE);
         data.put(REVOKE_TOKEN_DEFINITION, request);
+        return new Payload(data);
+    }
+
+    public CommandRequest getCommandRequest() {
+        return CommandRequest.builder()
+                .id(getId())
+                .command((String) get(COMMAND))
+                .userId((String) get(COMMAND_USER_ID))
+                .domainId(getReferenceId())
+                .principalId((String) get(COMMAND_PRINCIPAL_ID))
+                .principalUsername((String) get(COMMAND_PRINCIPAL_USERNAME))
+                .build();
+    }
+
+    public static Payload from(CommandRequest request) {
+        final var data = new HashMap<String, Object>();
+        // the command id identifies the payload so distinct commands of a same
+        // sync window are not coalesced by the gateway event deduplication
+        data.put(ID, request.getId());
+        data.put(REFERENCE_TYPE, ReferenceType.DOMAIN.name());
+        data.put(REFERENCE_ID, request.getDomainId());
+        data.put(ACTION, Action.CREATE);
+        data.put(COMMAND, request.getCommand());
+        data.put(COMMAND_USER_ID, request.getUserId());
+        if (request.getPrincipalId() != null) {
+            data.put(COMMAND_PRINCIPAL_ID, request.getPrincipalId());
+        }
+        if (request.getPrincipalUsername() != null) {
+            data.put(COMMAND_PRINCIPAL_USERNAME, request.getPrincipalUsername());
+        }
         return new Payload(data);
     }
 }

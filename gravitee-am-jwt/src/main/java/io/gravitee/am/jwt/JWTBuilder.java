@@ -30,4 +30,14 @@ public interface JWTBuilder {
      */
     String sign(JWT payload);
 
+    /**
+     * Sign and encode JWT payload with a custom JOSE header type (e.g. <code>command+jwt</code>)
+     * @param payload JWT payload
+     * @param tokenType JOSE header <code>typ</code> value
+     * @return signed and encoded token
+     */
+    default String sign(JWT payload, String tokenType) {
+        throw new UnsupportedOperationException("Signing with a custom JOSE header type is not supported by " + getClass().getSimpleName());
+    }
+
 }

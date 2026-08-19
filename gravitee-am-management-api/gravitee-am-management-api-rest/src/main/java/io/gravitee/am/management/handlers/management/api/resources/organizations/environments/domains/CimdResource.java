@@ -170,6 +170,7 @@ public class CimdResource extends AbstractDomainResource {
                         preview.backchannelClientNotificationEndpoint(),
                         preview.backchannelAuthRequestSignAlg(),
                         preview.backchannelUserCodeParameter(),
+                        preview.commandEndpoint(),
                         preview.requestObjectSigningAlg()));
     }
 
@@ -233,6 +234,7 @@ public class CimdResource extends AbstractDomainResource {
                 @JsonProperty("backchannel_client_notification_endpoint") String backchannelClientNotificationEndpoint,
                 @JsonProperty("backchannel_authentication_request_signing_alg") String backchannelAuthenticationRequestSigningAlg,
                 @JsonProperty("backchannel_user_code_parameter") Boolean backchannelUserCodeParameter,
+                @JsonProperty("command_endpoint") String commandEndpoint,
                 @JsonProperty("request_object_signing_alg") String requestObjectSigningAlg
         ) {}
     }

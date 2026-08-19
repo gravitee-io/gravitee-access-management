@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.client.cimd.impl;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.common.oidc.command.CommandEndpointValidator;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdLogoCacheService;
 import io.gravitee.am.common.oauth2.ClientIds;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import lombok.CustomLog;
 import io.gravitee.am.model.CimdClientState;
+import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -177,6 +179,11 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                             })
                     );
         });
+    }
+
+    @Override
+    public Client synthesizeFromDocument(CimdMetadataDocument document, Client templateClient) {
+        return synthesizeClient(document.getClientId(), templateClient, new JsonObject(document.getMetadata()));
     }
 
     private Completable validateJWKs(FetchResult fetchResult, CIMDSettings settings) {
@@ -333,6 +340,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             synthesizedClient.setJwks(toModelJwkSet((JsonObject) jwksRaw));
         }
 
+        // command_endpoint is never inherited
+        synthesizedClient.setCommandEndpoint(null);
+
         applyExtendedMetadata(metadata, synthesizedClient);
 
         synthesizedClient.setClientSecret(null);
@@ -366,6 +376,14 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         applyOptionalString(metadata, "backchannel_token_delivery_mode", client::setBackchannelTokenDeliveryMode);
         applyOptionalString(metadata, "backchannel_client_notification_endpoint", client::setBackchannelClientNotificationEndpoint);
         applyOptionalString(metadata, "backchannel_authentication_request_signing_alg", client::setBackchannelAuthRequestSignAlg);
+        applyOptionalString(metadata, "command_endpoint", value -> {
+            try {
+                CommandEndpointValidator.validate(value);
+                client.setCommandEndpoint(value);
+            } catch (IllegalArgumentException ex) {
+                throw new InvalidClientMetadataException(ex.getMessage());
+            }
+        });
 
         Boolean tlsBoundTokens = optionalBoolean(metadata, "tls_client_certificate_bound_access_tokens");
         if (tlsBoundTokens != null) {

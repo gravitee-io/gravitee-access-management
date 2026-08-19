@@ -53,6 +53,7 @@ public abstract class Event {
             case THEME -> ThemeEvent.actionOf(action);
             case PASSWORD_POLICY -> PasswordPolicyEvent.actionOf(action);
             case REVOKE_TOKEN -> RevokeTokenEvent.actionOf(action);
+            case COMMAND -> CommandEvent.actionOf(action);
             case USER -> UserEvent.actionOf(action);
             case AUTHORIZATION_ENGINE ->  AuthorizationEngineEvent.actionOf(action);
             case PROTECTED_RESOURCE -> ProtectedResourceEvent.actionOf(action);

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.client.cimd;
 
+import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 
@@ -39,4 +40,18 @@ public interface CimdMetadataService {
      *         {@code Maybe.error(InvalidClientMetadataException)} on validation/fetch failure
      */
     Maybe<Client> resolveClient(String clientId, Client templateClient);
+
+    /**
+     * Synthesize a runtime {@link Client} from an already-persisted metadata document,
+     * without any network fetch. Used by fan-out flows (e.g. OpenID Provider Commands
+     * dispatch) that enumerate the domain's stored CIMD documents instead of resolving
+     * a single known client_id.
+     *
+     * @param document the persisted metadata document (clientId + raw metadata JSON)
+     * @param templateClient the template application to clone and overlay with metadata fields
+     * @return the synthesized client
+     * @throws io.gravitee.am.service.exception.InvalidClientMetadataException if the stored
+     *         metadata no longer passes synthesis validation
+     */
+    Client synthesizeFromDocument(CimdMetadataDocument document, Client templateClient);
 }

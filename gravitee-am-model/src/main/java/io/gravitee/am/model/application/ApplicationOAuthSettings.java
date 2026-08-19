@@ -321,6 +321,12 @@ public class ApplicationOAuthSettings {
 
     private boolean backchannelUserCodeParameter;
 
+    /**
+     * OpenID Provider Commands 1.0 (draft) command_endpoint client metadata.
+     * Registering a value opts the application in to receive command tokens.
+     */
+    private String commandEndpoint;
+
     private boolean disableRefreshTokenRotation;
 
     /**
@@ -405,6 +411,7 @@ public class ApplicationOAuthSettings {
         this.backchannelClientNotificationEndpoint = other.backchannelClientNotificationEndpoint;
         this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
         this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
+        this.commandEndpoint = other.commandEndpoint;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
@@ -995,6 +1002,14 @@ public class ApplicationOAuthSettings {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public String getCommandEndpoint() {
+        return commandEndpoint;
+    }
+
+    public void setCommandEndpoint(String commandEndpoint) {
+        this.commandEndpoint = commandEndpoint;
+    }
+
     public boolean isDisableRefreshTokenRotation() {
         return disableRefreshTokenRotation;
     }
@@ -1086,6 +1101,7 @@ public class ApplicationOAuthSettings {
         client.setBackchannelUserCodeParameter(this.backchannelUserCodeParameter);
         client.setBackchannelAuthRequestSignAlg(this.backchannelAuthRequestSignAlg);
         client.setBackchannelClientNotificationEndpoint(this.backchannelClientNotificationEndpoint);
+        client.setCommandEndpoint(this.commandEndpoint);
         client.setDisableRefreshTokenRotation(this.disableRefreshTokenRotation);
         client.setOptInScopeSelection(this.optInScopeSelection);
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
