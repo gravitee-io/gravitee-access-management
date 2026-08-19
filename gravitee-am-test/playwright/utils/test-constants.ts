@@ -74,3 +74,19 @@ export const RESET_PASSWORD_GATEWAY_SETTLE_MS = 2_000;
 
 /** New password set on gateway reset-password form; distinct from {@link API_USER_PASSWORD} (AM-2196). */
 export const FORGOT_PASSWORD_NEW_PASSWORD_AFTER_RESET = 'V@l1dNewP@ss99';
+
+/* ------------------------------------------------------------------ */
+/*  Console route and selector constants                               */
+/* ------------------------------------------------------------------ */
+
+/** Environment hrid used in Console route paths; the standalone form of `BasePage.envHrid`. */
+export const envHrid = (): string => process.env.AM_DEF_ENV_HRID || 'default';
+
+/** Console route for the domain list of the default environment. */
+export const domainListPath = (): string => `/environments/${envHrid()}/domains`;
+
+/** URL an application settles on once opened from the application list. */
+export const APPLICATION_OVERVIEW_URL = /.*\/applications\/.*\/overview.*/i;
+
+/** The Console's floating create button, absent wherever the user may not create. */
+export const CREATE_FAB_SELECTOR = 'a[mat-fab], button[mat-fab]';
