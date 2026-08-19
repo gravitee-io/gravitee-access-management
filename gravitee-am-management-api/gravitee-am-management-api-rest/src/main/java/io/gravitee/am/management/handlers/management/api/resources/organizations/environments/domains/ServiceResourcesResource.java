@@ -95,11 +95,11 @@ public class ServiceResourcesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.LIST)
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapPublisher(___ -> resourceService.findByDomain(domain))
-                        .map(this::filterFactorInfos)
+                        .map(this::filterServiceResourceInfos)
                         .toList())
                 .subscribe(response::resume, response::resume);
     }
@@ -144,7 +144,7 @@ public class ServiceResourcesResource extends AbstractResource {
         return resourceContext.getResource(ServiceResourceResource.class);
     }
 
-    private ServiceResource filterFactorInfos(ServiceResource resource) {
+    private ServiceResource filterServiceResourceInfos(ServiceResource resource) {
         ServiceResource filteredResource = new ServiceResource();
         filteredResource.setId(resource.getId());
         filteredResource.setName(resource.getName());
