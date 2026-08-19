@@ -96,6 +96,20 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
     }
 
     @Override
+    public Completable create(AccessToken accessToken, RefreshToken refreshToken) {
+        if (refreshToken == null) {
+            return create(accessToken).ignoreElement();
+        }
+        if (refreshToken.getId() == null) {
+            refreshToken.setId(RandomString.generate());
+        }
+
+        return Completable
+                .fromPublisher(tokenCollection.insertMany(List.of(convert(accessToken), convert(refreshToken))))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<AccessToken> findAccessTokenByJti(String token) {
         return Observable
                 .fromPublisher(tokenCollection.find(and(
