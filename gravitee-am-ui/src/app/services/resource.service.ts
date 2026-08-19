@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
@@ -31,16 +31,15 @@ export class ResourceService {
     return this.http.get<any>(this.resourcesURL + domainId + '/resources');
   }
 
-  // The factor screens render without the resource list, so a user who lacks
-  // DOMAIN_RESOURCE[LIST] gets an empty list rather than a failed route.
+  // The factor screens render without the resource list, so a failed lookup
+  // (typically a user without DOMAIN_RESOURCE[LIST]) gives an empty list
+  // rather than a cancelled route with no message behind it.
   findByDomainWhenPermitted(domainId): Observable<any[]> {
     return this.http
       .get<any[]>(this.resourcesURL + domainId + '/resources', {
         context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
       })
-      .pipe(
-        catchError((error: unknown) => (error instanceof HttpErrorResponse && error.status === 403 ? of([]) : throwError(() => error))),
-      );
+      .pipe(catchError(() => of([])));
   }
 
   get(domainId, id): Observable<any> {

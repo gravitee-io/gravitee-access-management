@@ -15,9 +15,10 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpErrorResponse, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { AppConfig } from '../../config/app.config';
+import { SKIP_ERROR_SNACKBAR } from '../interceptors/http-request.interceptor';
 
 import { ResourceService } from './resource.service';
 
@@ -61,19 +62,18 @@ describe('ResourceService', () => {
         done();
       });
 
-      httpTestingController
-        .expectOne({ method: 'GET', url: resourcesUrl })
-        .flush({ message: 'Permission denied' }, { status: 403, statusText: 'Forbidden' });
+      const req = httpTestingController.expectOne({ method: 'GET', url: resourcesUrl });
+      expect(req.request.context.get(SKIP_ERROR_SNACKBAR)).toBe(true);
+      req.flush({ message: 'Permission denied' }, { status: 403, statusText: 'Forbidden' });
     });
 
-    it('propagates errors other than 403', (done) => {
+    it('returns an empty list when the request fails for any other reason', (done) => {
       resourceService.findByDomainWhenPermitted(domainId).subscribe({
-        next: () => done.fail('expected the error to propagate'),
-        error: (error: unknown) => {
-          expect(error).toBeInstanceOf(HttpErrorResponse);
-          expect((error as HttpErrorResponse).status).toEqual(500);
+        next: (result) => {
+          expect(result).toEqual([]);
           done();
         },
+        error: (error: unknown) => done(error),
       });
 
       httpTestingController
