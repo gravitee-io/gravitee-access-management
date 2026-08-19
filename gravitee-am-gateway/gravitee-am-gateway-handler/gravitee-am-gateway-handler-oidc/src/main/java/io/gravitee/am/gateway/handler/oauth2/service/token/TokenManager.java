@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
+import io.gravitee.am.repository.oauth2.model.AccessToken;
+import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Completable;
 
@@ -24,7 +26,12 @@ import io.reactivex.rxjava3.core.Completable;
  */
 public interface TokenManager extends Service {
 
-    Completable storeAccessToken(io.gravitee.am.repository.oauth2.model.AccessToken accessToken);
-
-    Completable storeRefreshToken(io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken);
+    /**
+     * Store an access token and, when provided, its refresh token in a single batch write.
+     *
+     * @param accessToken the access token to store
+     * @param refreshToken the refresh token to store, may be null
+     * @return acknowledge of the operation
+     */
+    Completable storeTokens(AccessToken accessToken, RefreshToken refreshToken);
 }

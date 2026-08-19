@@ -30,6 +30,8 @@ public interface TokenRepository extends ExpiredDataSweeper {
     Single<AccessToken> create(AccessToken accessToken);
     Observable<AccessToken> findAccessTokenByAuthorizationCode(String authorizationCode);
 
+    Completable create(AccessToken accessToken, RefreshToken refreshToken);
+
     Completable deleteByJti(String jti);
     Completable deleteByUserId(String userId);
     Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId);

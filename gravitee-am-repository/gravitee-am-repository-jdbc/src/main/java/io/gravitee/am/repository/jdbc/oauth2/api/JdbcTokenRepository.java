@@ -33,6 +33,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 
@@ -40,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,6 +60,13 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
 
     @Autowired
     private RetryOnConcurrencyFailureConfiguration retryOnConcurrencyFailureConfiguration;
+
+    private static final String ACCESS_TOKEN_PREFIX = "at_";
+    private static final String REFRESH_TOKEN_PREFIX = "rt_";
+
+    private static final List<String> TOKEN_COLUMNS = List.of(
+            "id", "domain", "client", SUBJECT, "token", "created_at", "expire_at",
+            "authorization_code", "refresh_token", "type", "parent_jti_1", "parent_jti_2");
 
     @Override
     public Maybe<RefreshToken> findRefreshTokenByJti(String jti) {
@@ -95,6 +104,54 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
                 .map(this::toAccessToken)
                 .doOnError(error -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error))
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable create(AccessToken accessToken, RefreshToken refreshToken) {
+        if (refreshToken == null) {
+            return create(accessToken).ignoreElement();
+        }
+        accessToken.setId(accessToken.getId() == null ? RandomString.generate() : accessToken.getId());
+        refreshToken.setId(refreshToken.getId() == null ? RandomString.generate() : refreshToken.getId());
+        LOGGER.debug("Create accessToken with id {} and refreshToken with id {}", accessToken.getId(), refreshToken.getId());
+
+        DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(batchInsertStatement());
+        spec = bindToken(spec, ACCESS_TOKEN_PREFIX, toJdbcEntity(accessToken));
+        spec = bindToken(spec, REFRESH_TOKEN_PREFIX, toJdbcEntity(refreshToken));
+
+        return monoToCompletable(spec.fetch().rowsUpdated())
+                .doOnError(error -> LOGGER.error("Unable to create accessToken with id {} and refreshToken with id {}",
+                        accessToken.getId(), refreshToken.getId(), error))
+                .observeOn(Schedulers.computation());
+    }
+
+    private String batchInsertStatement() {
+        String columns = TOKEN_COLUMNS.stream()
+                .map(SqlIdentifier::quoted)
+                .map(databaseDialectHelper::toSql)
+                .collect(Collectors.joining(","));
+        return "INSERT INTO tokens (" + columns + ") VALUES ("
+                + bindMarkers(ACCESS_TOKEN_PREFIX) + "),("
+                + bindMarkers(REFRESH_TOKEN_PREFIX) + ")";
+    }
+
+    private String bindMarkers(String prefix) {
+        return TOKEN_COLUMNS.stream().map(column -> ":" + prefix + column).collect(Collectors.joining(","));
+    }
+
+    private DatabaseClient.GenericExecuteSpec bindToken(DatabaseClient.GenericExecuteSpec spec, String prefix, JdbcToken token) {
+        spec = addQuotedField(spec, prefix + "id", token.getId(), String.class);
+        spec = addQuotedField(spec, prefix + "domain", token.getDomain(), String.class);
+        spec = addQuotedField(spec, prefix + "client", token.getClient(), String.class);
+        spec = addQuotedField(spec, prefix + SUBJECT, token.getSubject(), String.class);
+        spec = addQuotedField(spec, prefix + "token", token.getToken(), String.class);
+        spec = addQuotedField(spec, prefix + "created_at", token.getCreatedAt(), LocalDateTime.class);
+        spec = addQuotedField(spec, prefix + "expire_at", token.getExpireAt(), LocalDateTime.class);
+        spec = addQuotedField(spec, prefix + "authorization_code", token.getAuthorizationCode(), String.class);
+        spec = addQuotedField(spec, prefix + "refresh_token", token.getRefreshToken(), String.class);
+        spec = addQuotedField(spec, prefix + "type", token.getType(), String.class);
+        spec = addQuotedField(spec, prefix + "parent_jti_1", token.getParentJti1(), String.class);
+        return addQuotedField(spec, prefix + "parent_jti_2", token.getParentJti2(), String.class);
     }
 
     @Override

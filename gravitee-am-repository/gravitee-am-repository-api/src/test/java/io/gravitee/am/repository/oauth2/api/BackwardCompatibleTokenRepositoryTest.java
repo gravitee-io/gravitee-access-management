@@ -482,6 +482,29 @@ public class BackwardCompatibleTokenRepositoryTest {
         verify(tokenRepository).create(accessToken);
     }
 
+    // --- create(AccessToken, RefreshToken) ---
+
+    @Test
+    public void shouldDelegateBatchCreateToTokenRepository() {
+        AccessToken accessToken = new AccessToken();
+        RefreshToken refreshToken = new RefreshToken();
+        when(tokenRepository.create(accessToken, refreshToken)).thenReturn(Completable.complete());
+
+        BackwardCompatibleTokenRepository repository = new BackwardCompatibleTokenRepository(
+                tokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                true);
+
+        TestObserver<Void> observer = repository.create(accessToken, refreshToken).test();
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(tokenRepository).create(accessToken, refreshToken);
+        verify(accessTokenRepository, never()).create(any());
+        verify(refreshTokenRepository, never()).create(any());
+    }
+
     // --- purgeExpiredData ---
 
     @Test
