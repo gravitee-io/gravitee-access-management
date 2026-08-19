@@ -29,6 +29,36 @@ export interface TokenExchangeClaimMapping {
   tokenClaim: string;
 }
 
+/** Target claim names the management API rejects, mirroring TokenExchangeClaimsMapperValidator. */
+export const RESERVED_TOKEN_CLAIMS: readonly string[] = [
+  'iss',
+  'sub',
+  'gis',
+  'aud',
+  'exp',
+  'nbf',
+  'iat',
+  'jti',
+  'act',
+  'scope',
+  'client_id',
+  'cnf',
+  'domain',
+  'auth_time',
+  'updated_at',
+  'claims_request_parameter',
+  'ip_address',
+  'user_agent',
+  'nonce',
+  'acr',
+  'amr',
+  'azp',
+  'permissions',
+  'authorization_details',
+  'client_profile',
+  'sub_profile',
+];
+
 export const TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS: readonly { label: string; value: TokenExchangeClaimSource }[] = [
   { label: 'Subject token', value: CLAIM_SOURCE_SUBJECT_TOKEN },
   { label: 'Actor token', value: CLAIM_SOURCE_ACTOR_TOKEN },

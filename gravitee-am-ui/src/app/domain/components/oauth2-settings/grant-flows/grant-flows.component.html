@@ -88,7 +88,10 @@
           >
             Inherit configuration
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">Inherit Token Exchange settings from the security domain.</mat-hint>
+          <mat-hint style="font-size: 75%">
+            Inherit Token Exchange settings from the security domain. An override replaces the domain configuration entirely, including its
+            claim mappings.
+          </mat-hint>
         </div>
         <div *ngIf="!isTokenExchangeInherited()" class="override-form-section">
           <mat-divider></mat-divider>
@@ -173,6 +176,7 @@
               <mat-icon svgIcon="gio:plus"></mat-icon>ADD
             </button>
           </div>
+          <mat-error *ngIf="newClaimMappingError()" style="font-size: 75%">{{ newClaimMappingError() }}</mat-error>
           <mat-hint style="font-size: 75%">
             A claim that is absent from its source token is skipped. A custom token claim of the same name overrides the mapping.
           </mat-hint>
