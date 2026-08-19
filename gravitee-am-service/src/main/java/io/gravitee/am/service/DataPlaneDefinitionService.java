@@ -33,6 +33,8 @@ public interface DataPlaneDefinitionService {
 
     Flowable<DataPlaneDefinitionSummary> findAll();
 
+    Flowable<DataPlaneDefinitionSummary> findByEnvironmentId(String environmentId);
+
     Single<DataPlaneDefinitionSummary> findById(String id);
 
     /**

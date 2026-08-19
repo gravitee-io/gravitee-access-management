@@ -34,6 +34,7 @@ import {
 import { setup, retryImmediatelyForThisFile } from '../test-fixture';
 import { jira } from '@specs-utils/jira';
 import { OrgLicenseFixture, setupOrgLicenseFixture } from './fixtures/org-license-fixture';
+import { setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 
 setup(300000);
 retryImmediatelyForThisFile();
@@ -41,7 +42,7 @@ retryImmediatelyForThisFile();
 let fixture: OrgLicenseFixture;
 
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture('org-license-endpoint');
+  fixture = await setupOrgLicenseFixture(await setupCloudOrganizationFixture('org-license-endpoint'));
   await fixture.clearOrgLicense();
 });
 

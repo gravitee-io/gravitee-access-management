@@ -16,36 +16,33 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
-import { CloudOrganizationFixture, setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 import { getDomainApi } from '@management-commands/service/utils';
 import { retryUntil } from '@utils-commands/retry';
 import { setup } from '../test-fixture';
 import { CloudEntrypointFixture, setupCloudEntrypointFixture } from './fixtures/cloud-entrypoint-fixture';
+import { setupCloudSharedFixture } from './fixtures/cloud-shared-fixture';
 
 setup(120000);
 
-const ORGANIZATION_NAME = 'cloud-org-domain-ep';
-
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 
-let organization: CloudOrganizationFixture;
+let accessToken: string;
 let fixture: CloudEntrypointFixture;
 
 beforeAll(async () => {
   await waitForCockpitConnection();
-  organization = await setupCloudOrganizationFixture(ORGANIZATION_NAME);
-  fixture = await setupCloudEntrypointFixture(organization);
+  accessToken = (await setupCloudSharedFixture()).accessToken;
+  fixture = await setupCloudEntrypointFixture();
 });
 
 afterAll(async () => {
   await fixture?.cleanup();
-  await organization?.cleanup();
 });
 
 // The urls the management API resolves for the domain's Overview/Endpoints pages
 // (GET /organizations/{org}/environments/{env}/domains/{domain}/entrypoints).
 const domainEntrypointUrls = async (): Promise<string[]> => {
-  const entrypoints = await getDomainApi(organization.accessToken).getDomainEntrypoints({
+  const entrypoints = await getDomainApi(accessToken).getDomainEntrypoints({
     organizationId: fixture.organizationId,
     environmentId: fixture.environmentId,
     domain: fixture.domainId,

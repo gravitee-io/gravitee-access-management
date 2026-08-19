@@ -19,7 +19,7 @@ import { CockpitQueueEntry } from '@cloud-commands/cockpit-commands';
 import { stackLicenseBase64 } from '@cloud-commands/license-key';
 import { retryUntil } from '@utils-commands/retry';
 import { GraviteeLicense } from '../../../api/management/models/GraviteeLicense';
-import { setupCloudOrganizationFixture } from './cloud-organization-fixture';
+import { CloudOrganizationFixture } from './cloud-organization-fixture';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 
@@ -48,8 +48,7 @@ export interface CloudLicenseFixture {
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudLicenseFixture = async (organizationName = 'cloud-license'): Promise<CloudLicenseFixture> => {
-  const organization = await setupCloudOrganizationFixture(organizationName);
+export const setupCloudLicenseFixture = async (organization: CloudOrganizationFixture): Promise<CloudLicenseFixture> => {
   const organizationId = organization.organizationId;
   const licenseApi = getLicenseApi(organization.accessToken);
   const licenseKey = stackLicenseBase64();

@@ -25,6 +25,8 @@ process.env.AM_MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL || 'http://localho
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_ENDPOINT || process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
 process.env.AM_GATEWAY_NODE_MONITORING_URL = process.env.AM_GATEWAY_NODE_MONITORING_URL || 'http://localhost:18092/_node';
+// Management technical API — the cloud fixtures provision their data plane through it.
+process.env.AM_MANAGEMENT_NODE_URL = process.env.AM_MANAGEMENT_NODE_URL || 'http://localhost:18093/_node';
 process.env.AM_ADMIN_USERNAME = process.env.AM_ADMIN_USERNAME || 'admin';
 process.env.AM_ADMIN_PASSWORD = process.env.AM_ADMIN_PASSWORD || 'adminadmin';
 process.env.AM_DEF_ORG_ID = process.env.AM_DEF_ORG_ID || 'DEFAULT';
@@ -33,6 +35,11 @@ process.env.AM_DEF_ENV_ID = process.env.AM_DEF_ENV_ID || 'DEFAULT';
 process.env.AM_DEF_ENV_HRID = process.env.AM_DEF_ENV_HRID || 'default';
 // Cockpit mock — cloud specs only (local-stack.sh up --cloud).
 process.env.AM_COCKPIT_MOCK_URL = process.env.AM_COCKPIT_MOCK_URL || 'http://localhost:8085';
+// Stores as the management API container reaches them — the cloud fixture's data plane definition
+// names the same store the gateway is configured with. Matches api/config/ci.setup.js; the cloud
+// stack only runs in docker, so these are service names rather than dev.setup.js' localhost.
+process.env.AM_INTERNAL_MONGODB_URI = process.env.AM_INTERNAL_MONGODB_URI || 'mongodb://mongodb:27017';
+process.env.AM_INTERNAL_POSTGRES_HOST = process.env.AM_INTERNAL_POSTGRES_HOST || 'postgres';
 // fakeSMTP UI (matches api/config/dev.setup.js) — forgot-password Playwright specs
 process.env.FAKE_SMTP = process.env.FAKE_SMTP || 'http://localhost:5080';
 process.env.INTERNAL_FAKE_SMTP_HOST = process.env.INTERNAL_FAKE_SMTP_HOST || 'smtp';
@@ -92,7 +99,7 @@ export default defineConfig({
     // Cloud specs need a managed-cloud stack (cockpit-mock + empty platform license — see
     // docker-compose.cloud.yml) and are excluded from the 'chromium' project above. Run
     // explicitly via `pw:ci:cloud` / `--project=cloud` against `local-stack.sh up --cloud --ui`.
-   {
+    {
       name: 'cloud',
       testMatch: '**/cloud/**',
       use: {

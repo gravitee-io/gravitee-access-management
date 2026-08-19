@@ -17,12 +17,10 @@
 import { getDomainApi } from '@management-commands/service/utils';
 import { getDomainState, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { sendCockpitCommand, waitForCockpitReply } from '@cloud-commands/cockpit-commands';
 import { safeDeleteCloudDomains } from '@cloud-commands/domain-commands';
 import { DomainState } from '../../../api/gateway/apis/MonitoringApi';
 import { CloudLicenseFixture, setupCloudLicenseFixture } from './cloud-license-fixture';
-
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
+import { setupCloudSharedFixture } from './cloud-shared-fixture';
 
 export const GATED_PLUGIN = 'magiclink-am-authenticator';
 
@@ -40,37 +38,21 @@ export interface CloudLicenseEnforcementFixture extends CloudLicenseFixture {
 /**
  * Adds domain deployment to the license fixture, so the gateway's decisions can be read off domain state.
  *
- * The domains must live in the same organization the license is pushed to, so the environment is
- * provisioned in the fixture's Cockpit-created organization rather than the default one.
+ * The domains must live in the same organization the license is pushed to, so both come from the
+ * shared cloud org/env whose data plane the gateway is pinned to.
  */
 export const setupCloudLicenseEnforcementFixture = async (): Promise<CloudLicenseEnforcementFixture> => {
-  const licenseFixture = await setupCloudLicenseFixture('cloud-license-gate');
-  const organizationId = licenseFixture.organizationId;
-  const accessToken = licenseFixture.accessToken;
-  const environmentId = 'lic-gate-env';
+  const shared = await setupCloudSharedFixture();
+  const licenseFixture = await setupCloudLicenseFixture(shared);
+  const { organizationId, environmentId, accessToken, dataPlaneId } = shared;
   const domainApi = getDomainApi(accessToken);
   const domainIds: string[] = [];
-
-  const environmentReply = await sendCockpitCommand({
-    type: 'ENVIRONMENT',
-    payload: {
-      id: environmentId,
-      organizationId,
-      hrids: [environmentId],
-      name: `License enforcement env ${environmentId}`,
-      // Required: cloud mode rejects an ENVIRONMENT command with no non-overriding GATEWAY access point.
-      accessPoints: [{ target: 'GATEWAY', host: `${environmentId}.example.com` }],
-    },
-  }).then(waitForCockpitReply);
-  if (environmentReply.commandStatus !== 'SUCCEEDED') {
-    throw new Error(`Cockpit refused to create environment ${environmentId}: ${environmentReply.errorDetails}`);
-  }
 
   const deployDomain = async (): Promise<DomainState> => {
     const domain = await domainApi.createDomain({
       organizationId,
       environmentId,
-      newDomain: { name: uniqueName('lic-gate', true), dataPlaneId: DATA_PLANE_ID },
+      newDomain: { name: uniqueName('lic-gate', true), dataPlaneId },
     });
     domainIds.push(domain.id!);
     await domainApi.patchDomain({ organizationId, environmentId, domain: domain.id!, patchDomain: { enabled: true } });

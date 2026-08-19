@@ -55,6 +55,43 @@ describe('Domain Create', () => {
     expect(fetched.description).toEqual(description);
   });
 
+  it('should default dataPlaneId when omitted on a standalone stack', async () => {
+    const name = uniqueName('domain-create-nodp', true);
+
+    // Bypass the helper: send NewDomain without dataPlaneId at all.
+    const raw = await getDomainApi(accessToken).createDomainRaw({
+      organizationId: process.env.AM_DEF_ORG_ID,
+      environmentId: process.env.AM_DEF_ENV_ID,
+      newDomain: { name, description: 'AM-7262' } as any,
+    });
+    expect(raw.raw.status).toBe(201);
+    const created = await raw.raw.json();
+    domainId = created.id;
+
+    expect(created.dataPlaneId).toBe('default');
+  });
+
+  it('should reject an unknown dataPlaneId', async () => {
+    const name = uniqueName('domain-create-baddp', true);
+
+    let status: number | undefined;
+    let message = '';
+    try {
+      await getDomainApi(accessToken).createDomainRaw({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        newDomain: { name, description: 'AM-7262', dataPlaneId: 'ghost-dp' },
+      });
+    } catch (e: any) {
+      status = e?.response?.status;
+      // runtime.request() already drained the body into e.message; re-reading it throws
+      message = e?.message ?? '';
+    }
+    expect(status).toBeGreaterThanOrEqual(400);
+    expect(status).toBeLessThan(500);
+    expect(message).toMatch(/data plane/i);
+  });
+
   it('should return createdAt and updatedAt as epoch-millisecond numbers', async () => {
     const name = uniqueName('domain-create-test', true);
     const description = 'Test domain created by regression test AM-2217';

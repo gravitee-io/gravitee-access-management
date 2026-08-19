@@ -16,7 +16,6 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
-import { CloudOrganizationFixture, setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 import { getDomainState } from '@gateway-commands/monitoring-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { setup } from '../test-fixture';
@@ -24,23 +23,18 @@ import { CloudEntrypointFixture, setupCloudEntrypointFixture } from './fixtures/
 
 setup(120000);
 
-const ORGANIZATION_NAME = 'cloud-org-ep-cache';
-
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const sameUrls = (urls: string[], expected: string[]) => urls.length === expected.length && expected.every((u) => urls.includes(u));
 
-let organization: CloudOrganizationFixture;
 let fixture: CloudEntrypointFixture;
 
 beforeAll(async () => {
   await waitForCockpitConnection();
-  organization = await setupCloudOrganizationFixture(ORGANIZATION_NAME);
-  fixture = await setupCloudEntrypointFixture(organization);
+  fixture = await setupCloudEntrypointFixture();
 });
 
 afterAll(async () => {
   await fixture?.cleanup();
-  await organization?.cleanup();
 });
 
 // These specs share one environment/domain and run in order (jest --runInBand): the initial access

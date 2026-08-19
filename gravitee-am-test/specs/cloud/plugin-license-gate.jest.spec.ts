@@ -30,11 +30,11 @@ import { uniqueName } from '@utils-commands/misc';
 import { setup, retryImmediatelyForThisFile } from '../test-fixture';
 import { jira } from '@specs-utils/jira';
 import { OrgLicenseFixture, setupOrgLicenseFixture } from './fixtures/org-license-fixture';
+import { setupCloudSharedFixture } from './fixtures/cloud-shared-fixture';
 
 setup(300000);
 retryImmediatelyForThisFile();
 
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 const AZURE_AD_TYPE = 'azure-ad-am-idp';
 const INLINE_TYPE = 'inline-am-idp';
 
@@ -79,14 +79,15 @@ const deleteIdp = (idpId: string) =>
   });
 
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture('plugin-license-gate');
+  const shared = await setupCloudSharedFixture();
+  fixture = await setupOrgLicenseFixture(shared);
   // Universe license required to start the domain without EE-gate interference.
   await fixture.setUniverseLicense();
 
   const domainApi = getDomainApi(fixture.accessToken);
   const domain = await domainApi.createDomain({
     ...orgEnv(),
-    newDomain: { name: uniqueName('am7241', true), description: 'AM-7241 plugin license gate', dataPlaneId: DATA_PLANE_ID },
+    newDomain: { name: uniqueName('am7241', true), description: 'AM-7241 plugin license gate', dataPlaneId: shared.dataPlaneId },
   });
   await domainApi.patchDomain({ ...orgEnv(), domain: domain.id!, patchDomain: { enabled: true } });
   const started = await waitForDomainStart(domain);

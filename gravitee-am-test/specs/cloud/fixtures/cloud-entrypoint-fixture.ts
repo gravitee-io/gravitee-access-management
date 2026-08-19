@@ -20,10 +20,9 @@ import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
 import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
-import { CloudOrganizationFixture } from './cloud-organization-fixture';
+import { setupCloudSharedFixture } from './cloud-shared-fixture';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 
 const urlFor = (host: string) => `https://${host}`;
 
@@ -55,18 +54,16 @@ export interface CloudEntrypointFixture {
 }
 
 /**
- * Provisions an environment via a Cockpit ENVIRONMENT command whose GATEWAY access points become
- * entrypoints, then deploys a domain in that environment so its cached entrypoints can be observed
- * through the domain state endpoint. `resyncAccessPoints` re-issues the command to exercise the live
- * update/eviction path (the handler deletes-and-recreates the environment's entrypoints each time).
+ * Deploys an enabled domain in the shared cloud environment so its cached entrypoints can be
+ * observed through the domain state endpoint. `resyncAccessPoints` re-issues the ENVIRONMENT
+ * command to exercise the live update/eviction path (the handler deletes-and-recreates the
+ * environment's entrypoints each time).
+ *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
-export const setupCloudEntrypointFixture = async (organization: CloudOrganizationFixture): Promise<CloudEntrypointFixture> => {
-  const organizationId = organization.organizationId;
-  const accessToken = organization.accessToken;
-  // Derived from the organization so two specs using this fixture never collide on the environment id
-  // (ids are unique across organizations in AM), while staying fixed so each command is an upsert.
-  const environmentId = `${organizationId}-env`;
+export const setupCloudEntrypointFixture = async (): Promise<CloudEntrypointFixture> => {
+  const shared = await setupCloudSharedFixture();
+  const { organizationId, environmentId, accessToken, dataPlaneId } = shared;
   const uniqueHost = () => `${uniqueName('gw', true)}.example.com`;
 
   // Track every host we ever provision so cleanup removes all of them, not just the current set
@@ -88,26 +85,23 @@ export const setupCloudEntrypointFixture = async (organization: CloudOrganizatio
     return hosts.map(urlFor);
   };
 
-  // 1. Cockpit provisions the environment; its GATEWAY access points are turned into entrypoints.
+  // 1. Set this spec's access points on the shared env.
   const initialHosts = [uniqueHost(), uniqueHost()];
   const expectedUrls = await resyncAccessPoints(initialHosts);
 
-  // 2. Wait until AM has processed the command (environment created + entrypoints persisted).
+  // 2. Wait until AM has processed the command (entrypoints persisted).
   await retryUntil(
     () => getEntrypointsApi(accessToken).listEntrypoints({ organizationId }),
     (entrypoints: any[]) => expectedUrls.every((url) => entrypoints.some((e) => e.url === url)),
     POLL,
   );
 
-  // 2b. Cockpit grants the environment owner right after creating the environment.
-  await organization.grantEnvironmentOwnership(environmentId);
-
-  // 3. Deploy an enabled domain in that environment so its cached entrypoints surface on domain state.
+  // 3. Deploy an enabled domain so its cached entrypoints surface on domain state.
   const domainApi = getDomainApi(accessToken);
   const domain = await domainApi.createDomain({
     organizationId,
     environmentId,
-    newDomain: { name: uniqueName('ep-cache-domain', true), dataPlaneId: DATA_PLANE_ID },
+    newDomain: { name: uniqueName('ep-cache-domain', true), dataPlaneId },
   });
   await domainApi.patchDomain({ organizationId, environmentId, domain: domain.id, patchDomain: { enabled: true } });
   await waitForDomainReady(domain.id);
@@ -137,7 +131,6 @@ export const setupCloudEntrypointFixture = async (organization: CloudOrganizatio
             .catch((err) => console.warn(`cleanup: failed to delete entrypoint ${e.id}: ${err.message}`)),
         ),
     );
-    // Note: organizations and environments have no delete endpoint in the management API
   };
 
   return {

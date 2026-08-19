@@ -15288,7 +15288,6 @@ components:
         name:
           type: string
       required:
-      - dataPlaneId
       - name
     NewEmail:
       type: object

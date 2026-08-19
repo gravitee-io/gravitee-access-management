@@ -36,13 +36,13 @@ import { uniqueName } from '@utils-commands/misc';
 import { setup, retryImmediatelyForThisFile } from '../test-fixture';
 import { jira } from '@specs-utils/jira';
 import { OrgLicenseFixture, setupOrgLicenseFixture } from './fixtures/org-license-fixture';
+import { setupCloudSharedFixture } from './fixtures/cloud-shared-fixture';
 
 setup(300000);
 retryImmediatelyForThisFile();
 
 // Computed at module load (not from the async fixture) so it's known before `it`/`it.skip` is chosen below.
 const hasExpiredLicense = Boolean(process.env.AM_ORG_LICENSE_EXPIRED_PATH);
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
 
 const AZURE_AD_TYPE = 'azure-ad-am-idp';
 const JKS_CONFIG = JSON.stringify({
@@ -86,7 +86,8 @@ async function patchDomain(body: Record<string, unknown>): Promise<void> {
 }
 
 beforeAll(async () => {
-  fixture = await setupOrgLicenseFixture('gateway-org-license');
+  const shared = await setupCloudSharedFixture();
+  fixture = await setupOrgLicenseFixture(shared);
 
   // Set universe license before domain creation so the gateway enforces it when the
   // domain first deploys. License enforcement applies on domain startup/update, not
@@ -96,7 +97,7 @@ beforeAll(async () => {
   const domainApi = getDomainApi(fixture.accessToken);
   const domain = await domainApi.createDomain({
     ...orgEnv(),
-    newDomain: { name: uniqueName('am7238', true), description: 'AM-7238 gateway license', dataPlaneId: DATA_PLANE_ID },
+    newDomain: { name: uniqueName('am7238', true), description: 'AM-7238 gateway license', dataPlaneId: shared.dataPlaneId },
   });
   domainId = domain.id!;
   domainHrid = domain.hrid!;

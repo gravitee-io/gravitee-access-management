@@ -32,7 +32,6 @@ public class NewDomain {
 
     private String description;
 
-    @NotNull
     private String dataPlaneId;
 
     @Override

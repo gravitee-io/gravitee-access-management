@@ -32,6 +32,8 @@ import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
 import io.gravitee.am.service.exception.LastDefaultEntrypointException;
 import io.gravitee.am.service.impl.EntrypointServiceImpl;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
+import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
@@ -91,6 +93,9 @@ public class EntrypointServiceTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private DataPlaneDefinitionService dataPlaneDefinitionService;
+
     private EntrypointService cut;
 
     @Before
@@ -98,10 +103,11 @@ public class EntrypointServiceTest {
 
         cut = newEntrypointService(new MockEnvironment());
         lenient().when(eventService.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+        lenient().when(dataPlaneDefinitionService.findByEnvironmentId(any())).thenReturn(Flowable.empty());
     }
 
     private EntrypointService newEntrypointService(Environment environment) {
-        return new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, "https://gravitee.io", environment);
+        return new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, eventService, dataPlaneDefinitionService, "https://gravitee.io", environment);
     }
 
     private EntrypointService cloudModeEntrypointService() {
@@ -776,6 +782,55 @@ public class EntrypointServiceTest {
                         && "env#1".equals(event.getPayload().getReferenceId())
                         && "env#1".equals(event.getEnvironmentId())
                         && event.getDataPlaneId() != null));
+    }
+
+    @Test
+    public void shouldPublishOneEntrypointEventPerLinkedDataPlane() {
+
+        Entrypoint existingEntrypoint = new Entrypoint();
+        existingEntrypoint.setId(ENTRYPOINT_ID);
+        existingEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        existingEntrypoint.setEnvironmentId("env#1");
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+        when(dataPlaneDefinitionService.findByEnvironmentId("env#1"))
+                .thenReturn(Flowable.just(dpSummary("dp-a"), dpSummary("dp-b")));
+
+        cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(eventService, times(1)).create(argThat(event ->
+                event.getType() == Type.ENTRYPOINT && "dp-a".equals(event.getDataPlaneId())));
+        verify(eventService, times(1)).create(argThat(event ->
+                event.getType() == Type.ENTRYPOINT && "dp-b".equals(event.getDataPlaneId())));
+        // outside managed cloud a domain can sit on a plane the node declares itself, so default is a target as well
+        verify(eventService, times(1)).create(argThat(event ->
+                DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(event.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldPublishEntrypointEventToDefaultWhenEnvironmentHasNoLinkedDataPlane() {
+
+        Entrypoint existingEntrypoint = new Entrypoint();
+        existingEntrypoint.setId(ENTRYPOINT_ID);
+        existingEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        existingEntrypoint.setEnvironmentId("env#1");
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
+        when(entrypointRepository.delete(ENTRYPOINT_ID)).thenReturn(Completable.complete());
+
+        cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(eventService, times(1)).create(argThat(event ->
+                DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(event.getDataPlaneId())));
+    }
+
+    private DataPlaneDefinitionSummary dpSummary(String id) {
+        return new DataPlaneDefinitionSummary(id, id, "mongodb", null, ORGANIZATION_ID, "env#1", null, List.of(), null, null);
     }
 
     @Test

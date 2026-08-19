@@ -37,7 +37,7 @@ export interface NewDomain {
    * @type {string}
    * @memberof NewDomain
    */
-  dataPlaneId: string;
+  dataPlaneId?: string;
   /**
    *
    * @type {string}
@@ -56,7 +56,6 @@ export interface NewDomain {
  * Check if a given object implements the NewDomain interface.
  */
 export function instanceOfNewDomain(value: object): value is NewDomain {
-  if (!('dataPlaneId' in value) || value['dataPlaneId'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   return true;
 }
@@ -70,7 +69,7 @@ export function NewDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    dataPlaneId: json['dataPlaneId'],
+    dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     description: json['description'] == null ? undefined : json['description'],
     name: json['name'],
   };

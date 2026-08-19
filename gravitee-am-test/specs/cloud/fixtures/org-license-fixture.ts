@@ -19,7 +19,7 @@ import { drainCockpitQueue, waitForCockpitConnection } from '@cloud-commands/coc
 import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { waitForOrgLicenseScope } from '@management-commands/license-management-commands';
 import { stackLicenseBase64 } from '@cloud-commands/license-key';
-import { setupCloudOrganizationFixture } from './cloud-organization-fixture';
+import { CloudOrganizationFixture } from './cloud-organization-fixture';
 
 export interface OrgLicenseFixture {
   /** Id of the Cockpit-provisioned organization. */
@@ -46,11 +46,10 @@ export interface OrgLicenseFixture {
   cleanup: () => Promise<void>;
 }
 
-export const setupOrgLicenseFixture = async (organizationName = 'org-license'): Promise<OrgLicenseFixture> => {
+export const setupOrgLicenseFixture = async (organization: CloudOrganizationFixture): Promise<OrgLicenseFixture> => {
   await waitForCockpitConnection();
   await drainCockpitQueue();
 
-  const organization = await setupCloudOrganizationFixture(organizationName);
   const organizationId = organization.organizationId;
   const environmentId = organization.environmentId;
   const userId = organization.userId;

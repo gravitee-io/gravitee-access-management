@@ -21,13 +21,11 @@ globalThis.fetch = crossFetch;
 import { getDomainApi } from '@management-commands/service/utils';
 import { waitForDomainSync } from '@management-commands/domain-management-commands';
 import { OrgLicenseFixture, setupOrgLicenseFixture } from '../../specs/cloud/fixtures/org-license-fixture';
+import { setupCloudSharedFixture } from '../../specs/cloud/fixtures/cloud-shared-fixture';
 import { quietly, uniqueTestName as uniqueName } from '../utils/fixture-helpers';
 import { cockpitBrowserSignIn } from '../utils/cockpit-browser-signin';
 import type { Domain } from '@management-models/Domain';
 import type { Page } from '@playwright/test';
-
-const DATA_PLANE_ID = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
-const ORGANIZATION_NAME = 'plugin-license-ui';
 
 export type CloudPluginLicenseFixtures = {
   /** Cockpit-provisioned org + license helpers. */
@@ -48,14 +46,17 @@ export const test = base.extend<CloudPluginLicenseFixtures>({
   // Cloud has no inline admin — do not reuse the chromium project's admin storageState.
   storageState: { cookies: [], origins: [] },
 
+  // The shared cloud org/env, whose data plane is the one the gateway is pinned to: cloud mode
+  // resolves the data plane from the environment link, so a domain elsewhere is never served.
   licenseFixture: async ({}, use) => {
-    const fixture = await setupOrgLicenseFixture(ORGANIZATION_NAME);
+    const fixture = await setupOrgLicenseFixture(await setupCloudSharedFixture());
     await use(fixture);
     await fixture.cleanup();
   },
 
   testDomain: async ({ licenseFixture }, use) => {
     const { accessToken, organizationId, environmentId } = licenseFixture;
+    const { dataPlaneId } = await setupCloudSharedFixture();
     const domainApi = getDomainApi(accessToken);
     const domain = await quietly(() =>
       domainApi.createDomain({
@@ -64,7 +65,7 @@ export const test = base.extend<CloudPluginLicenseFixtures>({
         newDomain: {
           name: uniqueName('pw-license-ui'),
           description: 'Playwright EE plugin license UI',
-          dataPlaneId: DATA_PLANE_ID,
+          dataPlaneId,
         },
       }),
     );
@@ -77,7 +78,7 @@ export const test = base.extend<CloudPluginLicenseFixtures>({
   },
 
   environmentHrid: async ({ licenseFixture }, use) => {
-    // setupCloudOrganizationFixture sets hrids to [environmentId].
+    // The shared cloud fixture sets hrids to [environmentId].
     await use(licenseFixture.environmentId);
   },
 

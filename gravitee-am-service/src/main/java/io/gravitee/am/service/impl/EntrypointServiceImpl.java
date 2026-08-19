@@ -30,8 +30,10 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
 import io.gravitee.am.service.exception.LastDefaultEntrypointException;
@@ -56,7 +58,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -71,6 +75,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final AuditService auditService;
     private final VirtualHostValidator virtualHostValidator;
     private final EventService eventService;
+    private final DataPlaneDefinitionService dataPlaneDefinitionService;
     private final String gatewayUrl;
     private final boolean managedCloudEnabled;
 
@@ -79,6 +84,7 @@ public class EntrypointServiceImpl implements EntrypointService {
                                  AuditService auditService,
                                  VirtualHostValidator virtualHostValidator,
                                  EventService eventService,
+                                 @Lazy DataPlaneDefinitionService dataPlaneDefinitionService,
                                  @Value("${gateway.url:http://localhost:8092}") String gatewayUrl,
                                  Environment environment) {
         this.entrypointRepository = entrypointRepository;
@@ -86,6 +92,7 @@ public class EntrypointServiceImpl implements EntrypointService {
         this.auditService = auditService;
         this.virtualHostValidator = virtualHostValidator;
         this.eventService = eventService;
+        this.dataPlaneDefinitionService = dataPlaneDefinitionService;
         this.gatewayUrl = gatewayUrl;
         this.managedCloudEnabled = CloudProperties.isManagedCloudEnabled(environment);
     }
@@ -240,10 +247,40 @@ public class EntrypointServiceImpl implements EntrypointService {
         ReferenceType referenceType = entrypoint.getEnvironmentId() != null ? ReferenceType.ENVIRONMENT : ReferenceType.ORGANIZATION;
         String referenceId = entrypoint.getEnvironmentId() != null ? entrypoint.getEnvironmentId() : entrypoint.getOrganizationId();
         Payload payload = new Payload(entrypoint.getId(), referenceType, referenceId, action);
-        // Tag with a data-plane id so the gateway sync (which polls events by data-plane) picks it up.
-        // No environment->data-plane mapping exists; sharded multi-data-plane is out of scope (AM-7226).
-        Event event = new Event(Type.ENTRYPOINT, payload, DataPlaneDescription.DEFAULT_DATA_PLANE_ID, entrypoint.getEnvironmentId());
-        return eventService.create(event).ignoreElement();
+        return resolveDataPlaneIds(entrypoint)
+                .flatMapCompletable(dataPlaneIds -> Flowable.fromIterable(dataPlaneIds)
+                        .flatMapCompletable(dataPlaneId -> eventService
+                                .create(new Event(Type.ENTRYPOINT, payload, dataPlaneId, entrypoint.getEnvironmentId()))
+                                .ignoreElement()));
+    }
+
+    /**
+     * Route an entrypoint event to every data plane that can serve a domain in this environment, so
+     * whichever gateway holds one picks it up (SyncManager polls events by data-plane id). One event
+     * per plane rather than one for the first row: an environment may hold several linked planes, and
+     * a gateway pinned to any other one would never see the change. Org-scoped entrypoints go to
+     * {@code default}.
+     */
+    private Single<Set<String>> resolveDataPlaneIds(Entrypoint entrypoint) {
+        if (entrypoint.getEnvironmentId() == null) {
+            return Single.just(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        }
+        return dataPlaneDefinitionService.findByEnvironmentId(entrypoint.getEnvironmentId())
+                .map(DataPlaneDefinitionSummary::id)
+                .toList()
+                .map(this::targetPlanes);
+    }
+
+    private Set<String> targetPlanes(List<String> linkedForEnv) {
+        Set<String> targets = new LinkedHashSet<>(linkedForEnv);
+        // Cloud binds every domain to one of the environment's linked planes, so those are the only
+        // gateways that can be serving it. Outside managed cloud a domain may also sit on a plane the
+        // node's configuration declares while the environment has another provisioned against it, and
+        // dropping `default` there strands the entrypoints of every domain bound to it.
+        if (!managedCloudEnabled || targets.isEmpty()) {
+            targets.add(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        }
+        return targets;
     }
 
     private Completable validate(Entrypoint entrypoint) {

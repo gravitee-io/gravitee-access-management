@@ -68,6 +68,7 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
@@ -81,6 +82,7 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -103,6 +105,7 @@ import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidDataPlaneException;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
@@ -110,6 +113,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.AutomationNewDomain;
+import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -149,6 +153,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
@@ -210,6 +215,12 @@ public class DomainServiceTest {
 
     @Mock
     private DataPlaneRegistry dataPlaneRegistry;
+
+    @Mock
+    private DataPlaneDefinitionService dataPlaneDefinitionService;
+
+    @Mock
+    private MultiDataPlaneLoader dataPlaneConfigurationLoader;
 
     @Mock
     private DomainValidator domainValidator;
@@ -393,6 +404,12 @@ public class DomainServiceTest {
     @BeforeEach
     void stubCimdClientStateServiceDefaults() {
         Mockito.lenient().when(cimdClientStateService.deleteByDomain(any(Domain.class))).thenReturn(Completable.complete());
+    }
+
+    /** Domain creation always reads the environment's linked planes; most tests have none. */
+    @BeforeEach
+    void stubNoLinkedDataPlanes() {
+        Mockito.lenient().when(dataPlaneDefinitionService.findByEnvironmentId(anyString())).thenReturn(Flowable.empty());
     }
 
     /**
@@ -690,6 +707,257 @@ public class DomainServiceTest {
 
         testObserver.assertError(DomainAlreadyExistsException.class);
         testObserver.assertNotComplete();
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    private void stubCreateDomainPersistence(String hrid) {
+        Domain persisted = new Domain();
+        persisted.setId("domain-id");
+        persisted.setReferenceType(ReferenceType.ENVIRONMENT);
+        persisted.setReferenceId(ENVIRONMENT_ID);
+        persisted.setVersion(DomainVersion.V2_0);
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, hrid)).thenReturn(Maybe.empty());
+        when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(persisted));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
+        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
+        when(defaultIdentityProviderService.create(any())).thenReturn(Single.just(new IdentityProvider()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+    }
+
+    private void stubLoadedDataPlanes(String... ids) {
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(Stream.of(ids)
+                .map(id -> new DataPlaneDescription(id, id, "mongodb", "test", null))
+                .toList());
+    }
+
+    private DataPlaneDefinitionSummary dpSummary(String id) {
+        return new DataPlaneDefinitionSummary(
+                id, id, "mongodb", null, ORGANIZATION_ID, ENVIRONMENT_ID, null, List.of(), null, null);
+    }
+
+    @Test
+    public void shouldCreate_standalone_omittedId_resolvesToDefault() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        // dataPlaneId intentionally not set
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Flowable.empty());
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        when(dataPlaneRegistry.verified(DataPlaneDescription.DEFAULT_DATA_PLANE_ID))
+                .thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_standalone_omittedId_extraDpDeclared() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Flowable.empty());
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "extra-dp"));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldReject_standalone_omittedId_provisionedDpLinkedAndLoaded() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "provisioned-dp");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_standalone_omittedId_resolvesToDefault_whenLinkedDpNotLoadedOnThisNode() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        // Linked to the environment but not loaded here: it cannot take the domain, so it does not
+        // count against the fall back to default.
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
+        when(dataPlaneConfigurationLoader.declaredIds())
+                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.verified(DataPlaneDescription.DEFAULT_DATA_PLANE_ID))
+                .thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_standalone_suppliedId_unknown() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("ghost");
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(
+                new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "default", "mongodb", "test", null)));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_cloud_omittedId_singleLinkedDp() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+        stubLoadedDataPlanes("env-dp");
+        when(dataPlaneRegistry.verified("env-dp")).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> "env-dp".equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_cloud_omittedId_noLinkedDp() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID)).thenReturn(Flowable.empty());
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldReject_cloud_omittedId_multipleLinkedDps() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("dp-a"), dpSummary("dp-b")));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_cloud_suppliedId_matchesLinked() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("env-dp");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+        stubLoadedDataPlanes("env-dp");
+        when(dataPlaneRegistry.verified("env-dp")).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> "env-dp".equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldCreate_standalone_suppliedDefault_whileEnvironmentHasAProvisionedPlane() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        // A plane provisioned against the environment must not stop a domain landing on a declared
+        // one. Lenient because resolution short-circuits before the lookup, which is the point.
+        Mockito.lenient().when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("provisioned-dp")));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.verified(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_cloud_linkedDpNotLoadedOnThisNode() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+        // the definition is linked, but activation failed so the registry never took it
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+        verify(dataPlaneRegistry, never()).verified(anyString());
+    }
+
+    @Test
+    public void shouldReject_cloud_suppliedId_notLinked() {
+        enableCloudMode();
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("other-dp");
+        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
+                .thenReturn(Flowable.just(dpSummary("env-dp")));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
 
         verify(domainRepository, never()).create(any(Domain.class));
     }

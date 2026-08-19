@@ -17,7 +17,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/glob
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { CloudEmailFixture, setupCloudEmailFixture } from './fixtures/cloud-email-fixture';
-import { CloudOrganizationFixture, setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 import { setup } from '../test-fixture';
 
 setup(200000);
@@ -30,14 +29,12 @@ setup(200000);
  * The entrypoint host is synthetic and never resolves: assert on the link string, never follow it.
  */
 describe('AM - Cloud - entrypoint url in email links', () => {
-  let organization: CloudOrganizationFixture;
   let fixture: CloudEmailFixture;
   let expectedOrigin: string;
   let generatedOrigin: string;
 
   beforeAll(async () => {
-    organization = await setupCloudOrganizationFixture('cloud-org-email');
-    fixture = await setupCloudEmailFixture(organization);
+    fixture = await setupCloudEmailFixture();
     // Through URL rather than string concatenation: uniqueName produces mixed case and hostnames are
     // case-insensitive, so both sides have to be normalised the same way.
     expectedOrigin = new URL(`https://${fixture.overridingHost}`).origin;
@@ -46,7 +43,6 @@ describe('AM - Cloud - entrypoint url in email links', () => {
 
   afterAll(async () => {
     if (fixture) await fixture.cleanup();
-    await organization?.cleanup();
   });
 
   // Cleared per address rather than a blanket delete: the fake SMTP inbox is shared with whatever

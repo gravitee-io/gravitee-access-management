@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
 import { setup } from '../test-fixture';
 import { CloudLicenseFixture, OSS_TIER, EXAMPLE_EE_FEATURES, setupCloudLicenseFixture } from './fixtures/cloud-license-fixture';
+import { setupCloudOrganizationFixture } from './fixtures/cloud-organization-fixture';
 
 setup(120000);
 
@@ -25,7 +26,7 @@ let fixture: CloudLicenseFixture;
 
 beforeAll(async () => {
   await waitForCockpitConnection();
-  fixture = await setupCloudLicenseFixture();
+  fixture = await setupCloudLicenseFixture(await setupCloudOrganizationFixture('cloud-license'));
 });
 
 afterAll(async () => {

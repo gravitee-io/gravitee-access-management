@@ -149,6 +149,12 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     }
 
     @Override
+    public Flowable<DataPlaneDefinitionSummary> findByEnvironmentId(String environmentId) {
+        log.debug("Find data plane definitions for environment {}", environmentId);
+        return dataPlaneDefinitionRepository.findByEnvironmentId(environmentId).map(this::toSummary);
+    }
+
+    @Override
     public Single<DataPlaneDefinitionSummary> findById(String id) {
         log.debug("Find data plane definition by id: {}", id);
         return dataPlaneDefinitionRepository.findById(id)
