@@ -275,7 +275,7 @@ public class TokenServiceImplTest {
 
         ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor =
                 ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
-        verify(tokenManager).storeRefreshToken(captor.capture());
+        verify(tokenManager).storeTokens(any(), captor.capture());
         assertThat(captor.getValue().getJkt()).isEqualTo("the-jwk-thumbprint");
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
@@ -305,7 +305,7 @@ public class TokenServiceImplTest {
 
         ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor =
                 ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
-        verify(tokenManager).storeRefreshToken(captor.capture());
+        verify(tokenManager).storeTokens(any(), captor.capture());
         assertThat(captor.getValue().getJkt()).isNull();
     }
 
@@ -406,8 +406,7 @@ public class TokenServiceImplTest {
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
         when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
-        when(tokenManager.storeAccessToken(any())).thenReturn(Completable.complete());
-        when(tokenManager.storeRefreshToken(any())).thenReturn(Completable.complete());
+        when(tokenManager.storeTokens(any(), any())).thenReturn(Completable.complete());
         when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
     }
 
@@ -1264,7 +1263,7 @@ public class TokenServiceImplTest {
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
         when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
-        when(tokenManager.storeAccessToken(any())).thenReturn(Completable.complete());
+        when(tokenManager.storeTokens(any(), any())).thenReturn(Completable.complete());
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
 
