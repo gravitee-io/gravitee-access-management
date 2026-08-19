@@ -39,12 +39,13 @@ const DATA_PLANE_ID = 'cloud-test';
 
 // The definition has to name the same store the gateway is configured with, otherwise the management
 // API writes users the gateway then cannot read. Both stacks run one database, so the branch follows
-// REPOSITORY_TYPE the same way the internal-api data plane fixtures do. The store details are the
-// local stack's own (docker-compose.mongo.yml / docker-compose.postgres.yml), which is the only thing
-// that runs the cloud stack today; the hosts take the same overrides as the internal-api fixtures for
-// a stack that runs the stores elsewhere.
-const MONGO_HOST = process.env.AM_DATAPLANE_MONGO_HOST ?? 'mongodb';
-const JDBC_HOST = process.env.AM_DATAPLANE_JDBC_HOST ?? 'postgres';
+// REPOSITORY_TYPE the same way the internal-api data plane fixtures do. The connection comes from the
+// setup files: AM_INTERNAL_* is the store as the management API reaches it (a docker service name when
+// it runs in the stack), falling back to the runner's view when the node runs natively, same as
+// idps-commands.ts. The database and credentials are the local stack's own and do not move with the
+// runner (GRAVITEE_DATAPLANES_0_* in docker-compose.mongo.yml / docker-compose.postgres.yml).
+const MONGO_URI = process.env.AM_INTERNAL_MONGODB_URI ?? process.env.AM_MONGODB_URI;
+const JDBC_HOST = process.env.AM_INTERNAL_POSTGRES_HOST ?? process.env.AM_POSTGRES_HOST;
 const dataPlaneStore = () =>
   process.env.REPOSITORY_TYPE === 'jdbc'
     ? {
@@ -60,7 +61,7 @@ const dataPlaneStore = () =>
           },
         },
       }
-    : { type: 'mongodb', configuration: { mongodb: { dbname: 'graviteeam', host: MONGO_HOST, port: 27017 } } };
+    : { type: 'mongodb', configuration: { mongodb: { uri: `${MONGO_URI}/graviteeam` } } };
 
 export interface CloudSharedFixture extends CloudOrganizationFixture {
   /** Id of the data plane linked to the shared environment, and the one the gateway is pinned to. */
