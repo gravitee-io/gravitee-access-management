@@ -1,0 +1,67 @@
+# Groups for the LDAP identity-provider tests (AM-7447).
+#
+# Added by openldap-init AFTER the memberof overlay is installed, so that writing
+# each group stamps memberOf onto the users it names. If these were seeded with
+# the rest of the tree at container start the overlay would not yet exist and no
+# user would ever carry memberOf.
+#
+# Membership is expressed twice on purpose:
+#   member:    full user DN -> overlay derives memberOf: cn=<GROUP>,ou=groups,dc=gravitee,dc=io
+#   memberUid: bare uid     -> matched by the group search filter (memberuid={0})
+#
+# groupOfNames and posixGroup are both STRUCTURAL so one entry cannot be both;
+# extensibleObject is auxiliary and permits memberUid alongside groupOfNames.
+
+# 'ou' is carried purely so groupRoleAttribute can be pointed at something other
+# than the default 'cn', proving that setting is honoured.
+dn: cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io
+objectClass: top
+objectClass: groupOfNames
+objectClass: extensibleObject
+cn: GRAVITEE_ADMINS
+ou: gravitee-admins-role
+description: Target group for the LDAP IdP role mappers
+member: uid=ldap-admin,ou=people,dc=gravitee,dc=io
+memberUid: ldap-admin
+
+dn: cn=GRAVITEE_USERS,ou=groups,dc=gravitee,dc=io
+objectClass: top
+objectClass: groupOfNames
+objectClass: extensibleObject
+cn: GRAVITEE_USERS
+description: Second group, so mappers can be shown to discriminate between groups
+member: uid=jdoe,ou=people,dc=gravitee,dc=io
+memberUid: jdoe
+
+# AM-5385 groups. John is a member of 'workers' only. 'engineers' exists but does
+# NOT contain him, so a mapper keyed to it must not fire — which is what makes the
+# "roles disappeared / roles not updated" assertions meaningful.
+dn: cn=workers,ou=groups,dc=gravitee,dc=io
+objectClass: top
+objectClass: groupOfNames
+objectClass: extensibleObject
+cn: workers
+description: AM-5385 - John belongs to this group
+member: uid=john,ou=people,dc=gravitee,dc=io
+memberUid: john
+
+dn: cn=engineers,ou=groups,dc=gravitee,dc=io
+objectClass: top
+objectClass: groupOfNames
+objectClass: extensibleObject
+cn: engineers
+description: AM-5385 - John deliberately NOT a member
+member: uid=jdoe,ou=people,dc=gravitee,dc=io
+memberUid: jdoe
+
+# NESTED group: its member is a GROUP, not a user. ldap-admin therefore belongs to
+# GRAVITEE_SUPER_ADMINS only transitively, via GRAVITEE_ADMINS. A plain group
+# search finds only the direct group; recursiveGroupFetch is what walks up to this
+# one. Ordered after GRAVITEE_ADMINS because its member DN must already exist.
+dn: cn=GRAVITEE_SUPER_ADMINS,ou=groups,dc=gravitee,dc=io
+objectClass: top
+objectClass: groupOfNames
+objectClass: extensibleObject
+cn: GRAVITEE_SUPER_ADMINS
+description: Parent of GRAVITEE_ADMINS, used to exercise recursiveGroupFetch
+member: cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io

@@ -102,13 +102,15 @@ FULL=0
 DETACH=1
 LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
-WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0
+WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0; WANT_LDAP=0
 
 want_set() { # want_set <name> <value>
   case "$1" in
     ui) WANT_UI="$2" ;; wiremock) WANT_WIREMOCK="$2" ;; ciba) WANT_CIBA="$2" ;;
     openfga) WANT_OPENFGA="$2" ;; kafka) WANT_KAFKA="$2" ;; mtls) WANT_MTLS="$2" ;;
-    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; keycloak) WANT_KEYCLOAK="$2" ;; *) return 1 ;;
+    spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; keycloak) WANT_KEYCLOAK="$2" ;;
+    ldap) WANT_LDAP="$2" ;;
+    *) return 1 ;;
   esac
 }
 
@@ -139,10 +141,12 @@ MODE
 SERVICES
   (default lean)       gateway, management, <db>, smtp, wiremock
   --ui                 also start the Console UI on :4200 (needed for playwright)
-  --full               UI + wiremock + ciba + openfga + kafka + mtls
+  --full               UI + wiremock + ciba + openfga + kafka + mtls + ldap
                        (the union the jest gateway + playwright suites need)
+  --ldap               start OpenLDAP on :1389, seeded with dc=gravitee,dc=io
+                       (needed by the LDAP identity-provider tests)
   --with a,b,...       opt-in extras individually:
-                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,keycloak
+                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,keycloak,ldap
   --keycloak           start Keycloak on :8180 as a third-party SAML IdP
                        (realms saml-test / saml-test-2 imported at start-up)
   --cloud              managed-cloud mode: start the cockpit mock and point the
@@ -196,6 +200,7 @@ while [ $# -gt 0 ]; do
     --registry)  REGISTRY="${2:?--registry needs a host}"; shift 2 ;;
     --db)        DB="${2:?--db needs mongo|psql}"; shift 2 ;;
     --ui)        WANT_UI=1; shift ;;
+    --ldap)      WANT_LDAP=1; shift ;;
     --full)      FULL=1; shift ;;
     --with)      IFS=',' read -ra _x <<< "${2:?--with needs a list}"
                  for s in "${_x[@]}"; do
@@ -221,7 +226,7 @@ DBSVC="mongodb"; [ "$DB" = "psql" ] && DBSVC="postgres"
 
 # --full implies UI + the heavy extras
 if [ "$FULL" -eq 1 ]; then
-  WANT_UI=1; WANT_WIREMOCK=1; WANT_CIBA=1; WANT_OPENFGA=1; WANT_KAFKA=1; WANT_MTLS=1
+  WANT_UI=1; WANT_WIREMOCK=1; WANT_CIBA=1; WANT_OPENFGA=1; WANT_KAFKA=1; WANT_MTLS=1; WANT_LDAP=1
 fi
 
 # ---------------------------------------------------------------------------
@@ -236,6 +241,7 @@ ALL_FILES=(
   -f "$DEV/docker-compose.postgres.yml"
   -f "$DEV/docker-compose-ui.yml"
   -f "$DEV/docker-compose-kerberos.yml"
+  -f "$DEV/docker-compose-ldap.yml"
   -f "$DEV/docker-compose.spire.yml"
   -f "$DEV/docker-compose.cloud.yml"
   -f "$DEV/docker-compose.images.yml"
@@ -252,6 +258,7 @@ build_compose_files() {
   if [ "$DB" = "mongo" ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.mongo.yml")
   else COMPOSE_FILES+=(-f "$DEV/docker-compose.postgres.yml"); fi
   if [ "$WANT_UI" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ui.yml"); fi
+  if [ "$WANT_LDAP" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose-ldap.yml"); fi
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
   if [ "$WANT_KEYCLOAK" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.keycloak.yml"); fi
@@ -271,6 +278,7 @@ build_service_list() {
   [ "$WANT_OPENFGA" -eq 1 ]  && SERVICES+=(openfga)
   [ "$WANT_KAFKA" -eq 1 ]    && SERVICES+=(kafka)
   [ "$WANT_MTLS" -eq 1 ]     && SERVICES+=(gateway-mtls)
+  [ "$WANT_LDAP" -eq 1 ]     && SERVICES+=(openldap openldap-init)
   [ "$WANT_CLOUD" -eq 1 ]    && SERVICES+=(cockpit-mock)
   [ "$WANT_KEYCLOAK" -eq 1 ] && SERVICES+=(keycloak)
   if [ "$WANT_SPIRE" -eq 1 ]; then

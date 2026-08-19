@@ -1,0 +1,39 @@
+# Installs the memberof overlay (AM-7447).
+#
+# Applied against cn=config by openldap-init, because the image exposes no
+# memberof environment variable of its own — it ships only accesslog, syncprov
+# and ppolicy.
+#
+# Without this overlay a user entry has no memberOf attribute at all, and the
+# "Fetch user groups = off" role-mapper configuration has nothing to match:
+#   roleMapper: { "<role>": ["memberOf=cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io"] }
+
+# cn=module{0} already exists (it carries pw-sha2.so), so extend it rather than
+# adding a second module list.
+#
+# The absolute path is deliberate. cn=module{0} has
+#   olcModulePath: /opt/bitnami/openldap/libexec/openldap
+# which holds only the contrib modules (pw-sha2, autogroup, lastbind, ...).
+# memberof.so lives in the CORE module directory, /opt/bitnami/openldap/lib/openldap.
+# A bare "memberof.so" is resolved against olcModulePath and fails with
+#   <olcModuleLoad> handler exited with 1
+# An absolute path bypasses olcModulePath entirely.
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: /opt/bitnami/openldap/lib/openldap/memberof.so
+
+# olcDatabase={2}mdb is the data database (olcSuffix: dc=gravitee,dc=io).
+# {-1}frontend, {0}config and {1}monitor are the other three.
+dn: olcOverlay=memberof,olcDatabase={2}mdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcMemberOf
+olcOverlay: memberof
+olcMemberOfGroupOC: groupOfNames
+olcMemberOfMemberAD: member
+olcMemberOfMemberOfAD: memberOf
+# Tolerate a group naming a user that does not exist rather than refusing the write.
+olcMemberOfDangling: ignore
+# Keep memberOf consistent when a member is removed or renamed.
+olcMemberOfRefInt: TRUE
