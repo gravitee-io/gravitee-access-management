@@ -123,12 +123,12 @@ export const TOKEN_EXCHANGE_TEST = {
   REDIRECT_URI: 'https://gravitee.io/callback',
 };
 
-/**
- * Token exchange settings for domain configuration
- */
 /** One declarative claim mapping, as the management SDK models it. */
 export type ClaimMapping = TokenExchangeClaimMapping;
 
+/**
+ * Token exchange settings for domain configuration
+ */
 interface TokenExchangeSettingsConfig {
   /** Claims mapper set on the DOMAIN defaults, which an application inherits unless it overrides. */
   domainClaimsMapper?: ClaimMapping[];

@@ -189,9 +189,8 @@ describe('Token Exchange claims mapper inheritance', () => {
     const { accessToken: subjectToken } = await overrideFixture.obtainSubjectToken();
 
     const body = await exchange(overrideFixture, subjectToken);
-    const exchanged = parseJwt(body.access_token);
 
     expect(body.access_token).toBeDefined();
-    expect(exchanged.payload).not.toHaveProperty('mapped_subject_jti');
+    expect(parseJwt(body.access_token).payload).not.toHaveProperty('mapped_subject_jti');
   });
 });

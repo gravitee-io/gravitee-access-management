@@ -33,7 +33,28 @@ setup();
  * protocol claim would let that issuer redefine the identity of the exchanged token. The Management
  * API must refuse those target names at both the domain and the application level.
  */
-const RESERVED_CLAIMS = ['gis', 'sub', 'iss', 'aud', 'exp', 'iat', 'nbf', 'jti', 'act', 'client_id', 'scope'];
+const RESERVED_CLAIMS = [
+  'gis',
+  'sub',
+  'iss',
+  'aud',
+  'exp',
+  'iat',
+  'nbf',
+  'jti',
+  'act',
+  'client_id',
+  'scope',
+  // authentication context the relying party makes security decisions on
+  'auth_time',
+  'nonce',
+  'acr',
+  'amr',
+  'azp',
+  // agent identity AM writes only when still absent, so a mapping here suppresses it
+  'client_profile',
+  'sub_profile',
+];
 
 let accessToken: string;
 let domain: Domain;
@@ -112,6 +133,20 @@ describe('Token exchange claims mapper validation - application level', () => {
     expect(response.body.message).not.toContain('business_claim_id');
   });
 
+  it('should refuse two mappings onto the same target claim', async () => {
+    const response = await patchApplicationRaw(
+      domain.id,
+      application.id,
+      accessToken,
+      applicationSettings([
+        { source: 'SUBJECT_TOKEN', sourceClaim: 'claim_id', tokenClaim: 'business_claim_id' },
+        { source: 'ACTOR_TOKEN', sourceClaim: 'agent_id', tokenClaim: 'business_claim_id' },
+      ]),
+    ).expect(400);
+
+    expect(response.body.message).toEqual('Duplicate token exchange claim mappings: [business_claim_id]');
+  });
+
   it('should accept an ordinary target claim and store the mapping', async () => {
     const mapping = { source: 'SUBJECT_TOKEN', sourceClaim: 'claim_id', tokenClaim: 'business_claim_id' };
 
@@ -132,6 +167,19 @@ describe('Token exchange claims mapper validation - domain level', () => {
     ).expect(400);
 
     expect(response.body.message).toEqual(`Invalid token exchange claim mappings: [${reserved}]`);
+  });
+
+  it('should refuse two domain mappings onto the same target claim', async () => {
+    const response = await patchDomainRaw(
+      domain.id,
+      accessToken,
+      domainSettings([
+        { source: 'SUBJECT_TOKEN', sourceClaim: 'claim_id', tokenClaim: 'agent_email' },
+        { source: 'ACTOR_TOKEN', sourceClaim: 'email', tokenClaim: 'agent_email' },
+      ]),
+    ).expect(400);
+
+    expect(response.body.message).toEqual('Duplicate token exchange claim mappings: [agent_email]');
   });
 
   it('should accept an ordinary target claim on the domain defaults', async () => {
