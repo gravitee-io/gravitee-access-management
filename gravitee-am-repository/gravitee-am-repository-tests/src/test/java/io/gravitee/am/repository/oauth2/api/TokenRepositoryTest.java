@@ -25,9 +25,11 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -75,6 +77,74 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
         refreshObserver.assertComplete();
         refreshObserver.assertValueCount(1);
         refreshObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldBatchCreateAccessAndRefreshTokens() {
+        String suffix = shortSuffix();
+        Date createdAt = new Date();
+        Date expireAt = new Date(createdAt.getTime() + TimeUnit.DAYS.toMillis(1));
+
+        AccessToken accessToken = newAccessToken("batch-at-" + suffix, "domain-id", "client-id", "user-id", "parent-jti-" + suffix);
+        accessToken.setAuthorizationCode("batch-code-" + suffix);
+        accessToken.setRefreshToken("batch-rt-" + suffix);
+        accessToken.setCreatedAt(createdAt);
+        accessToken.setExpireAt(expireAt);
+
+        RefreshToken refreshToken = newRefreshToken("batch-rt-" + suffix, "domain-id", "client-id", "user-id", "parent-jti-" + suffix);
+        refreshToken.setCreatedAt(createdAt);
+        refreshToken.setExpireAt(expireAt);
+
+        tokenRepository.create(accessToken, refreshToken).blockingAwait();
+
+        AccessToken storedAccessToken = tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet();
+        assertNotNull(storedAccessToken);
+        assertEquals(accessToken.getId(), storedAccessToken.getId());
+        assertEquals("domain-id", storedAccessToken.getDomain());
+        assertEquals("client-id", storedAccessToken.getClient());
+        assertEquals("user-id", storedAccessToken.getSubject());
+        assertEquals(accessToken.getAuthorizationCode(), storedAccessToken.getAuthorizationCode());
+        assertEquals(refreshToken.getToken(), storedAccessToken.getRefreshToken());
+        assertEquals(createdAt.getTime(), storedAccessToken.getCreatedAt().getTime());
+        assertEquals(expireAt.getTime(), storedAccessToken.getExpireAt().getTime());
+
+        RefreshToken storedRefreshToken = tokenRepository.findRefreshTokenByJti(refreshToken.getToken()).blockingGet();
+        assertNotNull(storedRefreshToken);
+        assertEquals(refreshToken.getId(), storedRefreshToken.getId());
+        assertEquals("domain-id", storedRefreshToken.getDomain());
+        assertEquals("client-id", storedRefreshToken.getClient());
+        assertEquals("user-id", storedRefreshToken.getSubject());
+        assertEquals(createdAt.getTime(), storedRefreshToken.getCreatedAt().getTime());
+        assertEquals(expireAt.getTime(), storedRefreshToken.getExpireAt().getTime());
+
+        assertNull(tokenRepository.findRefreshTokenByJti(accessToken.getToken()).blockingGet());
+        assertNull(tokenRepository.findAccessTokenByJti(refreshToken.getToken()).blockingGet());
+    }
+
+    @Test
+    public void shouldBatchCreateAccessTokenOnlyWhenRefreshTokenIsNull() {
+        String suffix = shortSuffix();
+        AccessToken accessToken = newAccessToken("batch-single-at-" + suffix, null, null, null);
+
+        tokenRepository.create(accessToken, null).blockingAwait();
+
+        assertNotNull(tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet());
+    }
+
+    @Test
+    public void shouldDeleteBatchCreatedTokensByParentJti() {
+        String suffix = shortSuffix();
+        AccessToken parent = newAccessToken("batch-parent-" + suffix, null, null, null);
+        AccessToken accessToken = newAccessToken("batch-child-at-" + suffix, null, null, null, parent.getToken());
+        RefreshToken refreshToken = newRefreshToken("batch-child-rt-" + suffix, null, null, null, parent.getToken());
+
+        tokenRepository.create(parent).ignoreElement()
+                .andThen(tokenRepository.create(accessToken, refreshToken))
+                .andThen(tokenRepository.deleteByJti(parent.getToken()))
+                .blockingAwait();
+
+        assertNull(tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet());
+        assertNull(tokenRepository.findRefreshTokenByJti(refreshToken.getToken()).blockingGet());
     }
 
     @Test

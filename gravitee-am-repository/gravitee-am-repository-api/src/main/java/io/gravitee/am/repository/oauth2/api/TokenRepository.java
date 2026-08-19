@@ -30,6 +30,19 @@ public interface TokenRepository extends ExpiredDataSweeper {
     Single<AccessToken> create(AccessToken accessToken);
     Observable<AccessToken> findAccessTokenByAuthorizationCode(String authorizationCode);
 
+    /**
+     * Store an access token and, when provided, its refresh token in a single write.
+     * <p>
+     * Not atomic on every backend: JDBC issues one statement so a failure stores neither token,
+     * while MongoDB stops at the failing document but keeps the ones already written. On error,
+     * callers must assume that one of the tokens may have been stored.
+     *
+     * @param accessToken the access token to store
+     * @param refreshToken the refresh token to store, may be null
+     * @return acknowledge of the operation
+     */
+    Completable create(AccessToken accessToken, RefreshToken refreshToken);
+
     Completable deleteByJti(String jti);
     Completable deleteByUserId(String userId);
     Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId);
