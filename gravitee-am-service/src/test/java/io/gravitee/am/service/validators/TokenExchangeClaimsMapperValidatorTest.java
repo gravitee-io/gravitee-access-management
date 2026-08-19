@@ -52,7 +52,9 @@ class TokenExchangeClaimsMapperValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"gis", "sub", "iss", "aud", "exp", "iat", "nbf", "jti", "act", "client_id", "scope",
-            "auth_time", "nonce", "acr", "amr", "azp", "client_profile", "sub_profile"})
+            "auth_time", "nonce", "acr", "amr", "azp", "client_profile", "sub_profile",
+            "cnf", "domain", "updated_at", "claims_request_parameter", "ip_address", "user_agent",
+            "permissions", "authorization_details"})
     void shouldRejectReservedTargetClaim(String reserved) {
         var result = validator.validate(List.of(mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", reserved)));
 

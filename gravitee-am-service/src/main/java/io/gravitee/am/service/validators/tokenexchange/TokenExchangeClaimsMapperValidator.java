@@ -21,6 +21,7 @@ import io.gravitee.am.service.validators.Validator;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -33,7 +34,9 @@ import static io.gravitee.am.common.oidc.idtoken.Claims.NONCE;
 /**
  * Rejects a token exchange claim mapping that would overwrite a protocol-critical claim on the
  * issued token. A mapping can read from an external trusted-issuer subject token, so a mapping onto
- * "sub" or "iss" would let a remote issuer redefine the identity of the exchanged token.
+ * "sub" or "iss" would let a remote issuer redefine the identity of the exchanged token. The same
+ * holds for "cnf", which carries the DPoP and mTLS sender constraint, and for "domain", which
+ * DomainTokenValidator reads to decide whether a token is in scope for the revocation lookup.
  * <p>
  * This guards against a misconfigured mapping, not against the administrator. A tokenCustomClaims
  * entry naming the same target reaches the same claim through the expression language, reading the
@@ -44,28 +47,35 @@ import static io.gravitee.am.common.oidc.idtoken.Claims.NONCE;
 @Component
 public class TokenExchangeClaimsMapperValidator implements Validator<List<TokenExchangeClaimMapping>, TokenExchangeClaimsMapperValidator.ValidationResult> {
 
-    private static final Set<String> RESERVED_TOKEN_CLAIMS = Set.of(
-            Claims.GIO_INTERNAL_SUB,
-            Claims.SUB,
-            Claims.ISS,
-            Claims.AUD,
-            Claims.EXP,
-            Claims.IAT,
-            Claims.NBF,
-            Claims.JTI,
-            Claims.ACT,
-            Claims.CLIENT_ID,
-            Claims.SCOPE,
-            // authentication context the relying party makes security decisions on
-            Claims.AUTH_TIME,
-            NONCE,
-            ACR,
-            AMR,
-            AZP,
-            // agent identity, written later in issuance only when still absent, so a mapping
-            // here suppresses the value AM would have advertised
-            Claims.CLIENT_PROFILE,
-            Claims.SUB_PROFILE);
+    // UMA 2.0 and RFC 9396 claims, written by TokenServiceImpl before the mapper runs. Neither has
+    // a shared constant — both are private to the gateway.
+    private static final String PERMISSIONS = "permissions";
+    private static final String AUTHORIZATION_DETAILS = "authorization_details";
+
+    private static final Set<String> RESERVED_TOKEN_CLAIMS = reservedTokenClaims();
+
+    private static Set<String> reservedTokenClaims() {
+        // Claims.getAllClaims() is the list AM already treats as its own when rebuilding a refresh
+        // token, and covers iss, sub, aud, exp, nbf, iat, auth_time, updated_at, jti, domain,
+        // claims_request_parameter, ip_address, user_agent, scope, cnf and client_id
+        Set<String> reserved = new HashSet<>(Claims.getAllClaims());
+        reserved.addAll(Set.of(
+                Claims.GIO_INTERNAL_SUB,
+                Claims.ACT,
+                // authentication context the relying party makes security decisions on
+                NONCE,
+                ACR,
+                AMR,
+                AZP,
+                // resource access decided at authorization time and read back after issuance
+                PERMISSIONS,
+                AUTHORIZATION_DETAILS,
+                // agent identity, written later in issuance only when still absent, so a mapping
+                // here suppresses the value AM would have advertised
+                Claims.CLIENT_PROFILE,
+                Claims.SUB_PROFILE));
+        return Set.copyOf(reserved);
+    }
 
     public record ValidationResult(List<String> invalidClaims, List<String> duplicateClaims) {
 
