@@ -52,6 +52,7 @@ import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
+import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
@@ -69,6 +70,7 @@ import io.gravitee.am.service.validators.email.UserEmail;
 import io.gravitee.am.service.validators.email.UserEmailConstraintValidator;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
+import io.gravitee.am.service.validators.resource.ResourceValidator;
 import io.gravitee.am.service.validators.plugincfg.PluginJsonFormValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -237,6 +239,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ResourcePluginService resourcePluginService;
+
+    @Autowired
+    protected ServiceResourceServiceProxy serviceResourceServiceProxy;
 
     @Autowired
     protected BotDetectionPluginService botDetectionPluginService;
@@ -568,6 +573,18 @@ public abstract class JerseySpringTest {
         @Bean
         public ResourcePluginService resourcePluginService() {
             return mock(ResourcePluginService.class);
+        }
+
+        @Bean
+        public ServiceResourceServiceProxy serviceResourceServiceProxy() {
+            return mock(ServiceResourceServiceProxy.class);
+        }
+
+        @Bean
+        public ResourceValidator resourceValidator() {
+            ResourceValidator mock = mock(ResourceValidator.class);
+            when(mock.validate(Mockito.any())).thenReturn(Completable.complete());
+            return mock;
         }
 
         @Bean
