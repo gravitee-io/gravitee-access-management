@@ -25,9 +25,7 @@ export type TokenExchangeClaimSource = typeof CLAIM_SOURCE_SUBJECT_TOKEN | typeo
 /** Copies one claim from a validated token onto the issued token. */
 export interface TokenExchangeClaimMapping {
   source: TokenExchangeClaimSource;
-  /** Claim name on the source token. */
   sourceClaim: string;
-  /** Claim name on the issued token. */
   tokenClaim: string;
 }
 
