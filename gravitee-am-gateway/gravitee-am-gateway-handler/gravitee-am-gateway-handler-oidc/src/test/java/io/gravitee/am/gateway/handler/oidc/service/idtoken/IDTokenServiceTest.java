@@ -958,4 +958,69 @@ public class IDTokenServiceTest {
         assertEquals("ai_agent hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
         assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
     }
+
+    @Test
+    public void shouldCreateIDToken_tokenExchangeMappedClaims() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+        oAuth2Request.setTokenExchangeMappedClaims(Map.of("business_id", "acme-42"));
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCert = createCert(defaultCertificateProvider, "default-certificate");
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("payload"));
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null, executionContext).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        assertEquals("acme-42", jwtCaptor.getValue().get("business_id"));
+    }
+
+    @Test
+    public void shouldCreateIDToken_customClaimWinsOverTokenExchangeMappedClaim() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+        oAuth2Request.setTokenExchangeMappedClaims(Map.of("business_id", "from-mapper"));
+
+        TokenClaim customClaim = new TokenClaim();
+        customClaim.setTokenType(TokenTypeHint.ID_TOKEN);
+        customClaim.setClaimName("business_id");
+        customClaim.setClaimValue("from-custom-claim");
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+        client.setClientId("my-client-id");
+        client.setTokenCustomClaims(Collections.singletonList(customClaim));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine templateEngine = mock(TemplateEngine.class);
+        when(templateEngine.getValue("from-custom-claim", Object.class)).thenReturn("from-custom-claim");
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCert = createCert(defaultCertificateProvider, "default-certificate");
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("payload"));
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null, executionContext).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        assertEquals("from-custom-claim", jwtCaptor.getValue().get("business_id"));
+    }
 }

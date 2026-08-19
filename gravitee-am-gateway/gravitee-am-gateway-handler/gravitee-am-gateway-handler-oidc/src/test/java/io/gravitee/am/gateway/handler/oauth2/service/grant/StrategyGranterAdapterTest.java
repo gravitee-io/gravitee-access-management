@@ -305,6 +305,120 @@ class StrategyGranterAdapterTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldPropagateMappedClaimsOntoTheOAuth2Request() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("subject-user");
+
+        GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
+                "urn:ietf:params:oauth:token-type:access_token",
+                new Date(),
+                "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                null,
+                null,
+                null,
+                Map.of("business_id", "acme-42"),
+                Set.of()
+        );
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.TOKEN_EXCHANGE,
+                Set.of("openid"),
+                user,
+                exchangeData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(new AccessToken("access-token-value")));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertEquals(Map.of("business_id", "acme-42"), oAuth2RequestCaptor.getValue().getTokenExchangeMappedClaims());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldFallBackToNoMappedClaimsWhenTheStrategyProvidesNone() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("subject-user");
+
+        GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
+                "urn:ietf:params:oauth:token-type:access_token",
+                new Date(),
+                "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                null,
+                null,
+                null,
+                null,
+                Set.of()
+        );
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.TOKEN_EXCHANGE,
+                Set.of("openid"),
+                user,
+                exchangeData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(new AccessToken("access-token-value")));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        assertEquals(Map.of(), oAuth2RequestCaptor.getValue().getTokenExchangeMappedClaims());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldIncludeGisInActClaimWhenActorHasGis() {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
