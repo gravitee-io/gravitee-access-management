@@ -17,64 +17,41 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.application.TokenExchangeClaimMapping;
 import io.gravitee.am.model.application.TokenExchangeClaimSource;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * MongoDB representation of {@link TokenExchangeClaimMapping}.
  */
+@Setter
+@Getter
 public class TokenExchangeClaimMappingMongo {
 
     private String source;
     private String sourceClaim;
     private String tokenClaim;
 
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getSourceClaim() {
-        return sourceClaim;
-    }
-
-    public void setSourceClaim(String sourceClaim) {
-        this.sourceClaim = sourceClaim;
-    }
-
-    public String getTokenClaim() {
-        return tokenClaim;
-    }
-
-    public void setTokenClaim(String tokenClaim) {
-        this.tokenClaim = tokenClaim;
-    }
-
-    /**
-     * Convert this MongoDB representation to the domain model.
-     */
     public TokenExchangeClaimMapping convert() {
         TokenExchangeClaimMapping mapping = new TokenExchangeClaimMapping();
         if (getSource() != null) {
             mapping.setSource(TokenExchangeClaimSource.valueOf(getSource()));
         }
+
         mapping.setSourceClaim(getSourceClaim());
         mapping.setTokenClaim(getTokenClaim());
         return mapping;
     }
 
-    /**
-     * Convert a domain model to its MongoDB representation.
-     */
     public static TokenExchangeClaimMappingMongo convert(TokenExchangeClaimMapping mapping) {
         if (mapping == null) {
             return null;
         }
+
         TokenExchangeClaimMappingMongo mongo = new TokenExchangeClaimMappingMongo();
         if (mapping.getSource() != null) {
             mongo.setSource(mapping.getSource().name());
         }
+
         mongo.setSourceClaim(mapping.getSourceClaim());
         mongo.setTokenClaim(mapping.getTokenClaim());
         return mongo;
