@@ -27,10 +27,12 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +80,13 @@ import static org.junit.Assert.fail;
  */
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MongoReporterJUnitConfiguration.class}, loader = AnnotationConfigContextLoader.class)
+// Matches MongoAuditReporterTest so both classes share one cached Spring context, and so the
+// module starts a single Mongo testcontainer. startReporter() sets purgeEnabled and
+// retentionDays explicitly, so these values never reach an assertion.
+@TestPropertySource(properties = {
+    "services.purge.enabled=true",
+    "services.purge.audits.retention.days=90"
+})
 public class MongoAuditReporterIndexTest {
 
     /** Indexes the reporter declares unconditionally. */
@@ -141,7 +150,7 @@ public class MongoAuditReporterIndexTest {
 
         Map<String, Document> byName = indexesByName();
         expectedKeys().forEach((name, key) ->
-                assertEquals("wrong key for index " + name, key, byName.get(name).get("key")));
+                assertKeyEquals(name, key, byName.get(name).get("key", Document.class)));
     }
 
     @Test
@@ -168,7 +177,7 @@ public class MongoAuditReporterIndexTest {
                 "the retention index was not created");
 
         Document key = indexesByName().get(INDEX_TIMESTAMP_ID_NAME).get("key", Document.class);
-        assertEquals(new Document(FIELD_TIMESTAMP, 1).append(FIELD_ID, 1), key);
+        assertKeyEquals(INDEX_TIMESTAMP_ID_NAME, new Document(FIELD_TIMESTAMP, 1).append(FIELD_ID, 1), key);
     }
 
     @Test
@@ -233,7 +242,23 @@ public class MongoAuditReporterIndexTest {
         ReflectionTestUtils.setField(reporter, "retentionDays", 0);
         overrides.accept(reporter);
         reporter.afterPropertiesSet();
+        // Deliberately not stopped. doStop() calls clientWrapper.releaseClient(), and
+        // TestMongoConnectionProvider hands every caller the same wrapper, so the first release
+        // drops the shared client's reference count to zero and shuts it down for the rest of the
+        // suite. The cost is a leaked bulkProcessor subscription per reporter, which is the lesser
+        // evil. A real fix belongs in TestMongoConnectionProvider (a wrapper per reporter).
         return reporter;
+    }
+
+    /**
+     * Compares index keys by ordered entries. Document.equals() delegates to Map.equals() and is
+     * order-insensitive, but for a compound index the field order is the semantics — a swapped
+     * prefix is a different index.
+     */
+    private static void assertKeyEquals(String indexName, Document expected, Document actual) {
+        assertEquals("wrong key for index " + indexName,
+                new ArrayList<>(expected.entrySet()),
+                new ArrayList<>(actual.entrySet()));
     }
 
     private void seedIndex(String name, Document key) {
