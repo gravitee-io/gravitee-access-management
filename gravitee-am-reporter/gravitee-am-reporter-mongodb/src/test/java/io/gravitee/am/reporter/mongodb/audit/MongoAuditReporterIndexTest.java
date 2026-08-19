@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_ACTOR;
@@ -66,6 +67,7 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -217,6 +219,56 @@ public class MongoAuditReporterIndexTest {
                 names.contains(OLD_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME_SHORT_NAME));
         assertTrue("indexes were created despite the repository switch being off",
                 CURRENT_INDEXES.stream().noneMatch(names::contains));
+    }
+
+    @Test
+    public void anIndexHoldingADeclaredNameWithAnOlderDefinitionIsRebuilt() throws Exception {
+        seedIndex(INDEX_REFERENCE_TIMESTAMP_NAME, new Document("a_previous_definition", 1));
+
+        startReporter(reporter -> {});
+
+        awaitIndexes(names -> names.containsAll(CURRENT_INDEXES),
+                "a stale definition on one declared name suppressed the whole index set");
+        assertKeyEquals(INDEX_REFERENCE_TIMESTAMP_NAME,
+                expectedKeys().get(INDEX_REFERENCE_TIMESTAMP_NAME),
+                indexesByName().get(INDEX_REFERENCE_TIMESTAMP_NAME).get("key", Document.class));
+    }
+
+    @Test
+    public void aForeignIndexOverADeclaredKeyCostsOnlyItsOwnDeclaration() throws Exception {
+        String incumbent = "legacy_actor_idx";
+        seedIndex(incumbent, expectedKeys().get(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME));
+
+        startReporter(reporter -> {});
+
+        List<String> unaffected = CURRENT_INDEXES.stream()
+                .filter(name -> !name.equals(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME))
+                .toList();
+        awaitIndexes(names -> names.containsAll(unaffected),
+                "a foreign index over one declared key suppressed the rest of the index set");
+
+        Set<String> names = indexNames();
+        assertTrue("an index the reporter did not name should have been left in place",
+                names.contains(incumbent));
+        assertFalse("the declared index should not have been created over an already covered key",
+                names.contains(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME));
+    }
+
+    @Test
+    public void noTwoIndexesAreDeclaredOverOneKey() throws Exception {
+        startReporter(reporter -> {});
+        awaitIndexes(names -> names.containsAll(CURRENT_INDEXES), "the current index set did not land");
+
+        Map<String, String> byKey = new HashMap<>();
+        for (Document index : indexesByName().values()) {
+            String key = index.get("key", Document.class).entrySet().stream()
+                    .map(entry -> entry.getKey() + ":" + entry.getValue())
+                    .collect(Collectors.joining(","));
+            String previous = byKey.put(key, index.getString("name"));
+            assertNull("indexes " + previous + " and " + index.getString("name")
+                    + " are both declared on " + key + " - MongoDB refuses both and the collection ends up unindexed",
+                    previous);
+        }
     }
 
     // ---------------------------------------------------------------- helpers

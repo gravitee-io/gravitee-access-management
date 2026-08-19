@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.common;
 
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.MongoNamespace;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
@@ -207,6 +208,9 @@ public class EnsureIndexOnStartResolutionTest {
     private static MongoCollection<?> mockCollection() {
         MongoCollection<Document> collection = mock(MongoCollection.class);
         when(collection.createIndexes(any())).thenReturn(Flowable.empty());
+        // index creation names its collection in everything it logs and reports, so the mock has to
+        // carry a namespace the way a real collection always does
+        when(collection.getNamespace()).thenReturn(new MongoNamespace("test", "probe_collection"));
         return collection;
     }
 

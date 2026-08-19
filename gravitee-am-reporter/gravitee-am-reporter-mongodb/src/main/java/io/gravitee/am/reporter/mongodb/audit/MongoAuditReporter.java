@@ -49,6 +49,7 @@ import io.gravitee.am.reporter.mongodb.audit.model.AuditAccessPointMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditEntityMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditOutcomeMongo;
+import io.gravitee.am.repository.mongodb.common.MongoIndexManager;
 import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
@@ -404,12 +405,16 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_ID_TIMESTAMP_NAME).background(true)));
         indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TIMESTAMP_NAME).background(true)));
 
-        Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
-                .doOnComplete(() -> log.debug("{} Reporter indexes created", indexes.size()))
-                .doOnError(throwable -> log.error("An error has occurred during creation of indexes", throwable));
+        Completable createNewIndexes = MongoIndexManager.ensureIndexes(reportableCollection, indexes)
+                .doOnComplete(() -> log.debug("{} reporter indexes ensured for collection {}",
+                        indexes.size(), configuration.getReportableCollection()));
 
         // process indexes
         deleteOldIndexes
+                .doOnError(error -> log.error("Unable to sweep the retired indexes of collection {}",
+                        configuration.getReportableCollection(), error))
+                // a sweep that failed must not stop the current indexes from being declared
+                .onErrorComplete()
                 .andThen(createNewIndexes)
                 .subscribe();
     }

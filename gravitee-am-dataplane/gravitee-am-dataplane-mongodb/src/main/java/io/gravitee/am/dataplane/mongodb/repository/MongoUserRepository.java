@@ -144,8 +144,9 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("rt1ri1l1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
-        super.createIndex(usersCollection, indexes);
-        createOrUpdateIndex();
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
+                new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true));
+        createOrUpdateIndexes(indexes);
     }
 
     @Override
@@ -801,17 +802,16 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                 }).collect(Collectors.toList());
     }
 
-    private void createOrUpdateIndex() {
+    /**
+     * Sweeps the index names retired by earlier versions, then declares the current set.
+     */
+    private void createOrUpdateIndexes(Map<Document, IndexOptions> indexes) {
         if (getEnsureIndexOnStart()) {
             MongoUtils.dropIndexes(usersCollection, UNUSED_INDEXES::contains)
-                    .doOnComplete(() -> {
-                        try {
-                            super.createIndex(usersCollection, Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
-                                    new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true)));
-                        } catch (Exception e) {
-                            logger.error("An error has occurred while creating index {} with unique constraints", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE, e);
-                        }
-                    })
+                    .doOnError(error -> logger.error("Unable to sweep the retired indexes of the users collection", error))
+                    // a sweep that failed must not stop the current indexes from being declared
+                    .onErrorComplete()
+                    .doOnComplete(() -> super.createIndex(usersCollection, indexes))
                     .subscribe();
         }
     }
