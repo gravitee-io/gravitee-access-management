@@ -2453,7 +2453,7 @@ components:
       description: "OAuth-specific token-exchange behavior, such as how scopes are\
         \ handled, with optional inheritance from domain defaults."
       properties:
-        claimsMapper:
+        claimMappings:
           type: array
           description: Claims copied from the validated subject or actor token onto
             the issued token. A claim that is absent from its source token is skipped.

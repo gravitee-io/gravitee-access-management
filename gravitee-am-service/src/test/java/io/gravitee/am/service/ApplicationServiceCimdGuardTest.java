@@ -32,7 +32,7 @@ import io.gravitee.am.service.impl.OAuthClientUniquenessValidator;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
-import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -119,7 +119,7 @@ public class ApplicationServiceCimdGuardTest {
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
     @Spy
-    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator(20);
+    private TokenExchangeClaimMappingsValidator tokenExchangeClaimMappingsValidator = new TokenExchangeClaimMappingsValidator(20);
 
     @Before
     public void setUp() {

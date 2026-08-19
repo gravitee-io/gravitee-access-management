@@ -253,7 +253,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                 && a.getSettings().getOauth().getTokenExchangeOAuthSettings().getScopeHandling() == TokenExchangeScopeHandling.PERMISSIVE
                 && !a.getSettings().getOauth().getTokenExchangeOAuthSettings().isInherited());
         testObserver.assertValue(a -> {
-            var mappings = a.getSettings().getOauth().getTokenExchangeOAuthSettings().getClaimsMapper();
+            var mappings = a.getSettings().getOauth().getTokenExchangeOAuthSettings().getClaimMappings();
             return mappings != null
                     && mappings.size() == 2
                     && mappings.get(0).getSource() == TokenExchangeClaimSource.SUBJECT_TOKEN
@@ -328,7 +328,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         actorMapping.setSource(TokenExchangeClaimSource.ACTOR_TOKEN);
         actorMapping.setSourceClaim("email");
         actorMapping.setTokenClaim("actor_email");
-        teSettings.setClaimsMapper(List.of(subjectMapping, actorMapping));
+        teSettings.setClaimMappings(List.of(subjectMapping, actorMapping));
         oauth.setTokenExchangeOAuthSettings(teSettings);
 
         final AccountSettings account = new AccountSettings();

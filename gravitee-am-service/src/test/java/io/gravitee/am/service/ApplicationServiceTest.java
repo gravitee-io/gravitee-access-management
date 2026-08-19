@@ -73,7 +73,7 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
-import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -195,7 +195,7 @@ public class ApplicationServiceTest {
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
     @Spy
-    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator = new TokenExchangeClaimsMapperValidator(20);
+    private TokenExchangeClaimMappingsValidator tokenExchangeClaimMappingsValidator = new TokenExchangeClaimMappingsValidator(20);
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -1027,11 +1027,11 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldInvalidatePatch_claims_mapper_reserved_target() {
-        Application toPatch = appWithClaimsMapper(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "sub"));
+    public void shouldInvalidatePatch_claim_mappings_reserved_target() {
+        Application toPatch = appWithClaimMappings(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "sub"));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
-        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimsMapperPatch(), principal, revokeToken).test();
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimMappingsPatch(), principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(err -> err instanceof InvalidParameterException
@@ -1040,11 +1040,11 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldInvalidatePatch_claims_mapper_agent_identity_target() {
-        Application toPatch = appWithClaimsMapper(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "client_profile"));
+    public void shouldInvalidatePatch_claim_mappings_agent_identity_target() {
+        Application toPatch = appWithClaimMappings(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "client_profile"));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
-        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimsMapperPatch(), principal, revokeToken).test();
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimMappingsPatch(), principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(err -> err instanceof InvalidParameterException
@@ -1053,13 +1053,13 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldInvalidatePatch_claims_mapper_duplicate_target() {
-        Application toPatch = appWithClaimsMapper(
+    public void shouldInvalidatePatch_claim_mappings_duplicate_target() {
+        Application toPatch = appWithClaimMappings(
                 claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id"),
                 claimMapping(TokenExchangeClaimSource.ACTOR_TOKEN, "agent_id", "business_id"));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
-        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimsMapperPatch(), principal, revokeToken).test();
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", claimMappingsPatch(), principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(err -> err instanceof InvalidParameterException
@@ -1068,8 +1068,8 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldInvalidateUpdate_claims_mapper_reserved_target() {
-        Application toUpdate = appWithClaimsMapper(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "cnf"));
+    public void shouldInvalidateUpdate_claim_mappings_reserved_target() {
+        Application toUpdate = appWithClaimMappings(claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "cnf"));
         toUpdate.getSettings().getOauth().setGrantTypes(List.of("implicit"));
         toUpdate.getSettings().getOauth().setResponseTypes(List.of("token"));
 
@@ -1083,7 +1083,7 @@ public class ApplicationServiceTest {
         verify(applicationRepository, never()).update(any(Application.class));
     }
 
-    private static PatchApplication claimsMapperPatch() {
+    private static PatchApplication claimMappingsPatch() {
         PatchApplication patchClient = new PatchApplication();
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
         PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
@@ -1094,10 +1094,10 @@ public class ApplicationServiceTest {
         return patchClient;
     }
 
-    private static Application appWithClaimsMapper(TokenExchangeClaimMapping... mappings) {
+    private static Application appWithClaimMappings(TokenExchangeClaimMapping... mappings) {
         TokenExchangeOAuthSettings tokenExchangeOAuthSettings = new TokenExchangeOAuthSettings();
         tokenExchangeOAuthSettings.setInherited(false);
-        tokenExchangeOAuthSettings.setClaimsMapper(List.of(mappings));
+        tokenExchangeOAuthSettings.setClaimMappings(List.of(mappings));
 
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setTokenExchangeOAuthSettings(tokenExchangeOAuthSettings);

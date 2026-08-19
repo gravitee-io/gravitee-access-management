@@ -17,7 +17,7 @@ package io.gravitee.am.service.validators;
 
 import io.gravitee.am.model.application.TokenExchangeClaimMapping;
 import io.gravitee.am.model.application.TokenExchangeClaimSource;
-import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -26,9 +26,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TokenExchangeClaimsMapperValidatorTest {
+class TokenExchangeClaimMappingsValidatorTest {
 
-    private final TokenExchangeClaimsMapperValidator validator = new TokenExchangeClaimsMapperValidator(20);
+    private final TokenExchangeClaimMappingsValidator validator = new TokenExchangeClaimMappingsValidator(20);
 
     @Test
     void shouldAcceptNullMappings() {
@@ -143,7 +143,7 @@ class TokenExchangeClaimsMapperValidatorTest {
 
     @Test
     void shouldRejectMoreMappingsThanTheConfiguredMaximum() {
-        var validatorWithSmallMax = new TokenExchangeClaimsMapperValidator(2);
+        var validatorWithSmallMax = new TokenExchangeClaimMappingsValidator(2);
 
         var result = validatorWithSmallMax.validate(List.of(
                 mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "one"),
@@ -156,7 +156,7 @@ class TokenExchangeClaimsMapperValidatorTest {
 
     @Test
     void shouldAcceptExactlyTheConfiguredMaximum() {
-        var validatorWithSmallMax = new TokenExchangeClaimsMapperValidator(2);
+        var validatorWithSmallMax = new TokenExchangeClaimMappingsValidator(2);
 
         var result = validatorWithSmallMax.validate(List.of(
                 mapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "a", "one"),

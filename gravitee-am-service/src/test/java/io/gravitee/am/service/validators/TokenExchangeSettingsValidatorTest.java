@@ -23,7 +23,7 @@ import io.gravitee.am.model.application.TokenExchangeClaimMapping;
 import io.gravitee.am.model.application.TokenExchangeClaimSource;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.service.exception.InvalidDomainException;
-import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidatorImpl;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -44,7 +44,7 @@ class TokenExchangeSettingsValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new TokenExchangeSettingsValidatorImpl(5, new TokenExchangeClaimsMapperValidator(20));
+        validator = new TokenExchangeSettingsValidatorImpl(5, new TokenExchangeClaimMappingsValidator(20));
     }
 
     // --- Disabled / null settings ---
@@ -388,7 +388,7 @@ class TokenExchangeSettingsValidatorTest {
     // --- Claims mapper ---
 
     @Test
-    void validate_claimsMapperOntoAReservedClaimIsInvalid() {
+    void validate_claimMappingsOntoAReservedClaimIsInvalid() {
         var settings = enabledSettings();
         settings.setTokenExchangeOAuthSettings(mapperSettings(
                 claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "sub")));
@@ -397,7 +397,7 @@ class TokenExchangeSettingsValidatorTest {
     }
 
     @Test
-    void validate_claimsMapperOntoAnAgentIdentityClaimIsInvalid() {
+    void validate_claimMappingsOntoAnAgentIdentityClaimIsInvalid() {
         var settings = enabledSettings();
         settings.setTokenExchangeOAuthSettings(mapperSettings(
                 claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "client_profile")));
@@ -406,7 +406,7 @@ class TokenExchangeSettingsValidatorTest {
     }
 
     @Test
-    void validate_claimsMapperWithDuplicateTargetsIsInvalid() {
+    void validate_claimMappingsWithDuplicateTargetsIsInvalid() {
         var settings = enabledSettings();
         settings.setTokenExchangeOAuthSettings(mapperSettings(
                 claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id"),
@@ -416,7 +416,7 @@ class TokenExchangeSettingsValidatorTest {
     }
 
     @Test
-    void validate_claimsMapperOntoAnOrdinaryClaimIsValid() {
+    void validate_claimMappingsOntoAnOrdinaryClaimIsValid() {
         var settings = enabledSettings();
         settings.setTokenExchangeOAuthSettings(mapperSettings(
                 claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_id")));
@@ -444,7 +444,7 @@ class TokenExchangeSettingsValidatorTest {
     private static TokenExchangeOAuthSettings mapperSettings(TokenExchangeClaimMapping... mappings) {
         var oauthSettings = new TokenExchangeOAuthSettings();
         oauthSettings.setInherited(false);
-        oauthSettings.setClaimsMapper(List.of(mappings));
+        oauthSettings.setClaimMappings(List.of(mappings));
         return oauthSettings;
     }
 

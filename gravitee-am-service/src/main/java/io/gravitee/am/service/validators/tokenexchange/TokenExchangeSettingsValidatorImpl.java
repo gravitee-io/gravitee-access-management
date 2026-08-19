@@ -40,13 +40,13 @@ import java.util.Set;
 public class TokenExchangeSettingsValidatorImpl implements TokenExchangeSettingsValidator {
 
     private final int trustedIssuersMaxCount;
-    private final TokenExchangeClaimsMapperValidator claimsMapperValidator;
+    private final TokenExchangeClaimMappingsValidator claimMappingsValidator;
 
     public TokenExchangeSettingsValidatorImpl(
             @Value("${domain.tokenExchange.trustedIssuers.maxCount:5}") int trustedIssuersMaxCount,
-            TokenExchangeClaimsMapperValidator claimsMapperValidator) {
+            TokenExchangeClaimMappingsValidator claimMappingsValidator) {
         this.trustedIssuersMaxCount = trustedIssuersMaxCount;
-        this.claimsMapperValidator = claimsMapperValidator;
+        this.claimMappingsValidator = claimMappingsValidator;
     }
 
     @Override
@@ -77,7 +77,7 @@ public class TokenExchangeSettingsValidatorImpl implements TokenExchangeSettings
 
         TokenExchangeOAuthSettings oauthSettings = settings.getTokenExchangeOAuthSettings();
         if (oauthSettings != null) {
-            var mapperValidation = claimsMapperValidator.validate(oauthSettings.getClaimsMapper());
+            var mapperValidation = claimMappingsValidator.validate(oauthSettings.getClaimMappings());
             if (mapperValidation.isInvalid()) {
                 return error(mapperValidation.describe());
             }

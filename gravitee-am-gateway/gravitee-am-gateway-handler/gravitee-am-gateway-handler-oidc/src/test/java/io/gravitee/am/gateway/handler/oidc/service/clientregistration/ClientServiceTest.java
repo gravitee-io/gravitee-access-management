@@ -177,7 +177,7 @@ public class ClientServiceTest {
 
         TokenExchangeOAuthSettings tokenExchangeSettings = new TokenExchangeOAuthSettings();
         tokenExchangeSettings.setInherited(false);
-        tokenExchangeSettings.setClaimsMapper(List.of(mapping));
+        tokenExchangeSettings.setClaimMappings(List.of(mapping));
 
         Client toUpdate = new Client();
         toUpdate.setDomain(DOMAIN.getId());

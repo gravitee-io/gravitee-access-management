@@ -329,7 +329,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
      */
     private Map<String, Object> resolveMappedClaims(Client client, Domain domain,
                                                     ValidatedToken subjectToken, ValidatedToken actorToken) {
-        List<TokenExchangeClaimMapping> mappings = TokenExchangeOAuthSettings.getInstance(domain, client).getClaimsMapper();
+        List<TokenExchangeClaimMapping> mappings = TokenExchangeOAuthSettings.getInstance(domain, client).getClaimMappings();
         if (mappings == null || mappings.isEmpty()) {
             return Map.of();
         }

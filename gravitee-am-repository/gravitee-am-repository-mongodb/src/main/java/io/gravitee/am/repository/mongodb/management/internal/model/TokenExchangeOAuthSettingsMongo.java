@@ -28,7 +28,7 @@ public class TokenExchangeOAuthSettingsMongo {
 
     private boolean inherited = true;
     private String scopeHandling;
-    private List<TokenExchangeClaimMappingMongo> claimsMapper;
+    private List<TokenExchangeClaimMappingMongo> claimMappings;
 
     public boolean isInherited() {
         return inherited;
@@ -46,12 +46,12 @@ public class TokenExchangeOAuthSettingsMongo {
         this.scopeHandling = scopeHandling;
     }
 
-    public List<TokenExchangeClaimMappingMongo> getClaimsMapper() {
-        return claimsMapper;
+    public List<TokenExchangeClaimMappingMongo> getClaimMappings() {
+        return claimMappings;
     }
 
-    public void setClaimsMapper(List<TokenExchangeClaimMappingMongo> claimsMapper) {
-        this.claimsMapper = claimsMapper;
+    public void setClaimMappings(List<TokenExchangeClaimMappingMongo> claimMappings) {
+        this.claimMappings = claimMappings;
     }
 
     /**
@@ -63,8 +63,8 @@ public class TokenExchangeOAuthSettingsMongo {
         if (getScopeHandling() != null) {
             settings.setScopeHandling(TokenExchangeScopeHandling.valueOf(getScopeHandling()));
         }
-        if (getClaimsMapper() != null) {
-            settings.setClaimsMapper(getClaimsMapper().stream()
+        if (getClaimMappings() != null) {
+            settings.setClaimMappings(getClaimMappings().stream()
                     .map(TokenExchangeClaimMappingMongo::convert)
                     .collect(Collectors.toList()));
         }
@@ -83,8 +83,8 @@ public class TokenExchangeOAuthSettingsMongo {
         if (settings.getScopeHandling() != null) {
             mongo.setScopeHandling(settings.getScopeHandling().name());
         }
-        if (settings.getClaimsMapper() != null) {
-            mongo.setClaimsMapper(settings.getClaimsMapper().stream()
+        if (settings.getClaimMappings() != null) {
+            mongo.setClaimMappings(settings.getClaimMappings().stream()
                     .map(TokenExchangeClaimMappingMongo::convert)
                     .collect(Collectors.toList()));
         }

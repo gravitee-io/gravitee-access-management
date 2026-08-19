@@ -149,7 +149,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         TokenExchangeOAuthSettings tokenExchangeOAuthSettings = new TokenExchangeOAuthSettings();
         tokenExchangeOAuthSettings.setInherited(false);
-        tokenExchangeOAuthSettings.setClaimsMapper(List.of(
+        tokenExchangeOAuthSettings.setClaimMappings(List.of(
                 claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_claim_id"),
                 claimMapping(TokenExchangeClaimSource.ACTOR_TOKEN, "email", "agent_email")));
         TokenExchangeSettings tokenExchangeSettings = new TokenExchangeSettings();
@@ -176,7 +176,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testTokenExchangeClaimsMapperRoundTrip() {
+    public void testTokenExchangeClaimMappingsRoundTrip() {
         Domain domainCreated = domainRepository.create(initDomain()).blockingGet();
 
         TestObserver<Domain> testObserver = domainRepository.findById(domainCreated.getId()).test();
@@ -185,7 +185,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> {
             var oauthSettings = d.getTokenExchangeSettings().getTokenExchangeOAuthSettings();
-            var mappings = oauthSettings.getClaimsMapper();
+            var mappings = oauthSettings.getClaimMappings();
             return !oauthSettings.isInherited()
                     && mappings != null
                     && mappings.size() == 2

@@ -46,7 +46,7 @@ import static io.gravitee.am.common.oidc.idtoken.Claims.NONCE;
  * of these names.
  */
 @Component
-public class TokenExchangeClaimsMapperValidator implements Validator<List<TokenExchangeClaimMapping>, TokenExchangeClaimsMapperValidator.ValidationResult> {
+public class TokenExchangeClaimMappingsValidator implements Validator<List<TokenExchangeClaimMapping>, TokenExchangeClaimMappingsValidator.ValidationResult> {
 
     // UMA 2.0 and RFC 9396 claims, written by TokenServiceImpl before the mapper runs. Neither has
     // a shared constant — both are private to the gateway.
@@ -80,7 +80,7 @@ public class TokenExchangeClaimsMapperValidator implements Validator<List<TokenE
 
     private final int maxCount;
 
-    public TokenExchangeClaimsMapperValidator(@Value("${domain.tokenExchange.claimsMapper.maxCount:20}") int maxCount) {
+    public TokenExchangeClaimMappingsValidator(@Value("${domain.tokenExchange.claimMappings.maxCount:20}") int maxCount) {
         this.maxCount = maxCount;
     }
 

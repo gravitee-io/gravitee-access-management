@@ -1140,7 +1140,7 @@ public class TokenExchangeServiceImplTest {
     private static TokenExchangeOAuthSettings mapperSettings(boolean inherited, TokenExchangeClaimMapping... mappings) {
         TokenExchangeOAuthSettings settings = new TokenExchangeOAuthSettings();
         settings.setInherited(inherited);
-        settings.setClaimsMapper(List.of(mappings));
+        settings.setClaimMappings(List.of(mappings));
         return settings;
     }
 
@@ -1177,7 +1177,7 @@ public class TokenExchangeServiceImplTest {
     }
 
     @Test
-    public void shouldApplyApplicationLevelClaimsMapper() throws Exception {
+    public void shouldApplyApplicationLevelClaimMappings() throws Exception {
         service = createService(List.of(mapperValidator()));
 
         TokenRequest tokenRequest = new TokenRequest();
@@ -1195,7 +1195,7 @@ public class TokenExchangeServiceImplTest {
     }
 
     @Test
-    public void shouldApplyDomainLevelClaimsMapperWhenApplicationInherits() throws Exception {
+    public void shouldApplyDomainLevelClaimMappingsWhenApplicationInherits() throws Exception {
         service = createService(List.of(mapperValidator()));
 
         TokenRequest tokenRequest = new TokenRequest();

@@ -38,16 +38,16 @@ public class TokenExchangeOAuthSettings {
     private TokenExchangeScopeHandling scopeHandling = TokenExchangeScopeHandling.DOWNSCOPING;
     @Schema(description = "Claims copied from the validated subject or actor token onto the issued token. " +
             "A claim that is absent from its source token is skipped.")
-    private List<TokenExchangeClaimMapping> claimsMapper;
+    private List<TokenExchangeClaimMapping> claimMappings;
 
     public TokenExchangeOAuthSettings() {}
 
     public TokenExchangeOAuthSettings(TokenExchangeOAuthSettings other) {
         this.inherited = other.inherited;
         this.scopeHandling = other.scopeHandling;
-        if (other.claimsMapper != null) {
-            this.claimsMapper = new ArrayList<>();
-            other.claimsMapper.forEach(mapping -> this.claimsMapper.add(new TokenExchangeClaimMapping(mapping)));
+        if (other.claimMappings != null) {
+            this.claimMappings = new ArrayList<>();
+            other.claimMappings.forEach(mapping -> this.claimMappings.add(new TokenExchangeClaimMapping(mapping)));
         }
     }
 
@@ -67,12 +67,12 @@ public class TokenExchangeOAuthSettings {
         this.scopeHandling = scopeHandling;
     }
 
-    public List<TokenExchangeClaimMapping> getClaimsMapper() {
-        return claimsMapper;
+    public List<TokenExchangeClaimMapping> getClaimMappings() {
+        return claimMappings;
     }
 
-    public void setClaimsMapper(List<TokenExchangeClaimMapping> claimsMapper) {
-        this.claimsMapper = claimsMapper;
+    public void setClaimMappings(List<TokenExchangeClaimMapping> claimMappings) {
+        this.claimMappings = claimMappings;
     }
 
     /**

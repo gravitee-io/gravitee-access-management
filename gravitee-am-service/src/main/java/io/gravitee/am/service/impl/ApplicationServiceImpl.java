@@ -86,7 +86,7 @@ import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidato
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
-import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimsMapperValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -197,7 +197,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationTokenCustomClaimsValidator customClaimsValidator;
 
     @Autowired
-    private TokenExchangeClaimsMapperValidator tokenExchangeClaimsMapperValidator;
+    private TokenExchangeClaimMappingsValidator tokenExchangeClaimMappingsValidator;
 
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
@@ -852,11 +852,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         return existingApplication.getSettings() != null && existingApplication.getSettings().getOauth() != null && existingApplication.getSettings().getOauth().getClientSecret() != null;
     }
 
-    private static List<TokenExchangeClaimMapping> tokenExchangeClaimsMapperOf(Application application) {
+    private static List<TokenExchangeClaimMapping> tokenExchangeClaimMappingsOf(Application application) {
         return Optional.ofNullable(application.getSettings())
                 .map(ApplicationSettings::getOauth)
                 .map(ApplicationOAuthSettings::getTokenExchangeOAuthSettings)
-                .map(TokenExchangeOAuthSettings::getClaimsMapper)
+                .map(TokenExchangeOAuthSettings::getClaimMappings)
                 .orElse(null);
     }
 
@@ -1148,7 +1148,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return Single.just(app);
                     }
                     return validateTokenCustomClaims(app)
-                            .flatMap(this::validateTokenExchangeClaimsMapper)
+                            .flatMap(this::validateTokenExchangeClaimMappings)
                             .flatMap(GrantTypeUtils::validateGrantTypes)
                             .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
                             .flatMap(this::validateScopes)
@@ -1168,8 +1168,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                 : Single.just(application);
     }
 
-    private Single<Application> validateTokenExchangeClaimsMapper(Application application) {
-        var mapperValidation = tokenExchangeClaimsMapperValidator.validate(tokenExchangeClaimsMapperOf(application));
+    private Single<Application> validateTokenExchangeClaimMappings(Application application) {
+        var mapperValidation = tokenExchangeClaimMappingsValidator.validate(tokenExchangeClaimMappingsOf(application));
         return mapperValidation.isInvalid()
                 ? Single.error(new InvalidParameterException(mapperValidation.describe()))
                 : Single.just(application);
