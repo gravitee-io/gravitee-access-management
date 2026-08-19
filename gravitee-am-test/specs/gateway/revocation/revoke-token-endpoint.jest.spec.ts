@@ -79,8 +79,10 @@ describe('Revocation endpoint - access token', () => {
    * Characterisation test, not an endorsement. RFC 7009 §2.1 says the authorization server SHOULD
    * revoke every token issued from the same grant; AM deletes only the presented JTI plus any
    * token-exchange children (MongoTokenRepository#deleteByJtis matches jti or parentJtis), so the
-   * sibling refresh token survives and can still mint a new access token. Raised with the team —
-   * if this is changed deliberately, this test should be updated to match.
+   * sibling refresh token survives and can still mint a new access token.
+   *
+   * Whether that is intended is an open question — see AM-7550. If it changes, invert this test
+   * rather than assuming it has broken.
    */
   it('should leave the sibling refresh token usable after the access token is revoked', async () => {
     const tokens = await fixture.obtainAuthorizationCodeTokens();
