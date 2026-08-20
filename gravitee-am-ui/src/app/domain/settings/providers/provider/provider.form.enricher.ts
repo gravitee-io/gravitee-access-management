@@ -20,8 +20,13 @@ const OIDC_JSON_FORM = {
 
 const MONGO_IDP_TYPE = 'mongo-am-idp';
 
-/** Storage fields the platform owns once an identity provider reuses the system cluster. */
-const PINNED_STORAGE_FIELDS = ['useSystemCluster', 'database', 'usersCollection'];
+/**
+ * Storage fields the platform owns once an identity provider reuses the system cluster.
+ * `useSystemCluster` is left out on purpose: it renders as a checkbox, and the form library only
+ * honours `readonly` on its unbound branch, so marking it here would promise a restriction the
+ * widget does not apply. The server rejects a change to it.
+ */
+const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
 
 const LDAP_JSON_FORM = {
   id: 'urn:jsonschema:com:graviteesource:am:identityprovider:ldap:LdapIdentityProviderConfiguration',

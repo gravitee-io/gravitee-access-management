@@ -31,7 +31,6 @@ describe('enrichFormWithSystemClusterRestrictions', () => {
   it('marks the storage fields read-only for a restricted mongo provider', () => {
     const enriched = enrichFormWithSystemClusterRestrictions(mongoSchema(), 'mongo-am-idp', true);
 
-    expect(enriched.properties.useSystemCluster.readonly).toBe(true);
     expect(enriched.properties.database.readonly).toBe(true);
     expect(enriched.properties.usersCollection.readonly).toBe(true);
   });
@@ -40,6 +39,13 @@ describe('enrichFormWithSystemClusterRestrictions', () => {
     const enriched = enrichFormWithSystemClusterRestrictions(mongoSchema(), 'mongo-am-idp', true);
 
     expect(enriched.properties.usernameField.readonly).toBeUndefined();
+  });
+
+  // The checkbox widget ignores `readonly`, so marking it would look enforced without being so.
+  it('leaves the system cluster toggle alone', () => {
+    const enriched = enrichFormWithSystemClusterRestrictions(mongoSchema(), 'mongo-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.readonly).toBeUndefined();
   });
 
   it('leaves the schema alone when the provider is not restricted', () => {
