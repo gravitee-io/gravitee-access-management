@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +50,8 @@ public class SystemClusterIdpPolicy {
     static final String SYSTEM_CLUSTER = "repositories.system-cluster";
     static final String DEFAULT_SYSTEM_CLUSTER = "management";
     static final String COLLECTION_PREFIX = "idp_";
+    static final String PIN_DATABASE = "repositories.system-cluster-idp.pin-database";
+    static final String PREFIX_USERS_COLLECTION = "repositories.system-cluster-idp.prefix-users-collection";
 
     private static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
     private static final String DATASOURCE_ID = "datasourceId";
@@ -86,7 +89,9 @@ public class SystemClusterIdpPolicy {
     }
 
     private void pinIfEligible(IdentityProvider identityProvider) {
-        if (!CloudProperties.isManagedCloudEnabled(environment)) {
+        final boolean pinDatabase = isEnabled(PIN_DATABASE);
+        final boolean prefixUsersCollection = isEnabled(PREFIX_USERS_COLLECTION);
+        if (!pinDatabase && !prefixUsersCollection) {
             return;
         }
         if (identityProvider.isSystem() || !MONGO_IDP_TYPE.equals(identityProvider.getType())) {
@@ -97,20 +102,34 @@ public class SystemClusterIdpPolicy {
             return;
         }
 
-        // The key stays in the configuration: the plugin schema requires it unless a datasource is
-        // named, so removing it would leave the stored configuration invalid and block every later
-        // update. Each node still overrides it from its own client wrapper at runtime.
-        final String database = resolvePlatformDatabase();
-        if (database != null && !database.isEmpty()) {
-            configuration.put(DATABASE, database);
-        } else {
-            log.warn("Cannot pin the database of identity provider {}: no dbname configured for the system cluster",
-                    identityProvider.getId());
+        if (pinDatabase) {
+            // The key stays in the configuration: the plugin schema requires it unless a datasource
+            // is named, so removing it would leave the stored configuration invalid and block every
+            // later update. Each node still overrides it from its own client wrapper at runtime.
+            final String database = resolvePlatformDatabase();
+            if (database != null && !database.isEmpty()) {
+                configuration.put(DATABASE, database);
+            } else {
+                log.warn("Cannot pin the database of identity provider {}: no uri or dbname configured for the system cluster",
+                        identityProvider.getId());
+            }
         }
-        configuration.put(USERS_COLLECTION, COLLECTION_PREFIX + identityProvider.getId());
+        if (prefixUsersCollection) {
+            configuration.put(USERS_COLLECTION, COLLECTION_PREFIX + identityProvider.getId());
+        }
 
         identityProvider.setConfiguration(JSONObjectUtils.toJSONString(configuration));
         identityProvider.setSystemClusterRestricted(true);
+    }
+
+    /**
+     * A setting left out of the configuration follows the deployment: on by default in a
+     * Gravitee-managed cloud installation, off elsewhere. An operator turns it on or off explicitly
+     * whatever the deployment is.
+     */
+    private boolean isEnabled(String property) {
+        final Boolean enabled = environment.getProperty(property, Boolean.class);
+        return enabled != null ? enabled : CloudProperties.isManagedCloudEnabled(environment);
     }
 
     private void checkStorageUnchanged(IdentityProvider stored, String newConfiguration) {
@@ -129,9 +148,22 @@ public class SystemClusterIdpPolicy {
         }
     }
 
+    /**
+     * Mirrors the resolution the repository layer applies to the same settings: the database named
+     * in the connection uri wins over dbname. No packaged default is pinned, so a deployment that
+     * configures neither keeps whatever the identity provider asked for.
+     */
     private String resolvePlatformDatabase() {
         final String scope = environment.getProperty(SYSTEM_CLUSTER, String.class, DEFAULT_SYSTEM_CLUSTER);
-        return environment.getProperty("repositories." + scope + ".mongodb.dbname");
+        final String prefix = "repositories." + scope + ".mongodb.";
+        final String uri = environment.getProperty(prefix + "uri", "");
+        if (!uri.isEmpty()) {
+            final String path = URI.create(uri).getPath();
+            if (path != null && path.length() > 1) {
+                return path.substring(1);
+            }
+        }
+        return environment.getProperty(prefix + "dbname");
     }
 
     private boolean isUseSystemCluster(Map<String, Object> configuration) {
