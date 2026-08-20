@@ -83,6 +83,14 @@ public abstract class MongoAbstractProvider implements InitializingBean {
         }
 
         this.clientWrapper = this.buildClientWrapper(systemScope);
+        // The platform owns the database of a restricted provider, so take it from the client
+        // wrapper of this node the way configureDatasourceClient() does for the datasource path.
+        if (this.identityProviderEntity != null
+                && this.identityProviderEntity.isSystemClusterRestricted()
+                && this.configuration.isUseSystemCluster()
+                && !shouldUseDatasource()) {
+            this.configuration.setDatabase(this.clientWrapper.getDatabaseName());
+        }
         this.mongoClient = this.clientWrapper.getClient();
     }
 

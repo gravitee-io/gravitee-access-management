@@ -61,4 +61,6 @@ public class JdbcIdentityProvider {
     private String dataPlaneId;
     @Column("managed_by")
     private String managedBy;
+    @Column("system_cluster_restricted")
+    private boolean systemClusterRestricted;
 }

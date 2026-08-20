@@ -262,4 +262,31 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(idps -> idps.size() == 1);
         testObserver.assertValue(idp -> idp.get(0).getName().equals(identityProvider.getName()));
     }
+
+    @Test
+    public void testSystemClusterRestrictedRoundTrip() {
+        IdentityProvider identityProvider = buildIdentityProvider();
+        identityProvider.setSystemClusterRestricted(true);
+        IdentityProvider created = identityProviderRepository.create(identityProvider).blockingGet();
+
+        TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertValue(idp -> idp.isSystemClusterRestricted());
+
+        created.setSystemClusterRestricted(false);
+        identityProviderRepository.update(created).blockingGet();
+
+        TestObserver<IdentityProvider> afterUpdate = identityProviderRepository.findById(created.getId()).test();
+        afterUpdate.awaitDone(10, TimeUnit.SECONDS);
+        afterUpdate.assertValue(idp -> !idp.isSystemClusterRestricted());
+    }
+
+    @Test
+    public void testSystemClusterRestrictedDefaultsToFalse() {
+        IdentityProvider created = identityProviderRepository.create(buildIdentityProvider()).blockingGet();
+
+        TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertValue(idp -> !idp.isSystemClusterRestricted());
+    }
 }

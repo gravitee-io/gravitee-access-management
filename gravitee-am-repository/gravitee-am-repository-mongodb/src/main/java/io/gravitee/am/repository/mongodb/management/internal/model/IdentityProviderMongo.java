@@ -73,6 +73,8 @@ public class IdentityProviderMongo extends Auditable {
 
     private String managedBy;
 
+    private boolean systemClusterRestricted;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
