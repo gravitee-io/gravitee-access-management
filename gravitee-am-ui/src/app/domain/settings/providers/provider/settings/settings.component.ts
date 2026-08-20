@@ -28,7 +28,7 @@ import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
-import { enrichFormWithCerts } from '../provider.form.enricher';
+import { enrichFormWithCerts, enrichFormWithSystemClusterRestrictions } from '../provider.form.enricher';
 import { DataSourcesService } from '../../../../../services/datasources.service';
 
 @Component({
@@ -105,7 +105,10 @@ export class ProviderSettingsComponent implements OnInit {
     this.updateProviderConfiguration = this.providerConfiguration;
     this.organizationService
       .identitySchema(this.provider.type)
-      .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
+      .pipe(
+        map((schema) => enrichFormWithCerts(schema, this.certificates)),
+        map((schema) => enrichFormWithSystemClusterRestrictions(schema, this.provider.type, this.provider.systemClusterRestricted)),
+      )
       .subscribe((data) => {
         this.providerSchema = data;
         if (data) {

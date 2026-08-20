@@ -15,12 +15,14 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
-import { enrichFormWithCerts } from '../../../provider/provider.form.enricher';
+import { enrichFormWithCerts, enrichFormWithSystemClusterRestrictions } from '../../../provider/provider.form.enricher';
 import { DataSourcesService } from '../../../../../../services/datasources.service';
+import { CloudModeService } from '../../../../../../services/cloud-mode.service';
 
 @Component({
   selector: 'provider-creation-step2',
@@ -43,6 +45,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     private snackbarService: SnackbarService,
     private route: ActivatedRoute,
     private dataSourcesService: DataSourcesService,
+    private cloudModeService: CloudModeService,
   ) {}
 
   ngOnInit() {
@@ -52,9 +55,13 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.provider) {
-      this.organizationService
-        .identitySchema(changes.provider.currentValue.type)
-        .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
+      const providerType = changes.provider.currentValue.type;
+      combineLatest([this.organizationService.identitySchema(providerType), this.cloudModeService.isCloudModeEnabled()])
+        .pipe(
+          map(([schema, cloudMode]) =>
+            enrichFormWithSystemClusterRestrictions(enrichFormWithCerts(schema, this.certificates), providerType, cloudMode),
+          ),
+        )
         .subscribe((data) => {
           // Process datasource widgets BEFORE setting the schema
           this.providerSchema = this.dataSourcesService.applyDataSourceSelection(data, this.datasources);

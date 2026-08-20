@@ -18,6 +18,11 @@ const OIDC_JSON_FORM = {
   version: '05-2024',
 };
 
+const MONGO_IDP_TYPE = 'mongo-am-idp';
+
+/** Storage fields the platform owns once an identity provider reuses the system cluster. */
+const PINNED_STORAGE_FIELDS = ['useSystemCluster', 'database', 'usersCollection'];
+
 const LDAP_JSON_FORM = {
   id: 'urn:jsonschema:com:graviteesource:am:identityprovider:ldap:LdapIdentityProviderConfiguration',
   version: '07-2024',
@@ -36,6 +41,23 @@ export function enrichFormWithCerts(schema: FormSchema, certs: Certificate[]): F
   return schema;
 }
 
+/**
+ * Marks the storage fields of a mongo identity provider read-only when the platform owns where it
+ * stores its users. On the edit screen `restricted` is the provider's own flag; on the creation
+ * screen it is whether this installation is a managed cloud one, since the flag does not exist yet.
+ */
+export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
+  if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties) {
+    return schema;
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  PINNED_STORAGE_FIELDS.filter((field) => updatedSchema.properties[field]).forEach((field) => {
+    updatedSchema.properties[field] = { ...updatedSchema.properties[field], readonly: true };
+  });
+  return updatedSchema;
+}
+
 function supportsMTls(schema: FormSchema): boolean {
   return (
     (schema.id === OIDC_JSON_FORM.id && schema?.version == OIDC_JSON_FORM.version) ||
@@ -52,6 +74,8 @@ interface FormSchema {
       enumNames: string[];
       readonly: boolean;
     };
+    // Other plugin-specific properties, e.g. the mongo storage fields pinned below.
+    [field: string]: any;
   };
 }
 
