@@ -15471,8 +15471,6 @@ components:
             type: string
         external:
           type: boolean
-        id:
-          type: string
         name:
           type: string
         type:
