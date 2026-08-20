@@ -13,39 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { setupDomainForTest, safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
-import { Domain } from '@management-models/Domain';
-import { Fixture } from '../../../test-fixture';
+import { CloudDomainScope } from '@cloud-commands/domain-commands';
 
-export interface IdpFixture extends Fixture {
-  domain: Domain;
-  accessToken: string;
+/**
+ * Identity provider calls scoped to a Cockpit-provisioned org and environment. The
+ * `@management-commands/idp-management-commands` helpers read AM_DEF_ORG_ID / AM_DEF_ENV_ID, so they
+ * cannot address a cloud organization.
+ */
+export interface CloudIdpScope extends CloudDomainScope {
+  domainId: string;
 }
 
-export const setupIdpFixture = async (): Promise<IdpFixture> => {
-  const accessToken = await requestAdminAccessToken();
-  const { domain } = await setupDomainForTest(uniqueName('idp', true), { accessToken, waitForStart: false });
+export const createCloudIdp = (scope: CloudIdpScope, idp: object) =>
+  getIdpApi(scope.accessToken).createIdentityProvider({
+    organizationId: scope.organizationId,
+    environmentId: scope.environmentId,
+    domain: scope.domainId,
+    newIdentityProvider: idp as any,
+  });
 
-  return {
-    accessToken,
-    domain,
-    cleanUp: async () => {
-      if (domain?.id && accessToken) {
-        await safeDeleteDomain(domain.id, accessToken);
-      }
-    },
-  };
-};
+export const getCloudIdp = (scope: CloudIdpScope, idpId: string) =>
+  getIdpApi(scope.accessToken).findIdentityProvider({
+    organizationId: scope.organizationId,
+    environmentId: scope.environmentId,
+    domain: scope.domainId,
+    identity: idpId,
+  });
 
-export const buildInlineIdpBody = (users: object[]) => ({
-  external: false,
-  type: 'inline-am-idp',
-  domainWhitelist: [],
-  configuration: JSON.stringify({ users }),
-  name: uniqueName('inline-idp', true),
-});
+export const updateCloudIdp = (scope: CloudIdpScope, idpId: string, body: object) =>
+  getIdpApi(scope.accessToken).updateIdentityProvider({
+    organizationId: scope.organizationId,
+    environmentId: scope.environmentId,
+    domain: scope.domainId,
+    identity: idpId,
+    updateIdentityProvider: body as any,
+  });
 
 export const buildMongoIdpBody = (overrides: { useSystemCluster: boolean; database?: string; usersCollection?: string }) => ({
   external: false,
