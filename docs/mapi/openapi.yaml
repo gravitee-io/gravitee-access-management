@@ -14823,6 +14823,8 @@ components:
               type: string
         system:
           type: boolean
+        systemClusterRestricted:
+          type: boolean
         type:
           type: string
         updatedAt:
