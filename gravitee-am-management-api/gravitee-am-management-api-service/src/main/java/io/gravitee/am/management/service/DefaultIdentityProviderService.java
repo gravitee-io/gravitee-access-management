@@ -32,5 +32,14 @@ public interface DefaultIdentityProviderService {
      */
     Single<IdentityProvider> create(Domain domain, String automationKey, User principal);
 
+    /**
+     * Build the configuration of a domain's default identity provider.
+     */
     Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
+
+    /**
+     * Rebuild the configuration of an existing default identity provider, preserving the repository
+     * scope and password encoder setting it was originally created with.
+     */
+    Map<String, Object> refreshProviderConfiguration(IdentityProvider identityProvider);
 }

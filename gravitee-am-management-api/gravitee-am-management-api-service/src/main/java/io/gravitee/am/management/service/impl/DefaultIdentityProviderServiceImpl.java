@@ -55,6 +55,11 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     private static final String DEFAULT_JDBC_IDP_TYPE = "jdbc-am-idp";
     private static final int TABLE_NAME_MAX_LENGTH = 50;
     public static final String PASSWORD = "password";
+    public static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
+    private static final String PASSWORD_ENCODER = "passwordEncoder";
+    private static final String PASSWORD_ENCODER_OPTIONS = "passwordEncoderOptions";
+
+    static final String SYSTEM_CLUSTER_PROPERTY = "repositories.system-cluster";
 
     private static final Set<String> SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "PBKDF2-SHA1", "PBKDF2-SHA256", "PBKDF2-SHA512", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
     private static final Map<String, String> PBKDF2_PASSWORD_ENCODER_MAP = Map.of(
@@ -110,6 +115,50 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
     @Override
     public Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
+        return buildProviderConfiguration(referenceId, identityProvider, boundToSystemClusterByConfiguration());
+    }
+
+    @Override
+    public Map<String, Object> refreshProviderConfiguration(IdentityProvider identityProvider) {
+        final Map<String, Object> existingConfig = readConfiguration(identityProvider);
+        // Preserve existing binding setting. The identity provider and its users cannot be moved to another cluster.
+        final boolean boundToSystemCluster = Boolean.TRUE.equals(existingConfig.get(USE_SYSTEM_CLUSTER));
+
+        final Map<String, Object> configMap = buildProviderConfiguration(identityProvider.getReferenceId(), null, boundToSystemCluster);
+
+        // Password encoder settings are owned by the provider, not by gravitee.yml.
+        configMap.put(PASSWORD_ENCODER, existingConfig.get(PASSWORD_ENCODER));
+        configMap.put(PASSWORD_ENCODER_OPTIONS, existingConfig.get(PASSWORD_ENCODER_OPTIONS));
+        return configMap;
+    }
+
+    private Map<String, Object> readConfiguration(IdentityProvider identityProvider) {
+        try {
+            return objectMapper.readValue(identityProvider.getConfiguration(), Map.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Unable to read the default idp configuration for domain '" + identityProvider.getReferenceId() + "'", e);
+        }
+    }
+
+    private boolean boundToSystemClusterByConfiguration() {
+        return useMongoRepositories() && systemClusterScope() == Scope.GATEWAY;
+    }
+
+    private Scope systemClusterScope() {
+        final String value = environment.getProperty(SYSTEM_CLUSTER_PROPERTY, Scope.MANAGEMENT.getName());
+        final Scope scope;
+        try {
+            scope = Scope.fromName(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER_PROPERTY + "' value '" + value + "', only 'management' or 'gateway' are accepted", e);
+        }
+        if (scope != Scope.MANAGEMENT && scope != Scope.GATEWAY) {
+            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER_PROPERTY + "' value '" + value + "', only 'management' or 'gateway' are accepted");
+        }
+        return scope;
+    }
+
+    private Map<String, Object> buildProviderConfiguration(String referenceId, NewIdentityProvider identityProvider, boolean boundToSystemCluster) {
         final Map<String, Object> configMap = new LinkedHashMap<>();
 
         final String encoder = environment.getProperty("domains.identities.default.passwordEncoder.algorithm", "BCrypt");
@@ -150,7 +199,8 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             configMap.put("findUserByEmailQuery", "{email: ?}");
             configMap.put("usernameField", "username");
             configMap.put("passwordField", PASSWORD);
-            configMap.put("passwordEncoder", parsePasswordEncoder(encoder));
+            configMap.put(PASSWORD_ENCODER, parsePasswordEncoder(encoder));
+            configMap.put(USE_SYSTEM_CLUSTER, boundToSystemCluster);
             updatePasswordEncoderOptions(configMap, encoder);
 
         } else if (useJdbcRepositories()) {
@@ -182,7 +232,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             configMap.put("identifierAttribute", "id");
             configMap.put("usernameAttribute", "username");
             configMap.put("passwordAttribute", PASSWORD);
-            configMap.put("passwordEncoder", parsePasswordEncoder(encoder));
+            configMap.put(PASSWORD_ENCODER, parsePasswordEncoder(encoder));
             jdbcSchema().ifPresent(schema -> configMap.put("options", List.of(Map.of("option", "currentSchema", "value", schema))));
             updatePasswordEncoderOptions(configMap, encoder);
         }
@@ -235,13 +285,13 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     private void updatePasswordEncoderOptions(Map<String, Object> configMap, String encoder) {
         if ("bcrypt".equalsIgnoreCase(encoder)) {
             String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "10");
-            configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+            configMap.put(PASSWORD_ENCODER_OPTIONS, new PasswordEncoderOptions(Integer.parseInt(rounds)));
         } else if (encoder.toLowerCase().startsWith("sha")) {
             String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "1");
-            configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+            configMap.put(PASSWORD_ENCODER_OPTIONS, new PasswordEncoderOptions(Integer.parseInt(rounds)));
         } else if (encoder.toLowerCase().startsWith("pbkdf2")) {
             String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "600000");
-            configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+            configMap.put(PASSWORD_ENCODER_OPTIONS, new PasswordEncoderOptions(Integer.parseInt(rounds)));
         }
     }
 

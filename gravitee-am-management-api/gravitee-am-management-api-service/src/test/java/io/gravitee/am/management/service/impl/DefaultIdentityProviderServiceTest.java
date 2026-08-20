@@ -18,6 +18,9 @@ package io.gravitee.am.management.service.impl;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -211,5 +214,168 @@ public class DefaultIdentityProviderServiceTest {
 
         assertEquals("PBKDF2WithHmacSHA512", test.get("passwordEncoder"));
         assertEquals(600000, ((PasswordEncoderOptions) test.get("passwordEncoderOptions")).getRounds());
+    }
+
+    // --- repositories.system-cluster binding ---
+
+    @Test
+    public void managementScope_isNotBoundToTheSystemCluster() {
+        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
+        environment.setProperty("repositories.management.mongodb.port", "27018");
+        environment.setProperty("repositories.management.mongodb.dbname", "mgmt-db");
+
+        Map<String, Object> config = cut.createProviderConfiguration("test", null);
+
+        assertEquals("mgmt-host", config.get("host"));
+        assertEquals(27018, config.get("port"));
+        assertEquals("mgmt-db", config.get("database"));
+        assertEquals("mongodb://mgmt-host:27018/?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
+        assertEquals(false, config.get("useSystemCluster"));
+    }
+
+    @Test
+    public void mongoBackend_emitsTheFullProviderConfiguration() {
+        Map<String, Object> config = cut.createProviderConfiguration("test", null);
+
+        assertEquals("localhost", config.get("host"));
+        assertEquals(27017, config.get("port"));
+        assertEquals(false, config.get("enableCredentials"));
+        assertEquals("gravitee-am", config.get("database"));
+        assertEquals("idp_users_test", config.get("usersCollection"));
+        assertEquals("{username: ?}", config.get("findUserByUsernameQuery"));
+        assertEquals("{email: ?}", config.get("findUserByEmailQuery"));
+        assertEquals("username", config.get("usernameField"));
+        assertEquals("password", config.get("passwordField"));
+        assertEquals("BCrypt", config.get("passwordEncoder"));
+    }
+
+    @Test
+    public void gatewayScope_bindsTheProviderToTheSystemCluster() {
+        environment.setProperty("repositories.system-cluster", "gateway");
+        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
+        environment.setProperty("repositories.management.mongodb.dbname", "mgmt-db");
+
+        Map<String, Object> config = cut.createProviderConfiguration("test", null);
+
+        // the connection settings stay a fallback: the Mongo provider replaces both the client and the
+        // database with the data plane's when it honors this flag
+        assertEquals("mgmt-host", config.get("host"));
+        assertEquals("mgmt-db", config.get("database"));
+        assertEquals(true, config.get("useSystemCluster"));
+    }
+
+    @Test
+    public void invalidSystemClusterScope_isRejected() {
+        environment.setProperty("repositories.system-cluster", "oauth2");
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> cut.createProviderConfiguration("test", null));
+        assertTrue(error.getMessage().contains("oauth2"));
+    }
+
+    @Test
+    public void unknownSystemClusterScope_isRejected() {
+        environment.setProperty("repositories.system-cluster", "not-a-scope");
+
+        assertThrows(IllegalStateException.class, () -> cut.createProviderConfiguration("test", null));
+    }
+
+    @Test
+    public void jdbcBackend_emitsTheFullProviderConfiguration() {
+        environment.setProperty("repositories.management.type", "jdbc");
+
+        Map<String, Object> config = cut.createProviderConfiguration("test", null);
+
+        assertEquals("localhost", config.get("host"));
+        assertEquals(5432, config.get("port"));
+        assertEquals("gravitee_am", config.get("database"));
+        assertEquals("postgresql", config.get("protocol"));
+        assertEquals("idp_users_test", config.get("usersTable"));
+        assertEquals("postgres", config.get("user"));
+        assertEquals(true, config.get("autoProvisioning"));
+        assertEquals("SELECT * FROM idp_users_test WHERE username = %s", config.get("selectUserByUsernameQuery"));
+        assertEquals("SELECT * FROM idp_users_test WHERE email = %s", config.get("selectUserByEmailQuery"));
+        assertEquals("id", config.get("identifierAttribute"));
+        assertEquals("username", config.get("usernameAttribute"));
+        assertEquals("password", config.get("passwordAttribute"));
+        assertEquals("BCrypt", config.get("passwordEncoder"));
+    }
+
+    @Test
+    public void jdbcBackend_isNeverBoundToTheSystemCluster() {
+        environment.setProperty("repositories.management.type", "jdbc");
+        environment.setProperty("repositories.system-cluster", "gateway");
+        environment.setProperty("repositories.management.jdbc.host", "mgmt-jdbc");
+
+        Map<String, Object> config = cut.createProviderConfiguration("test", null);
+
+        assertEquals("mgmt-jdbc", config.get("host"));
+        assertFalse(config.containsKey("useSystemCluster"));
+    }
+
+    // --- refreshProviderConfiguration preserves the binding made at creation time ---
+
+    @Test
+    public void refresh_keepsAnExistingProviderUnboundEvenWhenGatewayIsConfigured() {
+        environment.setProperty("repositories.system-cluster", "gateway");
+        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
+
+        Map<String, Object> config = cut.refreshProviderConfiguration(
+                existingProvider("{\"host\":\"mgmt-host\",\"passwordEncoder\":\"BCrypt\"}"));
+
+        assertEquals("mgmt-host", config.get("host"));
+        assertEquals(false, config.get("useSystemCluster"));
+    }
+
+    @Test
+    public void refresh_keepsAnExplicitlyUnboundProviderUnbound() {
+        environment.setProperty("repositories.system-cluster", "gateway");
+
+        Map<String, Object> config = cut.refreshProviderConfiguration(
+                existingProvider("{\"useSystemCluster\":false,\"passwordEncoder\":\"BCrypt\"}"));
+
+        assertEquals(false, config.get("useSystemCluster"));
+    }
+
+    @Test
+    public void refresh_keepsABoundProviderBound() {
+        environment.setProperty("repositories.system-cluster", "gateway");
+
+        Map<String, Object> config = cut.refreshProviderConfiguration(
+                existingProvider("{\"useSystemCluster\":true,\"passwordEncoder\":\"BCrypt\"}"));
+
+        assertEquals(true, config.get("useSystemCluster"));
+    }
+
+    @Test
+    public void refresh_keepsTheBindingWhenTheScopeIsMovedBackToManagement() {
+        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
+
+        Map<String, Object> config = cut.refreshProviderConfiguration(
+                existingProvider("{\"useSystemCluster\":true,\"passwordEncoder\":\"BCrypt\"}"));
+
+        assertEquals("mgmt-host", config.get("host"));
+        assertEquals(true, config.get("useSystemCluster"));
+    }
+
+    @Test
+    public void refresh_preservesPasswordEncoderSettings() {
+        environment.setProperty("domains.identities.default.passwordEncoder.algorithm", "SHA-512");
+
+        Map<String, Object> config = cut.refreshProviderConfiguration(
+                existingProvider("{\"passwordEncoder\":\"BCrypt\",\"passwordEncoderOptions\":{\"rounds\":12}}"));
+
+        assertEquals("BCrypt", config.get("passwordEncoder"));
+        assertEquals(Map.of("rounds", 12), config.get("passwordEncoderOptions"));
+    }
+
+    private IdentityProvider existingProvider(String configuration) {
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("default-idp-test");
+        identityProvider.setReferenceId("test");
+        identityProvider.setSystem(true);
+        identityProvider.setDataPlaneId("dp1");
+        identityProvider.setConfiguration(configuration);
+        return identityProvider;
     }
 }
