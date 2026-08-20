@@ -321,6 +321,8 @@ public class ApplicationOAuthSettings {
 
     private boolean disableRefreshTokenRotation;
 
+    private Boolean asyncTokenStore;
+
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     public ApplicationOAuthSettings() {
@@ -397,6 +399,7 @@ public class ApplicationOAuthSettings {
         this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
         this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.asyncTokenStore = other.asyncTokenStore;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
     }
 
@@ -985,6 +988,14 @@ public class ApplicationOAuthSettings {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
+    public Boolean getAsyncTokenStore() {
+        return asyncTokenStore;
+    }
+
+    public void setAsyncTokenStore(Boolean asyncTokenStore) {
+        this.asyncTokenStore = asyncTokenStore;
+    }
+
     public TokenExchangeOAuthSettings getTokenExchangeOAuthSettings() {
         return tokenExchangeOAuthSettings;
     }
@@ -1060,6 +1071,7 @@ public class ApplicationOAuthSettings {
         client.setBackchannelAuthRequestSignAlg(this.backchannelAuthRequestSignAlg);
         client.setBackchannelClientNotificationEndpoint(this.backchannelClientNotificationEndpoint);
         client.setDisableRefreshTokenRotation(this.disableRefreshTokenRotation);
+        client.setAsyncTokenStore(this.asyncTokenStore);
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
     }
 }

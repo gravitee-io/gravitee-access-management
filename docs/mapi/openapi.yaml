@@ -12193,6 +12193,8 @@ components:
           format: int32
         applicationType:
           type: string
+        asyncTokenStore:
+          type: boolean
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:
@@ -15014,6 +15016,8 @@ components:
           format: int32
         applicationType:
           type: string
+        asyncTokenStore:
+          type: boolean
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:

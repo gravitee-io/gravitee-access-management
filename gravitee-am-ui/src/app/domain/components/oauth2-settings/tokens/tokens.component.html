@@ -72,6 +72,26 @@
         </div>
       </div>
 
+      <div class="gv-form-section" *ngIf="context !== 'McpServer'">
+        <div class="gv-form-section-title">
+          <h5>Token storage</h5>
+          <small>
+            Asynchronous storage sends the token response back to the client without waiting for the tokens to be written to the database.
+            Tokens may then be returned but not stored yet: introspection, refresh token usage and token revocation may not see them
+            immediately after their creation.
+          </small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle (change)="asyncTokenStoreChanged($event)" [checked]="isAsyncTokenStoreEnabled()" [disabled]="readonly">
+            Store tokens asynchronously
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%"
+            >Asynchronous storage can also be enabled for the whole gateway, in which case this setting cannot turn it off.</mat-hint
+          >
+        </div>
+      </div>
+
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <div fxLayout="row" style="align-items: center">

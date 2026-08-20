@@ -98,6 +98,8 @@ public class ApplicationOAuthSettingsMongo {
 
     private boolean disableRefreshTokenRotation;
 
+    private Boolean asyncTokenStore;
+
     private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
 
     public String getClientId() {
@@ -658,6 +660,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public Boolean getAsyncTokenStore() {
+        return asyncTokenStore;
+    }
+
+    public void setAsyncTokenStore(Boolean asyncTokenStore) {
+        this.asyncTokenStore = asyncTokenStore;
     }
 
     public TokenExchangeOAuthSettingsMongo getTokenExchangeOAuthSettings() {

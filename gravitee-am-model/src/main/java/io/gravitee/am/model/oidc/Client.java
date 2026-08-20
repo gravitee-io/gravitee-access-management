@@ -286,6 +286,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
+    private Boolean asyncTokenStore;
+
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     private SecretExpirationSettings secretExpirationSettings;
@@ -381,6 +383,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.asyncTokenStore = other.asyncTokenStore;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
     }
@@ -1161,6 +1164,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public Boolean getAsyncTokenStore() {
+        return asyncTokenStore;
+    }
+
+    public void setAsyncTokenStore(Boolean asyncTokenStore) {
+        this.asyncTokenStore = asyncTokenStore;
     }
 
     public TokenExchangeOAuthSettings getTokenExchangeOAuthSettings() {

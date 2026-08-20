@@ -60,6 +60,15 @@ export class TokensComponent implements OnInit {
     this.initUserInfoCustomClaims();
   }
 
+  asyncTokenStoreChanged(event) {
+    this.oauthSettings.asyncTokenStore = event.checked;
+    this.modelChanged();
+  }
+
+  isAsyncTokenStoreEnabled() {
+    return this.oauthSettings.asyncTokenStore;
+  }
+
   addClaim(claim) {
     if (claim) {
       if (!this.claimExits(claim)) {

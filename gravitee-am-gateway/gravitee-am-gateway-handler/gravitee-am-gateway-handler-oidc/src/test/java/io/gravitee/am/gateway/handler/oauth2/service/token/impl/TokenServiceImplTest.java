@@ -226,8 +226,8 @@ public class TokenServiceImplTest {
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
         when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
-        when(tokenManager.storeAccessToken(any())).thenReturn(Completable.complete());
-        when(tokenManager.storeRefreshToken(any())).thenReturn(Completable.complete());
+        when(tokenManager.storeAccessToken(any(), any())).thenReturn(Completable.complete());
+        when(tokenManager.storeRefreshToken(any(), any())).thenReturn(Completable.complete());
         when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
     }
 

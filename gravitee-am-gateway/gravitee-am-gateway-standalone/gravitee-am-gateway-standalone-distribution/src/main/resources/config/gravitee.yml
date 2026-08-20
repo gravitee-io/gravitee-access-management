@@ -366,6 +366,14 @@ handlers:
 
     response:
       strict: false
+#    tokens:
+#      # Store the access and refresh tokens in a fire-and-forget mode: the token response is sent
+#      # back to the client without waiting for the database write to complete.
+#      # Can be overridden per application (Settings -> OAuth/OIDC -> Tokens).
+#      # Caveats: a token may be returned but not stored yet, so introspection (see
+#      # introspect.offlineVerificationTimerSeconds below), refresh token usage and token revocation
+#      # may not see the token immediately after its creation.
+#      asyncStore: false
 #    introspect: # Enables the inclusion of the audience claim in the introspection response.
 #      allowAudience: true
 #      offlineVerificationTimerSeconds: 10

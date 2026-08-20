@@ -94,6 +94,7 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.idTokenValiditySeconds = newSettings.idTokenValiditySeconds;
     this.oauthSettings.tokenCustomClaims = newSettings.tokenCustomClaims;
     this.oauthSettings.userinfoCustomClaims = newSettings.userinfoCustomClaims;
+    this.oauthSettings.asyncTokenStore = newSettings.asyncTokenStore;
 
     this.formChanged = true;
   }
@@ -157,6 +158,7 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;
     oauthSettings.refreshTokenValiditySeconds = this.oauthSettings.refreshTokenValiditySeconds;
     oauthSettings.idTokenValiditySeconds = this.oauthSettings.idTokenValiditySeconds;
+    oauthSettings.asyncTokenStore = this.oauthSettings.asyncTokenStore;
 
     // Filter out 'id' property from tokenCustomClaims (used only for UI tracking)
     if (this.oauthSettings.tokenCustomClaims !== undefined) {

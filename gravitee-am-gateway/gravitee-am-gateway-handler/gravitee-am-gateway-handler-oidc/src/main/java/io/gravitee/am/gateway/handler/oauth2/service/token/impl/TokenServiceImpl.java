@@ -225,7 +225,7 @@ public class TokenServiceImpl implements TokenService {
                                     (refreshToken != null ? jwtService.encodeJwt(refreshToken, client).map(Optional::of) : Single.just(Optional.<EncodedJWT>empty())),
                                     (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(tokenWithCertInfo -> enhanceToken(oAuth2Request, client, endUser, executionContext, tokenWithCertInfo))
-                            .flatMap(tokenWithCertInfo -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> tokenWithCertInfo))
+                            .flatMap(tokenWithCertInfo -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser, client).toSingle(() -> tokenWithCertInfo))
                             .doOnSuccess(tokenWithCertInfo -> auditService.report(buildTokenCreatedAudit(oAuth2Request, client, endUser, accessToken, refreshToken, tokenWithCertInfo)));
                 })
                 .map(tokenWithCertificateInfo -> tokenWithCertificateInfo.token)
@@ -329,12 +329,12 @@ public class TokenServiceImpl implements TokenService {
         return tokenRepository.deleteByJti(refreshToken);
     }
 
-    private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
+    private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user, Client client) {
         // store access token
-        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request, user));
+        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request, user), client);
         // store refresh token (if exists)
         if (refreshToken != null) {
-            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request)));
+            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request), client));
         }
         return persistAccessToken;
     }
