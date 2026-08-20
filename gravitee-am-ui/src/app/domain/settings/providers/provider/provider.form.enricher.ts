@@ -48,8 +48,9 @@ export function enrichFormWithCerts(schema: FormSchema, certs: Certificate[]): F
 
 /**
  * Marks the storage fields of a mongo identity provider read-only when the platform owns where it
- * stores its users. On the edit screen `restricted` is the provider's own flag; on the creation
- * screen it is whether this installation is a managed cloud one, since the flag does not exist yet.
+ * stores its users. Edit screen only: `restricted` is the provider's own flag. The creation screen
+ * deliberately leaves the form alone, because the plugin schema makes `usersCollection` mandatory
+ * and a read-only empty field can never satisfy it, which would disable Create for good.
  */
 export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
   if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties) {
