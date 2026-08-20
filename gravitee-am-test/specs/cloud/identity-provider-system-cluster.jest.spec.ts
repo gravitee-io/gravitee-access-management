@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { getDomainApi } from '@management-commands/service/utils';
-import { safeDeleteCloudDomain } from '@cloud-commands/domain-commands';
-import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../test-fixture';
 import { jira } from '@specs-utils/jira';
-import { CloudSharedFixture, setupCloudSharedFixture } from './fixtures/cloud-shared-fixture';
 import {
-  CloudIdpScope,
+  SystemClusterIdpFixture,
+  setupSystemClusterIdpFixture,
   buildMongoIdpBody,
   buildMongoIdpUpdateBody,
   createCloudIdp,
@@ -39,30 +36,15 @@ setup(120000);
  * Managed-cloud stack only (local-stack.sh --cloud). A standalone installation leaves the provider
  * exactly as the administrator configured it, which is why this lives in the cloud suite.
  */
-let shared: CloudSharedFixture;
-let scope: CloudIdpScope;
+let scope: SystemClusterIdpFixture;
 
 beforeAll(async () => {
-  shared = await setupCloudSharedFixture();
-  const domain = await getDomainApi(shared.accessToken).createDomain({
-    organizationId: shared.organizationId,
-    environmentId: shared.environmentId,
-    newDomain: { name: uniqueName('idp-system-cluster', true) },
-  });
-  scope = {
-    accessToken: shared.accessToken,
-    organizationId: shared.organizationId,
-    environmentId: shared.environmentId,
-    domainId: domain.id,
-  };
+  scope = await setupSystemClusterIdpFixture();
 });
 
 afterAll(async () => {
-  if (scope?.domainId) {
-    await safeDeleteCloudDomain(scope, scope.domainId);
-  }
-  if (shared) {
-    await shared.cleanup();
+  if (scope) {
+    await scope.cleanup();
   }
 });
 
@@ -125,7 +107,7 @@ describe('Identity provider reusing the system cluster', () => {
     const updated = await updateCloudIdp(scope, idp.id, buildMongoIdpUpdateBody(idp, { useSystemCluster: true }));
 
     const configuration = JSON.parse(updated.configuration);
-    expect(configuration.database).not.toEqual('my-own-database');
+    expect(configuration.database).toEqual(platformDatabase);
     expect(configuration.usersCollection).toEqual(`idp_${idp.id}`);
     expect(updated.systemClusterRestricted).toEqual(true);
 

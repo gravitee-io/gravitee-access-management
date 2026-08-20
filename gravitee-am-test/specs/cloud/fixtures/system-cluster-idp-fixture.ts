@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getIdpApi } from '@management-commands/service/utils';
+import { getDomainApi, getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
-import { CloudDomainScope } from '@cloud-commands/domain-commands';
+import { CloudDomainScope, safeDeleteCloudDomain } from '@cloud-commands/domain-commands';
+import { setupCloudSharedFixture } from './cloud-shared-fixture';
 
 /**
  * Identity provider calls scoped to a Cockpit-provisioned org and environment. The
@@ -25,6 +26,34 @@ import { CloudDomainScope } from '@cloud-commands/domain-commands';
 export interface CloudIdpScope extends CloudDomainScope {
   domainId: string;
 }
+
+export interface SystemClusterIdpFixture extends CloudIdpScope {
+  /** Deletes the domain created for this spec and releases the shared cloud fixture. */
+  cleanup: () => Promise<void>;
+}
+
+/** Creates a domain on the shared cloud org/env to hold the identity providers under test. */
+export const setupSystemClusterIdpFixture = async (): Promise<SystemClusterIdpFixture> => {
+  const shared = await setupCloudSharedFixture();
+  const domain = await getDomainApi(shared.accessToken).createDomain({
+    organizationId: shared.organizationId,
+    environmentId: shared.environmentId,
+    newDomain: { name: uniqueName('idp-system-cluster', true) },
+  });
+  const scope: CloudIdpScope = {
+    accessToken: shared.accessToken,
+    organizationId: shared.organizationId,
+    environmentId: shared.environmentId,
+    domainId: domain.id,
+  };
+
+  const cleanup = async (): Promise<void> => {
+    await safeDeleteCloudDomain(scope, scope.domainId);
+    await shared.cleanup();
+  };
+
+  return { ...scope, cleanup };
+};
 
 export const createCloudIdp = (scope: CloudIdpScope, idp: object) =>
   getIdpApi(scope.accessToken).createIdentityProvider({
