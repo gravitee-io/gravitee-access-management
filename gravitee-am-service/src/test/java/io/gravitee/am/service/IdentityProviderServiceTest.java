@@ -239,7 +239,7 @@ public class IdentityProviderServiceTest {
 
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
         doThrow(new InvalidParameterException("Identity provider storage settings cannot be changed"))
-                .when(systemClusterIdpPolicy).checkOnUpdate(any(IdentityProvider.class), any());
+                .when(systemClusterIdpPolicy).applyOnUpdate(any(IdentityProvider.class), any(IdentityProvider.class));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

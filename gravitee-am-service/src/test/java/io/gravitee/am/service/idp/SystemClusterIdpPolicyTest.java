@@ -150,41 +150,100 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_allow_any_change_on_an_unflagged_identity_provider() {
+    void should_leave_an_existing_system_cluster_provider_alone_on_update() {
         var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp(configuration(true, "other-db", "other-users", null));
 
-        policy.checkOnUpdate(stored, configuration(false, "other-db", "other-users", null));
+        policy.applyOnUpdate(stored, toUpdate);
+
+        assertFalse(toUpdate.isSystemClusterRestricted());
+        assertEquals(configuration(true, "other-db", "other-users", null), toUpdate.getConfiguration());
+    }
+
+    @Test
+    void should_pin_when_an_update_turns_the_system_cluster_on() throws ParseException {
+        var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
+
+        policy.applyOnUpdate(stored, toUpdate);
+
+        var configuration = JSONObjectUtils.parse(toUpdate.getConfiguration());
+        assertEquals(PLATFORM_DATABASE, configuration.get("database"));
+        assertEquals("idp_" + IDP_ID, configuration.get("usersCollection"));
+        assertTrue(toUpdate.isSystemClusterRestricted());
+    }
+
+    @Test
+    void should_not_pin_an_update_that_turns_the_system_cluster_on_outside_managed_cloud() {
+        var standalone = new SystemClusterIdpPolicy();
+        ReflectionTestUtils.setField(standalone, "environment", new MockEnvironment());
+        var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        var original = configuration(true, "custom-db", "my-users", null);
+        var toUpdate = mongoIdp(original);
+
+        standalone.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+        assertFalse(toUpdate.isSystemClusterRestricted());
+    }
+
+    @Test
+    void should_not_pin_an_update_that_turns_the_system_cluster_on_for_a_datasource_provider() {
+        var stored = mongoIdp(configuration(false, "custom-db", "my-users", "ds-1"));
+        var original = configuration(true, "custom-db", "my-users", "ds-1");
+        var toUpdate = mongoIdp(original);
+
+        policy.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+        assertFalse(toUpdate.isSystemClusterRestricted());
     }
 
     @Test
     void should_allow_an_unchanged_configuration_on_a_flagged_identity_provider() {
         var stored = restrictedIdp(configuration(true, null, "idp_" + IDP_ID, null));
 
-        policy.checkOnUpdate(stored, configuration(true, null, "idp_" + IDP_ID, null));
+        policy.applyOnUpdate(stored, mongoIdp(configuration(true, null, "idp_" + IDP_ID, null)));
     }
 
     @Test
     void should_reject_a_changed_collection_on_a_flagged_identity_provider() {
         var stored = restrictedIdp(configuration(true, null, "idp_" + IDP_ID, null));
+        var toUpdate = mongoIdp(configuration(true, null, "my-users", null));
 
-        assertThrows(InvalidParameterException.class,
-                () -> policy.checkOnUpdate(stored, configuration(true, null, "my-users", null)));
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
     }
 
     @Test
     void should_reject_a_changed_database_on_a_flagged_identity_provider() {
         var stored = restrictedIdp(configuration(true, null, "idp_" + IDP_ID, null));
+        var toUpdate = mongoIdp(configuration(true, "custom-db", "idp_" + IDP_ID, null));
 
-        assertThrows(InvalidParameterException.class,
-                () -> policy.checkOnUpdate(stored, configuration(true, "custom-db", "idp_" + IDP_ID, null)));
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
     }
 
     @Test
     void should_reject_a_changed_use_system_cluster_on_a_flagged_identity_provider() {
         var stored = restrictedIdp(configuration(true, null, "idp_" + IDP_ID, null));
+        var toUpdate = mongoIdp(configuration(false, null, "idp_" + IDP_ID, null));
 
-        assertThrows(InvalidParameterException.class,
-                () -> policy.checkOnUpdate(stored, configuration(false, null, "idp_" + IDP_ID, null)));
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
+    }
+
+    @Test
+    void should_reject_a_datasource_added_to_a_flagged_identity_provider() {
+        var stored = restrictedIdp(configuration(true, null, "idp_" + IDP_ID, null));
+        var toUpdate = mongoIdp(configuration(true, null, "idp_" + IDP_ID, "ds-1"));
+
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
+    }
+
+    @Test
+    void should_reject_an_unreadable_configuration_on_a_flagged_identity_provider() {
+        var stored = restrictedIdp(configuration(true, null, "idp_" + IDP_ID, null));
+        var toUpdate = mongoIdp("not json");
+
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
     }
 
     private IdentityProvider mongoIdp(String configuration) {

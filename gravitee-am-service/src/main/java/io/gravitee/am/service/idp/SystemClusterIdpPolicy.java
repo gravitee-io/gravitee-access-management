@@ -63,6 +63,29 @@ public class SystemClusterIdpPolicy {
      * platform owns its storage location.
      */
     public void applyOnCreate(IdentityProvider identityProvider) {
+        pinIfEligible(identityProvider);
+    }
+
+    /**
+     * Applies the platform-owned storage regime to an update. A flagged identity provider cannot
+     * move to another storage location. An update that turns the system cluster on brings the
+     * identity provider under the same regime as one created that way.
+     */
+    public void applyOnUpdate(IdentityProvider stored, IdentityProvider identityToUpdate) {
+        if (stored.isSystemClusterRestricted()) {
+            checkStorageUnchanged(stored, identityToUpdate.getConfiguration());
+            return;
+        }
+        final Map<String, Object> current = parse(stored.getConfiguration());
+        // An identity provider that already reuses the system cluster keeps the settings it has
+        // today, whatever the mode says now.
+        if (current == null || isUseSystemCluster(current)) {
+            return;
+        }
+        pinIfEligible(identityToUpdate);
+    }
+
+    private void pinIfEligible(IdentityProvider identityProvider) {
         if (!CloudProperties.isManagedCloudEnabled(environment)) {
             return;
         }
@@ -90,21 +113,18 @@ public class SystemClusterIdpPolicy {
         identityProvider.setSystemClusterRestricted(true);
     }
 
-    /**
-     * Rejects an update that moves a pinned identity provider to another storage location.
-     */
-    public void checkOnUpdate(IdentityProvider stored, String newConfiguration) {
-        if (!stored.isSystemClusterRestricted()) {
-            return;
-        }
+    private void checkStorageUnchanged(IdentityProvider stored, String newConfiguration) {
         final Map<String, Object> current = parse(stored.getConfiguration());
         final Map<String, Object> updated = parse(newConfiguration);
         if (current == null || updated == null) {
-            return;
+            throw new InvalidParameterException("Identity provider storage settings cannot be checked");
         }
+        // datasourceId is compared too: naming a datasource moves the users elsewhere at runtime,
+        // which is the move this check exists to reject.
         if (!Objects.equals(current.get(USE_SYSTEM_CLUSTER), updated.get(USE_SYSTEM_CLUSTER))
                 || !Objects.equals(current.get(USERS_COLLECTION), updated.get(USERS_COLLECTION))
-                || !Objects.equals(current.get(DATABASE), updated.get(DATABASE))) {
+                || !Objects.equals(current.get(DATABASE), updated.get(DATABASE))
+                || !Objects.equals(current.get(DATASOURCE_ID), updated.get(DATASOURCE_ID))) {
             throw new InvalidParameterException("Identity provider storage settings cannot be changed");
         }
     }

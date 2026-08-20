@@ -291,7 +291,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityToUpdate.setUpdatedAt(new Date());
         identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
 
-        systemClusterIdpPolicy.checkOnUpdate(oldIdentity, identityToUpdate.getConfiguration());
+        systemClusterIdpPolicy.applyOnUpdate(oldIdentity, identityToUpdate);
 
         // for update validate config against schema here instead of the resource
         // as idp may be system idp so on the UI config is empty.
