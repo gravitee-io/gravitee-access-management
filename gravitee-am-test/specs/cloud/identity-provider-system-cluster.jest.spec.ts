@@ -68,15 +68,17 @@ afterAll(async () => {
 
 const newMongoIdp = (useSystemCluster: boolean) => createCloudIdp(scope, buildMongoIdpBody({ useSystemCluster }));
 
+// The database is pinned from the repository settings of the system cluster scope, which only a mongo
+// management repository has. On the postgres stack the platform has no mongo database to name, so the
+// provider keeps the one it was created with. Same discriminator the shared cloud fixture uses.
+const platformDatabase = process.env.REPOSITORY_TYPE === 'jdbc' ? 'my-own-database' : 'graviteeam';
+
 describe('Identity provider reusing the system cluster', () => {
   it(jira`should pin the storage of a provider created with the system cluster ${'AM-7264'}`, async () => {
     const idp = await newMongoIdp(true);
 
     const configuration = JSON.parse(idp.configuration);
-    // The platform database name depends on the deployment, so assert the administrator's choice was
-    // discarded rather than pinning the spec to one environment's dbname.
-    expect(configuration.database).not.toEqual('my-own-database');
-    expect(configuration.database).toBeTruthy();
+    expect(configuration.database).toEqual(platformDatabase);
     expect(configuration.usersCollection).toEqual(`idp_${idp.id}`);
     expect(idp.systemClusterRestricted).toEqual(true);
 
