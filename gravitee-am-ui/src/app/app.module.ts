@@ -338,6 +338,7 @@ import { FactorFormComponent } from './domain/settings/factors/factor/form/form.
 import { FactorResolver } from './resolvers/factor.resolver';
 import { EnrolledFactorsResolver } from './resolvers/enrolled-factors.resolver';
 import { ResourcesResolver } from './resolvers/resources.resolver';
+import { FactorResourcesResolver } from './resolvers/factor-resources.resolver';
 import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
 import { ResourceService } from './services/resource.service';
 import { ResourceComponent } from './domain/settings/resources/resource/resource.component';
@@ -974,6 +975,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     EnrolledFactorsResolver,
     ResourceService,
     ResourcesResolver,
+    FactorResourcesResolver,
     ResourcePluginsResolver,
     ResourceResolver,
     AuthGuard,

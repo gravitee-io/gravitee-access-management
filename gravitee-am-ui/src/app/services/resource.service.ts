@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
+import { SKIP_ERROR_SNACKBAR } from '../interceptors/http-request.interceptor';
 
 @Injectable()
 export class ResourceService {
@@ -27,6 +29,17 @@ export class ResourceService {
 
   findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.resourcesURL + domainId + '/resources');
+  }
+
+  // The factor screens render without the resource list, so a failed lookup
+  // (typically a user without DOMAIN_RESOURCE[LIST]) gives an empty list
+  // rather than a cancelled route with no message behind it.
+  findByDomainWhenPermitted(domainId): Observable<any[]> {
+    return this.http
+      .get<any[]>(this.resourcesURL + domainId + '/resources', {
+        context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
+      })
+      .pipe(catchError(() => of([])));
   }
 
   get(domainId, id): Observable<any> {

@@ -165,6 +165,7 @@ import { ResourceCreationComponent } from './domain/settings/resources/creation/
 import { ResourceComponent } from './domain/settings/resources/resource/resource.component';
 import { ResourceResolver } from './resolvers/resource.resolver';
 import { ResourcesResolver } from './resolvers/resources.resolver';
+import { FactorResourcesResolver } from './resolvers/factor-resources.resolver';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { EntrypointsComponent } from './settings/management/entrypoints/entrypoints.component';
 import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
@@ -2124,7 +2125,7 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             resolve: {
                               factorPlugins: FactorPluginsResolver,
-                              resources: ResourcesResolver,
+                              resources: FactorResourcesResolver,
                               resourcePlugins: ResourcePluginsResolver,
                             },
                             data: {
@@ -2140,7 +2141,7 @@ export const routes: Routes = [
                             resolve: {
                               factor: FactorResolver,
                               factorPlugins: FactorPluginsResolver,
-                              resources: ResourcesResolver,
+                              resources: FactorResourcesResolver,
                               resourcePlugins: ResourcePluginsResolver,
                             },
                             data: {
