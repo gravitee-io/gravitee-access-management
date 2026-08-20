@@ -19,7 +19,9 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -30,11 +32,15 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -119,6 +125,48 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
                 HttpMethod.POST, "/oauth/revoke?token=toto",
                 req -> req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED),
                 HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeRevocationTokenEndpoint_propagatesTokenTypeHint() throws Exception {
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", new Client());
+            routingContext.next();
+        });
+
+        when(revocationTokenService.revoke(any(), any())).thenReturn(Completable.complete());
+
+        testRequest(
+                HttpMethod.POST, "/oauth/revoke?token=toto&token_type_hint=refresh_token",
+                req -> req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED),
+                HttpStatusCode.OK_200, "OK", null);
+
+        ArgumentCaptor<RevocationTokenRequest> requestCaptor = ArgumentCaptor.forClass(RevocationTokenRequest.class);
+        verify(revocationTokenService).revoke(requestCaptor.capture(), any());
+        assertEquals(TokenTypeHint.REFRESH_TOKEN, requestCaptor.getValue().getHint());
+    }
+
+    /**
+     * RFC 7009 section 2.1: an unrecognised hint must not fail the request — the server falls back
+     * to searching every token type, which here means leaving the hint unset.
+     */
+    @Test
+    public void shouldInvokeRevocationTokenEndpoint_ignoresUnknownTokenTypeHint() throws Exception {
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", new Client());
+            routingContext.next();
+        });
+
+        when(revocationTokenService.revoke(any(), any())).thenReturn(Completable.complete());
+
+        testRequest(
+                HttpMethod.POST, "/oauth/revoke?token=toto&token_type_hint=not_a_token_type",
+                req -> req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED),
+                HttpStatusCode.OK_200, "OK", null);
+
+        ArgumentCaptor<RevocationTokenRequest> requestCaptor = ArgumentCaptor.forClass(RevocationTokenRequest.class);
+        verify(revocationTokenService).revoke(requestCaptor.capture(), any());
+        assertNull(requestCaptor.getValue().getHint());
     }
 
     @Test
