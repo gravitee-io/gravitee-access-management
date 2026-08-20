@@ -279,6 +279,67 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldCreate_ignoreIdFromRequestBody() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setId("idp-belonging-to-someone-else");
+        newIdentityProvider.setType("inline-am-idp");
+        newIdentityProvider.setName("my-idp");
+        newIdentityProvider.setConfiguration("{}");
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        Assert.assertNotEquals("idp-belonging-to-someone-else", captor.getValue().getId());
+    }
+
+    @Test
+    public void shouldCreate_ignoreIdFromRequestBody_organizationScope() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setId("idp-belonging-to-someone-else");
+        newIdentityProvider.setType("inline-am-idp");
+        newIdentityProvider.setName("my-idp");
+        newIdentityProvider.setConfiguration("{}");
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(ReferenceType.ORGANIZATION, "org#1", newIdentityProvider, null, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        Assert.assertNotEquals("idp-belonging-to-someone-else", captor.getValue().getId());
+    }
+
+    @Test
+    public void shouldCreateSystemIdp_keepTheSuppliedId() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setId("default-idp-domain-1");
+        newIdentityProvider.setType("mongo-am-idp");
+        newIdentityProvider.setName("Default idp");
+        newIdentityProvider.setConfiguration("{}");
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null, true).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        Assert.assertEquals("default-idp-domain-1", captor.getValue().getId());
+    }
+
+    private ArgumentCaptor<IdentityProvider> mockSuccessfulCreate() {
+        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        return ArgumentCaptor.forClass(IdentityProvider.class);
+    }
+
+    @Test
     public void shouldNotUpdate_whenLicenseFeatureMissing() {
         UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
         IdentityProvider existing = new IdentityProvider();

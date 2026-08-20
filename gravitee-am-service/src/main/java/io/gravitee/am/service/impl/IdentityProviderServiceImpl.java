@@ -230,7 +230,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     private static IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
         var identityProvider = new IdentityProvider();
-        identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
+        // The id becomes the users collection name, so a caller-supplied id would let a request
+        // point a new provider at another provider's storage. Only the internal default-provider
+        // path supplies one, and it always creates with system set.
+        identityProvider.setId(system && newIdentityProvider.getId() != null ? newIdentityProvider.getId() : RandomString.generate());
         if (newIdentityProvider instanceof AutomationNewIdentityProvider auto) {
             identityProvider.setAutomationKey(auto.getAutomationKey());
             identityProvider.setManagedBy(ManagedBy.AUTOMATION_API);
