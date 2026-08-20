@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -157,28 +159,64 @@ public enum Permission {
         return flattenedPermissions;
     }
 
+    /**
+     * Rebuilds the permission/acl pairs from their flattened {@code <permission>_<acl>} form, as
+     * produced by {@link #flatten(Map)}.
+     *
+     * @param flatPermissions the flattened permissions, may be null
+     * @return the parsed permissions, empty if {@code flatPermissions} is null or empty
+     * @throws IllegalArgumentException if any entry is null, malformed, or names a permission or an
+     * acl that does not exist. Every offending entry is reported, and nothing is parsed.
+     */
     public static Map<Permission, Set<Acl>> unflatten(List<String> flatPermissions) {
 
         Map<Permission, Set<Acl>> permissions = new EnumMap<>(Permission.class);
 
-        if (flatPermissions != null) {
-            flatPermissions.stream().map(String::toUpperCase)
-                    .forEach(flatPermission -> {
-                        int i = flatPermission.lastIndexOf('_');
-                        Acl acl = Acl.valueOf(flatPermission.substring(i + 1));
-                        Permission permission = Permission.valueOf(flatPermission.substring(0, i));
+        if (flatPermissions == null) {
+            return permissions;
+        }
 
+        List<String> invalidPermissions = new ArrayList<>();
 
-                        if (permissions.containsKey(permission)) {
-                            permissions.get(permission).add(acl);
-                        } else {
-                            HashSet<Acl> acls = new HashSet<>();
-                            acls.add(acl);
-                            permissions.put(permission, acls);
-                        }
-                    });
+        for (String flatPermission : flatPermissions) {
+            parse(flatPermission).ifPresentOrElse(
+                    parsed -> permissions.computeIfAbsent(parsed.permission(), key -> new HashSet<>()).add(parsed.acl()),
+                    () -> invalidPermissions.add(flatPermission));
+        }
+
+        if (!invalidPermissions.isEmpty()) {
+            throw new IllegalArgumentException("Invalid permission(s): " + invalidPermissions);
         }
 
         return permissions;
+    }
+
+    private record PermissionAcl(Permission permission, Acl acl) {
+    }
+
+    private static Optional<PermissionAcl> parse(String flatPermission) {
+
+        if (flatPermission == null) {
+            return Optional.empty();
+        }
+
+        String candidate = flatPermission.toUpperCase(Locale.ROOT);
+        int separator = candidate.lastIndexOf('_');
+        if (separator < 1 || separator == candidate.length() - 1) {
+            return Optional.empty();
+        }
+
+        return resolve(Permission.class, candidate.substring(0, separator))
+                .flatMap(permission -> resolve(Acl.class, candidate.substring(separator + 1))
+                        .map(acl -> new PermissionAcl(permission, acl)));
+    }
+
+    private static <E extends Enum<E>> Optional<E> resolve(Class<E> type, String name) {
+
+        try {
+            return Optional.of(Enum.valueOf(type, name));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 }

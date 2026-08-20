@@ -24,6 +24,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.exception.DefaultRoleUpdateException;
+import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.RoleAlreadyExistsException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.SystemRoleDeleteException;
@@ -32,6 +33,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.RoleServiceImpl;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
+import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -46,6 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -258,6 +261,51 @@ public class RoleServiceTest {
         verify(roleRepository, times(1)).findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role");
         verify(roleRepository, times(1)).findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID);
         verify(roleRepository, times(1)).update(any(Role.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_unknownPermission() {
+        TestObserver<Role> testObserver = updateWithPermissions(Arrays.asList("domain_read", "domain_pillage", "kingdom_read"));
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidRoleException.class);
+        testObserver.assertError(ex -> ((InvalidRoleException) ex).getHttpStatusCode() == HttpStatusCode.BAD_REQUEST_400);
+        testObserver.assertError(ex -> ex.getMessage().contains("domain_pillage") && ex.getMessage().contains("kingdom_read"));
+
+        verify(roleRepository, never()).update(any(Role.class));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdate_malformedPermission() {
+        TestObserver<Role> testObserver = updateWithPermissions(Collections.singletonList("read"));
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidRoleException.class);
+        testObserver.assertError(ex -> ((InvalidRoleException) ex).getHttpStatusCode() == HttpStatusCode.BAD_REQUEST_400);
+
+        verify(roleRepository, never()).update(any(Role.class));
+        verify(eventService, never()).create(any());
+    }
+
+    private TestObserver<Role> updateWithPermissions(List<String> permissions) {
+        UpdateRole updateRole = new UpdateRole();
+        updateRole.setName("my-role-name");
+        updateRole.setPermissions(permissions);
+
+        Role role = new Role();
+        role.setId("my-role");
+        role.setName("my-role-name");
+        role.setReferenceType(ReferenceType.ORGANIZATION);
+        role.setReferenceId(ORGANIZATION_ID);
+
+        when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
+        when(roleRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID)).thenReturn(Flowable.empty());
+
+        TestObserver<Role> testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        return testObserver;
     }
 
     @Test

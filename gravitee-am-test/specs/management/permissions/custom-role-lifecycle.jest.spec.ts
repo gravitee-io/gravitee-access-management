@@ -101,6 +101,49 @@ describe('Custom role lifecycle - permissions are not validated against the assi
   });
 });
 
+describe('Custom role lifecycle - malformed permissions are refused as client errors', () => {
+  it.each<[string, string[]]>([
+    ['an unknown acl', ['domain_pillage']],
+    ['an unknown permission', ['kingdom_read']],
+    ['no separator at all', ['read']],
+    ['an empty permission half', ['_read']],
+    ['an empty acl half', ['domain_']],
+    ['an empty string', ['']],
+    ['surrounding whitespace', [' domain_read']],
+    ['a valid permission alongside an invalid one', ['domain_read', 'domain_pillage']],
+  ])('should refuse %s with a 400', async (_label, permissions) => {
+    const role = await fixture.createRole('lifecycle-invalid');
+
+    await expect(updateOrganizationRole(fixture.adminToken, role.id, { name: role.name, permissions })).rejects.toMatchObject({
+      response: { status: 400 },
+      message: expect.stringContaining('Invalid permission(s)'),
+    });
+  });
+
+  it('should name every rejected entry, not just the first', async () => {
+    const role = await fixture.createRole('lifecycle-invalid-reported');
+
+    await expect(
+      updateOrganizationRole(fixture.adminToken, role.id, { name: role.name, permissions: ['domain_pillage', 'kingdom_read'] }),
+    ).rejects.toMatchObject({
+      response: { status: 400 },
+      message: expect.stringMatching(/domain_pillage.*kingdom_read/),
+    });
+  });
+
+  it('should leave the permissions already applied untouched after a refused update', async () => {
+    const role = await fixture.createRole('lifecycle-invalid-noop');
+    await updateOrganizationRole(fixture.adminToken, role.id, { name: role.name, permissions: ['domain_read'] });
+
+    await expect(
+      updateOrganizationRole(fixture.adminToken, role.id, { name: role.name, permissions: ['domain_update', 'domain_pillage'] }),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+
+    const reread = await getOrganizationRole(fixture.adminToken, role.id);
+    expect(reread.permissions).toEqual(['domain_read']);
+  });
+});
+
 describe('Custom role lifecycle - naming and deletion', () => {
   it('should refuse a second role with a name already in use', async () => {
     const role = await fixture.createRole('lifecycle-duplicate');

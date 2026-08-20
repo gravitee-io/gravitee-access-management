@@ -37,6 +37,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DefaultRoleUpdateException;
+import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.RoleAlreadyExistsException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.SystemRoleDeleteException;
@@ -259,7 +260,7 @@ public class RoleServiceImpl implements RoleService {
                                 Role roleToUpdate = new Role(oldRole);
                                 roleToUpdate.setName(updateRole.getName());
                                 roleToUpdate.setDescription(updateRole.getDescription());
-                                roleToUpdate.setPermissionAcls(Permission.unflatten(updateRole.getPermissions()));
+                                roleToUpdate.setPermissionAcls(unflattenPermissions(updateRole.getPermissions()));
                                 roleToUpdate.setOauthScopes(updateRole.getOauthScopes());
                                 roleToUpdate.setUpdatedAt(new Date());
                                 return roleRepository.update(roleToUpdate)
@@ -286,6 +287,14 @@ public class RoleServiceImpl implements RoleService {
     public Single<Role> update(String domain, String id, UpdateRole updateRole, User principal) {
 
         return update(ReferenceType.DOMAIN, domain, id, updateRole, principal);
+    }
+
+    private static Map<Permission, Set<Acl>> unflattenPermissions(List<String> permissions) {
+        try {
+            return Permission.unflatten(permissions);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRoleException(e.getMessage());
+        }
     }
 
     @Override
