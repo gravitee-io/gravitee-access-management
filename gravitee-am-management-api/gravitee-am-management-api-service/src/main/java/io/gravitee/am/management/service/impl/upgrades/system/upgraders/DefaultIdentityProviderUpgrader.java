@@ -65,11 +65,8 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
         updateIdentityProvider.setName(identityProvider.getName());
         updateIdentityProvider.setRoleMapper(identityProvider.getRoleMapper());
         updateIdentityProvider.setGroupMapper(identityProvider.getGroupMapper());
-        Map<String, Object> configMap = defaultIdentityProviderService.createProviderConfiguration(identityProvider.getReferenceId(), null);
+        Map<String, Object> configMap = defaultIdentityProviderService.refreshProviderConfiguration(identityProvider);
         try {
-            Map<String, Object> existingConfigMap = mapper.readValue(identityProvider.getConfiguration(), Map.class);
-            configMap.put("passwordEncoder", existingConfigMap.get("passwordEncoder"));
-            configMap.put("passwordEncoderOptions", existingConfigMap.get("passwordEncoderOptions"));
             updateIdentityProvider.setConfiguration(mapper.writeValueAsString(configMap));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Unable to serialize the default idp configuration for domain '" + identityProvider.getReferenceId() + "'", e);

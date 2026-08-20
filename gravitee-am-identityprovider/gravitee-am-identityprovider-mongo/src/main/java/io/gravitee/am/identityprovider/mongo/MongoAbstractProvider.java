@@ -97,7 +97,14 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
             // make sure the DataPlane plugin is a Mongo one
             if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-                return provider.getClientWrapper();
+                final ClientWrapper<MongoClient> clientWrapper = provider.getClientWrapper();
+                // Only a domain's default identity provider follows the data plane's database: it has no
+                // connection settings of its own to honor. A user-configured provider keeps the database
+                // from its own form to preserve historical behavior.
+                if (this.identityProviderEntity.isSystem()) {
+                    this.configuration.setDatabase(clientWrapper.getDatabaseName());
+                }
+                return clientWrapper;
             }
         }
 
