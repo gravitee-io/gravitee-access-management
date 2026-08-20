@@ -46,31 +46,3 @@ export const buildInlineIdpBody = (users: object[]) => ({
   configuration: JSON.stringify({ users }),
   name: uniqueName('inline-idp', true),
 });
-
-export const buildMongoIdpBody = (overrides: { useSystemCluster: boolean; database?: string; usersCollection?: string }) => ({
-  external: false,
-  type: 'mongo-am-idp',
-  domainWhitelist: [],
-  name: uniqueName('mongo-idp', true),
-  configuration: JSON.stringify({
-    uri: 'mongodb://mongodb:27017',
-    host: 'mongodb',
-    port: 27017,
-    enableCredentials: false,
-    useSystemCluster: overrides.useSystemCluster,
-    database: overrides.database ?? 'my-own-database',
-    usersCollection: overrides.usersCollection ?? 'my-own-users',
-    findUserByUsernameQuery: '{username: ?}',
-    findUserByEmailQuery: '{email: ?}',
-    usernameField: 'username',
-    passwordField: 'password',
-    passwordEncoder: 'BCrypt',
-  }),
-});
-
-export const buildMongoIdpUpdateBody = (idp, configurationOverrides: object) => ({
-  name: idp.name,
-  type: idp.type,
-  domainWhitelist: [],
-  configuration: JSON.stringify({ ...JSON.parse(idp.configuration), ...configurationOverrides }),
-});
