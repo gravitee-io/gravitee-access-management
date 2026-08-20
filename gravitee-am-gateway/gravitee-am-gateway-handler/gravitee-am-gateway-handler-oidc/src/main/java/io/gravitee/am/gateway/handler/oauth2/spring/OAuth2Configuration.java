@@ -41,6 +41,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AsyncTokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -63,6 +64,7 @@ import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 /**
@@ -192,7 +194,8 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TokenManager tokenManager() {
-        return new TokenManagerImpl();
+    public TokenManager tokenManager(@Lazy BackwardCompatibleTokenRepository tokenRepository,
+                                     @Value("${handlers.oauth2.tokens.asyncStore:false}") boolean asyncStore) {
+        return asyncStore ? new AsyncTokenManager(tokenRepository) : new TokenManagerImpl(tokenRepository);
     }
 }

@@ -263,6 +263,22 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         }
     }
 
+    @Override
+    protected void doStop() throws Exception {
+        // stop the services before the application context is closed
+        stopServices();
+
+        super.doStop();
+    }
+
+    private void stopServices() {
+        try {
+            tokenManager.stop();
+        } catch (Exception e) {
+            logger.error("An error occurs while stopping oauth 2.0 services", e);
+        }
+    }
+
     private void initRouter() {
         // Create the OAuth 2.0 router
         final Router oauth2Router = Router.router(vertx);
