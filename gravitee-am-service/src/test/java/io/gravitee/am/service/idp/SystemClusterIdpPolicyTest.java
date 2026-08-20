@@ -112,6 +112,21 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
+    void should_leave_the_database_alone_when_the_system_cluster_is_jdbc() throws ParseException {
+        var jdbcEnv = managedCloudEnvironment();
+        jdbcEnv.setProperty("repositories.management.type", "jdbc");
+        var jdbcPolicy = policyWith(jdbcEnv);
+        var idp = mongoIdp(configuration(true, "my-own-database", "my-users", null));
+
+        jdbcPolicy.applyOnCreate(idp);
+
+        var configuration = JSONObjectUtils.parse(idp.getConfiguration());
+        assertEquals("my-own-database", configuration.get("database"));
+        assertEquals("idp_" + IDP_ID, configuration.get("usersCollection"));
+        assertTrue(idp.isSystemClusterRestricted());
+    }
+
+    @Test
     void should_take_the_database_from_the_system_cluster_uri() throws ParseException {
         var uriEnv = managedCloudEnvironment();
         uriEnv.setProperty("repositories.management.mongodb.uri", "mongodb://mongodb:27017/graviteeam");

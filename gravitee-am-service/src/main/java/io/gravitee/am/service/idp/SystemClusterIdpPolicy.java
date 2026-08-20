@@ -50,6 +50,7 @@ public class SystemClusterIdpPolicy {
     static final String SYSTEM_CLUSTER = "repositories.system-cluster";
     static final String DEFAULT_SYSTEM_CLUSTER = "management";
     static final String COLLECTION_PREFIX = "idp_";
+    static final String MONGODB_TYPE = "mongodb";
     static final String PIN_DATABASE = "repositories.system-cluster-idp.pin-database";
     static final String PREFIX_USERS_COLLECTION = "repositories.system-cluster-idp.prefix-users-collection";
 
@@ -155,6 +156,11 @@ public class SystemClusterIdpPolicy {
      */
     private String resolvePlatformDatabase() {
         final String scope = environment.getProperty(SYSTEM_CLUSTER, String.class, DEFAULT_SYSTEM_CLUSTER);
+        // Only a mongo repository names a database to pin. The packaged gravitee.yml still carries a
+        // mongodb block on a jdbc platform, so without this the policy pins a database that has no store.
+        if (!MONGODB_TYPE.equalsIgnoreCase(environment.getProperty("repositories." + scope + ".type", MONGODB_TYPE))) {
+            return null;
+        }
         final String prefix = "repositories." + scope + ".mongodb.";
         final String uri = environment.getProperty(prefix + "uri", "");
         if (!uri.isEmpty()) {
