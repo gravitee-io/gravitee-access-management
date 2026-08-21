@@ -16,7 +16,6 @@
 package io.gravitee.am.service.idp;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
-import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import lombok.CustomLog;
@@ -51,8 +50,6 @@ public class SystemClusterIdpPolicy {
     static final String DEFAULT_SYSTEM_CLUSTER = "management";
     static final String COLLECTION_PREFIX = "idp_";
     static final String MONGODB_TYPE = "mongodb";
-    static final String PIN_DATABASE = "repositories.system-cluster-idp.pin-database";
-    static final String PREFIX_USERS_COLLECTION = "repositories.system-cluster-idp.prefix-users-collection";
 
     private static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
     private static final String DATASOURCE_ID = "datasourceId";
@@ -61,6 +58,9 @@ public class SystemClusterIdpPolicy {
 
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private SystemClusterIdpSettings settings;
 
     /**
      * Rewrites the configuration of a newly created identity provider and flags it, when the
@@ -72,8 +72,8 @@ public class SystemClusterIdpPolicy {
 
     /**
      * Applies the platform-owned storage regime to an update. A flagged identity provider cannot
-     * move to another storage location. An update that turns the system cluster on brings the
-     * identity provider under the same regime as one created that way.
+     * move to another storage location. An identity provider that does not reuse the system cluster
+     * cannot start to reuse it, because the platform derives the storage location at creation time.
      */
     public void applyOnUpdate(IdentityProvider stored, IdentityProvider identityToUpdate) {
         if (stored.isSystemClusterRestricted()) {
@@ -86,16 +86,30 @@ public class SystemClusterIdpPolicy {
         if (current == null || isUseSystemCluster(current)) {
             return;
         }
-        pinIfEligible(identityToUpdate);
+        rejectSystemClusterSwitch(identityToUpdate);
+    }
+
+    /**
+     * The collection of a restricted identity provider comes from its id and the users already
+     * stored elsewhere do not move, so joining the regime later would hide them.
+     */
+    private void rejectSystemClusterSwitch(IdentityProvider identityToUpdate) {
+        if (!isRegimeActive() || !isEligible(identityToUpdate)) {
+            return;
+        }
+        final Map<String, Object> updated = parse(identityToUpdate.getConfiguration());
+        if (updated != null && isUseSystemCluster(updated) && !hasDatasourceId(updated)) {
+            throw new InvalidParameterException("The system cluster can only be selected when the identity provider is created");
+        }
     }
 
     private void pinIfEligible(IdentityProvider identityProvider) {
-        final boolean pinDatabase = isEnabled(PIN_DATABASE);
-        final boolean prefixUsersCollection = isEnabled(PREFIX_USERS_COLLECTION);
+        final boolean pinDatabase = settings.isPinDatabase();
+        final boolean prefixUsersCollection = settings.isPrefixUsersCollection();
         if (!pinDatabase && !prefixUsersCollection) {
             return;
         }
-        if (identityProvider.isSystem() || !MONGO_IDP_TYPE.equals(identityProvider.getType())) {
+        if (!isEligible(identityProvider)) {
             return;
         }
         final Map<String, Object> configuration = parse(identityProvider.getConfiguration());
@@ -123,14 +137,12 @@ public class SystemClusterIdpPolicy {
         identityProvider.setSystemClusterRestricted(true);
     }
 
-    /**
-     * A setting left out of the configuration follows the deployment: on by default in a
-     * Gravitee-managed cloud installation, off elsewhere. An operator turns it on or off explicitly
-     * whatever the deployment is.
-     */
-    private boolean isEnabled(String property) {
-        final Boolean enabled = environment.getProperty(property, Boolean.class);
-        return enabled != null ? enabled : CloudProperties.isManagedCloudEnabled(environment);
+    private boolean isRegimeActive() {
+        return settings.isPinDatabase() || settings.isPrefixUsersCollection();
+    }
+
+    private boolean isEligible(IdentityProvider identityProvider) {
+        return !identityProvider.isSystem() && MONGO_IDP_TYPE.equals(identityProvider.getType());
     }
 
     private void checkStorageUnchanged(IdentityProvider stored, String newConfiguration) {

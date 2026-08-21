@@ -40,13 +40,13 @@ class SystemClusterIdpPolicyTest {
     private static final String PLATFORM_DATABASE = "gravitee-am";
 
     private final MockEnvironment environment = new MockEnvironment();
-    private final SystemClusterIdpPolicy policy = new SystemClusterIdpPolicy();
+    private SystemClusterIdpPolicy policy;
 
     @BeforeEach
     void setUp() {
         environment.setProperty("repositories.management.mongodb.dbname", PLATFORM_DATABASE);
         enableManagedCloud(environment);
-        ReflectionTestUtils.setField(policy, "environment", environment);
+        policy = policyWith(environment);
     }
 
     private static void enableManagedCloud(MockEnvironment environment) {
@@ -68,8 +68,7 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_configuration_alone_when_not_in_managed_cloud() {
-        var standalone = new SystemClusterIdpPolicy();
-        ReflectionTestUtils.setField(standalone, "environment", new MockEnvironment());
+        var standalone = policyWith(new MockEnvironment());
         var original = configuration(true, "custom-db", "my-users", null);
         var idp = mongoIdp(original);
 
@@ -81,11 +80,10 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_configuration_alone_when_cloud_is_enabled_but_installation_is_standalone() {
-        var selfHosted = new SystemClusterIdpPolicy();
         var selfHostedEnv = new MockEnvironment();
         selfHostedEnv.setProperty("cloud.enabled", "true");
         selfHostedEnv.setProperty("installation.type", "standalone");
-        ReflectionTestUtils.setField(selfHosted, "environment", selfHostedEnv);
+        var selfHosted = policyWith(selfHostedEnv);
         var original = configuration(true, "custom-db", "my-users", null);
         var idp = mongoIdp(original);
 
@@ -97,10 +95,9 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_database_alone_when_the_system_cluster_has_no_dbname() throws ParseException {
-        var bare = new SystemClusterIdpPolicy();
         var bareEnv = new MockEnvironment();
         enableManagedCloud(bareEnv);
-        ReflectionTestUtils.setField(bare, "environment", bareEnv);
+        var bare = policyWith(bareEnv);
         var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
         bare.applyOnCreate(idp);
@@ -168,7 +165,7 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_database_alone_when_pinning_is_turned_off() throws ParseException {
-        environment.setProperty(SystemClusterIdpPolicy.PIN_DATABASE, "false");
+        environment.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "false");
         var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
         policy.applyOnCreate(idp);
@@ -181,7 +178,7 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_collection_alone_when_the_prefix_is_turned_off() throws ParseException {
-        environment.setProperty(SystemClusterIdpPolicy.PREFIX_USERS_COLLECTION, "false");
+        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "false");
         var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
         policy.applyOnCreate(idp);
@@ -194,8 +191,8 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_configuration_alone_when_both_settings_are_turned_off() {
-        environment.setProperty(SystemClusterIdpPolicy.PIN_DATABASE, "false");
-        environment.setProperty(SystemClusterIdpPolicy.PREFIX_USERS_COLLECTION, "false");
+        environment.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "false");
+        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "false");
         var original = configuration(true, "custom-db", "my-users", null);
         var idp = mongoIdp(original);
 
@@ -209,8 +206,8 @@ class SystemClusterIdpPolicyTest {
     void should_pin_outside_managed_cloud_when_the_settings_are_turned_on() throws ParseException {
         var selfHostedEnv = new MockEnvironment();
         selfHostedEnv.setProperty("repositories.management.mongodb.dbname", PLATFORM_DATABASE);
-        selfHostedEnv.setProperty(SystemClusterIdpPolicy.PIN_DATABASE, "true");
-        selfHostedEnv.setProperty(SystemClusterIdpPolicy.PREFIX_USERS_COLLECTION, "true");
+        selfHostedEnv.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "true");
+        selfHostedEnv.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "true");
         var selfHosted = policyWith(selfHostedEnv);
         var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
@@ -272,22 +269,26 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_pin_when_an_update_turns_the_system_cluster_on() throws ParseException {
+    void should_reject_an_update_that_turns_the_system_cluster_on() {
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
         var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
-        policy.applyOnUpdate(stored, toUpdate);
-
-        var configuration = JSONObjectUtils.parse(toUpdate.getConfiguration());
-        assertEquals(PLATFORM_DATABASE, configuration.get("database"));
-        assertEquals("idp_" + IDP_ID, configuration.get("usersCollection"));
-        assertTrue(toUpdate.isSystemClusterRestricted());
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
     }
 
     @Test
-    void should_not_pin_an_update_that_turns_the_system_cluster_on_outside_managed_cloud() {
-        var standalone = new SystemClusterIdpPolicy();
-        ReflectionTestUtils.setField(standalone, "environment", new MockEnvironment());
+    void should_reject_an_update_that_turns_the_system_cluster_on_with_only_the_prefix_setting() {
+        var environment = new MockEnvironment();
+        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "true");
+        var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
+
+        assertThrows(InvalidParameterException.class, () -> policyWith(environment).applyOnUpdate(stored, toUpdate));
+    }
+
+    @Test
+    void should_allow_an_update_that_turns_the_system_cluster_on_outside_managed_cloud() {
+        var standalone = policyWith(new MockEnvironment());
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
         var original = configuration(true, "custom-db", "my-users", null);
         var toUpdate = mongoIdp(original);
@@ -299,10 +300,23 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_not_pin_an_update_that_turns_the_system_cluster_on_for_a_datasource_provider() {
+    void should_allow_an_update_that_turns_the_system_cluster_on_for_a_datasource_provider() {
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", "ds-1"));
         var original = configuration(true, "custom-db", "my-users", "ds-1");
         var toUpdate = mongoIdp(original);
+
+        policy.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+        assertFalse(toUpdate.isSystemClusterRestricted());
+    }
+
+    @Test
+    void should_allow_an_update_that_turns_the_system_cluster_on_for_a_non_mongo_provider() {
+        var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        var original = configuration(true, "custom-db", "my-users", null);
+        var toUpdate = mongoIdp(original);
+        toUpdate.setType("inline-am-idp");
 
         policy.applyOnUpdate(stored, toUpdate);
 
@@ -364,8 +378,11 @@ class SystemClusterIdpPolicyTest {
     }
 
     private static SystemClusterIdpPolicy policyWith(MockEnvironment environment) {
+        var settings = new SystemClusterIdpSettings();
+        ReflectionTestUtils.setField(settings, "environment", environment);
         var policy = new SystemClusterIdpPolicy();
         ReflectionTestUtils.setField(policy, "environment", environment);
+        ReflectionTestUtils.setField(policy, "settings", settings);
         return policy;
     }
 
