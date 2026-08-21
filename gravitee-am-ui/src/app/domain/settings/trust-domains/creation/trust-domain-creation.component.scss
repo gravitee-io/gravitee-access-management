@@ -13,3 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.section-hint {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 75%;
+}
+
+.kind-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kind-choice {
+  white-space: normal;
+}
+
+.kind-choice-label {
+  display: block;
+  font-weight: 600;
+}
+
+.kind-choice-hint {
+  display: block;
+  opacity: 0.7;
+}

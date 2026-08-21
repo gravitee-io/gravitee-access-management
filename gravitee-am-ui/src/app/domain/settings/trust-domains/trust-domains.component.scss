@@ -13,3 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@use 'sass:map';
+@use '@gravitee/ui-particles-angular' as gio;
+
+$color-shield: map.get(gio.$mat-success-palette, darker20);
+
+.gv-page-container {
+  .gv-page-content {
+    ngx-datatable {
+      .trust-domain-header {
+        align-items: center;
+        padding: 6px 0;
+
+        .trust-domain-icon {
+          margin: 0 12px 0 0;
+
+          mat-icon {
+            color: $color-shield;
+          }
+        }
+
+        .trust-domain-information {
+          overflow: hidden;
+          min-width: 0;
+
+          .trust-domain-name {
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: normal;
+            line-height: 1.4;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          small {
+            overflow: hidden;
+            color: rgb(0 0 0 / 54%);
+            font-size: 12px;
+            line-height: 1.4;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+      }
+    }
+  }
+}
+
+:host {
+  ::ng-deep .trust-domain-name-cell {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}

@@ -16,75 +16,23 @@
 
 -->
 <div class="gv-page-container">
-  <a [routerLink]="['..']" class="gv-back-link"><small>&lt;&lt; Back to trust domains</small></a>
-  <h1>{{ trustDomain.name }}</h1>
+  <a [routerLink]="['..']" class="gv-back-link"><small>&lt;&lt; Back to trusted domains</small></a>
+  <h1 data-testid="trustDomainTitle">{{ trustDomain.name }}</h1>
+  <span class="trust-domain-kind" data-testid="trustDomainKind">{{ kindLabel }}</span>
 
   <div class="gv-page-content">
-    <form #editForm="ngForm" (ngSubmit)="save()">
-      <mat-form-field appearance="outline" style="width: 100%">
-        <mat-label>Name</mat-label>
-        <input matInput [value]="trustDomain.name" disabled />
-        <mat-hint>Trust domain name is immutable.</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>Description</mat-label>
-        <input matInput name="description" [(ngModel)]="trustDomain.description" [disabled]="!editMode" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>Bundle source</mat-label>
-        <input matInput [value]="trustDomain.bundleSource" disabled />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>JWKS URL</mat-label>
-        <input matInput name="jwksUrl" type="url" required [(ngModel)]="trustDomain.jwksUrl" [disabled]="!editMode" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>Refresh interval (seconds)</mat-label>
-        <input
-          matInput
-          name="refreshIntervalSeconds"
-          type="number"
-          min="1"
-          required
-          [(ngModel)]="trustDomain.refreshIntervalSeconds"
-          [disabled]="!editMode"
-        />
-      </mat-form-field>
-
-      <div style="margin-top: 16px">
-        <label class="mat-body-strong">Allowed algorithms (optional)</label>
-        <p class="mat-caption">Override the domain default. Leave empty to inherit.</p>
-        <mat-chip-set>
-          <mat-chip *ngFor="let alg of trustDomain.allowedAlgorithms" [removable]="editMode" (removed)="removeAlgorithm(alg)">
-            {{ alg }}
-            <button matChipRemove *ngIf="editMode"><mat-icon>cancel</mat-icon></button>
-          </mat-chip>
-        </mat-chip-set>
-        <mat-form-field appearance="outline" style="margin-top: 8px" *ngIf="editMode">
-          <mat-label>Add algorithm</mat-label>
-          <input
-            matInput
-            name="algorithmInput"
-            [(ngModel)]="algorithmInput"
-            (keyup.enter)="addAlgorithm(algorithmInput); $event.preventDefault()"
-            placeholder="e.g. RS256"
-          />
-        </mat-form-field>
-      </div>
-
-      <div style="margin-top: 24px" *ngIf="editMode">
-        <button mat-raised-button color="primary" type="submit" [disabled]="!editForm.valid">Save</button>
-      </div>
-    </form>
+    <app-trust-domain-form
+      [trustDomain]="trustDomain"
+      [domainId]="domainId"
+      [createMode]="false"
+      [editMode]="editMode"
+      (saved)="save($event)"
+    ></app-trust-domain-form>
   </div>
 
   <div class="gv-page-content" style="margin-top: 24px" *hasPermission="['domain_trust_domain_delete']">
     <h3>Danger zone</h3>
-    <p>Deleting a trust domain will prevent any client configured against it from authenticating.</p>
-    <button mat-raised-button color="warn" (click)="delete($event)">Delete trust domain</button>
+    <p>Deleting a trusted domain stops AM believing anything it vouches for.</p>
+    <button mat-raised-button color="warn" data-testid="deleteButton" (click)="delete($event)">Delete trusted domain</button>
   </div>
 </div>

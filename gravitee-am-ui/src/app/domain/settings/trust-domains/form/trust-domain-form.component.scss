@@ -13,10 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.trust-domain-kind {
-  padding: 2px 10px;
-  border-radius: 12px;
-  background: var(--mat-sys-surface-container-high, rgb(0 0 0 / 6%));
+:host {
+  display: block;
+}
+
+.trust-domain-field {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.staging-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.staging-field {
+  flex: 1;
+}
+
+.section-hint {
+  display: block;
+  margin-bottom: 12px;
   font-size: 75%;
-  text-transform: uppercase;
+}
+
+.sub-section-title {
+  margin-bottom: 4px;
+}
+
+.validation-error {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  color: var(--mat-sys-error, #b3261e);
 }

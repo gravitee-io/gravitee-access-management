@@ -16,76 +16,38 @@
 
 -->
 <div class="gv-page-container">
-  <a [routerLink]="['..']" class="gv-back-link"><small>&lt;&lt; Back to trust domains</small></a>
-  <h1>New Trust Domain</h1>
+  <a [routerLink]="['..']" class="gv-back-link"><small>&lt;&lt; Back to trusted domains</small></a>
+  <h1>New Trusted Domain</h1>
 
   <div class="gv-page-content">
-    <form #createForm="ngForm" (ngSubmit)="create()">
-      <mat-form-field appearance="outline" style="width: 100%">
-        <mat-label>Name</mat-label>
-        <input
-          matInput
-          name="name"
-          required
-          pattern="^[a-z0-9]([a-z0-9.\-]*[a-z0-9])?$"
-          [(ngModel)]="trustDomain.name"
-          placeholder="e.g. prod.example or am.local"
-        />
-        <mat-hint>DNS-style label: lowercase letters, digits, '.' or '-'. Lowercased on save.</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>Description</mat-label>
-        <input matInput name="description" [(ngModel)]="trustDomain.description" />
-      </mat-form-field>
-
-      <div style="margin-top: 16px">
-        <label class="mat-body-strong">Bundle source</label>
-        <mat-radio-group name="bundleSource" [(ngModel)]="trustDomain.bundleSource" style="display: flex; flex-direction: column">
-          <mat-radio-button value="JWKS_URL">JWKS URL</mat-radio-button>
-          <mat-radio-button value="STATIC_JWKS" [disabled]="true" matTooltip="Coming in a future release">Static JWKS</mat-radio-button>
-        </mat-radio-group>
+    <div class="gv-form-section" fxLayout="column">
+      <div class="gv-form-section-title">
+        <h5>Kind</h5>
+        <mat-divider></mat-divider>
       </div>
+      <mat-hint class="section-hint">Pick what this trusted domain is for. The settings that follow depend on it.</mat-hint>
+      <mat-radio-group class="kind-choices" name="kind" [ngModel]="kind" (ngModelChange)="selectKind($event)">
+        <mat-radio-button
+          *ngFor="let option of TRUST_DOMAIN_KIND_OPTIONS"
+          class="kind-choice"
+          [value]="option.value"
+          [attr.data-testid]="'kindChoice-' + option.value"
+        >
+          <span class="kind-choice-label">{{ option.label }}</span>
+          <small class="kind-choice-hint">{{ option.hint }}</small>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
 
-      <mat-form-field *ngIf="trustDomain.bundleSource === 'JWKS_URL'" appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>JWKS URL</mat-label>
-        <input matInput name="jwksUrl" type="url" required [(ngModel)]="trustDomain.jwksUrl" placeholder="https://issuer.example/keys" />
-        <mat-hint>Endpoint serving the trust domain's JWK set. https:// recommended.</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px">
-        <mat-label>Refresh interval (seconds)</mat-label>
-        <input matInput name="refreshIntervalSeconds" type="number" min="1" required [(ngModel)]="trustDomain.refreshIntervalSeconds" />
-        <mat-hint>How often AM polls the JWKS endpoint. Capped by domain SPIFFE settings.</mat-hint>
-      </mat-form-field>
-
-      <div style="margin-top: 16px">
-        <label class="mat-body-strong">Allowed algorithms (optional)</label>
-        <p class="mat-caption">
-          Override the domain default. Leave empty to inherit. <code>none</code> and HMAC variants are always rejected.
-        </p>
-        <mat-chip-set>
-          <mat-chip *ngFor="let alg of trustDomain.allowedAlgorithms" (removed)="removeAlgorithm(alg)">
-            {{ alg }}
-            <button matChipRemove><mat-icon>cancel</mat-icon></button>
-          </mat-chip>
-        </mat-chip-set>
-        <mat-form-field appearance="outline" style="margin-top: 8px">
-          <mat-label>Add algorithm</mat-label>
-          <input
-            matInput
-            name="algorithmInput"
-            [(ngModel)]="algorithmInput"
-            (keyup.enter)="addAlgorithm(algorithmInput); $event.preventDefault()"
-            placeholder="e.g. RS256"
-          />
-        </mat-form-field>
-      </div>
-
-      <div style="margin-top: 24px">
-        <button mat-raised-button color="primary" type="submit" [disabled]="!createForm.valid">Create</button>
-        <a mat-button [routerLink]="['..']" style="margin-left: 8px">Cancel</a>
-      </div>
-    </form>
+    <app-trust-domain-form
+      *ngIf="trustDomain"
+      [trustDomain]="trustDomain"
+      [domainId]="domainId"
+      [createMode]="true"
+      [editMode]="true"
+      (saved)="create($event)"
+    >
+      <a mat-button [routerLink]="['..']">CANCEL</a>
+    </app-trust-domain-form>
   </div>
 </div>

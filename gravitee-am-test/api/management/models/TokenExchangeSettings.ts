@@ -91,9 +91,10 @@ export interface TokenExchangeSettings {
    */
   tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
   /**
-   * External issuers whose JWTs may be accepted as subject or actor tokens. When unset, only domain-issued tokens are accepted.
+   * Deprecated: use the trusted-domains API instead. External issuers whose JWTs may be accepted as subject or actor tokens. A projection over the security domain's token-exchange trusted domains; a write replaces the list, so an omitted issuer is no longer trusted.
    * @type {Array<TrustedIssuer>}
    * @memberof TokenExchangeSettings
+   * @deprecated
    */
   trustedIssuers?: Array<TrustedIssuer>;
 }

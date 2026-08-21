@@ -21,6 +21,7 @@ import { AuthService } from '../../../../services/auth.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TrustDomainService } from '../../../../services/trust-domain.service';
+import { TrustDomain, trustDomainKindLabel } from '../trust-domain.types';
 
 @Component({
   selector: 'app-trust-domain',
@@ -29,10 +30,9 @@ import { TrustDomainService } from '../../../../services/trust-domain.service';
   standalone: false,
 })
 export class TrustDomainComponent implements OnInit {
-  trustDomain: any;
+  trustDomain: TrustDomain;
   domainId: string;
   editMode: boolean;
-  algorithmInput = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -45,52 +45,22 @@ export class TrustDomainComponent implements OnInit {
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.data['domain'].id;
-    this.trustDomain = this.normalize(this.route.snapshot.data['trustDomain']);
+    this.trustDomain = this.route.snapshot.data['trustDomain'];
     this.editMode = this.authService.hasPermissions(['domain_trust_domain_update']);
   }
 
-  private normalize(td: any): any {
-    return {
-      ...td,
-      allowedAlgorithms: td?.allowedAlgorithms ?? [],
-    };
+  get kindLabel(): string {
+    return trustDomainKindLabel(this.trustDomain?.kind);
   }
 
-  addAlgorithm(value: string): void {
-    const trimmed = (value ?? '').trim();
-    if (trimmed && !this.trustDomain.allowedAlgorithms.includes(trimmed)) {
-      this.trustDomain.allowedAlgorithms.push(trimmed);
-    }
-    this.algorithmInput = '';
-  }
-
-  removeAlgorithm(alg: string): void {
-    this.trustDomain.allowedAlgorithms = this.trustDomain.allowedAlgorithms.filter((a) => a !== alg);
-  }
-
-  private keyMaterialPayload(): any {
-    const keyMaterial = this.trustDomain.keyMaterial;
-    // The form only edits the JWKS URL; other key-material sources round-trip untouched.
-    if (keyMaterial && keyMaterial.source?.toUpperCase() !== 'JWKS_URL') {
-      return keyMaterial;
-    }
-    return { source: 'JWKS_URL', ...(keyMaterial ?? {}), jwksUrl: this.trustDomain.jwksUrl };
-  }
-
-  save(): void {
-    const payload = {
-      description: this.trustDomain.description,
-      keyMaterial: this.keyMaterialPayload(),
-      refreshIntervalSeconds: this.trustDomain.refreshIntervalSeconds,
-      allowedAlgorithms: this.trustDomain.allowedAlgorithms.length ? this.trustDomain.allowedAlgorithms : null,
-    };
+  save(payload: TrustDomain): void {
     this.trustDomainService.update(this.domainId, this.trustDomain.id, payload).subscribe({
       next: (updated) => {
-        this.trustDomain = this.normalize(updated);
-        this.snackbarService.open('Trust domain updated');
+        this.trustDomain = updated;
+        this.snackbarService.open('Trusted domain updated');
       },
       error: (err: unknown) => {
-        const message = (err as any)?.error?.message || 'Failed to update trust domain';
+        const message = (err as any)?.error?.message || 'Failed to update trusted domain';
         this.snackbarService.open(message);
       },
     });
@@ -99,17 +69,17 @@ export class TrustDomainComponent implements OnInit {
   delete(event: Event): void {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Trust Domain', `Are you sure you want to delete "${this.trustDomain.name}"?`)
+      .confirm('Delete Trusted Domain', `Are you sure you want to delete "${this.trustDomain.name}"?`)
       .pipe(
         filter((res) => res),
         switchMap(() => this.trustDomainService.delete(this.domainId, this.trustDomain.id)),
         tap(() => {
-          this.snackbarService.open('Trust domain deleted');
+          this.snackbarService.open('Trusted domain deleted');
           this.router.navigate(['..'], { relativeTo: this.route });
         }),
       )
       .subscribe({
-        error: () => this.snackbarService.open('Failed to delete trust domain'),
+        error: () => this.snackbarService.open('Failed to delete trusted domain'),
       });
   }
 }
