@@ -35,6 +35,8 @@ public class OIDCSettingsMongo {
 
     private SpiffeDomainSettingsMongo workloadIdentitySettings;
 
+    private KeyRetrievalSettingsMongo keyRetrievalSettings;
+
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
     }
@@ -105,5 +107,13 @@ public class OIDCSettingsMongo {
 
     public void setWorkloadIdentitySettings(SpiffeDomainSettingsMongo workloadIdentitySettings) {
         this.workloadIdentitySettings = workloadIdentitySettings;
+    }
+
+    public KeyRetrievalSettingsMongo getKeyRetrievalSettings() {
+        return keyRetrievalSettings;
+    }
+
+    public void setKeyRetrievalSettings(KeyRetrievalSettingsMongo keyRetrievalSettings) {
+        this.keyRetrievalSettings = keyRetrievalSettings;
     }
 }

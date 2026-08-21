@@ -22,5 +22,12 @@ import io.reactivex.rxjava3.core.Maybe;
 public interface JWKSetFetcher {
     Maybe<JWKSetFetchResponse> getKeys(String jwksUri);
 
+    /**
+     * Same as {@link #getKeys(String)} but abandons the response once its body grows past
+     * {@code maxResponseSizeBytes}, so an oversized payload is refused rather than buffered.
+     * A non-positive limit means unbounded.
+     */
+    Maybe<JWKSetFetchResponse> getKeys(String jwksUri, long maxResponseSizeBytes);
+
     record JWKSetFetchResponse(JWKSet jwkSet, Resource resource) {}
 }

@@ -33,13 +33,28 @@ public class JdbcTrustDomain {
     @Column("reference_type")
     private String referenceType;
 
+    private String kind;
+
     private String name;
 
     private String description;
 
+    /**
+     * JSON-encoded {@code TrustDomainKeyMaterial}.
+     */
+    @Column("key_material")
+    private String keyMaterial;
+
+    /**
+     * Superseded by {@link #keyMaterial}; still read so trust domains stored before the shared
+     * key-material shape existed keep working.
+     */
     @Column("bundle_source")
     private String bundleSource;
 
+    /**
+     * Superseded by {@link #keyMaterial}; see {@link #bundleSource}.
+     */
     @Column("jwks_url")
     private String jwksUrl;
 
@@ -80,6 +95,22 @@ public class JdbcTrustDomain {
 
     public void setReferenceType(String referenceType) {
         this.referenceType = referenceType;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    public String getKeyMaterial() {
+        return keyMaterial;
+    }
+
+    public void setKeyMaterial(String keyMaterial) {
+        this.keyMaterial = keyMaterial;
     }
 
     public String getName() {

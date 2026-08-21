@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.ReferenceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -27,8 +28,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * SPIFFE trust domain registered against an AM domain. Owns the bundle source used to
- * verify JWT-SVIDs presented by clients with the {@code spiffe_jwt} auth method.
+ * External authority an AM domain trusts, either as a SPIFFE trust domain whose JWT-SVIDs are
+ * accepted as client assertions, or as a token-exchange issuer whose tokens are accepted during an
+ * RFC 8693 exchange. Owns the key material used to verify what it vouches for.
  *
  * @author GraviteeSource Team
  */
@@ -46,17 +48,20 @@ public class TrustDomain {
     private ReferenceType referenceType;
 
     /**
-     * Trust-domain name as it appears in SPIFFE IDs. Unique per AM domain.
+     * Which kind of trust this domain represents. Trusted domains stored before the token-exchange
+     * kind existed read back as {@link TrustDomainKind#SPIFFE}.
+     */
+    @Builder.Default
+    private TrustDomainKind kind = TrustDomainKind.SPIFFE;
+
+    /**
+     * Name as it appears in SPIFFE IDs. Unique per kind within an AM domain.
      */
     private String name;
 
     private String description;
 
-    private SpiffeBundleSource bundleSource;
-
-    private String jwksUrl;
-
-    private JWKSet staticJwks;
+    private TrustDomainKeyMaterial keyMaterial;
 
     private int refreshIntervalSeconds = DEFAULT_REFRESH_INTERVAL_SECONDS;
 
@@ -75,25 +80,49 @@ public class TrustDomain {
         this.id = other.id;
         this.referenceId = other.referenceId;
         this.referenceType = other.referenceType;
+        this.kind = other.kind;
         this.name = other.name;
         this.description = other.description;
-        this.bundleSource = other.bundleSource;
-        this.jwksUrl = other.jwksUrl;
-        this.staticJwks = cloneJwkSet(other.staticJwks);
+        this.keyMaterial = other.keyMaterial != null ? new TrustDomainKeyMaterial(other.keyMaterial) : null;
         this.refreshIntervalSeconds = other.refreshIntervalSeconds;
         this.allowedAlgorithms = other.allowedAlgorithms;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
 
-    private static JWKSet cloneJwkSet(JWKSet source) {
-        if (source == null) {
+    /**
+     * @deprecated superseded by {@link #getKeyMaterial()}; PEM key material has no representation here.
+     */
+    @Deprecated
+    @JsonProperty
+    @Schema(deprecated = true, description = "Use keyMaterial.source instead. Null when the key material is a PEM certificate.")
+    public SpiffeBundleSource getBundleSource() {
+        if (keyMaterial == null || keyMaterial.getSource() == null) {
             return null;
         }
-        try {
-            return source.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new IllegalStateException("JWKSet clone failed", e);
-        }
+        return switch (keyMaterial.getSource()) {
+            case JWKS_URL -> SpiffeBundleSource.JWKS_URL;
+            case JWK_SET -> SpiffeBundleSource.STATIC_JWKS;
+            case PEM -> null;
+        };
+    }
+
+    /**
+     * @deprecated superseded by {@link #getKeyMaterial()}.
+     */
+    @Deprecated
+    @JsonProperty
+    @Schema(deprecated = true, description = "Use keyMaterial.jwksUrl instead.")
+    public String getJwksUrl() {
+        return keyMaterial != null ? keyMaterial.getJwksUrl() : null;
+    }
+
+    /**
+     * @deprecated superseded by {@link #getKeyMaterial()}.
+     */
+    @Deprecated
+    @JsonProperty
+    public JWKSet getStaticJwks() {
+        return keyMaterial != null ? keyMaterial.getJwkSet() : null;
     }
 }

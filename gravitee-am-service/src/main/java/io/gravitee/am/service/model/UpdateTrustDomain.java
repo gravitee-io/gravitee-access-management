@@ -16,11 +16,14 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class UpdateTrustDomain {
     private String description;
+    private TrustDomainKeyMaterial keyMaterial;
     private SpiffeBundleSource bundleSource;
     private String jwksUrl;
     private Integer refreshIntervalSeconds;
@@ -29,9 +32,22 @@ public class UpdateTrustDomain {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
+    public TrustDomainKeyMaterial getKeyMaterial() { return keyMaterial; }
+    public void setKeyMaterial(TrustDomainKeyMaterial keyMaterial) { this.keyMaterial = keyMaterial; }
+
+    /**
+     * @deprecated supply {@code keyMaterial} instead; ignored when {@code keyMaterial} is present.
+     */
+    @Deprecated
+    @Schema(deprecated = true, description = "Use keyMaterial.source instead.")
     public SpiffeBundleSource getBundleSource() { return bundleSource; }
     public void setBundleSource(SpiffeBundleSource bundleSource) { this.bundleSource = bundleSource; }
 
+    /**
+     * @deprecated supply {@code keyMaterial} instead; ignored when {@code keyMaterial} is present.
+     */
+    @Deprecated
+    @Schema(deprecated = true, description = "Use keyMaterial.jwksUrl instead.")
     public String getJwksUrl() { return jwksUrl; }
     public void setJwksUrl(String jwksUrl) { this.jwksUrl = jwksUrl; }
 

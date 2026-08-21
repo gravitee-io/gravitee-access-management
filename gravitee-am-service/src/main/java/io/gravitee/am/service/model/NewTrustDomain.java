@@ -16,16 +16,24 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class NewTrustDomain {
+    private TrustDomainKind kind;
     private String name;
     private String description;
+    private TrustDomainKeyMaterial keyMaterial;
     private SpiffeBundleSource bundleSource;
     private String jwksUrl;
     private Integer refreshIntervalSeconds;
     private List<String> allowedAlgorithms;
+
+    public TrustDomainKind getKind() { return kind; }
+    public void setKind(TrustDomainKind kind) { this.kind = kind; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -33,9 +41,22 @@ public class NewTrustDomain {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
+    public TrustDomainKeyMaterial getKeyMaterial() { return keyMaterial; }
+    public void setKeyMaterial(TrustDomainKeyMaterial keyMaterial) { this.keyMaterial = keyMaterial; }
+
+    /**
+     * @deprecated supply {@code keyMaterial} instead; ignored when {@code keyMaterial} is present.
+     */
+    @Deprecated
+    @Schema(deprecated = true, description = "Use keyMaterial.source instead.")
     public SpiffeBundleSource getBundleSource() { return bundleSource; }
     public void setBundleSource(SpiffeBundleSource bundleSource) { this.bundleSource = bundleSource; }
 
+    /**
+     * @deprecated supply {@code keyMaterial} instead; ignored when {@code keyMaterial} is present.
+     */
+    @Deprecated
+    @Schema(deprecated = true, description = "Use keyMaterial.jwksUrl instead.")
     public String getJwksUrl() { return jwksUrl; }
     public void setJwksUrl(String jwksUrl) { this.jwksUrl = jwksUrl; }
 

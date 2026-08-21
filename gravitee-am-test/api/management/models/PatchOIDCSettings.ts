@@ -54,6 +54,13 @@ import {
   PatchDPoPSettingsToJSON,
   PatchDPoPSettingsToJSONTyped,
 } from './PatchDPoPSettings';
+import type { PatchKeyRetrievalSettings } from './PatchKeyRetrievalSettings';
+import {
+  PatchKeyRetrievalSettingsFromJSON,
+  PatchKeyRetrievalSettingsFromJSONTyped,
+  PatchKeyRetrievalSettingsToJSON,
+  PatchKeyRetrievalSettingsToJSONTyped,
+} from './PatchKeyRetrievalSettings';
 import type { PatchClientRegistrationSettings } from './PatchClientRegistrationSettings';
 import {
   PatchClientRegistrationSettingsFromJSON,
@@ -99,6 +106,12 @@ export interface PatchOIDCSettings {
    * @memberof PatchOIDCSettings
    */
   dpopSettings?: PatchDPoPSettings;
+  /**
+   *
+   * @type {PatchKeyRetrievalSettings}
+   * @memberof PatchOIDCSettings
+   */
+  keyRetrievalSettings?: PatchKeyRetrievalSettings;
   /**
    *
    * @type {Array<string>}
@@ -236,6 +249,8 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : PatchClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
     dpopSettings: json['dpopSettings'] == null ? undefined : PatchDPoPSettingsFromJSON(json['dpopSettings']),
+    keyRetrievalSettings:
+      json['keyRetrievalSettings'] == null ? undefined : PatchKeyRetrievalSettingsFromJSON(json['keyRetrievalSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
@@ -261,6 +276,7 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
     cimdSettings: PatchCIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: PatchClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
     dpopSettings: PatchDPoPSettingsToJSON(value['dpopSettings']),
+    keyRetrievalSettings: PatchKeyRetrievalSettingsToJSON(value['keyRetrievalSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],

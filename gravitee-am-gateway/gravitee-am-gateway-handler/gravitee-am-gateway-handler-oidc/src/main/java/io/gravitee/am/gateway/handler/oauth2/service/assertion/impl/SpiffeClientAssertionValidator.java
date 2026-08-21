@@ -27,7 +27,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.spiffe.SpiffeJwtSvidValidator;
-import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.AgentType;
@@ -35,6 +35,7 @@ import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.CustomLog;
@@ -51,7 +52,7 @@ import static io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.JwtAs
  * The client is resolved either via {@code clientIdHint} (request {@code client_id})
  * or, when absent, by treating the SPIFFE URI in {@code sub} as the client_id
  * (CIMD-style). The trust domain is derived from the SPIFFE ID and the bundle
- * keys are fetched via {@link TrustBundleService}.
+ * keys are fetched via {@link TrustDomainKeyService}.
  */
 @CustomLog
 public class SpiffeClientAssertionValidator implements ClientAssertionValidator {
@@ -60,20 +61,20 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
     private final JWSService jwsService;
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final Domain domain;
-    private final TrustBundleService trustBundleService;
+    private final TrustDomainKeyService trustDomainKeyService;
     private final TrustDomainRepository trustDomainRepository;
 
     public SpiffeClientAssertionValidator(ClientLookupService clientLookupService,
                                           JWSService jwsService,
                                           OpenIDDiscoveryService openIDDiscoveryService,
                                           Domain domain,
-                                          TrustBundleService trustBundleService,
+                                          TrustDomainKeyService trustDomainKeyService,
                                           TrustDomainRepository trustDomainRepository) {
         this.clientLookupService = clientLookupService;
         this.jwsService = jwsService;
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.domain = domain;
-        this.trustBundleService = trustBundleService;
+        this.trustDomainKeyService = trustDomainKeyService;
         this.trustDomainRepository = trustDomainRepository;
     }
 
@@ -128,7 +129,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
                     if (spiffe == null || spiffe.getTrustDomain() == null) {
                         return Maybe.error(new InvalidClientException("Client missing SPIFFE settings"));
                     }
-                    return trustDomainRepository.findByName(ReferenceType.DOMAIN, domain.getId(), spiffe.getTrustDomain())
+                    return trustDomainRepository.findByName(ReferenceType.DOMAIN, domain.getId(), TrustDomainKind.SPIFFE, spiffe.getTrustDomain())
                             .switchIfEmpty(Maybe.error(new InvalidClientException("Trust domain not registered")))
                             .flatMap(td -> {
                                 String fail = new SpiffeJwtSvidValidator(settings)
@@ -159,7 +160,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
         if (kid == null || kid.isBlank()) {
             return Maybe.error(new InvalidClientException("SVID missing kid"));
         }
-        return trustBundleService.getKey(td, kid)
+        return trustDomainKeyService.getKey(td, kid)
                 .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key in trust bundle for kid: " + kid)))
                 .flatMap(jwk -> {
                     if (!jwsService.isValidSignature(signedJWT, jwk)) {

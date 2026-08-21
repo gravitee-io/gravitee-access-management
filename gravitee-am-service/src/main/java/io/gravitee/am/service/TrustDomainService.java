@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
 import io.reactivex.rxjava3.core.Completable;
@@ -30,7 +31,10 @@ public interface TrustDomainService {
 
     Maybe<TrustDomain> findById(String id);
 
-    Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name);
+    /**
+     * Names are unique per kind within a reference, so the lookup must name the kind it wants.
+     */
+    Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, TrustDomainKind kind, String name);
 
     Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
 

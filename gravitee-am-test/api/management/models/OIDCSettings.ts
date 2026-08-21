@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { KeyRetrievalSettings } from './KeyRetrievalSettings';
+import {
+  KeyRetrievalSettingsFromJSON,
+  KeyRetrievalSettingsFromJSONTyped,
+  KeyRetrievalSettingsToJSON,
+  KeyRetrievalSettingsToJSONTyped,
+} from './KeyRetrievalSettings';
 import type { CIMDSettings } from './CIMDSettings';
 import { CIMDSettingsFromJSON, CIMDSettingsFromJSONTyped, CIMDSettingsToJSON, CIMDSettingsToJSONTyped } from './CIMDSettings';
 import type { CIBASettings } from './CIBASettings';
@@ -85,6 +92,12 @@ export interface OIDCSettings {
    */
   dpopSettings?: DPoPSettings;
   /**
+   *
+   * @type {KeyRetrievalSettings}
+   * @memberof OIDCSettings
+   */
+  keyRetrievalSettings?: KeyRetrievalSettings;
+  /**
    * URLs to which a relying party may request the user be redirected after logout, via the post_logout_redirect_uri parameter.
    * @type {Array<string>}
    * @memberof OIDCSettings
@@ -137,6 +150,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
     dpopSettings: json['dpopSettings'] == null ? undefined : DPoPSettingsFromJSON(json['dpopSettings']),
+    keyRetrievalSettings: json['keyRetrievalSettings'] == null ? undefined : KeyRetrievalSettingsFromJSON(json['keyRetrievalSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
@@ -161,6 +175,7 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
     cimdSettings: CIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
     dpopSettings: DPoPSettingsToJSON(value['dpopSettings']),
+    keyRetrievalSettings: KeyRetrievalSettingsToJSON(value['keyRetrievalSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],

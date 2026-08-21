@@ -68,9 +68,20 @@ export class TrustDomainComponent implements OnInit {
     this.trustDomain.allowedAlgorithms = this.trustDomain.allowedAlgorithms.filter((a) => a !== alg);
   }
 
+  private keyMaterialPayload(): any {
+    const keyMaterial = this.trustDomain.keyMaterial;
+    // The form only edits the JWKS URL; other key-material sources round-trip untouched.
+    if (keyMaterial && keyMaterial.source?.toUpperCase() !== 'JWKS_URL') {
+      return keyMaterial;
+    }
+    return { source: 'JWKS_URL', ...(keyMaterial ?? {}), jwksUrl: this.trustDomain.jwksUrl };
+  }
+
   save(): void {
     const payload = {
-      ...this.trustDomain,
+      description: this.trustDomain.description,
+      keyMaterial: this.keyMaterialPayload(),
+      refreshIntervalSeconds: this.trustDomain.refreshIntervalSeconds,
       allowedAlgorithms: this.trustDomain.allowedAlgorithms.length ? this.trustDomain.allowedAlgorithms : null,
     };
     this.trustDomainService.update(this.domainId, this.trustDomain.id, payload).subscribe({
