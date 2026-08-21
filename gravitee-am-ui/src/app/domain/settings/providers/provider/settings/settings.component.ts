@@ -186,10 +186,28 @@ export class ProviderSettingsComponent implements OnInit {
 
   enableProviderUpdate(configurationWrapper: any): void {
     window.setTimeout(() => {
-      this.configurationPristine = this.provider.configuration === JSON.stringify(configurationWrapper.configuration);
+      const configuration = this.withPinnedStorage(configurationWrapper.configuration);
+      this.configurationPristine = this.provider.configuration === JSON.stringify(configuration);
       this.configurationIsValid = configurationWrapper.isValid;
-      this.updateProviderConfiguration = configurationWrapper.configuration;
+      this.updateProviderConfiguration = configuration;
     });
+  }
+
+  /**
+   * Angular leaves a disabled control out of the form value, so the system cluster flag of a pinned
+   * provider would reach the server as undefined and read as a change. Send back what is stored.
+   */
+  private withPinnedStorage(configuration: any): any {
+    if (!this.provider.systemClusterRestricted || typeof this.provider.configuration !== 'string') {
+      return configuration;
+    }
+    const stored = JSON.parse(this.provider.configuration);
+    return {
+      ...configuration,
+      useSystemCluster: stored.useSystemCluster,
+      database: stored.database,
+      usersCollection: stored.usersCollection,
+    };
   }
 
   addDomainWhitelistPattern(event: Event): void {

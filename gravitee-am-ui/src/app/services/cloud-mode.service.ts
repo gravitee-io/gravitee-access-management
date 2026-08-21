@@ -20,21 +20,42 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 
+/**
+ * The storage rules the platform applies to a mongo identity provider that reuses the system cluster.
+ * They default to the installation type and an operator overrides either one in `gravitee.yml`.
+ */
+export interface IdentityProviderStorageRules {
+  pinDatabase: boolean;
+  prefixUsersCollection: boolean;
+}
+
 @Injectable()
 export class CloudModeService {
   private platformURL = AppConfig.settings.baseURL + '/platform';
-  private isCloudModeEnabled$: Observable<boolean>;
+  private installation$: Observable<any>;
 
   constructor(private http: HttpClient) {}
 
   isCloudModeEnabled(): Observable<boolean> {
-    if (!this.isCloudModeEnabled$) {
-      this.isCloudModeEnabled$ = this.http.get<any>(this.platformURL + '/configuration/installation').pipe(
-        map((response) => response.type === 'managed'),
-        catchError(() => of(false)),
+    return this.installation().pipe(map((response) => response.type === 'managed'));
+  }
+
+  identityProviderStorageRules(): Observable<IdentityProviderStorageRules> {
+    return this.installation().pipe(
+      map((response) => ({
+        pinDatabase: response.pinIdentityProviderDatabase === true,
+        prefixUsersCollection: response.prefixIdentityProviderUsersCollection === true,
+      })),
+    );
+  }
+
+  private installation(): Observable<any> {
+    if (!this.installation$) {
+      this.installation$ = this.http.get<any>(this.platformURL + '/configuration/installation').pipe(
+        catchError(() => of({})),
         shareReplay({ bufferSize: 1, refCount: true }),
       );
     }
-    return this.isCloudModeEnabled$;
+    return this.installation$;
   }
 }

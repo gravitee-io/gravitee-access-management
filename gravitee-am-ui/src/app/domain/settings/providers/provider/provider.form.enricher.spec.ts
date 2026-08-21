@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { enrichFormWithSystemClusterRestrictions } from './provider.form.enricher';
+import { enrichFormWithSystemClusterCreationHints, enrichFormWithSystemClusterRestrictions } from './provider.form.enricher';
 
 describe('enrichFormWithSystemClusterRestrictions', () => {
   const mongoSchema = () =>
@@ -41,11 +41,11 @@ describe('enrichFormWithSystemClusterRestrictions', () => {
     expect(enriched.properties.usernameField.readonly).toBeUndefined();
   });
 
-  // The checkbox widget ignores `readonly`, so marking it would look enforced without being so.
-  it('leaves the system cluster toggle alone', () => {
+  // The bound checkbox widget ignores `readonly` and honours the control's disabled state instead.
+  it('disables the system cluster toggle', () => {
     const enriched = enrichFormWithSystemClusterRestrictions(mongoSchema(), 'mongo-am-idp', true);
 
-    expect(enriched.properties.useSystemCluster.readonly).toBeUndefined();
+    expect(enriched.properties.useSystemCluster.disabled).toBe(true);
   });
 
   it('leaves the schema alone when the provider is not restricted', () => {
@@ -75,5 +75,76 @@ describe('enrichFormWithSystemClusterRestrictions', () => {
     const enriched = enrichFormWithSystemClusterRestrictions(schema, 'mongo-am-idp', true);
 
     expect(enriched.properties.usernameField.readonly).toBeUndefined();
+  });
+
+  it('leaves the toggle enabled when the provider is not restricted', () => {
+    const enriched = enrichFormWithSystemClusterRestrictions(mongoSchema(), 'mongo-am-idp', false);
+
+    expect(enriched.properties.useSystemCluster.disabled).toBeUndefined();
+  });
+});
+
+describe('enrichFormWithSystemClusterCreationHints', () => {
+  const mongoSchema = () =>
+    ({
+      id: 'urn:jsonschema:io:gravitee:am:identityprovider:mongo:MongoIdentityProviderConfiguration',
+      version: '1',
+      properties: {
+        useSystemCluster: { type: 'boolean' },
+        database: { type: 'string', description: 'The database.' },
+        usersCollection: { type: 'string' },
+        usernameField: { type: 'string' },
+      },
+    }) as any;
+
+  const bothRules = { pinDatabase: true, prefixUsersCollection: true };
+
+  it('appends the hint to the pinned fields', () => {
+    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', bothRules);
+
+    expect(enriched.properties.database.description).toEqual(
+      'The database. The platform sets this value when "use system cluster" is selected.',
+    );
+    expect(enriched.properties.usersCollection.description).toEqual('The platform sets this value when "use system cluster" is selected.');
+  });
+
+  it('hints only the field its rule covers', () => {
+    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', {
+      pinDatabase: false,
+      prefixUsersCollection: true,
+    });
+
+    expect(enriched.properties.database.description).toEqual('The database.');
+    expect(enriched.properties.usersCollection.description).toContain('The platform sets this value');
+  });
+
+  it('keeps the fields editable', () => {
+    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', bothRules);
+
+    expect(enriched.properties.database.readonly).toBeUndefined();
+    expect(enriched.properties.usersCollection.readonly).toBeUndefined();
+  });
+
+  it('leaves the schema alone when both rules are off', () => {
+    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', {
+      pinDatabase: false,
+      prefixUsersCollection: false,
+    });
+
+    expect(enriched.properties.usersCollection.description).toBeUndefined();
+  });
+
+  it('leaves the schema alone for a provider of another type', () => {
+    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'inline-am-idp', bothRules);
+
+    expect(enriched.properties.usersCollection.description).toBeUndefined();
+  });
+
+  it('does not mutate the schema it was given', () => {
+    const original = mongoSchema();
+
+    enrichFormWithSystemClusterCreationHints(original, 'mongo-am-idp', bothRules);
+
+    expect(original.properties.usersCollection.description).toBeUndefined();
   });
 });

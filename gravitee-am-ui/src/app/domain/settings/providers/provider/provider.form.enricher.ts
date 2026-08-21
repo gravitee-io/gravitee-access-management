@@ -22,11 +22,17 @@ const MONGO_IDP_TYPE = 'mongo-am-idp';
 
 /**
  * Storage fields the platform owns once an identity provider reuses the system cluster.
- * `useSystemCluster` is left out on purpose: it renders as a checkbox, and the form library only
- * honours `readonly` on its unbound branch, so marking it here would promise a restriction the
- * widget does not apply. The server rejects a change to it.
  */
 const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
+
+/**
+ * The system cluster checkbox needs `disabled` rather than `readonly`: the form library binds the
+ * checkbox to a form control, and that branch of the widget honours only the control's own disabled
+ * state, which the library takes from this option.
+ */
+const PINNED_STORAGE_TOGGLE = 'useSystemCluster';
+
+const CREATION_HINT = 'The platform sets this value when "use system cluster" is selected.';
 
 const LDAP_JSON_FORM = {
   id: 'urn:jsonschema:com:graviteesource:am:identityprovider:ldap:LdapIdentityProviderConfiguration',
@@ -47,10 +53,8 @@ export function enrichFormWithCerts(schema: FormSchema, certs: Certificate[]): F
 }
 
 /**
- * Marks the storage fields of a mongo identity provider read-only when the platform owns where it
- * stores its users. Edit screen only: `restricted` is the provider's own flag. The creation screen
- * deliberately leaves the form alone, because the plugin schema makes `usersCollection` mandatory
- * and a read-only empty field can never satisfy it, which would disable Create for good.
+ * Locks the storage settings of a mongo identity provider when the platform owns where it stores its
+ * users. Edit screen only: `restricted` is the provider's own flag.
  */
 export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
   if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties) {
@@ -61,6 +65,44 @@ export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, prov
   PINNED_STORAGE_FIELDS.filter((field) => updatedSchema.properties[field]).forEach((field) => {
     updatedSchema.properties[field] = { ...updatedSchema.properties[field], readonly: true };
   });
+  if (updatedSchema.properties[PINNED_STORAGE_TOGGLE]) {
+    updatedSchema.properties[PINNED_STORAGE_TOGGLE] = { ...updatedSchema.properties[PINNED_STORAGE_TOGGLE], disabled: true };
+  }
+  return updatedSchema;
+}
+
+/**
+ * Tells the administrator which storage fields the platform will overwrite on a new mongo identity
+ * provider. The creation screen keeps them editable: the plugin schema makes `usersCollection`
+ * mandatory, and a provider that does not reuse the system cluster still needs both values.
+ */
+export function enrichFormWithSystemClusterCreationHints(
+  schema: FormSchema,
+  providerType: string,
+  rules: { pinDatabase: boolean; prefixUsersCollection: boolean },
+): FormSchema {
+  if (providerType !== MONGO_IDP_TYPE || !schema?.properties || (!rules?.pinDatabase && !rules?.prefixUsersCollection)) {
+    return schema;
+  }
+
+  const hinted = [];
+  if (rules.pinDatabase) {
+    hinted.push('database');
+  }
+  if (rules.prefixUsersCollection) {
+    hinted.push('usersCollection');
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  hinted
+    .filter((field) => updatedSchema.properties[field])
+    .forEach((field) => {
+      const property = updatedSchema.properties[field];
+      updatedSchema.properties[field] = {
+        ...property,
+        description: property.description ? `${property.description} ${CREATION_HINT}` : CREATION_HINT,
+      };
+    });
   return updatedSchema;
 }
 
