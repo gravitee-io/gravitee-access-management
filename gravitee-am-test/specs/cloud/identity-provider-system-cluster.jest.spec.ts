@@ -100,21 +100,18 @@ describe('Identity provider reusing the system cluster', () => {
     expect(updated.systemClusterRestricted).toEqual(true);
   });
 
-  it(jira`should pin a provider when an update turns the system cluster on ${'AM-7264'}`, async () => {
+  it(jira`should reject an update that turns the system cluster on ${'AM-7264'}`, async () => {
     const idp = await newMongoIdp(false);
     expect(idp.systemClusterRestricted).toBeFalsy();
 
-    const updated = await updateCloudIdp(scope, idp.id, buildMongoIdpUpdateBody(idp, { useSystemCluster: true }));
+    await expect(updateCloudIdp(scope, idp.id, buildMongoIdpUpdateBody(idp, { useSystemCluster: true }))).rejects.toMatchObject({
+      response: { status: 400 },
+    });
 
-    const configuration = JSON.parse(updated.configuration);
-    expect(configuration.database).toEqual(platformDatabase);
-    expect(configuration.usersCollection).toEqual(`idp_${idp.id}`);
-    expect(updated.systemClusterRestricted).toEqual(true);
-
-    // The provider is pinned from here on, so a further move is rejected.
-    await expect(
-      updateCloudIdp(scope, idp.id, buildMongoIdpUpdateBody(updated, { usersCollection: 'somewhere-else' })),
-    ).rejects.toMatchObject({ response: { status: 400 } });
+    // The provider keeps the storage it was created with, and stays editable.
+    const unchanged = await getCloudIdp(scope, idp.id);
+    expect(JSON.parse(unchanged.configuration)).toMatchObject({ useSystemCluster: false, usersCollection: 'my-own-users' });
+    expect(unchanged.systemClusterRestricted).toBeFalsy();
   });
 
   it(jira`should leave a provider that does not reuse the system cluster editable ${'AM-7264'}`, async () => {
