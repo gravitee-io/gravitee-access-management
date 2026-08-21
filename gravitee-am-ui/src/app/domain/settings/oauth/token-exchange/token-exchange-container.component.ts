@@ -27,8 +27,5 @@ interface NavLink {
   standalone: false,
 })
 export class TokenExchangeContainerComponent {
-  navLinks: NavLink[] = [
-    { href: 'settings', label: 'Settings' },
-    { href: 'trusted-issuers', label: 'Trusted Issuers' },
-  ];
+  navLinks: NavLink[] = [{ href: 'settings', label: 'Settings' }];
 }

@@ -21,6 +21,8 @@ import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TrustDomainService } from '../../../services/trust-domain.service';
 
+import { keyMaterialSourceLabel, TOKEN_EXCHANGE, TrustDomain, trustDomainKindLabel } from './trust-domain.types';
+
 @Component({
   selector: 'app-domain-trust-domains',
   templateUrl: './trust-domains.component.html',
@@ -28,7 +30,7 @@ import { TrustDomainService } from '../../../services/trust-domain.service';
   standalone: false,
 })
 export class DomainSettingsTrustDomainsComponent implements OnInit {
-  trustDomains: any[];
+  trustDomains: TrustDomain[];
   domainId: string;
 
   constructor(
@@ -47,25 +49,39 @@ export class DomainSettingsTrustDomainsComponent implements OnInit {
     return !this.trustDomains || this.trustDomains.length === 0;
   }
 
-  bundleSourceLabel(source: string): string {
-    return source === 'JWKS_URL' ? 'JWKS URL' : source;
+  kindLabel(trustDomain: TrustDomain): string {
+    return trustDomainKindLabel(trustDomain.kind);
+  }
+
+  subtitle(trustDomain: TrustDomain): string {
+    if (trustDomain.description) {
+      return trustDomain.description;
+    }
+    if (trustDomain.kind === TOKEN_EXCHANGE) {
+      return trustDomain.tokenExchange?.issuer ?? '';
+    }
+    return trustDomain.keyMaterial?.jwksUrl ?? keyMaterialSourceLabel(trustDomain.keyMaterial?.source);
+  }
+
+  keySourceLabel(trustDomain: TrustDomain): string {
+    return keyMaterialSourceLabel(trustDomain.keyMaterial?.source);
   }
 
   delete(id: string, name: string, event: Event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Trust Domain', `Are you sure you want to delete "${name}"?`)
+      .confirm('Delete Trusted Domain', `Are you sure you want to delete "${name}"?`)
       .pipe(
         filter((res) => res),
         switchMap(() => this.trustDomainService.delete(this.domainId, id)),
         switchMap(() => this.trustDomainService.list(this.domainId)),
         tap((updated) => {
           this.trustDomains = updated;
-          this.snackbarService.open('Trust domain deleted');
+          this.snackbarService.open('Trusted domain deleted');
         }),
       )
       .subscribe({
-        error: () => this.snackbarService.open('Failed to delete trust domain'),
+        error: () => this.snackbarService.open('Failed to delete trusted domain'),
       });
   }
 }

@@ -1,0 +1,300 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form (ngSubmit)="submit()" *ngIf="model">
+  <div class="gv-form-section" fxLayout="column">
+    <div class="gv-form-section-title">
+      <h5>{{ kindLabel }} trusted domain</h5>
+      <mat-divider></mat-divider>
+    </div>
+
+    <mat-form-field *ngIf="isTokenExchange" appearance="outline" class="trust-domain-field">
+      <mat-label>Issuer URL</mat-label>
+      <input
+        matInput
+        name="issuer"
+        data-testid="issuerUrlInput"
+        [(ngModel)]="model.tokenExchange.issuer"
+        (ngModelChange)="onIssuerChange()"
+        [disabled]="!editMode"
+        placeholder="https://external-idp.example.com"
+      />
+      <mat-hint>The expected "iss" claim value in the external JWT. Unique within this security domain.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="trust-domain-field">
+      <mat-label>Name</mat-label>
+      <input
+        matInput
+        name="name"
+        data-testid="nameInput"
+        [(ngModel)]="model.name"
+        (ngModelChange)="onNameChange()"
+        [disabled]="!editMode || !createMode"
+        placeholder="e.g. prod.example or am.local"
+      />
+      <mat-hint *ngIf="createMode">DNS-style label: lowercase letters, digits, "." or "-". Lowercased on save.</mat-hint>
+      <mat-hint *ngIf="!createMode">The name is immutable.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="trust-domain-field">
+      <mat-label>Description</mat-label>
+      <input matInput name="description" [(ngModel)]="model.description" (ngModelChange)="onFieldChange()" [disabled]="!editMode" />
+    </mat-form-field>
+  </div>
+
+  <div class="gv-form-section" fxLayout="column">
+    <div class="gv-form-section-title">
+      <h5>Key material</h5>
+      <mat-divider></mat-divider>
+    </div>
+    <app-trust-domain-key-material
+      [keyMaterial]="model.keyMaterial"
+      [disabled]="!editMode"
+      (keyMaterialChange)="onKeyMaterialChange($event)"
+    ></app-trust-domain-key-material>
+
+    <mat-form-field *ngIf="keySource === 'JWKS_URL'" appearance="outline" class="trust-domain-field">
+      <mat-label>Refresh interval (seconds)</mat-label>
+      <input
+        matInput
+        name="refreshIntervalSeconds"
+        data-testid="refreshIntervalInput"
+        type="number"
+        min="1"
+        [(ngModel)]="model.refreshIntervalSeconds"
+        (ngModelChange)="onFieldChange()"
+        [disabled]="!editMode"
+      />
+      <mat-hint>How often AM polls the JWKS endpoint.</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <div *ngIf="!isTokenExchange" class="gv-form-section" fxLayout="column">
+    <div class="gv-form-section-title">
+      <h5>JWT-SVID signing algorithms</h5>
+      <mat-divider></mat-divider>
+    </div>
+    <mat-hint class="section-hint">
+      Override the domain default from SPIFFE Settings. Leave empty to inherit. <code>none</code> and HMAC variants are always rejected.
+    </mat-hint>
+    <mat-chip-set>
+      <mat-chip *ngFor="let alg of model.allowedAlgorithms" [removable]="editMode" (removed)="removeAlgorithm(alg)">
+        {{ alg }}
+        <button matChipRemove *ngIf="editMode" type="button"><mat-icon>cancel</mat-icon></button>
+      </mat-chip>
+    </mat-chip-set>
+    <mat-form-field *ngIf="editMode" appearance="outline" class="trust-domain-field">
+      <mat-label>Add algorithm</mat-label>
+      <input
+        matInput
+        name="algorithmInput"
+        [(ngModel)]="algorithmInput"
+        (keyup.enter)="addAlgorithm(algorithmInput); $event.preventDefault()"
+        placeholder="e.g. RS256"
+      />
+    </mat-form-field>
+  </div>
+
+  <div *ngIf="isTokenExchange" class="gv-form-section" fxLayout="column">
+    <div class="gv-form-section-title">
+      <h5>Scope mappings</h5>
+      <mat-divider></mat-divider>
+    </div>
+    <mat-hint class="section-hint">Map external scopes from this issuer to domain scopes. Unmapped scopes are dropped.</mat-hint>
+    <div class="staging-row">
+      <mat-form-field appearance="outline" class="staging-field">
+        <mat-label>External Scope</mat-label>
+        <input
+          matInput
+          name="newExtScope"
+          data-testid="externalScopeInput"
+          [(ngModel)]="newScopeStaging.key"
+          [disabled]="!editMode"
+          placeholder="External scope name"
+        />
+      </mat-form-field>
+      <mat-form-field *ngIf="domainScopes?.length" appearance="outline" class="staging-field">
+        <mat-label>Domain Scope</mat-label>
+        <input
+          matInput
+          name="newDomScope"
+          data-testid="domainScopeAutocomplete"
+          [formControl]="domainScopeCtrl"
+          [matAutocomplete]="scopeAuto"
+          placeholder="Type to search scopes"
+        />
+        <mat-autocomplete #scopeAuto="matAutocomplete" (optionSelected)="onDomainScopeSelected($event)" [displayWith]="displayDomainScope">
+          <mat-option *ngFor="let scope of filteredDomainScopes" [value]="scope.key">
+            <span>{{ scope.name || scope.key }}</span>
+            <small *ngIf="scope.description"> | {{ scope.description }}</small>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field *ngIf="!domainScopes?.length" appearance="outline" class="staging-field">
+        <mat-label>Domain Scope</mat-label>
+        <input
+          matInput
+          name="newDomScopeText"
+          data-testid="domainScopeText"
+          [(ngModel)]="newScopeStaging.value"
+          [disabled]="!editMode"
+          placeholder="Domain scope"
+        />
+      </mat-form-field>
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="addScopeMappingButton"
+        (click)="addScopeMapping()"
+        [disabled]="!editMode || !canAddScopeMapping()"
+      >
+        <mat-icon>add</mat-icon> ADD
+      </button>
+    </div>
+    <ngx-datatable
+      class="material"
+      data-testid="scopeMappingsTable"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [rowHeight]="55"
+      [messages]="{ emptyMessage: 'No scope mappings configured' }"
+      [rows]="scopeMappingRows"
+    >
+      <ngx-datatable-column name="External Scope" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.key }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Domain Scope" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ domainScopes?.length ? domainScopeLabel(row.value) : row.value }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+        <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <button mat-button type="button" (click)="removeScopeMapping(rowIndex)" [disabled]="!editMode">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+
+  <div *ngIf="isTokenExchange" class="gv-form-section" fxLayout="column">
+    <div class="gv-form-section-title">
+      <h5>User binding</h5>
+      <mat-divider></mat-divider>
+    </div>
+    <mat-slide-toggle
+      name="userBindingEnabled"
+      data-testid="userBindingToggle"
+      [(ngModel)]="model.tokenExchange.userBindingEnabled"
+      (ngModelChange)="onFieldChange()"
+      [disabled]="!editMode"
+    >
+      Enable User Binding
+    </mat-slide-toggle>
+    <mat-hint class="section-hint">
+      When enabled, the minted token carries the domain user's roles, groups and profile data instead of a synthetic user.
+    </mat-hint>
+
+    <div *ngIf="model.tokenExchange.userBindingEnabled">
+      <h5 class="sub-section-title">User binding mappings</h5>
+      <mat-hint class="section-hint">
+        Map user attributes to JWT claims for domain user lookup. Use claim names (e.g. "email") or EL expressions (e.g.
+        &#123;#token['email']&#125;).
+      </mat-hint>
+      <div class="staging-row">
+        <mat-form-field appearance="outline" class="staging-field">
+          <mat-label>User Attribute</mat-label>
+          <input
+            matInput
+            name="newUbAttr"
+            data-testid="userBindingAttributeInput"
+            [(ngModel)]="newUserBindingStaging.attribute"
+            [disabled]="!editMode"
+            placeholder="e.g. userName, emails.value"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="staging-field">
+          <mat-label>Claim / Expression</mat-label>
+          <input
+            matInput
+            name="newUbClaim"
+            data-testid="userBindingExpressionInput"
+            [(ngModel)]="newUserBindingStaging.expression"
+            [disabled]="!editMode"
+            placeholder="email or {#token['email']}"
+          />
+        </mat-form-field>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="addUserBindingButton"
+          (click)="addUserBindingCriterion()"
+          [disabled]="!editMode || !canAddUserBindingCriterion()"
+        >
+          <mat-icon>add</mat-icon> ADD
+        </button>
+      </div>
+      <ngx-datatable
+        class="material"
+        data-testid="userBindingTable"
+        [columnMode]="'flex'"
+        [headerHeight]="40"
+        [rowHeight]="55"
+        [messages]="{ emptyMessage: 'No user binding criteria configured' }"
+        [rows]="userBindingRows"
+      >
+        <ngx-datatable-column name="User Attribute" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.attribute }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Claim / Expression" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.expression }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+            <div fxLayout="row" class="gv-table-cell-actions">
+              <button mat-button type="button" (click)="removeUserBindingCriterion(rowIndex)" [disabled]="!editMode">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+  </div>
+
+  <div *ngFor="let error of getValidationErrors()" class="validation-error" data-testid="validationError">
+    <mat-icon>warning</mat-icon>
+    <span style="margin-left: 8px">{{ error }}</span>
+  </div>
+
+  <div fxLayout="row" fxLayoutGap="10px" *ngIf="editMode" style="margin-top: 24px">
+    <button mat-raised-button color="primary" type="submit" data-testid="saveButton" [disabled]="!formChanged || !isFormValid()">
+      {{ createMode ? 'CREATE' : 'SAVE' }}
+    </button>
+    <ng-content></ng-content>
+  </div>
+</form>

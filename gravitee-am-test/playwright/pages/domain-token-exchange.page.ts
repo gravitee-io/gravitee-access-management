@@ -30,8 +30,9 @@ export class DomainTokenExchangePage extends BasePage {
     return this.page.locator('a[mat-tab-link]').filter({ hasText: /settings/i });
   }
 
-  get trustedIssuersTab(): Locator {
-    return this.page.locator('a[mat-tab-link]').filter({ hasText: /trusted issuers/i });
+  /** Cross-link that leads operators to where issuer configuration now lives. */
+  get trustedDomainsLink(): Locator {
+    return this.page.locator('[data-testid="trustedDomainsLink"]');
   }
 
   /* ------------------------------------------------------------------ */
