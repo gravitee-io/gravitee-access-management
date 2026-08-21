@@ -23,10 +23,12 @@ import io.gravitee.am.gateway.handler.oauth2.exception.TokenVerificationExceptio
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
-import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -34,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.CustomLog;
@@ -57,17 +60,20 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
 
     private final TokenValidator delegate;
     private final TrustedIssuerResolver trustedIssuerResolver;
+    private final TrustDomainManager trustDomainManager;
     private final JWTService jwtService;
     private final JWTService.TokenType jwtTokenType;
     private final String supportedTokenType;
 
     public TrustedIssuerTokenValidator(TokenValidator delegate,
                                        TrustedIssuerResolver trustedIssuerResolver,
+                                       TrustDomainManager trustDomainManager,
                                        JWTService jwtService,
                                        JWTService.TokenType jwtTokenType,
                                        String supportedTokenType) {
         this.delegate = delegate;
         this.trustedIssuerResolver = trustedIssuerResolver;
+        this.trustDomainManager = trustDomainManager;
         this.jwtService = jwtService;
         this.jwtTokenType = jwtTokenType;
         this.supportedTokenType = supportedTokenType;
@@ -82,16 +88,16 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
     public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
         return delegate.validate(token, settings, domain, client)
                 .onErrorResumeNext(error -> {
-                    if (error instanceof TokenVerificationException && hasTrustedIssuers(settings)) {
+                    if (error instanceof TokenVerificationException && trustDomainManager.hasTokenExchangeTrust()) {
                         log.debug("Domain cert validation failed, trying trusted issuers: {}",
                                 error.getMessage());
-                        return validateWithTrustedIssuer(token, settings, domain);
+                        return validateWithTrustedIssuer(token, domain);
                     }
                     return Single.error(error);
                 });
     }
 
-    private Single<ValidatedToken> validateWithTrustedIssuer(String token, TokenExchangeSettings settings, Domain domain) {
+    private Single<ValidatedToken> validateWithTrustedIssuer(String token, Domain domain) {
         return jwtService.decode(token, jwtTokenType)
                 .flatMap(jwt -> {
                     String issuer = jwt.getIss();
@@ -99,15 +105,14 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                         return Single.error(new InvalidRequestException("JWT missing 'iss' claim"));
                     }
 
-                    TrustedIssuer matchingIssuer = findTrustedIssuer(settings, issuer);
-                    if (matchingIssuer == null) {
-                        return Single.error(new InvalidRequestException("Untrusted issuer: " + issuer));
+                    TrustDomain trustedDomain = trustDomainManager.findByIssuer(issuer).orElse(null);
+                    if (trustedDomain == null) {
+                        return Single.error(untrusted(issuer));
                     }
 
-                    return Single.fromCallable(() -> {
-                        JWTClaimsSet claimsSet = trustedIssuerResolver.resolve(token, matchingIssuer);
-                        return buildValidatedToken(claimsSet, domain, matchingIssuer);
-                    }).subscribeOn(Schedulers.io());
+                    return trustedIssuerResolver.resolve(token, trustedDomain)
+                            .subscribeOn(Schedulers.io())
+                            .map(claimsSet -> buildValidatedToken(claimsSet, domain, trustedDomain));
                 })
                 .onErrorResumeNext(error -> {
                     if (error instanceof InvalidRequestException) {
@@ -118,8 +123,20 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                 });
     }
 
+    /**
+     * Names are unique per kind, so an issuer claim that matches a SPIFFE trusted domain's name is a
+     * naming coincidence rather than a missing registration, and says so.
+     */
+    private InvalidRequestException untrusted(String issuer) {
+        if (trustDomainManager.findSpiffeByName(issuer).isPresent()) {
+            return new InvalidRequestException(
+                    "Untrusted issuer: " + issuer + " names a SPIFFE trusted domain, not a token-exchange trusted domain");
+        }
+        return new InvalidRequestException("Untrusted issuer: " + issuer);
+    }
+
     private ValidatedToken buildValidatedToken(JWTClaimsSet claimsSet, Domain domain,
-                                               TrustedIssuer matchingIssuer) {
+                                               TrustDomain trustedDomain) {
         long exp = claimsSet.getExpirationTime() != null ? claimsSet.getExpirationTime().getTime() / 1000 : 0;
         long iat = claimsSet.getIssueTime() != null ? claimsSet.getIssueTime().getTime() / 1000 : 0;
         long nbf = claimsSet.getNotBeforeTime() != null ? claimsSet.getNotBeforeTime().getTime() / 1000 : 0;
@@ -127,17 +144,19 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
         TokenValidationUtils.validateTemporalClaims(exp, nbf, supportedTokenType);
 
         Map<String, Object> claims = new HashMap<>(claimsSet.getClaims());
-        Set<String> scopes = applyScopeMapping(TokenValidationUtils.parseScopes(claims.get(Claims.SCOPE)), matchingIssuer);
+        Set<String> scopes = applyScopeMapping(TokenValidationUtils.parseScopes(claims.get(Claims.SCOPE)), trustedDomain);
         List<String> audience = TokenValidationUtils.parseAudience(claims.get(Claims.AUD));
 
         return TokenValidationUtils.buildValidatedToken(claims,
                 exp, iat, nbf,
                 scopes, audience,
-                supportedTokenType, domain, matchingIssuer);
+                supportedTokenType, domain, trustedDomain);
     }
 
-    private Set<String> applyScopeMapping(Set<String> originalScopes, TrustedIssuer issuer) {
-        Map<String, String> mappings = issuer.getScopeMappings();
+    private Set<String> applyScopeMapping(Set<String> originalScopes, TrustDomain trustedDomain) {
+        Map<String, String> mappings = Optional.ofNullable(trustedDomain.getTokenExchange())
+                .map(TrustDomainTokenExchangeSettings::getScopeMappings)
+                .orElse(null);
         if (mappings == null || mappings.isEmpty()) {
             return originalScopes;
         }
@@ -145,15 +164,5 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                 .map(mappings::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-    }
-
-    private static boolean hasTrustedIssuers(TokenExchangeSettings settings) {
-        return settings != null
-                && settings.getTrustedIssuers() != null
-                && !settings.getTrustedIssuers().isEmpty();
-    }
-
-    private static TrustedIssuer findTrustedIssuer(TokenExchangeSettings settings, String issuer) {
-        return settings.getMapOfTrustedIssuers().get(issuer);
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
@@ -55,6 +56,9 @@ public class OIDCSettings {
 
     private SpiffeDomainSettings workloadIdentitySettings;
 
+    @Schema(description = "Fetch, SSRF and cache limits applied to every trusted domain in the security domain.")
+    private KeyRetrievalSettings keyRetrievalSettings;
+
     public OIDCSettings() {
     }
 
@@ -71,6 +75,7 @@ public class OIDCSettings {
         this.cibaSettings = other.cibaSettings != null ? new CIBASettings(other.cibaSettings) : null;
         this.cimdSettings = other.cimdSettings != null ? new CIMDSettings(other.cimdSettings) : null;
         this.workloadIdentitySettings = other.workloadIdentitySettings != null ? new SpiffeDomainSettings(other.workloadIdentitySettings) : null;
+        this.keyRetrievalSettings = other.keyRetrievalSettings != null ? new KeyRetrievalSettings(other.keyRetrievalSettings) : null;
     }
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
@@ -145,6 +150,26 @@ public class OIDCSettings {
         this.workloadIdentitySettings = workloadIdentitySettings;
     }
 
+    /**
+     * The limits applied to trusted-domain key retrieval. Falls back to the values the SPIFFE block
+     * carried before they were promoted here, so a domain reads the same limits before and after the
+     * relocation upgrader has run.
+     */
+    public KeyRetrievalSettings getKeyRetrievalSettings() {
+        return keyRetrievalSettings != null
+                ? keyRetrievalSettings
+                : KeyRetrievalSettings.fromLegacySpiffeSettings(workloadIdentitySettings);
+    }
+
+    public void setKeyRetrievalSettings(KeyRetrievalSettings keyRetrievalSettings) {
+        this.keyRetrievalSettings = keyRetrievalSettings;
+    }
+
+    @JsonIgnore
+    public KeyRetrievalSettings getConfiguredKeyRetrievalSettings() {
+        return keyRetrievalSettings;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
@@ -154,6 +179,7 @@ public class OIDCSettings {
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
         defaultSettings.setCimdSettings(CIMDSettings.defaultSettings());
         defaultSettings.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());
+        defaultSettings.setKeyRetrievalSettings(KeyRetrievalSettings.defaultSettings());
         return defaultSettings;
     }
 

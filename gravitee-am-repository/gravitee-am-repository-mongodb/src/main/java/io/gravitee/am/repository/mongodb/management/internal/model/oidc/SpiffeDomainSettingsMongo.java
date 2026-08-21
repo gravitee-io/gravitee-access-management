@@ -20,12 +20,12 @@ import java.util.List;
 public class SpiffeDomainSettingsMongo {
 
     private boolean enabled;
-    private boolean allowUnsecuredHttpUri;
-    private boolean allowPrivateIpAddress;
-    private int fetchTimeoutMs;
-    private int maxResponseSizeKb;
-    private int cacheTtlSeconds;
-    private int cacheMaxEntries;
+    private Boolean allowUnsecuredHttpUri;
+    private Boolean allowPrivateIpAddress;
+    private Integer fetchTimeoutMs;
+    private Integer maxResponseSizeKb;
+    private Integer cacheTtlSeconds;
+    private Integer cacheMaxEntries;
     private int maxJwtLifetimeSeconds;
     private int clockSkewSeconds;
     private List<String> defaultAllowedAlgorithms;
@@ -33,23 +33,23 @@ public class SpiffeDomainSettingsMongo {
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
-    public boolean isAllowUnsecuredHttpUri() { return allowUnsecuredHttpUri; }
-    public void setAllowUnsecuredHttpUri(boolean allowUnsecuredHttpUri) { this.allowUnsecuredHttpUri = allowUnsecuredHttpUri; }
+    public Boolean getAllowUnsecuredHttpUri() { return allowUnsecuredHttpUri; }
+    public void setAllowUnsecuredHttpUri(Boolean allowUnsecuredHttpUri) { this.allowUnsecuredHttpUri = allowUnsecuredHttpUri; }
 
-    public boolean isAllowPrivateIpAddress() { return allowPrivateIpAddress; }
-    public void setAllowPrivateIpAddress(boolean allowPrivateIpAddress) { this.allowPrivateIpAddress = allowPrivateIpAddress; }
+    public Boolean getAllowPrivateIpAddress() { return allowPrivateIpAddress; }
+    public void setAllowPrivateIpAddress(Boolean allowPrivateIpAddress) { this.allowPrivateIpAddress = allowPrivateIpAddress; }
 
-    public int getFetchTimeoutMs() { return fetchTimeoutMs; }
-    public void setFetchTimeoutMs(int fetchTimeoutMs) { this.fetchTimeoutMs = fetchTimeoutMs; }
+    public Integer getFetchTimeoutMs() { return fetchTimeoutMs; }
+    public void setFetchTimeoutMs(Integer fetchTimeoutMs) { this.fetchTimeoutMs = fetchTimeoutMs; }
 
-    public int getMaxResponseSizeKb() { return maxResponseSizeKb; }
-    public void setMaxResponseSizeKb(int maxResponseSizeKb) { this.maxResponseSizeKb = maxResponseSizeKb; }
+    public Integer getMaxResponseSizeKb() { return maxResponseSizeKb; }
+    public void setMaxResponseSizeKb(Integer maxResponseSizeKb) { this.maxResponseSizeKb = maxResponseSizeKb; }
 
-    public int getCacheTtlSeconds() { return cacheTtlSeconds; }
-    public void setCacheTtlSeconds(int cacheTtlSeconds) { this.cacheTtlSeconds = cacheTtlSeconds; }
+    public Integer getCacheTtlSeconds() { return cacheTtlSeconds; }
+    public void setCacheTtlSeconds(Integer cacheTtlSeconds) { this.cacheTtlSeconds = cacheTtlSeconds; }
 
-    public int getCacheMaxEntries() { return cacheMaxEntries; }
-    public void setCacheMaxEntries(int cacheMaxEntries) { this.cacheMaxEntries = cacheMaxEntries; }
+    public Integer getCacheMaxEntries() { return cacheMaxEntries; }
+    public void setCacheMaxEntries(Integer cacheMaxEntries) { this.cacheMaxEntries = cacheMaxEntries; }
 
     public int getMaxJwtLifetimeSeconds() { return maxJwtLifetimeSeconds; }
     public void setMaxJwtLifetimeSeconds(int maxJwtLifetimeSeconds) { this.maxJwtLifetimeSeconds = maxJwtLifetimeSeconds; }

@@ -18,6 +18,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TrustDomainService } from '../../../../services/trust-domain.service';
+import {
+  DEFAULT_REFRESH_INTERVAL_SECONDS,
+  TOKEN_EXCHANGE,
+  TRUST_DOMAIN_KIND_OPTIONS,
+  TrustDomain,
+  TrustDomainKind,
+} from '../trust-domain.types';
 
 @Component({
   selector: 'app-trust-domain-creation',
@@ -26,18 +33,11 @@ import { TrustDomainService } from '../../../../services/trust-domain.service';
   standalone: false,
 })
 export class TrustDomainCreationComponent implements OnInit {
+  readonly TRUST_DOMAIN_KIND_OPTIONS = TRUST_DOMAIN_KIND_OPTIONS;
+
   domainId: string;
-
-  trustDomain = {
-    name: '',
-    description: '',
-    bundleSource: 'JWKS_URL',
-    jwksUrl: '',
-    refreshIntervalSeconds: 300,
-    allowedAlgorithms: [] as string[],
-  };
-
-  algorithmInput = '';
+  kind: TrustDomainKind;
+  trustDomain: TrustDomain;
 
   constructor(
     private route: ActivatedRoute,
@@ -48,32 +48,26 @@ export class TrustDomainCreationComponent implements OnInit {
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.data['domain'].id;
+    this.selectKind(TOKEN_EXCHANGE);
   }
 
-  addAlgorithm(value: string): void {
-    const trimmed = (value ?? '').trim();
-    if (trimmed && !this.trustDomain.allowedAlgorithms.includes(trimmed)) {
-      this.trustDomain.allowedAlgorithms.push(trimmed);
-    }
-    this.algorithmInput = '';
-  }
-
-  removeAlgorithm(alg: string): void {
-    this.trustDomain.allowedAlgorithms = this.trustDomain.allowedAlgorithms.filter((a) => a !== alg);
-  }
-
-  create(): void {
-    const payload = {
-      ...this.trustDomain,
-      allowedAlgorithms: this.trustDomain.allowedAlgorithms.length ? this.trustDomain.allowedAlgorithms : null,
+  selectKind(kind: TrustDomainKind): void {
+    this.kind = kind;
+    this.trustDomain = {
+      kind,
+      name: '',
+      refreshIntervalSeconds: DEFAULT_REFRESH_INTERVAL_SECONDS,
     };
+  }
+
+  create(payload: TrustDomain): void {
     this.trustDomainService.create(this.domainId, payload).subscribe({
-      next: () => {
-        this.snackbarService.open('Trust domain created');
-        this.router.navigate(['..'], { relativeTo: this.route });
+      next: (created) => {
+        this.snackbarService.open('Trusted domain created');
+        this.router.navigate(['..', created.id], { relativeTo: this.route });
       },
       error: (err: unknown) => {
-        const message = (err as any)?.error?.message || 'Failed to create trust domain';
+        const message = (err as any)?.error?.message || 'Failed to create trusted domain';
         this.snackbarService.open(message);
       },
     });

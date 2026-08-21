@@ -25,6 +25,8 @@ import io.gravitee.am.management.handlers.automation.resource.AutomationResource
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
+import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.ReporterPluginService;
@@ -35,6 +37,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.client.Entity;
@@ -115,6 +118,9 @@ public abstract class AutomationJerseySpringTest {
     @Autowired
     protected PluginConfigurationValidationService validationService;
 
+    @Autowired
+    protected TrustDomainService trustDomainService;
+
     @BeforeEach
     public void init() {
         // The service mocks are Spring singletons shared across the cached context, so clear any
@@ -122,6 +128,8 @@ public abstract class AutomationJerseySpringTest {
         // (e.g. "delete was never called") scoped to the test at hand.
         clearInvocations(permissionService, domainService, certificateService, identityProviderService,
                 defaultIdentityProviderService, reporterService);
+        reset(trustDomainService);
+        when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
         // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
         // to exercise rejection paths, and those would otherwise leak across the shared singleton context.
         reset(reporterPluginService, identityProviderManager, validationService);
@@ -152,6 +160,16 @@ public abstract class AutomationJerseySpringTest {
         @Bean
         public DomainService domainService() {
             return mock(DomainService.class);
+        }
+
+        @Bean
+        public TrustDomainService trustDomainService() {
+            return mock(TrustDomainService.class);
+        }
+
+        @Bean
+        public TrustedIssuerProjection trustedIssuerProjection() {
+            return new TrustedIssuerProjection(trustDomainService());
         }
 
         @Bean

@@ -1,0 +1,50 @@
+databaseChangeLog:
+  # A trusted domain now declares its kind and describes its key material in one shared shape.
+  # Rows written before this changeset are SPIFFE trust domains whose key material lives in the
+  # legacy bundle_source / jwks_url columns; those columns are kept readable but no longer written.
+  - changeSet:
+      id: 4.13.0-trust-domains-kind-and-key-material
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: trust_domains
+                columnName: kind
+      changes:
+        - addColumn:
+            tableName: trust_domains
+            columns:
+              - column: { name: kind, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: key_material, type: clob, constraints: { nullable: true } }
+
+        - update:
+            tableName: trust_domains
+            columns:
+              - column: { name: kind, value: SPIFFE }
+            where: kind IS NULL
+
+        - addNotNullConstraint:
+            tableName: trust_domains
+            columnName: kind
+            columnDataType: nvarchar(64)
+            defaultNullValue: SPIFFE
+
+        - dropNotNullConstraint:
+            tableName: trust_domains
+            columnName: bundle_source
+            columnDataType: nvarchar(64)
+
+        - dropIndex:
+            tableName: trust_domains
+            indexName: idx_trust_domains_ref_name
+
+        - createIndex:
+            columns:
+              - column: { name: reference_type }
+              - column: { name: reference_id }
+              - column: { name: kind }
+              - column: { name: name }
+            indexName: idx_trust_domains_ref_kind_name
+            tableName: trust_domains
+            unique: true

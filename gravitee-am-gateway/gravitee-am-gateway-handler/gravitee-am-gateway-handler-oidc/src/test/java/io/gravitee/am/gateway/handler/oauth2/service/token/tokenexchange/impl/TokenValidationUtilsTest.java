@@ -19,7 +19,9 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -193,8 +195,10 @@ public class TokenValidationUtilsTest {
     public void buildValidatedToken_withTrustedIssuer() {
         Domain domain = mock(Domain.class);
 
-        TrustedIssuer ti = new TrustedIssuer();
-        ti.setIssuer("https://external.example.com");
+        TrustDomain trustedDomain = TrustDomain.builder()
+                .kind(TrustDomainKind.TOKEN_EXCHANGE)
+                .tokenExchange(TrustDomainTokenExchangeSettings.builder().issuer("https://external.example.com").build())
+                .build();
 
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUB, "ext-user");
@@ -202,7 +206,7 @@ public class TokenValidationUtilsTest {
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 claims, 0, 0, 0,
                 Set.of(), List.of(),
-                "jwt", domain, ti);
+                "jwt", domain, trustedDomain);
 
         assertTrue(result.isTrustedIssuerValidated());
         assertEquals("ext-user", result.getSubject());

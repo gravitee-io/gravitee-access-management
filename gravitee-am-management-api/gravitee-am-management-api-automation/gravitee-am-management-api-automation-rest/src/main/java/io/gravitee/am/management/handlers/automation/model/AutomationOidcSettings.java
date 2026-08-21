@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.automation.model;
 
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -52,6 +53,9 @@ public class AutomationOidcSettings {
 
     @Schema(description = "Workload identity (SPIFFE) settings for the domain.")
     private SpiffeDomainSettings workloadIdentitySettings;
+
+    @Schema(description = "Fetch, SSRF and cache limits applied to every trusted domain in the security domain.")
+    private KeyRetrievalSettings keyRetrievalSettings;
 
     @Schema(description = "Whether redirect_uri and post_logout_redirect_uri values are matched strictly " +
             "during OpenID Connect flows.", defaultValue = "false")

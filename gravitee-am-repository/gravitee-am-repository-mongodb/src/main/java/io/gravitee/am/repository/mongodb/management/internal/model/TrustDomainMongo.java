@@ -27,12 +27,24 @@ public class TrustDomainMongo extends Auditable {
 
     private String referenceId;
     private String referenceType;
+    private String kind;
     private String name;
     private String description;
+    private TrustDomainKeyMaterialMongo keyMaterial;
+
+    /**
+     * Superseded by {@link #keyMaterial}; still read so trust domains stored before the shared
+     * key-material shape existed keep working.
+     */
     private String bundleSource;
+
+    /**
+     * Superseded by {@link #keyMaterial}; see {@link #bundleSource}.
+     */
     private String jwksUrl;
     private int refreshIntervalSeconds;
     private List<String> allowedAlgorithms;
+    private TrustDomainTokenExchangeMongo tokenExchange;
 
     public String getId() {
         return id;
@@ -56,6 +68,22 @@ public class TrustDomainMongo extends Auditable {
 
     public void setReferenceType(String referenceType) {
         this.referenceType = referenceType;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    public TrustDomainKeyMaterialMongo getKeyMaterial() {
+        return keyMaterial;
+    }
+
+    public void setKeyMaterial(TrustDomainKeyMaterialMongo keyMaterial) {
+        this.keyMaterial = keyMaterial;
     }
 
     public String getName() {
@@ -104,5 +132,13 @@ public class TrustDomainMongo extends Auditable {
 
     public void setAllowedAlgorithms(List<String> allowedAlgorithms) {
         this.allowedAlgorithms = allowedAlgorithms;
+    }
+
+    public TrustDomainTokenExchangeMongo getTokenExchange() {
+        return tokenExchange;
+    }
+
+    public void setTokenExchange(TrustDomainTokenExchangeMongo tokenExchange) {
+        this.tokenExchange = tokenExchange;
     }
 }

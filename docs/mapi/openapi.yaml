@@ -8424,7 +8424,7 @@ paths:
           description: Invalid trust domain configuration
         "500":
           description: Internal server error
-      summary: Register a SPIFFE trust domain on the security domain
+      summary: Register a trust domain on the security domain
       tags:
       - trust-domain
       - domain
@@ -14880,6 +14880,40 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/JWK"
+    KeyRetrievalSettings:
+      type: object
+      description: "Fetch, SSRF and cache limits applied to every trusted domain in\
+        \ the security domain, regardless of its kind."
+      properties:
+        allowPrivateIpAddress:
+          type: boolean
+          default: false
+          description: Whether key material can be fetched from private IP addresses.
+        allowUnsecuredHttpUri:
+          type: boolean
+          default: false
+          description: Whether key material can be fetched over unsecured HTTP URIs.
+        cacheMaxEntries:
+          type: integer
+          format: int32
+          default: 50
+          description: Maximum number of key material entries retained in the cache.
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+          default: 300
+          description: "Time-to-live, in seconds, for cached key material."
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+          default: 5000
+          description: "Timeout, in milliseconds, for fetching key material."
+        maxResponseSizeKb:
+          type: integer
+          format: int32
+          default: 32
+          description: "Maximum key material response size, in kilobytes."
+      title: Trusted domain key retrieval settings
     LoginSettings:
       type: object
       description: Configuration of the domain's login flow and the features offered
@@ -15779,6 +15813,8 @@ components:
             type: string
         bundleSource:
           type: string
+          deprecated: true
+          description: Use keyMaterial.source instead.
           enum:
           - JWKS_URL
           - STATIC_JWKS
@@ -15786,11 +15822,22 @@ components:
           type: string
         jwksUrl:
           type: string
+          deprecated: true
+          description: Use keyMaterial.jwksUrl instead.
+        keyMaterial:
+          $ref: "#/components/schemas/TrustDomainKeyMaterial"
+        kind:
+          type: string
+          enum:
+          - SPIFFE
+          - TOKEN_EXCHANGE
         name:
           type: string
         refreshIntervalSeconds:
           type: integer
           format: int32
+        tokenExchange:
+          $ref: "#/components/schemas/TrustDomainTokenExchangeSettings"
     NewUser:
       type: object
       properties:
@@ -15888,6 +15935,8 @@ components:
           $ref: "#/components/schemas/ClientRegistrationSettings"
         dpopSettings:
           $ref: "#/components/schemas/DPoPSettings"
+        keyRetrievalSettings:
+          $ref: "#/components/schemas/KeyRetrievalSettings"
         postLogoutRedirectUris:
           type: array
           description: "URLs to which a relying party may request the user be redirected\
@@ -16847,6 +16896,25 @@ components:
             $ref: "#/components/schemas/PatchApplicationFactorSettings"
         defaultFactorId:
           type: string
+    PatchKeyRetrievalSettings:
+      type: object
+      properties:
+        allowPrivateIpAddress:
+          type: boolean
+        allowUnsecuredHttpUri:
+          type: boolean
+        cacheMaxEntries:
+          type: integer
+          format: int32
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+        maxResponseSizeKb:
+          type: integer
+          format: int32
     PatchLoginSettings:
       type: object
       properties:
@@ -16913,6 +16981,8 @@ components:
           $ref: "#/components/schemas/PatchClientRegistrationSettings"
         dpopSettings:
           $ref: "#/components/schemas/PatchDPoPSettings"
+        keyRetrievalSettings:
+          $ref: "#/components/schemas/PatchKeyRetrievalSettings"
         postLogoutRedirectUris:
           type: array
           items:
@@ -17194,14 +17264,22 @@ components:
       properties:
         allowPrivateIpAddress:
           type: boolean
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.allowPrivateIpAddress."
         allowUnsecuredHttpUri:
           type: boolean
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.allowUnsecuredHttpUri."
         cacheMaxEntries:
           type: integer
           format: int32
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.cacheMaxEntries."
         cacheTtlSeconds:
           type: integer
           format: int32
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.cacheTtlSeconds."
         clockSkewSeconds:
           type: integer
           format: int32
@@ -17214,12 +17292,16 @@ components:
         fetchTimeoutMs:
           type: integer
           format: int32
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.fetchTimeoutMs."
         maxJwtLifetimeSeconds:
           type: integer
           format: int32
         maxResponseSizeKb:
           type: integer
           format: int32
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.maxResponseSizeKb."
     PatchStepUpAuthentication:
       type: object
       properties:
@@ -17857,22 +17939,22 @@ components:
       properties:
         allowPrivateIpAddress:
           type: boolean
-          default: false
-          description: Whether trust bundles can be fetched from private IP addresses.
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.allowPrivateIpAddress."
         allowUnsecuredHttpUri:
           type: boolean
-          default: false
-          description: Whether trust bundles can be fetched over unsecured HTTP URIs.
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.allowUnsecuredHttpUri."
         cacheMaxEntries:
           type: integer
           format: int32
-          default: 50
-          description: Maximum number of trust bundle entries retained in the cache.
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.cacheMaxEntries."
         cacheTtlSeconds:
           type: integer
           format: int32
-          default: 300
-          description: "Time-to-live, in seconds, for cached trust bundle entries."
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.cacheTtlSeconds."
         clockSkewSeconds:
           type: integer
           format: int32
@@ -17895,8 +17977,8 @@ components:
         fetchTimeoutMs:
           type: integer
           format: int32
-          default: 5000
-          description: "Timeout, in milliseconds, for fetching trust bundles."
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.fetchTimeoutMs."
         maxJwtLifetimeSeconds:
           type: integer
           format: int32
@@ -17906,8 +17988,8 @@ components:
         maxResponseSizeKb:
           type: integer
           format: int32
-          default: 32
-          description: "Maximum trust bundle response size, in kilobytes."
+          deprecated: true
+          description: "Deprecated: moved to oidc.keyRetrievalSettings.maxResponseSizeKb."
     StatusEntity:
       type: object
       properties:
@@ -18157,8 +18239,11 @@ components:
           $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         trustedIssuers:
           type: array
-          description: "External issuers whose JWTs may be accepted as subject or\
-            \ actor tokens. When unset, only domain-issued tokens are accepted."
+          deprecated: true
+          description: "Deprecated: use the trusted-domains API instead. External\
+            \ issuers whose JWTs may be accepted as subject or actor tokens. A projection\
+            \ over the security domain's token-exchange trusted domains; a write replaces\
+            \ the list, so an omitted issuer is no longer trusted."
           items:
             $ref: "#/components/schemas/TrustedIssuer"
       title: Token exchange settings
@@ -18171,6 +18256,9 @@ components:
             type: string
         bundleSource:
           type: string
+          deprecated: true
+          description: Use keyMaterial.source instead. Null when the key material
+            is a PEM certificate.
           enum:
           - JWKS_URL
           - STATIC_JWKS
@@ -18184,6 +18272,15 @@ components:
           type: string
         jwksUrl:
           type: string
+          deprecated: true
+          description: Use keyMaterial.jwksUrl instead.
+        keyMaterial:
+          $ref: "#/components/schemas/TrustDomainKeyMaterial"
+        kind:
+          type: string
+          enum:
+          - SPIFFE
+          - TOKEN_EXCHANGE
         name:
           type: string
         referenceId:
@@ -18202,12 +18299,68 @@ components:
           format: int32
         staticJwks:
           $ref: "#/components/schemas/JWKSet"
+        tokenExchange:
+          $ref: "#/components/schemas/TrustDomainTokenExchangeSettings"
         updatedAt:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    TrustDomainKeyMaterial:
+      type: object
+      description: Where the trusted domain's signing keys come from. Exactly one
+        source applies.
+      properties:
+        certificate:
+          type: string
+          description: PEM-encoded X.509 certificate. Required when source is PEM.
+        jwkSet:
+          $ref: "#/components/schemas/JWKSet"
+        jwksUrl:
+          type: string
+          description: JWKS endpoint URL. Required when source is JWKS_URL.
+          example: https://issuer.example.com/.well-known/jwks.json
+        source:
+          type: string
+          description: Which of the three key sources this trusted domain uses.
+          enum:
+          - JWKS_URL
+          - JWK_SET
+          - PEM
+      title: Trusted domain key material
+    TrustDomainTokenExchangeSettings:
+      type: object
+      description: Settings that apply only to a trusted domain of the TOKEN_EXCHANGE
+        kind.
+      properties:
+        issuer:
+          type: string
+          description: Expected value of the "iss" claim in the external JWT. Unique
+            per security domain.
+          example: https://issuer.example.com
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+            description: One-to-one mapping from external scope to domain scope. Unmapped
+              issuer scopes are dropped (fail-closed).
+          description: One-to-one mapping from external scope to domain scope. Unmapped
+            issuer scopes are dropped (fail-closed).
+        userBindingCriteria:
+          type: array
+          description: Criteria used to locate a domain user when user binding is
+            enabled. All criteria are combined with AND.
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+          default: false
+          description: "Whether the external JWT subject is resolved to a single domain\
+            \ user using the user binding criteria. When false, a virtual user is\
+            \ built from the token claims only."
+      title: Token-exchange trusted domain settings
     TrustedIssuer:
       type: object
+      deprecated: true
       description: "An external token issuer whose JWTs are accepted as subject or\
         \ actor tokens during token exchange, validated with the configured key material."
       properties:
@@ -18670,6 +18823,8 @@ components:
             type: string
         bundleSource:
           type: string
+          deprecated: true
+          description: Use keyMaterial.source instead.
           enum:
           - JWKS_URL
           - STATIC_JWKS
@@ -18677,9 +18832,15 @@ components:
           type: string
         jwksUrl:
           type: string
+          deprecated: true
+          description: Use keyMaterial.jwksUrl instead.
+        keyMaterial:
+          $ref: "#/components/schemas/TrustDomainKeyMaterial"
         refreshIntervalSeconds:
           type: integer
           format: int32
+        tokenExchange:
+          $ref: "#/components/schemas/TrustDomainTokenExchangeSettings"
     UpdateUser:
       type: object
       properties:

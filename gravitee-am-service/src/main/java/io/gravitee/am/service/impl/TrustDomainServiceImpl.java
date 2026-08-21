@@ -15,17 +15,24 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.certificate.api.X509CertUtils;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.oidc.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -33,6 +40,7 @@ import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.TrustDomainAlreadyExistsException;
+import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
@@ -86,8 +94,8 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     }
 
     @Override
-    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
-        return repository.findByName(referenceType, referenceId, name);
+    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, TrustDomainKind kind, String name) {
+        return repository.findByName(referenceType, referenceId, kind, name);
     }
 
     @Override
@@ -103,25 +111,27 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         TrustDomain td = new TrustDomain();
         td.setReferenceType(ReferenceType.DOMAIN);
         td.setReferenceId(domain.getId());
+        td.setKind(Optional.ofNullable(input.getKind()).orElse(TrustDomainKind.SPIFFE));
         td.setName(input.getName() != null ? input.getName().toLowerCase(Locale.ROOT) : null);
         td.setDescription(input.getDescription());
-        td.setBundleSource(input.getBundleSource());
-        td.setJwksUrl(input.getJwksUrl());
+        td.setKeyMaterial(resolveKeyMaterial(input.getKeyMaterial(), input.getBundleSource(), input.getJwksUrl()));
         td.setRefreshIntervalSeconds(Optional.ofNullable(input.getRefreshIntervalSeconds())
                 .orElse(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS));
         td.setAllowedAlgorithms(input.getAllowedAlgorithms());
+        td.setTokenExchange(input.getTokenExchange());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
 
         return validate(domain, td)
-                .andThen(repository.findByName(ReferenceType.DOMAIN, domain.getId(), td.getName())
+                .andThen(repository.findByName(ReferenceType.DOMAIN, domain.getId(), td.getKind(), td.getName())
                         .isEmpty()
                         .flatMap(absent -> {
                             if (!absent) {
                                 return Single.error(new TrustDomainAlreadyExistsException(td.getName()));
                             }
-                            return repository.create(td)
+                            return rejectDuplicateIssuer(domain, td, null)
+                                    .andThen(Single.defer(() -> repository.create(td)))
                                     .flatMap(created -> publish(domain, created, Action.CREATE).andThen(Single.just(created)));
                         }))
                 .doOnSuccess(created -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
@@ -154,11 +164,10 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                     }
                     TrustDomain updated = new TrustDomain(existing);
                     updated.setDescription(input.getDescription());
-                    if (input.getBundleSource() != null) {
-                        updated.setBundleSource(input.getBundleSource());
-                    }
-                    if (input.getJwksUrl() != null) {
-                        updated.setJwksUrl(input.getJwksUrl());
+                    TrustDomainKeyMaterial keyMaterial =
+                            resolveKeyMaterial(input.getKeyMaterial(), input.getBundleSource(), input.getJwksUrl());
+                    if (keyMaterial != null) {
+                        updated.setKeyMaterial(keyMaterial);
                     }
                     if (input.getRefreshIntervalSeconds() != null) {
                         updated.setRefreshIntervalSeconds(input.getRefreshIntervalSeconds());
@@ -166,11 +175,15 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                     if (input.getAllowedAlgorithms() != null) {
                         updated.setAllowedAlgorithms(input.getAllowedAlgorithms());
                     }
+                    if (input.getTokenExchange() != null) {
+                        updated.setTokenExchange(input.getTokenExchange());
+                    }
                     updated.setUpdatedAt(new Date());
                     updatedRef.set(updated);
 
                     return validate(domain, updated)
-                            .andThen(repository.update(updated))
+                            .andThen(rejectDuplicateIssuer(domain, updated, existing))
+                            .andThen(Single.defer(() -> repository.update(updated)))
                             .flatMap(saved -> publish(domain, saved, Action.UPDATE).andThen(Single.just(saved)));
                 })
                 .doOnSuccess(saved -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
@@ -233,37 +246,64 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                 });
     }
 
+    private Completable rejectDuplicateIssuer(Domain domain, TrustDomain td, TrustDomain beforeUpdate) {
+        if (td.getKind() != TrustDomainKind.TOKEN_EXCHANGE) {
+            return Completable.complete();
+        }
+        String issuer = td.getTokenExchange().getIssuer();
+        if (beforeUpdate != null && beforeUpdate.getTokenExchange() != null
+                && issuer.equals(beforeUpdate.getTokenExchange().getIssuer())) {
+            return Completable.complete();
+        }
+        return Completable.defer(() -> repository.findByIssuer(ReferenceType.DOMAIN, domain.getId(), issuer)
+                .flatMapCompletable(conflict -> Completable.error(new TrustDomainIssuerAlreadyExistsException(issuer))));
+    }
+
     private Completable publish(Domain domain, TrustDomain trustDomain, Action action) {
         Event event = new Event(TRUST_DOMAIN, new Payload(trustDomain.getId(), trustDomain.getReferenceType(), trustDomain.getReferenceId(), action));
         return eventService.create(event, domain).ignoreElement();
     }
 
+    /**
+     * Maps the deprecated bundle-source input onto the shared key-material shape. The deprecated
+     * fields are ignored whenever key material is supplied directly; a bare {@code jwksUrl} means
+     * the JWKS-URL source, as it did before the bundle source became explicit.
+     */
+    private static TrustDomainKeyMaterial resolveKeyMaterial(TrustDomainKeyMaterial keyMaterial,
+                                                             SpiffeBundleSource bundleSource,
+                                                             String jwksUrl) {
+        if (keyMaterial != null) {
+            return keyMaterial;
+        }
+        if (bundleSource == null && jwksUrl == null) {
+            return null;
+        }
+        return TrustDomainKeyMaterial.fromBundleSource(
+                bundleSource != null ? bundleSource : SpiffeBundleSource.JWKS_URL, jwksUrl);
+    }
+
     private Completable validate(Domain domain, TrustDomain td) {
-        SpiffeDomainSettings settings = Optional.ofNullable(domain.getOidc())
+        SpiffeDomainSettings spiffeSettings = Optional.ofNullable(domain.getOidc())
                 .map(o -> o.getWorkloadIdentitySettings())
                 .orElseGet(SpiffeDomainSettings::defaultSettings);
+        KeyRetrievalSettings settings = Optional.ofNullable(domain.getOidc())
+                .map(o -> o.getKeyRetrievalSettings())
+                .orElseGet(KeyRetrievalSettings::defaultSettings);
 
-        if (!settings.isEnabled()) {
+        if (td.getKind() == TrustDomainKind.SPIFFE && !spiffeSettings.isEnabled()) {
             return Completable.error(new InvalidTrustDomainException(
                     "SPIFFE workload identity is disabled for this domain. Enable it in domain settings before registering trust domains."));
         }
         if (td.getName() == null || !NAME_PATTERN.matcher(td.getName()).matches()) {
             return Completable.error(new InvalidTrustDomainException("name must be a DNS-style label (lowercase letters, digits, '.' or '-')"));
         }
-        if (td.getBundleSource() == null) {
-            return Completable.error(new InvalidTrustDomainException("bundleSource is required"));
+        Optional<String> kindError = validateKindSettings(td);
+        if (kindError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(kindError.get()));
         }
-        if (td.getBundleSource() != SpiffeBundleSource.JWKS_URL) {
-            return Completable.error(new InvalidTrustDomainException(
-                    "Only bundleSource=JWKS_URL is supported in this release"));
-        }
-        if (td.getJwksUrl() == null || td.getJwksUrl().isBlank()) {
-            return Completable.error(new InvalidTrustDomainException("jwksUrl is required when bundleSource=JWKS_URL"));
-        }
-        Optional<String> urlError = PrivateAddressGuard.validateHttpUrl(
-                "jwksUrl", td.getJwksUrl(), settings.isAllowUnsecuredHttpUri(), settings.isAllowPrivateIpAddress());
-        if (urlError.isPresent()) {
-            return Completable.error(new InvalidTrustDomainException(urlError.get()));
+        Optional<String> keyMaterialError = validateKeyMaterial(td.getKeyMaterial(), settings);
+        if (keyMaterialError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(keyMaterialError.get()));
         }
         if (td.getRefreshIntervalSeconds() <= 0) {
             return Completable.error(new InvalidTrustDomainException("refreshIntervalSeconds must be positive"));
@@ -278,5 +318,76 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             }
         }
         return Completable.complete();
+    }
+
+    private Optional<String> validateKindSettings(TrustDomain td) {
+        if (td.getKind() == TrustDomainKind.SPIFFE) {
+            return td.getTokenExchange() != null
+                    ? Optional.of("tokenExchange settings are only allowed on a trusted domain of kind TOKEN_EXCHANGE")
+                    : Optional.empty();
+        }
+        if (td.getAllowedAlgorithms() != null) {
+            return Optional.of("allowedAlgorithms is only allowed on a trusted domain of kind SPIFFE");
+        }
+        TrustDomainTokenExchangeSettings tokenExchange = td.getTokenExchange();
+        if (tokenExchange == null) {
+            return Optional.of("tokenExchange settings are required on a trusted domain of kind TOKEN_EXCHANGE");
+        }
+        if (tokenExchange.getIssuer() == null || tokenExchange.getIssuer().isBlank()) {
+            return Optional.of("tokenExchange.issuer is required");
+        }
+        return validateUserBinding(tokenExchange);
+    }
+
+    private Optional<String> validateUserBinding(TrustDomainTokenExchangeSettings tokenExchange) {
+        if (!tokenExchange.isUserBindingEnabled()) {
+            return Optional.empty();
+        }
+        List<UserBindingCriterion> criteria = tokenExchange.getUserBindingCriteria();
+        if (criteria == null || criteria.isEmpty()) {
+            return Optional.of("tokenExchange.userBindingCriteria must not be empty when user binding is enabled");
+        }
+        boolean incomplete = criteria.stream().anyMatch(c -> c == null
+                || c.getAttribute() == null || c.getAttribute().isBlank()
+                || c.getExpression() == null || c.getExpression().isBlank());
+        return incomplete
+                ? Optional.of("tokenExchange.userBindingCriteria entries must have a non-blank attribute and expression")
+                : Optional.empty();
+    }
+
+    private Optional<String> validateKeyMaterial(TrustDomainKeyMaterial keyMaterial, KeyRetrievalSettings settings) {
+        if (keyMaterial == null || keyMaterial.getSource() == null) {
+            return Optional.of("keyMaterial.source is required");
+        }
+        return switch (keyMaterial.getSource()) {
+            case JWKS_URL -> validateJwksUrl(keyMaterial.getJwksUrl(), settings);
+            case JWK_SET -> validateJwkSet(keyMaterial.getJwkSet());
+            case PEM -> validateCertificate(keyMaterial.getCertificate());
+        };
+    }
+
+    private Optional<String> validateJwkSet(JWKSet jwkSet) {
+        if (jwkSet == null || jwkSet.getKeys() == null || jwkSet.getKeys().isEmpty()) {
+            return Optional.of("keyMaterial.jwkSet must contain at least one key when source=JWK_SET");
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> validateJwksUrl(String jwksUrl, KeyRetrievalSettings settings) {
+        if (jwksUrl == null || jwksUrl.isBlank()) {
+            return Optional.of("keyMaterial.jwksUrl is required when source=JWKS_URL");
+        }
+        return PrivateAddressGuard.validateHttpUrl(
+                "jwksUrl", jwksUrl, settings.isAllowUnsecuredHttpUri(), settings.isAllowPrivateIpAddress());
+    }
+
+    private Optional<String> validateCertificate(String certificate) {
+        if (certificate == null || certificate.isBlank()) {
+            return Optional.of("keyMaterial.certificate is required when source=PEM");
+        }
+        if (X509CertUtils.parse(certificate) == null) {
+            return Optional.of("keyMaterial.certificate is not a valid PEM-encoded X.509 certificate");
+        }
+        return Optional.empty();
     }
 }

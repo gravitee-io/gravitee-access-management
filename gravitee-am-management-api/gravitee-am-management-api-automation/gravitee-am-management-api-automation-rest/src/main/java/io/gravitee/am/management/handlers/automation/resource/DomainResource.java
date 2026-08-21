@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationDomainMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,6 +53,9 @@ public class DomainResource extends AbstractAutomationResource {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private TrustedIssuerProjection trustedIssuerProjection;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetDomain", summary = "Get a domain",
@@ -70,6 +74,7 @@ public class DomainResource extends AbstractAutomationResource {
         final AutomationRef domainRef = AutomationRef.parse(domainKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.READ)
                 .andThen(resolver.resolveDomain(environmentId, domainRef))
+                .flatMap(trustedIssuerProjection::project)
                 .map(AutomationDomainMapper::toAutomationDomain)
                 .subscribe(response::resume, response::resume);
     }

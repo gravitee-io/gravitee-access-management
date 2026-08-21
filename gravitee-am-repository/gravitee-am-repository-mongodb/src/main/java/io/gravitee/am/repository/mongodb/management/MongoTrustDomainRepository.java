@@ -15,14 +15,23 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.jose.JWKModule;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainKeyMaterialMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainTokenExchangeMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -31,12 +40,16 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
@@ -45,10 +58,18 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
  * @author GraviteeSource Team
  */
 @Component
+@CustomLog
 public class MongoTrustDomainRepository extends AbstractManagementMongoRepository implements TrustDomainRepository {
 
     private static final String COLLECTION_NAME = "trust_domains";
     private static final String FIELD_NAME = "name";
+    private static final String FIELD_KIND = "kind";
+    private static final String FIELD_ISSUER = "tokenExchange.issuer";
+
+    /** Superseded by the kind-scoped index; names are unique per kind, not per reference. */
+    private static final String UNUSED_INDEX = "rt1ri1n1";
+
+    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
 
     private MongoCollection<TrustDomainMongo> collection;
 
@@ -57,9 +78,29 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         collection = mongoOperations.getCollection(COLLECTION_NAME, TrustDomainMongo.class);
         super.init(collection);
         super.createIndex(collection, Map.of(
-                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1),
-                new IndexOptions().name("rt1ri1n1").unique(true)
+                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_KIND, 1).append(FIELD_NAME, 1),
+                new IndexOptions().name("rt1ri1k1n1").unique(true),
+                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ISSUER, 1),
+                new IndexOptions().name("rt1ri1te1i1").unique(true)
+                        .partialFilterExpression(exists(FIELD_ISSUER, true))
         ));
+        if (ensureIndexOnStart) {
+            stampKindOnLegacyDocuments()
+                    .andThen(dropIndexes(collection, UNUSED_INDEX::equals))
+                    .subscribe();
+        }
+    }
+
+    /**
+     * Trust domains stored before the kind discriminator existed are all SPIFFE. Stamping them puts
+     * them inside the kind-scoped unique index, which would otherwise treat their absent kind as a
+     * distinct value from every new SPIFFE trusted domain.
+     */
+    private Completable stampKindOnLegacyDocuments() {
+        return Completable.fromPublisher(collection.updateMany(
+                        exists(FIELD_KIND, false),
+                        new Document("$set", new Document(FIELD_KIND, TrustDomainKind.SPIFFE.name()))))
+                .doOnError(error -> log.warn("Unable to stamp the SPIFFE kind on legacy trust domains", error));
     }
 
     @Override
@@ -106,14 +147,35 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
+    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, TrustDomainKind kind, String name) {
         return Observable.fromPublisher(collection.find(and(
                         eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                         eq(FIELD_REFERENCE_ID, referenceId),
+                        kindFilter(kind),
                         eq(FIELD_NAME, name))).first())
                 .firstElement()
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
+        return Observable.fromPublisher(collection.find(and(
+                        eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                        eq(FIELD_REFERENCE_ID, referenceId),
+                        eq(FIELD_ISSUER, issuer))).first())
+                .firstElement()
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    /**
+     * Trust domains stored before the kind discriminator existed carry no kind field and are SPIFFE.
+     */
+    private static Bson kindFilter(TrustDomainKind kind) {
+        return kind == TrustDomainKind.SPIFFE
+                ? or(eq(FIELD_KIND, kind.name()), exists(FIELD_KIND, false))
+                : eq(FIELD_KIND, kind.name());
     }
 
     private TrustDomain toEntity(TrustDomainMongo doc) {
@@ -124,12 +186,13 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         td.setId(doc.getId());
         td.setReferenceId(doc.getReferenceId());
         td.setReferenceType(doc.getReferenceType() != null ? ReferenceType.valueOf(doc.getReferenceType()) : null);
+        td.setKind(TrustDomainKind.fromStored(doc.getKind()));
         td.setName(doc.getName());
         td.setDescription(doc.getDescription());
-        td.setBundleSource(doc.getBundleSource() != null ? SpiffeBundleSource.valueOf(doc.getBundleSource()) : null);
-        td.setJwksUrl(doc.getJwksUrl());
+        td.setKeyMaterial(readKeyMaterial(doc));
         td.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
         td.setAllowedAlgorithms(doc.getAllowedAlgorithms());
+        td.setTokenExchange(doc.getTokenExchange() != null ? doc.getTokenExchange().convert() : null);
         td.setCreatedAt(doc.getCreatedAt());
         td.setUpdatedAt(doc.getUpdatedAt());
         return td;
@@ -143,14 +206,68 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         doc.setId(td.getId());
         doc.setReferenceId(td.getReferenceId());
         doc.setReferenceType(td.getReferenceType() != null ? td.getReferenceType().name() : null);
+        doc.setKind(td.getKind() != null ? td.getKind().name() : TrustDomainKind.SPIFFE.name());
         doc.setName(td.getName());
         doc.setDescription(td.getDescription());
-        doc.setBundleSource(td.getBundleSource() != null ? td.getBundleSource().name() : null);
-        doc.setJwksUrl(td.getJwksUrl());
+        doc.setKeyMaterial(toMongo(td.getKeyMaterial()));
         doc.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
         doc.setAllowedAlgorithms(td.getAllowedAlgorithms());
+        doc.setTokenExchange(TrustDomainTokenExchangeMongo.convert(td.getTokenExchange()));
         doc.setCreatedAt(td.getCreatedAt());
         doc.setUpdatedAt(td.getUpdatedAt());
         return doc;
+    }
+
+    /**
+     * Reads the shared key-material shape, falling back to the legacy bundle-source fields for
+     * trust domains stored before it existed.
+     */
+    static TrustDomainKeyMaterial readKeyMaterial(TrustDomainMongo doc) {
+        TrustDomainKeyMaterialMongo keyMaterial = doc.getKeyMaterial();
+        if (keyMaterial != null) {
+            return TrustDomainKeyMaterial.builder()
+                    .source(keyMaterial.getSource() != null ? KeyMaterialSource.valueOf(keyMaterial.getSource()) : null)
+                    .jwksUrl(keyMaterial.getJwksUrl())
+                    .jwkSet(parseJwkSet(keyMaterial.getJwkSet()))
+                    .certificate(keyMaterial.getCertificate())
+                    .build();
+        }
+        return TrustDomainKeyMaterial.fromBundleSource(
+                doc.getBundleSource() != null ? SpiffeBundleSource.valueOf(doc.getBundleSource()) : null,
+                doc.getJwksUrl());
+    }
+
+    private static TrustDomainKeyMaterialMongo toMongo(TrustDomainKeyMaterial keyMaterial) {
+        if (keyMaterial == null) {
+            return null;
+        }
+        TrustDomainKeyMaterialMongo doc = new TrustDomainKeyMaterialMongo();
+        doc.setSource(keyMaterial.getSource() != null ? keyMaterial.getSource().name() : null);
+        doc.setJwksUrl(keyMaterial.getJwksUrl());
+        doc.setJwkSet(serializeJwkSet(keyMaterial.getJwkSet()));
+        doc.setCertificate(keyMaterial.getCertificate());
+        return doc;
+    }
+
+    private static JWKSet parseJwkSet(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return MAPPER.readValue(json, JWKSet.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to parse trust domain JWK set", e);
+        }
+    }
+
+    private static String serializeJwkSet(JWKSet jwkSet) {
+        if (jwkSet == null) {
+            return null;
+        }
+        try {
+            return MAPPER.writeValueAsString(jwkSet);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize trust domain JWK set", e);
+        }
     }
 }

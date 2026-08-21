@@ -36,9 +36,9 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
-import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
@@ -103,10 +103,10 @@ public class ClientAssertionServiceTest {
     private Domain domain;
 
     @Mock
-    private TrustBundleService trustBundleService;
+    private TrustDomainKeyService trustDomainKeyService;
 
     @Mock
-    private TrustDomainRepository trustDomainRepository;
+    private TrustDomainManager trustDomainManager;
 
     @Mock
     private io.gravitee.am.service.AuditService auditService;
@@ -120,7 +120,7 @@ public class ClientAssertionServiceTest {
         var agentJwtBearer = new AgentJwtBearerClientAssertionValidator(
                 clientLookupService, jwkService, jwsService, openIDDiscoveryService, domain);
         var spiffe = new SpiffeClientAssertionValidator(
-                clientLookupService, jwsService, openIDDiscoveryService, domain, trustBundleService, trustDomainRepository);
+                clientLookupService, jwsService, openIDDiscoveryService, domain, trustDomainKeyService, trustDomainManager);
         clientAssertionService = new ClientAssertionServiceImpl(List.of(jwtBearer, agentJwtBearer, spiffe));
         lenient().when(clientLookupService.findByClientId(any())).thenReturn(Maybe.empty());
     }

@@ -51,6 +51,9 @@ public class PatchOIDCSettings {
     @JsonProperty("workloadIdentitySettings")
     private Optional<PatchSpiffeDomainSettings> workloadIdentitySettings;
 
+    @JsonProperty("keyRetrievalSettings")
+    private Optional<PatchKeyRetrievalSettings> keyRetrievalSettings;
+
     private Optional<Boolean> redirectUriStrictMatching;
 
     private Optional<List<String>> postLogoutRedirectUris;
@@ -128,6 +131,14 @@ public class PatchOIDCSettings {
         this.workloadIdentitySettings = workloadIdentitySettings;
     }
 
+    public Optional<PatchKeyRetrievalSettings> getKeyRetrievalSettings() {
+        return keyRetrievalSettings;
+    }
+
+    public void setKeyRetrievalSettings(Optional<PatchKeyRetrievalSettings> keyRetrievalSettings) {
+        this.keyRetrievalSettings = keyRetrievalSettings;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
         toPatch = toPatch == null ? OIDCSettings.defaultSettings() : new OIDCSettings(toPatch);
         SetterUtils.safeSet(toPatch::setRedirectUriStrictMatching, this.getRedirectUriStrictMatching(), boolean.class);
@@ -195,6 +206,24 @@ public class PatchOIDCSettings {
             }
         }
 
+        final PatchKeyRetrievalSettings relocatedFromSpiffe =
+                getWorkloadIdentitySettings() != null && getWorkloadIdentitySettings().isPresent()
+                        ? getWorkloadIdentitySettings().get().toKeyRetrievalPatch()
+                        : null;
+        if (relocatedFromSpiffe != null) {
+            toPatch.setKeyRetrievalSettings(relocatedFromSpiffe.patch(toPatch.getKeyRetrievalSettings()));
+        }
+
+        if (getKeyRetrievalSettings() != null) {
+            if (getKeyRetrievalSettings().isPresent()) {
+                final PatchKeyRetrievalSettings patcher = getKeyRetrievalSettings().get();
+                final KeyRetrievalSettings source = toPatch.getKeyRetrievalSettings();
+                toPatch.setKeyRetrievalSettings(patcher.patch(source));
+            } else {
+                toPatch.setKeyRetrievalSettings(KeyRetrievalSettings.defaultSettings());
+            }
+        }
+
         return toPatch;
     }
 
@@ -209,6 +238,7 @@ public class PatchOIDCSettings {
                 || (cibaSettings != null && cibaSettings.isPresent())
                 || (cimdSettings != null && cimdSettings.isPresent())
                 || (workloadIdentitySettings != null && workloadIdentitySettings.isPresent())
+                || (keyRetrievalSettings != null && keyRetrievalSettings.isPresent())
                 || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
                 || (requestUris != null && requestUris.isPresent())
                 || (securityProfileSettings != null && securityProfileSettings.isPresent())) {

@@ -19,11 +19,14 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationDomainMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -53,6 +56,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Stuart Clark
@@ -66,6 +70,9 @@ public class DomainsResource extends AbstractAutomationResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private TrustedIssuerProjection trustedIssuerProjection;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -87,6 +94,7 @@ public class DomainsResource extends AbstractAutomationResource {
                 .andThen(domainService.findAllByEnvironment(organizationId, environmentId)
                         .filter(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .concatMapSingle(trustedIssuerProjection::project)
                         .map(AutomationDomainMapper::toAutomationDomain)
                         .toList())
                 .subscribe(response::resume, response::resume);
@@ -181,9 +189,21 @@ public class DomainsResource extends AbstractAutomationResource {
         return automationIdentityProviders(domain.getId())
                 .flatMap(idps -> {
                     AutomationDomainMapper.applyTo(definition, domain, idps);
-                    return domainService.update(domain.getId(), domain, false);
+                    return trustedIssuerProjection.apply(domain, declaredTrustedIssuers(definition), principal)
+                            .andThen(Single.defer(() -> domainService.update(domain.getId(), domain, false)));
                 })
+                .flatMap(trustedIssuerProjection::project)
                 .map(AutomationDomainMapper::toAutomationDomain);
+    }
+
+    /**
+     * The definition declares the whole desired state, so trusted issuers it omits are no longer
+     * trusted — unlike the management API's partial patch, where an absent list is left alone.
+     */
+    private static List<TrustedIssuer> declaredTrustedIssuers(AutomationDomain definition) {
+        return Optional.ofNullable(definition.getTokenExchangeSettings())
+                .map(TokenExchangeSettings::getTrustedIssuers)
+                .orElse(List.of());
     }
 
     private Single<List<IdentityProvider>> automationIdentityProviders(String domainId) {

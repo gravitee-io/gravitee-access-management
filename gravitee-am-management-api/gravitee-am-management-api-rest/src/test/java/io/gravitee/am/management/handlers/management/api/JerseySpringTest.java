@@ -32,6 +32,8 @@ import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginServi
 import io.gravitee.am.management.service.AuthorizationEngineManager;
 import io.gravitee.am.management.service.AuthorizationEnginePluginService;
 import io.gravitee.am.management.service.AuthorizationEngineServiceProxy;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
+import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.CertificateManager;
@@ -40,6 +42,10 @@ import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.management.service.FactorPluginService;
@@ -101,6 +107,7 @@ import io.gravitee.am.service.validators.plugincfg.PluginJsonFormValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.node.api.license.LicenseManager;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
 import jakarta.servlet.http.HttpServletRequest;
@@ -130,9 +137,14 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -331,6 +343,9 @@ public abstract class JerseySpringTest {
     protected AuthorizationEngineServiceProxy authorizationEngineServiceProxy;
 
     @Autowired
+    protected TrustDomainService trustDomainService;
+
+    @Autowired
     protected AuthorizationEngineManager authorizationEngineManager;
 
     @Autowired
@@ -339,9 +354,25 @@ public abstract class JerseySpringTest {
     @Autowired
     protected LicenseManager licenseManager;
 
+    /**
+     * Answers permission checks against a principal holding only these permissions on the given
+     * security domain, so the real matching logic decides rather than a blanket true or false.
+     */
+    protected void grantOnly(String domainId, Permission... permissions) {
+        Membership membership = new Membership();
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setReferenceId(domainId);
+        Map<Permission, Set<Acl>> held = Arrays.stream(permissions)
+                .collect(Collectors.toMap(Function.identity(), permission -> Set.of(Acl.values())));
+        Map<Membership, Map<Permission, Set<Acl>>> byMembership = Map.of(membership, held);
+        doAnswer(invocation -> Single.just(invocation.<PermissionAcls>getArgument(1).match(byMembership)))
+                .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+    }
+
     @BeforeEach
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
+        Mockito.lenient().when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
     }
 
     @Configuration
@@ -723,6 +754,16 @@ public abstract class JerseySpringTest {
         @Bean
         public AuthorizationEngineServiceProxy authorizationEngineServiceProxy() {
             return mock(AuthorizationEngineServiceProxy.class);
+        }
+
+        @Bean
+        public TrustDomainService trustDomainService() {
+            return mock(TrustDomainService.class);
+        }
+
+        @Bean
+        public TrustedIssuerProjection trustedIssuerProjection() {
+            return new TrustedIssuerProjection(trustDomainService());
         }
 
         @Bean

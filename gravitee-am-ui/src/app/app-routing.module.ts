@@ -274,8 +274,6 @@ import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
 import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
 import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
-import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
-import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
@@ -2372,8 +2370,8 @@ export const routes: Routes = [
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
-                            label: 'Trust Domains',
-                            section: 'Workload Identity',
+                            label: 'Trusted Domains',
+                            section: 'Security',
                             level: 'level2',
                           },
                           perms: {
@@ -3024,18 +3022,6 @@ export const routes: Routes = [
                         children: [
                           { path: '', redirectTo: 'settings', pathMatch: 'full' },
                           { path: 'settings', component: TokenExchangeSettingsComponent },
-                          {
-                            path: 'trusted-issuers',
-                            children: [
-                              { path: '', component: TrustedIssuersListComponent, pathMatch: 'full' },
-                              { path: 'new', component: TrustedIssuerDetailComponent },
-                              {
-                                path: ':issuerIndex',
-                                component: TrustedIssuerDetailComponent,
-                                data: { breadcrumb: { label: 'detail' } },
-                              },
-                            ],
-                          },
                         ],
                       },
                       {

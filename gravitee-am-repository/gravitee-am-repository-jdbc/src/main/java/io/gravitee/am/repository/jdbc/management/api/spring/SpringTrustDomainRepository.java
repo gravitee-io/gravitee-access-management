@@ -27,8 +27,14 @@ public interface SpringTrustDomainRepository extends RxJava3CrudRepository<JdbcT
     @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId")
     Flowable<JdbcTrustDomain> findByReference(@Param("refType") String refType, @Param("refId") String refId);
 
-    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and name = :name")
+    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and kind = :kind and name = :name")
     Maybe<JdbcTrustDomain> findByName(@Param("refType") String refType,
                                       @Param("refId") String refId,
+                                      @Param("kind") String kind,
                                       @Param("name") String name);
+
+    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and issuer = :issuer")
+    Maybe<JdbcTrustDomain> findByIssuer(@Param("refType") String refType,
+                                        @Param("refId") String refId,
+                                        @Param("issuer") String issuer);
 }

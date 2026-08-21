@@ -25,6 +25,21 @@
         <mat-hint style="font-size: 75%">Enable RFC 8693 OAuth 2.0 Token Exchange</mat-hint>
       </div>
 
+      <div class="gv-form-section" fxLayout="column">
+        <div class="gv-form-section-title">
+          <h5>Trusted issuers</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <mat-hint style="font-size: 75%; margin-bottom: 12px">
+          External issuers whose JWTs are accepted as subject or actor tokens are managed as token-exchange trusted domains.
+        </mat-hint>
+        <div *hasPermission="['domain_trust_domain_list']">
+          <a mat-stroked-button data-testid="trustedDomainsLink" [routerLink]="['../../trust-domains']">
+            <mat-icon>verified_user</mat-icon> Trusted Domains
+          </a>
+        </div>
+      </div>
+
       <div *ngIf="isTokenExchangeEnabled()">
         <!-- Subject Token Types Section -->
         <div class="gv-form-section" fxLayout="column">
@@ -281,6 +296,12 @@
         <li>No refresh tokens are issued during token exchange</li>
         <li>When requesting an ID token, it is returned in the access_token field with token_type "N_A"</li>
       </ul>
+      <h4>Trusted issuers</h4>
+      <p>
+        Issuers this security domain believes are configured under
+        <strong>Security &rarr; Trusted Domains</strong> as trusted domains of the token-exchange kind, next to the SPIFFE trust this domain
+        holds. Managing them requires the trusted-domain permission.
+      </p>
       <p>
         Clients must have the <code>Token Exchange</code> grant type enabled to use token exchange.
         <br />

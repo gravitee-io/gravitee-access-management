@@ -395,6 +395,8 @@ import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
 import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
 import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
 import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainFormComponent } from './domain/settings/trust-domains/form/trust-domain-form.component';
+import { TrustDomainKeyMaterialComponent } from './domain/settings/trust-domains/key-material/trust-domain-key-material.component';
 import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
 import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
@@ -511,8 +513,6 @@ import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/d
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
 import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
-import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
-import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 @NgModule({
@@ -773,6 +773,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     DomainSettingsTrustDomainsComponent,
     TrustDomainCreationComponent,
     TrustDomainComponent,
+    TrustDomainFormComponent,
+    TrustDomainKeyMaterialComponent,
     BotDetectionCreationComponent,
     BotDetectionCreationStep1Component,
     BotDetectionCreationStep2Component,
@@ -809,8 +811,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     TokensComponent,
     TokenExchangeContainerComponent,
     TokenExchangeSettingsComponent,
-    TrustedIssuersListComponent,
-    TrustedIssuerDetailComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

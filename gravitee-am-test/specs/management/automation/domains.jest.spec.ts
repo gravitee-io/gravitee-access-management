@@ -78,6 +78,8 @@ const fullDef = (key: string) =>
       },
       workloadIdentitySettings: {
         enabled: true,
+      },
+      keyRetrievalSettings: {
         allowUnsecuredHttpUri: true,
       },
     },
@@ -263,9 +265,8 @@ describe('Automation API - Domain - Round-trip preserves all writable fields', (
       }),
     );
     expect(body.oidc.securityProfileSettings).toEqual(expect.objectContaining({ enablePlainFapi: true }));
-    expect(body.oidc.workloadIdentitySettings).toEqual(
-      expect.objectContaining({ enabled: true, allowUnsecuredHttpUri: true }),
-    );
+    expect(body.oidc.workloadIdentitySettings).toEqual(expect.objectContaining({ enabled: true }));
+    expect(body.oidc.keyRetrievalSettings).toEqual(expect.objectContaining({ allowUnsecuredHttpUri: true }));
 
     expect(body.loginSettings).toEqual(expect.objectContaining({
       registerEnabled: true,
