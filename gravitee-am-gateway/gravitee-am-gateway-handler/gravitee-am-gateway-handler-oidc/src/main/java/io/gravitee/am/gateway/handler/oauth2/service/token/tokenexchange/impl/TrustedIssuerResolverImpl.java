@@ -21,14 +21,9 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
-import io.gravitee.am.model.KeyResolutionMethod;
-import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
-import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
-import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -54,12 +49,6 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
 
     private static final String SIGNATURE_USE = "sig";
 
-    /**
-     * Namespaces the cache key so an inline trusted issuer cannot collide with a stored trusted
-     * domain. Transitional: trusted issuers become trusted-domain entities of their own later.
-     */
-    private static final String CACHE_KEY_PREFIX = "trusted-issuer:";
-
     private final TrustDomainKeyService trustDomainKeyService;
     private final JWSService jwsService;
 
@@ -69,39 +58,33 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
     }
 
     @Override
-    public Single<JWTClaimsSet> resolve(String rawToken, TrustedIssuer trustedIssuer) {
+    public Single<JWTClaimsSet> resolve(String rawToken, TrustDomain trustedDomain) {
         final SignedJWT signedJWT;
         try {
             signedJWT = SignedJWT.parse(rawToken);
         } catch (ParseException e) {
-            return Single.error(malformed(trustedIssuer));
+            return Single.error(malformed(trustedDomain));
         }
         JWSAlgorithm algorithm = signedJWT.getHeader().getAlgorithm();
         if (!SUPPORTED_ALGORITHMS.contains(algorithm)) {
             return Single.error(new SecurityException(
-                    "Unsupported signature algorithm " + algorithm + " for trusted issuer: " + trustedIssuer.getIssuer()));
+                    "Unsupported signature algorithm " + algorithm + " for trusted issuer: " + trustedDomain.issuer()));
         }
-        final TrustDomain trustDomain;
-        try {
-            trustDomain = asTrustDomain(trustedIssuer);
-        } catch (IllegalArgumentException e) {
-            return Single.error(e);
-        }
-        return verify(signedJWT, trustDomain, trustedIssuer);
+        return verify(signedJWT, trustedDomain);
     }
 
-    private Single<JWTClaimsSet> verify(SignedJWT signedJWT, TrustDomain trustDomain, TrustedIssuer trustedIssuer) {
+    private Single<JWTClaimsSet> verify(SignedJWT signedJWT, TrustDomain trustedDomain) {
         String kid = signedJWT.getHeader().getKeyID();
         Maybe<Boolean> verified = kid == null || kid.isBlank()
-                ? trustDomainKeyService.getKeys(trustDomain).map(jwks -> anyKeyVerifies(signedJWT, jwks))
-                : trustDomainKeyService.getKey(trustDomain, kid).map(jwk -> isValidSignature(signedJWT, jwk));
+                ? trustDomainKeyService.getKeys(trustedDomain).map(jwks -> anyKeyVerifies(signedJWT, jwks))
+                : trustDomainKeyService.getKey(trustedDomain, kid).map(jwk -> isValidSignature(signedJWT, jwk));
         return verified
                 .switchIfEmpty(Single.error(() -> new SecurityException(
-                        "No signing key available for trusted issuer: " + trustedIssuer.getIssuer())))
+                        "No signing key available for trusted issuer: " + trustedDomain.issuer())))
                 .flatMap(valid -> valid
-                        ? claimsOf(signedJWT, trustedIssuer)
+                        ? claimsOf(signedJWT, trustedDomain)
                         : Single.error(new SecurityException(
-                                "JWT signature verification failed for trusted issuer: " + trustedIssuer.getIssuer())));
+                                "JWT signature verification failed for trusted issuer: " + trustedDomain.issuer())));
     }
 
     private boolean anyKeyVerifies(SignedJWT signedJWT, JWKSet jwks) {
@@ -123,38 +106,15 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
         }
     }
 
-    private static Single<JWTClaimsSet> claimsOf(SignedJWT signedJWT, TrustedIssuer trustedIssuer) {
+    private static Single<JWTClaimsSet> claimsOf(SignedJWT signedJWT, TrustDomain trustedDomain) {
         try {
             return Single.just(signedJWT.getJWTClaimsSet());
         } catch (ParseException e) {
-            return Single.error(malformed(trustedIssuer));
+            return Single.error(malformed(trustedDomain));
         }
     }
 
-    private static SecurityException malformed(TrustedIssuer trustedIssuer) {
-        return new SecurityException("Malformed JWT from trusted issuer: " + trustedIssuer.getIssuer());
-    }
-
-    private static TrustDomain asTrustDomain(TrustedIssuer trustedIssuer) {
-        KeyResolutionMethod method = trustedIssuer.getKeyResolutionMethod();
-        if (method == null) {
-            throw new IllegalArgumentException("Unsupported key resolution method: null");
-        }
-        TrustDomainKeyMaterial keyMaterial = switch (method) {
-            case JWKS_URL -> TrustDomainKeyMaterial.builder()
-                    .source(KeyMaterialSource.JWKS_URL)
-                    .jwksUrl(trustedIssuer.getJwksUri())
-                    .build();
-            case PEM -> TrustDomainKeyMaterial.builder()
-                    .source(KeyMaterialSource.PEM)
-                    .certificate(trustedIssuer.getCertificate())
-                    .build();
-        };
-        return TrustDomain.builder()
-                .id(CACHE_KEY_PREFIX + trustedIssuer.getIssuer())
-                .kind(TrustDomainKind.TOKEN_EXCHANGE)
-                .name(trustedIssuer.getIssuer())
-                .keyMaterial(keyMaterial)
-                .build();
+    private static SecurityException malformed(TrustDomain trustedDomain) {
+        return new SecurityException("Malformed JWT from trusted issuer: " + trustedDomain.issuer());
     }
 }

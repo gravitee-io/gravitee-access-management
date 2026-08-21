@@ -17,8 +17,10 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { waitForOidcReady } from '@management-commands/domain-management-commands';
-import { setup } from '../../test-fixture';
+import { getDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { listTrustDomains } from '@management-commands/trust-domain-management-commands';
+import { TrustDomain } from '@management-models/TrustDomain';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 import {
   setupTrustedIssuerFixture,
   TrustedIssuerFixture,
@@ -28,6 +30,7 @@ import { signJwtForTrustedIssuer } from './fixtures/trusted-issuer-jwt-helper';
 import { TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
 
 setup();
+retryImmediatelyForThisFile();
 
 let fixture: TrustedIssuerFixture;
 
@@ -448,5 +451,117 @@ describe('Trusted Issuers - User Binding', () => {
     expect(response.body.access_token).toBeDefined();
     const decoded = parseJwt(response.body.access_token);
     expect(decoded.payload['sub']).toBe('external-user-synthetic');
+  });
+});
+
+describe('Trusted Issuers - Deprecated list is a projection over trusted domains', () => {
+  const configWithIssuers = (trustedIssuers: Array<Record<string, unknown>>) => ({
+    tokenExchangeSettings: {
+      enabled: true,
+      allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+      allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+      allowImpersonation: true,
+      allowDelegation: true,
+      allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+      maxDelegationDepth: 3,
+      trustedIssuers,
+    },
+  });
+
+  const tokenExchangeKind = (trustDomains: TrustDomain[]) =>
+    trustDomains.filter((trustDomain) => String(trustDomain.kind).toUpperCase() === 'TOKEN_EXCHANGE');
+
+  const exchangeExternalJwt = (externalJwt: string) => {
+    const { oidc, basicAuth } = fixture;
+    return performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${encodeURIComponent(externalJwt)}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    );
+  };
+
+  it('should back a written issuer with a trusted domain of the token-exchange kind', async () => {
+    const { domain, accessToken, externalIssuer, trustedKey } = fixture;
+
+    await waitForSyncAfter(domain.id, () =>
+      patchDomainRaw(
+        domain.id,
+        accessToken,
+        configWithIssuers([{ issuer: externalIssuer, keyResolutionMethod: 'PEM', certificate: trustedKey.certificatePem }]),
+      ).expect(200),
+    );
+    await waitForOidcReady(domain.hrid);
+
+    const tokenExchangeDomains = tokenExchangeKind(await listTrustDomains(domain.id, accessToken));
+    expect(tokenExchangeDomains).toHaveLength(1);
+    expect(tokenExchangeDomains[0].tokenExchange.issuer).toBe(externalIssuer);
+    expect(tokenExchangeDomains[0].keyMaterial.source.toUpperCase()).toBe('PEM');
+
+    const projected = await getDomain(domain.id, accessToken);
+    expect(projected.tokenExchangeSettings.trustedIssuers).toHaveLength(1);
+    expect(projected.tokenExchangeSettings.trustedIssuers[0].issuer).toBe(externalIssuer);
+  });
+
+  it('should stop trusting an issuer omitted from a written list', async () => {
+    const { domain, accessToken, externalIssuer, untrustedKey } = fixture;
+    const replacementIssuer = 'https://replacement-idp.example.com';
+
+    await waitForSyncAfter(domain.id, () =>
+      patchDomainRaw(
+        domain.id,
+        accessToken,
+        configWithIssuers([
+          { issuer: replacementIssuer, keyResolutionMethod: 'PEM', certificate: untrustedKey.certificatePem },
+        ]),
+      ).expect(200),
+    );
+    await waitForOidcReady(domain.hrid);
+
+    expect(tokenExchangeKind(await listTrustDomains(domain.id, accessToken))).toHaveLength(1);
+
+    const omittedIssuerJwt = fixture.signExternalJwt({
+      sub: 'external-user-123',
+      scope: 'external:read',
+      iss: externalIssuer,
+    });
+
+    const rejected = await exchangeExternalJwt(omittedIssuerJwt).expect(400);
+    expect(rejected.body.error).toBe('invalid_request');
+    expect(rejected.body.error_description).toContain(`Untrusted issuer: ${externalIssuer}`);
+
+    const replacementJwt = signJwtForTrustedIssuer({
+      issuer: replacementIssuer,
+      privateKeyPem: untrustedKey.privateKeyPem,
+      subject: 'external-user-456',
+      payload: { scope: 'openid' },
+    });
+
+    await exchangeExternalJwt(replacementJwt).expect(200);
+  });
+
+  it('should stop trusting every issuer when an empty list is written', async () => {
+    const { domain, accessToken, untrustedKey } = fixture;
+    const replacementIssuer = 'https://replacement-idp.example.com';
+
+    await waitForSyncAfter(domain.id, () => patchDomainRaw(domain.id, accessToken, configWithIssuers([])).expect(200));
+    await waitForOidcReady(domain.hrid);
+
+    expect(tokenExchangeKind(await listTrustDomains(domain.id, accessToken))).toHaveLength(0);
+
+    const replacementJwt = signJwtForTrustedIssuer({
+      issuer: replacementIssuer,
+      privateKeyPem: untrustedKey.privateKeyPem,
+      subject: 'external-user-456',
+      payload: { scope: 'openid' },
+    });
+
+    const rejected = await exchangeExternalJwt(replacementJwt).expect(400);
+    expect(rejected.body.error_description).toBe('The presented token is invalid');
   });
 });

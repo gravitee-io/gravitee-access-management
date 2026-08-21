@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.ManagementUserService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.DeviceManagementService;
@@ -212,6 +213,9 @@ public class DomainServiceTest {
 
     @Mock
     private EntryPointManager entryPointManager;
+
+    @Mock
+    private TrustedIssuerProjection trustedIssuerProjection;
 
     @Mock
     private DataPlaneRegistry dataPlaneRegistry;
@@ -410,6 +414,11 @@ public class DomainServiceTest {
     @BeforeEach
     void stubNoLinkedDataPlanes() {
         Mockito.lenient().when(dataPlaneDefinitionService.findByEnvironmentId(anyString())).thenReturn(Flowable.empty());
+    }
+
+    @BeforeEach
+    void stubTrustedIssuerProjectionDefaults() {
+        Mockito.lenient().when(trustedIssuerProjection.apply(any(Domain.class), any(), any())).thenReturn(Completable.complete());
     }
 
     /**

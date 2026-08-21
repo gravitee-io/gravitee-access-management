@@ -25,7 +25,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKind;
-import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.common.event.Event;
@@ -63,6 +62,7 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     private final ConcurrentMap<String, TrustDomain> byId = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TrustDomain> spiffeByName = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TrustDomain> tokenExchangeByIssuer = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TrustDomain> tokenExchangeByName = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() {
@@ -122,6 +122,16 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
         return issuer == null ? Optional.empty() : Optional.ofNullable(tokenExchangeByIssuer.get(issuer));
     }
 
+    @Override
+    public Optional<TrustDomain> findTokenExchangeByName(String name) {
+        return name == null ? Optional.empty() : Optional.ofNullable(tokenExchangeByName.get(name));
+    }
+
+    @Override
+    public boolean hasTokenExchangeTrust() {
+        return !tokenExchangeByIssuer.isEmpty();
+    }
+
     private void reload(String trustDomainId) {
         log.info("Loading trusted domain {} for domain {}", trustDomainId, domain.getName());
         domainReadinessService.initPluginSync(domain.getId(), trustDomainId, Type.TRUST_DOMAIN.name());
@@ -160,7 +170,10 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
             unindex(previous);
         }
         if (trustDomain.getKind() == TrustDomainKind.TOKEN_EXCHANGE) {
-            issuerOf(trustDomain).ifPresent(issuer -> tokenExchangeByIssuer.put(issuer, trustDomain));
+            Optional.ofNullable(trustDomain.issuer()).ifPresent(issuer -> tokenExchangeByIssuer.put(issuer, trustDomain));
+            if (trustDomain.getName() != null) {
+                tokenExchangeByName.put(trustDomain.getName(), trustDomain);
+            }
         } else if (trustDomain.getName() != null) {
             spiffeByName.put(trustDomain.getName(), trustDomain);
         }
@@ -169,11 +182,8 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     private void unindex(TrustDomain trustDomain) {
         if (trustDomain.getName() != null) {
             spiffeByName.remove(trustDomain.getName(), trustDomain);
+            tokenExchangeByName.remove(trustDomain.getName(), trustDomain);
         }
-        issuerOf(trustDomain).ifPresent(issuer -> tokenExchangeByIssuer.remove(issuer, trustDomain));
-    }
-
-    private static Optional<String> issuerOf(TrustDomain trustDomain) {
-        return Optional.ofNullable(trustDomain.getTokenExchange()).map(TrustDomainTokenExchangeSettings::getIssuer);
+        Optional.ofNullable(trustDomain.issuer()).ifPresent(issuer -> tokenExchangeByIssuer.remove(issuer, trustDomain));
     }
 }

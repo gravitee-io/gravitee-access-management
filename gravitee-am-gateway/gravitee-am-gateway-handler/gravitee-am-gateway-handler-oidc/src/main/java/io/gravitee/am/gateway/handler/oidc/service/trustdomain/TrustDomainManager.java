@@ -37,4 +37,15 @@ public interface TrustDomainManager extends Service {
      * The token-exchange trusted domain vouching for this issuer, if any.
      */
     Optional<TrustDomain> findByIssuer(String issuer);
+
+    /**
+     * The token-exchange trusted domain registered under this name, if any. Names are unique per
+     * kind, so this is how a SPIFFE lookup tells a naming coincidence from a missing registration.
+     */
+    Optional<TrustDomain> findTokenExchangeByName(String name);
+
+    /**
+     * Whether the security domain vouches for any external issuer.
+     */
+    boolean hasTokenExchangeTrust();
 }

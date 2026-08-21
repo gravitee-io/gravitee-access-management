@@ -128,7 +128,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
                         return Maybe.error(new InvalidClientException("Client missing SPIFFE settings"));
                     }
                     return Maybe.fromOptional(trustDomainManager.findSpiffeByName(spiffe.getTrustDomain()))
-                            .switchIfEmpty(Maybe.error(new InvalidClientException("Trust domain not registered")))
+                            .switchIfEmpty(Maybe.error(() -> notRegistered(spiffe.getTrustDomain())))
                             .flatMap(td -> {
                                 String fail = new SpiffeJwtSvidValidator(settings)
                                         .validate(signedJWT, td, spiffe, tokenEndpoint);
@@ -140,6 +140,18 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
                                         .map(ok -> buildAgentClientIfApplicable(client, sub));
                             });
                 });
+    }
+
+    /**
+     * Names are unique per kind, so a name that belongs to a token-exchange trusted domain is a
+     * naming coincidence rather than a missing registration, and says so.
+     */
+    private InvalidClientException notRegistered(String trustDomainName) {
+        if (trustDomainManager.findTokenExchangeByName(trustDomainName).isPresent()) {
+            return new InvalidClientException(
+                    "Trust domain " + trustDomainName + " is registered for token exchange, not for SPIFFE");
+        }
+        return new InvalidClientException("Trust domain not registered");
     }
 
     private static Client buildAgentClientIfApplicable(Client client, String spiffeId) {
