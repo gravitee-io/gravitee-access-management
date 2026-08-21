@@ -15,16 +15,18 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
-import { setupTokenExchangeFixture, TokenExchangeFixture, TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
+import {
+  ACCESS_TOKEN_TYPE,
+  ID_TOKEN_TYPE,
+  TOKEN_EXCHANGE_TEST,
+  TokenExchangeFixture,
+  setupTokenExchangeFixture,
+} from './fixtures/token-exchange-fixture';
 
 setup(120000);
-
-const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
-const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
-const ID_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id_token';
 
 const SUBJECT_CLAIMS = "#context.attributes['token_exchange']['subject']['subject_token_claims']";
 const ACTOR_CLAIMS = "#context.attributes['token_exchange']['actor']['actor_token_claims']";
@@ -71,29 +73,12 @@ afterAll(async () => {
   }
 });
 
-const exchange = async (
-  fixture: TokenExchangeFixture,
-  subjectToken: string,
-  extraParams = '',
-): Promise<Record<string, any>> => {
-  const response = await performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${ACCESS_TOKEN_TYPE}${extraParams}`,
-    {
-      'Content-type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${fixture.basicAuth}`,
-    },
-  ).expect(200);
-  return response.body;
-};
-
 describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
-  it('should copy a subject token claim onto the exchanged access token', async () => {
+  it(jira`should copy a subject token claim onto the exchanged access token ${'AM-7539'}`, async () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken();
 
-    const body = await exchange(impersonationFixture, subjectToken);
+    const body = await impersonationFixture.exchange(subjectToken);
     const exchanged = parseJwt(body.access_token);
     const subject = parseJwt(subjectToken);
 
@@ -102,11 +87,11 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     expect(exchanged.payload['tx_subject_jti']).not.toEqual(exchanged.payload['jti']);
   });
 
-  it('should expose the subject token scope, not the scope requested on the exchange', async () => {
+  it(jira`should expose the subject token scope, not the scope requested on the exchange ${'AM-7539'}`, async () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken('openid%20profile%20offline_access');
 
-    const body = await exchange(impersonationFixture, subjectToken, '&scope=openid');
+    const body = await impersonationFixture.exchange(subjectToken, '&scope=openid');
     const exchanged = parseJwt(body.access_token);
 
     const subjectScope = String(exchanged.payload['tx_subject_scope']).split(' ').sort();
@@ -118,7 +103,7 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken();
 
-    const body = await exchange(impersonationFixture, subjectToken);
+    const body = await impersonationFixture.exchange(subjectToken);
     const exchanged = parseJwt(body.access_token);
 
     expect(body.access_token).toBeDefined();
@@ -129,7 +114,7 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken();
 
-    const body = await exchange(impersonationFixture, subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
+    const body = await impersonationFixture.exchange(subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
     const issued = parseJwt(body.access_token);
     const subject = parseJwt(subjectToken);
 
@@ -142,11 +127,7 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
 
-    const body = await exchange(
-      delegationFixture,
-      subjectToken,
-      `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`,
-    );
+    const body = await delegationFixture.exchange(subjectToken, `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['tx_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
