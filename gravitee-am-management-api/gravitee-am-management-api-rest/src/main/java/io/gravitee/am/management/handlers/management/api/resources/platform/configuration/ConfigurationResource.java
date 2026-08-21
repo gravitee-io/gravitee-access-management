@@ -33,6 +33,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import io.gravitee.am.service.idp.SystemClusterIdpSettings;
 import org.springframework.core.env.Environment;
 
 import java.util.Map;
@@ -51,6 +52,8 @@ public class ConfigurationResource {
     private SpelService spelService;
     @Inject
     private Environment environment;
+    @Inject
+    private SystemClusterIdpSettings systemClusterIdpSettings;
 
     @GET
     @Path("/flow/schema")
@@ -108,11 +111,16 @@ public class ConfigurationResource {
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "getInstallationConfiguration",
-            summary = "Get the installation type of this instance",
+            summary = "Get the installation type of this instance and the storage rules it applies to identity providers",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getInstallation(@Suspended final AsyncResponse response) {
         var type = CloudProperties.isManagedCloudEnabled(environment) ? CloudProperties.INSTALLATION_TYPE_MANAGED : CloudProperties.INSTALLATION_TYPE_STANDALONE;
-        response.resume(Map.of("type", type));
+        // The console shapes the mongo identity provider form from these two, so it must read the
+        // settings themselves. They default to the installation type and an operator overrides them.
+        response.resume(Map.of(
+                "type", type,
+                "pinIdentityProviderDatabase", systemClusterIdpSettings.isPinDatabase(),
+                "prefixIdentityProviderUsersCollection", systemClusterIdpSettings.isPrefixUsersCollection()));
     }
 
 }
