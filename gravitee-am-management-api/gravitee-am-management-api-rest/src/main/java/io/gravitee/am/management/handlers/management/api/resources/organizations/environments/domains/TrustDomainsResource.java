@@ -94,7 +94,7 @@ public class TrustDomainsResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "createTrustDomain",
-            summary = "Register a SPIFFE trust domain on the security domain",
+            summary = "Register a trust domain on the security domain",
             description = "User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain " +
                     "or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment " +
                     "or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization")

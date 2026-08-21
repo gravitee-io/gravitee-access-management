@@ -8433,7 +8433,7 @@ paths:
           description: Invalid trust domain configuration
         "500":
           description: Internal server error
-      summary: Register a SPIFFE trust domain on the security domain
+      summary: Register a trust domain on the security domain
       tags:
       - trust-domain
       - domain
@@ -15856,6 +15856,10 @@ components:
           - STATIC_JWKS
         description:
           type: string
+        issuer:
+          type: string
+          maxLength: 512
+          minLength: 0
         jwksUrl:
           type: string
           deprecated: true
@@ -15869,12 +15873,22 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
         spiffeTrustDomain:
           type: string
           description: SPIFFE trust domain matched against the "sub" of a JWT-SVID.
-            Defaults to the name when not supplied.
+            Defaults to the name when no matcher is supplied.
           maxLength: 255
           minLength: 0
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
     NewUser:
       type: object
       properties:
@@ -18320,6 +18334,11 @@ components:
           type: string
         id:
           type: string
+        issuer:
+          type: string
+          description: Expected value of the "iss" claim in an external JWT. Required
+            to accept tokens during an RFC 8693 exchange.
+          example: https://sso.acme.com
         jwksUrl:
           type: string
           deprecated: true
@@ -18345,6 +18364,16 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+            description: One-to-one mapping from external scope to domain scope. Unmapped
+              issuer scopes are dropped (fail-closed). Applies to tokens matched by
+              "issuer".
+          description: One-to-one mapping from external scope to domain scope. Unmapped
+            issuer scopes are dropped (fail-closed). Applies to tokens matched by
+            "issuer".
         spiffeTrustDomain:
           type: string
           description: "SPIFFE trust domain matched against the \"sub\" of a JWT-SVID,\
@@ -18356,6 +18385,18 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+        userBindingCriteria:
+          type: array
+          description: Criteria used to locate a domain user when user binding is
+            enabled. All criteria are combined with AND.
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+          default: false
+          description: "Whether the external JWT subject is resolved to a single domain\
+            \ user using the user binding criteria. When false, a virtual user is\
+            \ built from the token claims only."
     TrustDomainKeyMaterial:
       type: object
       description: Where the trusted domain's signing keys come from. Exactly one
@@ -18853,6 +18894,10 @@ components:
           - STATIC_JWKS
         description:
           type: string
+        issuer:
+          type: string
+          maxLength: 512
+          minLength: 0
         jwksUrl:
           type: string
           deprecated: true
@@ -18867,12 +18912,23 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
         spiffeTrustDomain:
           type: string
           description: SPIFFE trust domain matched against the "sub" of a JWT-SVID.
-            Left unchanged when absent.
+            Supplying either matcher replaces both; supplying neither leaves them
+            unchanged.
           maxLength: 255
           minLength: 0
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
     UpdateUser:
       type: object
       properties:

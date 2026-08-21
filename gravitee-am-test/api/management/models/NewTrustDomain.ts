@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { UserBindingCriterion } from './UserBindingCriterion';
+import {
+  UserBindingCriterionFromJSON,
+  UserBindingCriterionFromJSONTyped,
+  UserBindingCriterionToJSON,
+  UserBindingCriterionToJSONTyped,
+} from './UserBindingCriterion';
 import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
 import {
   TrustDomainKeyMaterialFromJSON,
@@ -60,6 +67,12 @@ export interface NewTrustDomain {
    */
   description?: string;
   /**
+   *
+   * @type {string}
+   * @memberof NewTrustDomain
+   */
+  issuer?: string;
+  /**
    * Use keyMaterial.jwksUrl instead.
    * @type {string}
    * @memberof NewTrustDomain
@@ -85,11 +98,29 @@ export interface NewTrustDomain {
    */
   refreshIntervalSeconds?: number;
   /**
-   * SPIFFE trust domain matched against the "sub" of a JWT-SVID. Defaults to the name when not supplied.
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof NewTrustDomain
+   */
+  scopeMappings?: { [key: string]: string };
+  /**
+   * SPIFFE trust domain matched against the "sub" of a JWT-SVID. Defaults to the name when no matcher is supplied.
    * @type {string}
    * @memberof NewTrustDomain
    */
   spiffeTrustDomain?: string;
+  /**
+   *
+   * @type {Array<UserBindingCriterion>}
+   * @memberof NewTrustDomain
+   */
+  userBindingCriteria?: Array<UserBindingCriterion>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof NewTrustDomain
+   */
+  userBindingEnabled?: boolean;
 }
 
 /**
@@ -120,11 +151,16 @@ export function NewTrustDomainFromJSONTyped(json: any, ignoreDiscriminator: bool
     allowedAlgorithms: json['allowedAlgorithms'] == null ? undefined : json['allowedAlgorithms'],
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
     description: json['description'] == null ? undefined : json['description'],
+    issuer: json['issuer'] == null ? undefined : json['issuer'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
     keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
     name: json['name'] == null ? undefined : json['name'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
+    scopeMappings: json['scopeMappings'] == null ? undefined : json['scopeMappings'],
     spiffeTrustDomain: json['spiffeTrustDomain'] == null ? undefined : json['spiffeTrustDomain'],
+    userBindingCriteria:
+      json['userBindingCriteria'] == null ? undefined : (json['userBindingCriteria'] as Array<any>).map(UserBindingCriterionFromJSON),
+    userBindingEnabled: json['userBindingEnabled'] == null ? undefined : json['userBindingEnabled'],
   };
 }
 
@@ -141,10 +177,15 @@ export function NewTrustDomainToJSONTyped(value?: NewTrustDomain | null, ignoreD
     allowedAlgorithms: value['allowedAlgorithms'],
     bundleSource: value['bundleSource'],
     description: value['description'],
+    issuer: value['issuer'],
     jwksUrl: value['jwksUrl'],
     keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
     name: value['name'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
+    scopeMappings: value['scopeMappings'],
     spiffeTrustDomain: value['spiffeTrustDomain'],
+    userBindingCriteria:
+      value['userBindingCriteria'] == null ? undefined : (value['userBindingCriteria'] as Array<any>).map(UserBindingCriterionToJSON),
+    userBindingEnabled: value['userBindingEnabled'],
   };
 }

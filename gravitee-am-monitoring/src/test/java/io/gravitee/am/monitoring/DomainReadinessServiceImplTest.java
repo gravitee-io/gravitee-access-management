@@ -95,6 +95,7 @@ public class DomainReadinessServiceImplTest {
         domainReadinessService.pluginFailed(null, "plugin", "error");
         domainReadinessService.pluginUnlicensed(null, "plugin", "feature required");
         domainReadinessService.pluginUnloaded(null, "plugin");
+        domainReadinessService.pluginRemoved(null, "plugin");
         domainReadinessService.updateDomainStatus(null, DomainState.Status.DEPLOYED);
         domainReadinessService.removeDomain(null);
         
@@ -161,6 +162,23 @@ public class DomainReadinessServiceImplTest {
         // Ensure graceful handling if domain state is null
         domainReadinessService.pluginUnloaded("new-domain", "plugin-X");
         assertNotNull(domainReadinessService.getDomainState("new-domain"));
+    }
+
+    @Test
+    public void shouldAdvanceLastSyncWhenPluginIsRemoved() {
+        String domainId = "domain-removed";
+        String pluginId = "plugin-1";
+
+        domainReadinessService.initPluginSync(domainId, pluginId, "TRUST_DOMAIN");
+        domainReadinessService.pluginLoaded(domainId, pluginId);
+        long lastSyncBefore = domainReadinessService.getDomainState(domainId).getLastSync().get();
+
+        domainReadinessService.pluginRemoved(domainId, pluginId);
+
+        DomainState state = domainReadinessService.getDomainState(domainId);
+        assertEquals(0, state.getCreationState().size());
+        assertTrue(state.getLastSync().get() >= lastSyncBefore);
+        assertTrue(state.isSynchronized());
     }
 
     @Test

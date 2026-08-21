@@ -243,3 +243,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_13_0/4.13.0-trust-domains-key-material-and-matcher.yml
   - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-domains-add-key-retrieval-settings-column.yml
+  - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-trust-domains-token-exchange.yml

@@ -31,7 +31,6 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.impl.JWSServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainKeyServiceImpl;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
@@ -42,7 +41,7 @@ import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +58,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -141,7 +141,7 @@ class SpiffeClientAssertionValidatorTest {
     @Mock
     private TrustDomainKeyService trustDomainKeyService;
     @Mock
-    private TrustDomainRepository trustDomainRepository;
+    private TrustDomainManager trustDomainManager;
     @Mock
     private OpenIDProviderMetadata discovery;
 
@@ -164,7 +164,7 @@ class SpiffeClientAssertionValidatorTest {
 
         validator = new SpiffeClientAssertionValidator(
                 clientLookupService, jwsService, openIDDiscoveryService, domain,
-                trustDomainKeyService, trustDomainRepository);
+                trustDomainKeyService, trustDomainManager);
     }
 
     /** Stubs required by every path that reaches {@code validateSpiffeAssertion} past the sub check. */
@@ -176,11 +176,6 @@ class SpiffeClientAssertionValidatorTest {
     /** Stubs required by every path that reaches the settings check. */
     private void stubDomainOidc() {
         when(domain.getOidc()).thenReturn(oidcSettings);
-    }
-
-    /** Stubs required by every path that reaches the trust-domain repository lookup. */
-    private void stubDomainId() {
-        when(domain.getId()).thenReturn(DOMAIN_ID);
     }
 
     @Test
@@ -272,11 +267,10 @@ class SpiffeClientAssertionValidatorTest {
     void rejects_whenTrustDomainNotRegistered() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.empty());
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.empty());
         String assertion = svid().serialize();
 
         validator.validate(assertion, BASE_PATH, null).test()
@@ -289,14 +283,13 @@ class SpiffeClientAssertionValidatorTest {
     void rejects_whenSvidValidatorFails() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings();
         TrustDomain td = TrustDomain.builder()
                 .name(TRUST_DOMAIN_NAME)
                 .build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         // aud mismatch — SVID validator returns non-null reason → InvalidClientException
         SignedJWT jwt = svidBuilder()
                 .audience("https://other.example/token")
@@ -313,12 +306,11 @@ class SpiffeClientAssertionValidatorTest {
     void rejects_whenKidMissing() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings();
         TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         SignedJWT noKid = new SignedJWT(
                 new JWSHeader.Builder(JWSAlgorithm.RS256).build(),
                 validClaims().build());
@@ -333,12 +325,11 @@ class SpiffeClientAssertionValidatorTest {
     void rejects_whenBundleHasNoMatchingKey() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings();
         TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.empty());
 
         validator.validate(svid().serialize(), BASE_PATH, null).test()
@@ -350,14 +341,13 @@ class SpiffeClientAssertionValidatorTest {
     void rejects_whenSignatureInvalid() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings();
         TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
         when(jwsService.isValidSignature(any(), any())).thenReturn(false);
 
@@ -369,7 +359,6 @@ class SpiffeClientAssertionValidatorTest {
     void resolvesClient_viaClientIdHint_whenProvided() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         // sub is the SPIFFE URI but the form-level client_id should win as lookup id.
         Client client = clientWithSpiffeSettings();
         client.setClientId("hint-client-id");
@@ -378,8 +367,8 @@ class SpiffeClientAssertionValidatorTest {
         jwk.setKid(KID);
 
         when(clientLookupService.findByClientId("hint-client-id")).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
@@ -393,14 +382,13 @@ class SpiffeClientAssertionValidatorTest {
     void succeeds_onWellFormedSvid() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings();
         TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
@@ -413,7 +401,6 @@ class SpiffeClientAssertionValidatorTest {
     void synthesises_perInstanceAgentClient_forHostedDelegated_withPrefixSubject() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
 
         String parent = "spiffe://example.org/hotel-agent/";
         String instanceSpiffeId = parent + "instance-a";
@@ -434,8 +421,8 @@ class SpiffeClientAssertionValidatorTest {
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(blueprintClientId)).thenReturn(Maybe.just(blueprint));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
@@ -451,7 +438,6 @@ class SpiffeClientAssertionValidatorTest {
     void synthesises_perInstanceAgentClient_forAutonomous_withPrefixSubject() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
 
         String parent = "spiffe://example.org/hotel-agent/";
         String instanceSpiffeId = parent + "instance-b";
@@ -472,8 +458,8 @@ class SpiffeClientAssertionValidatorTest {
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(blueprintClientId)).thenReturn(Maybe.just(blueprint));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
@@ -486,14 +472,13 @@ class SpiffeClientAssertionValidatorTest {
     void doesNotSynthesise_forNonAgentClient_evenWithMatchingSvid() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Client client = clientWithSpiffeSettings(); // SERVICE-style, no appType=AGENT
         TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
         when(trustDomainKeyService.getKey(eq(td), eq(KID))).thenReturn(Maybe.just(jwk));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
@@ -506,13 +491,12 @@ class SpiffeClientAssertionValidatorTest {
     void acceptsSvid_signedByPemKeyMaterial() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Domain realDomain = new Domain();
         realDomain.setId(DOMAIN_ID);
         realDomain.setOidc(oidcSettings);
         SpiffeClientAssertionValidator pemValidator = new SpiffeClientAssertionValidator(
                 clientLookupService, new JWSServiceImpl(), openIDDiscoveryService, domain,
-                new TrustDomainKeyServiceImpl(mock(JWKSetFetcher.class), realDomain), trustDomainRepository);
+                new TrustDomainKeyServiceImpl(mock(JWKSetFetcher.class), realDomain), trustDomainManager);
 
         TrustDomain td = TrustDomain.builder()
                 .id("td-pem")
@@ -523,8 +507,8 @@ class SpiffeClientAssertionValidatorTest {
                         .build())
                 .build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(clientWithSpiffeSettings()));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
 
         String assertion = svidSignedBy(pemPrivateKey()).serialize();
 
@@ -537,13 +521,12 @@ class SpiffeClientAssertionValidatorTest {
     void rejectsSvid_notSignedByPemKeyMaterial() throws Exception {
         stubDiscovery();
         stubDomainOidc();
-        stubDomainId();
         Domain realDomain = new Domain();
         realDomain.setId(DOMAIN_ID);
         realDomain.setOidc(oidcSettings);
         SpiffeClientAssertionValidator pemValidator = new SpiffeClientAssertionValidator(
                 clientLookupService, new JWSServiceImpl(), openIDDiscoveryService, domain,
-                new TrustDomainKeyServiceImpl(mock(JWKSetFetcher.class), realDomain), trustDomainRepository);
+                new TrustDomainKeyServiceImpl(mock(JWKSetFetcher.class), realDomain), trustDomainManager);
 
         TrustDomain td = TrustDomain.builder()
                 .id("td-pem")
@@ -554,8 +537,8 @@ class SpiffeClientAssertionValidatorTest {
                         .build())
                 .build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(clientWithSpiffeSettings()));
-        when(trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN, DOMAIN_ID, TRUST_DOMAIN_NAME))
-                .thenReturn(Maybe.just(td));
+        when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(td));
 
         // signed by the per-test generated key, which the certificate does not carry
         String assertion = svidSignedBy(privateKey).serialize();

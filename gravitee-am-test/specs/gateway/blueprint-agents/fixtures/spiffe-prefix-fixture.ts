@@ -26,6 +26,8 @@ import {
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { deleteTrustDomain } from '@management-commands/trust-domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { Fixture } from '../../../test-fixture';
 
 const ORG_ID = process.env.AM_DEF_ORG_ID;
@@ -47,6 +49,8 @@ export interface SpiffePrefixFixture extends Fixture {
   prefixSubject: string;
   /** Fetch a JWT-SVID from the local SPIRE agent for the given SPIFFE ID + audience. */
   fetchSvid: (spiffeId: string, audience: string) => string;
+  /** Revokes the trust domain and waits for the gateway to apply the removal. */
+  revokeTrustDomain: () => Promise<void>;
   cleanUp: () => Promise<void>;
 }
 
@@ -96,6 +100,7 @@ export const setupSpiffePrefixFixture = async (): Promise<SpiffePrefixFixture> =
     if (!trustDomainResp.ok) {
       throw new Error(`Failed to register trust domain: ${trustDomainResp.status} ${await trustDomainResp.text()}`);
     }
+    const trustDomainId = (await trustDomainResp.json()).id;
 
     // 3. Create the blueprint agent application.
     const createAppResp = await fetch(managementUrl(`/domains/${domain.id}/applications`), {
@@ -146,6 +151,7 @@ export const setupSpiffePrefixFixture = async (): Promise<SpiffePrefixFixture> =
       blueprintAppId: blueprintApp.id,
       prefixSubject,
       fetchSvid: (spiffeId, audience) => fetchSvidFromSpireAgent(spiffeId, audience),
+      revokeTrustDomain: () => waitForSyncAfter(domain.id, () => deleteTrustDomain(domain.id, accessToken, trustDomainId)),
       cleanUp: async () => {
         if (domain?.id && accessToken) {
           await safeDeleteDomain(domain.id, accessToken);
