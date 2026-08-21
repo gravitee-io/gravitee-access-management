@@ -106,6 +106,51 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldReturnProtectedResource_whenTypeIsAbsent(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ProtectedResourcePrimaryData protectedResource = new ProtectedResourcePrimaryData(
+                "id", "clientId", "name", "desc", ProtectedResource.Type.MCP_SERVER, List.of("https://onet.pl"), null, List.of(), List.of(), new Date(), "Certificate");
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Maybe.just(protectedResource))
+                .when(protectedResourceService).findByDomainAndIdAndType(domainId, "id", null);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .request().get();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = response.readEntity(Map.class);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("id", data.get("id"));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_whenTypeIsUnknown(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .queryParam("type", "NOT_A_TYPE")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
     public void shouldNotReturnProtectedResource_404(){
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
@@ -195,24 +240,6 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_getWithoutType() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("id")
-                .request().get();
-
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @Test
     public void shouldReturnBadRequest_deleteWithoutType() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
@@ -230,8 +257,33 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
+    /**
+     * Deliberate: a malformed type is rejected by the parameter converter, which Jersey runs before
+     * the resource method, so this one 400s rather than 403s. An unusable enum value tells the caller
+     * nothing the OpenAPI spec does not already publish.
+     */
     @Test
-    public void shouldReturnBadRequest_whenTypeMissingAndPermissionDenied() {
+    public void shouldReturnBadRequest_whenTypeUnknownAndPermissionDenied() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(io.reactivex.rxjava3.core.Single.just(false)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .queryParam("type", "NOT_A_TYPE")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnForbidden_whenTypeMissingAndPermissionDenied() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -246,8 +298,8 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .path("id")
                 .request().get();
 
-        // a malformed request is rejected before the permission check, so 400 wins over 403
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        // An omitted type no longer short-circuits the request, so the caller is refused (AM-7476).
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
     @Test

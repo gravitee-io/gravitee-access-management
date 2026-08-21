@@ -20,9 +20,8 @@ import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.EventType;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
 
 import java.time.temporal.ChronoUnit;
 
@@ -107,54 +106,33 @@ public class AnalyticsParam {
         this.field = field;
     }
 
-    public void validate() throws WebApplicationException {
-        if (type.getValue() == null) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'type' is not valid")
-                    .build());
+    public void validate() {
+        if (type == null || type.getValue() == null) {
+            throw new BadRequestException("Query parameter 'type' is not valid");
         }
 
         if (from == -1L) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'from' is not valid")
-                    .build());
+            throw new BadRequestException("Query parameter 'from' is not valid");
         }
 
         if (to == -1L) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'to' is not valid")
-                    .build());
+            throw new BadRequestException("Query parameter 'to' is not valid");
         }
 
         if (interval == -1L) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'interval' is not valid")
-                    .build());
+            throw new BadRequestException("Query parameter 'interval' is not valid");
         }
 
         if (interval <  ChronoUnit.MILLIS.getDuration().toMillis() || interval > ChronoUnit.YEARS.getDuration().toMillis()) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'interval' is not valid. 'interval' must be >= 1000000 (millis) and <= 31556952 (years)")
-                    .build());
+            throw new BadRequestException("Query parameter 'interval' is not valid. 'interval' must be >= 1000000 (millis) and <= 31556952 (years)");
         }
 
         if (from >= to) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("'from' query parameter value must be greater than 'to'")
-                    .build());
+            throw new BadRequestException("'from' query parameter value must be greater than 'to'");
         }
 
         if (field != null && !field.isEmpty() && !EventType.types().contains(field.toUpperCase()) && !Field.types().contains(field.toLowerCase())) {
-                throw new WebApplicationException(Response
-                        .status(Response.Status.BAD_REQUEST)
-                        .entity("'field' query parameter is invalid")
-                        .build());
+                throw new BadRequestException("'field' query parameter is invalid");
             }
 
     }

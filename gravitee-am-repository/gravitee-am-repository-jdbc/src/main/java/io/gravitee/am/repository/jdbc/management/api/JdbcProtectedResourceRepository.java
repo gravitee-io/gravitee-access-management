@@ -41,6 +41,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -337,15 +338,17 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
         Sort.Order order = pageSortRequest.isAsc() ? Sort.Order.asc(transformSortValue(sortBy)) : Sort.Order.desc(transformSortValue(sortBy));
         Sort sort = Sort.by(order);
+        Criteria criteria = type == null ? where(COLUMN_DOMAIN_ID).is(domainId) : where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type);
         Flowable<ProtectedResource> mainFlowable = fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
-                .matching(query(where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type))
+                .matching(query(criteria)
                         .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
                 .all())
                 .map(this::toEntity);
+        Single<Long> count = type == null ? spring.countByDomainId(domainId) : spring.countByDomainIdAndType(domainId, type);
         return attachIdentifiers(attachFeatures(mainFlowable))
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
-                .flatMap(data -> spring.countByDomainIdAndType(domainId, type).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .flatMap(data -> count.map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
     }
 
@@ -357,15 +360,19 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
         Sort.Order order = pageSortRequest.isAsc() ? Sort.Order.asc(transformSortValue(sortBy)) : Sort.Order.desc(transformSortValue(sortBy));
         Sort sort = Sort.by(order);
+        Criteria criteria = type == null
+                ? where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_ID).in(ids)
+                : where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type).and(COLUMN_ID).in(ids);
         Flowable<ProtectedResource> mainFlowable = fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
-                .matching(query(where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type).and(COLUMN_ID).in(ids))
+                .matching(query(criteria)
                         .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
                 .all())
                 .map(this::toEntity);
+        Single<Long> count = type == null ? spring.countByDomainIdAndIdIn(domainId, ids) : spring.countByDomainIdAndTypeAndIdIn(domainId, type, ids);
         return attachIdentifiers(attachFeatures(mainFlowable))
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
-                .flatMap(data -> spring.countByDomainIdAndTypeAndIdIn(domainId, type, ids).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .flatMap(data -> count.map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
     }
 
