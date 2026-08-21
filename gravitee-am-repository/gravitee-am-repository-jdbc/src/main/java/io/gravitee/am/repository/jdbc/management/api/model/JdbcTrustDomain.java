@@ -35,11 +35,27 @@ public class JdbcTrustDomain {
 
     private String name;
 
+    @Column("spiffe_trust_domain")
+    private String spiffeTrustDomain;
+
     private String description;
 
+    /**
+     * JSON-encoded {@code TrustDomainKeyMaterial}.
+     */
+    @Column("key_material")
+    private String keyMaterial;
+
+    /**
+     * Superseded by {@link #keyMaterial}; still read so trust domains stored before the shared
+     * key-material shape existed keep working.
+     */
     @Column("bundle_source")
     private String bundleSource;
 
+    /**
+     * Superseded by {@link #keyMaterial}; see {@link #bundleSource}.
+     */
     @Column("jwks_url")
     private String jwksUrl;
 
@@ -80,6 +96,22 @@ public class JdbcTrustDomain {
 
     public void setReferenceType(String referenceType) {
         this.referenceType = referenceType;
+    }
+
+    public String getSpiffeTrustDomain() {
+        return spiffeTrustDomain;
+    }
+
+    public void setSpiffeTrustDomain(String spiffeTrustDomain) {
+        this.spiffeTrustDomain = spiffeTrustDomain;
+    }
+
+    public String getKeyMaterial() {
+        return keyMaterial;
+    }
+
+    public void setKeyMaterial(String keyMaterial) {
+        this.keyMaterial = keyMaterial;
     }
 
     public String getName() {

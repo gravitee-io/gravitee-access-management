@@ -25,6 +25,7 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
+import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.application.TokenExchangeClaimMapping;
 import io.gravitee.am.model.application.TokenExchangeClaimSource;
@@ -157,6 +158,12 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         tokenExchangeSettings.setTokenExchangeOAuthSettings(tokenExchangeOAuthSettings);
         domain.setTokenExchangeSettings(tokenExchangeSettings);
 
+        KeyRetrievalSettings keyRetrievalSettings = new KeyRetrievalSettings();
+        keyRetrievalSettings.setAllowPrivateIpAddress(true);
+        keyRetrievalSettings.setFetchTimeoutMs(1234);
+        keyRetrievalSettings.setCacheMaxEntries(7);
+        domain.setKeyRetrievalSettings(keyRetrievalSettings);
+
         SAMLSettings saml = new SAMLSettings();
         saml.setEnabled(true);
         saml.setEntityId("https://idp.example.com");
@@ -173,6 +180,24 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         mapping.setSourceClaim(sourceClaim);
         mapping.setTokenClaim(tokenClaim);
         return mapping;
+    }
+
+    @Test
+    public void testKeyRetrievalSettingsRoundTrip() {
+        Domain domainCreated = domainRepository.create(initDomain()).blockingGet();
+
+        TestObserver<Domain> testObserver = domainRepository.findById(domainCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(d -> {
+            var settings = d.getKeyRetrievalSettings();
+            return settings.isAllowPrivateIpAddress()
+                    && !settings.isAllowUnsecuredHttpUri()
+                    && settings.getFetchTimeoutMs() == 1234
+                    && settings.getCacheMaxEntries() == 7
+                    && settings.getMaxResponseSizeKb() == KeyRetrievalSettings.DEFAULT_MAX_RESPONSE_SIZE_KB;
+        });
     }
 
     @Test

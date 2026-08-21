@@ -16,141 +16,143 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
-import com.nimbusds.jose.proc.JWSKeySelector;
-import com.nimbusds.jose.proc.JWSVerificationKeySelector;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jose.util.DefaultResourceRetriever;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jose.proc.BadJWSException;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.proc.BadJWTException;
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jwt.proc.JWTProcessor;
-import io.gravitee.am.certificate.api.X509CertUtils;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
+import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.text.ParseException;
-import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Set;
 
 /**
- * Resolves and caches JWT processors for trusted external issuers.
- *
- * <p>Supports two key resolution methods:
- * <ul>
- *   <li>JWKS_URL: Fetches keys from a remote JWKS endpoint (with outage tolerance and retrying).</li>
- *   <li>PEM: Uses a static PEM-encoded X.509 certificate.</li>
- * </ul>
- *
- * <p><b>Cache lifecycle:</b> This bean is created per domain reactor via {@code OAuth2Configuration}.
- * When a domain configuration changes, the gateway stops the old reactor and starts a new one,
- * which creates a fresh {@code TrustedIssuerResolverImpl} with an empty cache. This means the
- * processor cache is naturally invalidated on config changes — no explicit cache clearing is needed.
+ * Verifies JWTs presented for a trusted external issuer, resolving the issuer's keys through the
+ * shared {@link TrustDomainKeyService}. That service applies the domain's scheme, private-address,
+ * timeout and response-size restrictions to any remote fetch, and owns the cache: keys survive a
+ * transient fetch failure and are refreshed on a {@code kid} miss.
  *
  * @author GraviteeSource Team
  */
 public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
 
-    private static final int JWKS_CONNECT_TIMEOUT_MS = 5000;
-    private static final int JWKS_READ_TIMEOUT_MS = 5000;
+    /** Asymmetric algorithms only; HMAC is not supported for external trust. */
+    private static final Set<JWSAlgorithm> SUPPORTED_ALGORITHMS = Set.of(
+            JWSAlgorithm.RS256, JWSAlgorithm.RS384, JWSAlgorithm.RS512,
+            JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512,
+            JWSAlgorithm.PS256, JWSAlgorithm.PS384, JWSAlgorithm.PS512);
 
-    private final ConcurrentMap<String, JWTProcessor<SecurityContext>> processorCache = new ConcurrentHashMap<>();
+    private static final String SIGNATURE_USE = "sig";
+
+    /**
+     * Namespaces the cache key so an inline trusted issuer cannot collide with a stored trusted
+     * domain. Transitional: trusted issuers become trusted-domain entities of their own later.
+     */
+    private static final String CACHE_KEY_PREFIX = "trusted-issuer:";
+
+    private final TrustDomainKeyService trustDomainKeyService;
+    private final JWSService jwsService;
+
+    public TrustedIssuerResolverImpl(TrustDomainKeyService trustDomainKeyService, JWSService jwsService) {
+        this.trustDomainKeyService = trustDomainKeyService;
+        this.jwsService = jwsService;
+    }
 
     @Override
-    public JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer) {
-        JWTProcessor<SecurityContext> processor = processorCache.computeIfAbsent(
-                trustedIssuer.getIssuer(),
-                key -> buildProcessor(trustedIssuer)
-        );
+    public Single<JWTClaimsSet> resolve(String rawToken, TrustedIssuer trustedIssuer) {
+        final SignedJWT signedJWT;
         try {
-            return processor.process(rawToken, null);
-        } catch (BadJWSException e) {
-            throw new SecurityException("JWT signature verification failed for trusted issuer: " + trustedIssuer.getIssuer());
-        } catch (BadJWTException e) {
-            throw new SecurityException("JWT claims validation failed: " + e.getMessage());
-        } catch (BadJOSEException e) {
-            throw new SecurityException("JWT processing failed: " + e.getMessage());
-        } catch (JOSEException e) {
-            throw new SecurityException("JWT cryptographic error: " + e.getMessage());
+            signedJWT = SignedJWT.parse(rawToken);
         } catch (ParseException e) {
-            throw new SecurityException("Malformed JWT from trusted issuer: " + trustedIssuer.getIssuer());
+            return Single.error(malformed(trustedIssuer));
+        }
+        JWSAlgorithm algorithm = signedJWT.getHeader().getAlgorithm();
+        if (!SUPPORTED_ALGORITHMS.contains(algorithm)) {
+            return Single.error(new SecurityException(
+                    "Unsupported signature algorithm " + algorithm + " for trusted issuer: " + trustedIssuer.getIssuer()));
+        }
+        final TrustDomain trustDomain;
+        try {
+            trustDomain = asTrustDomain(trustedIssuer);
+        } catch (IllegalArgumentException e) {
+            return Single.error(e);
+        }
+        return verify(signedJWT, trustDomain, trustedIssuer);
+    }
+
+    private Single<JWTClaimsSet> verify(SignedJWT signedJWT, TrustDomain trustDomain, TrustedIssuer trustedIssuer) {
+        String kid = signedJWT.getHeader().getKeyID();
+        Maybe<Boolean> verified = kid == null || kid.isBlank()
+                ? trustDomainKeyService.getKeys(trustDomain).map(jwks -> anyKeyVerifies(signedJWT, jwks))
+                : trustDomainKeyService.getKey(trustDomain, kid).map(jwk -> isValidSignature(signedJWT, jwk));
+        return verified
+                .switchIfEmpty(Single.error(() -> new SecurityException(
+                        "No signing key available for trusted issuer: " + trustedIssuer.getIssuer())))
+                .flatMap(valid -> valid
+                        ? claimsOf(signedJWT, trustedIssuer)
+                        : Single.error(new SecurityException(
+                                "JWT signature verification failed for trusted issuer: " + trustedIssuer.getIssuer())));
+    }
+
+    private boolean anyKeyVerifies(SignedJWT signedJWT, JWKSet jwks) {
+        List<JWK> keys = jwks != null ? jwks.getKeys() : null;
+        return keys != null && keys.stream()
+                .filter(TrustedIssuerResolverImpl::usableForSignatureVerification)
+                .anyMatch(jwk -> isValidSignature(signedJWT, jwk));
+    }
+
+    private static boolean usableForSignatureVerification(JWK jwk) {
+        return jwk.getUse() == null || SIGNATURE_USE.equals(jwk.getUse());
+    }
+
+    private boolean isValidSignature(SignedJWT signedJWT, JWK jwk) {
+        try {
+            return jwsService.isValidSignature(signedJWT, jwk);
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 
-    private JWTProcessor<SecurityContext> buildProcessor(TrustedIssuer trustedIssuer) {
-        JWKSource<SecurityContext> jwkSource = buildJwkSource(trustedIssuer);
-
-        // Asymmetric algorithms only; HMAC not supported for external trust
-        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(
-                new HashSet<>(List.of(
-                        JWSAlgorithm.RS256, JWSAlgorithm.RS384, JWSAlgorithm.RS512,
-                        JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512,
-                        JWSAlgorithm.PS256, JWSAlgorithm.PS384, JWSAlgorithm.PS512
-                )),
-                jwkSource
-        );
-
-        DefaultJWTProcessor<SecurityContext> processor = new DefaultJWTProcessor<>();
-        processor.setJWSKeySelector(keySelector);
-        // No required claims at the Nimbus level; temporal validations (exp, nbf)
-        // are handled by DefaultTokenValidator.validateTemporalClaims() after verification.
-        processor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier<>(
-                null, Collections.emptySet()
-        ));
-        return processor;
+    private static Single<JWTClaimsSet> claimsOf(SignedJWT signedJWT, TrustedIssuer trustedIssuer) {
+        try {
+            return Single.just(signedJWT.getJWTClaimsSet());
+        } catch (ParseException e) {
+            return Single.error(malformed(trustedIssuer));
+        }
     }
 
-    private JWKSource<SecurityContext> buildJwkSource(TrustedIssuer trustedIssuer) {
+    private static SecurityException malformed(TrustedIssuer trustedIssuer) {
+        return new SecurityException("Malformed JWT from trusted issuer: " + trustedIssuer.getIssuer());
+    }
+
+    private static TrustDomain asTrustDomain(TrustedIssuer trustedIssuer) {
         KeyResolutionMethod method = trustedIssuer.getKeyResolutionMethod();
-
-        if (method == KeyResolutionMethod.JWKS_URL) {
-            return buildRemoteJwkSource(trustedIssuer.getJwksUri());
-        } else if (method == KeyResolutionMethod.PEM) {
-            return buildPemJwkSource(trustedIssuer.getCertificate());
-        } else {
-            throw new IllegalArgumentException("Unsupported key resolution method: " + method);
+        if (method == null) {
+            throw new IllegalArgumentException("Unsupported key resolution method: null");
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private JWKSource<SecurityContext> buildRemoteJwkSource(String jwksUri) {
-        try {
-            DefaultResourceRetriever retriever = new DefaultResourceRetriever(
-                    JWKS_CONNECT_TIMEOUT_MS, JWKS_READ_TIMEOUT_MS);
-            return (JWKSource<SecurityContext>) JWKSourceBuilder.create(URI.create(jwksUri).toURL(), retriever)
-                    .outageTolerant(true)
-                    .retrying(true)
+        TrustDomainKeyMaterial keyMaterial = switch (method) {
+            case JWKS_URL -> TrustDomainKeyMaterial.builder()
+                    .source(KeyMaterialSource.JWKS_URL)
+                    .jwksUrl(trustedIssuer.getJwksUri())
                     .build();
-        } catch (MalformedURLException | IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUri, e);
-        }
-    }
-
-    private JWKSource<SecurityContext> buildPemJwkSource(String pemCertificate) {
-        X509Certificate cert = X509CertUtils.parse(pemCertificate);
-        if (cert == null) {
-            throw new IllegalArgumentException("Failed to parse PEM certificate for trusted issuer");
-        }
-        try {
-            JWK jwk = JWK.parse(cert);
-            // PEM has one key; return it unconditionally to bypass kid matching.
-            return (selector, context) -> List.of(jwk);
-        } catch (JOSEException e) {
-            throw new IllegalArgumentException("Failed to convert certificate to JWK", e);
-        }
+            case PEM -> TrustDomainKeyMaterial.builder()
+                    .source(KeyMaterialSource.PEM)
+                    .certificate(trustedIssuer.getCertificate())
+                    .build();
+        };
+        return TrustDomain.builder()
+                .id(CACHE_KEY_PREFIX + trustedIssuer.getIssuer())
+                .name(trustedIssuer.getIssuer())
+                .keyMaterial(keyMaterial)
+                .build();
     }
 }

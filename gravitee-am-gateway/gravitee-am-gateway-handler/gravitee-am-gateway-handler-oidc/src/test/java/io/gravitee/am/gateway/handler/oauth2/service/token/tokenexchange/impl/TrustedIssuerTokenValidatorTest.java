@@ -230,7 +230,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .claim(Claims.DOMAIN, DOMAIN_ID)
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenReturn(claimsSet);
+                .thenReturn(Single.just(claimsSet));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -263,7 +263,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .thenReturn(Single.just(decodedJwt));
 
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenThrow(new InvalidRequestException("JWT signature verification failed for trusted issuer: https://external-idp.example.com"));
+                .thenReturn(Single.error(new InvalidRequestException("JWT signature verification failed for trusted issuer: https://external-idp.example.com")));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -297,7 +297,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .claim(Claims.SCOPE, "ext:read ext:write ext:admin")
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenReturn(claimsSet);
+                .thenReturn(Single.just(claimsSet));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -334,7 +334,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .claim(Claims.SCOPE, "read write")
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenReturn(claimsSet);
+                .thenReturn(Single.just(claimsSet));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -376,7 +376,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .claim("custom_claim", "custom_value")
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenReturn(claimsSet);
+                .thenReturn(Single.just(claimsSet));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -420,7 +420,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .expirationTime(new Date(pastExp * 1000))
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenReturn(claimsSet);
+                .thenReturn(Single.just(claimsSet));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -450,7 +450,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .issuer("https://external-idp.example.com")
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenReturn(claimsSet);
+                .thenReturn(Single.just(claimsSet));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

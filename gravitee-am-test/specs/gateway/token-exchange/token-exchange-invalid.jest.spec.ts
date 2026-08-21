@@ -233,10 +233,9 @@ describe('Token Exchange with invalid tokens', () => {
     const response = await exchangeExternalJwt(expired).expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
-    // the refusal is indistinguishable from a signature failure by message alone - the trusted
-    // issuer resolver's nimbus claims verifier rejects the expiry before AM's temporal check
-    // can raise its more specific "has expired".
-    expect(response.body.error_description).toEqual('The presented token is invalid');
+    // the trusted issuer resolver verifies the signature only - expiry is caught by the same
+    // temporal check that guards domain-signed tokens, so the refusal names the reason
+    expect(response.body.error_description).toEqual(`${JWT_TOKEN_TYPE} has expired`);
     expect(response.body).not.toHaveProperty('access_token');
   });
 });

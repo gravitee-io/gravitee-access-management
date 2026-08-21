@@ -23,15 +23,18 @@ import { DomainStoreService } from '../../../../stores/domain.store';
 
 const DEFAULT_SETTINGS = {
   enabled: false,
+  maxJwtLifetimeSeconds: 300,
+  clockSkewSeconds: 30,
+  defaultAllowedAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'EdDSA'],
+};
+
+const DEFAULT_KEY_RETRIEVAL_SETTINGS = {
   allowUnsecuredHttpUri: false,
   allowPrivateIpAddress: false,
   fetchTimeoutMs: 5000,
   maxResponseSizeKb: 32,
   cacheTtlSeconds: 300,
   cacheMaxEntries: 50,
-  maxJwtLifetimeSeconds: 300,
-  clockSkewSeconds: 30,
-  defaultAllowedAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'EdDSA'],
 };
 
 const SUPPORTED_ALGORITHMS = ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'EdDSA', 'PS256', 'PS384', 'PS512'];
@@ -47,6 +50,7 @@ export class SpiffeSettingsComponent implements OnInit {
   domain: any = {};
   formChanged = false;
   editMode: boolean;
+  keyRetrievalEditMode: boolean;
   supportedAlgorithms = SUPPORTED_ALGORITHMS;
 
   constructor(
@@ -60,21 +64,32 @@ export class SpiffeSettingsComponent implements OnInit {
     this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
+    this.keyRetrievalEditMode = this.authService.hasPermissions(['domain_settings_update']);
     if (!this.domain.oidc.workloadIdentitySettings) {
       this.domain.oidc.workloadIdentitySettings = { ...DEFAULT_SETTINGS };
+    }
+    if (!this.domain.keyRetrievalSettings) {
+      this.domain.keyRetrievalSettings = { ...DEFAULT_KEY_RETRIEVAL_SETTINGS };
     }
   }
 
   save() {
-    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe({
+    const payload: any = {};
+    if (this.editMode) {
+      payload.oidc = this.domain.oidc;
+    }
+    if (this.keyRetrievalEditMode) {
+      payload.keyRetrievalSettings = this.domain.keyRetrievalSettings;
+    }
+    this.domainService.patch(this.domainId, payload).subscribe({
       next: (data) => {
         this.domainStore.set(data);
         this.domain = data;
         this.formChanged = false;
-        this.snackbarService.open('SPIFFE configuration updated');
+        this.snackbarService.open('Configuration updated');
       },
       error: (err: unknown) => {
-        const message = (err as any)?.error?.message || 'Failed to update SPIFFE configuration';
+        const message = (err as any)?.error?.message || 'Failed to update configuration';
         this.snackbarService.open(message);
       },
     });
@@ -93,12 +108,12 @@ export class SpiffeSettingsComponent implements OnInit {
   }
 
   toggleAllowUnsecuredHttpUri(event) {
-    this.domain.oidc.workloadIdentitySettings.allowUnsecuredHttpUri = event.checked;
+    this.domain.keyRetrievalSettings.allowUnsecuredHttpUri = event.checked;
     this.formChanged = true;
   }
 
   toggleAllowPrivateIpAddress(event) {
-    this.domain.oidc.workloadIdentitySettings.allowPrivateIpAddress = event.checked;
+    this.domain.keyRetrievalSettings.allowPrivateIpAddress = event.checked;
     this.formChanged = true;
   }
 

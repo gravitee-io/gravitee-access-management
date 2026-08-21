@@ -33,27 +33,31 @@ import { mapValues } from '../runtime';
  */
 export interface PatchSpiffeDomainSettings {
   /**
-   *
+   * Deprecated: moved to keyRetrievalSettings.allowPrivateIpAddress.
    * @type {boolean}
    * @memberof PatchSpiffeDomainSettings
+   * @deprecated
    */
   allowPrivateIpAddress?: boolean;
   /**
-   *
+   * Deprecated: moved to keyRetrievalSettings.allowUnsecuredHttpUri.
    * @type {boolean}
    * @memberof PatchSpiffeDomainSettings
+   * @deprecated
    */
   allowUnsecuredHttpUri?: boolean;
   /**
-   *
+   * Deprecated: moved to keyRetrievalSettings.cacheMaxEntries.
    * @type {number}
    * @memberof PatchSpiffeDomainSettings
+   * @deprecated
    */
   cacheMaxEntries?: number;
   /**
-   *
+   * Deprecated: moved to keyRetrievalSettings.cacheTtlSeconds.
    * @type {number}
    * @memberof PatchSpiffeDomainSettings
+   * @deprecated
    */
   cacheTtlSeconds?: number;
   /**
@@ -75,9 +79,10 @@ export interface PatchSpiffeDomainSettings {
    */
   enabled?: boolean;
   /**
-   *
+   * Deprecated: moved to keyRetrievalSettings.fetchTimeoutMs.
    * @type {number}
    * @memberof PatchSpiffeDomainSettings
+   * @deprecated
    */
   fetchTimeoutMs?: number;
   /**
@@ -87,9 +92,10 @@ export interface PatchSpiffeDomainSettings {
    */
   maxJwtLifetimeSeconds?: number;
   /**
-   *
+   * Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb.
    * @type {number}
    * @memberof PatchSpiffeDomainSettings
+   * @deprecated
    */
   maxResponseSizeKb?: number;
 }

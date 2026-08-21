@@ -30,6 +30,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -53,6 +54,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsM
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SelfServiceAccountManagementSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.KeyRetrievalSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingNotifierMongo;
@@ -220,7 +222,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                 .observeOn(Schedulers.computation());
     }
 
-    private static Domain convert(DomainMongo domainMongo) {
+    static Domain convert(DomainMongo domainMongo) {
         if (domainMongo == null) {
             return null;
         }
@@ -259,12 +261,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setManagedBy(domainMongo.getManagedBy() != null ? ManagedBy.valueOf(domainMongo.getManagedBy()) : null);
         domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
         domain.setTokenExchangeSettings(convert(domainMongo.getTokenExchangeSettings()));
+        domain.setKeyRetrievalSettings(convert(domainMongo.getKeyRetrievalSettings()));
         domain.setCertificateSettings(domainMongo.getCertificateSettings());
 
         return domain;
     }
 
-    private static DomainMongo convert(Domain domain) {
+    static DomainMongo convert(Domain domain) {
         if (domain == null) {
             return null;
         }
@@ -303,11 +306,12 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setManagedBy(domain.getManagedBy() != null ? domain.getManagedBy().name() : null);
         domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
         domainMongo.setTokenExchangeSettings(convert(domain.getTokenExchangeSettings()));
+        domainMongo.setKeyRetrievalSettings(convert(domain.getKeyRetrievalSettings()));
         domainMongo.setCertificateSettings(domain.getCertificateSettings());
         return domainMongo;
     }
 
-    private static OIDCSettings convert(OIDCSettingsMongo oidcMongo) {
+    static OIDCSettings convert(OIDCSettingsMongo oidcMongo) {
         if (oidcMongo == null) {
             return null;
         }
@@ -396,7 +400,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return notifier;
     }
 
-    private static OIDCSettingsMongo convert(OIDCSettings oidc) {
+    static OIDCSettingsMongo convert(OIDCSettings oidc) {
         if (oidc == null) {
             return null;
         }
@@ -543,8 +547,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         }
         io.gravitee.am.model.oidc.SpiffeDomainSettings result = new io.gravitee.am.model.oidc.SpiffeDomainSettings();
         result.setEnabled(source.isEnabled());
-        result.setAllowUnsecuredHttpUri(source.isAllowUnsecuredHttpUri());
-        result.setAllowPrivateIpAddress(source.isAllowPrivateIpAddress());
+        result.setAllowUnsecuredHttpUri(source.getAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(source.getAllowPrivateIpAddress());
         result.setFetchTimeoutMs(source.getFetchTimeoutMs());
         result.setMaxResponseSizeKb(source.getMaxResponseSizeKb());
         result.setCacheTtlSeconds(source.getCacheTtlSeconds());
@@ -564,15 +568,37 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo result =
                 new io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo();
         result.setEnabled(source.isEnabled());
+        result.setMaxJwtLifetimeSeconds(source.getMaxJwtLifetimeSeconds());
+        result.setClockSkewSeconds(source.getClockSkewSeconds());
+        result.setDefaultAllowedAlgorithms(source.getDefaultAllowedAlgorithms());
+        return result;
+    }
+
+    private static KeyRetrievalSettings convert(KeyRetrievalSettingsMongo source) {
+        if (source == null) {
+            return null;
+        }
+        KeyRetrievalSettings result = new KeyRetrievalSettings();
         result.setAllowUnsecuredHttpUri(source.isAllowUnsecuredHttpUri());
         result.setAllowPrivateIpAddress(source.isAllowPrivateIpAddress());
         result.setFetchTimeoutMs(source.getFetchTimeoutMs());
         result.setMaxResponseSizeKb(source.getMaxResponseSizeKb());
         result.setCacheTtlSeconds(source.getCacheTtlSeconds());
         result.setCacheMaxEntries(source.getCacheMaxEntries());
-        result.setMaxJwtLifetimeSeconds(source.getMaxJwtLifetimeSeconds());
-        result.setClockSkewSeconds(source.getClockSkewSeconds());
-        result.setDefaultAllowedAlgorithms(source.getDefaultAllowedAlgorithms());
+        return result;
+    }
+
+    private static KeyRetrievalSettingsMongo convert(KeyRetrievalSettings source) {
+        if (source == null) {
+            return null;
+        }
+        KeyRetrievalSettingsMongo result = new KeyRetrievalSettingsMongo();
+        result.setAllowUnsecuredHttpUri(source.isAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(source.isAllowPrivateIpAddress());
+        result.setFetchTimeoutMs(source.getFetchTimeoutMs());
+        result.setMaxResponseSizeKb(source.getMaxResponseSizeKb());
+        result.setCacheTtlSeconds(source.getCacheTtlSeconds());
+        result.setCacheMaxEntries(source.getCacheMaxEntries());
         return result;
     }
 
