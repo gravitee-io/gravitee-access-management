@@ -257,6 +257,31 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
+    /**
+     * Deliberate: a malformed type is rejected by the parameter converter, which Jersey runs before
+     * the resource method, so this one 400s rather than 403s. An unusable enum value tells the caller
+     * nothing the OpenAPI spec does not already publish.
+     */
+    @Test
+    public void shouldReturnBadRequest_whenTypeUnknownAndPermissionDenied() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(io.reactivex.rxjava3.core.Single.just(false)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .queryParam("type", "NOT_A_TYPE")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
     @Test
     public void shouldReturnForbidden_whenTypeMissingAndPermissionDenied() {
         final String domainId = "domain-1";

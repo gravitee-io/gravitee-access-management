@@ -23,6 +23,7 @@ import jakarta.ws.rs.ext.ParamConverterProvider;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * Without this, Jersey reports an unrecognised {@code type} query parameter as a 404, because a
@@ -44,7 +45,7 @@ public class ProtectedResourceTypeParamConverterProvider implements ParamConvert
                     return null;
                 }
                 try {
-                    return ProtectedResource.Type.valueOf(value.toUpperCase());
+                    return ProtectedResource.Type.valueOf(value.toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
                     throw new BadRequestException("Invalid protected resource type: " + value
                             + ". Available types: " + Arrays.toString(ProtectedResource.Type.values()));

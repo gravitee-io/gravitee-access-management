@@ -34,7 +34,7 @@ public record CursorApiRequest(String id, String lastSortValue) {
         try {
             decoded = new String(Base64.getDecoder().decode(value));
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Query parameter 'cursor' is not valid");
+            throw new IllegalArgumentException("Query parameter 'cursor' is not valid", e);
         }
         String[] split = decoded.split(SEPARATOR);
         if (split.length != 2) {

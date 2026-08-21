@@ -32,15 +32,7 @@ import java.util.Optional;
 public class ProtectedResource implements Notifiable {
 
     public enum Type {
-        MCP_SERVER;
-
-        public static Type fromString(String type) {
-            try {
-                return Type.valueOf(type.toUpperCase());
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Invalid protected resource type: " + type);
-            }
-        }
+        MCP_SERVER
     }
 
     private String id;
