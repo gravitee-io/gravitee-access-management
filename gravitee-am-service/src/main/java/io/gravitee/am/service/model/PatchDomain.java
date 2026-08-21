@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -73,6 +74,7 @@ public class PatchDomain {
     private Optional<SecretExpirationSettings> secretSettings;
     private Optional<TokenExchangeSettings> tokenExchangeSettings;
     private Optional<CertificateSettings> certificateSettings;
+    private Optional<PatchKeyRetrievalSettings> keyRetrievalSettings;
 
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -106,8 +108,21 @@ public class PatchDomain {
             if (this.getOidc().isPresent()) {
                 PatchOIDCSettings patcher = this.getOidc().get();
                 toPatch.setOidc(patcher.patch(toPatch.getOidc()));
+                final PatchKeyRetrievalSettings relocatedFromSpiffe = patcher.relocatedKeyRetrievalPatch();
+                if (relocatedFromSpiffe != null) {
+                    toPatch.setKeyRetrievalSettings(relocatedFromSpiffe.patch(toPatch.getKeyRetrievalSettings()));
+                }
             } else {
                 toPatch.setOidc(OIDCSettings.defaultSettings());
+            }
+        }
+
+        if (this.getKeyRetrievalSettings() != null) {
+            if (this.getKeyRetrievalSettings().isPresent()) {
+                final PatchKeyRetrievalSettings patcher = this.getKeyRetrievalSettings().get();
+                toPatch.setKeyRetrievalSettings(patcher.patch(toPatch.getKeyRetrievalSettings()));
+            } else {
+                toPatch.setKeyRetrievalSettings(KeyRetrievalSettings.defaultSettings());
             }
         }
 
@@ -157,7 +172,8 @@ public class PatchDomain {
                 || webProtectionSettings != null && webProtectionSettings.isPresent()
                 || secretSettings != null && secretSettings.isPresent()
                 || tokenExchangeSettings != null && tokenExchangeSettings.isPresent()
-                || certificateSettings != null && certificateSettings.isPresent()) {
+                || certificateSettings != null && certificateSettings.isPresent()
+                || keyRetrievalSettings != null && keyRetrievalSettings.isPresent()) {
 
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }

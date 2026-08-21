@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.automation.model;
 
 import io.gravitee.am.model.CorsSettings;
+import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -144,6 +145,9 @@ public class AutomationDomain {
     private WebProtectionSettings webProtectionSettings;
     private SecretExpirationSettings secretExpirationSettings;
     private TokenExchangeSettings tokenExchangeSettings;
+
+    @Schema(description = "Fetch, SSRF and cache limits applied to every trusted domain in the security domain.")
+    private KeyRetrievalSettings keyRetrievalSettings;
 
     // --- Automation wrappers (key-keyed references) ---
 

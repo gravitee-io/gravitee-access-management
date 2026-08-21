@@ -73,6 +73,10 @@ test('AM-6625: exchange succeeds with real Domain B token via JWKS URL trust', a
   // PROVE: real cross-domain trust via JWKS — Domain A trusts Domain B's JWKS endpoint
   await waitForSyncAfter(tokenExchangeDomain.id, async () => {
     await patchDomainRaw(tokenExchangeDomain.id, teAdminToken, {
+      keyRetrievalSettings: {
+        allowPrivateIpAddress: true,
+        allowUnsecuredHttpUri: true,
+      },
       tokenExchangeSettings: {
         enabled: true,
         allowedSubjectTokenTypes: TOKEN_EXCHANGE_DEFAULTS.ALLOWED_SUBJECT_TOKEN_TYPES,

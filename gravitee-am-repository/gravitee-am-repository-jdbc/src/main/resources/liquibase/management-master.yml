@@ -239,3 +239,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_13_0/4.13.0-reporters-add-attribute-mappings.yml
   - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-identities-add-system-cluster-restricted.yml
+  - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-trust-domains-key-material-and-matcher.yml
+  - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-domains-add-key-retrieval-settings-column.yml

@@ -43,8 +43,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
-import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
-import io.gravitee.am.gateway.handler.oidc.service.spiffe.impl.TrustBundleServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainKeyServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -106,8 +106,8 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TrustBundleService trustBundleService(@Qualifier("uncachedJwkSetFetcher") JWKSetFetcher jwkSetFetcher, Domain domain) {
-        return new TrustBundleServiceImpl(jwkSetFetcher, domain);
+    public TrustDomainKeyService trustDomainKeyService(@Qualifier("uncachedJwkSetFetcher") JWKSetFetcher jwkSetFetcher, Domain domain) {
+        return new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
     }
 
     @Bean
@@ -148,8 +148,8 @@ public class OIDCConfiguration implements ProtocolConfiguration {
                                                                    JWSService jwsService,
                                                                    OpenIDDiscoveryService openIDDiscoveryService,
                                                                    Domain domain,
-                                                                   TrustBundleService trustBundleService,
+                                                                   TrustDomainKeyService trustDomainKeyService,
                                                                    TrustDomainRepository trustDomainRepository) {
-        return new SpiffeClientAssertionValidator(clientLookupService, jwsService, openIDDiscoveryService, domain, trustBundleService, trustDomainRepository);
+        return new SpiffeClientAssertionValidator(clientLookupService, jwsService, openIDDiscoveryService, domain, trustDomainKeyService, trustDomainRepository);
     }
 }

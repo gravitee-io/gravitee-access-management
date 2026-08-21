@@ -64,6 +64,13 @@ import {
   AccountSettingsToJSON,
   AccountSettingsToJSONTyped,
 } from './AccountSettings';
+import type { KeyRetrievalSettings } from './KeyRetrievalSettings';
+import {
+  KeyRetrievalSettingsFromJSON,
+  KeyRetrievalSettingsFromJSONTyped,
+  KeyRetrievalSettingsToJSON,
+  KeyRetrievalSettingsToJSONTyped,
+} from './KeyRetrievalSettings';
 import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
 import {
   SelfServiceAccountManagementSettingsFromJSON,
@@ -189,6 +196,12 @@ export interface Domain {
    * @memberof Domain
    */
   readonly key?: string;
+  /**
+   *
+   * @type {KeyRetrievalSettings}
+   * @memberof Domain
+   */
+  keyRetrievalSettings?: KeyRetrievalSettings;
   /**
    *
    * @type {LoginSettings}
@@ -419,6 +432,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     id: json['id'] == null ? undefined : json['id'],
     identities: json['identities'] == null ? undefined : new Set(json['identities']),
     key: json['key'] == null ? undefined : json['key'],
+    keyRetrievalSettings: json['keyRetrievalSettings'] == null ? undefined : KeyRetrievalSettingsFromJSON(json['keyRetrievalSettings']),
     loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
     managedBy: json['managedBy'] == null ? undefined : ManagedByFromJSON(json['managedBy']),
     master: json['master'] == null ? undefined : json['master'],
@@ -481,6 +495,7 @@ export function DomainToJSONTyped(value?: Omit<Domain, 'key'> | null, ignoreDisc
     hrid: value['hrid'],
     id: value['id'],
     identities: value['identities'] == null ? undefined : Array.from(value['identities'] as Set<any>),
+    keyRetrievalSettings: KeyRetrievalSettingsToJSON(value['keyRetrievalSettings']),
     loginSettings: LoginSettingsToJSON(value['loginSettings']),
     managedBy: ManagedByToJSON(value['managedBy']),
     master: value['master'],

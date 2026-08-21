@@ -52,8 +52,8 @@ class ApplicationServiceImplSpiffeValidationTest {
     void setUp() {
         service = new ApplicationServiceImpl();
         ReflectionTestUtils.setField(service, "trustDomainRepository", trustDomainRepository);
-        lenient().when(trustDomainRepository.findByName(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(TRUST_DOMAIN)))
-                .thenReturn(Maybe.just(TrustDomain.builder().name(TRUST_DOMAIN).build()));
+        lenient().when(trustDomainRepository.findBySpiffeTrustDomain(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(TRUST_DOMAIN)))
+                .thenReturn(Maybe.just(TrustDomain.builder().name(TRUST_DOMAIN).spiffeTrustDomain(TRUST_DOMAIN).build()));
     }
 
     @Test

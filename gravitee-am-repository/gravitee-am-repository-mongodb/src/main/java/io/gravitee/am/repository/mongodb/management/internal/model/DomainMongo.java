@@ -102,6 +102,8 @@ public class DomainMongo extends Auditable {
 
     private TokenExchangeSettingsMongo tokenExchangeSettings;
 
+    private KeyRetrievalSettingsMongo keyRetrievalSettings;
+
     private CertificateSettings certificateSettings;
 
     @Override

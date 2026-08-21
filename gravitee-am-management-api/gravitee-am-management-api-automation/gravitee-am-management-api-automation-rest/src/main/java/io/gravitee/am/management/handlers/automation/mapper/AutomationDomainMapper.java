@@ -88,6 +88,7 @@ public final class AutomationDomainMapper {
         out.setWebProtectionSettings(domain.getWebProtectionSettings());
         out.setSecretExpirationSettings(domain.getSecretExpirationSettings());
         out.setTokenExchangeSettings(domain.getTokenExchangeSettings());
+        out.setKeyRetrievalSettings(domain.getKeyRetrievalSettings());
 
         // Wrapped settings blocks (key-keyed references read from the parallel *Key fields)
         out.setOidc(toAutomationOidc(domain.getOidc()));
@@ -207,6 +208,7 @@ public final class AutomationDomainMapper {
         target.setWebProtectionSettings(in.getWebProtectionSettings());
         target.setSecretExpirationSettings(in.getSecretExpirationSettings());
         target.setTokenExchangeSettings(in.getTokenExchangeSettings());
+        target.setKeyRetrievalSettings(in.getKeyRetrievalSettings());
 
         if (in.getSaml() != null) {
             SAMLSettings saml = new SAMLSettings();

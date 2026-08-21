@@ -21,6 +21,7 @@ import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.reactivex.rxjava3.core.Maybe;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 
 public class CachedJWKSetFetcher implements JWKSetFetcher {
     private final JWKSetFetcher jwkSetFetcher;
@@ -38,8 +39,25 @@ public class CachedJWKSetFetcher implements JWKSetFetcher {
 
     @Override
     public Maybe<JWKSetFetchResponse> getKeys(String jwksUri) {
-        return Maybe.fromCallable(() -> cache.getIfPresent(jwksUri))
-                .switchIfEmpty(Maybe.defer(() -> this.jwkSetFetcher.getKeys(jwksUri)).doAfterSuccess(value -> cache.put(jwksUri, value)));
+        return cached(cacheKey(jwksUri, 0L), () -> this.jwkSetFetcher.getKeys(jwksUri));
+    }
+
+    @Override
+    public Maybe<JWKSetFetchResponse> getKeys(String jwksUri, long maxResponseSizeBytes) {
+        return cached(cacheKey(jwksUri, maxResponseSizeBytes), () -> this.jwkSetFetcher.getKeys(jwksUri, maxResponseSizeBytes));
+    }
+
+    private Maybe<JWKSetFetchResponse> cached(String cacheKey, Supplier<Maybe<JWKSetFetchResponse>> loader) {
+        return Maybe.fromCallable(() -> cache.getIfPresent(cacheKey))
+                .switchIfEmpty(Maybe.defer(loader::get).doAfterSuccess(value -> cache.put(cacheKey, value)));
+    }
+
+    /**
+     * A response fetched without a size bound must not be served to a caller that asked for one,
+     * so the bound is part of the entry's identity.
+     */
+    private static String cacheKey(String jwksUri, long maxResponseSizeBytes) {
+        return jwksUri + '|' + maxResponseSizeBytes;
     }
 
 }

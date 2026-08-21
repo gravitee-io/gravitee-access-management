@@ -104,10 +104,9 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                         return Single.error(new InvalidRequestException("Untrusted issuer: " + issuer));
                     }
 
-                    return Single.fromCallable(() -> {
-                        JWTClaimsSet claimsSet = trustedIssuerResolver.resolve(token, matchingIssuer);
-                        return buildValidatedToken(claimsSet, domain, matchingIssuer);
-                    }).subscribeOn(Schedulers.io());
+                    return trustedIssuerResolver.resolve(token, matchingIssuer)
+                            .subscribeOn(Schedulers.io())
+                            .map(claimsSet -> buildValidatedToken(claimsSet, domain, matchingIssuer));
                 })
                 .onErrorResumeNext(error -> {
                     if (error instanceof InvalidRequestException) {

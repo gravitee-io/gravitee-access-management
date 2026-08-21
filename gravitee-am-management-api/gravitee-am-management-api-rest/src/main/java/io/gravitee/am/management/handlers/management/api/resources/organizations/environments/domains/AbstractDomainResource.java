@@ -103,6 +103,7 @@ public class AbstractDomainResource extends AbstractResource {
         }
 
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
+            filteredDomain.setKeyRetrievalSettings(domain.getKeyRetrievalSettings());
             filteredDomain.setLoginSettings(domain.getLoginSettings());
             filteredDomain.setWebAuthnSettings(domain.getWebAuthnSettings());
             filteredDomain.setAccountSettings(domain.getAccountSettings());

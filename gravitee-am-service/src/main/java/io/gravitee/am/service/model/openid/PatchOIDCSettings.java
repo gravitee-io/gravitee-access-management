@@ -18,6 +18,7 @@ package io.gravitee.am.service.model.openid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.*;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.model.PatchKeyRetrievalSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 import lombok.NoArgsConstructor;
 
@@ -126,6 +127,16 @@ public class PatchOIDCSettings {
 
     public void setWorkloadIdentitySettings(Optional<PatchSpiffeDomainSettings> workloadIdentitySettings) {
         this.workloadIdentitySettings = workloadIdentitySettings;
+    }
+
+    /**
+     * The retrieval limits this patch still carries under the deprecated SPIFFE block, as a patch on
+     * the block that now owns them, or null when the patch carries none.
+     */
+    public PatchKeyRetrievalSettings relocatedKeyRetrievalPatch() {
+        return workloadIdentitySettings != null && workloadIdentitySettings.isPresent()
+                ? workloadIdentitySettings.get().toKeyRetrievalPatch()
+                : null;
     }
 
     public OIDCSettings patch(OIDCSettings toPatch) {

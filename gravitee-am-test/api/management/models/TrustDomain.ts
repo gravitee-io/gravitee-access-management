@@ -28,6 +28,13 @@
 import { mapValues } from '../runtime';
 import type { JWKSet } from './JWKSet';
 import { JWKSetFromJSON, JWKSetFromJSONTyped, JWKSetToJSON, JWKSetToJSONTyped } from './JWKSet';
+import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
+import {
+  TrustDomainKeyMaterialFromJSON,
+  TrustDomainKeyMaterialFromJSONTyped,
+  TrustDomainKeyMaterialToJSON,
+  TrustDomainKeyMaterialToJSONTyped,
+} from './TrustDomainKeyMaterial';
 
 /**
  *
@@ -42,9 +49,10 @@ export interface TrustDomain {
    */
   allowedAlgorithms?: Array<string>;
   /**
-   *
+   * Use keyMaterial.source instead. Null when the key material is a PEM certificate.
    * @type {string}
    * @memberof TrustDomain
+   * @deprecated
    */
   bundleSource?: TrustDomainBundleSourceEnum;
   /**
@@ -66,13 +74,20 @@ export interface TrustDomain {
    */
   id?: string;
   /**
-   *
+   * Use keyMaterial.jwksUrl instead.
    * @type {string}
    * @memberof TrustDomain
+   * @deprecated
    */
   jwksUrl?: string;
   /**
    *
+   * @type {TrustDomainKeyMaterial}
+   * @memberof TrustDomain
+   */
+  keyMaterial?: TrustDomainKeyMaterial;
+  /**
+   * Label the trusted domain is known by. Unique within the security domain.
    * @type {string}
    * @memberof TrustDomain
    */
@@ -95,6 +110,12 @@ export interface TrustDomain {
    * @memberof TrustDomain
    */
   refreshIntervalSeconds?: number;
+  /**
+   * SPIFFE trust domain matched against the "sub" of a JWT-SVID, without the "spiffe://" scheme. Required to accept SPIFFE client assertions.
+   * @type {string}
+   * @memberof TrustDomain
+   */
+  spiffeTrustDomain?: string;
   /**
    *
    * @type {JWKSet}
@@ -153,10 +174,12 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
+    keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
     name: json['name'] == null ? undefined : json['name'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
+    spiffeTrustDomain: json['spiffeTrustDomain'] == null ? undefined : json['spiffeTrustDomain'],
     staticJwks: json['staticJwks'] == null ? undefined : JWKSetFromJSON(json['staticJwks']),
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
@@ -178,10 +201,12 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     description: value['description'],
     id: value['id'],
     jwksUrl: value['jwksUrl'],
+    keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
     name: value['name'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
+    spiffeTrustDomain: value['spiffeTrustDomain'],
     staticJwks: JWKSetToJSON(value['staticJwks']),
     updatedAt: value['updatedAt'],
   };

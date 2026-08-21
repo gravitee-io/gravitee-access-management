@@ -28,5 +28,14 @@ public interface TrustDomainRepository extends CrudRepository<TrustDomain, Strin
 
     Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
 
+    /**
+     * Finds a trusted domain by the label it is known by. Labels are unique per reference.
+     */
     Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name);
+
+    /**
+     * Finds the trusted domain that vouches for a SPIFFE trust domain. Unique per reference, and
+     * absent on trusted domains that are not trusted for SPIFFE.
+     */
+    Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
 }

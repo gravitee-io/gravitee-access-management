@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.service.spiffe;
+package io.gravitee.am.gateway.handler.oidc.service.trustdomain;
 
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -21,11 +21,11 @@ import io.gravitee.am.model.oidc.TrustDomain;
 import io.reactivex.rxjava3.core.Maybe;
 
 /**
- * Resolves JWT-SVID signing keys for a {@link TrustDomain}. Keys are fetched from
- * the bundle source configured on the trust domain (JWKS URL or static), cached
- * with the domain's refresh interval, and re-fetched on a {@code kid} miss.
+ * Resolves the signing keys of a {@link TrustDomain}.
+ * Keys are read from the key material configured on the trust domain (JWKS URL or inline),
+ * cached with the domain's refresh interval, and re-fetched on a {@code kid} miss.
  */
-public interface TrustBundleService {
+public interface TrustDomainKeyService {
 
     Maybe<JWKSet> getKeys(TrustDomain trustDomain);
 

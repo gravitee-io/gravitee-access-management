@@ -81,6 +81,8 @@ public class JdbcDomain {
     private String tokenExchangeSettings;
     @Column("certificate_settings")
     private String certificateSettings;
+    @Column("key_retrieval_settings")
+    private String keyRetrievalSettings;
 
 
     /**

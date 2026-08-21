@@ -71,9 +71,11 @@ export const setupSpiffePrefixFixture = async (): Promise<SpiffePrefixFixture> =
         oidc: {
           workloadIdentitySettings: {
             enabled: true,
-            allowPrivateIpAddress: true,
-            allowUnsecuredHttpUri: true,
           },
+        },
+        keyRetrievalSettings: {
+          allowPrivateIpAddress: true,
+          allowUnsecuredHttpUri: true,
         },
       }),
     });
