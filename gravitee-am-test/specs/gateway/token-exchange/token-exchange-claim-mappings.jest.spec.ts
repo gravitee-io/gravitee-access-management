@@ -15,16 +15,19 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
-import { ClaimMapping, setupTokenExchangeFixture, TokenExchangeFixture, TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
+import {
+  ACCESS_TOKEN_TYPE,
+  ClaimMapping,
+  ID_TOKEN_TYPE,
+  TOKEN_EXCHANGE_TEST,
+  TokenExchangeFixture,
+  setupTokenExchangeFixture,
+} from './fixtures/token-exchange-fixture';
 
 setup(180000);
-
-const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
-const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
-const ID_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id_token';
 
 // jti is used as the source claim because it is always present and its value differs between the
 // subject token and the token the exchange issues. That difference is what proves the mapper read
@@ -84,25 +87,12 @@ afterAll(async () => {
   }
 });
 
-const exchange = async (fixture: TokenExchangeFixture, subjectToken: string, extraParams = ''): Promise<Record<string, any>> => {
-  const response = await performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${ACCESS_TOKEN_TYPE}${extraParams}`,
-    {
-      'Content-type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${fixture.basicAuth}`,
-    },
-  ).expect(200);
-  return response.body;
-};
-
 describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (placement) => {
-  it('should copy a subject token claim onto the exchanged access token', async () => {
+  it(jira`should copy a subject token claim onto the exchanged access token ${'AM-7539'}`, async () => {
     const fixture = fixtures[placement].main;
     const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(fixture, subjectToken);
+    const body = await fixture.exchange(subjectToken);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['mapped_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
@@ -113,7 +103,7 @@ describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (
     const fixture = fixtures[placement].main;
     const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(fixture, subjectToken);
+    const body = await fixture.exchange(subjectToken);
 
     expect(body.access_token).toBeDefined();
     expect(parseJwt(body.access_token).payload).not.toHaveProperty('never_appears');
@@ -123,7 +113,7 @@ describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (
     const fixture = fixtures[placement].main;
     const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(fixture, subjectToken);
+    const body = await fixture.exchange(subjectToken);
 
     expect(parseJwt(body.access_token).payload).not.toHaveProperty('mapped_actor_jti');
   });
@@ -133,7 +123,7 @@ describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (
     const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
     const { accessToken: actorToken } = await fixture.obtainActorToken();
 
-    const body = await exchange(fixture, subjectToken, `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`);
+    const body = await fixture.exchange(subjectToken, `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['mapped_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
@@ -145,7 +135,7 @@ describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (
     const fixture = fixtures[placement].main;
     const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(fixture, subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
+    const body = await fixture.exchange(subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
     const issued = parseJwt(body.access_token);
 
     expect(body.issued_token_type).toEqual(ID_TOKEN_TYPE);
@@ -156,7 +146,7 @@ describe.each(PLACEMENTS)('Token Exchange claims mapper on the %s (RFC 8693)', (
     const fixture = fixtures[placement].precedence;
     const { accessToken: subjectToken } = await fixture.obtainSubjectToken();
 
-    const body = await exchange(fixture, subjectToken);
+    const body = await fixture.exchange(subjectToken);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['contested_claim']).toEqual('from-custom-claim');
@@ -188,7 +178,7 @@ describe('Token Exchange claims mapper inheritance', () => {
   it('should not apply the domain mapper to an application that overrides without one', async () => {
     const { accessToken: subjectToken } = await overrideFixture.obtainSubjectToken();
 
-    const body = await exchange(overrideFixture, subjectToken);
+    const body = await overrideFixture.exchange(subjectToken);
 
     expect(body.access_token).toBeDefined();
     expect(parseJwt(body.access_token).payload).not.toHaveProperty('mapped_subject_jti');

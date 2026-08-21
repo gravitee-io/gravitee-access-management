@@ -32,6 +32,10 @@ import { TokenClaim } from '@management-models/TokenClaim';
 import { User } from '@management-models/User';
 import request from 'supertest';
 
+export const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
+export const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
+export const ID_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id_token';
+
 /**
  * OIDC configuration returned from well-known endpoint
  */
@@ -91,6 +95,12 @@ export interface TokenExchangeFixture {
 
   // Helper method to exchange token (impersonation/delegation)
   exchangeToken: (subjectToken: string, subjectTokenType: 'access_token' | 'refresh_token', actorToken?: string) => Promise<string>;
+
+  /**
+   * Exchange an access-token subject token and return the whole token response.
+   * `extraParams` is appended to the form body verbatim.
+   */
+  exchange: (subjectToken: string, extraParams?: string) => Promise<Record<string, any>>;
 }
 
 /**
@@ -341,6 +351,19 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       return exchangedToken;
     };
 
+    const exchange = async (subjectToken: string, extraParams = ''): Promise<Record<string, any>> => {
+      const response = await performPost(
+        oidc.token_endpoint,
+        '',
+        `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${ACCESS_TOKEN_TYPE}${extraParams}`,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${basicAuth}`,
+        },
+      ).expect(200);
+      return response.body;
+    };
+
     // Cleanup function
     const cleanup = async () => {
       if (domain?.id && accessToken) {
@@ -361,6 +384,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       introspectToken,
       revokeToken,
       exchangeToken,
+      exchange,
       cleanup,
     };
   } catch (error) {

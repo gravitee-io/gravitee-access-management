@@ -16,6 +16,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { parseJwt } from '@api-fixtures/jwt';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import {
   ASSERTION_CLAIM,
@@ -45,7 +46,7 @@ afterAll(async () => {
  * request, so the propagated value cannot come from static configuration.
  */
 describe('Token Exchange over a JWT Bearer subject token (RFC 8693)', () => {
-  it('should propagate an assertion claim through the JWT Bearer grant and the exchange', async () => {
+  it(jira`should propagate an assertion claim through the JWT Bearer grant and the exchange ${'AM-7539'}`, async () => {
     const claimValue = 'AGENT-101';
 
     const subjectToken = await fixture.obtainSubjectToken(claimValue);
