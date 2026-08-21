@@ -23,6 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -37,6 +38,7 @@ import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.TrustDomainAlreadyExistsException;
+import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.exception.TrustDomainSpiffeAlreadyExistsException;
 import io.gravitee.am.service.model.NewTrustDomain;
@@ -67,7 +69,6 @@ import lombok.CustomLog;
 @Component
 @CustomLog
 public class TrustDomainServiceImpl implements TrustDomainService {
-
 
     /**
      * SPIFFE trust domains are case-insensitive DNS-style host labels per the
@@ -116,11 +117,14 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         td.setReferenceId(domain.getId());
         td.setName(trimToNull(input.getName()));
         td.setDescription(input.getDescription());
-        applySpiffeTrustDomain(td, input.getSpiffeTrustDomain());
+        applyMatchers(td, input.getSpiffeTrustDomain(), input.getIssuer());
         td.setKeyMaterial(resolveKeyMaterial(input.getKeyMaterial(), input.getBundleSource(), input.getJwksUrl()));
         td.setRefreshIntervalSeconds(Optional.ofNullable(input.getRefreshIntervalSeconds())
                 .orElse(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS));
         td.setAllowedAlgorithms(input.getAllowedAlgorithms());
+        td.setScopeMappings(input.getScopeMappings());
+        td.setUserBindingEnabled(input.isUserBindingEnabled());
+        td.setUserBindingCriteria(input.getUserBindingCriteria());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
@@ -162,8 +166,8 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                         updated.setName(trimToNull(input.getName()));
                     }
                     updated.setDescription(input.getDescription());
-                    if (input.getSpiffeTrustDomain() != null) {
-                        applySpiffeTrustDomain(updated, input.getSpiffeTrustDomain());
+                    if (input.getSpiffeTrustDomain() != null || input.getIssuer() != null) {
+                        applyMatchers(updated, input.getSpiffeTrustDomain(), input.getIssuer());
                     }
                     TrustDomainKeyMaterial keyMaterial =
                             resolveKeyMaterial(input.getKeyMaterial(), input.getBundleSource(), input.getJwksUrl());
@@ -175,6 +179,15 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                     }
                     if (input.getAllowedAlgorithms() != null) {
                         updated.setAllowedAlgorithms(input.getAllowedAlgorithms());
+                    }
+                    if (input.getScopeMappings() != null) {
+                        updated.setScopeMappings(input.getScopeMappings());
+                    }
+                    if (input.getUserBindingEnabled() != null) {
+                        updated.setUserBindingEnabled(input.getUserBindingEnabled());
+                    }
+                    if (input.getUserBindingCriteria() != null) {
+                        updated.setUserBindingCriteria(input.getUserBindingCriteria());
                     }
                     updated.setUpdatedAt(new Date());
                     updatedRef.set(updated);
@@ -244,43 +257,25 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                 });
     }
 
-    private Completable publish(Domain domain, TrustDomain trustDomain, Action action) {
-        Event event = new Event(TRUST_DOMAIN, new Payload(trustDomain.getId(), trustDomain.getReferenceType(), trustDomain.getReferenceId(), action));
-        return eventService.create(event, domain).ignoreElement();
-    }
-
     /**
-     * Maps the deprecated bundle-source input onto the shared key-material shape. The deprecated
-     * fields are ignored whenever key material is supplied directly; a bare {@code jwksUrl} means
-     * the JWKS-URL source, as it did before the bundle source became explicit.
+     * Sets the matchers a trusted domain is recognised by. A payload that declares neither is written
+     * against the SPIFFE-only API that preceded the issuer matcher, and means the name.
      */
-    private static TrustDomainKeyMaterial resolveKeyMaterial(TrustDomainKeyMaterial keyMaterial,
-                                                             SpiffeBundleSource bundleSource,
-                                                             String jwksUrl) {
-        if (keyMaterial != null) {
-            return keyMaterial;
-        }
-        if (bundleSource == null && jwksUrl == null) {
-            return null;
-        }
-        return TrustDomainKeyMaterial.fromBundleSource(
-                bundleSource != null ? bundleSource : SpiffeBundleSource.JWKS_URL, jwksUrl);
-    }
-
-    /**
-     * Sets the SPIFFE trust domain this authority issues IDs for. A payload that does not declare one
-     * is written against the API that preceded the matcher, and means the name.
-     */
-    private static void applySpiffeTrustDomain(TrustDomain td, String spiffeTrustDomain) {
-        String spiffe = spiffeTrustDomain == null ? td.getName() : trimToNull(spiffeTrustDomain);
+    private static void applyMatchers(TrustDomain td, String spiffeTrustDomain, String issuer) {
+        String spiffe = spiffeTrustDomain == null && issuer == null
+                ? td.getName()
+                : trimToNull(spiffeTrustDomain);
         td.setSpiffeTrustDomain(spiffe != null ? spiffe.toLowerCase(Locale.ROOT) : null);
+        td.setIssuer(trimToNull(issuer));
     }
 
     private Completable rejectDuplicates(Domain domain, TrustDomain td, TrustDomain beforeUpdate) {
         return rejectDuplicate(domain, td, beforeUpdate, TrustDomain::getName,
                 repository::findByName, TrustDomainAlreadyExistsException::new)
                 .andThen(rejectDuplicate(domain, td, beforeUpdate, TrustDomain::getSpiffeTrustDomain,
-                        repository::findBySpiffeTrustDomain, TrustDomainSpiffeAlreadyExistsException::new));
+                        repository::findBySpiffeTrustDomain, TrustDomainSpiffeAlreadyExistsException::new))
+                .andThen(rejectDuplicate(domain, td, beforeUpdate, TrustDomain::getIssuer,
+                        repository::findByIssuer, TrustDomainIssuerAlreadyExistsException::new));
     }
 
     private Completable rejectDuplicate(Domain domain,
@@ -305,6 +300,29 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         Maybe<TrustDomain> find(ReferenceType referenceType, String referenceId, String value);
     }
 
+    private Completable publish(Domain domain, TrustDomain trustDomain, Action action) {
+        Event event = new Event(TRUST_DOMAIN, new Payload(trustDomain.getId(), trustDomain.getReferenceType(), trustDomain.getReferenceId(), action));
+        return eventService.create(event, domain).ignoreElement();
+    }
+
+    /**
+     * Maps the deprecated bundle-source input onto the shared key-material shape. The deprecated
+     * fields are ignored whenever key material is supplied directly; a bare {@code jwksUrl} means
+     * the JWKS-URL source, as it did before the bundle source became explicit.
+     */
+    private static TrustDomainKeyMaterial resolveKeyMaterial(TrustDomainKeyMaterial keyMaterial,
+                                                             SpiffeBundleSource bundleSource,
+                                                             String jwksUrl) {
+        if (keyMaterial != null) {
+            return keyMaterial;
+        }
+        if (bundleSource == null && jwksUrl == null) {
+            return null;
+        }
+        return TrustDomainKeyMaterial.fromBundleSource(
+                bundleSource != null ? bundleSource : SpiffeBundleSource.JWKS_URL, jwksUrl);
+    }
+
     private static String trimToNull(String value) {
         if (value == null) {
             return null;
@@ -320,23 +338,19 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         KeyRetrievalSettings settings = Optional.ofNullable(domain.getKeyRetrievalSettings())
                 .orElseGet(KeyRetrievalSettings::defaultSettings);
 
-        if (!spiffeSettings.isEnabled()) {
-            return Completable.error(new InvalidTrustDomainException(
-                    "SPIFFE workload identity is disabled for this domain. Enable it in domain settings before registering a SPIFFE trust domain."));
-        }
         if (td.getName() == null) {
             return Completable.error(new InvalidTrustDomainException("name is required"));
         }
         if (td.getName().length() > TrustDomain.NAME_MAX_LENGTH) {
             return Completable.error(new InvalidTrustDomainException("name must be at most " + TrustDomain.NAME_MAX_LENGTH + " characters"));
         }
-        if (td.getSpiffeTrustDomain() == null || !SPIFFE_TRUST_DOMAIN_PATTERN.matcher(td.getSpiffeTrustDomain()).matches()) {
-            return Completable.error(new InvalidTrustDomainException(
-                    "spiffeTrustDomain must be a DNS-style label (lowercase letters, digits, '.' or '-')"));
+        Optional<String> matcherError = validateMatchers(td, spiffeSettings);
+        if (matcherError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(matcherError.get()));
         }
-        if (td.getSpiffeTrustDomain().length() > TrustDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH) {
-            return Completable.error(new InvalidTrustDomainException(
-                    "spiffeTrustDomain must be at most " + TrustDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH + " characters"));
+        Optional<String> userBindingError = validateUserBinding(td);
+        if (userBindingError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(userBindingError.get()));
         }
         Optional<String> keyMaterialError = validateKeyMaterial(td.getKeyMaterial(), settings);
         if (keyMaterialError.isPresent()) {
@@ -355,6 +369,51 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             }
         }
         return Completable.complete();
+    }
+
+    private Optional<String> validateMatchers(TrustDomain td, SpiffeDomainSettings spiffeSettings) {
+        if (!td.trustsSpiffe() && !td.trustsTokenExchange()) {
+            return Optional.of("a trusted domain must declare spiffeTrustDomain, issuer, or both");
+        }
+        if (td.trustsSpiffe()) {
+            if (!spiffeSettings.isEnabled()) {
+                return Optional.of("SPIFFE workload identity is disabled for this domain. Enable it in domain settings before registering a SPIFFE trust domain.");
+            }
+            if (!SPIFFE_TRUST_DOMAIN_PATTERN.matcher(td.getSpiffeTrustDomain()).matches()) {
+                return Optional.of("spiffeTrustDomain must be a DNS-style label (lowercase letters, digits, '.' or '-')");
+            }
+            if (td.getSpiffeTrustDomain().length() > TrustDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH) {
+                return Optional.of("spiffeTrustDomain must be at most " + TrustDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH + " characters");
+            }
+        }
+        if (td.trustsTokenExchange() && td.getIssuer().length() > TrustDomain.ISSUER_MAX_LENGTH) {
+            return Optional.of("issuer must be at most " + TrustDomain.ISSUER_MAX_LENGTH + " characters");
+        }
+        if (!td.trustsTokenExchange()) {
+            if (td.getScopeMappings() != null && !td.getScopeMappings().isEmpty()) {
+                return Optional.of("scopeMappings requires an issuer");
+            }
+            if (td.isUserBindingEnabled()) {
+                return Optional.of("userBindingEnabled requires an issuer");
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> validateUserBinding(TrustDomain td) {
+        if (!td.isUserBindingEnabled()) {
+            return Optional.empty();
+        }
+        List<UserBindingCriterion> criteria = td.getUserBindingCriteria();
+        if (criteria == null || criteria.isEmpty()) {
+            return Optional.of("userBindingCriteria must not be empty when user binding is enabled");
+        }
+        boolean incomplete = criteria.stream().anyMatch(c -> c == null
+                || c.getAttribute() == null || c.getAttribute().isBlank()
+                || c.getExpression() == null || c.getExpression().isBlank());
+        return incomplete
+                ? Optional.of("userBindingCriteria entries must have a non-blank attribute and expression")
+                : Optional.empty();
     }
 
     private Optional<String> validateKeyMaterial(TrustDomainKeyMaterial keyMaterial, KeyRetrievalSettings settings) {

@@ -38,6 +38,15 @@ public class MongoTrustDomainLegacyMappingTest {
     }
 
     @Test
+    public void shouldNotReadAMigratedIssuerDocumentAsSpiffe() {
+        TrustDomainMongo migrated = new TrustDomainMongo();
+        migrated.setName("issuer.example");
+        migrated.setIssuer("https://issuer.example/realm");
+
+        assertNull(MongoTrustDomainRepository.readSpiffeTrustDomain(migrated));
+    }
+
+    @Test
     public void shouldPreferTheStoredMatcherOverTheName() {
         TrustDomainMongo doc = new TrustDomainMongo();
         doc.setName("acme-corp");

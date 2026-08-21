@@ -30,6 +30,7 @@ import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainKeyMaterialMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.UserBindingCriterionMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -61,6 +62,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     private static final String COLLECTION_NAME = "trust_domains";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SPIFFE_TRUST_DOMAIN = "spiffeTrustDomain";
+    private static final String FIELD_ISSUER = "issuer";
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
 
@@ -75,7 +77,10 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
                 new IndexOptions().name("rt1ri1n1").unique(true),
                 new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_SPIFFE_TRUST_DOMAIN, 1),
                 new IndexOptions().name("rt1ri1std1").unique(true)
-                        .partialFilterExpression(exists(FIELD_SPIFFE_TRUST_DOMAIN, true))
+                        .partialFilterExpression(exists(FIELD_SPIFFE_TRUST_DOMAIN, true)),
+                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ISSUER, 1),
+                new IndexOptions().name("rt1ri1i1").unique(true)
+                        .partialFilterExpression(exists(FIELD_ISSUER, true))
         ));
         if (ensureIndexOnStart) {
             stampSpiffeTrustDomainOnLegacyDocuments().subscribe();
@@ -89,7 +94,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
      */
     private Completable stampSpiffeTrustDomainOnLegacyDocuments() {
         return Completable.fromPublisher(collection.updateMany(
-                        exists(FIELD_SPIFFE_TRUST_DOMAIN, false),
+                        and(exists(FIELD_SPIFFE_TRUST_DOMAIN, false), exists(FIELD_ISSUER, false)),
                         List.of(new Document("$set", new Document(FIELD_SPIFFE_TRUST_DOMAIN, "$" + FIELD_NAME)))))
                 .doOnError(error -> log.warn("Unable to stamp the SPIFFE trust domain on legacy trust domains", error));
     }
@@ -147,6 +152,11 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         return findByField(referenceType, referenceId, FIELD_SPIFFE_TRUST_DOMAIN, spiffeTrustDomain);
     }
 
+    @Override
+    public Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
+        return findByField(referenceType, referenceId, FIELD_ISSUER, issuer);
+    }
+
     private Maybe<TrustDomain> findByField(ReferenceType referenceType, String referenceId, String field, String value) {
         return Observable.fromPublisher(collection.find(and(
                         eq(FIELD_REFERENCE_TYPE, referenceType.name()),
@@ -165,12 +175,16 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         td.setId(doc.getId());
         td.setReferenceId(doc.getReferenceId());
         td.setReferenceType(doc.getReferenceType() != null ? ReferenceType.valueOf(doc.getReferenceType()) : null);
-        td.setSpiffeTrustDomain(readSpiffeTrustDomain(doc));
         td.setName(doc.getName());
         td.setDescription(doc.getDescription());
+        td.setSpiffeTrustDomain(readSpiffeTrustDomain(doc));
+        td.setIssuer(doc.getIssuer());
         td.setKeyMaterial(readKeyMaterial(doc));
         td.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
         td.setAllowedAlgorithms(doc.getAllowedAlgorithms());
+        td.setScopeMappings(doc.getScopeMappings());
+        td.setUserBindingEnabled(Boolean.TRUE.equals(doc.getUserBindingEnabled()));
+        td.setUserBindingCriteria(UserBindingCriterionMongo.toModelList(doc.getUserBindingCriteria()));
         td.setCreatedAt(doc.getCreatedAt());
         td.setUpdatedAt(doc.getUpdatedAt());
         return td;
@@ -184,12 +198,16 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         doc.setId(td.getId());
         doc.setReferenceId(td.getReferenceId());
         doc.setReferenceType(td.getReferenceType() != null ? td.getReferenceType().name() : null);
-        doc.setSpiffeTrustDomain(td.getSpiffeTrustDomain());
         doc.setName(td.getName());
         doc.setDescription(td.getDescription());
+        doc.setSpiffeTrustDomain(td.getSpiffeTrustDomain());
+        doc.setIssuer(td.getIssuer());
         doc.setKeyMaterial(toMongo(td.getKeyMaterial()));
         doc.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
         doc.setAllowedAlgorithms(td.getAllowedAlgorithms());
+        doc.setScopeMappings(td.getScopeMappings());
+        doc.setUserBindingEnabled(td.isUserBindingEnabled());
+        doc.setUserBindingCriteria(UserBindingCriterionMongo.fromModelList(td.getUserBindingCriteria()));
         doc.setCreatedAt(td.getCreatedAt());
         doc.setUpdatedAt(td.getUpdatedAt());
         return doc;
@@ -197,10 +215,13 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
 
     /**
      * Reads the SPIFFE matcher, falling back to the name for trust domains stored while the name was
-     * the matcher.
+     * the matcher. Documents that carry an issuer were written by the migration and are not SPIFFE.
      */
     static String readSpiffeTrustDomain(TrustDomainMongo doc) {
-        return doc.getSpiffeTrustDomain() != null ? doc.getSpiffeTrustDomain() : doc.getName();
+        if (doc.getSpiffeTrustDomain() != null) {
+            return doc.getSpiffeTrustDomain();
+        }
+        return doc.getIssuer() == null ? doc.getName() : null;
     }
 
     /**

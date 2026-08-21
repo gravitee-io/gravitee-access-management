@@ -62,6 +62,7 @@ public abstract class Event {
             case LICENSE -> LicenseEvent.actionOf(action);
             case ENTRYPOINT -> EntrypointEvent.actionOf(action);
             case DATA_PLANE -> DataPlaneEvent.actionOf(action);
+            case TRUST_DOMAIN -> TrustDomainEvent.actionOf(action);
             default -> null;
         };
     }

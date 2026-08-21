@@ -38,4 +38,10 @@ public interface TrustDomainRepository extends CrudRepository<TrustDomain, Strin
      * absent on trusted domains that are not trusted for SPIFFE.
      */
     Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
+
+    /**
+     * Finds the trusted domain vouching for an issuer. Unique per reference, and absent on trusted
+     * domains that are not trusted for token exchange.
+     */
+    Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer);
 }

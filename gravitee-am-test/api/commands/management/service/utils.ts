@@ -35,6 +35,7 @@ import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
 import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
 import { ProtectedResourceApi } from '@management-apis/ProtectedResourceApi';
+import { TrustDomainApi } from '@management-apis/TrustDomainApi';
 import { DefaultApi } from '@management-apis/DefaultApi';
 import { AlertsApi } from '@management-apis/AlertsApi';
 import { NotifierApi } from '@management-apis/NotifierApi';
@@ -74,6 +75,10 @@ export function getEntrypointsApi(accessToken) {
 
 export function getProtectedResourcesApi(accessToken) {
   return new ProtectedResourceApi(createAccessTokenConfig(accessToken));
+}
+
+export function getTrustDomainApi(accessToken) {
+  return new TrustDomainApi(createAccessTokenConfig(accessToken));
 }
 
 export function getAuthenticationDeviceNotifierApi(accessToken) {

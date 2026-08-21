@@ -17,6 +17,7 @@ package io.gravitee.am.model.oidc;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,14 +25,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * External authority an AM domain trusts, and the key material used to verify what it vouches for.
  *
  * <p>A trusted domain declares how tokens are recognised as coming from it: {@code spiffeTrustDomain}
- * matches the trust domain of a JWT-SVID presented as a client assertion.
+ * matches the trust domain of a JWT-SVID presented as a client assertion, {@code issuer} matches the
+ * {@code iss} claim of an external token presented during an RFC 8693 exchange. At least one is
+ * required, and setting both lets one authority serve both usages on shared key material.
  *
  * @author GraviteeSource Team
  */
@@ -47,6 +53,8 @@ public class TrustDomain {
     public static final int NAME_MAX_LENGTH = 255;
 
     public static final int SPIFFE_TRUST_DOMAIN_MAX_LENGTH = 255;
+
+    public static final int ISSUER_MAX_LENGTH = 512;
 
     private String id;
     private String referenceId;
@@ -71,6 +79,15 @@ public class TrustDomain {
             example = "acme.org")
     private String spiffeTrustDomain;
 
+    /**
+     * Value of the {@code iss} claim this authority vouches for, matched against external subject and
+     * actor tokens. Null when this authority is not trusted for token exchange.
+     */
+    @Schema(description = "Expected value of the \"iss\" claim in an external JWT. Required to accept "
+            + "tokens during an RFC 8693 exchange.",
+            example = "https://sso.acme.com")
+    private String issuer;
+
     private TrustDomainKeyMaterial keyMaterial;
 
     private int refreshIntervalSeconds = DEFAULT_REFRESH_INTERVAL_SECONDS;
@@ -79,6 +96,19 @@ public class TrustDomain {
      * Optional override of {@link SpiffeDomainSettings#getDefaultAllowedAlgorithms()}.
      */
     private List<String> allowedAlgorithms;
+
+    @Schema(description = "One-to-one mapping from external scope to domain scope. Unmapped issuer scopes "
+            + "are dropped (fail-closed). Applies to tokens matched by \"issuer\".")
+    private Map<String, String> scopeMappings;
+
+    @Schema(description = "Whether the external JWT subject is resolved to a single domain user using the "
+            + "user binding criteria. When false, a virtual user is built from the token claims only.",
+            defaultValue = "false")
+    private boolean userBindingEnabled;
+
+    @Schema(description = "Criteria used to locate a domain user when user binding is enabled. All criteria "
+            + "are combined with AND.")
+    private List<UserBindingCriterion> userBindingCriteria;
 
     @Schema(type = "java.lang.Long")
     private Date createdAt;
@@ -93,9 +123,13 @@ public class TrustDomain {
         this.name = other.name;
         this.description = other.description;
         this.spiffeTrustDomain = other.spiffeTrustDomain;
+        this.issuer = other.issuer;
         this.keyMaterial = other.keyMaterial != null ? new TrustDomainKeyMaterial(other.keyMaterial) : null;
         this.refreshIntervalSeconds = other.refreshIntervalSeconds;
         this.allowedAlgorithms = other.allowedAlgorithms;
+        this.scopeMappings = other.scopeMappings != null ? new LinkedHashMap<>(other.scopeMappings) : null;
+        this.userBindingEnabled = other.userBindingEnabled;
+        this.userBindingCriteria = other.userBindingCriteria != null ? new ArrayList<>(other.userBindingCriteria) : null;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -105,6 +139,13 @@ public class TrustDomain {
      */
     public boolean trustsSpiffe() {
         return spiffeTrustDomain != null;
+    }
+
+    /**
+     * Whether this authority is trusted for RFC 8693 token exchange.
+     */
+    public boolean trustsTokenExchange() {
+        return issuer != null;
     }
 
     /**

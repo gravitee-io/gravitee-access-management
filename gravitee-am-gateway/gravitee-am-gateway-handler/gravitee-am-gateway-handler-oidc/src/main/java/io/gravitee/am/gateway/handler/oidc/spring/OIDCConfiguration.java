@@ -26,7 +26,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.SpiffeClient
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.impl.PushedAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientSecretService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
@@ -45,6 +44,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainKeyServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainManagerImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -111,6 +112,11 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
+    public TrustDomainManager trustDomainManager() {
+        return new TrustDomainManagerImpl();
+    }
+
+    @Bean
     public JWSService jwsService() {
         return new JWSServiceImpl();
     }
@@ -149,7 +155,7 @@ public class OIDCConfiguration implements ProtocolConfiguration {
                                                                    OpenIDDiscoveryService openIDDiscoveryService,
                                                                    Domain domain,
                                                                    TrustDomainKeyService trustDomainKeyService,
-                                                                   TrustDomainRepository trustDomainRepository) {
-        return new SpiffeClientAssertionValidator(clientLookupService, jwsService, openIDDiscoveryService, domain, trustDomainKeyService, trustDomainRepository);
+                                                                   TrustDomainManager trustDomainManager) {
+        return new SpiffeClientAssertionValidator(clientLookupService, jwsService, openIDDiscoveryService, domain, trustDomainKeyService, trustDomainManager);
     }
 }

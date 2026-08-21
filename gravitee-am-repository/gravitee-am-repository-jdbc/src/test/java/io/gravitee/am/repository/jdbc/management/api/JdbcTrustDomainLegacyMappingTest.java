@@ -37,6 +37,15 @@ public class JdbcTrustDomainLegacyMappingTest {
     }
 
     @Test
+    public void shouldNotReadAMigratedIssuerRowAsSpiffe() {
+        JdbcTrustDomain migrated = new JdbcTrustDomain();
+        migrated.setName("issuer.example");
+        migrated.setIssuer("https://issuer.example/realm");
+
+        assertNull(JdbcTrustDomainRepository.readSpiffeTrustDomain(migrated));
+    }
+
+    @Test
     public void shouldPreferTheStoredMatcherOverTheName() {
         JdbcTrustDomain row = new JdbcTrustDomain();
         row.setName("acme-corp");

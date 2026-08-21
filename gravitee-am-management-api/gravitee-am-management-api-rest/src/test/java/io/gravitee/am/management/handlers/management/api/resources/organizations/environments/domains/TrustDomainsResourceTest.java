@@ -18,6 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
@@ -26,6 +28,8 @@ import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -42,6 +46,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -70,7 +75,7 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
         return domain;
     }
 
-    private static TrustDomain trustDomain(TrustDomainKeyMaterial keyMaterial) {
+    private static TrustDomain spiffeTrustDomain(TrustDomainKeyMaterial keyMaterial) {
         return TrustDomain.builder()
                 .id("td-1")
                 .referenceType(ReferenceType.DOMAIN)
@@ -83,9 +88,9 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldExposeTheSpiffeMatcherAndKeyMaterial() {
+    public void shouldExposeMatchersAndKeyMaterial() {
         stubDomain();
-        doReturn(Flowable.just(trustDomain(TrustDomainKeyMaterial.builder()
+        doReturn(Flowable.just(spiffeTrustDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://spire.example.org/keys")
                 .build())))
@@ -105,7 +110,7 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
     @Test
     public void shouldStillExposeDeprecatedBundleSource() {
         stubDomain();
-        doReturn(Flowable.just(trustDomain(TrustDomainKeyMaterial.builder()
+        doReturn(Flowable.just(spiffeTrustDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://spire.example.org/keys")
                 .build())))
@@ -126,7 +131,7 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
                 .source(KeyMaterialSource.PEM)
                 .certificate(PEM_CERTIFICATE)
                 .build();
-        doReturn(Single.just(trustDomain(pem)))
+        doReturn(Single.just(spiffeTrustDomain(pem)))
                 .when(trustDomainService).create(eq(domain), any(NewTrustDomain.class), any());
 
         final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
@@ -150,7 +155,7 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
         key.setN("0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86z");
         JWKSet jwkSet = new JWKSet();
         jwkSet.setKeys(List.of(key));
-        doReturn(Single.just(trustDomain(TrustDomainKeyMaterial.builder()
+        doReturn(Single.just(spiffeTrustDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWK_SET)
                 .jwkSet(jwkSet)
                 .build())))
@@ -176,25 +181,20 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldCreateWithAnExplicitSpiffeMatcher() {
+    public void shouldCreateWithAnIssuerMatcher() {
         Domain domain = stubDomain();
-        doReturn(Single.just(trustDomain(TrustDomainKeyMaterial.builder()
-                .source(KeyMaterialSource.JWKS_URL)
-                .jwksUrl("https://issuer.example.org/keys")
-                .build())))
+        doReturn(Single.just(tokenExchangeTrustDomain()))
                 .when(trustDomainService).create(eq(domain), any(NewTrustDomain.class), any());
 
         final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
                 .post(Entity.json(Map.of(
-                        "name", "acme-corp",
-                        "spiffeTrustDomain", "example.org",
+                        "name", "example.org",
+                        "issuer", "https://issuer.example.org",
                         "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"))));
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
-        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
-        verify(trustDomainService).create(eq(domain), captor.capture(), any());
-        assertEquals("example.org", captor.getValue().getSpiffeTrustDomain());
         Map<String, Object> body = response.readEntity(Map.class);
+        assertEquals("https://issuer.example.org", body.get("issuer"));
         assertEquals("jwks_url", body.get("bundleSource"));
     }
 
@@ -253,7 +253,7 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
     @Test
     public void shouldStillAcceptDeprecatedBundleSourceInput() {
         Domain domain = stubDomain();
-        doReturn(Single.just(trustDomain(TrustDomainKeyMaterial.builder()
+        doReturn(Single.just(spiffeTrustDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://spire.example.org/keys")
                 .build())))
@@ -271,5 +271,89 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
         assertNull(captor.getValue().getKeyMaterial());
         assertEquals(SpiffeBundleSource.JWKS_URL, captor.getValue().getBundleSource());
         assertEquals("https://spire.example.org/keys", captor.getValue().getJwksUrl());
+    }
+
+    private static TrustDomain tokenExchangeTrustDomain() {
+        UserBindingCriterion criterion = new UserBindingCriterion();
+        criterion.setAttribute("emails.value");
+        criterion.setExpression("{#token['email']}");
+        TrustDomain td = spiffeTrustDomain(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl("https://issuer.example.org/keys")
+                .build());
+        td.setSpiffeTrustDomain(null);
+        td.setIssuer("https://issuer.example.org");
+        td.setScopeMappings(Map.of("read", "domain:read"));
+        td.setUserBindingEnabled(true);
+        td.setUserBindingCriteria(List.of(criterion));
+        return td;
+    }
+
+    @Test
+    public void shouldCreateTokenExchangeTrustedDomainWithScopeMappingsAndUserBinding() {
+        Domain domain = stubDomain();
+        doReturn(Single.just(tokenExchangeTrustDomain()))
+                .when(trustDomainService).create(eq(domain), any(NewTrustDomain.class), any());
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "issuer.example.org",
+                        "issuer", "https://issuer.example.org",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"),
+                        "scopeMappings", Map.of("read", "domain:read"),
+                        "userBindingEnabled", true,
+                        "userBindingCriteria", List.of(Map.of(
+                                "attribute", "emails.value",
+                                "expression", "{#token['email']}")))));
+
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
+        verify(trustDomainService).create(eq(domain), captor.capture(), any());
+        NewTrustDomain received = captor.getValue();
+        assertEquals("https://issuer.example.org", received.getIssuer());
+        assertEquals(Map.of("read", "domain:read"), received.getScopeMappings());
+        assertTrue(received.isUserBindingEnabled());
+        assertEquals(1, received.getUserBindingCriteria().size());
+        assertEquals("emails.value", received.getUserBindingCriteria().get(0).getAttribute());
+        assertEquals("{#token['email']}", received.getUserBindingCriteria().get(0).getExpression());
+    }
+
+    @Test
+    public void shouldExposeTokenExchangeSettingsInList() {
+        stubDomain();
+        doReturn(Flowable.just(tokenExchangeTrustDomain()))
+                .when(trustDomainService).findByReference(ReferenceType.DOMAIN, DOMAIN_ID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        List<Map<String, Object>> body = response.readEntity(List.class);
+        assertEquals("https://issuer.example.org", body.get(0).get("issuer"));
+        assertEquals(Map.of("read", "domain:read"), body.get(0).get("scopeMappings"));
+        assertEquals(Boolean.TRUE, body.get(0).get("userBindingEnabled"));
+    }
+
+    @Test
+    public void shouldRejectListWithoutTrustDomainPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request().get();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).findByReference(any(), any());
+    }
+
+    @Test
+    public void shouldRejectCreateWithoutTrustDomainPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "issuer.example.org",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"),
+                        "issuer", "https://issuer.example.org")));
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).create(any(), any(), any());
     }
 }
