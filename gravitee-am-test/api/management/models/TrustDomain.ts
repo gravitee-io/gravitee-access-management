@@ -28,6 +28,13 @@
 import { mapValues } from '../runtime';
 import type { JWKSet } from './JWKSet';
 import { JWKSetFromJSON, JWKSetFromJSONTyped, JWKSetToJSON, JWKSetToJSONTyped } from './JWKSet';
+import type { TrustDomainTokenExchangeSettings } from './TrustDomainTokenExchangeSettings';
+import {
+  TrustDomainTokenExchangeSettingsFromJSON,
+  TrustDomainTokenExchangeSettingsFromJSONTyped,
+  TrustDomainTokenExchangeSettingsToJSON,
+  TrustDomainTokenExchangeSettingsToJSONTyped,
+} from './TrustDomainTokenExchangeSettings';
 import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
 import {
   TrustDomainKeyMaterialFromJSON,
@@ -123,6 +130,12 @@ export interface TrustDomain {
    */
   staticJwks?: JWKSet;
   /**
+   *
+   * @type {TrustDomainTokenExchangeSettings}
+   * @memberof TrustDomain
+   */
+  tokenExchange?: TrustDomainTokenExchangeSettings;
+  /**
    * Epoch timestamp in milliseconds.
    * @type {number}
    * @memberof TrustDomain
@@ -190,6 +203,7 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
     staticJwks: json['staticJwks'] == null ? undefined : JWKSetFromJSON(json['staticJwks']),
+    tokenExchange: json['tokenExchange'] == null ? undefined : TrustDomainTokenExchangeSettingsFromJSON(json['tokenExchange']),
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
 }
@@ -217,6 +231,7 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     referenceType: value['referenceType'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
     staticJwks: JWKSetToJSON(value['staticJwks']),
+    tokenExchange: TrustDomainTokenExchangeSettingsToJSON(value['tokenExchange']),
     updatedAt: value['updatedAt'],
   };
 }

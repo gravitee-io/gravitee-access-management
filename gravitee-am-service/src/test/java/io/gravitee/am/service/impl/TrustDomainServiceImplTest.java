@@ -15,8 +15,15 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
@@ -27,11 +34,13 @@ import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.exception.TrustDomainAlreadyExistsException;
+import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
@@ -48,8 +57,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -230,24 +242,22 @@ public class TrustDomainServiceImplTest {
     @Test
     public void shouldCreateTokenExchangeKind_whenSpiffeDisabled() {
         spiffeSettings.setEnabled(false);
-        NewTrustDomain input = validInput();
-        input.setKind(TrustDomainKind.TOKEN_EXCHANGE);
         stubRepoForCreate();
+        stubNoIssuerConflict();
 
-        service.create(domain, input, null).test()
+        service.create(domain, tokenExchangeInput(), null).test()
                 .assertNoErrors()
                 .assertValue(created -> created.getKind() == TrustDomainKind.TOKEN_EXCHANGE);
     }
 
     @Test
     public void shouldScopeDuplicateNameCheckToKind() {
-        NewTrustDomain input = validInput();
-        input.setKind(TrustDomainKind.TOKEN_EXCHANGE);
         stubRepoForCreate();
+        stubNoIssuerConflict();
 
-        service.create(domain, input, null).test().assertNoErrors();
+        service.create(domain, tokenExchangeInput(), null).test().assertNoErrors();
 
-        verify(repository).findByName(ReferenceType.DOMAIN, DOMAIN_ID, TrustDomainKind.TOKEN_EXCHANGE, "example.org");
+        verify(repository).findByName(ReferenceType.DOMAIN, DOMAIN_ID, TrustDomainKind.TOKEN_EXCHANGE, "issuer.example.com");
     }
 
     @Test
@@ -466,6 +476,12 @@ public class TrustDomainServiceImplTest {
     }
 
     private void stubExistingTrustDomainForUpdate() {
+        stubExistingSpiffeTrustDomain();
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+    }
+
+    private void stubExistingSpiffeTrustDomain() {
         TrustDomain existing = new TrustDomain();
         existing.setId("td-1");
         existing.setReferenceType(ReferenceType.DOMAIN);
@@ -477,8 +493,6 @@ public class TrustDomainServiceImplTest {
                 .jwksUrl("https://example.com/keys")
                 .build());
         when(repository.findById("td-1")).thenReturn(Maybe.just(existing));
-        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
-        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
     }
 
     private static JWKSet inlineJwkSet() {
@@ -583,5 +597,303 @@ public class TrustDomainServiceImplTest {
         service.delete(domain, "td-1", null).test().assertNoErrors();
 
         verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldCreateTokenExchangeTrustedDomain() {
+        stubRepoForCreate();
+        stubNoIssuerConflict();
+
+        service.create(domain, tokenExchangeInput(), null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKind() == TrustDomainKind.TOKEN_EXCHANGE)
+                .assertValue(created -> "https://issuer.example.com".equals(created.getTokenExchange().getIssuer()));
+    }
+
+    @Test
+    public void shouldRoundTripScopeMappingsAndUserBinding() {
+        stubRepoForCreate();
+        stubNoIssuerConflict();
+        NewTrustDomain input = tokenExchangeInput();
+        input.getTokenExchange().setUserBindingEnabled(true);
+        input.getTokenExchange().setUserBindingCriteria(List.of(criterion("emails.value", "{#token['email']}")));
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> Map.of("read", "domain:read").equals(created.getTokenExchange().getScopeMappings()))
+                .assertValue(created -> created.getTokenExchange().isUserBindingEnabled())
+                .assertValue(created -> created.getTokenExchange().getUserBindingCriteria().size() == 1)
+                .assertValue(created -> "emails.value".equals(created.getTokenExchange().getUserBindingCriteria().get(0).getAttribute()));
+    }
+
+    @Test
+    public void shouldAuditTokenExchangeCreateAgainstThePrincipal() {
+        stubRepoForCreate();
+        stubNoIssuerConflict();
+
+        service.create(domain, tokenExchangeInput(), principal()).test().assertNoErrors();
+
+        verifyAudit(EventType.TRUST_DOMAIN_CREATED);
+    }
+
+    @Test
+    public void shouldAuditTokenExchangeUpdateAgainstThePrincipal() {
+        stubExistingTokenExchangeForUpdate();
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setDescription("amended");
+
+        service.update(domain, "td-1", input, principal()).test().assertNoErrors();
+
+        verifyAudit(EventType.TRUST_DOMAIN_UPDATED);
+    }
+
+    @Test
+    public void shouldRejectTokenExchangeSettingsOnSpiffeTrustedDomain() {
+        NewTrustDomain input = validInput();
+        input.setTokenExchange(TrustDomainTokenExchangeSettings.builder().issuer("https://issuer.example.com").build());
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("tokenExchange settings are only allowed"));
+        verify(repository, never()).create(any());
+    }
+
+    @Test
+    public void shouldRejectSpiffeAlgorithmsOnTokenExchangeTrustedDomain() {
+        NewTrustDomain input = tokenExchangeInput();
+        input.setAllowedAlgorithms(List.of("RS256"));
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("allowedAlgorithms is only allowed"));
+        verify(repository, never()).create(any());
+    }
+
+    @Test
+    public void shouldRejectTokenExchangeTrustedDomainWithoutSettings() {
+        NewTrustDomain input = tokenExchangeInput();
+        input.setTokenExchange(null);
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("tokenExchange settings are required"));
+    }
+
+    @Test
+    public void shouldRejectTokenExchangeTrustedDomainWithBlankIssuer() {
+        NewTrustDomain input = tokenExchangeInput();
+        input.getTokenExchange().setIssuer("  ");
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("tokenExchange.issuer is required"));
+    }
+
+    @Test
+    public void shouldRejectUserBindingWithoutCriteria() {
+        NewTrustDomain input = tokenExchangeInput();
+        input.getTokenExchange().setUserBindingEnabled(true);
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("tokenExchange.userBindingCriteria"));
+    }
+
+    @Test
+    public void shouldRejectUserBindingCriterionWithBlankAttribute() {
+        NewTrustDomain input = tokenExchangeInput();
+        input.getTokenExchange().setUserBindingEnabled(true);
+        input.getTokenExchange().setUserBindingCriteria(List.of(criterion(" ", "{#token['email']}")));
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("non-blank attribute and expression"));
+    }
+
+    @Test
+    public void shouldRejectDuplicateIssuerInSameDomain() {
+        when(repository.findByIssuer(ReferenceType.DOMAIN, DOMAIN_ID, "https://issuer.example.com"))
+                .thenReturn(Maybe.just(new TrustDomain()));
+
+        service.create(domain, tokenExchangeInput(), null).test()
+                .assertError(TrustDomainIssuerAlreadyExistsException.class);
+        verify(repository, never()).create(any());
+    }
+
+    @Test
+    public void shouldAuditDuplicateIssuerRejection() {
+        when(repository.findByIssuer(any(), any(), any())).thenReturn(Maybe.just(new TrustDomain()));
+
+        service.create(domain, tokenExchangeInput(), null).test()
+                .assertError(TrustDomainIssuerAlreadyExistsException.class);
+
+        verify(auditService).report(any(TrustDomainAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldNotCheckIssuerUniquenessForSpiffeTrustedDomain() {
+        stubRepoForCreate();
+
+        service.create(domain, validInput(), null).test().assertNoErrors();
+
+        verify(repository, never()).findByIssuer(any(), any(), any());
+    }
+
+    @Test
+    public void shouldUpdateTokenExchangeSettings() {
+        stubExistingTokenExchangeForUpdate();
+        stubNoIssuerConflict();
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setTokenExchange(TrustDomainTokenExchangeSettings.builder()
+                .issuer("https://issuer.example.com/v2")
+                .scopeMappings(Map.of("write", "domain:write"))
+                .build());
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> "https://issuer.example.com/v2".equals(saved.getTokenExchange().getIssuer()))
+                .assertValue(saved -> Map.of("write", "domain:write").equals(saved.getTokenExchange().getScopeMappings()));
+    }
+
+    @Test
+    public void shouldKeepTokenExchangeSettingsWhenUpdateCarriesNone() {
+        stubExistingTokenExchangeForUpdate();
+
+        service.update(domain, "td-1", new UpdateTrustDomain(), null).test()
+                .assertNoErrors()
+                .assertValue(saved -> "https://issuer.example.com".equals(saved.getTokenExchange().getIssuer()));
+        verify(repository, never()).findByIssuer(any(), any(), any());
+    }
+
+    @Test
+    public void shouldRejectUpdateIntroducingDuplicateIssuer() {
+        stubExistingTokenExchange();
+        TrustDomain other = new TrustDomain();
+        other.setId("td-2");
+        when(repository.findByIssuer(ReferenceType.DOMAIN, DOMAIN_ID, "https://issuer.example.com/v2"))
+                .thenReturn(Maybe.just(other));
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setTokenExchange(TrustDomainTokenExchangeSettings.builder()
+                .issuer("https://issuer.example.com/v2")
+                .build());
+
+        service.update(domain, "td-1", input, null).test()
+                .assertError(TrustDomainIssuerAlreadyExistsException.class);
+        verify(repository, never()).update(any());
+    }
+
+    @Test
+    public void shouldAllowUpdateKeepingItsOwnIssuer() {
+        stubExistingTokenExchangeForUpdate();
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setTokenExchange(TrustDomainTokenExchangeSettings.builder()
+                .issuer("https://issuer.example.com")
+                .scopeMappings(Map.of("write", "domain:write"))
+                .build());
+
+        service.update(domain, "td-1", input, null).test().assertNoErrors();
+        verify(repository, never()).findByIssuer(any(), any(), any());
+    }
+
+    @Test
+    public void shouldRejectTokenExchangeSettingsOnUpdateOfSpiffeTrustedDomain() {
+        stubExistingSpiffeTrustDomain();
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setTokenExchange(TrustDomainTokenExchangeSettings.builder().issuer("https://issuer.example.com").build());
+
+        service.update(domain, "td-1", input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("tokenExchange settings are only allowed"));
+        verify(repository, never()).update(any());
+    }
+
+    @Test
+    public void shouldDeleteTokenExchangeTrustedDomain() {
+        when(repository.findById("td-1")).thenReturn(Maybe.just(tokenExchangeEntity()));
+        when(repository.delete("td-1")).thenReturn(Completable.complete());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+
+        service.delete(domain, "td-1", principal()).test().assertNoErrors();
+
+        verifyAudit(EventType.TRUST_DOMAIN_DELETED);
+    }
+
+    private static User principal() {
+        DefaultUser user = new DefaultUser("admin");
+        user.setId("principal-1");
+        return user;
+    }
+
+    private void verifyAudit(String eventType) {
+        verify(auditService).report(argThat(builder -> {
+            Audit audit = builder.build(new ObjectMapper());
+            assertEquals(ReferenceType.DOMAIN, audit.getReferenceType());
+            assertEquals(DOMAIN_ID, audit.getReferenceId());
+            assertEquals("principal-1", audit.getActor().getId());
+            assertEquals(eventType, audit.getType());
+            assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
+            return true;
+        }));
+    }
+
+    private NewTrustDomain tokenExchangeInput() {
+        NewTrustDomain input = new NewTrustDomain();
+        input.setKind(TrustDomainKind.TOKEN_EXCHANGE);
+        input.setName("issuer.example.com");
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl("https://example.com/issuer/keys")
+                .build());
+        input.setRefreshIntervalSeconds(60);
+        input.setTokenExchange(TrustDomainTokenExchangeSettings.builder()
+                .issuer("https://issuer.example.com")
+                .scopeMappings(Map.of("read", "domain:read"))
+                .build());
+        return input;
+    }
+
+    private static TrustDomain tokenExchangeEntity() {
+        TrustDomain td = new TrustDomain();
+        td.setId("td-1");
+        td.setReferenceType(ReferenceType.DOMAIN);
+        td.setReferenceId(DOMAIN_ID);
+        td.setKind(TrustDomainKind.TOKEN_EXCHANGE);
+        td.setName("issuer.example.com");
+        td.setRefreshIntervalSeconds(60);
+        td.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl("https://example.com/issuer/keys")
+                .build());
+        td.setTokenExchange(TrustDomainTokenExchangeSettings.builder()
+                .issuer("https://issuer.example.com")
+                .scopeMappings(Map.of("read", "domain:read"))
+                .build());
+        return td;
+    }
+
+    private void stubExistingTokenExchangeForUpdate() {
+        when(repository.findById("td-1")).thenReturn(Maybe.just(tokenExchangeEntity()));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+    }
+
+    private void stubExistingTokenExchange() {
+        when(repository.findById("td-1")).thenReturn(Maybe.just(tokenExchangeEntity()));
+    }
+
+    private void stubNoIssuerConflict() {
+        when(repository.findByIssuer(any(), any(), any())).thenReturn(Maybe.empty());
+    }
+
+    private static UserBindingCriterion criterion(String attribute, String expression) {
+        UserBindingCriterion criterion = new UserBindingCriterion();
+        criterion.setAttribute(attribute);
+        criterion.setExpression(expression);
+        return criterion;
     }
 }

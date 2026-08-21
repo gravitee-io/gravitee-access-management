@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class UpdateTrustDomain {
     private String jwksUrl;
     private Integer refreshIntervalSeconds;
     private List<String> allowedAlgorithms;
+    private TrustDomainTokenExchangeSettings tokenExchange;
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -56,4 +58,7 @@ public class UpdateTrustDomain {
 
     public List<String> getAllowedAlgorithms() { return allowedAlgorithms; }
     public void setAllowedAlgorithms(List<String> allowedAlgorithms) { this.allowedAlgorithms = allowedAlgorithms; }
+
+    public TrustDomainTokenExchangeSettings getTokenExchange() { return tokenExchange; }
+    public void setTokenExchange(TrustDomainTokenExchangeSettings tokenExchange) { this.tokenExchange = tokenExchange; }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
@@ -25,8 +26,11 @@ import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -43,6 +47,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -247,5 +252,117 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
         assertNull(captor.getValue().getKeyMaterial());
         assertEquals(SpiffeBundleSource.JWKS_URL, captor.getValue().getBundleSource());
         assertEquals("https://spire.example.org/keys", captor.getValue().getJwksUrl());
+    }
+
+    private static TrustDomainTokenExchangeSettings tokenExchangeSettings() {
+        UserBindingCriterion criterion = new UserBindingCriterion();
+        criterion.setAttribute("emails.value");
+        criterion.setExpression("{#token['email']}");
+        return TrustDomainTokenExchangeSettings.builder()
+                .issuer("https://issuer.example.org")
+                .scopeMappings(Map.of("read", "domain:read"))
+                .userBindingEnabled(true)
+                .userBindingCriteria(List.of(criterion))
+                .build();
+    }
+
+    private static TrustDomain tokenExchangeTrustDomain() {
+        TrustDomain td = trustDomain(TrustDomainKind.TOKEN_EXCHANGE, TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl("https://issuer.example.org/keys")
+                .build());
+        td.setTokenExchange(tokenExchangeSettings());
+        return td;
+    }
+
+    @Test
+    public void shouldCreateTokenExchangeTrustedDomainWithScopeMappingsAndUserBinding() {
+        Domain domain = stubDomain();
+        doReturn(Single.just(tokenExchangeTrustDomain()))
+                .when(trustDomainService).create(eq(domain), any(NewTrustDomain.class), any());
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "issuer.example.org",
+                        "kind", "TOKEN_EXCHANGE",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"),
+                        "tokenExchange", Map.of(
+                                "issuer", "https://issuer.example.org",
+                                "scopeMappings", Map.of("read", "domain:read"),
+                                "userBindingEnabled", true,
+                                "userBindingCriteria", List.of(Map.of(
+                                        "attribute", "emails.value",
+                                        "expression", "{#token['email']}"))))));
+
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
+        verify(trustDomainService).create(eq(domain), captor.capture(), any());
+        TrustDomainTokenExchangeSettings received = captor.getValue().getTokenExchange();
+        assertNotNull(received);
+        assertEquals("https://issuer.example.org", received.getIssuer());
+        assertEquals(Map.of("read", "domain:read"), received.getScopeMappings());
+        assertTrue(received.isUserBindingEnabled());
+        assertEquals(1, received.getUserBindingCriteria().size());
+        assertEquals("emails.value", received.getUserBindingCriteria().get(0).getAttribute());
+        assertEquals("{#token['email']}", received.getUserBindingCriteria().get(0).getExpression());
+    }
+
+    @Test
+    public void shouldExposeTokenExchangeSettingsInList() {
+        stubDomain();
+        doReturn(Flowable.just(tokenExchangeTrustDomain()))
+                .when(trustDomainService).findByReference(ReferenceType.DOMAIN, DOMAIN_ID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        List<Map<String, Object>> body = response.readEntity(List.class);
+        assertEquals("token_exchange", body.get(0).get("kind"));
+        Map<String, Object> tokenExchange = (Map<String, Object>) body.get(0).get("tokenExchange");
+        assertEquals("https://issuer.example.org", tokenExchange.get("issuer"));
+        assertEquals(Map.of("read", "domain:read"), tokenExchange.get("scopeMappings"));
+        assertEquals(Boolean.TRUE, tokenExchange.get("userBindingEnabled"));
+    }
+
+    @Test
+    public void shouldRejectListWithoutTrustDomainPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request().get();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).findByReference(any(), any());
+    }
+
+    @Test
+    public void shouldRejectCreateWithoutTrustDomainPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "issuer.example.org",
+                        "kind", "TOKEN_EXCHANGE",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"),
+                        "tokenExchange", Map.of("issuer", "https://issuer.example.org"))));
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).create(any(), any(), any());
+    }
+
+    @Test
+    public void shouldRejectSettingsOfTheOtherKind() {
+        Domain domain = stubDomain();
+        doReturn(Single.error(new InvalidTrustDomainException(
+                "tokenExchange settings are only allowed on a trusted domain of kind TOKEN_EXCHANGE")))
+                .when(trustDomainService).create(eq(domain), any(NewTrustDomain.class), any());
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "example.org",
+                        "kind", "SPIFFE",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://spire.example.org/keys"),
+                        "tokenExchange", Map.of("issuer", "https://issuer.example.org"))));
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }

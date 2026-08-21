@@ -31,6 +31,7 @@ import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainKeyMaterialMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainTokenExchangeMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -63,6 +64,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     private static final String COLLECTION_NAME = "trust_domains";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_KIND = "kind";
+    private static final String FIELD_ISSUER = "tokenExchange.issuer";
 
     /** Superseded by the kind-scoped index; names are unique per kind, not per reference. */
     private static final String UNUSED_INDEX = "rt1ri1n1";
@@ -77,7 +79,10 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         super.init(collection);
         super.createIndex(collection, Map.of(
                 new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_KIND, 1).append(FIELD_NAME, 1),
-                new IndexOptions().name("rt1ri1k1n1").unique(true)
+                new IndexOptions().name("rt1ri1k1n1").unique(true),
+                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ISSUER, 1),
+                new IndexOptions().name("rt1ri1te1i1").unique(true)
+                        .partialFilterExpression(exists(FIELD_ISSUER, true))
         ));
         if (ensureIndexOnStart) {
             stampKindOnLegacyDocuments()
@@ -153,6 +158,17 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
+        return Observable.fromPublisher(collection.find(and(
+                        eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                        eq(FIELD_REFERENCE_ID, referenceId),
+                        eq(FIELD_ISSUER, issuer))).first())
+                .firstElement()
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
     /**
      * Trust domains stored before the kind discriminator existed carry no kind field and are SPIFFE.
      */
@@ -176,6 +192,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         td.setKeyMaterial(readKeyMaterial(doc));
         td.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
         td.setAllowedAlgorithms(doc.getAllowedAlgorithms());
+        td.setTokenExchange(doc.getTokenExchange() != null ? doc.getTokenExchange().convert() : null);
         td.setCreatedAt(doc.getCreatedAt());
         td.setUpdatedAt(doc.getUpdatedAt());
         return td;
@@ -195,6 +212,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         doc.setKeyMaterial(toMongo(td.getKeyMaterial()));
         doc.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
         doc.setAllowedAlgorithms(td.getAllowedAlgorithms());
+        doc.setTokenExchange(TrustDomainTokenExchangeMongo.convert(td.getTokenExchange()));
         doc.setCreatedAt(td.getCreatedAt());
         doc.setUpdatedAt(td.getUpdatedAt());
         return doc;

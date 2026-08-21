@@ -79,6 +79,14 @@ public interface DomainReadinessService {
     void pluginUnloaded(String domainId, String pluginId);
 
     /**
+     * Remove a plugin from matching and record that a change was applied, so the domain's
+     * last-sync timestamp advances as it does for a load.
+     * @param domainId Domain ID.
+     * @param pluginId Plugin ID.
+     */
+    void pluginRemoved(String domainId, String pluginId);
+
+    /**
      * Update the status of a domain.
      * @param domainId Domain ID.
      * @param status Domain Status.

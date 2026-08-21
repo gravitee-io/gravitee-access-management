@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { TrustDomainTokenExchangeSettings } from './TrustDomainTokenExchangeSettings';
+import {
+  TrustDomainTokenExchangeSettingsFromJSON,
+  TrustDomainTokenExchangeSettingsFromJSONTyped,
+  TrustDomainTokenExchangeSettingsToJSON,
+  TrustDomainTokenExchangeSettingsToJSONTyped,
+} from './TrustDomainTokenExchangeSettings';
 import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
 import {
   TrustDomainKeyMaterialFromJSON,
@@ -90,6 +97,12 @@ export interface NewTrustDomain {
    * @memberof NewTrustDomain
    */
   refreshIntervalSeconds?: number;
+  /**
+   *
+   * @type {TrustDomainTokenExchangeSettings}
+   * @memberof NewTrustDomain
+   */
+  tokenExchange?: TrustDomainTokenExchangeSettings;
 }
 
 /**
@@ -134,6 +147,7 @@ export function NewTrustDomainFromJSONTyped(json: any, ignoreDiscriminator: bool
     kind: json['kind'] == null ? undefined : json['kind'],
     name: json['name'] == null ? undefined : json['name'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
+    tokenExchange: json['tokenExchange'] == null ? undefined : TrustDomainTokenExchangeSettingsFromJSON(json['tokenExchange']),
   };
 }
 
@@ -155,5 +169,6 @@ export function NewTrustDomainToJSONTyped(value?: NewTrustDomain | null, ignoreD
     kind: value['kind'],
     name: value['name'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
+    tokenExchange: TrustDomainTokenExchangeSettingsToJSON(value['tokenExchange']),
   };
 }

@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -31,6 +32,7 @@ import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -38,6 +40,7 @@ import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.TrustDomainAlreadyExistsException;
+import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
@@ -115,6 +118,7 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         td.setRefreshIntervalSeconds(Optional.ofNullable(input.getRefreshIntervalSeconds())
                 .orElse(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS));
         td.setAllowedAlgorithms(input.getAllowedAlgorithms());
+        td.setTokenExchange(input.getTokenExchange());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
@@ -126,7 +130,8 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                             if (!absent) {
                                 return Single.error(new TrustDomainAlreadyExistsException(td.getName()));
                             }
-                            return repository.create(td)
+                            return rejectDuplicateIssuer(domain, td, null)
+                                    .andThen(Single.defer(() -> repository.create(td)))
                                     .flatMap(created -> publish(domain, created, Action.CREATE).andThen(Single.just(created)));
                         }))
                 .doOnSuccess(created -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
@@ -170,11 +175,15 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                     if (input.getAllowedAlgorithms() != null) {
                         updated.setAllowedAlgorithms(input.getAllowedAlgorithms());
                     }
+                    if (input.getTokenExchange() != null) {
+                        updated.setTokenExchange(input.getTokenExchange());
+                    }
                     updated.setUpdatedAt(new Date());
                     updatedRef.set(updated);
 
                     return validate(domain, updated)
-                            .andThen(repository.update(updated))
+                            .andThen(rejectDuplicateIssuer(domain, updated, existing))
+                            .andThen(Single.defer(() -> repository.update(updated)))
                             .flatMap(saved -> publish(domain, saved, Action.UPDATE).andThen(Single.just(saved)));
                 })
                 .doOnSuccess(saved -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
@@ -237,6 +246,19 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                 });
     }
 
+    private Completable rejectDuplicateIssuer(Domain domain, TrustDomain td, TrustDomain beforeUpdate) {
+        if (td.getKind() != TrustDomainKind.TOKEN_EXCHANGE) {
+            return Completable.complete();
+        }
+        String issuer = td.getTokenExchange().getIssuer();
+        if (beforeUpdate != null && beforeUpdate.getTokenExchange() != null
+                && issuer.equals(beforeUpdate.getTokenExchange().getIssuer())) {
+            return Completable.complete();
+        }
+        return Completable.defer(() -> repository.findByIssuer(ReferenceType.DOMAIN, domain.getId(), issuer)
+                .flatMapCompletable(conflict -> Completable.error(new TrustDomainIssuerAlreadyExistsException(issuer))));
+    }
+
     private Completable publish(Domain domain, TrustDomain trustDomain, Action action) {
         Event event = new Event(TRUST_DOMAIN, new Payload(trustDomain.getId(), trustDomain.getReferenceType(), trustDomain.getReferenceId(), action));
         return eventService.create(event, domain).ignoreElement();
@@ -275,6 +297,10 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         if (td.getName() == null || !NAME_PATTERN.matcher(td.getName()).matches()) {
             return Completable.error(new InvalidTrustDomainException("name must be a DNS-style label (lowercase letters, digits, '.' or '-')"));
         }
+        Optional<String> kindError = validateKindSettings(td);
+        if (kindError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(kindError.get()));
+        }
         Optional<String> keyMaterialError = validateKeyMaterial(td.getKeyMaterial(), settings);
         if (keyMaterialError.isPresent()) {
             return Completable.error(new InvalidTrustDomainException(keyMaterialError.get()));
@@ -292,6 +318,41 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             }
         }
         return Completable.complete();
+    }
+
+    private Optional<String> validateKindSettings(TrustDomain td) {
+        if (td.getKind() == TrustDomainKind.SPIFFE) {
+            return td.getTokenExchange() != null
+                    ? Optional.of("tokenExchange settings are only allowed on a trusted domain of kind TOKEN_EXCHANGE")
+                    : Optional.empty();
+        }
+        if (td.getAllowedAlgorithms() != null) {
+            return Optional.of("allowedAlgorithms is only allowed on a trusted domain of kind SPIFFE");
+        }
+        TrustDomainTokenExchangeSettings tokenExchange = td.getTokenExchange();
+        if (tokenExchange == null) {
+            return Optional.of("tokenExchange settings are required on a trusted domain of kind TOKEN_EXCHANGE");
+        }
+        if (tokenExchange.getIssuer() == null || tokenExchange.getIssuer().isBlank()) {
+            return Optional.of("tokenExchange.issuer is required");
+        }
+        return validateUserBinding(tokenExchange);
+    }
+
+    private Optional<String> validateUserBinding(TrustDomainTokenExchangeSettings tokenExchange) {
+        if (!tokenExchange.isUserBindingEnabled()) {
+            return Optional.empty();
+        }
+        List<UserBindingCriterion> criteria = tokenExchange.getUserBindingCriteria();
+        if (criteria == null || criteria.isEmpty()) {
+            return Optional.of("tokenExchange.userBindingCriteria must not be empty when user binding is enabled");
+        }
+        boolean incomplete = criteria.stream().anyMatch(c -> c == null
+                || c.getAttribute() == null || c.getAttribute().isBlank()
+                || c.getExpression() == null || c.getExpression().isBlank());
+        return incomplete
+                ? Optional.of("tokenExchange.userBindingCriteria entries must have a non-blank attribute and expression")
+                : Optional.empty();
     }
 
     private Optional<String> validateKeyMaterial(TrustDomainKeyMaterial keyMaterial, KeyRetrievalSettings settings) {

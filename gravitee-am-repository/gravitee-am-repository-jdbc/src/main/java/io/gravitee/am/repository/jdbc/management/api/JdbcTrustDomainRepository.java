@@ -20,11 +20,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcTrustDomain;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringTrustDomainRepository;
@@ -38,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -46,6 +49,9 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {};
+    private static final TypeReference<Map<String, String>> STRING_MAP = new TypeReference<>() {};
+    private static final TypeReference<List<UserBindingCriterion>> CRITERION_LIST = new TypeReference<>() {};
+    private static final TypeReference<TrustDomainKeyMaterial> KEY_MATERIAL = new TypeReference<>() {};
 
     @Autowired
     private SpringTrustDomainRepository repository;
@@ -98,6 +104,14 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
+        LOGGER.debug("findByIssuer({}, {}, {})", referenceType, referenceId, issuer);
+        return repository.findByIssuer(referenceType.name(), referenceId, issuer)
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
     private TrustDomain toEntity(JdbcTrustDomain entity) {
         if (entity == null) {
             return null;
@@ -111,7 +125,8 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         td.setDescription(entity.getDescription());
         td.setKeyMaterial(readKeyMaterial(entity));
         td.setRefreshIntervalSeconds(entity.getRefreshIntervalSeconds());
-        td.setAllowedAlgorithms(parseAlgorithms(entity.getAllowedAlgorithms()));
+        td.setAllowedAlgorithms(parseJson(entity.getAllowedAlgorithms(), STRING_LIST, "allowed algorithms"));
+        td.setTokenExchange(readTokenExchange(entity));
         td.setCreatedAt(toDate(entity.getCreatedAt()));
         td.setUpdatedAt(toDate(entity.getUpdatedAt()));
         return td;
@@ -128,9 +143,10 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         entity.setKind(td.getKind() != null ? td.getKind().name() : TrustDomainKind.SPIFFE.name());
         entity.setName(td.getName());
         entity.setDescription(td.getDescription());
-        entity.setKeyMaterial(serializeKeyMaterial(td.getKeyMaterial()));
+        entity.setKeyMaterial(serializeJson(td.getKeyMaterial(), "key material"));
         entity.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
-        entity.setAllowedAlgorithms(serializeAlgorithms(td.getAllowedAlgorithms()));
+        entity.setAllowedAlgorithms(serializeJson(td.getAllowedAlgorithms(), "allowed algorithms"));
+        writeTokenExchange(entity, td.getTokenExchange());
         entity.setCreatedAt(toLocalDateTime(td.getCreatedAt()));
         entity.setUpdatedAt(toLocalDateTime(td.getUpdatedAt()));
         return entity;
@@ -142,47 +158,54 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
      */
     static TrustDomainKeyMaterial readKeyMaterial(JdbcTrustDomain entity) {
         if (entity.getKeyMaterial() != null && !entity.getKeyMaterial().isBlank()) {
-            try {
-                return MAPPER.readValue(entity.getKeyMaterial(), TrustDomainKeyMaterial.class);
-            } catch (JsonProcessingException e) {
-                throw new IllegalStateException("Failed to parse trust domain key material", e);
-            }
+            return parseJson(entity.getKeyMaterial(), KEY_MATERIAL, "key material");
         }
         return TrustDomainKeyMaterial.fromBundleSource(
                 entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null,
                 entity.getJwksUrl());
     }
 
-    private static String serializeKeyMaterial(TrustDomainKeyMaterial keyMaterial) {
-        if (keyMaterial == null) {
+    private static TrustDomainTokenExchangeSettings readTokenExchange(JdbcTrustDomain entity) {
+        if (entity.getIssuer() == null) {
             return null;
         }
-        try {
-            return MAPPER.writeValueAsString(keyMaterial);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize trust domain key material", e);
-        }
+        return TrustDomainTokenExchangeSettings.builder()
+                .issuer(entity.getIssuer())
+                .scopeMappings(parseJson(entity.getScopeMappings(), STRING_MAP, "scope mappings"))
+                .userBindingEnabled(Boolean.TRUE.equals(entity.getUserBindingEnabled()))
+                .userBindingCriteria(parseJson(entity.getUserBindingCriteria(), CRITERION_LIST, "user binding criteria"))
+                .build();
     }
 
-    private static String serializeAlgorithms(List<String> algorithms) {
-        if (algorithms == null) {
-            return null;
+    private static void writeTokenExchange(JdbcTrustDomain entity, TrustDomainTokenExchangeSettings settings) {
+        if (settings == null) {
+            return;
         }
-        try {
-            return MAPPER.writeValueAsString(algorithms);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize allowed algorithms", e);
-        }
+        entity.setIssuer(settings.getIssuer());
+        entity.setScopeMappings(serializeJson(settings.getScopeMappings(), "scope mappings"));
+        entity.setUserBindingEnabled(settings.isUserBindingEnabled());
+        entity.setUserBindingCriteria(serializeJson(settings.getUserBindingCriteria(), "user binding criteria"));
     }
 
-    private static List<String> parseAlgorithms(String json) {
+    private static <T> T parseJson(String json, TypeReference<T> type, String what) {
         if (json == null || json.isBlank()) {
             return null;
         }
         try {
-            return MAPPER.readValue(json, STRING_LIST);
+            return MAPPER.readValue(json, type);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to parse allowed algorithms", e);
+            throw new IllegalStateException("Failed to parse trust domain " + what, e);
+        }
+    }
+
+    private static String serializeJson(Object value, String what) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return MAPPER.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize trust domain " + what, e);
         }
     }
 
