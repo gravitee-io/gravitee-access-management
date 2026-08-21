@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.ReferenceType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,6 +92,15 @@ public class TrustDomain {
         this.tokenExchange = other.tokenExchange != null ? new TrustDomainTokenExchangeSettings(other.tokenExchange) : null;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+    }
+
+    /**
+     * The {@code iss} claim this trusted domain vouches for, or null when it is not of the
+     * token-exchange kind.
+     */
+    @JsonIgnore
+    public String issuer() {
+        return tokenExchange != null ? tokenExchange.getIssuer() : null;
     }
 
     /**

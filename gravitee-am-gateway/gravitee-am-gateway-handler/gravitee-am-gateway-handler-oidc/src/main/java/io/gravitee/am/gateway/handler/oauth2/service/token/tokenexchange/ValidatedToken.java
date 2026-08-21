@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
-import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.oidc.TrustDomain;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -98,17 +98,18 @@ public class ValidatedToken {
     private final Set<String> domainParentJtis;
 
     /**
-     * The trusted issuer config used to validate this token when it was validated via an external issuer.
-     * Null when validated with the domain certificate. Used for scope mapping and user binding (EL context and criteria).
+     * The token-exchange trusted domain used to validate this token when it was validated via an
+     * external issuer. Null when validated with the domain certificate. Used for scope mapping and
+     * user binding (EL context and criteria).
      */
-    private final TrustedIssuer trustedIssuer;
+    private final TrustDomain trustedDomain;
 
     /**
      * Whether this token was validated via a trusted external issuer (not the domain certificate).
-     * Derived from {@link #trustedIssuer} for convenience.
+     * Derived from {@link #trustedDomain} for convenience.
      */
     public boolean isTrustedIssuerValidated() {
-        return trustedIssuer != null;
+        return trustedDomain != null;
     }
 
     /**
@@ -135,7 +136,7 @@ public class ValidatedToken {
                 .clientId(clientId)
                 .tokenType(tokenType)
                 .domain(domain)
-                .trustedIssuer(trustedIssuer)
+                .trustedDomain(trustedDomain)
                 .domainParentJtis(parentJtis)
                 .build();
     }
@@ -144,11 +145,11 @@ public class ValidatedToken {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ValidatedToken that = (ValidatedToken) o;
-        return Objects.equals(subject, that.subject) && Objects.equals(issuer, that.issuer) && Objects.equals(claims, that.claims) && Objects.equals(scopes, that.scopes) && Objects.equals(expiration, that.expiration) && Objects.equals(issuedAt, that.issuedAt) && Objects.equals(notBefore, that.notBefore) && Objects.equals(tokenId, that.tokenId) && Objects.equals(audience, that.audience) && Objects.equals(clientId, that.clientId) && Objects.equals(tokenType, that.tokenType) && Objects.equals(domain, that.domain) && Objects.equals(domainParentJtis, that.domainParentJtis) && Objects.equals(trustedIssuer, that.trustedIssuer);
+        return Objects.equals(subject, that.subject) && Objects.equals(issuer, that.issuer) && Objects.equals(claims, that.claims) && Objects.equals(scopes, that.scopes) && Objects.equals(expiration, that.expiration) && Objects.equals(issuedAt, that.issuedAt) && Objects.equals(notBefore, that.notBefore) && Objects.equals(tokenId, that.tokenId) && Objects.equals(audience, that.audience) && Objects.equals(clientId, that.clientId) && Objects.equals(tokenType, that.tokenType) && Objects.equals(domain, that.domain) && Objects.equals(domainParentJtis, that.domainParentJtis) && Objects.equals(trustedDomain, that.trustedDomain);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(subject, issuer, claims, scopes, expiration, issuedAt, notBefore, tokenId, audience, clientId, tokenType, domain, domainParentJtis, trustedIssuer);
+        return Objects.hash(subject, issuer, claims, scopes, expiration, issuedAt, notBefore, tokenId, audience, clientId, tokenType, domain, domainParentJtis, trustedDomain);
     }
 }

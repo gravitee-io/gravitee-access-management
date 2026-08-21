@@ -187,9 +187,9 @@ public class DomainsResource extends AbstractDomainResource {
         domainService.findByHrid(environmentId, hrid)
                 .flatMap(domain ->
                         checkAnyPermission(authenticatedUser, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.READ)
-                                .andThen(Single.defer(() ->
-                                        findAllPermissions(authenticatedUser, organizationId, environmentId, domain.getId())
-                                                .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
+                                .andThen(Single.defer(() -> trustedIssuerProjection.project(domain)
+                                        .flatMap(projected -> findAllPermissions(authenticatedUser, organizationId, environmentId, domain.getId())
+                                                .map(userPermissions -> filterDomainInfos(projected, userPermissions)))))
                 ).subscribe(response::resume, response::resume);
     }
 

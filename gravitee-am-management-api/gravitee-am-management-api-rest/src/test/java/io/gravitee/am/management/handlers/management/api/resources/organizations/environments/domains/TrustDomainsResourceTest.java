@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -337,6 +338,31 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
     @Test
     public void shouldRejectCreateWithoutTrustDomainPermission() {
         doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "issuer.example.org",
+                        "kind", "TOKEN_EXCHANGE",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"),
+                        "tokenExchange", Map.of("issuer", "https://issuer.example.org"))));
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).create(any(), any(), any());
+    }
+
+    @Test
+    public void shouldRejectListWhenOnlyTheDeprecatedPermissionsAreHeld() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request().get();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).findByReference(any(), any());
+    }
+
+    @Test
+    public void shouldRejectCreateWhenOnlyTheDeprecatedPermissionsAreHeld() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID);
 
         final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
                 .post(Entity.json(Map.of(

@@ -23,16 +23,25 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
@@ -42,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -98,6 +108,81 @@ public class DomainResourceTest extends JerseySpringTest {
         assertEquals(mockDomain.getTags(), domain.getTags());
         assertNotNull(domain.getCertificateSettings());
         assertEquals("fallback-cert-id", domain.getCertificateSettings().getFallbackCertificate());
+    }
+
+    @Test
+    public void shouldAssembleDeprecatedTrustedIssuersFromTrustedDomains() {
+        final Domain mockDomain = buildDomainMock();
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+        doReturn(Flowable.just(
+                tokenExchangeTrustDomain("td-1", "issuer.example.com", "https://issuer.example.com"),
+                spiffeTrustDomain("td-2", "am.local")))
+                .when(trustDomainService).findByReference(ReferenceType.DOMAIN, mockDomain.getId());
+
+        final Response response = target("domains").path(mockDomain.getId()).request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Domain domain = readEntity(response, Domain.class);
+        final List<TrustedIssuer> trustedIssuers = domain.getTokenExchangeSettings().getTrustedIssuers();
+        assertEquals(1, trustedIssuers.size());
+        assertEquals("https://issuer.example.com", trustedIssuers.get(0).getIssuer());
+        assertEquals(KeyResolutionMethod.JWKS_URL, trustedIssuers.get(0).getKeyResolutionMethod());
+        assertEquals("https://issuer.example.com/keys", trustedIssuers.get(0).getJwksUri());
+    }
+
+    @Test
+    public void shouldReportNoTrustedIssuersWhenNoTokenExchangeTrustedDomainExists() {
+        final Domain mockDomain = buildDomainMock();
+        mockDomain.getTokenExchangeSettings().setTrustedIssuers(List.of(new TrustedIssuer()));
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+        doReturn(Flowable.just(spiffeTrustDomain("td-2", "am.local")))
+                .when(trustDomainService).findByReference(ReferenceType.DOMAIN, mockDomain.getId());
+
+        final Response response = target("domains").path(mockDomain.getId()).request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        assertNull(readEntity(response, Domain.class).getTokenExchangeSettings().getTrustedIssuers());
+    }
+
+    @Test
+    public void shouldAcceptTheDeprecatedTrustedIssuerWriteWithoutTheTrustedDomainPermission() {
+        final Domain mockDomain = buildDomainMock();
+        PatchDomain patchDomain = new PatchDomain();
+        TokenExchangeSettings tokenExchangeSettings = new TokenExchangeSettings();
+        tokenExchangeSettings.setEnabled(true);
+        tokenExchangeSettings.setTrustedIssuers(List.of(new TrustedIssuer()));
+        patchDomain.setTokenExchangeSettings(Optional.of(tokenExchangeSettings));
+
+        grantOnly(mockDomain.getId(), Permission.DOMAIN_SETTINGS);
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Single.just(mockDomain)).when(domainService).patch(any(GraviteeContext.class), eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
+
+        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    private static TrustDomain tokenExchangeTrustDomain(String id, String name, String issuer) {
+        return TrustDomain.builder()
+                .id(id)
+                .kind(TrustDomainKind.TOKEN_EXCHANGE)
+                .name(name)
+                .keyMaterial(TrustDomainKeyMaterial.builder()
+                        .source(KeyMaterialSource.JWKS_URL)
+                        .jwksUrl(issuer + "/keys")
+                        .build())
+                .tokenExchange(TrustDomainTokenExchangeSettings.builder().issuer(issuer).build())
+                .build();
+    }
+
+    private static TrustDomain spiffeTrustDomain(String id, String name) {
+        return TrustDomain.builder().id(id).kind(TrustDomainKind.SPIFFE).name(name).build();
     }
 
     @Test
@@ -410,6 +495,7 @@ public class DomainResourceTest extends JerseySpringTest {
         mockDomain.setLoginSettings(new LoginSettings());
         mockDomain.setAccountSettings(new AccountSettings());
         mockDomain.setTags(Collections.singleton("tag"));
+        mockDomain.setTokenExchangeSettings(new TokenExchangeSettings());
         CertificateSettings certificateSettings = new CertificateSettings();
         certificateSettings.setFallbackCertificate("fallback-cert-id");
         mockDomain.setCertificateSettings(certificateSettings);

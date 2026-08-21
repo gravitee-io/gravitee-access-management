@@ -27,7 +27,12 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
-import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
+import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -43,6 +48,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -64,6 +70,9 @@ public class TrustedIssuerTokenValidatorTest {
     private TrustedIssuerResolver trustedIssuerResolver;
 
     @Mock
+    private TrustDomainManager trustDomainManager;
+
+    @Mock
     private TokenExchangeSettings settings;
 
     @Mock
@@ -77,6 +86,7 @@ public class TrustedIssuerTokenValidatorTest {
     private static final String TOKEN = "test.jwt.token";
     private static final String DOMAIN_ID = "domain-123";
     private static final String TOKEN_TYPE_URN = "urn:ietf:params:oauth:token-type:test";
+    private static final String EXTERNAL_ISSUER = "https://external-idp.example.com";
 
     @Before
     public void setUp() {
@@ -84,7 +94,7 @@ public class TrustedIssuerTokenValidatorTest {
         DefaultTokenValidator delegate = new DefaultTokenValidator(
                 jwtService, JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN);
         validator = new TrustedIssuerTokenValidator(
-                delegate, trustedIssuerResolver, jwtService,
+                delegate, trustedIssuerResolver, trustDomainManager, jwtService,
                 JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN);
     }
 
@@ -161,8 +171,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testUnknownIssuer_reportsUntrustedIssuer() {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
 
         // Delegate fails with TokenVerificationException
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
@@ -185,8 +194,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testBlankIssClaim_reportsJwtMissingIss() {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -205,13 +213,37 @@ public class TrustedIssuerTokenValidatorTest {
         );
     }
 
+    @Test
+    public void testIssuerNamingASpiffeTrustDomain_reportsTheNamingCoincidence() {
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer("am.local")).thenReturn(Optional.empty());
+        when(trustDomainManager.findSpiffeByName("am.local"))
+                .thenReturn(Optional.of(TrustDomain.builder().kind(TrustDomainKind.SPIFFE).name("am.local").build()));
+
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new JOSEException("Invalid signature")));
+
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("am.local");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidRequestException.class);
+        testObserver.assertError(error ->
+            error.getMessage().equals("Untrusted issuer: am.local names a SPIFFE trusted domain, not a token-exchange trusted domain")
+        );
+    }
+
     // --- Trusted issuer validation ---
 
     @Test
     public void testTrustedIssuer_success() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -250,9 +282,9 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_signatureVerificationFails() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -276,10 +308,10 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_scopeMapping() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        ti.setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        ti.getTokenExchange().setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -314,9 +346,9 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_noScopeMapping_passThrough() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -349,9 +381,9 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_allFieldsCopied() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -401,9 +433,9 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_expiredToken() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -433,9 +465,9 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_nullTimestamps() throws Exception {
-        TrustedIssuer ti = createTrustedIssuer();
-        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
-        when(settings.getMapOfTrustedIssuers()).thenReturn(Map.of(ti.getIssuer(), ti));
+        TrustDomain ti = createTrustedDomain();
+        when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
+        when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
@@ -466,12 +498,17 @@ public class TrustedIssuerTokenValidatorTest {
 
     // --- Helpers ---
 
-    private TrustedIssuer createTrustedIssuer() {
-        TrustedIssuer ti = new TrustedIssuer();
-        ti.setIssuer("https://external-idp.example.com");
-        ti.setKeyResolutionMethod(KeyResolutionMethod.PEM);
-        ti.setCertificate("some-pem");
-        return ti;
+    private TrustDomain createTrustedDomain() {
+        return TrustDomain.builder()
+                .id("trust-domain-1")
+                .kind(TrustDomainKind.TOKEN_EXCHANGE)
+                .name("external-idp.example.com")
+                .keyMaterial(TrustDomainKeyMaterial.builder()
+                        .source(KeyMaterialSource.PEM)
+                        .certificate("some-pem")
+                        .build())
+                .tokenExchange(TrustDomainTokenExchangeSettings.builder().issuer(EXTERNAL_ISSUER).build())
+                .build();
     }
 
     private JWT createValidJWT() {

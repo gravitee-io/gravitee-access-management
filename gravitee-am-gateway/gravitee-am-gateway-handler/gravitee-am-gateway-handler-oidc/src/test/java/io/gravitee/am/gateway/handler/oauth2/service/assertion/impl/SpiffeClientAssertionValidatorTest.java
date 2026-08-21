@@ -281,6 +281,26 @@ class SpiffeClientAssertionValidatorTest {
     }
 
     @Test
+    void rejectsDistinguishably_whenTrustDomainNamesATokenExchangeTrustedDomain() throws Exception {
+        stubDiscovery();
+        stubDomainOidc();
+        Client client = clientWithSpiffeSettings();
+        when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
+        when(trustDomainManager.findSpiffeByName(TRUST_DOMAIN_NAME)).thenReturn(Optional.empty());
+        when(trustDomainManager.findTokenExchangeByName(TRUST_DOMAIN_NAME))
+                .thenReturn(Optional.of(TrustDomain.builder()
+                        .kind(TrustDomainKind.TOKEN_EXCHANGE)
+                        .name(TRUST_DOMAIN_NAME)
+                        .build()));
+        String assertion = svid().serialize();
+
+        validator.validate(assertion, BASE_PATH, null).test()
+                .assertError(err -> err instanceof InvalidClientException
+                        && err.getMessage().contains("is registered for token exchange, not for SPIFFE"));
+        verify(trustDomainKeyService, never()).getKey(any(), anyString());
+    }
+
+    @Test
     void rejects_whenSvidValidatorFails() throws Exception {
         stubDiscovery();
         stubDomainOidc();

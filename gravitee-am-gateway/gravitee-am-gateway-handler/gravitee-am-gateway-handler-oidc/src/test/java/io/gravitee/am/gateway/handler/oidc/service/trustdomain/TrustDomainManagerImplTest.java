@@ -125,6 +125,14 @@ class TrustDomainManagerImplTest {
     }
 
     @Test
+    void shouldTellATokenExchangeNameApartFromAMissingSpiffeRegistration() {
+        preload(spiffe("td-1", "other.local"), tokenExchange("td-2", "am.local", "https://issuer.example.com"));
+
+        assertThat(manager.findTokenExchangeByName("am.local").orElseThrow().getId()).isEqualTo("td-2");
+        assertThat(manager.findTokenExchangeByName("other.local")).isEmpty();
+    }
+
+    @Test
     void shouldNotResolveSpiffeTrustedDomainByIssuer() {
         preload(spiffe("td-1", "https://issuer.example.com"));
 
