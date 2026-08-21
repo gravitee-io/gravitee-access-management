@@ -24,6 +24,7 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -64,8 +65,15 @@ public class ApplicationAnalyticsResource extends AbstractResource {
             @BeanParam AnalyticsParam param,
             @Suspended final AsyncResponse response) {
 
-        param.validate();
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION_ANALYTICS, Acl.READ)
+                .andThen(Completable.fromAction(param::validate))
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
+                        .flatMap(domain -> applicationAnalyticsService.execute(domain, buildQuery(domainId, application, param))))
+                .subscribe(response::resume, response::resume);
+    }
 
+    private static AnalyticsQuery buildQuery(String domainId, String application, AnalyticsParam param) {
         AnalyticsQuery query = new AnalyticsQuery();
         query.setDomain(domainId);
         query.setApplication(application);
@@ -75,11 +83,6 @@ public class ApplicationAnalyticsResource extends AbstractResource {
         query.setTo(param.getTo());
         query.setInterval(param.getInterval());
         query.setSize(param.getSize());
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION_ANALYTICS, Acl.READ)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
-                        .flatMap(domain -> applicationAnalyticsService.execute(domain, query)))
-                .subscribe(response::resume, response::resume);
+        return query;
     }
 }

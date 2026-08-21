@@ -108,7 +108,7 @@ public class AnalyticsParam {
     }
 
     public void validate() throws WebApplicationException {
-        if (type.getValue() == null) {
+        if (type == null || type.getValue() == null) {
             throw new WebApplicationException(Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("Query parameter 'type' is not valid")

@@ -126,13 +126,15 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ProtectedResourcesResource.ProtectedResourcePage.class))
             ),
+            @ApiResponse(responseCode = "400", description = "Unrecognised type"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @QueryParam("q") String query,
-            @NotNull @QueryParam("type") ProtectedResource.Type type,
+            @Parameter(description = "Restricts the listing to a single type. All types are listed when it is absent.")
+            @QueryParam("type") ProtectedResource.Type type,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("50") int size,
             @Parameter(schema = @Schema(type = "string"))

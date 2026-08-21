@@ -38,10 +38,13 @@ public interface ProtectedResourceService {
 
     Maybe<ProtectedResource> findById(String id);
 
+    /**
+     * @param type optional; when null the resource is matched on its domain and id alone.
+     */
     default Maybe<ProtectedResourcePrimaryData> findByDomainAndIdAndType(String domain, String id, ProtectedResource.Type type) {
         return findById(id)
                 .filter(res -> res.getDomainId().equals(domain))
-                .filter(res -> res.getType().equals(type))
+                .filter(res -> type == null || res.getType().equals(type))
                 .map(ProtectedResourcePrimaryData::of);
     }
 

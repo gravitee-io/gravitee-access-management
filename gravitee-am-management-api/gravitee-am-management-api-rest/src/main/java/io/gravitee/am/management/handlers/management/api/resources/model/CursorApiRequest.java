@@ -27,9 +27,19 @@ public record CursorApiRequest(String id, String lastSortValue) {
     }
 
     public static CursorApiRequest decode(String value){
-        Base64.Decoder decoder = Base64.getDecoder();
-        String decoded = new String(decoder.decode(value));
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Query parameter 'cursor' is required");
+        }
+        String decoded;
+        try {
+            decoded = new String(Base64.getDecoder().decode(value));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Query parameter 'cursor' is not valid");
+        }
         String[] split = decoded.split(SEPARATOR);
+        if (split.length != 2) {
+            throw new IllegalArgumentException("Query parameter 'cursor' is not valid");
+        }
         return new CursorApiRequest(split[0], split[1]);
     }
 }

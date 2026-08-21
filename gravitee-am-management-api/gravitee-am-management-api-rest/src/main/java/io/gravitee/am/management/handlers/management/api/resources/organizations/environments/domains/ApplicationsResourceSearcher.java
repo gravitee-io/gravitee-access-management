@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static io.gravitee.am.service.model.ApplicationFilter.STATUS_ENABLED;
 
@@ -113,18 +114,21 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
             @Suspended final AsyncResponse response,
             @Context UriInfo uriInfo) {
         Set<ApplicationExpand> expands = ApplicationExpand.convertToApplicationExpands(expandsParam);
-        CursorApiRequest cursorApiRequest = CursorApiRequest.decode(cursorEncoded);
-        ApplicationCursorRequest cursorRequest = new ApplicationCursorRequest(
-                cursorApiRequest.lastSortValue(),
-                cursorApiRequest.id(),
-                CursorRequest.SortDirection.valueOf(direction.toUpperCase()),
-                sort,
-                page,
-                query,
-                status == null ? null : STATUS_ENABLED.equalsIgnoreCase(status),
-                types
-        );
-        processCursorRequest(organizationId, environmentId, domainId, cursorRequest, ownerEmail, limit, expands, uriInfo)
+        processCursorRequest(organizationId, environmentId, domainId,
+                () -> {
+                    CursorApiRequest cursorApiRequest = CursorApiRequest.decode(cursorEncoded);
+                    return new ApplicationCursorRequest(
+                            cursorApiRequest.lastSortValue(),
+                            cursorApiRequest.id(),
+                            CursorRequest.SortDirection.valueOf(direction.toUpperCase()),
+                            sort,
+                            page,
+                            query,
+                            status == null ? null : STATUS_ENABLED.equalsIgnoreCase(status),
+                            types
+                    );
+                },
+                ownerEmail, limit, expands, uriInfo)
                 .subscribe(response::resume, response::resume);
     }
 
@@ -159,8 +163,9 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
             @Context UriInfo uriInfo) {
         Set<ApplicationExpand> expands = ApplicationExpand.convertToApplicationExpands(expandsParam);
         Boolean enabled = status == null ? null : STATUS_ENABLED.equalsIgnoreCase(status);
-        ApplicationCursorRequest cursorRequest = ApplicationCursorRequest.initialCursor(sort, direction, page, query, enabled, types);
-        processCursorRequest(organizationId, environmentId, domainId, cursorRequest, ownerEmail, limit, expands, uriInfo)
+        processCursorRequest(organizationId, environmentId, domainId,
+                () -> ApplicationCursorRequest.initialCursor(sort, direction, page, query, enabled, types),
+                ownerEmail, limit, expands, uriInfo)
                 .subscribe(response::resume, response::resume);
     }
 
@@ -168,7 +173,7 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
             String organizationId,
             String environmentId,
             String domainId,
-            ApplicationCursorRequest cursorRequest,
+            Supplier<ApplicationCursorRequest> cursorRequestSupplier,
             String ownerEmail,
             int limit,
             Set<ApplicationExpand> expands,
@@ -176,22 +181,23 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
         User authenticatedUser = getAuthenticatedUser();
         return checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION, Acl.LIST)
                 .andThen(checkDomainExists(domainId).ignoreElement())
-                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.APPLICATION, Acl.READ)
+                .andThen(Single.fromCallable(cursorRequestSupplier::get))
+                .flatMap(cursorRequest -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.APPLICATION, Acl.READ)
                         .filter(hasPermission -> hasPermission)
                         .flatMapSingle(__ -> applicationSearcher.searchByDomainCursor(organizationId, domainId, cursorRequest, ownerEmail, limit))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> applicationSearcher.searchByDomainAndIdsCursor(organizationId, domainId, ids, cursorRequest, ownerEmail, limit))))
-                .map(cursorPage ->
-                        new ApplicationCursorPage(
-                                cursorPage.getData().stream().map(a -> FilteredApplication.of(a, expands)).toList(),
-                                nextCursorPath(
-                                        cursorPage.getNextCursor(),
-                                        uriInfo,
-                                        "/organizations/%s/environments/%s/domains/%s/applications/search/_cursor".formatted(organizationId, environmentId, domainId)),
-                                cursorPage.getTotalCount(),
-                                cursorRequest.getPage()))
+                                        .flatMap(ids -> applicationSearcher.searchByDomainAndIdsCursor(organizationId, domainId, ids, cursorRequest, ownerEmail, limit)))
+                        .map(cursorPage ->
+                                new ApplicationCursorPage(
+                                        cursorPage.getData().stream().map(a -> FilteredApplication.of(a, expands)).toList(),
+                                        nextCursorPath(
+                                                cursorPage.getNextCursor(),
+                                                uriInfo,
+                                                "/organizations/%s/environments/%s/domains/%s/applications/search/_cursor".formatted(organizationId, environmentId, domainId)),
+                                        cursorPage.getTotalCount(),
+                                        cursorRequest.getPage())))
                 .onErrorResumeNext(ex -> ex instanceof IllegalArgumentException
                         ? Single.error(new BadRequestException(ex.getMessage()))
                         : Single.error(ex));
