@@ -34,4 +34,10 @@ public interface TrustDomainRepository extends CrudRepository<TrustDomain, Strin
      * may share a name.
      */
     Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, TrustDomainKind kind, String name);
+
+    /**
+     * Finds the token-exchange trusted domain vouching for an issuer. Issuers are unique per
+     * reference, and only the token-exchange kind carries one.
+     */
+    Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer);
 }

@@ -44,6 +44,7 @@ public class TrustDomainMongo extends Auditable {
     private String jwksUrl;
     private int refreshIntervalSeconds;
     private List<String> allowedAlgorithms;
+    private TrustDomainTokenExchangeMongo tokenExchange;
 
     public String getId() {
         return id;
@@ -131,5 +132,13 @@ public class TrustDomainMongo extends Auditable {
 
     public void setAllowedAlgorithms(List<String> allowedAlgorithms) {
         this.allowedAlgorithms = allowedAlgorithms;
+    }
+
+    public TrustDomainTokenExchangeMongo getTokenExchange() {
+        return tokenExchange;
+    }
+
+    public void setTokenExchange(TrustDomainTokenExchangeMongo tokenExchange) {
+        this.tokenExchange = tokenExchange;
     }
 }

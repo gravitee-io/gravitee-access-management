@@ -8424,7 +8424,7 @@ paths:
           description: Invalid trust domain configuration
         "500":
           description: Internal server error
-      summary: Register a SPIFFE trust domain on the security domain
+      summary: Register a trust domain on the security domain
       tags:
       - trust-domain
       - domain
@@ -15836,6 +15836,8 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
+        tokenExchange:
+          $ref: "#/components/schemas/TrustDomainTokenExchangeSettings"
     NewUser:
       type: object
       properties:
@@ -18294,6 +18296,8 @@ components:
           format: int32
         staticJwks:
           $ref: "#/components/schemas/JWKSet"
+        tokenExchange:
+          $ref: "#/components/schemas/TrustDomainTokenExchangeSettings"
         updatedAt:
           type: integer
           format: int64
@@ -18320,6 +18324,37 @@ components:
           - JWK_SET
           - PEM
       title: Trusted domain key material
+    TrustDomainTokenExchangeSettings:
+      type: object
+      description: Settings that apply only to a trusted domain of the TOKEN_EXCHANGE
+        kind.
+      properties:
+        issuer:
+          type: string
+          description: Expected value of the "iss" claim in the external JWT. Unique
+            per security domain.
+          example: https://issuer.example.com
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+            description: One-to-one mapping from external scope to domain scope. Unmapped
+              issuer scopes are dropped (fail-closed).
+          description: One-to-one mapping from external scope to domain scope. Unmapped
+            issuer scopes are dropped (fail-closed).
+        userBindingCriteria:
+          type: array
+          description: Criteria used to locate a domain user when user binding is
+            enabled. All criteria are combined with AND.
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+          default: false
+          description: "Whether the external JWT subject is resolved to a single domain\
+            \ user using the user binding criteria. When false, a virtual user is\
+            \ built from the token claims only."
+      title: Token-exchange trusted domain settings
     TrustedIssuer:
       type: object
       description: "An external token issuer whose JWTs are accepted as subject or\
@@ -18800,6 +18835,8 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
+        tokenExchange:
+          $ref: "#/components/schemas/TrustDomainTokenExchangeSettings"
     UpdateUser:
       type: object
       properties:

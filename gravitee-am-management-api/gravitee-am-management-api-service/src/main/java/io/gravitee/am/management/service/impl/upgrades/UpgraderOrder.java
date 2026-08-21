@@ -42,6 +42,7 @@ public final class UpgraderOrder {
     public static final int EMAIL_CONFIGURATION_UPGRADER = 21;
     public static final int ORGANIZATION_STANDARD_ROLE_UPGRADER = 22;
     public static final int DOMAIN_KEY_RETRIEVAL_SETTINGS_UPGRADER = 23;
+    public static final int DOMAIN_TRUSTED_ISSUER_UPGRADER = 24;
 
     private UpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");

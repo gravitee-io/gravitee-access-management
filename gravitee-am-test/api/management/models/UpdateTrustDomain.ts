@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { TrustDomainTokenExchangeSettings } from './TrustDomainTokenExchangeSettings';
+import {
+  TrustDomainTokenExchangeSettingsFromJSON,
+  TrustDomainTokenExchangeSettingsFromJSONTyped,
+  TrustDomainTokenExchangeSettingsToJSON,
+  TrustDomainTokenExchangeSettingsToJSONTyped,
+} from './TrustDomainTokenExchangeSettings';
 import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
 import {
   TrustDomainKeyMaterialFromJSON,
@@ -78,6 +85,12 @@ export interface UpdateTrustDomain {
    * @memberof UpdateTrustDomain
    */
   refreshIntervalSeconds?: number;
+  /**
+   *
+   * @type {TrustDomainTokenExchangeSettings}
+   * @memberof UpdateTrustDomain
+   */
+  tokenExchange?: TrustDomainTokenExchangeSettings;
 }
 
 /**
@@ -111,6 +124,7 @@ export function UpdateTrustDomainFromJSONTyped(json: any, ignoreDiscriminator: b
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
     keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
+    tokenExchange: json['tokenExchange'] == null ? undefined : TrustDomainTokenExchangeSettingsFromJSON(json['tokenExchange']),
   };
 }
 
@@ -130,5 +144,6 @@ export function UpdateTrustDomainToJSONTyped(value?: UpdateTrustDomain | null, i
     jwksUrl: value['jwksUrl'],
     keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
+    tokenExchange: TrustDomainTokenExchangeSettingsToJSON(value['tokenExchange']),
   };
 }

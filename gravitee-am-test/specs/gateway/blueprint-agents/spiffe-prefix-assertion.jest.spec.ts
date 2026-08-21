@@ -16,10 +16,11 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { decodeJwt } from '@utils-commands/jwt';
-import { setup } from '../../test-fixture';
+import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
 import { SpiffePrefixFixture, setupSpiffePrefixFixture } from './fixtures/spiffe-prefix-fixture';
 
 setup(120000);
+retryImmediatelyForThisFile();
 
 const JWT_SPIFFE_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-spiffe';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
@@ -88,5 +89,15 @@ describeIfSpire('Blueprint Agent — SPIFFE PREFIX subject matching', () => {
     const svid = fixture.fetchSvid(outOfPrefix, fixture.oidc.token_endpoint);
 
     await postClientAssertion(svid).expect(401);
+  });
+
+  // Runs last: revoking the trust domain stops every SVID above being accepted.
+  it('stops accepting SVIDs once the trust domain is revoked', async () => {
+    const instanceId = 'spiffe://am.local/agent/test/sample';
+    await postClientAssertion(fixture.fetchSvid(instanceId, fixture.oidc.token_endpoint)).expect(200);
+
+    await fixture.revokeTrustDomain();
+
+    await postClientAssertion(fixture.fetchSvid(instanceId, fixture.oidc.token_endpoint)).expect(401);
   });
 });

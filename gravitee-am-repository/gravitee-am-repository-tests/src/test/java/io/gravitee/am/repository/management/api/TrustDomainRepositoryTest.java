@@ -15,18 +15,21 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.TrustDomainKind;
+import io.gravitee.am.model.oidc.TrustDomainTokenExchangeSettings;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -268,5 +271,108 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         findObserver.assertComplete();
         findObserver.assertNoValues();
         findObserver.assertNoErrors();
+    }
+
+    private TrustDomain buildTokenExchangeTrustDomain(String referenceId, String issuer) {
+        TrustDomain td = buildTrustDomain(referenceId, TrustDomainKind.TOKEN_EXCHANGE, "issuer.example");
+        td.setAllowedAlgorithms(null);
+        UserBindingCriterion criterion = new UserBindingCriterion();
+        criterion.setAttribute("emails.value");
+        criterion.setExpression("{#token['email']}");
+        td.setTokenExchange(TrustDomainTokenExchangeSettings.builder()
+                .issuer(issuer)
+                .scopeMappings(Map.of("read", "domain:read"))
+                .userBindingEnabled(true)
+                .userBindingCriteria(List.of(criterion))
+                .build());
+        return td;
+    }
+
+    @Test
+    public void shouldRoundTripTokenExchangeSettings() {
+        String referenceId = randomUUID().toString();
+        var created = repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
+
+        var observer = repository.findById(created.getId()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(found -> found.getKind() == TrustDomainKind.TOKEN_EXCHANGE);
+        observer.assertValue(found -> "https://issuer.example/realm".equals(found.getTokenExchange().getIssuer()));
+        observer.assertValue(found -> Map.of("read", "domain:read").equals(found.getTokenExchange().getScopeMappings()));
+        observer.assertValue(found -> found.getTokenExchange().isUserBindingEnabled());
+        observer.assertValue(found -> found.getTokenExchange().getUserBindingCriteria().size() == 1);
+        observer.assertValue(found -> "emails.value".equals(found.getTokenExchange().getUserBindingCriteria().get(0).getAttribute()));
+        observer.assertValue(found -> "{#token['email']}".equals(found.getTokenExchange().getUserBindingCriteria().get(0).getExpression()));
+    }
+
+    @Test
+    public void shouldFindByIssuer() {
+        String referenceId = randomUUID().toString();
+        var created = repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
+
+        var observer = repository.findByIssuer(DOMAIN, referenceId, "https://issuer.example/realm").test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(found -> found.getId().equals(created.getId()));
+    }
+
+    @Test
+    public void shouldNotFindByIssuer_whenReferenceDiffers() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
+
+        var observer = repository.findByIssuer(DOMAIN, randomUUID().toString(), "https://issuer.example/realm").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldRejectDuplicateIssuerWithinReference() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
+
+        TrustDomain duplicate = buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm");
+        duplicate.setName("other.example");
+        var observer = repository.create(duplicate).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(Throwable.class);
+
+        var stored = repository.findByReference(DOMAIN, referenceId).toList().test();
+        stored.awaitDone(10, TimeUnit.SECONDS);
+        stored.assertValue(list -> list.size() == 1);
+    }
+
+    @Test
+    public void shouldAllowManySpiffeTrustDomainsWithoutIssuer() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "first.example")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "second.example")).blockingGet();
+
+        var stored = repository.findByReference(DOMAIN, referenceId).toList().test();
+        stored.awaitDone(10, TimeUnit.SECONDS);
+        stored.assertNoErrors();
+        stored.assertValue(list -> list.size() == 2);
+    }
+
+    @Test
+    public void shouldUpdateIssuer() {
+        String referenceId = randomUUID().toString();
+        var created = repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
+
+        TrustDomain toUpdate = new TrustDomain(created);
+        toUpdate.getTokenExchange().setIssuer("https://issuer.example/realm-v2");
+        toUpdate.setUpdatedAt(new Date());
+        repository.update(toUpdate).blockingGet();
+
+        var observer = repository.findByIssuer(DOMAIN, referenceId, "https://issuer.example/realm-v2").test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(found -> found.getId().equals(created.getId()));
+
+        var stale = repository.findByIssuer(DOMAIN, referenceId, "https://issuer.example/realm").test();
+        stale.awaitDone(5, TimeUnit.SECONDS);
+        stale.assertNoValues();
     }
 }

@@ -67,6 +67,17 @@ public class JdbcTrustDomain {
     @Column("allowed_algorithms")
     private String allowedAlgorithms;
 
+    private String issuer;
+
+    @Column("scope_mappings")
+    private String scopeMappings;
+
+    @Column("user_binding_enabled")
+    private Boolean userBindingEnabled;
+
+    @Column("user_binding_criteria")
+    private String userBindingCriteria;
+
     @Column("created_at")
     private LocalDateTime createdAt;
 
@@ -175,5 +186,37 @@ public class JdbcTrustDomain {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getIssuer() {
+        return issuer;
+    }
+
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+
+    public String getScopeMappings() {
+        return scopeMappings;
+    }
+
+    public void setScopeMappings(String scopeMappings) {
+        this.scopeMappings = scopeMappings;
+    }
+
+    public Boolean getUserBindingEnabled() {
+        return userBindingEnabled;
+    }
+
+    public void setUserBindingEnabled(Boolean userBindingEnabled) {
+        this.userBindingEnabled = userBindingEnabled;
+    }
+
+    public String getUserBindingCriteria() {
+        return userBindingCriteria;
+    }
+
+    public void setUserBindingCriteria(String userBindingCriteria) {
+        this.userBindingCriteria = userBindingCriteria;
     }
 }

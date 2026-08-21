@@ -242,6 +242,7 @@ export * from './TokenExchangeOAuthSettings';
 export * from './TokenExchangeSettings';
 export * from './TrustDomain';
 export * from './TrustDomainKeyMaterial';
+export * from './TrustDomainTokenExchangeSettings';
 export * from './TrustedIssuer';
 export * from './UMASettings';
 export * from './UpdateAuthenticationDeviceNotifier';

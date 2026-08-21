@@ -70,6 +70,8 @@ public class TrustDomain {
      */
     private List<String> allowedAlgorithms;
 
+    private TrustDomainTokenExchangeSettings tokenExchange;
+
     @Schema(type = "java.lang.Long")
     private Date createdAt;
 
@@ -86,6 +88,7 @@ public class TrustDomain {
         this.keyMaterial = other.keyMaterial != null ? new TrustDomainKeyMaterial(other.keyMaterial) : null;
         this.refreshIntervalSeconds = other.refreshIntervalSeconds;
         this.allowedAlgorithms = other.allowedAlgorithms;
+        this.tokenExchange = other.tokenExchange != null ? new TrustDomainTokenExchangeSettings(other.tokenExchange) : null;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
