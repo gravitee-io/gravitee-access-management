@@ -86,6 +86,12 @@ public class IdentityProvider implements Managed {
      */
     private ManagedBy managedBy;
 
+    /**
+     * Set when the identity provider is created while the platform owns the storage location of
+     * identity providers that reuse the system cluster. Existing providers keep their own settings.
+     */
+    private boolean systemClusterRestricted;
+
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;
         this.automationKey = other.automationKey;
@@ -105,6 +111,7 @@ public class IdentityProvider implements Managed {
         this.passwordPolicy = other.passwordPolicy;
         this.dataPlaneId = other.dataPlaneId;
         this.managedBy = other.managedBy;
+        this.systemClusterRestricted = other.systemClusterRestricted;
     }
 
     @Override

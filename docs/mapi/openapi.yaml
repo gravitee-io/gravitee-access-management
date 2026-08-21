@@ -11576,7 +11576,8 @@ paths:
           content:
             application/json: {}
           description: default response
-      summary: Get the installation type of this instance
+      summary: Get the installation type of this instance and the storage rules it
+        applies to identity providers
       tags:
       - platform
   /platform/configuration/spel/grammar:
@@ -14823,6 +14824,8 @@ components:
               type: string
         system:
           type: boolean
+        systemClusterRestricted:
+          type: boolean
         type:
           type: string
         updatedAt:
@@ -15469,8 +15472,6 @@ components:
             type: string
         external:
           type: boolean
-        id:
-          type: string
         name:
           type: string
         type:

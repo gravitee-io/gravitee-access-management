@@ -30,6 +30,7 @@ import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -47,6 +48,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -54,6 +56,7 @@ import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -67,6 +70,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -82,9 +86,10 @@ public class IdentityProviderServiceTest {
     private final DatasourceValidator datasourceValidator = mock();
     private PluginConfigurationValidationService validationService = mock();
     private final PluginLicenseGate pluginLicenseGate = mock();
+    private final SystemClusterIdpPolicy systemClusterIdpPolicy = mock();
 
     private final IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator, pluginLicenseGate
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator, pluginLicenseGate, systemClusterIdpPolicy
     );
 
     @Before
@@ -208,6 +213,42 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldApplySystemClusterPolicyOnCreate() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        // The repository converts the entity when its Single is assembled, so the policy must have run
+        // before create() is even invoked, not merely somewhere in the chain.
+        InOrder inOrder = inOrder(systemClusterIdpPolicy, identityProviderRepository);
+        inOrder.verify(systemClusterIdpPolicy).applyOnCreate(any(IdentityProvider.class));
+        inOrder.verify(identityProviderRepository).create(any(IdentityProvider.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_whenSystemClusterPolicyRejects() {
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        doThrow(new InvalidParameterException("Identity provider storage settings cannot be changed"))
+                .when(systemClusterIdpPolicy).applyOnUpdate(any(IdentityProvider.class), any(IdentityProvider.class));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+        verify(identityProviderRepository, never()).update(any(IdentityProvider.class));
+    }
+
+    @Test
     public void shouldNotCreate_whenLicenseFeatureMissing() {
         NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
         when(pluginLicenseGate.check(any(), any(), any()))
@@ -238,6 +279,67 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldCreate_ignoreIdFromRequestBody() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setId("idp-belonging-to-someone-else");
+        newIdentityProvider.setType("inline-am-idp");
+        newIdentityProvider.setName("my-idp");
+        newIdentityProvider.setConfiguration("{}");
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        Assert.assertNotEquals("idp-belonging-to-someone-else", captor.getValue().getId());
+    }
+
+    @Test
+    public void shouldCreate_ignoreIdFromRequestBody_organizationScope() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setId("idp-belonging-to-someone-else");
+        newIdentityProvider.setType("inline-am-idp");
+        newIdentityProvider.setName("my-idp");
+        newIdentityProvider.setConfiguration("{}");
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(ReferenceType.ORGANIZATION, "org#1", newIdentityProvider, null, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        Assert.assertNotEquals("idp-belonging-to-someone-else", captor.getValue().getId());
+    }
+
+    @Test
+    public void shouldCreateSystemIdp_keepTheSuppliedId() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setId("default-idp-domain-1");
+        newIdentityProvider.setType("mongo-am-idp");
+        newIdentityProvider.setName("Default idp");
+        newIdentityProvider.setConfiguration("{}");
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null, true).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        Assert.assertEquals("default-idp-domain-1", captor.getValue().getId());
+    }
+
+    private ArgumentCaptor<IdentityProvider> mockSuccessfulCreate() {
+        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        return ArgumentCaptor.forClass(IdentityProvider.class);
+    }
+
+    @Test
     public void shouldNotUpdate_whenLicenseFeatureMissing() {
         UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
         IdentityProvider existing = new IdentityProvider();
@@ -257,16 +359,14 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldNotCreate_WhenDatasourceIsInvalid() {
         NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
-        IdentityProvider idp = new IdentityProvider();
-        idp.setReferenceType(ReferenceType.DOMAIN);
-        idp.setReferenceId("domain#1");
-        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+        // create() is now behind Single.defer, so a failed validation never reaches the repository.
+        verify(identityProviderRepository, never()).create(any(IdentityProvider.class));
     }
 
     @Test

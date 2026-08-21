@@ -235,3 +235,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_13_0/4.13.0-dataplanes-table.yml
   - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-organization-users-username-unique-per-reference.yml
+  - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-identities-add-system-cluster-restricted.yml

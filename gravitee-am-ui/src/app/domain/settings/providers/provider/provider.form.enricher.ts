@@ -18,6 +18,22 @@ const OIDC_JSON_FORM = {
   version: '05-2024',
 };
 
+const MONGO_IDP_TYPE = 'mongo-am-idp';
+
+/**
+ * Storage fields the platform owns once an identity provider reuses the system cluster.
+ */
+const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
+
+/**
+ * The system cluster checkbox needs `disabled` rather than `readonly`: the form library binds the
+ * checkbox to a form control, and that branch of the widget honours only the control's own disabled
+ * state, which the library takes from this option.
+ */
+const PINNED_STORAGE_TOGGLE = 'useSystemCluster';
+
+const CREATION_HINT = 'The platform sets this value when "use system cluster" is selected.';
+
 const LDAP_JSON_FORM = {
   id: 'urn:jsonschema:com:graviteesource:am:identityprovider:ldap:LdapIdentityProviderConfiguration',
   version: '07-2024',
@@ -36,6 +52,60 @@ export function enrichFormWithCerts(schema: FormSchema, certs: Certificate[]): F
   return schema;
 }
 
+/**
+ * Locks the storage settings of a mongo identity provider when the platform owns where it stores its
+ * users. Edit screen only: `restricted` is the provider's own flag.
+ */
+export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
+  if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties) {
+    return schema;
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  PINNED_STORAGE_FIELDS.filter((field) => updatedSchema.properties[field]).forEach((field) => {
+    updatedSchema.properties[field] = { ...updatedSchema.properties[field], readonly: true };
+  });
+  if (updatedSchema.properties[PINNED_STORAGE_TOGGLE]) {
+    updatedSchema.properties[PINNED_STORAGE_TOGGLE] = { ...updatedSchema.properties[PINNED_STORAGE_TOGGLE], disabled: true };
+  }
+  return updatedSchema;
+}
+
+/**
+ * Tells the administrator which storage fields the platform will overwrite on a new mongo identity
+ * provider. The creation screen keeps them editable: the plugin schema makes `usersCollection`
+ * mandatory, and a provider that does not reuse the system cluster still needs both values.
+ */
+export function enrichFormWithSystemClusterCreationHints(
+  schema: FormSchema,
+  providerType: string,
+  rules: { pinDatabase: boolean; prefixUsersCollection: boolean },
+): FormSchema {
+  if (providerType !== MONGO_IDP_TYPE || !schema?.properties || (!rules?.pinDatabase && !rules?.prefixUsersCollection)) {
+    return schema;
+  }
+
+  const hinted = [];
+  if (rules.pinDatabase) {
+    hinted.push('database');
+  }
+  if (rules.prefixUsersCollection) {
+    hinted.push('usersCollection');
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  hinted
+    .filter((field) => updatedSchema.properties[field])
+    .forEach((field) => {
+      const property = updatedSchema.properties[field];
+      updatedSchema.properties[field] = {
+        ...property,
+        description: property.description ? `${property.description} ${CREATION_HINT}` : CREATION_HINT,
+      };
+    });
+  return updatedSchema;
+}
+
 function supportsMTls(schema: FormSchema): boolean {
   return (
     (schema.id === OIDC_JSON_FORM.id && schema?.version == OIDC_JSON_FORM.version) ||
@@ -52,6 +122,8 @@ interface FormSchema {
       enumNames: string[];
       readonly: boolean;
     };
+    // Other plugin-specific properties, e.g. the mongo storage fields pinned below.
+    [field: string]: any;
   };
 }
 

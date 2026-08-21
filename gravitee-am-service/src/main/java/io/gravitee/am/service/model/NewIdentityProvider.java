@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,11 @@ import java.util.List;
 @Setter
 public class NewIdentityProvider {
 
+    /**
+     * Set by the internal default-provider path only. The id becomes the users collection name, so a
+     * request must not choose it.
+     */
+    @JsonIgnore
     private String id;
 
     @NotNull
