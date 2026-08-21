@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.model.TrustedIssuer;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * Resolves key material for trusted external issuers and verifies JWTs against it.
@@ -30,9 +31,10 @@ public interface TrustedIssuerResolver {
      *
      * @param rawToken the raw JWT string
      * @param trustedIssuer the trusted issuer configuration
-     * @return the verified JWT claims set
-     * @throws SecurityException if JWT signature verification or claims validation fails
-     * @throws IllegalArgumentException if the issuer configuration is invalid
+     * @return the verified JWT claims set; the returned Single fails with a SecurityException when
+     *         the token cannot be verified against the issuer's keys, and with an unchecked
+     *         exception when the issuer's key material is unusable or its JWKS URL is refused by
+     *         the security domain's retrieval policy
      */
-    JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer);
+    Single<JWTClaimsSet> resolve(String rawToken, TrustedIssuer trustedIssuer);
 }

@@ -17,10 +17,16 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.jose.RSAKey;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
+import io.gravitee.am.model.oidc.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -53,6 +59,28 @@ public class TrustDomainServiceImplTest {
 
     private static final String DOMAIN_ID = "domain-1";
 
+    /** Self-signed throwaway certificate; only its parseability matters here. */
+    private static final String PEM_CERTIFICATE = """
+            -----BEGIN CERTIFICATE-----
+            MIIDGzCCAgOgAwIBAgIUTjn3isOFd6UKhH07F2M9E0+1naMwDQYJKoZIhvcNAQEL
+            BQAwHDEaMBgGA1UEAwwRdHJ1c3QtZG9tYWluLXRlc3QwIBcNMjYwODE5MDk0NTU3
+            WhgPMjEyNjA3MjYwOTQ1NTdaMBwxGjAYBgNVBAMMEXRydXN0LWRvbWFpbi10ZXN0
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1R3nx/2UCXBoJKsq2K3Z
+            POGsH8Djxj2nnSZ081MVRQL3YgvrSmgzmRSwr6sYx9oJ8Kn32IINUi/aLiwzxlFL
+            ACK3D/vjWmjP+kwIep64LCzHdD7PaP0ePgN/0jme1pOWVQgyHVs+0q0w6vepHpKu
+            l9NcAkMPd7Pq0fUTPg9ebW2sGko7EKZvcsE3/nOA7fStycEtmscLr38wZFGIZSIw
+            6QJ8Eww9Rn7CFhTXnE88/LGJ104YQ9taDR7uDQdB42dss2YQ/tWF82LL/PS/9zFW
+            zdlF11dI1Xyo3LTTt584PQkDXp0B+wrT4YoOskTK2aMO1IIkV/iNMUDs6fzbtJvY
+            AQIDAQABo1MwUTAdBgNVHQ4EFgQUmh/tKVGDTOrkfdEJ2J2+ZfA0ufswHwYDVR0j
+            BBgwFoAUmh/tKVGDTOrkfdEJ2J2+ZfA0ufswDwYDVR0TAQH/BAUwAwEB/zANBgkq
+            hkiG9w0BAQsFAAOCAQEAn84I8ZiCavT+RBk4f0eHd5pnT9Scj0zcEElwgDw+8nNM
+            eyTSuPdngL9pQCSBbZbo7ZNCe0WFOf2W/SLIzRx6E3+z1ffAmLr9/LTC1+UNuh1n
+            feEljw97Q0sJKd/EyyUg+ZwUwQ5yiTT8hAQdai1kWhRLbalI2cYYJ+1HlXD73eKM
+            9WrINYHmLrXclebEtB3SPTTeGtMZ/ajKlcBV1fu/+OoN5e09hvvEEJZ48aNYZrTt
+            2An+LQABjo4LNsjP1prK4PtQl1/PI/jHUiRkHfWZx3y2Rakw5bu+bWMMn3vL4Dsk
+            rXiZ9rmdTvbQ38TVI3+G5aBLVP9DS+9cXdHfSlyVPg==
+            -----END CERTIFICATE-----""";
+
     @InjectMocks
     private TrustDomainServiceImpl service = new TrustDomainServiceImpl();
 
@@ -67,6 +95,7 @@ public class TrustDomainServiceImplTest {
 
     private Domain domain;
     private SpiffeDomainSettings spiffeSettings;
+    private KeyRetrievalSettings keyRetrievalSettings;
 
     @Before
     public void setUp() {
@@ -81,13 +110,15 @@ public class TrustDomainServiceImplTest {
         spiffeSettings = new SpiffeDomainSettings();
         spiffeSettings.setEnabled(true);
         OIDCSettings oidc = new OIDCSettings();
+        keyRetrievalSettings = new KeyRetrievalSettings();
         oidc.setWorkloadIdentitySettings(spiffeSettings);
+        oidc.setKeyRetrievalSettings(keyRetrievalSettings);
         domain.setOidc(oidc);
 
         // create() builds the post-validate chain eagerly via andThen(...); the repository
         // call inside that chain therefore runs even on validation-failure paths. Default
         // to an empty result so the call doesn't NPE before validate's error propagates.
-        when(repository.findByName(any(), any(), any())).thenReturn(Maybe.empty());
+        when(repository.findByName(any(), any(), any(), any())).thenReturn(Maybe.empty());
     }
 
     @Test
@@ -120,39 +151,38 @@ public class TrustDomainServiceImplTest {
     }
 
     @Test
-    public void create_rejects_whenBundleSourceMissing() {
+    public void create_rejects_whenKeyMaterialMissing() {
         NewTrustDomain input = validInput();
-        input.setBundleSource(null);
+        input.setKeyMaterial(null);
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
-                .assertError(err -> err.getMessage().contains("bundleSource is required"));
+                .assertError(err -> err.getMessage().contains("keyMaterial.source is required"));
     }
 
     @Test
-    public void create_rejects_whenBundleSourceNotJwksUrl() {
+    public void create_rejects_whenKeyMaterialSourceMissing() {
         NewTrustDomain input = validInput();
-        input.setBundleSource(SpiffeBundleSource.STATIC_JWKS);
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder().jwksUrl("https://example.com/keys").build());
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
-                .assertError(err -> err.getMessage().contains("Only bundleSource=JWKS_URL"));
+                .assertError(err -> err.getMessage().contains("keyMaterial.source is required"));
     }
 
     @Test
     public void create_rejects_whenJwksUrlMissing() {
         NewTrustDomain input = validInput();
-        input.setJwksUrl(null);
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder().source(KeyMaterialSource.JWKS_URL).build());
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
-                .assertError(err -> err.getMessage().contains("jwksUrl is required"));
+                .assertError(err -> err.getMessage().contains("keyMaterial.jwksUrl is required"));
     }
 
     @Test
     public void create_rejects_whenJwksUrlBlank() {
-        NewTrustDomain input = validInput();
-        input.setJwksUrl("   ");
+        NewTrustDomain input = jwksUrlInput("   ");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class);
@@ -160,8 +190,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenJwksUrlResolvesToPrivateAddress() {
-        NewTrustDomain input = validInput();
-        input.setJwksUrl("https://10.0.0.1/keys");
+        NewTrustDomain input = jwksUrlInput("https://10.0.0.1/keys");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -170,9 +199,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_allowsPrivateAddress_whenPolicyPermits() {
-        spiffeSettings.setAllowPrivateIpAddress(true);
-        NewTrustDomain input = validInput();
-        input.setJwksUrl("https://10.0.0.1/keys");
+        keyRetrievalSettings.setAllowPrivateIpAddress(true);
+        NewTrustDomain input = jwksUrlInput("https://10.0.0.1/keys");
         stubRepoForCreate();
 
         service.create(domain, input, null).test()
@@ -181,12 +209,170 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejectsHttp_whenPolicyDisallows() {
-        NewTrustDomain input = validInput();
-        input.setJwksUrl("http://example.org/keys");
+        NewTrustDomain input = jwksUrlInput("http://example.org/keys");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
                 .assertError(err -> err.getMessage().contains("http"));
+    }
+
+    @Test
+    public void shouldDefaultToSpiffeKind_whenKindNotProvided() {
+        NewTrustDomain input = validInput();
+        input.setKind(null);
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKind() == TrustDomainKind.SPIFFE);
+    }
+
+    @Test
+    public void shouldCreateTokenExchangeKind_whenSpiffeDisabled() {
+        spiffeSettings.setEnabled(false);
+        NewTrustDomain input = validInput();
+        input.setKind(TrustDomainKind.TOKEN_EXCHANGE);
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKind() == TrustDomainKind.TOKEN_EXCHANGE);
+    }
+
+    @Test
+    public void shouldScopeDuplicateNameCheckToKind() {
+        NewTrustDomain input = validInput();
+        input.setKind(TrustDomainKind.TOKEN_EXCHANGE);
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test().assertNoErrors();
+
+        verify(repository).findByName(ReferenceType.DOMAIN, DOMAIN_ID, TrustDomainKind.TOKEN_EXCHANGE, "example.org");
+    }
+
+    @Test
+    public void shouldAcceptPemKeyMaterial() {
+        NewTrustDomain input = validInput();
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.PEM)
+                .certificate(PEM_CERTIFICATE)
+                .build());
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKeyMaterial().getSource() == KeyMaterialSource.PEM);
+    }
+
+    @Test
+    public void shouldRejectUnparseablePemKeyMaterial() {
+        NewTrustDomain input = validInput();
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.PEM)
+                .certificate("not-a-certificate")
+                .build());
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("not a valid PEM-encoded X.509 certificate"));
+    }
+
+    @Test
+    public void shouldRejectPemKeyMaterialWithoutCertificate() {
+        NewTrustDomain input = validInput();
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder().source(KeyMaterialSource.PEM).build());
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("keyMaterial.certificate is required"));
+    }
+
+    @Test
+    public void shouldAcceptInlineJwkSetKeyMaterial() {
+        NewTrustDomain input = validInput();
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWK_SET)
+                .jwkSet(inlineJwkSet())
+                .build());
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKeyMaterial().getJwkSet().getKeys().size() == 1);
+    }
+
+    @Test
+    public void shouldRejectEmptyInlineJwkSet() {
+        NewTrustDomain input = validInput();
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWK_SET)
+                .jwkSet(new JWKSet())
+                .build());
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("keyMaterial.jwkSet must contain at least one key"));
+    }
+
+    @Test
+    public void shouldAcceptDeprecatedBundleSourceInput() {
+        NewTrustDomain input = new NewTrustDomain();
+        input.setName("example.org");
+        input.setBundleSource(SpiffeBundleSource.JWKS_URL);
+        input.setJwksUrl("https://example.com/keys");
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKeyMaterial().getSource() == KeyMaterialSource.JWKS_URL)
+                .assertValue(created -> "https://example.com/keys".equals(created.getKeyMaterial().getJwksUrl()));
+    }
+
+    @Test
+    public void shouldIgnoreDeprecatedBundleSourceInput_whenKeyMaterialSupplied() {
+        NewTrustDomain input = validInput();
+        input.setBundleSource(SpiffeBundleSource.JWKS_URL);
+        input.setJwksUrl("https://deprecated.example.com/keys");
+        stubRepoForCreate();
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> "https://example.com/keys".equals(created.getKeyMaterial().getJwksUrl()));
+    }
+
+    @Test
+    public void shouldUpdateJwksUrlFromDeprecatedInputWithoutBundleSource() {
+        stubExistingTrustDomainForUpdate();
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setJwksUrl("https://example.com/v2/keys");
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> saved.getKeyMaterial().getSource() == KeyMaterialSource.JWKS_URL)
+                .assertValue(saved -> "https://example.com/v2/keys".equals(saved.getKeyMaterial().getJwksUrl()));
+    }
+
+    @Test
+    public void shouldLeaveKeyMaterialUntouched_whenUpdateCarriesNone() {
+        stubExistingTrustDomainForUpdate();
+
+        service.update(domain, "td-1", new UpdateTrustDomain(), null).test()
+                .assertNoErrors()
+                .assertValue(saved -> "https://example.com/keys".equals(saved.getKeyMaterial().getJwksUrl()));
+    }
+
+    @Test
+    public void shouldUpdateKeyMaterialFromDeprecatedInput() {
+        stubExistingTrustDomainForUpdate();
+
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setBundleSource(SpiffeBundleSource.JWKS_URL);
+        input.setJwksUrl("https://example.com/v2/keys");
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> "https://example.com/v2/keys".equals(saved.getKeyMaterial().getJwksUrl()));
     }
 
     @Test
@@ -265,12 +451,44 @@ public class TrustDomainServiceImplTest {
     }
 
     private NewTrustDomain validInput() {
+        return jwksUrlInput("https://example.com/keys");
+    }
+
+    private NewTrustDomain jwksUrlInput(String jwksUrl) {
         NewTrustDomain input = new NewTrustDomain();
         input.setName("example.org");
-        input.setBundleSource(SpiffeBundleSource.JWKS_URL);
-        input.setJwksUrl("https://example.com/keys");
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl(jwksUrl)
+                .build());
         input.setRefreshIntervalSeconds(60);
         return input;
+    }
+
+    private void stubExistingTrustDomainForUpdate() {
+        TrustDomain existing = new TrustDomain();
+        existing.setId("td-1");
+        existing.setReferenceType(ReferenceType.DOMAIN);
+        existing.setReferenceId(DOMAIN_ID);
+        existing.setName("example.org");
+        existing.setRefreshIntervalSeconds(60);
+        existing.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl("https://example.com/keys")
+                .build());
+        when(repository.findById("td-1")).thenReturn(Maybe.just(existing));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+    }
+
+    private static JWKSet inlineJwkSet() {
+        RSAKey key = new RSAKey();
+        key.setKid("key-1");
+        key.setE("AQAB");
+        key.setN("0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86z");
+        JWKSet jwkSet = new JWKSet();
+        jwkSet.setKeys(List.of(key));
+        return jwkSet;
     }
 
     @SuppressWarnings("unchecked")
@@ -299,7 +517,7 @@ public class TrustDomainServiceImplTest {
         TrustDomain existing = new TrustDomain();
         existing.setId("existing-1");
         existing.setName("example.org");
-        when(repository.findByName(any(), any(), any())).thenReturn(Maybe.just(existing));
+        when(repository.findByName(any(), any(), any(), any())).thenReturn(Maybe.just(existing));
 
         service.create(domain, validInput(), null).test().assertError(TrustDomainAlreadyExistsException.class);
 

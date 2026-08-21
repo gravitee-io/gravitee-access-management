@@ -20,8 +20,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcTrustDomain;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringTrustDomainRepository;
@@ -41,7 +44,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements TrustDomainRepository {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {};
 
     @Autowired
@@ -88,9 +91,9 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
-        LOGGER.debug("findByName({}, {}, {})", referenceType, referenceId, name);
-        return repository.findByName(referenceType.name(), referenceId, name)
+    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, TrustDomainKind kind, String name) {
+        LOGGER.debug("findByName({}, {}, {}, {})", referenceType, referenceId, kind, name);
+        return repository.findByName(referenceType.name(), referenceId, kind.name(), name)
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }
@@ -103,10 +106,10 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         td.setId(entity.getId());
         td.setReferenceId(entity.getReferenceId());
         td.setReferenceType(entity.getReferenceType() != null ? ReferenceType.valueOf(entity.getReferenceType()) : null);
+        td.setKind(TrustDomainKind.fromStored(entity.getKind()));
         td.setName(entity.getName());
         td.setDescription(entity.getDescription());
-        td.setBundleSource(entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null);
-        td.setJwksUrl(entity.getJwksUrl());
+        td.setKeyMaterial(readKeyMaterial(entity));
         td.setRefreshIntervalSeconds(entity.getRefreshIntervalSeconds());
         td.setAllowedAlgorithms(parseAlgorithms(entity.getAllowedAlgorithms()));
         td.setCreatedAt(toDate(entity.getCreatedAt()));
@@ -122,15 +125,43 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         entity.setId(td.getId());
         entity.setReferenceId(td.getReferenceId());
         entity.setReferenceType(td.getReferenceType() != null ? td.getReferenceType().name() : null);
+        entity.setKind(td.getKind() != null ? td.getKind().name() : TrustDomainKind.SPIFFE.name());
         entity.setName(td.getName());
         entity.setDescription(td.getDescription());
-        entity.setBundleSource(td.getBundleSource() != null ? td.getBundleSource().name() : null);
-        entity.setJwksUrl(td.getJwksUrl());
+        entity.setKeyMaterial(serializeKeyMaterial(td.getKeyMaterial()));
         entity.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
         entity.setAllowedAlgorithms(serializeAlgorithms(td.getAllowedAlgorithms()));
         entity.setCreatedAt(toLocalDateTime(td.getCreatedAt()));
         entity.setUpdatedAt(toLocalDateTime(td.getUpdatedAt()));
         return entity;
+    }
+
+    /**
+     * Reads the shared key-material shape, falling back to the legacy bundle-source columns for
+     * trust domains stored before it existed.
+     */
+    static TrustDomainKeyMaterial readKeyMaterial(JdbcTrustDomain entity) {
+        if (entity.getKeyMaterial() != null && !entity.getKeyMaterial().isBlank()) {
+            try {
+                return MAPPER.readValue(entity.getKeyMaterial(), TrustDomainKeyMaterial.class);
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException("Failed to parse trust domain key material", e);
+            }
+        }
+        return TrustDomainKeyMaterial.fromBundleSource(
+                entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null,
+                entity.getJwksUrl());
+    }
+
+    private static String serializeKeyMaterial(TrustDomainKeyMaterial keyMaterial) {
+        if (keyMaterial == null) {
+            return null;
+        }
+        try {
+            return MAPPER.writeValueAsString(keyMaterial);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize trust domain key material", e);
+        }
     }
 
     private static String serializeAlgorithms(List<String> algorithms) {

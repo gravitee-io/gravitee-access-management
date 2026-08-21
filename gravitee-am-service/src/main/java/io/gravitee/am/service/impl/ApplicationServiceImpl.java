@@ -32,6 +32,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -1505,7 +1506,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         return trustDomainRepository.findByName(ReferenceType.DOMAIN,
-                        application.getDomain(), spiffe.getTrustDomain())
+                        application.getDomain(), TrustDomainKind.SPIFFE, spiffe.getTrustDomain())
                 .switchIfEmpty(Single.error(new InvalidClientMetadataException(
                         "spiffe.trustDomain '" + spiffe.getTrustDomain() + "' is not registered for this domain")))
                 .map(td -> application);

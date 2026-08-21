@@ -17,7 +17,9 @@ package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import io.gravitee.am.model.oidc.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -25,6 +27,7 @@ import org.junit.runners.JUnit4;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -48,6 +51,61 @@ public class PatchOIDCSettingsTest {
         assertNotNull(result);
         assertNotNull(result.getClientRegistrationSettings());
         assertFalse("should be disabled by default", result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+    }
+
+    @Test
+    public void shouldPatchKeyRetrievalSettings() {
+        PatchKeyRetrievalSettings patchKeyRetrieval = new PatchKeyRetrievalSettings();
+        patchKeyRetrieval.setFetchTimeoutMs(Optional.of(1234));
+        patchKeyRetrieval.setAllowPrivateIpAddress(Optional.of(true));
+        PatchOIDCSettings patch = new PatchOIDCSettings();
+        patch.setKeyRetrievalSettings(Optional.of(patchKeyRetrieval));
+
+        OIDCSettings result = patch.patch(OIDCSettings.defaultSettings());
+
+        assertEquals(1234, result.getKeyRetrievalSettings().getFetchTimeoutMs());
+        assertTrue(result.getKeyRetrievalSettings().isAllowPrivateIpAddress());
+        assertEquals(KeyRetrievalSettings.DEFAULT_CACHE_TTL_SECONDS, result.getKeyRetrievalSettings().getCacheTtlSeconds());
+    }
+
+    @Test
+    public void shouldRelocateRetrievalLimitsWrittenAgainstTheSpiffeBlock() {
+        PatchSpiffeDomainSettings patchSpiffe = new PatchSpiffeDomainSettings();
+        patchSpiffe.setEnabled(Optional.of(true));
+        patchSpiffe.setFetchTimeoutMs(Optional.of(1234));
+        PatchOIDCSettings patch = new PatchOIDCSettings();
+        patch.setWorkloadIdentitySettings(Optional.of(patchSpiffe));
+
+        OIDCSettings result = patch.patch(OIDCSettings.defaultSettings());
+
+        assertEquals(1234, result.getKeyRetrievalSettings().getFetchTimeoutMs());
+        assertTrue(result.getWorkloadIdentitySettings().isEnabled());
+        assertNull(result.getWorkloadIdentitySettings().getFetchTimeoutMs());
+    }
+
+    @Test
+    public void shouldPreferKeyRetrievalSettingsOverTheDeprecatedSpiffeLimits() {
+        PatchSpiffeDomainSettings patchSpiffe = new PatchSpiffeDomainSettings();
+        patchSpiffe.setFetchTimeoutMs(Optional.of(1234));
+        PatchKeyRetrievalSettings patchKeyRetrieval = new PatchKeyRetrievalSettings();
+        patchKeyRetrieval.setFetchTimeoutMs(Optional.of(999));
+        PatchOIDCSettings patch = new PatchOIDCSettings();
+        patch.setWorkloadIdentitySettings(Optional.of(patchSpiffe));
+        patch.setKeyRetrievalSettings(Optional.of(patchKeyRetrieval));
+
+        OIDCSettings result = patch.patch(OIDCSettings.defaultSettings());
+
+        assertEquals(999, result.getKeyRetrievalSettings().getFetchTimeoutMs());
+    }
+
+    @Test
+    public void shouldRejectNonPositiveKeyRetrievalLimit() {
+        PatchKeyRetrievalSettings patchKeyRetrieval = new PatchKeyRetrievalSettings();
+        patchKeyRetrieval.setCacheMaxEntries(Optional.of(0));
+        PatchOIDCSettings patch = new PatchOIDCSettings();
+        patch.setKeyRetrievalSettings(Optional.of(patchKeyRetrieval));
+
+        assertThrows(InvalidParameterException.class, () -> patch.patch(OIDCSettings.defaultSettings()));
     }
 
     @Test

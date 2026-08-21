@@ -130,6 +130,7 @@ models/IdentityProvider.ts
 models/InstallationEntity.ts
 models/JWK.ts
 models/JWKSet.ts
+models/KeyRetrievalSettings.ts
 models/LoginSettings.ts
 models/MFASettings.ts
 models/ManagedBy.ts
@@ -200,6 +201,7 @@ models/PatchDomain.ts
 models/PatchEnrollSettings.ts
 models/PatchEnrollmentSettings.ts
 models/PatchFactorSettings.ts
+models/PatchKeyRetrievalSettings.ts
 models/PatchLoginSettings.ts
 models/PatchMFASettings.ts
 models/PatchOIDCSettings.ts
@@ -254,6 +256,7 @@ models/TokenExchangeClaimMapping.ts
 models/TokenExchangeOAuthSettings.ts
 models/TokenExchangeSettings.ts
 models/TrustDomain.ts
+models/TrustDomainKeyMaterial.ts
 models/TrustedIssuer.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts

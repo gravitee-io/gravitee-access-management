@@ -30,14 +30,17 @@
           </mat-hint>
         </div>
 
-        <div class="gv-form-section" fxLayout="column" *ngIf="isSpiffeEnabled()">
+        <div class="gv-form-section" fxLayout="column">
           <div class="gv-form-section-title">
-            <h5>Bundle fetch (SSRF protection)</h5>
+            <h5>Trusted domain key retrieval (SSRF protection)</h5>
             <mat-divider></mat-divider>
           </div>
+          <mat-hint style="font-size: 75%; margin-bottom: 12px">
+            These limits apply to every trusted domain in this security domain, whether it is used for SPIFFE or for token exchange.
+          </mat-hint>
           <mat-slide-toggle
             (change)="toggleAllowUnsecuredHttpUri($event)"
-            [checked]="domain.oidc.workloadIdentitySettings.allowUnsecuredHttpUri"
+            [checked]="domain.oidc.keyRetrievalSettings.allowUnsecuredHttpUri"
             [disabled]="!editMode"
           >
             Allow unsecured HTTP JWKS URLs
@@ -46,13 +49,13 @@
 
           <mat-slide-toggle
             (change)="toggleAllowPrivateIpAddress($event)"
-            [checked]="domain.oidc.workloadIdentitySettings.allowPrivateIpAddress"
+            [checked]="domain.oidc.keyRetrievalSettings.allowPrivateIpAddress"
             [disabled]="!editMode"
             style="margin-top: 12px"
           >
             Allow JWKS URLs resolving to private IP addresses
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">Enable only when SPIRE/SPIFFE bundle endpoints live on the internal network.</mat-hint>
+          <mat-hint style="font-size: 75%">Enable only when trusted domain key endpoints live on the internal network.</mat-hint>
 
           <mat-form-field appearance="outline" style="margin-top: 16px">
             <mat-icon matPrefix>timer</mat-icon>
@@ -63,7 +66,7 @@
               name="fetchTimeoutMs"
               min="100"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.fetchTimeoutMs"
+              [(ngModel)]="domain.oidc.keyRetrievalSettings.fetchTimeoutMs"
               [disabled]="!editMode"
             />
             <mat-hint>Maximum time to wait when fetching a JWKS endpoint. Default: 5000.</mat-hint>
@@ -78,16 +81,16 @@
               name="maxResponseSizeKb"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.maxResponseSizeKb"
+              [(ngModel)]="domain.oidc.keyRetrievalSettings.maxResponseSizeKb"
               [disabled]="!editMode"
             />
             <mat-hint>Reject JWKS responses larger than this. Default: 32.</mat-hint>
           </mat-form-field>
         </div>
 
-        <div class="gv-form-section" fxLayout="column" *ngIf="isSpiffeEnabled()">
+        <div class="gv-form-section" fxLayout="column">
           <div class="gv-form-section-title">
-            <h5>Bundle cache</h5>
+            <h5>Trusted domain key cache</h5>
             <mat-divider></mat-divider>
           </div>
           <mat-form-field appearance="outline">
@@ -99,10 +102,10 @@
               name="cacheTtlSeconds"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.cacheTtlSeconds"
+              [(ngModel)]="domain.oidc.keyRetrievalSettings.cacheTtlSeconds"
               [disabled]="!editMode"
             />
-            <mat-hint>Default cache lifetime when a Trust Domain does not override the refresh interval. Default: 300.</mat-hint>
+            <mat-hint>Default cache lifetime when a trusted domain does not override the refresh interval. Default: 300.</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-icon matPrefix>storage</mat-icon>
@@ -113,10 +116,10 @@
               name="cacheMaxEntries"
               min="1"
               (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.cacheMaxEntries"
+              [(ngModel)]="domain.oidc.keyRetrievalSettings.cacheMaxEntries"
               [disabled]="!editMode"
             />
-            <mat-hint>Max number of cached JWKS bundles. Default: 50.</mat-hint>
+            <mat-hint>Max number of cached key sets. Default: 50.</mat-hint>
           </mat-form-field>
         </div>
 
@@ -183,8 +186,9 @@
           bundle.
         </p>
         <p>
-          The settings on this page are domain-wide guards (SSRF protection, JWKS fetch limits, validation policy). Per-trust-domain JWKS
-          sources and refresh intervals live under <strong>Workload Identity → Trust Domains</strong>.
+          Key retrieval limits on this page (SSRF protection, JWKS fetch limits, cache) are domain-wide and govern every trusted domain,
+          token exchange included. The JWT-SVID validation policy below is SPIFFE-specific. Per-trust-domain key sources and refresh
+          intervals live under <strong>Workload Identity → Trust Domains</strong>.
         </p>
       </div>
     </div>

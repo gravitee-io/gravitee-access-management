@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.service.spiffe.impl;
+package io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.gravitee.am.gateway.handler.oidc.service.spiffe.TrustBundleService;
+import com.nimbusds.jose.JOSEException;
+import io.gravitee.am.certificate.api.X509CertUtils;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.gravitee.am.model.oidc.SpiffeBundleSource;
-import io.gravitee.am.model.oidc.SpiffeDomainSettings;
+import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
+import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
 import io.gravitee.am.service.utils.PrivateAddressGuard;
 import io.reactivex.rxjava3.core.Maybe;
 
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.CustomLog;
@@ -37,7 +43,7 @@ import lombok.CustomLog;
 /**
  * Caches JWKS bundles per trust domain. Refresh policy:
  * <ul>
- *   <li>Soft refresh interval per trust domain (capped by {@link SpiffeDomainSettings#getCacheTtlSeconds()}).
+ *   <li>Soft refresh interval per trust domain (capped by {@link KeyRetrievalSettings#getCacheTtlSeconds()}).
  *       When an entry is past the soft interval the bundle is re-fetched on the next access.</li>
  *   <li>Eager refresh on {@code kid} miss: fetch a new bundle without evicting the existing one,
  *       so a transient fetch failure can still fall back to the previous bundle.</li>
@@ -46,7 +52,7 @@ import lombok.CustomLog;
  * </ul>
  */
 @CustomLog
-public class TrustBundleServiceImpl implements TrustBundleService {
+public class TrustDomainKeyServiceImpl implements TrustDomainKeyService {
 
 
     /** Hard-TTL multiplier — entries this much past the soft refresh interval are not served stale. */
@@ -55,14 +61,14 @@ public class TrustBundleServiceImpl implements TrustBundleService {
     private static final long HARD_TTL_FLOOR_SECONDS = Duration.ofHours(1).toSeconds();
 
     private final JWKSetFetcher jwkSetFetcher;
-    private final SpiffeDomainSettings settings;
+    private final KeyRetrievalSettings settings;
     private final Cache<String, CachedBundle> cache;
 
-    public TrustBundleServiceImpl(JWKSetFetcher jwkSetFetcher, Domain domain) {
+    public TrustDomainKeyServiceImpl(JWKSetFetcher jwkSetFetcher, Domain domain) {
         this.jwkSetFetcher = jwkSetFetcher;
         this.settings = Optional.ofNullable(domain.getOidc())
-                .map(o -> o.getWorkloadIdentitySettings())
-                .orElseGet(SpiffeDomainSettings::defaultSettings);
+                .map(o -> o.getKeyRetrievalSettings())
+                .orElseGet(KeyRetrievalSettings::defaultSettings);
         long hardTtl = Math.max(
                 (long) settings.getCacheTtlSeconds() * HARD_TTL_MULTIPLIER,
                 HARD_TTL_FLOOR_SECONDS);
@@ -77,6 +83,13 @@ public class TrustBundleServiceImpl implements TrustBundleService {
         if (trustDomain == null) {
             return Maybe.empty();
         }
+        KeyMaterialSource source = sourceOf(trustDomain);
+        if (source == null) {
+            return Maybe.empty();
+        }
+        if (source != KeyMaterialSource.JWKS_URL) {
+            return inlineKeys(trustDomain, source);
+        }
         CachedBundle cached = cache.getIfPresent(trustDomain.getId());
         if (cached != null && !isStale(cached, trustDomain)) {
             return Maybe.just(cached.jwks);
@@ -89,15 +102,65 @@ public class TrustBundleServiceImpl implements TrustBundleService {
         if (trustDomain == null || kid == null || kid.isBlank()) {
             return Maybe.empty();
         }
+        KeyMaterialSource source = sourceOf(trustDomain);
+        if (source == KeyMaterialSource.PEM) {
+            // A PEM certificate holds exactly one key and carries no kid of its own, so matching on
+            // kid would reject a token that key did in fact sign.
+            return getKeys(trustDomain).flatMap(TrustDomainKeyServiceImpl::onlyKey);
+        }
         return getKeys(trustDomain)
                 .flatMap(jwks -> findKid(jwks, kid)
                         .switchIfEmpty(Maybe.defer(() -> {
+                            if (source != KeyMaterialSource.JWKS_URL) {
+                                // inline key material: there is nothing to refresh
+                                return Maybe.empty();
+                            }
                             // kid miss: fetch fresh without evicting first; if the fetch fails we
                             // fall back to the cached bundle, then look up the kid again.
                             CachedBundle existing = cache.getIfPresent(trustDomain.getId());
                             return fetch(trustDomain, existing)
                                     .flatMap(refreshed -> findKid(refreshed, kid));
                         })));
+    }
+
+    private static KeyMaterialSource sourceOf(TrustDomain trustDomain) {
+        return Optional.ofNullable(trustDomain.getKeyMaterial())
+                .map(TrustDomainKeyMaterial::getSource)
+                .orElse(null);
+    }
+
+    private Maybe<JWKSet> inlineKeys(TrustDomain trustDomain, KeyMaterialSource source) {
+        TrustDomainKeyMaterial keyMaterial = trustDomain.getKeyMaterial();
+        return switch (source) {
+            case JWK_SET -> keyMaterial.getJwkSet() != null
+                    ? Maybe.just(keyMaterial.getJwkSet())
+                    : Maybe.empty();
+            case PEM -> parseCertificate(trustDomain, keyMaterial.getCertificate());
+            case JWKS_URL -> Maybe.empty();
+        };
+    }
+
+    private Maybe<JWKSet> parseCertificate(TrustDomain trustDomain, String certificate) {
+        X509Certificate cert = X509CertUtils.parse(certificate);
+        if (cert == null) {
+            return Maybe.error(new IllegalStateException(
+                    "Unable to parse the PEM certificate of trust domain " + trustDomain.getName()));
+        }
+        try {
+            JWKSet jwkSet = new JWKSet();
+            jwkSet.setKeys(List.of(JWKConverter.convert(com.nimbusds.jose.jwk.JWK.parse(cert))));
+            return Maybe.just(jwkSet);
+        } catch (JOSEException e) {
+            return Maybe.error(new IllegalStateException(
+                    "Unable to convert the PEM certificate of trust domain " + trustDomain.getName() + " to a JWK", e));
+        }
+    }
+
+    private static Maybe<JWK> onlyKey(JWKSet jwks) {
+        if (jwks == null || jwks.getKeys() == null || jwks.getKeys().isEmpty()) {
+            return Maybe.empty();
+        }
+        return Maybe.just(jwks.getKeys().get(0));
     }
 
     @Override
@@ -108,7 +171,8 @@ public class TrustBundleServiceImpl implements TrustBundleService {
     }
 
     private boolean isStale(CachedBundle entry, TrustDomain trustDomain) {
-        return entry.fetchedAt.plusSeconds(softTtlSeconds(trustDomain)).isBefore(Instant.now());
+        long softTtl = softTtlSeconds(trustDomain);
+        return softTtl <= 0 || entry.fetchedAt.plusSeconds(softTtl).isBefore(Instant.now());
     }
 
     private long softTtlSeconds(TrustDomain trustDomain) {
@@ -119,22 +183,21 @@ public class TrustBundleServiceImpl implements TrustBundleService {
     }
 
     private Maybe<JWKSet> fetch(TrustDomain trustDomain, CachedBundle existing) {
-        if (trustDomain.getBundleSource() != SpiffeBundleSource.JWKS_URL) {
-            return Maybe.error(new UnsupportedOperationException(
-                    "Bundle source " + trustDomain.getBundleSource() + " is not supported in this release"));
-        }
-        if (trustDomain.getJwksUrl() == null || trustDomain.getJwksUrl().isBlank()) {
+        String jwksUrl = trustDomain.getKeyMaterial().getJwksUrl();
+        if (jwksUrl == null || jwksUrl.isBlank()) {
             return Maybe.empty();
         }
-        // Re-validate the URL against current SPIFFE policy at fetch time.
+        // Re-validate the URL against the current key retrieval policy at fetch time.
         // Validation also runs on create/update, but DNS may rebind to a private
         // address afterwards or the domain policy may have been tightened since.
-        String urlSafetyError = checkUrlSafety(trustDomain.getJwksUrl());
+        String urlSafetyError = checkUrlSafety(jwksUrl);
         if (urlSafetyError != null) {
+            log.warn("SSRF guard refused the key material fetch for {} trust domain {} ({}): {}",
+                    trustDomain.getKind(), trustDomain.getName(), jwksUrl, urlSafetyError);
             return Maybe.error(new SecurityException(
                     "Refused to fetch JWKS for trust domain " + trustDomain.getName() + ": " + urlSafetyError));
         }
-        Maybe<JWKSet> upstream = jwkSetFetcher.getKeys(trustDomain.getJwksUrl())
+        Maybe<JWKSet> upstream = jwkSetFetcher.getKeys(jwksUrl, maxResponseSizeBytes())
                 .map(JWKSetFetcher.JWKSetFetchResponse::jwkSet);
         if (settings.getFetchTimeoutMs() > 0) {
             upstream = upstream.timeout(settings.getFetchTimeoutMs(), TimeUnit.MILLISECONDS);
@@ -151,8 +214,12 @@ public class TrustBundleServiceImpl implements TrustBundleService {
                 });
     }
 
+    private long maxResponseSizeBytes() {
+        return Math.max(0L, settings.getMaxResponseSizeKb()) * 1024L;
+    }
+
     /**
-     * Returns null when the URL passes current SPIFFE policy, or a human-readable reason otherwise.
+     * Returns null when the URL passes the current key retrieval policy, or a human-readable reason otherwise.
      * Mirrors the create/update validation in TrustDomainServiceImpl so that a stored URL whose
      * resolution drifts to a private address — or that violates a tightened domain policy — is
      * refused at fetch time.

@@ -28,6 +28,13 @@
 import { mapValues } from '../runtime';
 import type { JWKSet } from './JWKSet';
 import { JWKSetFromJSON, JWKSetFromJSONTyped, JWKSetToJSON, JWKSetToJSONTyped } from './JWKSet';
+import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
+import {
+  TrustDomainKeyMaterialFromJSON,
+  TrustDomainKeyMaterialFromJSONTyped,
+  TrustDomainKeyMaterialToJSON,
+  TrustDomainKeyMaterialToJSONTyped,
+} from './TrustDomainKeyMaterial';
 
 /**
  *
@@ -42,9 +49,10 @@ export interface TrustDomain {
    */
   allowedAlgorithms?: Array<string>;
   /**
-   *
+   * Use keyMaterial.source instead. Null when the key material is a PEM certificate.
    * @type {string}
    * @memberof TrustDomain
+   * @deprecated
    */
   bundleSource?: TrustDomainBundleSourceEnum;
   /**
@@ -66,11 +74,24 @@ export interface TrustDomain {
    */
   id?: string;
   /**
+   * Use keyMaterial.jwksUrl instead.
+   * @type {string}
+   * @memberof TrustDomain
+   * @deprecated
+   */
+  jwksUrl?: string;
+  /**
+   *
+   * @type {TrustDomainKeyMaterial}
+   * @memberof TrustDomain
+   */
+  keyMaterial?: TrustDomainKeyMaterial;
+  /**
    *
    * @type {string}
    * @memberof TrustDomain
    */
-  jwksUrl?: string;
+  kind?: TrustDomainKindEnum;
   /**
    *
    * @type {string}
@@ -121,6 +142,15 @@ export type TrustDomainBundleSourceEnum = typeof TrustDomainBundleSourceEnum[key
 /**
  * @export
  */
+export const TrustDomainKindEnum = {
+  Spiffe: 'SPIFFE',
+  TokenExchange: 'TOKEN_EXCHANGE',
+} as const;
+export type TrustDomainKindEnum = typeof TrustDomainKindEnum[keyof typeof TrustDomainKindEnum];
+
+/**
+ * @export
+ */
 export const TrustDomainReferenceTypeEnum = {
   Platform: 'PLATFORM',
   Domain: 'DOMAIN',
@@ -153,6 +183,8 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
+    keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
+    kind: json['kind'] == null ? undefined : json['kind'],
     name: json['name'] == null ? undefined : json['name'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
@@ -178,6 +210,8 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     description: value['description'],
     id: value['id'],
     jwksUrl: value['jwksUrl'],
+    keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
+    kind: value['kind'],
     name: value['name'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],

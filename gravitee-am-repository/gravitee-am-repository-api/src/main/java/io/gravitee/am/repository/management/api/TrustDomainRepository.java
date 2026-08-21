@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustDomainKind;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -28,5 +29,9 @@ public interface TrustDomainRepository extends CrudRepository<TrustDomain, Strin
 
     Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
 
-    Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name);
+    /**
+     * Names are unique per kind within a reference, so a SPIFFE and a token-exchange trusted domain
+     * may share a name.
+     */
+    Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, TrustDomainKind kind, String name);
 }

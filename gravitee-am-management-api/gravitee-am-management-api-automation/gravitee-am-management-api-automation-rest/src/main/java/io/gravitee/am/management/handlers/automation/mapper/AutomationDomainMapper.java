@@ -116,6 +116,7 @@ public final class AutomationDomainMapper {
         out.setClientRegistrationSettings(toAutomationClientRegistration(oidc.getClientRegistrationSettings()));
         out.setSecurityProfileSettings(oidc.getSecurityProfileSettings());
         out.setWorkloadIdentitySettings(oidc.getWorkloadIdentitySettings());
+        out.setKeyRetrievalSettings(oidc.getKeyRetrievalSettings());
         out.setRedirectUriStrictMatching(oidc.isRedirectUriStrictMatching());
         out.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         out.setRequestUris(oidc.getRequestUris());
@@ -233,6 +234,7 @@ public final class AutomationDomainMapper {
         out.setClientRegistrationSettings(toModelClientRegistration(in.getClientRegistrationSettings()));
         out.setSecurityProfileSettings(in.getSecurityProfileSettings());
         out.setWorkloadIdentitySettings(in.getWorkloadIdentitySettings());
+        out.setKeyRetrievalSettings(in.getKeyRetrievalSettings());
         out.setRedirectUriStrictMatching(in.isRedirectUriStrictMatching());
         out.setPostLogoutRedirectUris(in.getPostLogoutRedirectUris());
         out.setRequestUris(in.getRequestUris());

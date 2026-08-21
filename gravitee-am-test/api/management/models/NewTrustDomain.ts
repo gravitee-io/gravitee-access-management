@@ -26,6 +26,14 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
+import {
+  TrustDomainKeyMaterialFromJSON,
+  TrustDomainKeyMaterialFromJSONTyped,
+  TrustDomainKeyMaterialToJSON,
+  TrustDomainKeyMaterialToJSONTyped,
+} from './TrustDomainKeyMaterial';
+
 /**
  *
  * @export
@@ -39,9 +47,10 @@ export interface NewTrustDomain {
    */
   allowedAlgorithms?: Array<string>;
   /**
-   *
+   * Use keyMaterial.source instead.
    * @type {string}
    * @memberof NewTrustDomain
+   * @deprecated
    */
   bundleSource?: NewTrustDomainBundleSourceEnum;
   /**
@@ -51,11 +60,24 @@ export interface NewTrustDomain {
    */
   description?: string;
   /**
+   * Use keyMaterial.jwksUrl instead.
+   * @type {string}
+   * @memberof NewTrustDomain
+   * @deprecated
+   */
+  jwksUrl?: string;
+  /**
+   *
+   * @type {TrustDomainKeyMaterial}
+   * @memberof NewTrustDomain
+   */
+  keyMaterial?: TrustDomainKeyMaterial;
+  /**
    *
    * @type {string}
    * @memberof NewTrustDomain
    */
-  jwksUrl?: string;
+  kind?: NewTrustDomainKindEnum;
   /**
    *
    * @type {string}
@@ -80,6 +102,15 @@ export const NewTrustDomainBundleSourceEnum = {
 export type NewTrustDomainBundleSourceEnum = typeof NewTrustDomainBundleSourceEnum[keyof typeof NewTrustDomainBundleSourceEnum];
 
 /**
+ * @export
+ */
+export const NewTrustDomainKindEnum = {
+  Spiffe: 'SPIFFE',
+  TokenExchange: 'TOKEN_EXCHANGE',
+} as const;
+export type NewTrustDomainKindEnum = typeof NewTrustDomainKindEnum[keyof typeof NewTrustDomainKindEnum];
+
+/**
  * Check if a given object implements the NewTrustDomain interface.
  */
 export function instanceOfNewTrustDomain(value: object): value is NewTrustDomain {
@@ -99,6 +130,8 @@ export function NewTrustDomainFromJSONTyped(json: any, ignoreDiscriminator: bool
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
     description: json['description'] == null ? undefined : json['description'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
+    keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
+    kind: json['kind'] == null ? undefined : json['kind'],
     name: json['name'] == null ? undefined : json['name'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
   };
@@ -118,6 +151,8 @@ export function NewTrustDomainToJSONTyped(value?: NewTrustDomain | null, ignoreD
     bundleSource: value['bundleSource'],
     description: value['description'],
     jwksUrl: value['jwksUrl'],
+    keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
+    kind: value['kind'],
     name: value['name'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
   };
