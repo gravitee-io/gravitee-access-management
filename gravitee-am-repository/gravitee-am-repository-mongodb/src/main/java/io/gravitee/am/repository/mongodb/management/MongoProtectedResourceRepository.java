@@ -138,13 +138,15 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest) {
-        Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type));
+        Bson query = type == null ? eq(DOMAIN_ID_FIELD, domain) : and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type));
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest) {
-        Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type), in(FIELD_ID, ids));
+        Bson query = type == null
+                ? and(eq(DOMAIN_ID_FIELD, domain), in(FIELD_ID, ids))
+                : and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type), in(FIELD_ID, ids));
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
     }
 

@@ -37,6 +37,7 @@ public class ManagementApplication extends ResourceConfig {
         packages("io.gravitee.am.management.handlers.management.api.resources");
 
         register(SortParamConverterProvider.class);
+        register(EnumParamConverterProvider.class);
         register(JacksonFeature.withoutExceptionMappers());
         register(JacksonExceptionMapper.class);
 

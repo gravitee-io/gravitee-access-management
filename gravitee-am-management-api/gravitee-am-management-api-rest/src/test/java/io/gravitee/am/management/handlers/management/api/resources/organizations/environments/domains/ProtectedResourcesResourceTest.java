@@ -280,23 +280,34 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_listWithoutType() {
+    public void shouldListEveryType_whenTypeIsAbsent() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("app-id");
+        protectedResource.setName("name");
+        protectedResource.setUpdatedAt(new Date());
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new Page(List.of(protectedResource), 0, 1)))
+                .when(protectedResourceService).findByDomainAndType(eq(domainId), isNull(), any());
 
         final Response response = target("domains")
                 .path(domainId)
                 .path("protected-resources")
                 .request().get();
 
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        Map map = response.readEntity(Map.class);
+        Map data = (Map) ((List) map.get("data")).get(0);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("app-id", data.get("id"));
     }
 
     @Test
-    public void shouldReturnNotFound_listWithUnknownType() {
+    public void shouldReturnBadRequest_listWithUnknownType() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -309,8 +320,7 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
                 .queryParam("type", "NOT_A_TYPE")
                 .request().get();
 
-        // JAX-RS maps a failed query param conversion to 404
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
     @Test

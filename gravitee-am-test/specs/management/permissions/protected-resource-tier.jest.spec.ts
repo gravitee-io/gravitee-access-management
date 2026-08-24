@@ -31,7 +31,7 @@ import {
 import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
 import { findOrganizationRoleByName } from '@management-commands/role-management-commands';
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
-import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { performDelete, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { ListRolesTypeEnum } from '@management-apis/RoleApi';
 import { uniqueName } from '@utils-commands/misc';
 import type { RoleEntity } from '@management-models/RoleEntity';
@@ -50,16 +50,27 @@ let resourcePrimaryOwnerRole: RoleEntity;
 const managementUrl = () => `${process.env.AM_MANAGEMENT_URL}/management`;
 const headers = (token: string) => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` });
 
-/**
- * Reading a protected resource by id answers 500 regardless of permissions — the type parameter is
- * parsed before authorisation, the same defect as AM-7476 — so the type-qualified list is the only
- * usable way to observe what this tier grants.
- */
 const listResourcesAs = (token: string) =>
   performGet(
     managementUrl(),
     `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${fixture.domain.id}` +
       `/protected-resources?type=MCP_SERVER`,
+    headers(token),
+  );
+
+const readResourceAs = (token: string) =>
+  performGet(
+    managementUrl(),
+    `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${fixture.domain.id}` +
+      `/protected-resources/${protectedResourceId}`,
+    headers(token),
+  );
+
+const deleteResourceAs = (token: string) =>
+  performDelete(
+    managementUrl(),
+    `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${fixture.domain.id}` +
+      `/protected-resources/${protectedResourceId}`,
     headers(token),
   );
 
@@ -176,11 +187,31 @@ describe('Protected resource tier - membership grants and revokes access', () =>
     }
   });
 
+  it('should refuse a delete to someone with no membership on it', async () => {
+    // Delete takes no type either. The refusal must come from the permission check rather than the
+    // missing parameter, so an outsider learns nothing about the resource.
+    const outsider = await createPersona(fixture.adminToken, 'resourcedeleter');
+
+    try {
+      const response = await deleteResourceAs(outsider.token);
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toEqual('Permission denied');
+    } finally {
+      await deleteOrganisationUser(fixture.adminToken, outsider.userId).catch(() => undefined);
+    }
+  });
+
   it('should show the resource to the member assigned to it', async () => {
     const response = await listResourcesAs(member.token);
 
     expect(response.status).toBe(200);
     expect(response.body.data.map((resource) => resource.id)).toContain(protectedResourceId);
+
+    // Read-by-id takes no type: the id already identifies the resource.
+    const read = await readResourceAs(member.token);
+    expect(read.status).toBe(200);
+    expect(read.body).toMatchObject({ id: protectedResourceId, type: 'mcp_server' });
   });
 
   it('should remove them from the resource when the membership is deleted', async () => {

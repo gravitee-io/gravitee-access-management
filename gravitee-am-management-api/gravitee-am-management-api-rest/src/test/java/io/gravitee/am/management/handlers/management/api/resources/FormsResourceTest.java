@@ -51,6 +51,43 @@ public class FormsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldReturnBadRequest_whenTemplateUnknown() {
+        // Jersey reports a failed enum conversion as a 404 unless a parameter converter claims the
+        // type. EnumParamConverterProvider claims every enum, so Template gets the same 400 as any
+        // other enum query parameter.
+        final Response response = target("domains")
+                .path(DOMAIN_ID).path("forms")
+                .queryParam("template", "NOT_A_TEMPLATE")
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetForm_whenTemplateIsLowerCase() {
+        // The API serialises enums in lower case, so the spelling a caller reads back from a
+        // response has to be accepted when it is passed into a query parameter.
+        final Form mockForm = new Form();
+        mockForm.setId("form-1-id");
+        mockForm.setTemplate(Template.LOGIN.template());
+        mockForm.setReferenceType(ReferenceType.DOMAIN);
+        mockForm.setReferenceId(DOMAIN_ID);
+
+        doReturn(Maybe.just(mockForm)).when(formService).findByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
+        doReturn(Single.just(mockForm)).when(formService).getDefaultByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID).path("forms")
+                .queryParam("template", "login")
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("form-1-id", readEntity(response, Form.class).getId());
+    }
+
+    @Test
     public void shouldGetForm() {
         final Form mockForm = new Form();
         mockForm.setId("form-1-id");

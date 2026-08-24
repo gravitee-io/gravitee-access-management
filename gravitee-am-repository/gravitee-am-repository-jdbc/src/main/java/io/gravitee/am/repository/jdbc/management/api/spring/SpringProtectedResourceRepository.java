@@ -29,7 +29,11 @@ public interface SpringProtectedResourceRepository extends RxJava3CrudRepository
 
     Maybe<JdbcProtectedResource> findByDomainIdAndId(String domainId, String id);
 
+    Single<Long> countByDomainId(String domainId);
+
     Single<Long> countByDomainIdAndType(String domainId, Type type);
+
+    Single<Long> countByDomainIdAndIdIn(String domainId, Collection<String> ids);
 
     Single<Long> countByDomainIdAndTypeAndIdIn(String domainId, Type type, Collection<String> ids);
 }

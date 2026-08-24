@@ -54,16 +54,6 @@ export const EXCLUDED_ROUTES: Record<string, string> = {
     'requires a template query parameter',
   '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails':
     'requires a template query parameter',
-
-  // Answer 500 before any permission check, so an unauthorised caller receives a server error
-  // rather than a refusal. Same defect class as AM-7476; re-include once fixed.
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/analytics': 'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics':
-    'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor':
-    'AM-7476 class: 500 before authorisation',
-  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources':
-    'AM-7476: type query parameter parsed before the permission check',
 };
 
 /**
@@ -75,6 +65,14 @@ export const SUFFICIENCY_ONLY_EXCLUDED: Record<string, string> = {
   // INSTALLATION is only relevant to the PLATFORM tier, so it cannot be granted by an
   // organization-assignable role and this technique cannot reach it.
   '/platform/installation': 'PLATFORM-tier permission, not grantable at organization level',
+
+  // Authorisation runs first on these, so the negative sweep drives them, but a granted
+  // caller still gets 400 without a genuine time window, analytics type, or cursor to supply.
+  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/analytics': 'requires from/to/type query parameters',
+  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics':
+    'requires from/to/type query parameters',
+  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor':
+    'requires a cursor query parameter',
 };
 
 /** The permission a route really enforces, preferring a confirmed override over the spec. */

@@ -504,6 +504,115 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertValue(page -> page.getData().stream().noneMatch(res -> res.id().equals(toSave2.getId())));
     }
 
+    /**
+     * A null type means "every type", which is what the list endpoint sends when its type query
+     * parameter is absent. Both counts and rows must drop the type filter together.
+     */
+    @Test
+    public void shouldFindEveryTypeWhenTypeIsNull() {
+        ProtectedResource toSave1 = generateResource("abc", "domainNullType1", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource toSave2 = generateResource("dcf", "domainNullType1", "client2", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+
+        ProtectedResource differentDomain = generateResource("ggg", "domainNullType2", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+
+        zip(repository.create(toSave1), repository.create(toSave2), repository.create(differentDomain), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.findByDomainAndType(toSave1.getDomainId(), null, PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .sortBy("name")
+                        .asc(true)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).id().equals(toSave1.getId()))
+                .assertValue(page -> List.copyOf(page.getData()).get(1).id().equals(toSave2.getId()));
+
+        // The domain filter still applies, so the resource in another domain stays out.
+        repository.findByDomainAndType(differentDomain.getDomainId(), null, PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).id().equals(differentDomain.getId()));
+
+        // Paging must agree with the untyped count rather than the typed one.
+        repository.findByDomainAndType(toSave1.getDomainId(), null, PageSortRequest.builder()
+                        .page(1)
+                        .size(1)
+                        .sortBy("name")
+                        .asc(true)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).id().equals(toSave2.getId()));
+    }
+
+    @Test
+    public void shouldFindEveryTypeByIdsWhenTypeIsNull() {
+        ProtectedResource toSave1 = generateResource("abc", "domainNullTypeIds1", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource toSave2 = generateResource("dcf", "domainNullTypeIds1", "client2", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+
+        ProtectedResource differentDomain = generateResource("ggg", "domainNullTypeIds2", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+
+        zip(repository.create(toSave1), repository.create(toSave2), repository.create(differentDomain), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), null, List.of(), PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getTotalCount() == 0)
+                .assertValue(page -> page.getData().isEmpty());
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), null, List.of(toSave1.getId(), toSave2.getId()), PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(res -> res.id().equals(toSave1.getId())))
+                .assertValue(page -> page.getData().stream().anyMatch(res -> res.id().equals(toSave2.getId())));
+
+        // An id from another domain is excluded, so the id list alone does not widen the query.
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), null, List.of(toSave1.getId(), differentDomain.getId()), PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(res -> res.id().equals(toSave1.getId())));
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), null, List.of(toSave1.getId(), toSave2.getId()), PageSortRequest.builder()
+                        .page(1)
+                        .size(1)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 1);
+    }
+
     @Test
     public void shouldTellIfExistsByDomain(){
         ProtectedResource toSave1 = generateResource("abc", "domainSearchExists1", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));

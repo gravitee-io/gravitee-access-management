@@ -84,13 +84,15 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @ApiResponse(responseCode = "200", description = "Protected Resource",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ProtectedResourcePrimaryData.class))),
+            @ApiResponse(responseCode = "400", description = "Unrecognised type"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("protected-resource") String protectedResourceId,
-            @NotNull @QueryParam("type") ProtectedResource.Type type,
+            @Parameter(description = "Asserts the resource has this type. The resource is read on its id alone when it is absent.")
+            @QueryParam("type") ProtectedResource.Type type,
             @Suspended final AsyncResponse response) {
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, READ)
                 .andThen(service.findByDomainAndIdAndType(domainId, protectedResourceId, type)
@@ -178,6 +180,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
                     "or PROTECTED_RESOURCE[DELETE] permission on the specified organization. ")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Protected Resource successfully deleted"),
+            @ApiResponse(responseCode = "400", description = "Unrecognised type"),
             @ApiResponse(responseCode = "404", description = "Protected Resource not found"),
             @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -186,7 +189,8 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("protected-resource") String protectedResourceId,
-            @NotNull @QueryParam("type") ProtectedResource.Type type,
+            @Parameter(description = "Asserts the resource has this type. The resource is deleted on its id alone when it is absent.")
+            @QueryParam("type") ProtectedResource.Type type,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 

@@ -110,7 +110,7 @@ export interface DeleteProtectedResourceRequest {
   environmentId: string;
   domain: string;
   protectedResource: string;
-  type: DeleteProtectedResourceTypeEnum;
+  type?: DeleteProtectedResourceTypeEnum;
 }
 
 export interface FindProtectedResourceRequest {
@@ -118,7 +118,7 @@ export interface FindProtectedResourceRequest {
   environmentId: string;
   domain: string;
   protectedResource: string;
-  type: FindProtectedResourceTypeEnum;
+  type?: FindProtectedResourceTypeEnum;
 }
 
 export interface GetMembers1Request {
@@ -154,7 +154,7 @@ export interface ListProtectedResourcesRequest {
   environmentId: string;
   domain: string;
   q?: string;
-  type: ListProtectedResourcesTypeEnum;
+  type?: ListProtectedResourcesTypeEnum;
   page?: number;
   size?: number;
   sort?: string;
@@ -643,13 +643,6 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
       );
     }
 
-    if (requestParameters.type === null || requestParameters.type === undefined) {
-      throw new runtime.RequiredError(
-        'type',
-        'Required parameter requestParameters.type was null or undefined when calling deleteProtectedResource.',
-      );
-    }
-
     const queryParameters: any = {};
 
     if (requestParameters.type !== undefined) {
@@ -727,13 +720,6 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
       throw new runtime.RequiredError(
         'protectedResource',
         'Required parameter requestParameters.protectedResource was null or undefined when calling findProtectedResource.',
-      );
-    }
-
-    if (requestParameters.type === null || requestParameters.type === undefined) {
-      throw new runtime.RequiredError(
-        'type',
-        'Required parameter requestParameters.type was null or undefined when calling findProtectedResource.',
       );
     }
 
@@ -1116,13 +1102,6 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
       throw new runtime.RequiredError(
         'domain',
         'Required parameter requestParameters.domain was null or undefined when calling listProtectedResources.',
-      );
-    }
-
-    if (requestParameters.type === null || requestParameters.type === undefined) {
-      throw new runtime.RequiredError(
-        'type',
-        'Required parameter requestParameters.type was null or undefined when calling listProtectedResources.',
       );
     }
 

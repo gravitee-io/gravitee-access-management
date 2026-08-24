@@ -24,6 +24,7 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -66,9 +67,15 @@ public class AnalyticsResource extends AbstractResource {
             @BeanParam AnalyticsParam param,
             @Suspended final AsyncResponse response) {
 
-        // validate param
-        param.validate();
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_ANALYTICS, Acl.READ)
+                .andThen(Completable.fromAction(param::validate))
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
+                        .flatMap(domain -> analyticsService.execute(domain, buildQuery(domainId, param))))
+                .subscribe(response::resume, response::resume);
+    }
 
+    private static AnalyticsQuery buildQuery(String domainId, AnalyticsParam param) {
         AnalyticsQuery query = new AnalyticsQuery();
         query.setType(param.getType());
         query.setField(param.getField());
@@ -77,11 +84,6 @@ public class AnalyticsResource extends AbstractResource {
         query.setDomain(domainId);
         query.setInterval(param.getInterval());
         query.setSize(param.getSize());
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_ANALYTICS, Acl.READ)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
-                        .flatMap(domain -> analyticsService.execute(domain, query)))
-                .subscribe(response::resume, response::resume);
+        return query;
     }
 }
