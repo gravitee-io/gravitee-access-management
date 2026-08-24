@@ -57,6 +57,8 @@ public class JdbcReporter  {
     @Column("system")
     private boolean system;
     private boolean inherited;
+    @Column("attribute_mappings")
+    private String attributeMappings;
     @Column("managed_by")
     private String managedBy;
 

@@ -1966,6 +1966,14 @@ components:
         \ persist audit events to a backend. The key field is the stable, immutable\
         \ identity used for idempotent create-or-update."
       properties:
+        attributeMappings:
+          type: array
+          description: Additional attributes exported alongside the regular audit
+            payload. Each entry pairs an expression read from the audit context with
+            the field name its value is exported under. Ignored when system is true;
+            a system reporter exports no additional attributes.
+          items:
+            $ref: "#/components/schemas/ReporterAttributeMapping"
         configuration:
           type: string
           description: Plugin-specific configuration as a JSON-encoded string. Its
@@ -2006,7 +2014,7 @@ components:
           description: "Whether this is the domain's system reporter. Immutable after\
             \ creation. When true, only key is required; the reporter is built from\
             \ the domains.reporters.default.* and repository system settings and the\
-            \ name, type, and configuration fields are ignored."
+            \ name, type, configuration, and attributeMappings fields are ignored."
         type:
           type: string
           description: Reporter plugin type identifier. Immutable after creation.
@@ -2308,6 +2316,20 @@ components:
           description: Whether password history is enforced to prevent reuse of recent
             passwords.
       title: Password settings
+    ReporterAttributeMapping:
+      type: object
+      description: "Exports one additional attribute, read from the audit context\
+        \ by expression, under a chosen field name."
+      properties:
+        exportedName:
+          type: string
+          description: The name the evaluated value takes on the exported payload.
+          example: user_sub
+        expression:
+          type: string
+          description: Expression evaluated against the audit context.
+          example: "{#context.attributes['user'].additionalInformation['sub']}"
+      title: Reporter attribute mapping
     ResetPasswordSettings:
       type: object
       description: Rules applied to a self-service password reset.

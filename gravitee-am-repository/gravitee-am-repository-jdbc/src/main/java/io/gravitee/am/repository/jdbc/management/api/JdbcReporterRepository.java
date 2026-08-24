@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringReporterRepository;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -67,6 +70,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .updatedAt(toDate(entity.getUpdatedAt()))
                 .type(entity.getType())
                 .inherited(entity.isInherited())
+                .attributeMappings(readAttributeMappings(entity.getAttributeMappings()))
                 .managedBy(entity.getManagedBy() != null ? ManagedBy.valueOf(entity.getManagedBy()) : null)
                 .build();
     }
@@ -86,9 +90,18 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
                 .type(entity.getType())
                 .inherited(entity.isInherited())
+                .attributeMappings(entity.getAttributeMappings() == null ? null : JSONMapper.toJson(entity.getAttributeMappings()))
                 .managedBy(entity.getManagedBy() != null ? entity.getManagedBy().name() : null)
                 .build();
 
+    }
+
+    private static List<ReporterAttributeMapping> readAttributeMappings(String attributeMappings) {
+        if (attributeMappings == null) {
+            return null;
+        }
+        return JSONMapper.toCollectionOfBean(attributeMappings, new TypeReference<List<ReporterAttributeMapping>>() {
+        });
     }
 
     private static final List<FieldSpec<JdbcReporter, ?>> fields = List.of(
@@ -103,6 +116,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
             new FieldSpec<>("configuration", JdbcReporter::getConfiguration, String.class),
             new FieldSpec<>("system", JdbcReporter::isSystem, boolean.class),
             new FieldSpec<>("inherited", JdbcReporter::isInherited, boolean.class),
+            new FieldSpec<>("attribute_mappings", JdbcReporter::getAttributeMappings, String.class),
             new FieldSpec<>("managed_by", JdbcReporter::getManagedBy, String.class),
             new FieldSpec<>("created_at", JdbcReporter::getCreatedAt, LocalDateTime.class),
             new FieldSpec<>("updated_at", JdbcReporter::getUpdatedAt, LocalDateTime.class)

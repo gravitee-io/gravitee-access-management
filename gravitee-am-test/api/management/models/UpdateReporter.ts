@@ -26,12 +26,26 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ReporterAttributeMapping } from './ReporterAttributeMapping';
+import {
+  ReporterAttributeMappingFromJSON,
+  ReporterAttributeMappingFromJSONTyped,
+  ReporterAttributeMappingToJSON,
+  ReporterAttributeMappingToJSONTyped,
+} from './ReporterAttributeMapping';
+
 /**
  *
  * @export
  * @interface UpdateReporter
  */
 export interface UpdateReporter {
+  /**
+   *
+   * @type {Array<ReporterAttributeMapping>}
+   * @memberof UpdateReporter
+   */
+  attributeMappings?: Array<ReporterAttributeMapping>;
   /**
    *
    * @type {string}
@@ -83,6 +97,8 @@ export function UpdateReporterFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
+    attributeMappings:
+      json['attributeMappings'] == null ? undefined : (json['attributeMappings'] as Array<any>).map(ReporterAttributeMappingFromJSON),
     configuration: json['configuration'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     inherited: json['inherited'] == null ? undefined : json['inherited'],
@@ -101,6 +117,8 @@ export function UpdateReporterToJSONTyped(value?: UpdateReporter | null, ignoreD
   }
 
   return {
+    attributeMappings:
+      value['attributeMappings'] == null ? undefined : (value['attributeMappings'] as Array<any>).map(ReporterAttributeMappingToJSON),
     configuration: value['configuration'],
     enabled: value['enabled'],
     inherited: value['inherited'],

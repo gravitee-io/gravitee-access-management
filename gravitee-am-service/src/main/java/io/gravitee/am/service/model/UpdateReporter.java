@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.ReporterAttributeMapping;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,6 +42,10 @@ public class UpdateReporter {
 
     private boolean inherited;
 
+    /**
+     * Additional attributes to export alongside the regular payload.
+     */
+    private List<ReporterAttributeMapping> attributeMappings;
 
     @Override
     public String toString() {

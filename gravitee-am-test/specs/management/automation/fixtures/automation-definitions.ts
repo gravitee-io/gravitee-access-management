@@ -100,32 +100,64 @@ export const buildAutomationCertificateDef = (overrides: {
   ...(overrides.system !== undefined ? { system: overrides.system } : {}),
 });
 
+export interface AutomationReporterAttributeMapping {
+  expression: string;
+  exportedName: string;
+}
+
+/** The mappings a reporter definition declares when it does not say otherwise. */
+export const DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS: AutomationReporterAttributeMapping[] = [
+  { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
+  { expression: "{#context.attributes['client'].clientId}", exportedName: 'client_id' },
+];
+
+export interface AutomationReporterDefOverrides {
+  key?: string;
+  name?: string;
+  system?: boolean;
+  configuration?: string;
+  /**
+   * Omit to take the builder's default.
+   */
+  attributeMappings?: AutomationReporterAttributeMapping[] | null;
+}
+
+/**
+ * Resolves the `attributeMappings` field. `undefined` falls back and `null` leaves the field off the payload.
+ */
+const attributeMappingsField = (
+  supplied: AutomationReporterAttributeMapping[] | null | undefined,
+  fallback: AutomationReporterAttributeMapping[] | null,
+): object => {
+  const resolved = supplied === undefined ? fallback : supplied;
+  return resolved === null ? {} : { attributeMappings: resolved };
+};
+
 /**
  * Build an Automation API reporter definition keyed by `key`, using a schema-valid Kafka
  * reporter configuration. Pass `system: true` to mark it the domain's system reporter — in
  * which case only `key` is meaningful and the reporter is built from
  * `domains.reporters.default.*` and repository settings in {@code gravitee.yaml}.
  */
-export const buildAutomationReporterDef = (overrides: {
-  key: string;
-  name?: string;
-  system?: boolean;
-  configuration?: string;
-}): object => ({
+export const buildAutomationReporterDef = (overrides: AutomationReporterDefOverrides & { key: string }): object => ({
   key: overrides.key,
   name: overrides.name ?? `Automation reporter ${overrides.key}`,
   type: 'reporter-am-kafka',
   configuration: overrides.configuration ?? buildKafkaReporterConfigJson(),
+  ...attributeMappingsField(overrides.attributeMappings, DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS),
   ...(overrides.system !== undefined ? { system: overrides.system } : {}),
 });
 
-/**
- * Build a minimal system payload — only `key` and `system:true`. {@code name}, {@code type}
- * and {@code configuration} are not required when {@code system} is true; the resource is
- * built from `gravitee.yaml` settings on the server side. Use this for the system path; use
- * {@link buildAutomationCertificateDef}/{@link buildAutomationReporterDef} for the non-system path.
- */
 export const buildSystemAutomationDef = (key: string): object => ({
   key,
   system: true,
+});
+
+/**
+ * A system reporter definition — minimal by design, so nothing is defaulted onto it. Mappings appear only
+ * when a test declares them explicitly.
+ */
+export const buildSystemAutomationReporterDef = (overrides: AutomationReporterDefOverrides & { key: string }): object => ({
+  ...buildSystemAutomationDef(overrides.key),
+  ...attributeMappingsField(overrides.attributeMappings, null),
 });

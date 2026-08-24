@@ -28,6 +28,7 @@ import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
+import io.gravitee.am.service.validators.reporter.ReporterAttributeMappingsValidator;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
 import io.gravitee.am.service.model.UpdateReporter;
@@ -79,7 +80,7 @@ class ReporterServiceTest {
     private final PluginLicenseGate pluginLicenseGate = mock(PluginLicenseGate.class);
 
     @InjectMocks
-    private ReporterService reporterService = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), reporterRepository, null, null, validationService, pluginLicenseGate);
+    private ReporterService reporterService = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), reporterRepository, null, null, validationService, pluginLicenseGate, new ReporterAttributeMappingsValidator());
 
     @BeforeEach
     void allowPluginLicenseGate() {

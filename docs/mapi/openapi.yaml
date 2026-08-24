@@ -15679,6 +15679,10 @@ components:
     NewReporter:
       type: object
       properties:
+        attributeMappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReporterAttributeMapping"
         configuration:
           type: string
         enabled:
@@ -17380,6 +17384,10 @@ components:
     Reporter:
       type: object
       properties:
+        attributeMappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReporterAttributeMapping"
         configuration:
           type: string
         createdAt:
@@ -17411,6 +17419,20 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    ReporterAttributeMapping:
+      type: object
+      description: "Exports one additional attribute, read from the audit context\
+        \ by expression, under a chosen field name."
+      properties:
+        exportedName:
+          type: string
+          description: The name the evaluated value takes on the exported payload.
+          example: user_sub
+        expression:
+          type: string
+          description: Expression evaluated against the audit context.
+          example: "{#context.attributes['user'].additionalInformation['sub']}"
+      title: Reporter attribute mapping
     ResetPasswordSettings:
       type: object
       description: Rules applied to a self-service password reset.
@@ -18596,6 +18618,10 @@ components:
     UpdateReporter:
       type: object
       properties:
+        attributeMappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReporterAttributeMapping"
         configuration:
           type: string
         enabled:

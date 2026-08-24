@@ -24,6 +24,7 @@ import {
   updateOrgReporter,
 } from '@management-commands/reporter-management-commands';
 import { OrgReporterFixture, setupOrgReporterFixture } from './fixtures/org-reporter-fixture';
+import { DEFAULT_ATTRIBUTE_MAPPINGS } from './fixtures/kafka-reporter-config-helper';
 import { setup } from '../../test-fixture';
 
 setup();
@@ -43,25 +44,26 @@ afterAll(async () => {
 describe('Org Kafka Reporter CRUD', () => {
   describe('Create', () => {
     it('should create a reporter with all fields', async () => {
-      const reporter: Reporter = await createOrgReporter(fixture.accessToken, {
-        type: 'reporter-am-kafka',
+      const reporter: Reporter = await fixture.createReporter({
         name: 'test-org-kafka-reporter',
-        enabled: true,
         configuration: fixture.kafkaConfig({ acks: '1', auditTypes: [] }),
       });
 
-      expect(reporter).toBeDefined();
-      expect(reporter.id).toBeDefined();
+      expect(reporter.id).toEqual(expect.any(String));
       expect(reporter.type).toEqual('reporter-am-kafka');
       expect(reporter.name).toEqual('test-org-kafka-reporter');
       expect(reporter.enabled).toBe(true);
-      expect(reporter.configuration).toBeDefined();
+      expect(reporter.attributeMappings).toEqual(DEFAULT_ATTRIBUTE_MAPPINGS);
 
       const config = JSON.parse(reporter.configuration);
-      expect(config.bootstrapServers).toBeDefined();
+      expect(config.bootstrapServers).toEqual(expect.any(String));
       expect(config.acks).toEqual('1');
+    });
 
-      fixture.createdReporterIds.push(reporter.id);
+    it('should create a reporter that exports no additional attributes', async () => {
+      const reporter: Reporter = await fixture.createReporter({ attributeMappings: [] });
+
+      expect(reporter.attributeMappings ?? []).toEqual([]);
     });
 
     it('should create a reporter with auditTypes filter', async () => {
@@ -128,21 +130,15 @@ describe('Org Kafka Reporter CRUD', () => {
     let createdId: string;
 
     beforeAll(async () => {
-      const reporter = await createOrgReporter(fixture.accessToken, {
-        type: 'reporter-am-kafka',
-        name: 'test-org-kafka-read-reporter',
-        enabled: true,
-        configuration: fixture.kafkaConfig(),
-      });
+      const reporter = await fixture.createReporter({ name: 'test-org-kafka-read-reporter' });
       createdId = reporter.id;
-      fixture.createdReporterIds.push(createdId);
     });
 
     it('should get reporter by ID', async () => {
       const reporter: Reporter = await getOrgReporter(fixture.accessToken, createdId);
-      expect(reporter).toBeDefined();
       expect(reporter.id).toEqual(createdId);
       expect(reporter.name).toEqual('test-org-kafka-read-reporter');
+      expect(reporter.attributeMappings).toEqual(DEFAULT_ATTRIBUTE_MAPPINGS);
     });
 
     it('should appear in the reporters list', async () => {
@@ -183,6 +179,22 @@ describe('Org Kafka Reporter CRUD', () => {
       expect(updated.name).toEqual('updated-org-kafka-reporter');
       const config = JSON.parse(updated.configuration);
       expect(config.acks).toEqual('all');
+    });
+
+    it('should replace the attribute mappings', async () => {
+      const remapped = [{ expression: "{#context.attributes['user'].id}", exportedName: 'user_id' }];
+
+      const updated: Reporter = await fixture.updateReporter(reporter, { attributeMappings: remapped });
+
+      expect(updated.attributeMappings).toEqual(remapped);
+    });
+
+    it('should clear the attribute mappings when none are supplied', async () => {
+      await fixture.updateReporter(reporter, { attributeMappings: DEFAULT_ATTRIBUTE_MAPPINGS });
+
+      const updated: Reporter = await fixture.updateReporter(reporter, { attributeMappings: null });
+
+      expect(updated.attributeMappings ?? []).toEqual([]);
     });
 
     it('should toggle enabled to false', async () => {
@@ -246,5 +258,24 @@ describe('Org Kafka Reporter CRUD', () => {
         response: { status: 404 },
       });
     });
+  });
+});
+
+describe('Org Reporter Attribute Mapping Validation', () => {
+  const invalid = (attributeMappings: any[]) => fixture.createReporter({ attributeMappings });
+
+  it('should reject two mappings exporting the same name', async () => {
+    await expect(
+      invalid([
+        { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
+        { expression: "{#context.attributes['user'].id}", exportedName: 'user_sub' },
+      ]),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should reject an expression that is not wrapped in braces', async () => {
+    await expect(
+      invalid([{ expression: "#context.attributes['user'].id", exportedName: 'user_id' }]),
+    ).rejects.toMatchObject({ response: { status: 400 } });
   });
 });

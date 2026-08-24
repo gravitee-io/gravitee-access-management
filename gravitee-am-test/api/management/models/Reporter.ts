@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ReporterAttributeMapping } from './ReporterAttributeMapping';
+import {
+  ReporterAttributeMappingFromJSON,
+  ReporterAttributeMappingFromJSONTyped,
+  ReporterAttributeMappingToJSON,
+  ReporterAttributeMappingToJSONTyped,
+} from './ReporterAttributeMapping';
 import type { ManagedBy } from './ManagedBy';
 import { ManagedByFromJSON, ManagedByFromJSONTyped, ManagedByToJSON, ManagedByToJSONTyped } from './ManagedBy';
 import type { Reference } from './Reference';
@@ -37,6 +44,12 @@ import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceTo
  * @interface Reporter
  */
 export interface Reporter {
+  /**
+   *
+   * @type {Array<ReporterAttributeMapping>}
+   * @memberof Reporter
+   */
+  attributeMappings?: Array<ReporterAttributeMapping>;
   /**
    *
    * @type {string}
@@ -133,6 +146,8 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
+    attributeMappings:
+      json['attributeMappings'] == null ? undefined : (json['attributeMappings'] as Array<any>).map(ReporterAttributeMappingFromJSON),
     configuration: json['configuration'] == null ? undefined : json['configuration'],
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     dataType: json['dataType'] == null ? undefined : json['dataType'],
@@ -159,6 +174,8 @@ export function ReporterToJSONTyped(value?: Omit<Reporter, 'key'> | null, ignore
   }
 
   return {
+    attributeMappings:
+      value['attributeMappings'] == null ? undefined : (value['attributeMappings'] as Array<any>).map(ReporterAttributeMappingToJSON),
     configuration: value['configuration'],
     createdAt: value['createdAt'],
     dataType: value['dataType'],

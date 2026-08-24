@@ -23,6 +23,7 @@ import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
@@ -41,6 +42,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -266,6 +268,68 @@ class ReporterServiceProxyImplTest {
         ArgumentCaptor<AuditBuilder<?>> captor = ArgumentCaptor.forClass(AuditBuilder.class);
         verify(auditService).report(captor.capture());
         return captor.getValue().build(objectMapper);
+    }
+
+    @Test
+    void shouldKeepAttributeMappingsWhenMaskingConfiguration() {
+        // filterSensitiveData copies the reporter before masking; the copy has to carry the mappings
+        var mappings = List.of(
+                new ReporterAttributeMapping("{#context.attributes['user'].additionalInformation['sub']}", "user_sub"),
+                new ReporterAttributeMapping("{#context.attributes['client'].clientId}", "client_id"));
+        var reporter = buildReporter("{\"secret\":\"value\"}");
+        reporter.setAttributeMappings(mappings);
+
+        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(reporter));
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        var result = service.findById("rep-id").blockingGet();
+
+        assertThat(result.getAttributeMappings()).isEqualTo(mappings);
+        assertThat(maskedSecret(result.getConfiguration())).isEqualTo("********");
+    }
+
+    @Test
+    void shouldKeepAttributeMappingsWhenSchemaIsMissing() {
+        // the configuration is discarded wholesale when the plugin schema is gone, but the mappings
+        // are not plugin data and must survive
+        var mappings = List.of(new ReporterAttributeMapping("{#context.attributes['user'].id}", "user_id"));
+        var reporter = buildReporter("{\"secret\":\"value\"}");
+        reporter.setAttributeMappings(mappings);
+
+        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(reporter));
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.empty());
+
+        var result = service.findById("rep-id").blockingGet();
+
+        assertThat(result.getAttributeMappings()).isEqualTo(mappings);
+    }
+
+    @Test
+    void shouldPassAttributeMappingsThroughOnUpdate() {
+        reset(auditService);
+        var principal = mock(User.class);
+        var reference = Reference.domain("domain");
+        var mappings = List.of(new ReporterAttributeMapping("{#context.attributes['user'].id}", "user_id"));
+
+        var update = new UpdateReporter();
+        update.setName("reporter");
+        update.setType("console");
+        update.setConfiguration("{\"secret\":\"new\"}");
+        update.setAttributeMappings(mappings);
+
+        var existing = buildReporter("{\"secret\":\"old\"}");
+        var updated = buildReporter("{\"secret\":\"new\"}");
+        updated.setAttributeMappings(mappings);
+
+        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(existing));
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+        when(reporterService.update(reference, "rep-id", update, principal, false)).thenReturn(Single.just(updated));
+
+        var result = service.update(reference, "rep-id", update, principal, false).blockingGet();
+
+        // the proxy only masks secrets; it must not rewrite the mappings on the way through
+        assertThat(update.getAttributeMappings()).isEqualTo(mappings);
+        assertThat(result.getAttributeMappings()).isEqualTo(mappings);
     }
 
     private Reporter buildReporter(String configuration) {

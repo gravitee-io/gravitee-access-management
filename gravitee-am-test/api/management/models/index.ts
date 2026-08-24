@@ -206,6 +206,7 @@ export * from './ProtectedResourceSecret';
 export * from './Reference';
 export * from './RememberDeviceSettings';
 export * from './Reporter';
+export * from './ReporterAttributeMapping';
 export * from './ResetPasswordSettings';
 export * from './Resource';
 export * from './ResourceEntity';

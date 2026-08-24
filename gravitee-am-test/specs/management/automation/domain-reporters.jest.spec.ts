@@ -21,15 +21,19 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
-import { AutomationDomainFixture, setupAutomationDomainFixture } from './fixtures/automation-domain-fixture';
-import { buildAutomationReporterDef, buildSystemAutomationDef } from './fixtures/automation-definitions';
+import { AutomationReporterFixture, setupAutomationReporterFixture } from './fixtures/automation-reporter-fixture';
+import {
+  DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS,
+  buildAutomationReporterDef,
+  buildSystemAutomationDef,
+} from './fixtures/automation-definitions';
 
 setup(120000);
 
-let fixture: AutomationDomainFixture;
+let fixture: AutomationReporterFixture;
 
 beforeAll(async () => {
-  fixture = await setupAutomationDomainFixture({ keyPrefix: 'autorep' });
+  fixture = await setupAutomationReporterFixture({ keyPrefix: 'autorep' });
 });
 
 afterAll(async () => {
@@ -38,29 +42,9 @@ afterAll(async () => {
   }
 });
 
-const createdReporterKeys: string[] = [];
-
 afterEach(async () => {
-  while (createdReporterKeys.length) {
-    // tolerant: a test may have already deleted its reporter (404), which is fine
-    await fixture.client.deleteReporter(fixture.domainKey, createdReporterKeys.pop());
-  }
+  await fixture.cleanUpReporters();
 });
-
-/** Create a reporter via PUT and track its key for cleanup. */
-async function createReporter(overrides: { key?: string; name?: string } = {}) {
-  const key = overrides.key ?? uniqueName('autoaudit', true).toLowerCase();
-  createdReporterKeys.push(key);
-  const response = await fixture.client.putReporter(fixture.domainKey, buildAutomationReporterDef({ ...overrides, key }));
-  return { key, response };
-}
-
-/** Create a system reporter via PUT and track its key for cleanup. */
-async function createSystemReporter(key = uniqueName('autosysrep', true).toLowerCase()) {
-  createdReporterKeys.push(key);
-  const response = await fixture.client.putReporter(fixture.domainKey, buildSystemAutomationDef(key));
-  return { key, response };
-}
 
 describe('Automation API - Reporters (resource under a domain)', () => {
   it('should list no reporters when none exist', async () => {
@@ -70,11 +54,12 @@ describe('Automation API - Reporters (resource under a domain)', () => {
   });
 
   it('should create a reporter via PUT', async () => {
-    const { key, response } = await createReporter();
+    const { key, response } = await fixture.putNewReporter();
 
     expect(response.status).toBe(200);
     expect(response.body.key).toEqual(key);
     expect(response.body.type).toEqual('reporter-am-kafka');
+    expect(response.body.attributeMappings).toEqual(DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS);
     // internal id / operational flags are intentionally not surfaced
     expect(response.body.id).toBeUndefined();
     expect(response.body.managedBy).toBeUndefined();
@@ -82,34 +67,59 @@ describe('Automation API - Reporters (resource under a domain)', () => {
   });
 
   it('should round-trip the reporter on GET', async () => {
-    const { key } = await createReporter();
+    const { key } = await fixture.putNewReporter();
 
     const response = await fixture.client.getReporter(fixture.domainKey, key);
     expect(response.status).toBe(200);
     expect(response.body.key).toEqual(key);
+    expect(response.body.attributeMappings).toEqual(DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS);
   });
 
   it('should list the reporter under the domain', async () => {
-    const { key } = await createReporter();
+    const { key } = await fixture.putNewReporter();
 
     const response = await fixture.client.listReporters(fixture.domainKey);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([expect.objectContaining({ key })]);
+    expect(response.body).toEqual([
+      expect.objectContaining({ key, attributeMappings: DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS }),
+    ]);
   });
 
   it('should update the reporter via a second PUT (idempotent)', async () => {
-    const { key } = await createReporter();
+    const { key } = await fixture.putNewReporter();
+    const remapped = [{ expression: "{#context.attributes['user'].id}", exportedName: 'user_id' }];
 
-    const response = await fixture.client.putReporter(
-      fixture.domainKey,
-      buildAutomationReporterDef({ key, name: 'Renamed reporter' }),
-    );
+    const response = await fixture.putReporter(key, { name: 'Renamed reporter', attributeMappings: remapped });
+
     expect(response.status).toBe(200);
     expect(response.body.name).toEqual('Renamed reporter');
+    expect(response.body.attributeMappings).toEqual(remapped);
+  });
+
+  it('should clear the mappings when a later definition omits them', async () => {
+    // the definition is the desired state, so an omitted field declares "none" rather than "leave as-is"
+    const { key } = await fixture.putNewReporter();
+
+    const response = await fixture.putReporter(key, { attributeMappings: null });
+
+    expect(response.status).toBe(200);
+    expect(response.body.attributeMappings ?? []).toEqual([]);
+
+    const fetched = await fixture.client.getReporter(fixture.domainKey, key);
+    expect(fetched.body.attributeMappings ?? []).toEqual([]);
+  });
+
+  it('should clear the mappings when a later definition supplies an empty list', async () => {
+    const { key } = await fixture.putNewReporter();
+
+    const response = await fixture.putReporter(key, { attributeMappings: [] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.attributeMappings ?? []).toEqual([]);
   });
 
   it('should reject changing the type of an existing reporter (400)', async () => {
-    const { key } = await createReporter();
+    const { key } = await fixture.putNewReporter();
 
     const response = await fixture.client.putReporter(fixture.domainKey, {
       ...buildAutomationReporterDef({ key }),
@@ -137,7 +147,7 @@ describe('Automation API - Reporters (resource under a domain)', () => {
   });
 
   it('should delete the reporter', async () => {
-    const { key } = await createReporter();
+    const { key } = await fixture.putNewReporter();
 
     const del = await fixture.client.deleteReporter(fixture.domainKey, key);
     expect(del.status).toBe(204);
@@ -164,9 +174,26 @@ describe('Automation API - Reporters - payload validation', () => {
     expect(response.status).toBe(400);
   });
 
+  it('should reject a mapping whose expression is not wrapped in braces (400)', async () => {
+    const { response } = await fixture.putNewReporter({
+      attributeMappings: [{ expression: "#context.attributes['user'].id", exportedName: 'user_id' }],
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('should reject two mappings exporting the same name (400)', async () => {
+    const { response } = await fixture.putNewReporter({
+      attributeMappings: [
+        { expression: "{#context.attributes['user'].id}", exportedName: 'user_sub' },
+        { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
+      ],
+    });
+    expect(response.status).toBe(400);
+  });
+
   it('should tolerate an unknown extra property in the configuration (200)', async () => {
     const key = uniqueName('autoextracfg', true).toLowerCase();
-    createdReporterKeys.push(key);
+    fixture.trackReporter(key);
     const base = buildAutomationReporterDef({ key }) as { configuration: string };
     const configuration = JSON.stringify({ ...JSON.parse(base.configuration), extraUnknownField: 'tolerated' });
     const response = await fixture.client.putReporter(fixture.domainKey, { ...base, configuration });
@@ -176,14 +203,14 @@ describe('Automation API - Reporters - payload validation', () => {
 
 describe('Automation API - System reporter', () => {
   it('should create a system reporter from a minimal {key, system:true} payload', async () => {
-    const { key, response } = await createSystemReporter();
+    const { key, response } = await fixture.putNewSystemReporter();
     expect(response.status).toBe(200);
     expect(response.body.key).toEqual(key);
     expect(response.body.system).toBe(true);
   });
 
   it('should be idempotent on re-PUT of a system reporter (200, no update)', async () => {
-    const { key } = await createSystemReporter();
+    const { key } = await fixture.putNewSystemReporter();
 
     const response = await fixture.client.putReporter(fixture.domainKey, buildSystemAutomationDef(key));
     expect(response.status).toBe(200);
@@ -192,7 +219,7 @@ describe('Automation API - System reporter', () => {
   });
 
   it('should reject a second system reporter (400)', async () => {
-    await createSystemReporter();
+    await fixture.putNewSystemReporter();
 
     const response = await fixture.client.putReporter(
       fixture.domainKey,
@@ -202,7 +229,7 @@ describe('Automation API - System reporter', () => {
   });
 
   it('should reject flipping system on an existing reporter (400)', async () => {
-    const { key } = await createSystemReporter();
+    const { key } = await fixture.putNewSystemReporter();
 
     // the reporter was created with system:true; PUT it again as non-system -> rejected (immutable)
     const response = await fixture.client.putReporter(
@@ -212,8 +239,23 @@ describe('Automation API - System reporter', () => {
     expect(response.status).toBe(400);
   });
 
+  it('should ignore mappings declared on a system reporter', async () => {
+    // name, type and configuration are already ignored for a system reporter; mappings join them because
+    // the internal audit store it writes to has a fixed record shape
+    const { key, response } = await fixture.putNewSystemReporter({
+      attributeMappings: [{ expression: "{#context.attributes['user'].id}", exportedName: 'user_id' }],
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.system).toBe(true);
+    expect(response.body.attributeMappings ?? []).toEqual([]);
+
+    const fetched = await fixture.client.getReporter(fixture.domainKey, key);
+    expect(fetched.body.attributeMappings ?? []).toEqual([]);
+  });
+
   it('should delete the system reporter without a system guard', async () => {
-    const { key } = await createSystemReporter();
+    const { key } = await fixture.putNewSystemReporter();
 
     const del = await fixture.client.deleteReporter(fixture.domainKey, key);
     expect(del.status).toBe(204);
