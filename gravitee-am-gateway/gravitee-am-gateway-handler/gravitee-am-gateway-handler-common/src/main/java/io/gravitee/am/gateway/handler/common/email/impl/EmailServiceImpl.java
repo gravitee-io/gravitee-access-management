@@ -451,6 +451,12 @@ public class EmailServiceImpl implements EmailService, InitializingBean, Disposa
                 .to(recipients.toArray(new String[recipients.size()]))
                 .build();
 
+        // compute email fromName
+        if (!Strings.isNullOrEmpty(emailTpl.getFromName())) {
+            final Template fromNameTemplate = new Template("fromName", new StringReader(emailTpl.getFromName()), freemarkerConfiguration);
+            email.setFromName(processTemplate(fromNameTemplate, params, preferredLanguage));
+        }
+
         // compute email subject
         final Template plainTextTemplate = new Template("subject", new StringReader(emailTpl.getSubject()), freemarkerConfiguration);
         email.setSubject(processTemplate(plainTextTemplate, params, preferredLanguage));
