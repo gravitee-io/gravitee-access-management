@@ -6659,9 +6659,10 @@ paths:
         required: true
         schema:
           type: string
-      - in: query
+      - description: Asserts the resource has this type. The resource is deleted on
+          its id alone when it is absent.
+        in: query
         name: type
-        required: true
         schema:
           type: string
           enum:
@@ -6669,6 +6670,8 @@ paths:
       responses:
         "204":
           description: Protected Resource successfully deleted
+        "400":
+          description: Unrecognised type
         "403":
           description: Forbidden
         "404":
