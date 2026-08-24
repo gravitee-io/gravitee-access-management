@@ -23,7 +23,9 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.repository.management.api.ReporterRepository;
+import io.gravitee.am.repository.mongodb.management.internal.model.ReporterAttributeMappingMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -37,6 +39,7 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
@@ -141,6 +144,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporterMongo.setCreatedAt(reporter.getCreatedAt());
         reporterMongo.setUpdatedAt(reporter.getUpdatedAt());
         reporterMongo.setInherited(reporter.isInherited());
+        reporterMongo.setAttributeMappings(toMongoAttributeMappings(reporter.getAttributeMappings()));
         reporterMongo.setManagedBy(reporter.getManagedBy() != null ? reporter.getManagedBy().name() : null);
         return reporterMongo;
     }
@@ -169,7 +173,29 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporter.setCreatedAt(reporterMongo.getCreatedAt());
         reporter.setUpdatedAt(reporterMongo.getUpdatedAt());
         reporter.setInherited(reporterMongo.isInherited());
+        reporter.setAttributeMappings(toModelAttributeMappings(reporterMongo.getAttributeMappings()));
         reporter.setManagedBy(reporterMongo.getManagedBy() != null ? ManagedBy.valueOf(reporterMongo.getManagedBy()) : null);
         return reporter;
+    }
+
+    private static List<ReporterAttributeMappingMongo> toMongoAttributeMappings(List<ReporterAttributeMapping> attributeMappings) {
+        if (attributeMappings == null) {
+            return null;
+        }
+        return attributeMappings.stream().map(mapping -> {
+            ReporterAttributeMappingMongo mappingMongo = new ReporterAttributeMappingMongo();
+            mappingMongo.setExpression(mapping.expression());
+            mappingMongo.setExportedName(mapping.exportedName());
+            return mappingMongo;
+        }).toList();
+    }
+
+    private static List<ReporterAttributeMapping> toModelAttributeMappings(List<ReporterAttributeMappingMongo> attributeMappings) {
+        if (attributeMappings == null) {
+            return null;
+        }
+        return attributeMappings.stream()
+                .map(mapping -> new ReporterAttributeMapping(mapping.getExpression(), mapping.getExportedName()))
+                .toList();
     }
 }

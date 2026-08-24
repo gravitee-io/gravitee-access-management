@@ -36,3 +36,12 @@ export const buildKafkaReporterConfig = (overrides?: Partial<KafkaReporterConfig
 export const buildKafkaReporterConfigJson = (overrides?: Partial<KafkaReporterConfig>): string =>
   JSON.stringify(buildKafkaReporterConfig(overrides));
 
+export interface ReporterAttributeMapping {
+  expression: string;
+  exportedName: string;
+}
+
+export const DEFAULT_ATTRIBUTE_MAPPINGS: ReporterAttributeMapping[] = [
+  { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
+  { expression: "{#context.attributes['client'].clientId}", exportedName: 'client_id' },
+];

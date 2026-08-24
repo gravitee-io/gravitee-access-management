@@ -17,7 +17,6 @@
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { Reporter } from '@management-models/Reporter';
 import {
-  createDomainReporter,
   deleteDomainReporter,
   getDomainReporter,
   listDomainReporters,
@@ -25,6 +24,7 @@ import {
 } from '@management-commands/reporter-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { DomainReporterFixture, setupDomainReporterFixture } from './fixtures/domain-reporter-fixture';
+import { DEFAULT_ATTRIBUTE_MAPPINGS } from './fixtures/kafka-reporter-config-helper';
 import { setup } from '../../test-fixture';
 
 setup();
@@ -45,59 +45,44 @@ describe('Domain Kafka Reporter CRUD', () => {
   describe('Create', () => {
     it('should create a reporter with all fields', async () => {
       const topic = uniqueName('audit-topic', true);
-      const reporter: Reporter = await createDomainReporter(fixture.domain.id, fixture.accessToken, {
-        type: 'reporter-am-kafka',
+      const reporter: Reporter = await fixture.createReporter({
         name: 'test-kafka-reporter',
-        enabled: true,
         configuration: fixture.kafkaConfig({ topic, acks: '1', auditTypes: [] }),
       });
 
-      expect(reporter).toBeDefined();
-      expect(reporter.id).toBeDefined();
+      expect(reporter.id).toEqual(expect.any(String));
       expect(reporter.type).toEqual('reporter-am-kafka');
       expect(reporter.name).toEqual('test-kafka-reporter');
       expect(reporter.enabled).toBe(true);
-      expect(reporter.configuration).toBeDefined();
+      expect(reporter.attributeMappings).toEqual(DEFAULT_ATTRIBUTE_MAPPINGS);
 
       const config = JSON.parse(reporter.configuration);
-      expect(config.bootstrapServers).toBeDefined();
+      expect(config.bootstrapServers).toEqual(expect.any(String));
       expect(config.topic).toEqual(topic);
       expect(config.acks).toEqual('1');
       expect(config.auditTypes).toEqual([]);
+    });
 
-      fixture.createdReporterIds.push(reporter.id);
+    it('should create a reporter that exports no additional attributes', async () => {
+      const reporter: Reporter = await fixture.createReporter({ attributeMappings: [] });
+
+      expect(reporter.attributeMappings ?? []).toEqual([]);
     });
 
     it('should create a reporter with auditTypes filter', async () => {
-      const reporter: Reporter = await createDomainReporter(fixture.domain.id, fixture.accessToken, {
-        type: 'reporter-am-kafka',
+      const reporter: Reporter = await fixture.createReporter({
         name: 'test-kafka-filtered-reporter',
-        enabled: true,
         configuration: fixture.kafkaConfig({ auditTypes: ['USER_LOGIN', 'USER_CREATED'] }),
       });
 
-      expect(reporter).toBeDefined();
-      expect(reporter.id).toBeDefined();
-
       const config = JSON.parse(reporter.configuration);
       expect(config.auditTypes).toEqual(['USER_LOGIN', 'USER_CREATED']);
-
-      fixture.createdReporterIds.push(reporter.id);
     });
 
     it('should create a disabled reporter', async () => {
-      const reporter: Reporter = await createDomainReporter(fixture.domain.id, fixture.accessToken, {
-        type: 'reporter-am-kafka',
-        name: 'test-kafka-disabled-reporter',
-        enabled: false,
-        configuration: fixture.kafkaConfig(),
-      });
+      const reporter: Reporter = await fixture.createReporter({ name: 'test-kafka-disabled-reporter', enabled: false });
 
-      expect(reporter).toBeDefined();
-      expect(reporter.id).toBeDefined();
       expect(reporter.enabled).toBe(false);
-
-      fixture.createdReporterIds.push(reporter.id);
     });
   });
 
@@ -105,27 +90,21 @@ describe('Domain Kafka Reporter CRUD', () => {
     let createdId: string;
 
     beforeAll(async () => {
-      const reporter = await createDomainReporter(fixture.domain.id, fixture.accessToken, {
-        type: 'reporter-am-kafka',
-        name: 'test-kafka-read-reporter',
-        enabled: true,
-        configuration: fixture.kafkaConfig(),
-      });
+      const reporter = await fixture.createReporter({ name: 'test-kafka-read-reporter' });
       createdId = reporter.id;
-      fixture.createdReporterIds.push(createdId);
     });
 
     it('should get reporter by ID', async () => {
       const reporter: Reporter = await getDomainReporter(fixture.domain.id, fixture.accessToken, createdId);
-      expect(reporter).toBeDefined();
       expect(reporter.id).toEqual(createdId);
       expect(reporter.name).toEqual('test-kafka-read-reporter');
+      expect(reporter.attributeMappings).toEqual(DEFAULT_ATTRIBUTE_MAPPINGS);
     });
 
     it('should appear in the reporters list', async () => {
       const reporters: Array<Reporter> = await listDomainReporters(fixture.domain.id, fixture.accessToken);
       const found = reporters.find((r) => r.id === createdId);
-      expect(found).toBeDefined();
+      expect(found).toEqual(expect.objectContaining({ id: createdId, attributeMappings: DEFAULT_ATTRIBUTE_MAPPINGS }));
     });
 
     it('should return 404 for a nonexistent reporter', async () => {
@@ -139,22 +118,16 @@ describe('Domain Kafka Reporter CRUD', () => {
     let reporter: Reporter;
 
     beforeAll(async () => {
-      reporter = await createDomainReporter(fixture.domain.id, fixture.accessToken, {
-        type: 'reporter-am-kafka',
+      reporter = await fixture.createReporter({
         name: 'test-kafka-update-reporter',
-        enabled: true,
         configuration: fixture.kafkaConfig({ acks: '1' }),
       });
-      fixture.createdReporterIds.push(reporter.id);
     });
 
     it('should update name and acks', async () => {
-      const updatedConfig = fixture.kafkaConfig({ acks: 'all' });
-      const updated: Reporter = await updateDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id, {
-        type: reporter.type,
+      const updated: Reporter = await fixture.updateReporter(reporter, {
         name: 'updated-kafka-reporter',
-        enabled: reporter.enabled,
-        configuration: updatedConfig,
+        configuration: fixture.kafkaConfig({ acks: 'all' }),
       });
 
       expect(updated.name).toEqual('updated-kafka-reporter');
@@ -162,23 +135,33 @@ describe('Domain Kafka Reporter CRUD', () => {
       expect(config.acks).toEqual('all');
     });
 
+    it('should replace the attribute mappings', async () => {
+      const remapped = [{ expression: "{#context.attributes['user'].id}", exportedName: 'user_id' }];
+
+      const updated: Reporter = await fixture.updateReporter(reporter, { attributeMappings: remapped });
+
+      expect(updated.attributeMappings).toEqual(remapped);
+    });
+
+    it('should clear the attribute mappings when none are supplied', async () => {
+      await fixture.updateReporter(reporter, { attributeMappings: DEFAULT_ATTRIBUTE_MAPPINGS });
+
+      const updated: Reporter = await fixture.updateReporter(reporter, { attributeMappings: null });
+
+      expect(updated.attributeMappings ?? []).toEqual([]);
+      const fetched: Reporter = await getDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id);
+      expect(fetched.attributeMappings ?? []).toEqual([]);
+    });
+
     it('should toggle enabled to false', async () => {
-      const updated: Reporter = await updateDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id, {
-        type: reporter.type,
-        name: reporter.name,
-        enabled: false,
-        configuration: fixture.kafkaConfig(),
-      });
+      const updated: Reporter = await fixture.updateReporter(reporter, { enabled: false });
       expect(updated.enabled).toBe(false);
     });
 
     it('should change auditTypes', async () => {
-      const updatedConfig = fixture.kafkaConfig({ auditTypes: ['USER_LOGOUT'] });
-      const updated: Reporter = await updateDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id, {
-        type: reporter.type,
-        name: reporter.name,
+      const updated: Reporter = await fixture.updateReporter(reporter, {
         enabled: true,
-        configuration: updatedConfig,
+        configuration: fixture.kafkaConfig({ auditTypes: ['USER_LOGOUT'] }),
       });
 
       const config = JSON.parse(updated.configuration);
@@ -188,13 +171,8 @@ describe('Domain Kafka Reporter CRUD', () => {
 
   describe('Delete', () => {
     it('should delete a reporter and return 404 afterward', async () => {
-      const reporter: Reporter = await createDomainReporter(fixture.domain.id, fixture.accessToken, {
-        type: 'reporter-am-kafka',
-        name: 'test-kafka-delete-reporter',
-        enabled: true,
-        configuration: fixture.kafkaConfig(),
-      });
-      expect(reporter.id).toBeDefined();
+      const reporter: Reporter = await fixture.createReporter({ name: 'test-kafka-delete-reporter' });
+      expect(reporter.id).toEqual(expect.any(String));
 
       await deleteDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id);
 
@@ -202,5 +180,63 @@ describe('Domain Kafka Reporter CRUD', () => {
         response: { status: 404 },
       });
     });
+  });
+});
+
+describe('Domain Reporter Attribute Mapping Validation', () => {
+  const invalid = (attributeMappings: any[]) => fixture.createReporter({ attributeMappings });
+
+  it('should reject two mappings exporting the same name', async () => {
+    await expect(
+      invalid([
+        { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
+        { expression: "{#context.attributes['user'].id}", exportedName: 'user_sub' },
+      ]),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should reject an invalid expression (missing braces)', async () => {
+    await expect(
+      invalid([{ expression: "#context.attributes['user'].id", exportedName: 'user_id' }]),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should reject an invalid exported name (too long)', async () => {
+    await expect(
+      invalid([{ expression: "{#context.attributes['user'].id}", exportedName: 'a'.repeat(65) }]),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+});
+
+describe('Domain System Reporter', () => {
+  it('should reject attribute mappings on the system reporter', async () => {
+    const system = await fixture.systemReporter();
+
+    await expect(
+      updateDomainReporter(fixture.domain.id, fixture.accessToken, system.id, {
+        type: system.type,
+        name: system.name,
+        enabled: system.enabled,
+        configuration: system.configuration ?? '{}',
+        attributeMappings: [
+          { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
+        ],
+      }),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should allow an unrelated update that leaves the mappings alone', async () => {
+    const system = await fixture.systemReporter();
+
+    const updated: Reporter = await updateDomainReporter(fixture.domain.id, fixture.accessToken, system.id, {
+      type: system.type,
+      name: 'renamed-system-reporter',
+      enabled: system.enabled,
+      configuration: system.configuration ?? '{}',
+      attributeMappings: system.attributeMappings,
+    });
+
+    expect(updated.name).toEqual('renamed-system-reporter');
+    expect(updated.attributeMappings ?? []).toEqual([]);
   });
 });

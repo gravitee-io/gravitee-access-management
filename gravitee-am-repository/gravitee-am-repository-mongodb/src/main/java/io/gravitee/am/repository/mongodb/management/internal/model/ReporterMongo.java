@@ -23,6 +23,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -70,6 +72,8 @@ public class ReporterMongo extends Auditable {
     private String configuration;
 
     private boolean inherited;
+
+    private List<ReporterAttributeMappingMongo> attributeMappings;
 
     private String managedBy;
 

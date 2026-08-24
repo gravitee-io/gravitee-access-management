@@ -25,6 +25,7 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -45,6 +46,7 @@ import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ReporterAuditBuilder;
+import io.gravitee.am.service.validators.reporter.ReporterAttributeMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -56,9 +58,12 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 import lombok.CustomLog;
 
@@ -92,13 +97,16 @@ public class ReporterServiceImpl implements ReporterService {
 
     private PluginLicenseGate pluginLicenseGate;
 
-    public ReporterServiceImpl(SystemReporterConfigResolver systemReporterConfigResolver, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService, PluginConfigurationValidationService validationService, PluginLicenseGate pluginLicenseGate) {
+    private ReporterAttributeMappingsValidator attributeMappingsValidator;
+
+    public ReporterServiceImpl(SystemReporterConfigResolver systemReporterConfigResolver, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService, PluginConfigurationValidationService validationService, PluginLicenseGate pluginLicenseGate, ReporterAttributeMappingsValidator attributeMappingsValidator) {
         this.systemReporterConfigResolver = systemReporterConfigResolver;
         this.reporterRepository = reporterRepository;
         this.eventService = eventService;
         this.auditService = auditService;
         this.validationService = validationService;
         this.pluginLicenseGate = pluginLicenseGate;
+        this.attributeMappingsValidator = attributeMappingsValidator;
     }
 
 
@@ -187,6 +195,7 @@ public class ReporterServiceImpl implements ReporterService {
                 .inherited(reference.type() == ReferenceType.ORGANIZATION && newReporter.isInherited())
                 .dataType("AUDIT")
                 .configuration(newReporter.getConfiguration())
+                .attributeMappings(isEmpty(newReporter.getAttributeMappings()) ? null : newReporter.getAttributeMappings())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -202,6 +211,7 @@ public class ReporterServiceImpl implements ReporterService {
                 : pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_REPORTER, newReporter.getType());
         return licenseCheck
                 .andThen(validateConfiguration(newReporter, system))
+                .andThen(validateAttributeMappings(newReporter.getAttributeMappings()))
                 .andThen(Single.defer(() -> checkReporterConfiguration(reporter)
                         .flatMap(ignore -> reporterRepository.create(reporter))
                         .flatMap(createdReporter -> {
@@ -217,6 +227,15 @@ public class ReporterServiceImpl implements ReporterService {
                             }
                             return Single.error(new TechnicalManagementException(message, ex));
                         })));
+    }
+
+    private Completable validateAttributeMappings(List<ReporterAttributeMapping> attributeMappings) {
+        return Completable.fromAction(() -> {
+            var result = attributeMappingsValidator.validate(attributeMappings);
+            if (result.isInvalid()) {
+                throw new ReporterConfigurationException(result.describe());
+            }
+        });
     }
 
     private Completable validateConfiguration(NewReporter newReporter, boolean system) {
@@ -268,6 +287,19 @@ public class ReporterServiceImpl implements ReporterService {
         }
         if (updateReporter.isInherited() && (oldReporter.getReference().type() != ReferenceType.ORGANIZATION || oldReporter.isSystem())) {
             return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
+        }
+
+        // A system reporter can never apply attribute mappings.
+        if (oldReporter.isSystem()) {
+            if (!isEmpty(updateReporter.getAttributeMappings())) {
+                return Single.error(new InvalidParameterException("Attribute mappings are not supported on a system reporter"));
+            }
+        } else {
+            var mappingsValidation = attributeMappingsValidator.validate(updateReporter.getAttributeMappings());
+            if (mappingsValidation.isInvalid()) {
+                return Single.error(new ReporterConfigurationException(mappingsValidation.describe()));
+            }
+            reporterToUpdate.setAttributeMappings(isEmpty(updateReporter.getAttributeMappings()) ? null : updateReporter.getAttributeMappings());
         }
 
         reporterToUpdate.setInherited(updateReporter.isInherited());

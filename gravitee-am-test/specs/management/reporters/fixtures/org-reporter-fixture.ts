@@ -16,12 +16,35 @@
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { deleteOrgReporter } from '@management-commands/reporter-management-commands';
-import { KafkaReporterConfig, buildKafkaReporterConfigJson } from './kafka-reporter-config-helper';
+import {
+  DEFAULT_ATTRIBUTE_MAPPINGS,
+  KafkaReporterConfig,
+  ReporterAttributeMapping,
+  buildKafkaReporterConfigJson,
+} from './kafka-reporter-config-helper';
+import { Reporter } from '@management-models/Reporter';
+import { createOrgReporter, updateOrgReporter } from '@management-commands/reporter-management-commands';
+import { uniqueName } from '@utils-commands/misc';
+
+export interface CreateOrgReporterOptions {
+  name?: string;
+  enabled?: boolean;
+  configuration?: string;
+  /** Mappings to declare. Omit for {@link DEFAULT_ATTRIBUTE_MAPPINGS}; pass `[]` or `null` to declare none. */
+  attributeMappings?: ReporterAttributeMapping[] | null;
+}
 
 export interface OrgReporterFixture {
   accessToken: string;
   kafkaConfig(overrides?: Partial<KafkaReporterConfig>): string;
   createdReporterIds: string[];
+
+  /** Create a Kafka reporter under the organization and track it for cleanup. */
+  createReporter(options?: CreateOrgReporterOptions): Promise<Reporter>;
+
+  /** Re-PUT an existing reporter; unsupplied fields fall back to the reporter's current values. */
+  updateReporter(reporter: Reporter, options?: CreateOrgReporterOptions): Promise<Reporter>;
+
   cleanUp(): Promise<void>;
 }
 
@@ -30,6 +53,32 @@ export const setupOrgReporterFixture = async (): Promise<OrgReporterFixture> => 
   const createdReporterIds: string[] = [];
   const kafkaConfig = buildKafkaReporterConfigJson;
   
+  const mappingsOf = (options: CreateOrgReporterOptions) =>
+    options.attributeMappings === null ? undefined : (options.attributeMappings ?? DEFAULT_ATTRIBUTE_MAPPINGS);
+
+  const createReporter = async (options: CreateOrgReporterOptions = {}): Promise<Reporter> => {
+    const reporter = await createOrgReporter(accessToken, {
+      type: 'reporter-am-kafka',
+      name: options.name ?? uniqueName('org-kafka-reporter', true),
+      enabled: options.enabled ?? true,
+      configuration: options.configuration ?? kafkaConfig(),
+      attributeMappings: mappingsOf(options),
+    });
+    createdReporterIds.push(reporter.id);
+    return reporter;
+  };
+
+  const updateReporter = (reporter: Reporter, options: CreateOrgReporterOptions = {}): Promise<Reporter> =>
+    updateOrgReporter(accessToken, reporter.id, {
+      type: reporter.type,
+      name: options.name ?? reporter.name,
+      enabled: options.enabled ?? reporter.enabled,
+      // preserved so a mapping-only update cannot silently un-inherit an organization reporter
+      inherited: reporter.inherited,
+      configuration: options.configuration ?? kafkaConfig(),
+      attributeMappings: mappingsOf(options),
+    });
+
   const cleanUp = async (): Promise<void> => {
     for (const id of createdReporterIds) {
       try {
@@ -40,5 +89,5 @@ export const setupOrgReporterFixture = async (): Promise<OrgReporterFixture> => 
     }
   };
 
-  return { accessToken, kafkaConfig, createdReporterIds, cleanUp };
+  return { accessToken, kafkaConfig, createdReporterIds, createReporter, updateReporter, cleanUp };
 };

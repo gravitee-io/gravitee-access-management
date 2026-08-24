@@ -21,7 +21,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,6 +63,12 @@ public class Reporter implements Managed {
     private boolean inherited;
 
     /**
+     * Additional attributes this reporter exports alongside its regular payload. Null or empty means
+     * nothing extra is exported.
+     */
+    private List<ReporterAttributeMapping> attributeMappings;
+
+    /**
      * Indicates the source of truth for this reporter.
      */
     private ManagedBy managedBy;
@@ -81,6 +89,7 @@ public class Reporter implements Managed {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.inherited = other.inherited;
+        this.attributeMappings = other.attributeMappings == null ? null : new ArrayList<>(other.attributeMappings);
         this.managedBy = other.managedBy;
     }
 

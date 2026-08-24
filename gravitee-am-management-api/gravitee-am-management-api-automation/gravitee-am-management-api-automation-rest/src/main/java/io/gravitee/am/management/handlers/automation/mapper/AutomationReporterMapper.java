@@ -37,6 +37,7 @@ public final class AutomationReporterMapper {
         out.setType(reporter.getType());
         out.setConfiguration(reporter.getConfiguration());
         out.setEnabled(reporter.isEnabled());
+        out.setAttributeMappings(reporter.getAttributeMappings());
         out.setSystem(reporter.isSystem());
         out.setDataType(reporter.getDataType());
         out.setCreatedAt(reporter.getCreatedAt());
@@ -55,6 +56,7 @@ public final class AutomationReporterMapper {
         newReporter.setType(definition.getType());
         newReporter.setConfiguration(definition.getConfiguration());
         newReporter.setEnabled(definition.isEnabled());
+        newReporter.setAttributeMappings(definition.getAttributeMappings());
         return newReporter;
     }
 
@@ -64,6 +66,7 @@ public final class AutomationReporterMapper {
         updateReporter.setType(definition.getType());
         updateReporter.setConfiguration(definition.getConfiguration());
         updateReporter.setEnabled(definition.isEnabled());
+        updateReporter.setAttributeMappings(definition.getAttributeMappings());
         return updateReporter;
     }
 }

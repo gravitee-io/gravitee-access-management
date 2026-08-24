@@ -221,6 +221,7 @@ models/ProtectedResourceSecret.ts
 models/Reference.ts
 models/RememberDeviceSettings.ts
 models/Reporter.ts
+models/ReporterAttributeMapping.ts
 models/ResetPasswordSettings.ts
 models/Resource.ts
 models/ResourceEntity.ts
