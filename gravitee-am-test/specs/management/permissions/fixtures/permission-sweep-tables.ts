@@ -66,7 +66,7 @@ export const SUFFICIENCY_ONLY_EXCLUDED: Record<string, string> = {
   // organization-assignable role and this technique cannot reach it.
   '/platform/installation': 'PLATFORM-tier permission, not grantable at organization level',
 
-  // Authorisation runs first on these (AM-7476), so the negative sweep drives them, but a granted
+  // Authorisation runs first on these, so the negative sweep drives them, but a granted
   // caller still gets 400 without a genuine time window, analytics type, or cursor to supply.
   '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/analytics': 'requires from/to/type query parameters',
   '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics':

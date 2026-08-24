@@ -185,7 +185,7 @@ describe('Protected resource tier - membership grants and revokes access', () =>
     expect(response.status).toBe(200);
     expect(response.body.data.map((resource) => resource.id)).toContain(protectedResourceId);
 
-    // Read-by-id takes no type: the id already identifies the resource (AM-7476).
+    // Read-by-id takes no type: the id already identifies the resource.
     const read = await readResourceAs(member.token);
     expect(read.status).toBe(200);
     expect(read.body).toMatchObject({ id: protectedResourceId, type: 'mcp_server' });
