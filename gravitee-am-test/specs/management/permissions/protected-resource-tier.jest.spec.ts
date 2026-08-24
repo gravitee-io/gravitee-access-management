@@ -31,7 +31,7 @@ import {
 import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
 import { findOrganizationRoleByName } from '@management-commands/role-management-commands';
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
-import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { performDelete, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { ListRolesTypeEnum } from '@management-apis/RoleApi';
 import { uniqueName } from '@utils-commands/misc';
 import type { RoleEntity } from '@management-models/RoleEntity';
@@ -60,6 +60,14 @@ const listResourcesAs = (token: string) =>
 
 const readResourceAs = (token: string) =>
   performGet(
+    managementUrl(),
+    `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${fixture.domain.id}` +
+      `/protected-resources/${protectedResourceId}`,
+    headers(token),
+  );
+
+const deleteResourceAs = (token: string) =>
+  performDelete(
     managementUrl(),
     `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${fixture.domain.id}` +
       `/protected-resources/${protectedResourceId}`,
@@ -171,6 +179,21 @@ describe('Protected resource tier - membership grants and revokes access', () =>
 
     try {
       const response = await listResourcesAs(outsider.token);
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toEqual('Permission denied');
+    } finally {
+      await deleteOrganisationUser(fixture.adminToken, outsider.userId).catch(() => undefined);
+    }
+  });
+
+  it('should refuse a delete to someone with no membership on it', async () => {
+    // Delete takes no type either. The refusal must come from the permission check rather than the
+    // missing parameter, so an outsider learns nothing about the resource.
+    const outsider = await createPersona(fixture.adminToken, 'resourcedeleter');
+
+    try {
+      const response = await deleteResourceAs(outsider.token);
 
       expect(response.status).toBe(403);
       expect(response.body.message).toEqual('Permission denied');
