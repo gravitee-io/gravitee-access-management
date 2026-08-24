@@ -240,11 +240,34 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_deleteWithoutType() {
+    public void shouldDeleteProtectedResourceWithoutType_204() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
+        // permission ok
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        // an absent type deletes on the id alone
+        doReturn(Completable.complete())
+                .when(protectedResourceService).delete(eq(mockDomain), eq("id"), eq(null), any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("id")
+                .request().delete();
+
+        assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnForbidden_whenDeleteTypeMissingAndPermissionDenied() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(io.reactivex.rxjava3.core.Single.just(false)).when(permissionService).hasPermission(any(), any());
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
@@ -254,7 +277,7 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .path("id")
                 .request().delete();
 
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
     /**
@@ -298,7 +321,7 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .path("id")
                 .request().get();
 
-        // An omitted type no longer short-circuits the request, so the caller is refused (AM-7476).
+        // An omitted type no longer short-circuits the request, so the caller is refused.
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
