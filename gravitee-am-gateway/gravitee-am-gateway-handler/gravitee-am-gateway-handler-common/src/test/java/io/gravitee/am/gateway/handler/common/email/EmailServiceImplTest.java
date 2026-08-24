@@ -49,7 +49,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
 import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
@@ -254,6 +256,45 @@ public class EmailServiceImplTest {
 
         io.gravitee.am.common.email.Email sentEmail = captor.getValue();
         assertThat(sentEmail.getFromName()).isEqualTo("domain-id-team");
+    }
+
+    @Test
+    public void createEmail_must_resolve_dynamic_fromName() throws Exception {
+        var emailService = instantiateEmailService(true);
+        emailServiceSpy = Mockito.spy(emailService);
+        MockitoAnnotations.openMocks(this);
+
+        final Email email = new Email();
+        email.setEnabled(true);
+        email.setFrom("noreply@gravitee.io");
+        email.setFromName("${msg('mfa.from-name')}");
+        email.setSubject("Verification Code");
+        email.setTemplate("mfa_challenge");
+        email.setContent("Your code");
+        email.setExpiresAfter(300);
+
+        when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
+        when(freemarkerConfiguration.getNamingConvention()).thenReturn(AUTO_DETECT_NAMING_CONVENTION);
+        when(freemarkerConfiguration.getObjectWrapper()).thenReturn(new DefaultObjectWrapperBuilder(DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build());
+        var templateMock = new freemarker.template.Template("content", new StringReader(email.getContent()), freemarkerConfiguration);
+        when(freemarkerConfiguration.getTemplate(eq(email.getTemplate() + ".html"))).thenReturn(templateMock);
+
+        final Properties dictionary = new Properties();
+        dictionary.setProperty("mfa.from-name", "Gravitee Security");
+        final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(dictionary);
+        when(graviteeMessageResolver.getDynamicDictionaryProvider()).thenReturn(null);
+        when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(email);
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        var wrapper = emailServiceSpy.createEmail(
+                Template.MFA_CHALLENGE, client, List.of("john.doe@gravitee.io"), new HashMap<>(), Locale.ENGLISH);
+
+        assertThat(wrapper.getEmail().getFromName()).isEqualTo("Gravitee Security");
     }
 
     private static EmailServiceImpl instantiateEmailService(boolean enabled) {
