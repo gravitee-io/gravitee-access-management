@@ -44,7 +44,9 @@ const DATA_PLANE_ID = 'cloud-test';
 // it runs in the stack), falling back to the runner's view when the node runs natively, same as
 // idps-commands.ts. The database and credentials are the local stack's own and do not move with the
 // runner (GRAVITEE_DATAPLANES_0_* in docker-compose.mongo.yml / docker-compose.postgres.yml).
-const MONGO_URI = process.env.AM_INTERNAL_MONGODB_URI ?? process.env.AM_MONGODB_URI;
+export const MONGO_URI = process.env.AM_INTERNAL_MONGODB_URI ?? process.env.AM_MONGODB_URI;
+/** The database the local stack gives the mongo store, in both the cloud and the standard overlays. */
+export const MONGO_DATABASE = 'graviteeam';
 const JDBC_HOST = process.env.AM_INTERNAL_POSTGRES_HOST ?? process.env.AM_POSTGRES_HOST;
 const dataPlaneStore = () =>
   process.env.REPOSITORY_TYPE === 'jdbc'
@@ -61,7 +63,7 @@ const dataPlaneStore = () =>
           },
         },
       }
-    : { type: 'mongodb', configuration: { mongodb: { uri: `${MONGO_URI}/graviteeam` } } };
+    : { type: 'mongodb', configuration: { mongodb: { uri: `${MONGO_URI}/${MONGO_DATABASE}` } } };
 
 export interface CloudSharedFixture extends CloudOrganizationFixture {
   /** Id of the data plane linked to the shared environment, and the one the gateway is pinned to. */
