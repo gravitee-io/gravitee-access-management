@@ -25,6 +25,7 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
 import io.gravitee.am.common.exception.jwt.SignatureException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.common.jwt.CertificateInfo;
@@ -679,6 +680,41 @@ public class JWTServiceTest {
         client.setCertificate("failingCert");
 
         var test = jwtService.encodeAuthorization(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void shouldPropagateTemporarilyUnavailableRaisedBySigner() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        var signerUnavailable = new TemporarilyUnavailableException("The signing key is temporarily unavailable");
+        when(failingBuilder.sign(any())).thenThrow(signerUnavailable);
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encodeJwt(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(signerUnavailable);
+    }
+
+    @Test
+    public void shouldWrapOtherOAuth2ExceptionsRaisedBySigner() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new InvalidRequestException("Signing was refused"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encodeJwt(new JWT(), client).test();
         test.await(10, TimeUnit.SECONDS);
         test.assertError(InvalidTokenException.class);
     }
