@@ -19,14 +19,7 @@ import { test as gatewayTest } from '../../../fixtures/login-flows-gateway.fixtu
 import { NavbarPage } from '../../../pages/navbar.page';
 import { linkJira } from '../../../utils/jira';
 import { buildAuthorizeUrl, submitLogin, reachOAuthAuthorizationCallback } from '../../../utils/mfa-helpers';
-import {
-  ADMIN_PASSWORD,
-  ADMIN_USERNAME,
-  ALT_ADMIN_PASSWORD,
-  ALT_ADMIN_USERNAME,
-  AUTH_CODE_FORMAT,
-  UNCONFIGURED_ADMIN_USERNAME,
-} from '../../../utils/test-constants';
+import { ADMIN_PASSWORD, ADMIN_USERNAME, ALT_ADMIN_PASSWORD, ALT_ADMIN_USERNAME, AUTH_CODE_FORMAT } from '../../../utils/test-constants';
 
 consoleTest.describe('Console admin login (AM-2230)', () => {
   consoleTest.use({ storageState: { cookies: [], origins: [] } });
@@ -90,7 +83,7 @@ consoleTest.describe('Console alternate admin (AM-2192)', () => {
     linkJira(testInfo, 'AM-2192');
 
     await loginPage.goto();
-    await loginPage.submitCredentials(UNCONFIGURED_ADMIN_USERNAME, ALT_ADMIN_PASSWORD);
+    await loginPage.submitCredentials('ghostadmin', ALT_ADMIN_PASSWORD);
 
     // Asserting the error alone would also pass if the console were merely slow, so the
     // absence of the console shell is checked too.

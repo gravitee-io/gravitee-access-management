@@ -36,9 +36,6 @@ export const ADMIN_PASSWORD = 'adminadmin';
 export const ALT_ADMIN_USERNAME = 'altadmin';
 export const ALT_ADMIN_PASSWORD = 'altadminaltadmin';
 
-/** A username that is deliberately absent from the configuration file (AM-2192 negative case) */
-export const UNCONFIGURED_ADMIN_USERNAME = 'ghostadmin';
-
 /** Regex matching a valid JWT (three Base64url segments separated by dots) */
 export const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
