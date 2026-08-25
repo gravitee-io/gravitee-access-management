@@ -86,6 +86,9 @@ public class IdentityProvider implements Managed {
      */
     private ManagedBy managedBy;
 
+    /** Set at creation time only, so an existing provider keeps its own settings. */
+    private boolean systemClusterRestricted;
+
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;
         this.automationKey = other.automationKey;
@@ -105,6 +108,7 @@ public class IdentityProvider implements Managed {
         this.passwordPolicy = other.passwordPolicy;
         this.dataPlaneId = other.dataPlaneId;
         this.managedBy = other.managedBy;
+        this.systemClusterRestricted = other.systemClusterRestricted;
     }
 
     @Override

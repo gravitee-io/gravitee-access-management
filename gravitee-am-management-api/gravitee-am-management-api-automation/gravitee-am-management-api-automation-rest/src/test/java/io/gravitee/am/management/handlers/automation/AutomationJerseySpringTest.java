@@ -33,6 +33,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -187,6 +188,13 @@ public abstract class AutomationJerseySpringTest {
         @Bean
         public PluginConfigurationValidationService validationService() {
             return mock(PluginConfigurationValidationService.class);
+        }
+
+        @Bean
+        public SystemClusterIdpPolicy systemClusterIdpPolicy() {
+            SystemClusterIdpPolicy policy = mock(SystemClusterIdpPolicy.class);
+            when(policy.carryPinnedStorage(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+            return policy;
         }
 
         @Bean

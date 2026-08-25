@@ -422,6 +422,16 @@ repositories:
   # to initialize the IdentityProviders with the "use system cluster"
   # option enabled (only management and gateway scopes are allowed as value)
   system-cluster: gateway
+  # Storage rules applied to a Mongo identity provider created with the "use system cluster"
+  # option enabled. Each defaults to true on a Gravitee-managed cloud installation and to false
+  # anywhere else. An identity provider already created keeps its settings whatever these become.
+  #system-cluster-idp:
+  #  # take the database from the system cluster scope above, so the identity provider cannot
+  #  # redefine it
+  #  pin-database: true
+  #  # force the users collection to idp_<identity provider id>, so it cannot collide with another
+  #  # identity provider or with a collection the platform creates later
+  #  prefix-users-collection: true
   # Management repository is used to store global configuration such as domains, clients, ...
   # This is the default configuration using MongoDB (single server)
   # For more information about MongoDB configuration, please have a look to:

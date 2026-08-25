@@ -31,6 +31,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -84,6 +85,9 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
 
     @Autowired
     private PluginConfigurationValidationService validationService;
+
+    @Autowired
+    private SystemClusterIdpPolicy systemClusterIdpPolicy;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -210,6 +214,8 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         if (rejection != null) {
             return rejection;
         }
+        // A re-applied manifest carries the operator's storage, which the guard would read as a move.
+        definition.setConfiguration(systemClusterIdpPolicy.carryPinnedStorage(existing, definition.getConfiguration()));
         return identityProviderManager.checkPluginDeployment(definition.getType())
                 .andThen(Completable.fromAction(() ->
                         validationService.validate(definition.getType(), definition.getConfiguration())))
