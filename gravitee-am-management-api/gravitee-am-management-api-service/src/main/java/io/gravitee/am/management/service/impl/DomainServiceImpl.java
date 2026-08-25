@@ -29,6 +29,7 @@ import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
@@ -40,6 +41,8 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
@@ -135,6 +138,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -298,6 +302,9 @@ public class DomainServiceImpl implements DomainService {
     private AuthorizationEngineService authorizationEngineService;
     @Autowired
     private CimdClientStateService cimdClientStateService;
+
+    @Autowired
+    private TrustedIssuerProjection trustedIssuerProjection;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -628,6 +635,7 @@ public class DomainServiceImpl implements DomainService {
                     toPatch.setUpdatedAt(new Date());
                     return validateDomain(toPatch)
                             .andThen(validateCertificateSettings(toPatch))
+                            .andThen(trustedIssuerProjection.apply(toPatch, writtenTrustedIssuers(patchDomain), principal))
                             .andThen(Single.defer(() -> domainRepository.update(toPatch)))
                             // create event for sync process
                             .flatMap(domain1 -> {
@@ -669,6 +677,17 @@ public class DomainServiceImpl implements DomainService {
                     log.error("An error occurred while trying to patch a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurred while trying to patch a domain", ex));
                 });
+    }
+
+    /**
+     * The trusted issuers the caller wrote through the deprecated inline field, or null when the
+     * field was not part of the patch and the trusted domains are therefore left alone.
+     */
+    private static List<TrustedIssuer> writtenTrustedIssuers(PatchDomain patchDomain) {
+        return Optional.ofNullable(patchDomain.getTokenExchangeSettings())
+                .flatMap(Function.identity())
+                .map(TokenExchangeSettings::getTrustedIssuers)
+                .orElse(null);
     }
 
     private boolean needOrganizationAudit(Domain oldDomain, Domain toPatch) {

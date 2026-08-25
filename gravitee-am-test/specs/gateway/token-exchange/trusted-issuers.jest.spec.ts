@@ -17,19 +17,45 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { waitForOidcReady } from '@management-commands/domain-management-commands';
+import { getDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { listTrustDomains } from '@management-commands/trust-domain-management-commands';
+import { TrustDomain } from '@management-models/TrustDomain';
 import { setup } from '../../test-fixture';
-import {
-  setupTrustedIssuerFixture,
-  TrustedIssuerFixture,
-  patchDomainRaw,
-} from './fixtures/trusted-issuer-fixture';
+import { setupTrustedIssuerFixture, TrustedIssuerFixture, patchDomainRaw } from './fixtures/trusted-issuer-fixture';
 import { signJwtForTrustedIssuer } from './fixtures/trusted-issuer-jwt-helper';
 import { TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
 
-setup();
+setup(120000);
 
 let fixture: TrustedIssuerFixture;
+
+const baselineTrustedIssuer = () => ({
+  issuer: fixture.externalIssuer,
+  keyResolutionMethod: 'PEM',
+  certificate: fixture.trustedKey.certificatePem,
+  scopeMappings: { 'external:read': 'openid', 'external:profile': 'profile' },
+});
+
+const writeTrustedIssuers = async (trustedIssuers: Array<Record<string, unknown>>) => {
+  const { domain, accessToken } = fixture;
+  await waitForSyncAfter(domain.id, () =>
+    patchDomainRaw(domain.id, accessToken, {
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+        allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+        allowImpersonation: true,
+        allowDelegation: true,
+        allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+        maxDelegationDepth: 3,
+        trustedIssuers,
+      },
+    }).expect(200),
+  );
+  await waitForOidcReady(domain.hrid);
+};
+
+const restoreBaseline = () => writeTrustedIssuers([baselineTrustedIssuer()]);
 
 beforeAll(async () => {
   fixture = await setupTrustedIssuerFixture();
@@ -323,44 +349,29 @@ describe('Trusted Issuers - Domain-issued tokens (no regression)', () => {
 });
 
 describe('Trusted Issuers - User Binding', () => {
-  // Helper to build the trusted issuer config with user binding settings
-  const buildTrustedIssuerConfig = (
-    userBindingEnabled: boolean,
-    userBindingCriteria?: Array<{ attribute: string; expression: string }>,
-  ) => ({
-    tokenExchangeSettings: {
-      enabled: true,
-      allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
-      allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
-      allowImpersonation: true,
-      allowDelegation: true,
-      allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
-      maxDelegationDepth: 3,
-      trustedIssuers: [
-        {
-          issuer: fixture.externalIssuer,
-          keyResolutionMethod: 'PEM',
-          certificate: fixture.trustedKey.certificatePem,
-          scopeMappings: { 'external:read': 'openid', 'external:profile': 'profile' },
-          userBindingEnabled,
-          ...(userBindingCriteria?.length && { userBindingCriteria }),
-        },
-      ],
-    },
+  const EMAIL_BINDING_CRITERIA = [{ attribute: 'emails.value', expression: "{#token['email']}" }];
+
+  const writeUserBinding = (userBindingEnabled: boolean, userBindingCriteria?: Array<{ attribute: string; expression: string }>) =>
+    writeTrustedIssuers([
+      {
+        ...baselineTrustedIssuer(),
+        userBindingEnabled,
+        ...(userBindingCriteria?.length && { userBindingCriteria }),
+      },
+    ]);
+
+  afterAll(async () => {
+    await restoreBaseline();
   });
 
   it('should use domain user when user binding is enabled and email matches', async () => {
-    const { domain, accessToken, oidc, basicAuth, externalIssuer, user } = fixture;
+    const { oidc, basicAuth, externalIssuer, user } = fixture;
 
     // Discover the domain user's actual sub by parsing a domain-issued token
     const domainTokens = await fixture.obtainSubjectToken('openid');
-    const domainUserSub = (parseJwt(domainTokens.accessToken).payload['sub'] as string);
+    const domainUserSub = parseJwt(domainTokens.accessToken).payload['sub'] as string;
 
-    // Patch domain to enable user binding with email -> email mapping
-    await waitForSyncAfter(domain.id, () =>
-      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(true, [{ attribute: 'emails.value', expression: "{#token['email']}" }])).expect(200),
-    );
-    await waitForOidcReady(domain.hrid);
+    await writeUserBinding(true, EMAIL_BINDING_CRITERIA);
 
     // Sign external JWT with matching email (from fixture user created by buildCreateAndTestUser)
     const externalJwt = fixture.signExternalJwt({
@@ -392,7 +403,8 @@ describe('Trusted Issuers - User Binding', () => {
   it('should reject when user binding is enabled but no matching domain user found', async () => {
     const { oidc, basicAuth, externalIssuer } = fixture;
 
-    // Domain is already patched with user binding enabled from the previous test
+    await writeUserBinding(true, EMAIL_BINDING_CRITERIA);
+
     const externalJwt = fixture.signExternalJwt({
       sub: 'external-user-no-match',
       email: 'nonexistent@example.com',
@@ -417,13 +429,9 @@ describe('Trusted Issuers - User Binding', () => {
   });
 
   it('should use synthetic user when user binding is disabled', async () => {
-    const { domain, accessToken, oidc, basicAuth, externalIssuer } = fixture;
+    const { oidc, basicAuth, externalIssuer } = fixture;
 
-    // Restore config with user binding disabled
-    await waitForSyncAfter(domain.id, () =>
-      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(false)).expect(200),
-    );
-    await waitForOidcReady(domain.hrid);
+    await writeUserBinding(false);
 
     const externalJwt = fixture.signExternalJwt({
       sub: 'external-user-synthetic',
@@ -448,5 +456,93 @@ describe('Trusted Issuers - User Binding', () => {
     expect(response.body.access_token).toBeDefined();
     const decoded = parseJwt(response.body.access_token);
     expect(decoded.payload['sub']).toBe('external-user-synthetic');
+  });
+});
+
+describe('Trusted Issuers - Deprecated list is a projection over trusted domains', () => {
+  const REPLACEMENT_ISSUER = 'https://replacement-idp.example.com';
+
+  const replacementIssuer = () => ({
+    issuer: REPLACEMENT_ISSUER,
+    keyResolutionMethod: 'PEM',
+    certificate: fixture.untrustedKey.certificatePem,
+  });
+
+  const signReplacementJwt = () =>
+    signJwtForTrustedIssuer({
+      issuer: REPLACEMENT_ISSUER,
+      privateKeyPem: fixture.untrustedKey.privateKeyPem,
+      subject: 'external-user-456',
+      payload: { scope: 'openid' },
+    });
+
+  const trustedIssuerDomains = (trustDomains: TrustDomain[]) => trustDomains.filter((trustDomain) => trustDomain.issuer != null);
+
+  const exchangeExternalJwt = (externalJwt: string) => {
+    const { oidc, basicAuth } = fixture;
+    return performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${encodeURIComponent(externalJwt)}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    );
+  };
+
+  afterAll(async () => {
+    await restoreBaseline();
+  });
+
+  it('should back a written issuer with a trusted domain carrying an issuer matcher', async () => {
+    const { domain, accessToken, externalIssuer } = fixture;
+
+    await writeTrustedIssuers([baselineTrustedIssuer()]);
+
+    const issuerDomains = trustedIssuerDomains(await listTrustDomains(domain.id, accessToken));
+    expect(issuerDomains).toHaveLength(1);
+    expect(issuerDomains[0].issuer).toBe(externalIssuer);
+    expect(issuerDomains[0].spiffeTrustDomain).toBeUndefined();
+    expect(issuerDomains[0].keyMaterial.source.toUpperCase()).toBe('PEM');
+
+    const projected = await getDomain(domain.id, accessToken);
+    expect(projected.tokenExchangeSettings.trustedIssuers).toHaveLength(1);
+    expect(projected.tokenExchangeSettings.trustedIssuers[0].issuer).toBe(externalIssuer);
+  });
+
+  it('should stop trusting an issuer omitted from a written list', async () => {
+    const { domain, accessToken, externalIssuer } = fixture;
+
+    await writeTrustedIssuers([baselineTrustedIssuer()]);
+    await writeTrustedIssuers([replacementIssuer()]);
+
+    expect(trustedIssuerDomains(await listTrustDomains(domain.id, accessToken))).toHaveLength(1);
+
+    const omittedIssuerJwt = fixture.signExternalJwt({
+      sub: 'external-user-123',
+      scope: 'external:read',
+      iss: externalIssuer,
+    });
+
+    const rejected = await exchangeExternalJwt(omittedIssuerJwt).expect(400);
+    expect(rejected.body.error).toBe('invalid_request');
+    expect(rejected.body.error_description).toContain(`Untrusted issuer: ${externalIssuer}`);
+
+    await exchangeExternalJwt(signReplacementJwt()).expect(200);
+  });
+
+  it('should stop trusting every issuer when an empty list is written', async () => {
+    const { domain, accessToken } = fixture;
+
+    await writeTrustedIssuers([replacementIssuer()]);
+    await writeTrustedIssuers([]);
+
+    expect(trustedIssuerDomains(await listTrustDomains(domain.id, accessToken))).toHaveLength(0);
+
+    const rejected = await exchangeExternalJwt(signReplacementJwt()).expect(400);
+    expect(rejected.body.error_description).toBe('The presented token is invalid');
   });
 });

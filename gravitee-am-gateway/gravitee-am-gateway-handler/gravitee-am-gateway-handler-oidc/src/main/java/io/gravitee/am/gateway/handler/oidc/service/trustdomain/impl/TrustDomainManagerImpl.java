@@ -120,6 +120,10 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
         return issuer == null ? Optional.empty() : Optional.ofNullable(byIssuer.get(issuer));
     }
 
+    @Override
+    public boolean hasTokenExchangeTrust() {
+        return !byIssuer.isEmpty();
+    }
 
     private void reload(String trustDomainId) {
         log.info("Loading trusted domain {} for domain {}", trustDomainId, domain.getName());

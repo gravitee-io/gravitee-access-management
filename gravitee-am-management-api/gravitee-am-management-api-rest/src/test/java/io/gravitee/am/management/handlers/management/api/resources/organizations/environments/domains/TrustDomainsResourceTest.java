@@ -356,4 +356,28 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
         verify(trustDomainService, never()).create(any(), any(), any());
     }
+
+    @Test
+    public void shouldRejectListWhenOnlyTheDeprecatedPermissionsAreHeld() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request().get();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).findByReference(any(), any());
+    }
+
+    @Test
+    public void shouldRejectCreateWhenOnlyTheDeprecatedPermissionsAreHeld() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trust-domains").request()
+                .post(Entity.json(Map.of(
+                        "name", "issuer.example.org",
+                        "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/keys"),
+                        "issuer", "https://issuer.example.org")));
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(trustDomainService, never()).create(any(), any(), any());
+    }
 }

@@ -32,7 +32,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
-import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -1712,7 +1712,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, criteria);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -1737,7 +1737,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, criteria);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -1764,7 +1764,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, criteria);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -1785,7 +1785,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
         // Trusted issuer without user binding enabled
-        Domain domain = domainWithTrustedIssuer(externalIssuer, false);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -1832,7 +1832,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, criteria);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -1861,7 +1861,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, criteria);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -1884,7 +1884,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, criteria);
+        Domain domain = domainWithTokenExchangeEnabled();
         Client client = new Client();
         client.setClientId("client-id");
 
@@ -2686,12 +2686,13 @@ public class TokenExchangeServiceImplTest {
 
     private TokenValidator trustedIssuerValidator(String issuer, Map<String, Object> additionalClaims,
                                                   List<UserBindingCriterion> bindingCriteria) {
-        TrustedIssuer ti = new TrustedIssuer();
-        ti.setIssuer(issuer);
+        TrustDomain.TrustDomainBuilder trustedDomainBuilder = TrustDomain.builder()
+                .name(issuer)
+                .issuer(issuer);
         if (bindingCriteria != null) {
-            ti.setUserBindingEnabled(true);
-            ti.setUserBindingCriteria(bindingCriteria);
+            trustedDomainBuilder.userBindingEnabled(true).userBindingCriteria(bindingCriteria);
         }
+        TrustDomain trustedDomain = trustedDomainBuilder.build();
         return new TokenValidator() {
             @Override
             public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
@@ -2703,7 +2704,7 @@ public class TokenExchangeServiceImplTest {
                         .scopes(Set.of("openid"))
                         .expiration(Date.from(Instant.now().plusSeconds(60)))
                         .tokenType(TokenType.JWT)
-                        .trustedIssuer(ti)
+                        .trustedDomain(trustedDomain)
                         .build());
             }
 
@@ -2714,39 +2715,10 @@ public class TokenExchangeServiceImplTest {
         };
     }
 
-    private Domain domainWithTrustedIssuerBinding(String issuerUrl, List<UserBindingCriterion> bindingCriteria) {
-        TrustedIssuer trustedIssuer = new TrustedIssuer();
-        trustedIssuer.setIssuer(issuerUrl);
-        trustedIssuer.setKeyResolutionMethod(KeyResolutionMethod.JWKS_URL);
-        trustedIssuer.setJwksUri(issuerUrl + "/.well-known/jwks.json");
-        trustedIssuer.setUserBindingEnabled(true);
-        trustedIssuer.setUserBindingCriteria(bindingCriteria);
-
+    private Domain domainWithTokenExchangeEnabled() {
         TokenExchangeSettings settings = new TokenExchangeSettings();
         settings.setEnabled(true);
         settings.setAllowedSubjectTokenTypes(List.of(TokenType.JWT, TokenType.ACCESS_TOKEN));
-        settings.setTrustedIssuers(List.of(trustedIssuer));
-
-        Domain domain = new Domain();
-        domain.setId("domain-id");
-        domain.setTokenExchangeSettings(settings);
-        return domain;
-    }
-
-    private Domain domainWithTrustedIssuer(String issuerUrl, boolean bindingEnabled) {
-        TrustedIssuer trustedIssuer = new TrustedIssuer();
-        trustedIssuer.setIssuer(issuerUrl);
-        trustedIssuer.setKeyResolutionMethod(KeyResolutionMethod.JWKS_URL);
-        trustedIssuer.setJwksUri(issuerUrl + "/.well-known/jwks.json");
-        trustedIssuer.setUserBindingEnabled(bindingEnabled);
-        if (bindingEnabled) {
-            trustedIssuer.setUserBindingCriteria(List.of(criterion("email", "{#token['email']}")));
-        }
-
-        TokenExchangeSettings settings = new TokenExchangeSettings();
-        settings.setEnabled(true);
-        settings.setAllowedSubjectTokenTypes(List.of(TokenType.JWT, TokenType.ACCESS_TOKEN));
-        settings.setTrustedIssuers(List.of(trustedIssuer));
 
         Domain domain = new Domain();
         domain.setId("domain-id");
