@@ -152,6 +152,12 @@ export interface TokenIdentityOptions {
   /** Extra attributes merged onto the primary user's stored profile. */
   userAttributes?: Record<string, unknown>;
   /**
+   * Custom metadata stored on the application, reachable from expression language as
+   * `{#context.attributes['client'].metadata['key']}`. Left unset unless a test asks for it,
+   * so it is inert for every other spec.
+   */
+  applicationMetadata?: Record<string, unknown>;
+  /**
    * Extra requestable scopes, on top of the defaults this fixture always configures.
    * Each is created on the domain first, since an application may only reference
    * a scope the domain already knows about.
@@ -215,6 +221,8 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
         },
         advanced: { skipConsent: true },
       },
+      // Application metadata is a top-level field, not part of the oauth settings.
+      ...(options.applicationMetadata ? { metadata: options.applicationMetadata } : {}),
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
     });
 
