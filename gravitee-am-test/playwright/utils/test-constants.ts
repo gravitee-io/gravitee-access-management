@@ -26,6 +26,16 @@ export const ADMIN_USERNAME = 'admin';
 /** Default admin password */
 export const ADMIN_PASSWORD = 'adminadmin';
 
+/**
+ * AM-2192: a second administrator declared in the configuration file rather than the database.
+ * Provisioned as security.providers[0].users[1] by the management service in
+ * docker/local-stack/dev/docker-compose.yml — these must stay in step with that file.
+ * Deliberately a different password from ADMIN_PASSWORD, so a test signing in as this
+ * account cannot pass by accidentally authenticating as the default admin.
+ */
+export const ALT_ADMIN_USERNAME = 'altadmin';
+export const ALT_ADMIN_PASSWORD = 'altadminaltadmin';
+
 /** Regex matching a valid JWT (three Base64url segments separated by dots) */
 export const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 

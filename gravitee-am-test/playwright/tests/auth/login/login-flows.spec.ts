@@ -16,9 +16,10 @@
 import { expect } from '@playwright/test';
 import { test as consoleTest } from '../../../fixtures/base.fixture';
 import { test as gatewayTest } from '../../../fixtures/login-flows-gateway.fixture';
+import { NavbarPage } from '../../../pages/navbar.page';
 import { linkJira } from '../../../utils/jira';
 import { buildAuthorizeUrl, submitLogin, reachOAuthAuthorizationCallback } from '../../../utils/mfa-helpers';
-import { ADMIN_PASSWORD, AUTH_CODE_FORMAT } from '../../../utils/test-constants';
+import { ADMIN_PASSWORD, ADMIN_USERNAME, ALT_ADMIN_PASSWORD, ALT_ADMIN_USERNAME, AUTH_CODE_FORMAT } from '../../../utils/test-constants';
 
 consoleTest.describe('Console admin login (AM-2230)', () => {
   consoleTest.use({ storageState: { cookies: [], origins: [] } });
@@ -37,25 +38,58 @@ consoleTest.describe('Console admin login (AM-2230)', () => {
   });
 });
 
+/**
+ * AM-2192 — an administrator declared in the configuration file rather than the database.
+ *
+ * The account is provisioned as security.providers[0].users[1] by the management service in
+ * docker/local-stack/dev/docker-compose.yml. AM merges that inline provider with the built-in
+ * Gravitee provider instead of replacing it, so both administrators are expected to work.
+ */
 consoleTest.describe('Console alternate admin (AM-2192)', () => {
   consoleTest.use({ storageState: { cookies: [], origins: [] } });
 
-  consoleTest('AM-2192: login with non-default admin credentials when configured', async ({ loginPage, page }, testInfo) => {
+  consoleTest('AM-2192: an administrator added to the configuration file can sign in', async ({ loginPage, page }, testInfo) => {
     linkJira(testInfo, 'AM-2192');
 
-    // eslint-disable-next-line playwright/no-skipped-test -- optional stack configuration
-    consoleTest.skip(
-      !process.env.AM_ALT_ADMIN_USERNAME?.trim() || !process.env.AM_ALT_ADMIN_PASSWORD?.trim(),
-      'Set AM_ALT_ADMIN_USERNAME and AM_ALT_ADMIN_PASSWORD (user must exist for the Management API realm)',
-    );
-
-    const username = process.env.AM_ALT_ADMIN_USERNAME!.trim();
-    const password = process.env.AM_ALT_ADMIN_PASSWORD!.trim();
+    const username = process.env.AM_ALT_ADMIN_USERNAME?.trim() || ALT_ADMIN_USERNAME;
+    const password = process.env.AM_ALT_ADMIN_PASSWORD?.trim() || ALT_ADMIN_PASSWORD;
 
     await loginPage.goto();
     await loginPage.login(username, password);
 
     await expect(page.locator('.gio-side-nav').first()).toBeVisible();
+    await expect(page).toHaveURL(/(?:environments|dashboard|domains)/i);
+    // Prove the session belongs to the configuration-defined account, not the default admin.
+    await new NavbarPage(page).expectSignedInAs(username);
+  });
+
+  consoleTest('AM-2192: the default administrator still works alongside the added one', async ({ loginPage, page }, testInfo) => {
+    linkJira(testInfo, 'AM-2192');
+
+    // Regression guard: enabling the inline provider must not displace the database-backed
+    // 'admin' account that the rest of the suite (and the compose healthcheck) relies on.
+    const username = process.env.AM_ADMIN_USERNAME || ADMIN_USERNAME;
+    const password = process.env.AM_ADMIN_PASSWORD || ADMIN_PASSWORD;
+
+    await loginPage.goto();
+    await loginPage.login(username, password);
+
+    await expect(page.locator('.gio-side-nav').first()).toBeVisible();
+    await expect(page).toHaveURL(/(?:environments|dashboard|domains)/i);
+    await new NavbarPage(page).expectSignedInAs(username);
+  });
+
+  consoleTest('AM-2192: credentials not in the configuration file are refused', async ({ loginPage, page }, testInfo) => {
+    linkJira(testInfo, 'AM-2192');
+
+    await loginPage.goto();
+    await loginPage.submitCredentials('ghostadmin', ALT_ADMIN_PASSWORD);
+
+    // Asserting the error alone would also pass if the console were merely slow, so the
+    // absence of the console shell is checked too.
+    await loginPage.expectError();
+    await expect(page).not.toHaveURL(/(?:environments|dashboard|domains)/i);
+    await expect(page.locator('.gio-side-nav')).toHaveCount(0);
   });
 });
 

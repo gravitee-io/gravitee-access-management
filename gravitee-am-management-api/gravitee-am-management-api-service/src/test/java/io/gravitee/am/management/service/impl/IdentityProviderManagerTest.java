@@ -33,12 +33,14 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.mock.env.MockEnvironment;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +67,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class IdentityProviderManagerTest {
     private static final String ADMIN_USERNAME = "admin";
+    private static final String ALT_ADMIN_USERNAME = "altadmin";
 
     @Spy
     private MockEnvironment environment = new MockEnvironment();
@@ -126,6 +129,53 @@ public class IdentityProviderManagerTest {
                 idp.getType().equals("gravitee-am-idp")));
         verify(idpPluginManager).create(eq("gravitee-am-idp"), any(), any());
 
+    }
+
+    /**
+     * AM-2192: the configuration file may declare more than one administrator. Existing
+     * coverage only ever exercised users[0], so a second entry reaching neither the provider
+     * configuration nor the role mapper would have gone unnoticed.
+     */
+    @Test
+    public void shouldRegisterSecondAdminDefinedInConfiguration() {
+        defineDefaultSecurityConfig(true);
+        doReturn(ALT_ADMIN_USERNAME).when(environment).getProperty("security.providers[0].users[1].username");
+        doReturn("altadminaltadmin").when(environment).getProperty("security.providers[0].users[1].password");
+        doReturn("ORGANIZATION_OWNER").when(environment).getProperty("security.providers[0].users[1].role");
+
+        Role primaryOwner = new Role();
+        primaryOwner.setId("primaryOwnerId");
+        primaryOwner.setName("ORGANIZATION_PRIMARY_OWNER");
+        Role owner = new Role();
+        owner.setId("ownerId");
+        owner.setName("ORGANIZATION_OWNER");
+
+        when(roleService.findRolesByName(any(), any(), any(), any())).thenReturn(Flowable.just(primaryOwner, owner));
+        when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
+        when(idpPluginManager.create(eq("inline-am-idp"), any(), any())).thenReturn(Single.just(Optional.empty()));
+
+        cut.loadIdentityProviders().blockingAwait();
+
+        // the listener takes io.gravitee.am.model.IdentityProvider — qualified because this
+        // class imports the identityprovider.api type of the same name
+        ArgumentCaptor<io.gravitee.am.model.IdentityProvider> captor =
+                ArgumentCaptor.forClass(io.gravitee.am.model.IdentityProvider.class);
+        verify(listener, times(2)).registerAuthenticationProvider(captor.capture());
+
+        io.gravitee.am.model.IdentityProvider inline = captor.getAllValues().stream()
+                .filter(idp -> "inline-am-idp".equals(idp.getType()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("inline provider was not registered"));
+
+        assertTrue("default admin missing from provider configuration", inline.getConfiguration().contains(ADMIN_USERNAME));
+        assertTrue("second admin missing from provider configuration", inline.getConfiguration().contains(ALT_ADMIN_USERNAME));
+
+        assertTrue("no role mapped for the default admin", inline.getRoleMapper().containsKey("primaryOwnerId"));
+        assertTrue("no role mapped for the second admin", inline.getRoleMapper().containsKey("ownerId"));
+        assertTrue("second admin not mapped to ORGANIZATION_OWNER",
+                Arrays.asList(inline.getRoleMapper().get("ownerId")).contains("username=" + ALT_ADMIN_USERNAME));
+        assertTrue("default admin not mapped to ORGANIZATION_PRIMARY_OWNER",
+                Arrays.asList(inline.getRoleMapper().get("primaryOwnerId")).contains("username=" + ADMIN_USERNAME));
     }
 
     @Test

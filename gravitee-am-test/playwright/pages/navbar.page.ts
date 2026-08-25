@@ -95,4 +95,14 @@ export class NavbarPage extends BasePage {
     await this.row(name).hover();
     await this.menu.getByTestId(`domainDefaultToggle-${name}`).click();
   }
+
+  /**
+   * Assert which account the current session belongs to, read from the
+   * account menu's preferred_username. Distinguishes "a console is shown"
+   * from "this specific administrator is signed in".
+   */
+  async expectSignedInAs(username: string): Promise<void> {
+    await this.accountMenuTrigger.click();
+    await expect(this.accountMenu.locator('.userAccountInfo small')).toHaveText(username);
+  }
 }

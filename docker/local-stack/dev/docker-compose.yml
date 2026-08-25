@@ -79,6 +79,18 @@ services:
       - GIO_MAX_MEM=512m
       - GRAVITEE_SERVICES_CORE_HTTP_HOST=0.0.0.0
       - GRAVITEE_HTTP_API_AUTOMATION_ENABLED=true
+      # AM-2192: a second administrator declared in the configuration file, alongside the
+      # default 'admin' shipped as users[0]. The inline provider is merged with the built-in
+      # Gravitee provider rather than replacing it, so 'admin:adminadmin' (and the healthcheck
+      # above) keeps working. Credentials must match ALT_ADMIN_* in playwright/utils/test-constants.ts.
+      # '$' is escaped as '$$' so Compose does not interpolate the BCrypt hash.
+      - GRAVITEE_SECURITY_PROVIDERS_0_ENABLED=true
+      - GRAVITEE_SECURITY_PROVIDERS_0_USERS_1_USERNAME=altadmin
+      # BCrypt hash of 'altadminaltadmin' — AM supports only the $2a$ prefix.
+      - GRAVITEE_SECURITY_PROVIDERS_0_USERS_1_PASSWORD=$$2a$$10$$52d0g.sIqu0Ut59IFTB8f.ld7px0p1Jl7cFPlYn8HK9BjDjUkVjha
+      - GRAVITEE_SECURITY_PROVIDERS_0_USERS_1_ROLE=ORGANIZATION_OWNER
+      - GRAVITEE_SECURITY_PROVIDERS_0_USERS_1_FIRSTNAME=Alternate
+      - GRAVITEE_SECURITY_PROVIDERS_0_USERS_1_LASTNAME=Administrator
 
   am-wait:
     image: curlimages/curl:8.10.1
