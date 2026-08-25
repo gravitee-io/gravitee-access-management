@@ -21,27 +21,25 @@ import { DomainService } from '../../../../services/domain.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DomainStoreService } from '../../../../stores/domain.store';
 
-const DEFAULT_SETTINGS = {
-  enabled: false,
-  maxJwtLifetimeSeconds: 300,
-  clockSkewSeconds: 30,
-  defaultAllowedAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'EdDSA'],
+const DEFAULT_KEY_RETRIEVAL_SETTINGS = {
+  allowUnsecuredHttpUri: false,
+  allowPrivateIpAddress: false,
+  fetchTimeoutMs: 5000,
+  maxResponseSizeKb: 32,
+  cacheTtlSeconds: 300,
+  cacheMaxEntries: 50,
 };
 
-const SUPPORTED_ALGORITHMS = ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'EdDSA', 'PS256', 'PS384', 'PS512'];
-
 @Component({
-  selector: 'app-oidc-spiffe-settings',
-  templateUrl: './spiffe-settings.component.html',
-  styleUrls: ['./spiffe-settings.component.scss'],
+  selector: 'app-trust-domain-key-retrieval',
+  templateUrl: './trust-domain-key-retrieval.component.html',
   standalone: false,
 })
-export class SpiffeSettingsComponent implements OnInit {
+export class TrustDomainKeyRetrievalComponent implements OnInit {
   domainId: string;
   domain: any = {};
   formChanged = false;
   editMode: boolean;
-  supportedAlgorithms = SUPPORTED_ALGORITHMS;
 
   constructor(
     private domainService: DomainService,
@@ -53,37 +51,35 @@ export class SpiffeSettingsComponent implements OnInit {
   ngOnInit() {
     this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
-    this.editMode = this.authService.hasPermissions(['domain_openid_update']);
-    if (!this.domain.oidc.workloadIdentitySettings) {
-      this.domain.oidc.workloadIdentitySettings = { ...DEFAULT_SETTINGS };
+    this.editMode = this.authService.hasPermissions(['domain_settings_update']);
+    if (!this.domain.keyRetrievalSettings) {
+      this.domain.keyRetrievalSettings = { ...DEFAULT_KEY_RETRIEVAL_SETTINGS };
     }
   }
 
   save() {
-    this.domainService.patch(this.domainId, { oidc: this.domain.oidc }).subscribe({
+    this.domainService.patch(this.domainId, { keyRetrievalSettings: this.domain.keyRetrievalSettings }).subscribe({
       next: (data) => {
         this.domainStore.set(data);
         this.domain = data;
         this.formChanged = false;
-        this.snackbarService.open('Configuration updated');
+        this.snackbarService.open('Key retrieval settings updated');
       },
       error: (err: unknown) => {
-        const message = (err as any)?.error?.message || 'Failed to update configuration';
+        const message = (err as any)?.error?.message || 'Failed to update key retrieval settings';
         this.snackbarService.open(message);
       },
     });
   }
 
-  enableSpiffe(event) {
-    if (!this.domain.oidc.workloadIdentitySettings) {
-      this.domain.oidc.workloadIdentitySettings = { ...DEFAULT_SETTINGS };
-    }
-    this.domain.oidc.workloadIdentitySettings.enabled = event.checked;
+  toggleAllowUnsecuredHttpUri(event) {
+    this.domain.keyRetrievalSettings.allowUnsecuredHttpUri = event.checked;
     this.formChanged = true;
   }
 
-  isSpiffeEnabled(): boolean {
-    return this.domain.oidc?.workloadIdentitySettings?.enabled === true;
+  toggleAllowPrivateIpAddress(event) {
+    this.domain.keyRetrievalSettings.allowPrivateIpAddress = event.checked;
+    this.formChanged = true;
   }
 
   modelChanged(): void {

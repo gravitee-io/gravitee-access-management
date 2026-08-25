@@ -265,6 +265,28 @@ export function createKeyMaterial(): KeyAndCertificate {
   };
 }
 
+export function jwkSetOf(certificatePem: string, kid = 'pw-test-key'): { keys: Record<string, unknown>[] } {
+  const publicKey = forge.pki.certificateFromPem(certificatePem).publicKey as forge.pki.rsa.PublicKey;
+  return {
+    keys: [
+      {
+        kty: 'RSA',
+        kid,
+        use: 'sig',
+        alg: 'RS256',
+        n: base64UrlBigInteger(publicKey.n),
+        e: base64UrlBigInteger(publicKey.e),
+      },
+    ],
+  };
+}
+
+function base64UrlBigInteger(value: forge.jsbn.BigInteger): string {
+  const hex = value.toString(16);
+  const padded = hex.length % 2 === 0 ? hex : `0${hex}`;
+  return forge.util.encode64(forge.util.hexToBytes(padded)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 /* ------------------------------------------------------------------ */
 /*  JWT signing + parsing                                              */
 /* ------------------------------------------------------------------ */

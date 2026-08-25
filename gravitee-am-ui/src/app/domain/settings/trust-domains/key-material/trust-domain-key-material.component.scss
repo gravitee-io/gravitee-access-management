@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.trust-domain-usage {
-  padding: 2px 10px;
-  border-radius: 12px;
-  background: var(--mat-sys-surface-container-high, rgb(0 0 0 / 6%));
+:host {
+  display: block;
+}
+
+.key-material-field {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.key-material-error {
+  color: var(--mat-sys-error, #b3261e);
   font-size: 75%;
-  text-transform: uppercase;
 }

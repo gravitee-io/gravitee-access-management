@@ -22,7 +22,6 @@ import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
 import {
-  TrustedIssuer,
   TokenExchangeOAuthSettings,
   TokenExchangeClaimMapping,
   CLAIM_SOURCE_SUBJECT_TOKEN,
@@ -39,7 +38,6 @@ interface TokenExchangeSettings {
   allowedActorTokenTypes: string[];
   allowDelegation: boolean;
   maxDelegationDepth?: number;
-  trustedIssuers?: TrustedIssuer[];
   tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
 }
 
@@ -113,7 +111,6 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowImpersonation: tokenExchangeSettings.allowImpersonation ?? true,
       allowedActorTokenTypes: tokenExchangeSettings.allowedActorTokenTypes ?? this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: tokenExchangeSettings.allowDelegation ?? false,
-      trustedIssuers: tokenExchangeSettings.trustedIssuers ?? [],
     };
 
     normalizedSettings.maxDelegationDepth =
@@ -138,7 +135,6 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowedActorTokenTypes: this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: false,
       maxDelegationDepth: this.defaultDelegationDepth,
-      trustedIssuers: [],
       tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false, claimMappings: [] },
     };
   }
@@ -193,12 +189,11 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
   }
 
   private buildPayload(): any {
-    const settings = this.domain.tokenExchangeSettings;
+    const settings = { ...this.domain.tokenExchangeSettings };
+    delete settings.trustedIssuers;
     return {
       ...this.domain,
-      tokenExchangeSettings: {
-        ...settings,
-      },
+      tokenExchangeSettings: settings,
     };
   }
 
