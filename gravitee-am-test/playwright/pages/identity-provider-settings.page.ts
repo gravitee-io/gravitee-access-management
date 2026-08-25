@@ -33,11 +33,11 @@ export class IdentityProviderSettingsPage extends BasePage {
   }
 
   get databaseField(): Locator {
-    return this.page.locator('input[placeholder="The database used to run query"]');
+    return this.page.locator('input[name="database"]');
   }
 
   get usersCollectionField(): Locator {
-    return this.page.locator('input[placeholder="The collection used to run query"]');
+    return this.page.locator('input[name="usersCollection"]');
   }
 
   get systemClusterToggle(): Locator {
