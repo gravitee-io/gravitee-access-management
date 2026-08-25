@@ -13,22 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
-
-interface NavLink {
-  readonly href: string;
-  readonly label: string;
+:host {
+  display: block;
 }
 
-@Component({
-  selector: 'app-token-exchange-container',
-  templateUrl: './token-exchange-container.component.html',
-  styleUrls: ['./token-exchange-container.component.scss'],
-  standalone: false,
-})
-export class TokenExchangeContainerComponent {
-  navLinks: NavLink[] = [
-    { href: 'settings', label: 'Settings' },
-    { href: 'trusted-issuers', label: 'Trusted Issuers' },
-  ];
+.trust-domain-field {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.staging-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.staging-field {
+  flex: 1;
+}
+
+.section-hint {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 75%;
+}
+
+.sub-section-title {
+  margin-bottom: 4px;
+}
+
+.validation-error {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  color: var(--mat-sys-error, #b3261e);
 }

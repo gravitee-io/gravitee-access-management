@@ -16,7 +16,7 @@
 
 -->
 <div class="gv-page-container">
-  <h1>Token Exchange</h1>
+  <h1>Trusted Domains</h1>
   <nav mat-tab-nav-bar color="accent" [tabPanel]="tabPanel">
     <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
       {{ link.label }}
@@ -24,8 +24,6 @@
   </nav>
 
   <mat-tab-nav-panel #tabPanel>
-    <div class="token-exchange-content">
-      <router-outlet></router-outlet>
-    </div>
+    <router-outlet></router-outlet>
   </mat-tab-nav-panel>
 </div>
