@@ -58,6 +58,18 @@ export class LoginPage {
     await this.page.waitForURL(/.*(?:environments|dashboard|domains).*/i);
   }
 
+  /**
+   * Submit credentials without waiting for a redirect to the console.
+   * Use for sign-in attempts that are expected to be refused, where login()
+   * would block until its navigation timeout.
+   */
+  async submitCredentials(username: string, password: string): Promise<void> {
+    await this.usernameInput.waitFor({ state: 'visible' });
+    await this.usernameInput.fill(username);
+    await this.passwordInput.fill(password);
+    await this.signInButton.click();
+  }
+
   async expectLoginFormVisible(): Promise<void> {
     await expect(this.usernameInput).toBeVisible();
     await expect(this.passwordInput).toBeVisible();
