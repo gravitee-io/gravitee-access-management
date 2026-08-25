@@ -273,6 +273,9 @@ public class JWTServiceImpl implements JWTService {
             try {
                 String encodedToken = certificateProvider.getJwtBuilder().sign(jwt);
                 emitter.onSuccess(encodedToken);
+            } catch (TemporarilyUnavailableException ex) {
+                log.error("Failed to sign JWT", ex);
+                emitter.onError(ex);
             } catch (Exception ex) {
                 log.error("Failed to sign JWT", ex);
                 emitter.onError(new InvalidTokenException("The JWT token couldn't be signed", ex));
