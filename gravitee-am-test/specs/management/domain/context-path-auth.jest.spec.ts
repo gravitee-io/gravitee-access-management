@@ -15,7 +15,8 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
-import { performGet, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { introspectToken, performGet, performPost, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
 import { setup } from '../../test-fixture';
 import { ContextPathAuthFixture, setupContextPathAuthFixture } from './fixtures/context-path-auth-fixture';
 
@@ -79,5 +80,31 @@ describe('Domain context path — authenticating through an application (AM-2224
 
     expect(response.status).toBeGreaterThanOrEqual(400);
     expect(response.status).toBeLessThan(500);
+  });
+  it(jira`a token minted before the change stays valid but keeps the old issuer ${'AM-2224'}`, async () => {
+    const introspection = await introspectToken(
+      fixture.openIdConfiguration.introspection_endpoint,
+      fixture.tokenMintedOnOriginalPath,
+      applicationBase64Token(fixture.application),
+    );
+
+    // Moving a domain's context path is a routing change, not a revocation event, so a token
+    // issued beforehand is still accepted at the endpoints in their new location.
+    expect(introspection.active).toEqual(true);
+    // It keeps the issuer it was minted with, which no longer resolves. Worth pinning down:
+    // a relying party that validates iss, or runs discovery from it, will not find that path.
+    expect(introspection.iss).toContain(fixture.originalPath);
+
+    // The introspection endpoint on the old path is itself gone.
+    const onOldPath = await performPost(
+      process.env.AM_GATEWAY_URL,
+      `${fixture.originalPath}/oauth/introspect`,
+      `token=${fixture.tokenMintedOnOriginalPath}`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+      },
+    );
+    expect(onOldPath.status).toEqual(404);
   });
 });

@@ -29,7 +29,7 @@ import {
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
@@ -52,6 +52,9 @@ export interface ContextPathAuthFixture extends Fixture {
    * identical if the domain had never been reachable there in the first place.
    */
   originalPathStatusBeforeChange: number;
+  originalOidcConfig: any;
+  tokenMintedOnOriginalPath: string;
+  domainOnOriginalPath: { hrid: string };
   /** Discovery document fetched from the domain after the context path changed. */
   openIdConfiguration: DomainOidcConfig;
   /**
@@ -119,7 +122,13 @@ export const setupContextPathAuthFixture = async (): Promise<ContextPathAuthFixt
   await createUser(domain.id, accessToken, user);
 
   await startDomain(domain.id, accessToken);
-  await waitForDomainStart(domain);
+  const startedOnOriginalPath = await waitForDomainStart(domain);
+  const originalOidcConfig = startedOnOriginalPath.oidcConfig;
+
+  // Mint a token on the original path, before anything moves.
+  const preChangePostLogin = await signInUser({ hrid: domain.hrid }, application, user, originalOidcConfig);
+  const preChangeTokenResponse = await requestToken(application, originalOidcConfig, preChangePostLogin);
+  const tokenMintedOnOriginalPath = preChangeTokenResponse.body.access_token;
 
   // Record that the domain really is reachable on its original path, before moving it.
   const originalPathStatusBeforeChange = (
@@ -141,6 +150,9 @@ export const setupContextPathAuthFixture = async (): Promise<ContextPathAuthFixt
     newPath,
     originalPath,
     originalPathStatusBeforeChange,
+    originalOidcConfig,
+    tokenMintedOnOriginalPath,
+    domainOnOriginalPath: { hrid: domain.hrid },
     openIdConfiguration,
     domainOnNewPath: { hrid: newPath.slice(1) },
     cleanUp: async () => {
