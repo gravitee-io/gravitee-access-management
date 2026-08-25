@@ -37,6 +37,9 @@ import {
   GraviteeLicense,
   GraviteeLicenseFromJSON,
   GraviteeLicenseToJSON,
+  InstallationConfiguration,
+  InstallationConfigurationFromJSON,
+  InstallationConfigurationToJSON,
   InstallationEntity,
   InstallationEntityFromJSON,
   InstallationEntityToJSON,
@@ -1119,9 +1122,11 @@ export class PlatformApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get the installation type of this instance
+   * Get the installation type of this instance and the storage rules it applies to identity providers
    */
-  async getInstallationConfigurationRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+  async getInstallationConfigurationRaw(
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<InstallationConfiguration>> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -1144,15 +1149,16 @@ export class PlatformApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse(response, (jsonValue) => InstallationConfigurationFromJSON(jsonValue));
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get the installation type of this instance
+   * Get the installation type of this instance and the storage rules it applies to identity providers
    */
-  async getInstallationConfiguration(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getInstallationConfigurationRaw(initOverrides);
+  async getInstallationConfiguration(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<InstallationConfiguration> {
+    const response = await this.getInstallationConfigurationRaw(initOverrides);
+    return await response.value();
   }
 
   /**
