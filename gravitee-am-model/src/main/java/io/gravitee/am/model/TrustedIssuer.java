@@ -27,13 +27,17 @@ import java.util.Map;
  * Defines an external issuer whose JWTs can be accepted as subject/actor tokens
  * when validated with the configured key material (JWKS URL or PEM certificate).
  *
+ * @deprecated superseded by token-exchange trusted domains; this shape is only the projection
+ * over them that the deprecated domain-level API still speaks.
  * @see TokenExchangeSettings#getTrustedIssuers()
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693 - OAuth 2.0 Token Exchange</a>
  * @author GraviteeSource Team
  */
+@Deprecated
 @Getter
 @Setter
-@Schema(title = "Trusted issuer", description = "An external token issuer whose JWTs are accepted as subject or " +
+@Schema(title = "Trusted issuer", deprecated = true,
+        description = "An external token issuer whose JWTs are accepted as subject or " +
         "actor tokens during token exchange, validated with the configured key material.")
 public class TrustedIssuer {
 

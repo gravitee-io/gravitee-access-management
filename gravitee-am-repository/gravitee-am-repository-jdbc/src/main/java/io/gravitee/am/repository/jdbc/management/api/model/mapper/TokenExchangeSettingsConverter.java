@@ -24,13 +24,26 @@ public class TokenExchangeSettingsConverter extends DozerConverter<TokenExchange
         super(TokenExchangeSettings.class, String.class);
     }
 
+    /**
+     * Trusted issuers are deliberately dropped: they live as token-exchange trusted domains and the
+     * inline list is only a projection over them.
+     */
     @Override
     public String convertTo(TokenExchangeSettings tokenExchangeSettings, String s) {
-        return JSONMapper.toJson(tokenExchangeSettings);
+        return JSONMapper.toJson(withoutTrustedIssuers(tokenExchangeSettings));
     }
 
     @Override
     public TokenExchangeSettings convertFrom(String s, TokenExchangeSettings tokenExchangeSettings) {
         return JSONMapper.toBean(s, TokenExchangeSettings.class);
+    }
+
+    private static TokenExchangeSettings withoutTrustedIssuers(TokenExchangeSettings settings) {
+        if (settings == null || settings.getTrustedIssuers() == null) {
+            return settings;
+        }
+        TokenExchangeSettings copy = new TokenExchangeSettings(settings);
+        copy.setTrustedIssuers(null);
+        return copy;
     }
 }

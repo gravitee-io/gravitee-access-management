@@ -128,7 +128,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
                         return Maybe.error(new InvalidClientException("Client missing SPIFFE settings"));
                     }
                     return Maybe.fromOptional(trustDomainManager.findBySpiffeTrustDomain(spiffe.getTrustDomain()))
-                            .switchIfEmpty(Maybe.error(new InvalidClientException("Trust domain not registered")))
+                            .switchIfEmpty(Maybe.error(() -> new InvalidClientException("Trust domain not registered")))
                             .flatMap(td -> {
                                 String fail = new SpiffeJwtSvidValidator(settings)
                                         .validate(signedJWT, td, spiffe, tokenEndpoint);

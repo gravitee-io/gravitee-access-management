@@ -35,6 +35,11 @@ public class TokenExchangeSettingsMongo {
     private List<String> allowedActorTokenTypes;
     private boolean allowDelegation;
     private Integer maxDelegationDepth;
+    /**
+     * @deprecated read only, so that the migration to token-exchange trusted domains can still see
+     * what a security domain declared before the cutover. Never written back.
+     */
+    @Deprecated
     private List<TrustedIssuerMongo> trustedIssuers;
     private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
 
@@ -138,7 +143,8 @@ public class TokenExchangeSettingsMongo {
     }
 
     /**
-     * Convert domain model to MongoDB representation.
+     * Convert domain model to MongoDB representation. Trusted issuers are deliberately dropped:
+     * they live as token-exchange trusted domains and the inline list is only a projection.
      */
     public static TokenExchangeSettingsMongo convert(TokenExchangeSettings settings) {
         if (settings == null) {
@@ -152,11 +158,6 @@ public class TokenExchangeSettingsMongo {
         mongo.setAllowedActorTokenTypes(settings.getAllowedActorTokenTypes());
         mongo.setAllowDelegation(settings.isAllowDelegation());
         mongo.setMaxDelegationDepth(settings.getMaxDelegationDepth());
-        if (settings.getTrustedIssuers() != null) {
-            mongo.setTrustedIssuers(settings.getTrustedIssuers().stream()
-                    .map(TrustedIssuerMongo::convert)
-                    .toList());
-        }
         mongo.setTokenExchangeOAuthSettings(TokenExchangeOAuthSettingsMongo.convert(settings.getTokenExchangeOAuthSettings()));
         return mongo;
     }

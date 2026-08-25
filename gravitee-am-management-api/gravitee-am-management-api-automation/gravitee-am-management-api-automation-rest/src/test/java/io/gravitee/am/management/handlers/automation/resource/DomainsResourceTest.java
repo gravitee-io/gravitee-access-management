@@ -18,13 +18,20 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.KeyResolutionMethod;
+import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -33,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -128,6 +136,52 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals("customer-auth", readEntity(response, AutomationDomain.class).getAutomationKey());
+    }
+
+    @Test
+    void put_declares_trusted_issuers_as_token_exchange_trusted_domains() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(existing));
+        when(trustDomainService.create(eq(existing), any(NewTrustDomain.class), any()))
+                .thenReturn(Single.just(new TrustDomain()));
+
+        AutomationDomain in = definition("customer-auth");
+        TokenExchangeSettings tokenExchange = new TokenExchangeSettings();
+        TrustedIssuer trustedIssuer = new TrustedIssuer();
+        trustedIssuer.setIssuer("https://issuer.example.com");
+        trustedIssuer.setKeyResolutionMethod(KeyResolutionMethod.JWKS_URL);
+        trustedIssuer.setJwksUri("https://issuer.example.com/keys");
+        tokenExchange.setTrustedIssuers(List.of(trustedIssuer));
+        in.setTokenExchangeSettings(tokenExchange);
+
+        assertEquals(200, put(domainsTarget(), in).getStatus());
+
+        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
+        verify(trustDomainService).create(eq(existing), captor.capture(), any());
+        assertEquals("https://issuer.example.com", captor.getValue().getIssuer());
+    }
+
+    @Test
+    void put_omitting_trusted_issuers_stops_trusting_them() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(existing));
+        when(trustDomainService.findByReference(ReferenceType.DOMAIN, domainId)).thenReturn(Flowable.just(
+                TrustDomain.builder()
+                        .id("td-1")
+                        .name("https-issuer.example.com")
+                        .issuer("https://issuer.example.com")
+                        .build()));
+        when(trustDomainService.delete(eq(existing), anyString(), any())).thenReturn(Completable.complete());
+
+        assertEquals(200, put(domainsTarget(), definition("customer-auth")).getStatus());
+
+        verify(trustDomainService).delete(eq(existing), eq("td-1"), any());
     }
 
     @Test

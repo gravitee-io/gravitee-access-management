@@ -38,4 +38,8 @@ public interface TrustDomainManager extends Service {
      */
     Optional<TrustDomain> findByIssuer(String issuer);
 
+    /**
+     * Whether the security domain vouches for any external issuer.
+     */
+    boolean hasTokenExchangeTrust();
 }

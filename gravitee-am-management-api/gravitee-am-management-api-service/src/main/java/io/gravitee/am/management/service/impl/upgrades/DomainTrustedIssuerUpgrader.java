@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerNaming;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.ReferenceType;
@@ -37,29 +38,22 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Date;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_TRUSTED_ISSUER_UPGRADER;
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
 /**
  * Gives every trusted issuer declared inside a security domain's token-exchange settings a trusted
- * domain of its own. The inline declarations are left in place and stay authoritative; this upgrader
- * only makes the entities exist, so the migration can be proven before anything reads them.
+ * domain of its own, then re-saves the security domain so no stored domain keeps a vestigial inline
+ * list. A security domain holding an issuer that could not be migrated keeps its list untouched, so
+ * a later run can still see what it declared.
  *
  * <p>Entities are written straight to the repository rather than through
  * {@code TrustDomainService}: that service applies the SSRF guard the inline shape never had, so an
@@ -67,6 +61,10 @@ import static java.util.stream.Collectors.toSet;
  * the upgrade rather than migrate. It does bypass the length bound that service enforces, so an
  * inline issuer too long to store is left inline and warned about rather than failing the upgrade
  * of every other security domain.
+ *
+ * <p>Runs before every upgrader that rewrites a security domain. The storage layer no longer
+ * persists the inline declarations, so any earlier domain write erases the issuers this upgrader
+ * reads and the migration silently finds nothing left to do.
  *
  * @author GraviteeSource Team
  */
@@ -78,11 +76,6 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "trusted_issuer_trust_domain_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Trusted issuers can't be migrated to trusted domains, other instance may process them or an upgrader has failed previously";
-
-    private static final int MAX_NAME_LENGTH = 255;
-    private static final int DIGEST_LENGTH = 8;
-    private static final Pattern OUTSIDE_LABEL = Pattern.compile("[^a-z0-9.-]+");
-    private static final Pattern LABEL_EDGES = Pattern.compile("(?:^[.-]+)|(?:[.-]+$)");
 
     private final DomainService domainService;
     private final TrustDomainRepository trustDomainRepository;
@@ -136,27 +129,39 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
         // names are unique across every trusted domain, so a derived name may not collide with a
         // trusted domain that only serves SPIFFE either
         Set<String> takenNames = existing.stream().map(TrustDomain::getName).collect(toSet());
-        Map<String, String> derivedNames = deriveNames(issuers, takenNames);
+        Map<String, String> derivedNames = TrustedIssuerNaming.deriveNames(
+                issuers.stream().map(TrustedIssuer::getIssuer).filter(issuer -> !alreadyVouchedFor.contains(issuer)).toList(),
+                takenNames);
 
         return Flowable.fromIterable(issuers)
                 .filter(issuer -> !alreadyVouchedFor.contains(issuer.getIssuer()))
-                .concatMapCompletable(issuer ->
-                        migrateIssuer(domain, issuer, derivedNames.get(issuer.getIssuer()), takenNames));
+                .concatMapSingle(issuer ->
+                        migrateIssuer(domain, issuer, derivedNames.get(issuer.getIssuer()), takenNames))
+                .reduce(true, (allMigrated, migrated) -> allMigrated && migrated)
+                .flatMapCompletable(allMigrated -> allMigrated ? purgeInlineIssuers(domain) : Completable.complete());
     }
 
-    private Completable migrateIssuer(Domain domain, TrustedIssuer issuer, String name, Set<String> takenNames) {
+    private Single<Boolean> migrateIssuer(Domain domain, TrustedIssuer issuer, String name, Set<String> takenNames) {
         if (issuer.getIssuer().length() > TrustDomain.ISSUER_MAX_LENGTH) {
             log.warn("Trusted issuer {} of domain {} is left inline: a trusted domain bounds its issuer at {} characters",
                     issuer.getIssuer(), domain.getId(), TrustDomain.ISSUER_MAX_LENGTH);
-            return Completable.complete();
+            return Single.just(false);
         }
         if (takenNames.contains(name)) {
             log.warn("Trusted issuer {} of domain {} is left inline: a trusted domain already holds its derived name {}",
                     issuer.getIssuer(), domain.getId(), name);
-            return Completable.complete();
+            return Single.just(false);
         }
         log.debug("Migrating trusted issuer {} of domain {} to trusted domain {}", issuer.getIssuer(), domain.getId(), name);
-        return trustDomainRepository.create(asTrustDomain(domain, issuer, name)).ignoreElement();
+        return trustDomainRepository.create(asTrustDomain(domain, issuer, name)).map(created -> true);
+    }
+
+    /**
+     * Drops the stored inline declarations now that the entities are authoritative. The storage
+     * layer no longer persists them, so re-saving the security domain is all it takes.
+     */
+    private Completable purgeInlineIssuers(Domain domain) {
+        return domainService.update(domain.getId(), domain).ignoreElement();
     }
 
     private static TrustDomain asTrustDomain(Domain domain, TrustedIssuer issuer, String name) {
@@ -203,48 +208,6 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
                 .filter(issuer -> issuer != null && StringUtils.hasText(issuer.getIssuer()))
                 .forEach(issuer -> byIssuer.putIfAbsent(issuer.getIssuer(), issuer));
         return List.copyOf(byIssuer.values());
-    }
-
-    private static Map<String, String> deriveNames(List<TrustedIssuer> issuers, Set<String> takenNames) {
-        Map<String, Long> occurrences = issuers.stream()
-                .collect(groupingBy(issuer -> slugOf(issuer.getIssuer()), counting()));
-        Map<String, String> names = new LinkedHashMap<>();
-        issuers.forEach(issuer -> {
-            String slug = slugOf(issuer.getIssuer());
-            boolean ambiguous = slug.isEmpty() || occurrences.get(slug) > 1 || takenNames.contains(slug);
-            names.put(issuer.getIssuer(), ambiguous ? disambiguate(issuer.getIssuer(), slug) : slug);
-        });
-        return names;
-    }
-
-    private static String slugOf(String issuer) {
-        return slugOf(issuer, MAX_NAME_LENGTH);
-    }
-
-    private static String slugOf(String issuer, int maxLength) {
-        String slug = trimEdges(OUTSIDE_LABEL.matcher(issuer.toLowerCase(Locale.ROOT)).replaceAll("-"));
-        return slug.length() > maxLength ? trimEdges(slug.substring(0, maxLength)) : slug;
-    }
-
-    private static String trimEdges(String slug) {
-        return LABEL_EDGES.matcher(slug).replaceAll("");
-    }
-
-    private static String disambiguate(String issuer, String slug) {
-        String digest = digestOf(issuer);
-        if (slug.isEmpty()) {
-            return digest;
-        }
-        return slugOf(issuer, MAX_NAME_LENGTH - digest.length() - 1) + "-" + digest;
-    }
-
-    private static String digestOf(String issuer) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(issuer.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest).substring(0, DIGEST_LENGTH);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is required to name a migrated trusted domain", e);
-        }
     }
 
     @Override
