@@ -27,6 +27,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -76,6 +77,9 @@ class IdentityProviderServiceImplTest {
 
     @Mock
     private PluginLicenseGate pluginLicenseGate;
+
+    @Mock
+    private SystemClusterIdpPolicy systemClusterIdpPolicy;
 
     @InjectMocks
     private IdentityProviderServiceImpl service;

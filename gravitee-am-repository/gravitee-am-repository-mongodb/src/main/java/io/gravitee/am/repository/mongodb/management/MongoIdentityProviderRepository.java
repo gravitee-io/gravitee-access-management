@@ -192,6 +192,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
         identityProvider.setPasswordPolicy(identityProviderMongo.getPasswordPolicy());
         identityProvider.setManagedBy(identityProviderMongo.getManagedBy() != null ? ManagedBy.valueOf(identityProviderMongo.getManagedBy()) : null);
+        identityProvider.setSystemClusterRestricted(identityProviderMongo.isSystemClusterRestricted());
         return identityProvider;
     }
 
@@ -222,6 +223,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
                             .collect(toCollection(BsonArray::new)));
             identityProviderMongo.setPasswordPolicy(identityProvider.getPasswordPolicy());
             identityProviderMongo.setManagedBy(identityProvider.getManagedBy() != null ? identityProvider.getManagedBy().name() : null);
+            identityProviderMongo.setSystemClusterRestricted(identityProvider.isSystemClusterRestricted());
             return identityProviderMongo;
         });
     }

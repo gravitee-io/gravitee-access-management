@@ -33,6 +33,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import io.gravitee.am.service.idp.SystemClusterIdpSettings;
+import io.gravitee.am.service.model.InstallationConfiguration;
 import org.springframework.core.env.Environment;
 
 import java.util.Map;
@@ -51,6 +53,8 @@ public class ConfigurationResource {
     private SpelService spelService;
     @Inject
     private Environment environment;
+    @Inject
+    private SystemClusterIdpSettings systemClusterIdpSettings;
 
     @GET
     @Path("/flow/schema")
@@ -108,11 +112,18 @@ public class ConfigurationResource {
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "getInstallationConfiguration",
-            summary = "Get the installation type of this instance",
+            summary = "Get the installation type of this instance and the storage rules it applies to identity providers",
             description = "There is no particular permission needed. User must be authenticated.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Installation configuration successfully fetched",
+                    content = @Content(mediaType = jakarta.ws.rs.core.MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = InstallationConfiguration.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getInstallation(@Suspended final AsyncResponse response) {
         var type = CloudProperties.isManagedCloudEnabled(environment) ? CloudProperties.INSTALLATION_TYPE_MANAGED : CloudProperties.INSTALLATION_TYPE_STANDALONE;
-        response.resume(Map.of("type", type));
+        response.resume(new InstallationConfiguration(type, new InstallationConfiguration.IdentityProviderStorage(
+                systemClusterIdpSettings.isPinDatabase(),
+                systemClusterIdpSettings.isPrefixUsersCollection())));
     }
 
 }

@@ -127,6 +127,8 @@ models/Group.ts
 models/GroupPage.ts
 models/I18nDictionary.ts
 models/IdentityProvider.ts
+models/IdentityProviderStorage.ts
+models/InstallationConfiguration.ts
 models/InstallationEntity.ts
 models/JWK.ts
 models/JWKSet.ts

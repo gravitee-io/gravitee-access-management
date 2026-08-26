@@ -18,8 +18,10 @@ package io.gravitee.am.identityprovider.mongo;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,6 +66,12 @@ public class MongoAbstractProviderTest {
     @Mock
     private ClientWrapper commonClientWrapper;
 
+    @Mock
+    private ClientWrapper datasourceClientWrapper;
+
+    @Mock
+    private DataSourcesConfiguration dataSourcesConfiguration;
+
     private final MockEnvironment environment = new MockEnvironment();
     private final MongoIdentityProviderConfiguration configuration = new MongoIdentityProviderConfiguration();
     private final IdentityProvider identityProviderEntity = new IdentityProvider();
@@ -78,6 +86,7 @@ public class MongoAbstractProviderTest {
         ReflectionTestUtils.setField(provider, "identityProviderEntity", identityProviderEntity);
         ReflectionTestUtils.setField(provider, "configuration", configuration);
         ReflectionTestUtils.setField(provider, "environment", environment);
+        ReflectionTestUtils.setField(provider, "dataSourcesConfiguration", dataSourcesConfiguration);
 
         identityProviderEntity.setSystem(true);
         identityProviderEntity.setDataPlaneId(DATA_PLANE_ID);
@@ -191,5 +200,73 @@ public class MongoAbstractProviderTest {
 
         IllegalStateException error = Assert.assertThrows(IllegalStateException.class, () -> provider.afterPropertiesSet());
         Assert.assertTrue(error.getMessage().contains("repositories.system-cluster"));
+    }
+
+    @Test
+    public void restrictedProvider_readsTheDatabaseFromItsClientWrapper() {
+        environment.setProperty("repositories.system-cluster-idp.pin-database", "true");
+        identityProviderEntity.setSystem(false);
+        identityProviderEntity.setDataPlaneId(null);
+        identityProviderEntity.setSystemClusterRestricted(true);
+        configuration.setUseSystemCluster(true);
+        configuration.setDatabase("configured-db");
+        when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
+        when(commonConnectionProvider.getClientWrapper(Scope.MANAGEMENT.getName())).thenReturn(commonClientWrapper);
+        when(commonClientWrapper.getDatabaseName()).thenReturn("gravitee-am");
+
+        provider.afterPropertiesSet();
+
+        Assert.assertEquals("gravitee-am", configuration.getDatabase());
+    }
+
+    @Test
+    public void restrictedProvider_keepsItsDatabaseWhenOnlyTheCollectionRuleIsOn() {
+        environment.setProperty("repositories.system-cluster-idp.pin-database", "false");
+        environment.setProperty("repositories.system-cluster-idp.prefix-users-collection", "true");
+        identityProviderEntity.setSystem(false);
+        identityProviderEntity.setDataPlaneId(null);
+        identityProviderEntity.setSystemClusterRestricted(true);
+        configuration.setUseSystemCluster(true);
+        configuration.setDatabase("configured-db");
+        when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
+        when(commonConnectionProvider.getClientWrapper(Scope.MANAGEMENT.getName())).thenReturn(commonClientWrapper);
+
+        provider.afterPropertiesSet();
+
+        Assert.assertEquals("configured-db", configuration.getDatabase());
+    }
+
+    @Test
+    public void providerCreatedBeforeTheRestriction_keepsItsConfiguredDatabase() {
+        identityProviderEntity.setSystem(false);
+        identityProviderEntity.setDataPlaneId(null);
+        identityProviderEntity.setSystemClusterRestricted(false);
+        configuration.setUseSystemCluster(true);
+        configuration.setDatabase("configured-db");
+        when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
+        when(commonConnectionProvider.getClientWrapper(Scope.MANAGEMENT.getName())).thenReturn(commonClientWrapper);
+
+        provider.afterPropertiesSet();
+
+        Assert.assertEquals("configured-db", configuration.getDatabase());
+    }
+
+    @Test
+    public void restrictedProviderNamingADatasource_keepsTheDatasourceDatabase() {
+        identityProviderEntity.setSystem(false);
+        identityProviderEntity.setDataPlaneId(null);
+        identityProviderEntity.setSystemClusterRestricted(true);
+        configuration.setUseSystemCluster(true);
+        configuration.setDatabase("configured-db");
+        configuration.setDatasourceId("ds-1");
+        environment.setProperty("datasources.ds1.settings.dbname", "datasource-db");
+        when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
+        when(dataSourcesConfiguration.getDataSourceKeyById("ds-1")).thenReturn("datasources.ds1");
+        when(commonConnectionProvider.getClientWrapperFromDatasource("ds-1", "datasources.ds1.settings."))
+                .thenReturn(datasourceClientWrapper);
+
+        provider.afterPropertiesSet();
+
+        Assert.assertEquals("datasource-db", configuration.getDatabase());
     }
 }

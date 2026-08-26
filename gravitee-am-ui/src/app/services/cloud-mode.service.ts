@@ -20,21 +20,43 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 
+export interface IdentityProviderStorageRules {
+  pinDatabase: boolean;
+  prefixUsersCollection: boolean;
+}
+
+interface InstallationConfiguration {
+  type?: string;
+  identityProviderStorage?: Partial<IdentityProviderStorageRules>;
+}
+
 @Injectable()
 export class CloudModeService {
   private platformURL = AppConfig.settings.baseURL + '/platform';
-  private isCloudModeEnabled$: Observable<boolean>;
+  private installation$: Observable<InstallationConfiguration>;
 
   constructor(private http: HttpClient) {}
 
   isCloudModeEnabled(): Observable<boolean> {
-    if (!this.isCloudModeEnabled$) {
-      this.isCloudModeEnabled$ = this.http.get<any>(this.platformURL + '/configuration/installation').pipe(
-        map((response) => response.type === 'managed'),
-        catchError(() => of(false)),
+    return this.getInstallation().pipe(map((installation) => installation.type === 'managed'));
+  }
+
+  identityProviderStorageRules(): Observable<IdentityProviderStorageRules> {
+    return this.getInstallation().pipe(
+      map((installation) => ({
+        pinDatabase: installation.identityProviderStorage?.pinDatabase === true,
+        prefixUsersCollection: installation.identityProviderStorage?.prefixUsersCollection === true,
+      })),
+    );
+  }
+
+  private getInstallation(): Observable<InstallationConfiguration> {
+    if (!this.installation$) {
+      this.installation$ = this.http.get<InstallationConfiguration>(this.platformURL + '/configuration/installation').pipe(
+        catchError(() => of({} as InstallationConfiguration)),
         shareReplay({ bufferSize: 1, refCount: true }),
       );
     }
-    return this.isCloudModeEnabled$;
+    return this.installation$;
   }
 }

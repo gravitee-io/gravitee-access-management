@@ -133,6 +133,12 @@ export interface IdentityProvider {
   system?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof IdentityProvider
+   */
+  systemClusterRestricted?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof IdentityProvider
    */
@@ -190,6 +196,7 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
     system: json['system'] == null ? undefined : json['system'],
+    systemClusterRestricted: json['systemClusterRestricted'] == null ? undefined : json['systemClusterRestricted'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
   };
@@ -220,6 +227,7 @@ export function IdentityProviderToJSONTyped(value?: Omit<IdentityProvider, 'key'
     referenceType: value['referenceType'],
     roleMapper: value['roleMapper'],
     system: value['system'],
+    systemClusterRestricted: value['systemClusterRestricted'],
     type: value['type'],
     updatedAt: value['updatedAt'],
   };
