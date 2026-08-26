@@ -34,6 +34,9 @@ const REGION_VALUE = 'eu-west';
  */
 const REVISION_KEY = 'revision';
 
+/** A metadata key deliberately never written, for the claim that refers to nothing. */
+const UNSET_KEY = 'never_set';
+
 const metadataExpression = (key: string) => `{#context.attributes['client'].metadata['${key}']}`;
 
 let fixture: TokenIdentityFixture;
@@ -46,6 +49,10 @@ beforeAll(async () => {
       { tokenType: 'ACCESS_TOKEN', claimName: 'app_tier', claimValue: metadataExpression(TIER_KEY) },
       { tokenType: 'ACCESS_TOKEN', claimName: 'app_region', claimValue: metadataExpression(REGION_KEY) },
       { tokenType: 'ACCESS_TOKEN', claimName: 'app_revision', claimValue: metadataExpression(REVISION_KEY) },
+      // Same key through the id token, to show metadata is not access-token only.
+      { tokenType: 'ID_TOKEN', claimName: 'app_tier', claimValue: metadataExpression(TIER_KEY) },
+      // Names a key that is never set, for the claim-with-no-metadata case.
+      { tokenType: 'ACCESS_TOKEN', claimName: 'app_absent', claimValue: metadataExpression(UNSET_KEY) },
     ],
   });
 });
@@ -60,6 +67,12 @@ afterAll(async () => {
 const freshClaims = async (): Promise<Record<string, any>> => {
   const tokens = await fixture.passwordGrant('openid');
   return decodeToken(tokens.access_token).payload;
+};
+
+/** The same, for the id token. */
+const freshIdTokenClaims = async (): Promise<Record<string, any>> => {
+  const tokens = await fixture.passwordGrant('openid');
+  return decodeToken(tokens.id_token).payload;
 };
 
 /**
@@ -83,7 +96,9 @@ const writeMetadata = async (metadata: Record<string, string>): Promise<void> =>
 };
 
 describe('Application metadata - an entry is readable as a claim', () => {
-  it(jira`each entry reaches the token through its own claim ${'AM-2173'}`, async () => {
+  // Serves both tickets: AM-2175 needs a claim reading a metadata value, and AM-2173 needs it
+  // as the anchor proving the value was there before the removal below.
+  it(jira`each entry reaches the token through its own claim ${'AM-2173'}${'AM-2175'}`, async () => {
     await writeMetadata({ [TIER_KEY]: TIER_VALUE, [REGION_KEY]: REGION_VALUE });
 
     const claims = await freshClaims();
@@ -92,6 +107,25 @@ describe('Application metadata - an entry is readable as a claim', () => {
 
     const app = await getApplication(fixture.domain.id, fixture.accessToken, fixture.app.id);
     expect(app.metadata).toMatchObject({ [TIER_KEY]: TIER_VALUE, [REGION_KEY]: REGION_VALUE });
+  });
+
+  it(jira`a metadata claim reaches the id token as well as the access token ${'AM-2175'}`, async () => {
+    await writeMetadata({ [TIER_KEY]: TIER_VALUE, [REGION_KEY]: REGION_VALUE });
+
+    expect((await freshIdTokenClaims()).app_tier).toEqual(TIER_VALUE);
+    // Asserted on both, so a pass cannot come from the claim being configured for one only.
+    expect((await freshClaims()).app_tier).toEqual(TIER_VALUE);
+  });
+
+  it(jira`a claim naming metadata that is not set is left out of the token ${'AM-2175'}`, async () => {
+    await writeMetadata({ [TIER_KEY]: TIER_VALUE, [REGION_KEY]: REGION_VALUE });
+
+    const claims = await freshClaims();
+    // ExecutionContextTokenEnhancer only writes a claim when its expression evaluates to a
+    // non-null value, so an unknown key leaves the claim out rather than carrying null.
+    expect(claims).not.toHaveProperty('app_absent');
+    // The token is still issued and its other claims are unaffected.
+    expect(claims.app_tier).toEqual(TIER_VALUE);
   });
 });
 
