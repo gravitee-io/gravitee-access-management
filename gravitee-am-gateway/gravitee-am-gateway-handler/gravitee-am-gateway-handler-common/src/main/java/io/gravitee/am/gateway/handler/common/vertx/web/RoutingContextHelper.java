@@ -45,4 +45,12 @@ public final class RoutingContextHelper {
     public static void setSession(RoutingContext ctx, Session session) {
         ((RoutingContextInternal) ctx.getDelegate()).setSession(session);
     }
+
+    public static io.gravitee.am.model.User endUser(RoutingContext ctx) {
+        if (ctx.user() == null
+                || !(ctx.user().getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User user)) {
+            return null;
+        }
+        return user.getUser();
+    }
 }

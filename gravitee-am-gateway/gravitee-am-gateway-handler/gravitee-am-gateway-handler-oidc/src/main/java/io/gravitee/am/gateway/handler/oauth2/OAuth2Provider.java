@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.ratelimit.DeviceFlowRateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
@@ -39,6 +40,11 @@ import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHa
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentPostEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceAuthorizationEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceFlowPageRenderer;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceVerificationEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceVerificationSubmitEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceVerificationUriResolver;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthorizationRequestEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
@@ -57,6 +63,9 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.Aut
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentPrepareContextHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentProcessHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.device.DeviceVerificationCompletionHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.device.DeviceVerificationDenialHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.device.DeviceVerificationReturnUrlHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.AuthorizationRequestResourceValidationHandler;
@@ -64,6 +73,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.TokenR
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -89,6 +99,7 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.Route;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
@@ -116,6 +127,8 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     public static final String PATH_REVOKE = "/revoke";
     public static final String PATH_PAR = "/par";
     public static final String PATH_ERROR = "/error";
+    public static final String PATH_DEVICE_AUTHORIZATION = "/device_authorization";
+    public static final String PATH_DEVICE = "/device";
     @Autowired
     private Domain domain;
 
@@ -243,6 +256,12 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private SecretService secretService;
 
     @Autowired
+    private DeviceAuthorizationRequestService deviceAuthorizationRequestService;
+
+    @Autowired
+    private DeviceFlowRateLimiterService deviceFlowRateLimiterService;
+
+    @Autowired
     private AuditService auditService;
 
     @Value("${legacy.handler.globalRootFlow.enabled:false}")
@@ -303,11 +322,12 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
         ReturnUrlValidationHandler returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
+        DeviceFlowPageRenderer deviceFlowPageRenderer = new DeviceFlowPageRenderer(thymeleafTemplateEngine, domain);
 
         // Authorization endpoint
         oauth2Router.route(HttpMethod.OPTIONS, PATH_AUTHORIZE)
                 .handler(corsHandler);
-        oauth2Router.route(HttpMethod.GET, PATH_AUTHORIZE)
+        final Route authorizeRoute = oauth2Router.route(HttpMethod.GET, PATH_AUTHORIZE)
                 .handler(corsHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
@@ -323,8 +343,12 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
-                .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
-                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
+                .handler(new DeviceVerificationCompletionHandler(deviceAuthorizationRequestService, deviceFlowPageRenderer, auditService))
+                .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService));
+        if (domain.useDeviceFlow()) {
+            authorizeRoute.failureHandler(new DeviceVerificationDenialHandler(deviceAuthorizationRequestService, deviceFlowPageRenderer, auditService));
+        }
+        authorizeRoute.failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
@@ -379,6 +403,27 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(clientAuthHandler)
                 .handler(new RevocationTokenEndpoint(revocationTokenService));
 
+        if (domain.useDeviceFlow()) {
+            oauth2Router.route(HttpMethod.OPTIONS, PATH_DEVICE_AUTHORIZATION)
+                    .handler(corsHandler);
+            oauth2Router.route(HttpMethod.POST, PATH_DEVICE_AUTHORIZATION)
+                    .handler(corsHandler)
+                    .handler(clientAuthHandler)
+                    .handler(new DeviceAuthorizationEndpoint(deviceAuthorizationRequestService, new DeviceVerificationUriResolver()));
+
+            oauth2Router.route(HttpMethod.GET, PATH_DEVICE)
+                    .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
+                    .handler(new DeviceVerificationReturnUrlHandler())
+                    .handler(authenticationFlowHandler.create())
+                    .handler(localeHandler)
+                    .handler(new DeviceVerificationEndpoint(deviceFlowPageRenderer));
+
+            oauth2Router.route(HttpMethod.POST, PATH_DEVICE)
+                    .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
+                    .handler(authenticationFlowHandler.create())
+                    .handler(new DeviceVerificationSubmitEndpoint(deviceAuthorizationRequestService, deviceFlowPageRenderer, deviceFlowRateLimiterService, auditService));
+        }
+
         // Error endpoint
         oauth2Router.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
@@ -408,6 +453,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
             oauth2Router.route(PATH_REVOKE).handler(rootExtensionPointHandler);
             oauth2Router.route(PATH_PAR).handler(rootExtensionPointHandler);
             oauth2Router.route(PATH_ERROR).handler(rootExtensionPointHandler);
+            if (domain.useDeviceFlow()) {
+                oauth2Router.route(PATH_DEVICE).handler(rootExtensionPointHandler);
+                oauth2Router.route(PATH_DEVICE_AUTHORIZATION).handler(rootExtensionPointHandler);
+            }
         }
     }
 
@@ -415,6 +464,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
         oauth2Router.route(PATH_AUTHORIZE).handler(authenticationFlowContextHandler);
         oauth2Router.route(PATH_CONSENT).handler(authenticationFlowContextHandler);
+        if (domain.useDeviceFlow()) {
+            oauth2Router.route(PATH_DEVICE).handler(authenticationFlowContextHandler);
+        }
     }
 
     @Override
@@ -437,21 +489,40 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .route(PATH_CONSENT)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
+
+        if (domain.useDeviceFlow()) {
+            router
+                    .route(PATH_DEVICE)
+                    .handler(sessionHandler)
+                    .handler(ssoSessionHandler);
+        }
     }
 
     private void csrfHandler(Router router) {
         router.route(PATH_CONSENT).handler(csrfHandler);
+        if (domain.useDeviceFlow()) {
+            router.route(PATH_DEVICE).handler(csrfHandler);
+        }
     }
 
     private void cspHandler(Router router) {
         router.route(PATH_CONSENT).handler(cspHandler);
+        if (domain.useDeviceFlow()) {
+            router.route(PATH_DEVICE).handler(cspHandler);
+        }
     }
 
     private void xFrameHandler(Router router) {
         router.route(PATH_CONSENT).handler(xframeHandler);
+        if (domain.useDeviceFlow()) {
+            router.route(PATH_DEVICE).handler(xframeHandler);
+        }
     }
     private void xssHandler(Router router) {
         router.route(PATH_CONSENT).handler(xssHandler);
+        if (domain.useDeviceFlow()) {
+            router.route(PATH_DEVICE).handler(xssHandler);
+        }
     }
 
     private void errorHandler(Router router) {

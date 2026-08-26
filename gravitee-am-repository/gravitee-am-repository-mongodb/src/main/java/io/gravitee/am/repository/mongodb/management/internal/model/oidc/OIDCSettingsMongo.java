@@ -33,6 +33,8 @@ public class OIDCSettingsMongo {
 
     private CIMDSettingsMongo cimdSettings;
 
+    private DeviceFlowSettingsMongo deviceFlowSettings;
+
     private SpiffeDomainSettingsMongo workloadIdentitySettings;
 
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
@@ -97,6 +99,14 @@ public class OIDCSettingsMongo {
 
     public void setCimdSettings(CIMDSettingsMongo cimdSettings) {
         this.cimdSettings = cimdSettings;
+    }
+
+    public DeviceFlowSettingsMongo getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(DeviceFlowSettingsMongo deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
     }
 
     public SpiffeDomainSettingsMongo getWorkloadIdentitySettings() {

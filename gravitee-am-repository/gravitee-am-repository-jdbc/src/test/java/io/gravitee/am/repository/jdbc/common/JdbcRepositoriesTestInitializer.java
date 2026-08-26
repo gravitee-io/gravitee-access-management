@@ -119,6 +119,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "system_tasks",
 
                 "ciba_auth_requests",
+                "device_authorization_requests",
                 "authentication_device_notifiers",
 
                 "notification_acknowledgements",

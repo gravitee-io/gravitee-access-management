@@ -274,6 +274,7 @@ public class ClientServiceImpl implements ClientService {
         // values over on registration updates and secret renewals
         oAuthSettings.setTokenExchangeOAuthSettings(client.getTokenExchangeOAuthSettings());
         oAuthSettings.setLightweightJwtSettings(client.getLightweightJwtSettings());
+        oAuthSettings.setDeviceFlowSettings(client.getDeviceFlowSettings());
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings

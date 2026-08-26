@@ -650,7 +650,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private static boolean isUnsupportedDeviceCodeGrant(String grantType) {
-        return "device_code".equals(grantType) || GrantType.DEVIDE_CODE.equals(grantType);
+        return "device_code".equals(grantType) || GrantType.DEVICE_CODE.equals(grantType);
     }
 
     private void applyExtendedMetadata(CimdClientMetadata preview, ApplicationOAuthSettings oAuthSettings) {

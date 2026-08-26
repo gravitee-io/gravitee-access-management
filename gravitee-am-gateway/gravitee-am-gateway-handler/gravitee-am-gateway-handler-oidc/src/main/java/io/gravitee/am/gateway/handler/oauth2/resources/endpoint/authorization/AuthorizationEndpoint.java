@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationSessionCleaner;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
@@ -89,7 +90,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                         authorizationResponse -> {
                             try {
                                 // final step of the authorization flow, we can clean the session and redirect the user
-                                cleanSession(context);
+                                AuthorizationSessionCleaner.clean(context);
                                 doRedirect(context, request, authorizationResponse);
                             } catch (Exception e) {
                                 log.error("Unable to redirect to client redirect_uri", e);
@@ -140,19 +141,4 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         }
     }
 
-    private void cleanSession(RoutingContext context) {
-        context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
-        context.session().remove(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY);
-        context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY);
-        context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-        context.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY);
-    }
 }

@@ -53,6 +53,8 @@ public class OIDCSettings {
 
     private CIMDSettings cimdSettings;
 
+    private DeviceFlowSettings deviceFlowSettings;
+
     private SpiffeDomainSettings workloadIdentitySettings;
 
     public OIDCSettings() {
@@ -70,6 +72,7 @@ public class OIDCSettings {
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
         this.cibaSettings = other.cibaSettings != null ? new CIBASettings(other.cibaSettings) : null;
         this.cimdSettings = other.cimdSettings != null ? new CIMDSettings(other.cimdSettings) : null;
+        this.deviceFlowSettings = other.deviceFlowSettings != null ? new DeviceFlowSettings(other.deviceFlowSettings) : null;
         this.workloadIdentitySettings = other.workloadIdentitySettings != null ? new SpiffeDomainSettings(other.workloadIdentitySettings) : null;
     }
 
@@ -137,6 +140,14 @@ public class OIDCSettings {
         this.cimdSettings = cimdSettings;
     }
 
+    public DeviceFlowSettings getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(DeviceFlowSettings deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
+    }
+
     public SpiffeDomainSettings getWorkloadIdentitySettings() {
         return workloadIdentitySettings;
     }
@@ -153,6 +164,7 @@ public class OIDCSettings {
         defaultSettings.setDpopSettings(DPoPSettings.defaultSettings());
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
         defaultSettings.setCimdSettings(CIMDSettings.defaultSettings());
+        defaultSettings.setDeviceFlowSettings(DeviceFlowSettings.defaultSettings());
         defaultSettings.setWorkloadIdentitySettings(SpiffeDomainSettings.defaultSettings());
         return defaultSettings;
     }

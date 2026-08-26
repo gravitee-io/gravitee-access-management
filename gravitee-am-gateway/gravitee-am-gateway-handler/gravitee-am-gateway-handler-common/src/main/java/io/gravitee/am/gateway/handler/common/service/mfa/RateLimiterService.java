@@ -15,23 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.common.service.mfa;
 
+import io.gravitee.am.gateway.handler.common.service.ratelimit.TokenBucketLimiter;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RateLimiterService {
+public interface RateLimiterService extends TokenBucketLimiter {
     Single<Boolean> tryConsume(String userId, String factorId, String applicationId, String domainId);
 
     boolean isRateLimitEnabled();
@@ -39,41 +34,4 @@ public interface RateLimiterService {
     Completable deleteByUser(User user);
 
     Completable deleteByDomain(Domain domain, ReferenceType referenceType);
-
-    default void calculateAndSetTokenLeft(RateLimit rateLimit, String timeUnit, int timePeriod, int limit) {
-        final int consumeOne = 1;
-        long now = Instant.now().toEpochMilli();
-        long lastRequested = rateLimit.getUpdatedAt().toInstant().toEpochMilli();
-        long timeElapsed = now - lastRequested;
-        long periodDuration = timePeriodToMillSeconds(timeUnit, timePeriod) / limit;
-        // We need to know how many tokens could be generated in between current time and the last request time (which is timeElapsed variable)
-        //periodDuration is calculated form timeUnit and timePeriod
-        long newTokens = Math.max(0, timeElapsed / periodDuration);
-        long tokenLeft = Math.max(0, rateLimit.getTokenLeft() + newTokens);
-
-        if (tokenLeft > limit) {
-            rateLimit.setTokenLeft((long) limit - consumeOne);
-            rateLimit.setAllowRequest(true);
-        } else {
-            if (tokenLeft > 0) {
-                rateLimit.setTokenLeft(tokenLeft - consumeOne);
-                rateLimit.setAllowRequest(true);
-            } else {
-                rateLimit.setTokenLeft(0);
-                rateLimit.setAllowRequest(false);
-            }
-        }
-    }
-
-    private long timePeriodToMillSeconds(String timeUnit, int timePeriod){
-        ChronoUnit unit = ChronoUnit.valueOf(timeUnit.trim().toUpperCase());
-        long seconds = switch (unit) {
-            case HOURS -> timePeriod * 60L * 60L;
-            case MINUTES -> timePeriod * 60L;
-            case SECONDS -> timePeriod;
-            default -> Duration.of(timePeriod, unit).toMillis();
-        };
-
-        return TimeUnit.SECONDS.toMillis(seconds);
-    }
 }
