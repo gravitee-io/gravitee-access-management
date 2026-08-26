@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { jira } from '@specs-utils/jira';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -34,6 +32,12 @@ setup(200000);
  * empty and the matching credentials are present.
  *
  * The two applications live in one domain, so the comparison differs only in that setting.
+ *
+ * Assertion-based methods are deliberately not covered here. An unset application refuses
+ * client_secret_jwt even though `ClientAssertionAuthProvider.canHandle` carries the same
+ * empty-method branch as basic and post — the identical assertion is accepted once the method is
+ * set explicitly. That looks like a defect rather than intended behaviour, so it is raised
+ * separately instead of being written down here as expected.
  */
 let fixture: ArbitraryAuthMethodFixture;
 
@@ -65,30 +69,6 @@ const withRequestBody = (app: AuthMethodApp) =>
     FORM,
   );
 
-/** A signed assertion — client_secret_jwt. */
-const withSignedAssertion = (app: AuthMethodApp) => {
-  const assertion = jwt.sign(
-    {
-      iss: app.clientId,
-      sub: app.clientId,
-      aud: fixture.oidc.token_endpoint,
-      jti: crypto.randomBytes(16).toString('hex'),
-      exp: Math.floor(Date.now() / 1000) + 300,
-    },
-    app.clientSecret,
-    { algorithm: 'HS256' },
-  );
-
-  return performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(
-      'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    )}&client_assertion=${encodeURIComponent(assertion)}`,
-    FORM,
-  );
-};
-
 describe('An application with no authentication method set', () => {
   it(jira`is stored with an empty method rather than a default ${'AM-2232'}`, async () => {
     // Anchors the rest of the file. Omitting the field on create is not the same thing: the
@@ -109,16 +89,6 @@ describe('An application with no authentication method set', () => {
 
     expect(response.status).toEqual(200);
     expect(response.body.access_token).toMatch(JWT_FORMAT);
-  });
-
-  it(jira`refuses a signed assertion ${'AM-2232'}`, async () => {
-    const response = await withSignedAssertion(fixture.unsetApp);
-
-    // The arbitrary option covers the secret-based methods only. An assertion is handled by a
-    // different provider, which requires the method to be set explicitly — so leaving it unset
-    // does not make an application accept client_secret_jwt.
-    expect(response.status).toEqual(401);
-    expect(response.body.error).toEqual('invalid_client');
   });
 });
 
