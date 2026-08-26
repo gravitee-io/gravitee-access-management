@@ -43,6 +43,7 @@ public class GatewayPurgeServiceConfiguration {
             auth_flow_ctx,
             pushed_authorization_requests,
             ciba_auth_requests,
+            device_authorization_requests,
             user_activities,
             devices);
 

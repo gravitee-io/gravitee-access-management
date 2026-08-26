@@ -32,6 +32,7 @@ import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -313,6 +314,54 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         reloaded.awaitDone(10, TimeUnit.SECONDS);
         reloaded.assertComplete();
         reloaded.assertValue(d -> "template-xyz-999".equals(d.getOidc().getCimdSettings().getTemplateId()));
+    }
+
+    @Test
+    public void shouldRoundTripDeviceFlowSettings() {
+        Domain domain = initDomain();
+        DeviceFlowSettings deviceFlow = new DeviceFlowSettings();
+        deviceFlow.setEnabled(true);
+        deviceFlow.setDeviceCodeExpiry(900);
+        deviceFlow.setPollingInterval(10);
+        domain.getOidc().setDeviceFlowSettings(deviceFlow);
+
+        Domain created = domainRepository.create(domain).blockingGet();
+
+        TestObserver<Domain> afterCreate = domainRepository.findById(created.getId()).test();
+        afterCreate.awaitDone(10, TimeUnit.SECONDS);
+        afterCreate.assertComplete();
+        afterCreate.assertNoErrors();
+        afterCreate.assertValue(d -> d.getOidc() != null && d.getOidc().getDeviceFlowSettings() != null);
+        afterCreate.assertValue(d -> d.getOidc().getDeviceFlowSettings().isEnabled());
+        afterCreate.assertValue(d -> d.getOidc().getDeviceFlowSettings().getDeviceCodeExpiry() == 900);
+        afterCreate.assertValue(d -> d.getOidc().getDeviceFlowSettings().getPollingInterval() == 10);
+        afterCreate.assertValue(Domain::useDeviceFlow);
+
+        Domain loaded = domainRepository.findById(created.getId()).blockingGet();
+        loaded.getOidc().getDeviceFlowSettings().setEnabled(false);
+        loaded.getOidc().getDeviceFlowSettings().setPollingInterval(20);
+        domainRepository.update(loaded).blockingGet();
+
+        TestObserver<Domain> reloaded = domainRepository.findById(created.getId()).test();
+        reloaded.awaitDone(10, TimeUnit.SECONDS);
+        reloaded.assertComplete();
+        reloaded.assertValue(d -> !d.getOidc().getDeviceFlowSettings().isEnabled());
+        reloaded.assertValue(d -> d.getOidc().getDeviceFlowSettings().getPollingInterval() == 20);
+        reloaded.assertValue(d -> !d.useDeviceFlow());
+    }
+
+    @Test
+    public void shouldTreatDomainWithoutDeviceFlowSettingsAsDisabled() {
+        Domain domain = initDomain();
+        domain.getOidc().setDeviceFlowSettings(null);
+
+        Domain created = domainRepository.create(domain).blockingGet();
+
+        TestObserver<Domain> afterCreate = domainRepository.findById(created.getId()).test();
+        afterCreate.awaitDone(10, TimeUnit.SECONDS);
+        afterCreate.assertComplete();
+        afterCreate.assertValue(d -> d.getOidc().getDeviceFlowSettings() == null);
+        afterCreate.assertValue(d -> !d.useDeviceFlow());
     }
 
     @Test

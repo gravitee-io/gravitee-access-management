@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.oidc.model;
 
+import io.gravitee.am.common.polling.PollingRequest;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.Set;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CibaAuthRequest {
+public class CibaAuthRequest implements PollingRequest {
 
     /**
      * Technical ID

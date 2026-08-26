@@ -69,6 +69,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMo
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLAssertionAttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationDeviceFlowSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserInfoClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
@@ -620,6 +621,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setOptInScopeSelection(other.isOptInScopeSelection());
         applicationOAuthSettingsMongo.setTokenExchangeOAuthSettings(
                 TokenExchangeOAuthSettingsMongo.convert(other.getTokenExchangeOAuthSettings()));
+        applicationOAuthSettingsMongo.setDeviceFlowSettings(
+                ApplicationDeviceFlowSettingsMongo.convert(other.getDeviceFlowSettings()));
 
         return applicationOAuthSettingsMongo;
     }
@@ -706,6 +709,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setOptInScopeSelection(other.isOptInScopeSelection());
         applicationOAuthSettings.setTokenExchangeOAuthSettings(
                 other.getTokenExchangeOAuthSettings() != null ? other.getTokenExchangeOAuthSettings().convert() : null);
+        applicationOAuthSettings.setDeviceFlowSettings(
+                other.getDeviceFlowSettings() != null ? other.getDeviceFlowSettings().convert() : null);
 
         return applicationOAuthSettings;
     }

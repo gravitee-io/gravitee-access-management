@@ -607,6 +607,12 @@ public class Domain implements Resource, Managed {
                 this.getOidc().getCibaSettings().isEnabled();
     }
 
+    public boolean useDeviceFlow() {
+        return this.getOidc() != null &&
+                this.getOidc().getDeviceFlowSettings() != null &&
+                this.getOidc().getDeviceFlowSettings().isEnabled();
+    }
+
     public boolean useCimd() {
         return this.getOidc() != null &&
                 this.getOidc().getCimdSettings() != null &&

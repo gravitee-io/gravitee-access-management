@@ -1568,6 +1568,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -1968,6 +1970,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -4120,6 +4124,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -4911,6 +4917,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -10101,6 +10109,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -12826,6 +12836,23 @@ components:
           type: boolean
     ApplicationCursorPage:
       type: object
+    ApplicationDeviceFlowSettings:
+      type: object
+      description: Per-application override of the domain device code expiry and polling
+        interval. Absent means the application inherits the domain settings.
+      properties:
+        deviceCodeExpiry:
+          type: integer
+          format: int32
+          default: 600
+          description: "Validity, in seconds, of an issued device code and user code."
+        pollingInterval:
+          type: integer
+          format: int32
+          default: 5
+          description: "Minimum delay, in seconds, between two polls of the token\
+            \ endpoint with the same device code."
+      title: Application Device Flow settings
     ApplicationEntity:
       type: object
       properties:
@@ -12907,6 +12934,8 @@ components:
           type: array
           items:
             type: string
+        deviceFlowSettings:
+          $ref: "#/components/schemas/ApplicationDeviceFlowSettings"
         disableRefreshTokenRotation:
           type: boolean
         dpopBoundAccessTokens:
@@ -14022,6 +14051,26 @@ components:
           type: string
         name:
           type: string
+    DeviceFlowSettings:
+      type: object
+      description: RFC 8628 device authorization grant configuration for the domain.
+      properties:
+        deviceCodeExpiry:
+          type: integer
+          format: int32
+          default: 600
+          description: "Validity, in seconds, of an issued device code and user code."
+        enabled:
+          type: boolean
+          default: false
+          description: Whether the device authorization grant is enabled for the domain.
+        pollingInterval:
+          type: integer
+          format: int32
+          default: 5
+          description: "Minimum delay, in seconds, between two polls of the token\
+            \ endpoint with the same device code."
+      title: Device Flow settings
     DeviceIdentifier:
       type: object
       properties:
@@ -15325,6 +15374,8 @@ components:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -15434,6 +15485,8 @@ components:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -15899,6 +15952,8 @@ components:
           $ref: "#/components/schemas/CIMDSettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/ClientRegistrationSettings"
+        deviceFlowSettings:
+          $ref: "#/components/schemas/DeviceFlowSettings"
         dpopSettings:
           $ref: "#/components/schemas/DPoPSettings"
         postLogoutRedirectUris:
@@ -16309,6 +16364,8 @@ components:
         defaultMaxAge:
           type: integer
           format: int32
+        deviceFlowSettings:
+          $ref: "#/components/schemas/ApplicationDeviceFlowSettings"
         disableRefreshTokenRotation:
           type: boolean
         dpopBoundAccessTokens:
@@ -16689,6 +16746,17 @@ components:
             type: string
         requireDpopForAll:
           type: boolean
+    PatchDeviceFlowSettings:
+      type: object
+      properties:
+        deviceCodeExpiry:
+          type: integer
+          format: int32
+        enabled:
+          type: boolean
+        pollingInterval:
+          type: integer
+          format: int32
     PatchDomain:
       type: object
       properties:
@@ -16924,6 +16992,8 @@ components:
           $ref: "#/components/schemas/PatchCIMDSettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/PatchClientRegistrationSettings"
+        deviceFlowSettings:
+          $ref: "#/components/schemas/PatchDeviceFlowSettings"
         dpopSettings:
           $ref: "#/components/schemas/PatchDPoPSettings"
         postLogoutRedirectUris:

@@ -198,6 +198,17 @@ public class OpenIDProviderMetadata {
     @JsonProperty("backchannel_user_code_parameter_supported")
     private boolean backchannelUserCodeSupported;
 
+    @JsonProperty("device_authorization_endpoint")
+    private String deviceAuthorizationEndpoint;
+
+    public String getDeviceAuthorizationEndpoint() {
+        return deviceAuthorizationEndpoint;
+    }
+
+    public void setDeviceAuthorizationEndpoint(String deviceAuthorizationEndpoint) {
+        this.deviceAuthorizationEndpoint = deviceAuthorizationEndpoint;
+    }
+
     public void setIssuer(String issuer) {
         this.issuer = issuer;
     }

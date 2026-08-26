@@ -331,6 +331,8 @@ public class ApplicationOAuthSettings {
 
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
+    private ApplicationDeviceFlowSettings deviceFlowSettings;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -408,6 +410,7 @@ public class ApplicationOAuthSettings {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
+        this.deviceFlowSettings = other.deviceFlowSettings != null ? new ApplicationDeviceFlowSettings(other.deviceFlowSettings) : null;
     }
 
     public String getClientId() {
@@ -1019,6 +1022,14 @@ public class ApplicationOAuthSettings {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
     }
 
+    public ApplicationDeviceFlowSettings getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettings deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -1089,5 +1100,6 @@ public class ApplicationOAuthSettings {
         client.setDisableRefreshTokenRotation(this.disableRefreshTokenRotation);
         client.setOptInScopeSelection(this.optInScopeSelection);
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
+        client.setDeviceFlowSettings(this.deviceFlowSettings != null ? new ApplicationDeviceFlowSettings(this.deviceFlowSettings) : null);
     }
 }

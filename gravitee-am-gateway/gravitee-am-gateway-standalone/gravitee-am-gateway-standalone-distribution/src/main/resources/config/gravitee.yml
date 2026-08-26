@@ -656,6 +656,16 @@ liquibase:
 #  timePeriod: 15
 #  timeUnit: Minutes
 
+## This section allows rate limit for the device flow code entry page.
+## The number of user codes an authenticated user may submit can be limited for a specific
+## time period of Hours, Minutes or Seconds
+
+#device_flow_rate:
+#  enabled: true
+#  limit: 5
+#  timePeriod: 15
+#  timeUnit: Minutes
+
 #applications:
 #  signing:
 #    fallback-to-hmac-signature: false

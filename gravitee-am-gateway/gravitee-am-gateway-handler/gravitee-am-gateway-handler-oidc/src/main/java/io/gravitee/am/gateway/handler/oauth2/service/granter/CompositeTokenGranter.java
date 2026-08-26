@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
@@ -31,6 +32,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.AuthorizationCodeStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.CibaStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.DeviceCodeStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ClientCredentialsStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.PasswordStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.RefreshTokenStrategy;
@@ -117,6 +119,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Autowired
     private AuthenticationRequestService authenticationRequestService;
+
+    @Autowired
+    private DeviceAuthorizationRequestService deviceAuthorizationRequestService;
 
     @Autowired
     private AuditService auditService;
@@ -206,6 +211,11 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         // Register CIBA strategy
         registerStrategy(GrantType.CIBA_GRANT_TYPE, new CibaStrategy(
                 authenticationRequestService,
+                userAuthenticationManager
+        ));
+
+        registerStrategy(GrantType.DEVICE_CODE, new DeviceCodeStrategy(
+                deviceAuthorizationRequestService,
                 userAuthenticationManager
         ));
 

@@ -252,6 +252,10 @@ data:
     mfa_rate:
 {{ toYaml .Values.gateway.mfa_rate | indent 6 }}
     {{- end }}
+    {{- if or .Values.gateway.device_flow_rate }}
+    device_flow_rate:
+{{ toYaml .Values.gateway.device_flow_rate | indent 6 }}
+    {{- end }}
 
     # Alert Engine communication
     {{ if .Values.alerts.enabled }}

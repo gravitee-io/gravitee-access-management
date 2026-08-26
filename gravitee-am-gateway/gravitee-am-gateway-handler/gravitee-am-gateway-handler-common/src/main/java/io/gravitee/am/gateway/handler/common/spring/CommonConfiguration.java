@@ -99,6 +99,8 @@ import io.gravitee.am.gateway.handler.common.service.mfa.impl.DomainEventListene
 import io.gravitee.am.gateway.handler.common.service.mfa.impl.RateLimiterServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.mfa.impl.UserEventListenerImpl;
 import io.gravitee.am.gateway.handler.common.service.mfa.impl.VerifyAttemptServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.ratelimit.DeviceFlowRateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.ratelimit.impl.DeviceFlowRateLimiterServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
@@ -607,6 +609,11 @@ public class CommonConfiguration {
     @Bean
     public RateLimiterService rateLimiterService() {
         return new RateLimiterServiceImpl();
+    }
+
+    @Bean
+    public DeviceFlowRateLimiterService deviceFlowRateLimiterService() {
+        return new DeviceFlowRateLimiterServiceImpl();
     }
 
     @Bean

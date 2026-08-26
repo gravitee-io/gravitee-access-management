@@ -39,6 +39,7 @@ import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.DPoPSettings;
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -60,6 +61,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASett
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIMDSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.DPoPSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.DeviceFlowSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
@@ -319,6 +321,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
         oidcSettings.setCimdSettings(convert(oidcMongo.getCimdSettings()));
+        oidcSettings.setDeviceFlowSettings(convert(oidcMongo.getDeviceFlowSettings()));
         oidcSettings.setWorkloadIdentitySettings(convert(oidcMongo.getWorkloadIdentitySettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidcMongo.getRequestUris());
@@ -384,6 +387,32 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
+    private static DeviceFlowSettings convert(DeviceFlowSettingsMongo deviceFlowSettings) {
+        if (deviceFlowSettings == null) {
+            return null;
+        }
+
+        DeviceFlowSettings result = new DeviceFlowSettings();
+        result.setEnabled(deviceFlowSettings.isEnabled());
+        result.setDeviceCodeExpiry(deviceFlowSettings.getDeviceCodeExpiry());
+        result.setPollingInterval(deviceFlowSettings.getPollingInterval());
+
+        return result;
+    }
+
+    private static DeviceFlowSettingsMongo convert(DeviceFlowSettings deviceFlowSettings) {
+        if (deviceFlowSettings == null) {
+            return null;
+        }
+
+        DeviceFlowSettingsMongo result = new DeviceFlowSettingsMongo();
+        result.setEnabled(deviceFlowSettings.isEnabled());
+        result.setDeviceCodeExpiry(deviceFlowSettings.getDeviceCodeExpiry());
+        result.setPollingInterval(deviceFlowSettings.getPollingInterval());
+
+        return result;
+    }
+
     private static CIBASettingNotifier convert(CIBASettingNotifierMongo entity) {
         CIBASettingNotifier notifier = new CIBASettingNotifier();
         notifier.setId(entity.getId());
@@ -408,6 +437,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
         oidcSettings.setCimdSettings(convert(oidc.getCimdSettings()));
+        oidcSettings.setDeviceFlowSettings(convert(oidc.getDeviceFlowSettings()));
         oidcSettings.setWorkloadIdentitySettings(convert(oidc.getWorkloadIdentitySettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidc.getRequestUris());

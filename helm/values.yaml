@@ -988,6 +988,12 @@ gateway:
     timePeriod: 15
     timeUnit: Minutes
 
+  device_flow_rate:
+    enabled: false
+    limit: 5
+    timePeriod: 15
+    timeUnit: Minutes
+
   consent:
     ip: false
     user-agent: false

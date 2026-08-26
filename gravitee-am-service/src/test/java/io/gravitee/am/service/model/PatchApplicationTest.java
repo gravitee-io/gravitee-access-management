@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -177,8 +178,52 @@ public class PatchApplicationTest {
 
     @Test
     public void patch_applies_dpopBoundAccessTokens_when_present() {
+        ApplicationOAuthSettings existingOauth = new ApplicationOAuthSettings();
+        assertFalse("dpopBoundAccessTokens shall default to false", existingOauth.isDpopBoundAccessTokens());
+
+        Application result = patchOAuthSettings(patch -> patch.setDpopBoundAccessTokens(Optional.of(true)), existingOauth);
+
+        assertTrue(result.getSettings().getOauth().isDpopBoundAccessTokens());
+    }
+
+    @Test
+    public void shouldSetTheDeviceFlowOverride() {
+        ApplicationDeviceFlowSettings override = new ApplicationDeviceFlowSettings();
+        override.setDeviceCodeExpiry(120);
+        override.setPollingInterval(2);
+
+        Application result = patchOAuthSettings(patch -> patch.setDeviceFlowSettings(Optional.of(override)), new ApplicationOAuthSettings());
+
+        assertEquals(120, result.getSettings().getOauth().getDeviceFlowSettings().getDeviceCodeExpiry());
+        assertEquals(2, result.getSettings().getOauth().getDeviceFlowSettings().getPollingInterval());
+    }
+
+    @Test
+    public void shouldClearTheDeviceFlowOverride() {
+        ApplicationOAuthSettings existing = new ApplicationOAuthSettings();
+        existing.setDeviceFlowSettings(new ApplicationDeviceFlowSettings());
+
+        Application result = patchOAuthSettings(patch -> patch.setDeviceFlowSettings(Optional.empty()), existing);
+
+        assertNull(result.getSettings().getOauth().getDeviceFlowSettings());
+    }
+
+    @Test
+    public void shouldLeaveTheDeviceFlowOverrideUntouchedWhenNotPatched() {
+        ApplicationDeviceFlowSettings override = new ApplicationDeviceFlowSettings();
+        override.setDeviceCodeExpiry(120);
+        ApplicationOAuthSettings existing = new ApplicationOAuthSettings();
+        existing.setDeviceFlowSettings(override);
+
+        Application result = patchOAuthSettings(patch -> {}, existing);
+
+        assertEquals(120, result.getSettings().getOauth().getDeviceFlowSettings().getDeviceCodeExpiry());
+    }
+
+    private Application patchOAuthSettings(java.util.function.Consumer<PatchApplicationOAuthSettings> customizer,
+                                           ApplicationOAuthSettings existing) {
         PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
-        oauthPatch.setDpopBoundAccessTokens(Optional.of(true));
+        customizer.accept(oauthPatch);
 
         PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
         settingsPatch.setOauth(Optional.of(oauthPatch));
@@ -188,14 +233,10 @@ public class PatchApplicationTest {
 
         Application toPatch = new Application();
         ApplicationSettings appSettings = new ApplicationSettings();
-        ApplicationOAuthSettings existingOauth = new ApplicationOAuthSettings();
-        assertFalse("dpopBoundAccessTokens shall default to false", existingOauth.isDpopBoundAccessTokens());
-        appSettings.setOauth(existingOauth);
+        appSettings.setOauth(existing);
         toPatch.setSettings(appSettings);
 
-        Application result = patch.patch(toPatch);
-
-        assertTrue(result.getSettings().getOauth().isDpopBoundAccessTokens());
+        return patch.patch(toPatch);
     }
 
     @Test

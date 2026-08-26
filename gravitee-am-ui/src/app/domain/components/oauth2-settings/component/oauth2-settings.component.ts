@@ -20,6 +20,7 @@ import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { AuthService } from '../../../../services/auth.service';
 import { OAUTH2_SETTINGS_SERVICE, OAuth2SettingsService, OAuth2Context } from '../../../../services/oauth2-settings.service';
+import { DEVICE_FLOW_TIMINGS_ERROR, deviceFlowTimingsValid } from '../../../settings/openid/device-flow/device-flow.types';
 
 @Component({
   selector: 'app-oauth2-settings',
@@ -86,6 +87,9 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.jwks = newSettings.jwks;
     this.oauthSettings.disableRefreshTokenRotation = newSettings.disableRefreshTokenRotation;
     this.oauthSettings.tokenExchangeOAuthSettings = newSettings.tokenExchangeOAuthSettings;
+    if ('deviceFlowSettings' in newSettings) {
+      this.oauthSettings.deviceFlowSettings = newSettings.deviceFlowSettings ?? null;
+    }
 
     // Scopes
     this.oauthSettings.scopeSettings = newSettings.scopeSettings;
@@ -134,6 +138,15 @@ export class OAuth2SettingsComponent implements OnInit {
       }
     }
 
+    const deviceFlowOverride = this.oauthSettings.deviceFlowSettings;
+    if (
+      deviceFlowOverride &&
+      !deviceFlowTimingsValid(Number(deviceFlowOverride.deviceCodeExpiry), Number(deviceFlowOverride.pollingInterval))
+    ) {
+      this.snackbarService.open(DEVICE_FLOW_TIMINGS_ERROR);
+      return;
+    }
+
     // Manually assign only valid properties to avoid sending read-only fields
     const oauthSettings: any = {};
 
@@ -153,6 +166,9 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.jwksUri = this.oauthSettings.jwksUri;
     oauthSettings.disableRefreshTokenRotation = this.oauthSettings.disableRefreshTokenRotation;
     oauthSettings.tokenExchangeOAuthSettings = this.oauthSettings.tokenExchangeOAuthSettings;
+    if (this.context === 'Application') {
+      oauthSettings.deviceFlowSettings = this.oauthSettings.deviceFlowSettings ?? null;
+    }
 
     // Parse jwks if it's a string
     if (this.oauthSettings.jwks !== undefined) {

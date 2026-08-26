@@ -63,6 +63,10 @@ public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProv
 
     @Lazy
     @Autowired
+    protected DeviceAuthorizationRequestRepository deviceAuthorizationRequestRepository;
+
+    @Lazy
+    @Autowired
     protected SingleDataPlaneProvider singleDataPlaneProvider;
 
     @Override
@@ -75,6 +79,7 @@ public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProv
             case auth_flow_ctx -> authenticationFlowContextRepository;
             case pushed_authorization_requests -> pushedAuthRequestRepository;
             case ciba_auth_requests -> cibaAuthRequestRepository;
+            case device_authorization_requests -> deviceAuthorizationRequestRepository;
             case tokens -> tokenRepository;
 
             case scope_approvals -> singleDataPlaneProvider.get().getScopeApprovalRepository();

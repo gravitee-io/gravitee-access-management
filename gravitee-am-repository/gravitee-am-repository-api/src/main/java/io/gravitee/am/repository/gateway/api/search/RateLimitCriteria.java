@@ -16,6 +16,10 @@
 package io.gravitee.am.repository.gateway.api.search;
 
 /**
+ * A bucket is identified by its user, its client and what it counts. The purpose discriminator
+ * keeps the buckets of two features apart: it is null for multi-factor authentication, which
+ * predates it and is keyed on a factor instead, and a null purpose only ever matches a null one.
+ *
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -24,11 +28,13 @@ public class RateLimitCriteria {
     private final String userId;
     private final String client;
     private final String factorId;
+    private final String purpose;
 
     public RateLimitCriteria(Builder builder) {
         this.userId = builder.userId;
         this.client = builder.client;
         this.factorId = builder.factorId;
+        this.purpose = builder.purpose;
     }
 
     public String userId(){
@@ -43,10 +49,15 @@ public class RateLimitCriteria {
         return factorId;
     }
 
+    public String purpose(){
+        return purpose;
+    }
+
     public static class Builder {
         private String userId;
         private String client;
         private String factorId;
+        private String purpose;
 
         public Builder userId(String userId) {
             this.userId = userId;
@@ -63,6 +74,11 @@ public class RateLimitCriteria {
             return this;
         }
 
+        public Builder purpose(String purpose) {
+            this.purpose = purpose;
+            return this;
+        }
+
         public RateLimitCriteria build() {
             return new RateLimitCriteria(this);
         }
@@ -72,6 +88,7 @@ public class RateLimitCriteria {
     public String toString() {
         return "{\"_class\":\"RateLimitCriteria\", " +
                 "\"factorId\":" + (factorId == null ? "null" : "\"" + factorId + "\"") + ", " +
+                "\"purpose\":" + (purpose == null ? "null" : "\"" + purpose + "\"") + ", " +
                 "\"client\":" + (client == null ? "null" : "\"" + client + "\"") + ", " +
                 "\"userId\":" + (userId == null ? "null" : "\"" + userId + "\"") +
                 "}";

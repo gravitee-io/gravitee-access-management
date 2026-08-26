@@ -264,6 +264,20 @@
     </mapping>
 
     <mapping map-null="false">
+        <class-a>io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcDeviceAuthorizationRequest</class-b>
+        <field>
+            <a>clientId</a>
+            <b>client</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.SetToStringConverter">
+            <a>scopes</a>
+            <b>scopes</b>
+            <a-hint>java.util.Set</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
         <class-a>io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest</class-a>
         <class-b>io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcPushedAuthorizationRequest</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.MultiValueMapToStringConverter">

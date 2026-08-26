@@ -110,6 +110,7 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.mockito.ArgumentMatchers;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -1281,6 +1282,47 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(any());
         verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldUpdateApplicationWithDeviceCodeGrant() {
+        Application saved = updateWithGrantTypes(List.of(GrantType.DEVICE_CODE));
+
+        assertTrue(saved.getSettings().getOauth().getGrantTypes().contains(GrantType.DEVICE_CODE));
+    }
+
+    @Test
+    public void shouldUpdateApplicationWithDeviceCodeAndRefreshTokenGrants() {
+        Application saved = updateWithGrantTypes(List.of(GrantType.DEVICE_CODE, GrantType.REFRESH_TOKEN));
+
+        assertTrue(saved.getSettings().getOauth().getGrantTypes().contains(GrantType.DEVICE_CODE));
+        assertTrue(saved.getSettings().getOauth().getGrantTypes().contains(GrantType.REFRESH_TOKEN));
+    }
+
+    private Application updateWithGrantTypes(List<String> grantTypes) {
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toUpdate = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(new ArrayList<>(grantTypes));
+        oAuthSettings.setResponseTypes(new ArrayList<>());
+        oAuthSettings.setRedirectUris(List.of("https://redirect"));
+        settings.setOauth(oAuthSettings);
+        toUpdate.setSettings(settings);
+
+        TestObserver<Application> testObserver = applicationService.update(toUpdate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationRepository).update(captor.capture());
+        return captor.getValue();
     }
 
     @Test
