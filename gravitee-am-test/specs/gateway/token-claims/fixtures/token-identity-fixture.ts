@@ -221,7 +221,6 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
         },
         advanced: { skipConsent: true },
       },
-      // Application metadata is a top-level field, not part of the oauth settings.
       ...(options.applicationMetadata ? { metadata: options.applicationMetadata } : {}),
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
     });
