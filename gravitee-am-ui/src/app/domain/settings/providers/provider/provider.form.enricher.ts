@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { IdentityProviderStorageRules } from '../../../../services/cloud-mode.service';
+
 const OIDC_JSON_FORM = {
   id: 'urn:jsonschema:io:gravitee:am:identityprovider:oauth2:OAuth2GenericIdentityProvider',
   version: '05-2024',
 };
+
+const MONGO_IDP_TYPE = 'mongo-am-idp';
+
+export const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
+
+/** The configuration field each storage rule owns. */
+const RULE_FIELDS: Record<keyof IdentityProviderStorageRules, string> = {
+  pinDatabase: 'database',
+  prefixUsersCollection: 'usersCollection',
+};
+
+/** The widget only binds a form control when `readonly` is falsy, so the toggle reads it too. */
+export const PINNED_STORAGE_TOGGLE = 'useSystemCluster';
+
+const CREATION_HINT = 'The platform sets this value when "use system cluster" is selected.';
 
 const LDAP_JSON_FORM = {
   id: 'urn:jsonschema:com:graviteesource:am:identityprovider:ldap:LdapIdentityProviderConfiguration',
@@ -36,6 +53,53 @@ export function enrichFormWithCerts(schema: FormSchema, certs: Certificate[]): F
   return schema;
 }
 
+/** Edit screen only: `restricted` is the provider's own flag. */
+export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
+  if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties) {
+    return schema;
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  [PINNED_STORAGE_TOGGLE, ...PINNED_STORAGE_FIELDS]
+    .filter((field) => updatedSchema.properties[field])
+    .forEach((field) => {
+      updatedSchema.properties[field] = { ...updatedSchema.properties[field], readonly: true };
+    });
+  return updatedSchema;
+}
+
+/**
+ * Creation screen. The fields stay editable: the plugin schema makes `usersCollection` mandatory and
+ * a provider that does not reuse the system cluster still needs both values.
+ */
+export function enrichFormWithSystemClusterCreationHints(
+  schema: FormSchema,
+  providerType: string,
+  rules: IdentityProviderStorageRules,
+): FormSchema {
+  if (providerType !== MONGO_IDP_TYPE || !schema?.properties) {
+    return schema;
+  }
+
+  const hinted = Object.entries(RULE_FIELDS)
+    .filter(([rule]) => rules?.[rule])
+    .map(([, field]) => field)
+    .filter((field) => schema.properties[field]);
+  if (hinted.length === 0) {
+    return schema;
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  hinted.forEach((field) => {
+    const property = updatedSchema.properties[field];
+    updatedSchema.properties[field] = {
+      ...property,
+      description: property.description ? `${property.description} ${CREATION_HINT}` : CREATION_HINT,
+    };
+  });
+  return updatedSchema;
+}
+
 function supportsMTls(schema: FormSchema): boolean {
   return (
     (schema.id === OIDC_JSON_FORM.id && schema?.version == OIDC_JSON_FORM.version) ||
@@ -43,15 +107,18 @@ function supportsMTls(schema: FormSchema): boolean {
   );
 }
 
+interface FormProperty {
+  enum?: string[];
+  enumNames?: string[];
+  description?: string;
+  readonly?: boolean;
+}
+
 interface FormSchema {
   id: string;
   version: string;
-  properties: {
-    clientAuthenticationCertificate: {
-      enum: string[];
-      enumNames: string[];
-      readonly: boolean;
-    };
+  properties: Record<string, FormProperty> & {
+    clientAuthenticationCertificate: FormProperty;
   };
 }
 

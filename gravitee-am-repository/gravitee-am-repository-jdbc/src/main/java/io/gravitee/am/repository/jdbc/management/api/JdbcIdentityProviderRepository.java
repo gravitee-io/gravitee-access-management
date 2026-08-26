@@ -67,6 +67,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public static final String COL_PASSWORD_POLICY = "password_policy";
     public static final String COL_DATA_PLANE_ID = "data_plane_id";
     public static final String COL_MANAGED_BY = "managed_by";
+    public static final String COL_SYSTEM_CLUSTER_RESTRICTED = "system_cluster_restricted";
 
     private static final List<String> columns = List.of(
             COL_ID,
@@ -86,7 +87,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_GROUP_MAPPER,
             COL_PASSWORD_POLICY,
             COL_DATA_PLANE_ID,
-            COL_MANAGED_BY
+            COL_MANAGED_BY,
+            COL_SYSTEM_CLUSTER_RESTRICTED
     );
 
     private String insertStatement;
@@ -190,6 +192,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy());
         insertSpec = addQuotedField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
+        insertSpec = addQuotedField(insertSpec, COL_SYSTEM_CLUSTER_RESTRICTED, item.isSystemClusterRestricted(), boolean.class);
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
@@ -221,6 +224,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_GROUP_MAPPER, item.getGroupMapper());
         update = addQuotedField(update, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
         update = addQuotedField(update, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
+        update = addQuotedField(update, COL_SYSTEM_CLUSTER_RESTRICTED, item.isSystemClusterRestricted(), boolean.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 

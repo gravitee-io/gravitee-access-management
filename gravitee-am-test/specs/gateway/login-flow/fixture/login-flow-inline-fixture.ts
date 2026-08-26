@@ -18,7 +18,8 @@ import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { setupDomainForTest, safeDeleteDomain, DomainOidcConfig } from '@management-commands/domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
+import { getHeaderLocation, initiateLoginFlow, login } from '@gateway-commands/login-commands';
+import { logoutUser, performGet, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import { createIdp } from '@management-commands/idp-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { getLastEmail } from '@utils-commands/email-commands';
@@ -248,4 +249,39 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
       }
     },
   };
+};
+
+/**
+ * Sign in through `app` and return the profile of whichever identity provider answered.
+ *
+ * Both inline providers hold the same username with a different profile, so the returned
+ * `given_name` is what says which provider handled the sign-in — the basis of both the
+ * priority-order and selection-rule specs.
+ */
+export const signInAndReadProfile = async (
+  app: any,
+  openIdConfiguration: DomainOidcConfig,
+  username: string,
+  password: string,
+): Promise<Record<string, any>> => {
+  const clientId = app.settings.oauth.clientId;
+
+  const authResponse = await performGet(
+    openIdConfiguration.authorization_endpoint,
+    `?response_type=code&client_id=${clientId}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile`,
+  ).expect(302);
+
+  const postLogin = await login(authResponse, username, clientId, password);
+  const loginResponse = await getHeaderLocation(postLogin);
+  expect(loginResponse.headers['location']).toContain(`${REDIRECT_URI}?code=`);
+
+  const tokenResponse = await requestToken(app, openIdConfiguration, loginResponse);
+  expect(tokenResponse.status).toBe(200);
+
+  const userInfo = await performGet(openIdConfiguration.userinfo_endpoint, '', {
+    Authorization: `Bearer ${tokenResponse.body.access_token}`,
+  }).expect(200);
+
+  await logoutUser(openIdConfiguration.end_session_endpoint, loginResponse);
+  return userInfo.body;
 };

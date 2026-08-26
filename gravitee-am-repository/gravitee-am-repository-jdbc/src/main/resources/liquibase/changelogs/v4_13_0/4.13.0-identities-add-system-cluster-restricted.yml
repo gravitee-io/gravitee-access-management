@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-add-system-cluster-restricted-to-identities
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: identities
+              columnName: system_cluster_restricted
+      changes:
+        - addColumn:
+            tableName: identities
+            columns:
+              - column:
+                  name: system_cluster_restricted
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: true

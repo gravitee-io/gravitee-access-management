@@ -55,6 +55,7 @@ import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -94,6 +95,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private final PluginConfigurationValidationService validationService;
     private final DatasourceValidator datasourceValidator;
     private final PluginLicenseGate pluginLicenseGate;
+    private final SystemClusterIdpPolicy systemClusterIdpPolicy;
 
     public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
                                        ApplicationService applicationService,
@@ -102,7 +104,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                                        ObjectMapper objectMapper,
                                        PluginConfigurationValidationService validationService,
                                        DatasourceValidator datasourceValidator,
-                                       PluginLicenseGate pluginLicenseGate) {
+                                       PluginLicenseGate pluginLicenseGate,
+                                       SystemClusterIdpPolicy systemClusterIdpPolicy) {
         this.identityProviderRepository = identityProviderRepository;
         this.applicationService = applicationService;
         this.eventService = eventService;
@@ -111,6 +114,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         this.validationService = validationService;
         this.datasourceValidator = datasourceValidator;
         this.pluginLicenseGate = pluginLicenseGate;
+        this.systemClusterIdpPolicy = systemClusterIdpPolicy;
     }
 
     @Override
@@ -172,6 +176,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         log.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
         var identityProvider = prepareIdp(newIdentityProvider, referenceType, referenceId, system);
         return checkLicense(new Reference(referenceType, referenceId), newIdentityProvider.getType(), system)
+                .andThen(pinStorage(identityProvider))
                 .andThen(validateConfiguration(identityProvider, system))
                 .andThen(Single.defer(() -> innerCreate(identityProvider)));
     }
@@ -184,6 +189,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityProvider.setDataPlaneId(domain.getDataPlaneId());
 
         return checkLicense(Reference.domain(domain.getId()), newIdentityProvider.getType(), system)
+                .andThen(pinStorage(identityProvider))
                 .andThen(validateConfiguration(identityProvider, system))
                 .andThen(Single.defer(() -> innerCreate(identityProvider)));
     }
@@ -195,6 +201,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_IDENTITY_PROVIDER, type);
     }
 
+    private Completable pinStorage(IdentityProvider identityProvider) {
+        return Completable.fromAction(() -> systemClusterIdpPolicy.applyOnCreate(identityProvider));
+    }
+
     private Completable validateConfiguration(IdentityProvider identityProvider, boolean system) {
         if (system) {
             return Completable.complete();
@@ -204,7 +214,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
         return datasourceValidator.validate(identityProvider.getConfiguration())
-                .andThen(identityProviderRepository.create(identityProvider))
+                .andThen(Single.defer(() -> identityProviderRepository.create(identityProvider)))
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
@@ -219,9 +229,25 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 });
     }
 
-    private static IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
+    /**
+     * A caller-supplied id would point a new provider at another provider's collection, so it is
+     * honoured only on an internal path: a system provider, or the automation API's payload type.
+     */
+    private String resolveId(NewIdentityProvider newIdentityProvider, boolean system) {
+        final String suppliedId = newIdentityProvider.getId();
+        if (suppliedId == null) {
+            return RandomString.generate();
+        }
+        if (!systemClusterIdpPolicy.derivesCollectionFromId()) {
+            return suppliedId;
+        }
+        final boolean internal = system || newIdentityProvider instanceof AutomationNewIdentityProvider;
+        return internal ? suppliedId : RandomString.generate();
+    }
+
+    private IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
         var identityProvider = new IdentityProvider();
-        identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
+        identityProvider.setId(resolveId(newIdentityProvider, system));
         if (newIdentityProvider instanceof AutomationNewIdentityProvider auto) {
             identityProvider.setAutomationKey(auto.getAutomationKey());
             identityProvider.setManagedBy(ManagedBy.AUTOMATION_API);
@@ -281,6 +307,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
         identityToUpdate.setUpdatedAt(new Date());
         identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
+
+        systemClusterIdpPolicy.applyOnUpdate(oldIdentity, identityToUpdate);
 
         // for update validate config against schema here instead of the resource
         // as idp may be system idp so on the UI config is empty.

@@ -1,0 +1,58 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.service.idp;
+
+import io.gravitee.am.common.env.CloudProperties;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+
+/**
+ * The storage rules applied to a mongo identity provider that reuses the system cluster.
+ * {@link SystemClusterIdpPolicy} enforces them and the console reads them to shape its forms.
+ *
+ * @author GraviteeSource Team
+ */
+@Component
+public class SystemClusterIdpSettings {
+
+    static final String PIN_DATABASE = "repositories.system-cluster-idp.pin-database";
+    static final String PREFIX_USERS_COLLECTION = "repositories.system-cluster-idp.prefix-users-collection";
+
+    private final Environment environment;
+
+    public SystemClusterIdpSettings(Environment environment) {
+        this.environment = environment;
+    }
+
+    /** The database comes from the repository layer settings rather than from the form. */
+    public boolean isPinDatabase() {
+        return enabled(PIN_DATABASE);
+    }
+
+    /** The users collection is derived from the identity provider id. */
+    public boolean isPrefixUsersCollection() {
+        return enabled(PREFIX_USERS_COLLECTION);
+    }
+
+    /**
+     * A rule left out of the configuration follows the deployment: on in a Gravitee-managed cloud
+     * installation, off elsewhere.
+     */
+    private boolean enabled(String key) {
+        final Boolean value = environment.getProperty(key, Boolean.class);
+        return value != null ? value : CloudProperties.isManagedCloudEnabled(environment);
+    }
+}

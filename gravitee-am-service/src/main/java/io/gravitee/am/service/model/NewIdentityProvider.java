@@ -29,6 +29,7 @@ import java.util.List;
 @Setter
 public class NewIdentityProvider {
 
+    /** Honoured for an internal caller only: the id becomes a restricted provider's collection name. */
     private String id;
 
     @NotNull

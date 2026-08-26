@@ -28,7 +28,12 @@ import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
-import { enrichFormWithCerts } from '../provider.form.enricher';
+import {
+  enrichFormWithCerts,
+  enrichFormWithSystemClusterRestrictions,
+  PINNED_STORAGE_FIELDS,
+  PINNED_STORAGE_TOGGLE,
+} from '../provider.form.enricher';
 import { DataSourcesService } from '../../../../../services/datasources.service';
 
 @Component({
@@ -105,7 +110,10 @@ export class ProviderSettingsComponent implements OnInit {
     this.updateProviderConfiguration = this.providerConfiguration;
     this.organizationService
       .identitySchema(this.provider.type)
-      .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
+      .pipe(
+        map((schema) => enrichFormWithCerts(schema, this.certificates)),
+        map((schema) => enrichFormWithSystemClusterRestrictions(schema, this.provider.type, this.provider.systemClusterRestricted)),
+      )
       .subscribe((data) => {
         this.providerSchema = data;
         if (data) {
@@ -183,10 +191,27 @@ export class ProviderSettingsComponent implements OnInit {
 
   enableProviderUpdate(configurationWrapper: any): void {
     window.setTimeout(() => {
-      this.configurationPristine = this.provider.configuration === JSON.stringify(configurationWrapper.configuration);
+      const configuration = this.withPinnedStorage(configurationWrapper.configuration);
+      this.configurationPristine = this.provider.configuration === JSON.stringify(configuration);
       this.configurationIsValid = configurationWrapper.isValid;
-      this.updateProviderConfiguration = configurationWrapper.configuration;
+      this.updateProviderConfiguration = configuration;
     });
+  }
+
+  /**
+   * Angular leaves a disabled control out of the form value, so the system cluster flag of a pinned
+   * provider would reach the server as undefined and read as a change. Send back what is stored.
+   */
+  private withPinnedStorage(configuration: any): any {
+    if (!this.provider.systemClusterRestricted || typeof this.provider.configuration !== 'string') {
+      return configuration;
+    }
+    const stored = JSON.parse(this.provider.configuration);
+    const pinned = {};
+    [PINNED_STORAGE_TOGGLE, ...PINNED_STORAGE_FIELDS].forEach((field) => {
+      pinned[field] = stored[field];
+    });
+    return { ...configuration, ...pinned };
   }
 
   addDomainWhitelistPattern(event: Event): void {
