@@ -27,7 +27,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
-import { createUser } from '@management-commands/user-management-commands';
+import { createUser, listUsers } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
@@ -68,6 +68,24 @@ export const refusingPolicy = (status = '401') => ({
   }),
 });
 
+/**
+ * An Enrich User Profile policy writing a fixed value onto the signing-in user.
+ *
+ * Its effect is stored against the user rather than only reaching the token, so whether it ran
+ * can still be established after a sign-in that was refused and issued no token.
+ */
+export const enrichProfilePolicy = (key: string, value: string) => ({
+  name: 'Enrich User Profile',
+  policy: 'policy-am-enrich-profile',
+  description: '',
+  condition: '',
+  enabled: true,
+  configuration: JSON.stringify({
+    exitOnError: false,
+    properties: [{ claim: key, claimValue: value }],
+  }),
+});
+
 /** A Groovy policy whose script throws, for the runtime-failure case. */
 export const throwingPolicy = () => ({
   name: 'Groovy',
@@ -88,6 +106,8 @@ export interface RefusingPolicyFixture extends Fixture {
   user: typeof REFUSING_USER;
   /** Replace the policies on the domain's Login flow. Pass [] to clear them. */
   setLoginPolicies: (scope: 'pre' | 'post', policies: any[]) => Promise<void>;
+  /** The signing-in user's stored profile, for reading back what a policy wrote. */
+  readUserProfile: () => Promise<Record<string, any>>;
 }
 
 export const setupRefusingPolicyFixture = async (): Promise<RefusingPolicyFixture> => {
@@ -138,6 +158,14 @@ export const setupRefusingPolicyFixture = async (): Promise<RefusingPolicyFixtur
     await waitForSyncAfter(domain.id, () => updateDomainFlows(domain.id, accessToken, flows));
   };
 
+  const readUserProfile = async (): Promise<Record<string, any>> => {
+    const page = await listUsers(domain.id, accessToken, REFUSING_USER.username);
+    if (!page.totalCount || page.data.length === 0) {
+      throw new Error(`user ${REFUSING_USER.username} not found`);
+    }
+    return page.data[0].additionalInformation ?? {};
+  };
+
   return {
     accessToken,
     domain: started.domain,
@@ -145,6 +173,7 @@ export const setupRefusingPolicyFixture = async (): Promise<RefusingPolicyFixtur
     application,
     user: REFUSING_USER,
     setLoginPolicies,
+    readUserProfile,
     cleanUp: async () => {
       await safeDeleteDomain(domain.id, accessToken);
     },
