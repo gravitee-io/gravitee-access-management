@@ -491,9 +491,15 @@ export const setupOrgIdpRoleMapperFixture = async (): Promise<OrgIdpRoleMapperFi
     );
     createdOrgIdpIds.push(providerBId);
 
+    // Re-read rather than reusing the list from the start of setup: two domains and two providers
+    // are created in between, and another spec sharing this organization can register its own
+    // provider in that window. Writing back the older list would drop it. cleanUp does the same.
+    const currentSettings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
+    const identitiesBeforePatch = currentSettings.identities ? Array.from(currentSettings.identities) : [];
+
     await defaultApi.patchOrganizationSettings({
       organizationId: ORG_ID,
-      patchOrganization: { identities: [...existingIdentities, providerAId, providerBId] },
+      patchOrganization: { identities: [...identitiesBeforePatch, providerAId, providerBId] },
     });
     identitiesWerePatched = true;
 
