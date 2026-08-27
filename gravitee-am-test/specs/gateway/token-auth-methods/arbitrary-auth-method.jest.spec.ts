@@ -36,8 +36,9 @@ setup(200000);
  * Assertion-based methods are deliberately not covered here. An unset application refuses
  * client_secret_jwt even though `ClientAssertionAuthProvider.canHandle` carries the same
  * empty-method branch as basic and post — the identical assertion is accepted once the method is
- * set explicitly. That looks like a defect rather than intended behaviour, so it is raised
- * separately instead of being written down here as expected.
+ * set explicitly. That looks like a defect rather than intended behaviour, so it is tracked as
+ * AM-7591 instead of being written down here as expected. Add the assertion cases to this file
+ * once that is resolved.
  */
 let fixture: ArbitraryAuthMethodFixture;
 
