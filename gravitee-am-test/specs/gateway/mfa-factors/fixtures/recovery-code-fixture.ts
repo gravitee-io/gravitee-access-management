@@ -344,13 +344,7 @@ export const setupRecoveryCodeFixture = async (): Promise<RecoveryCodeFixture> =
       },
     };
   } catch (error) {
-    if (domain?.id) {
-      try {
-        await safeDeleteDomain(domain.id, accessToken);
-      } catch (e) {
-        console.error('Cleanup failed:', e);
-      }
-    }
+    await safeDeleteDomain(domain?.id, accessToken);
     throw error;
   }
 };

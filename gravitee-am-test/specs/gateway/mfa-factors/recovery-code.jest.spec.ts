@@ -21,12 +21,7 @@ import { RecoveryCodeFixture, setupRecoveryCodeFixture } from './fixtures/recove
 setup(300000);
 
 /**
- * AM-2216 / UC-AM46 — recovery codes during sign-in.
- *
- * Being issued recovery codes and signing in with one is already covered, both here and in
- * Playwright. What nothing covered is that a code is spent when it is used: a code that stayed
- * valid afterwards would be a lasting way past multi-factor authentication, and no test would
- * have noticed.
+ * AM-2216 / UC-AM46 — a recovery code is spent when it is used.
  *
  * A refused code and a code that was never issued produce the same error, so every refusal below
  * is paired with the same code having worked first. Without that, a test could pass because the
