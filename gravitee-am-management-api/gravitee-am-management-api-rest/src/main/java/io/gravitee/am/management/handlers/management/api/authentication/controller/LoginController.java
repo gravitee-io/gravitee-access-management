@@ -124,12 +124,6 @@ public class LoginController {
 
         // enhance social providers data
         if (socialProviders != null && !socialProviders.isEmpty()) {
-            Set<IdentityProvider> enhancedSocialProviders = socialProviders.stream().map(identityProvider -> {
-                // get social identity provider type (currently use for display purpose (logo, description, ...)
-                identityProvider.setType(socialProviderTypes.getOrDefault(identityProvider.getType(), identityProvider.getType()));
-                return identityProvider;
-            }).collect(Collectors.toSet());
-
             Map<String, String> authorizeUrls = new HashMap<>();
             socialProviders.forEach(identity -> {
                 String identityId = identity.getId();
@@ -140,12 +134,23 @@ public class LoginController {
                             Claims.NONCE, SecureRandomString.generate(),
                             Claims.IAT, now.getEpochSecond(),
                             Claims.EXP, now.plus(getSocialIdpStateExpiration()).getEpochSecond()));
+                    // A provider that cannot build its sign-in URL or reports an error is left off the login page.
                     socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId), state, this::processState)
-                            .map(Optional::ofNullable)
-                            .blockingGet()
-                            .ifPresent(idpAuthzRequest -> authorizeUrls.put(identityId, idpAuthzRequest.getUri()));
+                            .blockingSubscribe(
+                                    idpAuthzRequest -> authorizeUrls.put(identityId, idpAuthzRequest.getUri()),
+                                    error -> LOGGER.warn("An error has occurred while building the sign-in URL of the social provider [{}]", identityId, error),
+                                    () -> LOGGER.warn("Social provider [{}] did not provide a sign-in URL, it will not be displayed on the login page", identityId));
                 }
             });
+
+            Set<IdentityProvider> enhancedSocialProviders = socialProviders.stream()
+                    // filter out providers that do not have an authorize URL
+                    .filter(identityProvider -> authorizeUrls.containsKey(identityProvider.getId()))
+                    .map(identityProvider -> {
+                        // get social identity provider type (currently use for display purpose (logo, description, ...)
+                        identityProvider.setType(socialProviderTypes.getOrDefault(identityProvider.getType(), identityProvider.getType()));
+                        return identityProvider;
+                    }).collect(Collectors.toSet());
 
             params.put("oauth2Providers", enhancedSocialProviders);
             params.put("socialProviders", enhancedSocialProviders);
