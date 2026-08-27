@@ -52,8 +52,6 @@ export interface TranslationFixture extends Fixture {
   clientId: string;
   /** Adds or replaces the entries on the domain's translation for TRANSLATED_LANGUAGE. */
   setTranslationEntries: (entries: Record<string, string>) => Promise<void>;
-  /** True when the login form was overridden with a template referencing CUSTOM_KEY. */
-  templateReferencesCustomKey: boolean;
 }
 
 export const setupTranslationFixture = async (): Promise<TranslationFixture> => {
@@ -99,25 +97,25 @@ export const setupTranslationFixture = async (): Promise<TranslationFixture> => 
     // A key of our own renders only if the template asks for it, so the domain's login form is
     // replaced with one that does. Overriding a shipped key needs no template change; adding a
     // new one does — that difference is what the custom-key test exists to show.
-    let templateReferencesCustomKey = false;
-    try {
-      const loginHtmlPath = join(
-        __dirname,
-        '../../../../../gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-core/src/main/resources/webroot/views/login.html',
-      );
-      const original = readFileSync(loginHtmlPath, 'utf-8');
-      const injected = original.replace('<body>', `<body><label id="am2184-extra" th:text="#{${CUSTOM_KEY}}"></label>`);
-
-      await getDomainApi(accessToken).createForm({
-        organizationId: process.env.AM_DEF_ORG_ID!,
-        environmentId: process.env.AM_DEF_ENV_ID!,
-        domain: domain.id,
-        newForm: { template: 'LOGIN' as any, content: injected, enabled: true },
-      });
-      templateReferencesCustomKey = true;
-    } catch (e) {
-      console.warn('Could not override the login form; the custom-key test will be skipped:', e);
+    //
+    // Anything wrong here is a problem with the setup, not with the gateway, so it throws rather
+    // than leaving a test to fail as though the wording had not rendered.
+    const loginHtmlPath = join(
+      __dirname,
+      '../../../../../gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-core/src/main/resources/webroot/views/login.html',
+    );
+    const original = readFileSync(loginHtmlPath, 'utf-8');
+    const injected = original.replace('<body>', `<body><label id="am2184-extra" th:text="#{${CUSTOM_KEY}}"></label>`);
+    if (injected === original) {
+      throw new Error(`No <body> found in ${loginHtmlPath}, so the custom key was never added to the template`);
     }
+
+    await getDomainApi(accessToken).createForm({
+      organizationId: process.env.AM_DEF_ORG_ID!,
+      environmentId: process.env.AM_DEF_ENV_ID!,
+      domain: domain.id,
+      newForm: { template: 'LOGIN' as any, content: injected, enabled: true },
+    });
 
     await startDomain(domain.id, accessToken);
     const started = await waitForDomainStart(domain);
@@ -135,7 +133,6 @@ export const setupTranslationFixture = async (): Promise<TranslationFixture> => 
       oidc: started.oidcConfig,
       clientId: app.settings.oauth.clientId,
       setTranslationEntries,
-      templateReferencesCustomKey,
       cleanUp: async () => {
         if (domain?.id) {
           await safeDeleteDomain(domain.id, accessToken);

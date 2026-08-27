@@ -131,8 +131,6 @@ describe('A translation used on the sign-in form', () => {
   });
 
   it(jira`a key of its own is shown when the form's template asks for it ${'AM-2184'}`, async () => {
-    expect(fixture.templateReferencesCustomKey).toBe(true);
-
     // Overriding a shipped key needs no template change; a key of your own does. This domain's
     // login form was replaced with one referencing it, which is what makes the wording appear.
     await fixture.setTranslationEntries({ [TITLE_KEY]: TRANSLATED_TITLE, [CUSTOM_KEY]: CUSTOM_WORDING });
