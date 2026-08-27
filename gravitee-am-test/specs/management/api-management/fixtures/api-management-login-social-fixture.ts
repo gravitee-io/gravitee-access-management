@@ -46,6 +46,12 @@ export { getLoginForm } from '../management-auth-helper';
 const MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL!;
 
 /**
+ * Name of the organization provider this fixture registers. Passed when reading the link back so
+ * the lookup cannot pick a provider another spec registered on the shared organization.
+ */
+const SOCIAL_PROVIDER_NAME = 'Social';
+
+/**
  * Wait for the social provider link to appear on the management login page.
  * Organization settings may take time to propagate.
  */
@@ -94,6 +100,7 @@ export async function getSocialForm(
     loginFormRes.text,
     f.internalGatewayUrl,
     f.gatewayUrl,
+    SOCIAL_PROVIDER_NAME,
   );
   const socialRes = await performGet(
     new URL(socialUrl).origin,
@@ -145,6 +152,7 @@ export async function runLoginFlowWithCookieJar(
     loginFormRes.text,
     f.internalGatewayUrl,
     f.gatewayUrl,
+    SOCIAL_PROVIDER_NAME,
   );
   const socialOrigin = new URL(socialUrl).origin;
   const socialRes = await performGet(
@@ -332,7 +340,7 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
       connectTimeout: 10000,
       maxPoolSize: 200,
     }),
-    name: 'Social',
+    name: SOCIAL_PROVIDER_NAME,
   };
 
   const createRes = await request(process.env.AM_MANAGEMENT_URL)

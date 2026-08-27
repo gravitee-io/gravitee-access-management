@@ -46,6 +46,7 @@ import { Fixture } from '../../../test-fixture';
 import {
   cookieHeaderFromSetCookie,
   mergeCookieStrings,
+  extractSocialUrlFromManagementLoginHtml,
   extractXsrfAndActionFromSocialLoginHtml,
   getLoginForm,
   parseLocation,
@@ -89,39 +90,6 @@ export interface OrgIdpRoleMapperFixture extends Fixture {
 }
 
 /**
- * Pick a specific provider's sign-in link from the Console login page.
- *
- * The shared `extractSocialUrlFromManagementLoginHtml` takes `.first()`, which is fine when a
- * single provider is registered but cannot distinguish between two. Kept here rather than added
- * to the shared helper so the four files that depend on that helper are left untouched.
- */
-export function extractSocialUrlForProvider(html: string, providerName: string, internalGatewayUrl: string, gatewayUrl: string): string {
-  const $ = cheerio.load(html);
-  const links = $('[data-testid^="social-provider-"]');
-  if (links.length === 0) {
-    throw new Error('No social provider link on the Console login page');
-  }
-
-  let href: string | undefined;
-  links.each((_, el) => {
-    const testId = $(el).attr('data-testid') ?? '';
-    const label = $(el).text().trim();
-    if (testId.includes(providerName) || label.includes(providerName)) {
-      href = $(el).attr('href');
-    }
-  });
-
-  if (!href) {
-    const seen = links
-      .map((_, el) => $(el).attr('data-testid'))
-      .get()
-      .join(', ');
-    throw new Error(`No sign-in link for provider "${providerName}" on the Console login page. Present: ${seen}`);
-  }
-  return href.replace(internalGatewayUrl, gatewayUrl);
-}
-
-/**
  * Sign in to the Console through a named organization identity provider, following the
  * redirect chain to the configured redirect address.
  *
@@ -148,7 +116,7 @@ export async function signInThroughOrgProvider(f: OrgIdpRoleMapperFixture, provi
     jar[origin] = mergeCookieStrings(jar[origin], loginCookie);
   }
 
-  const socialUrl = extractSocialUrlForProvider(loginFormRes.text, provider.name, f.internalGatewayUrl, f.gatewayUrl);
+  const socialUrl = extractSocialUrlFromManagementLoginHtml(loginFormRes.text, f.internalGatewayUrl, f.gatewayUrl, provider.name);
   const socialOrigin = new URL(socialUrl).origin;
   const socialRes = await performGet(
     socialOrigin,
@@ -423,133 +391,190 @@ async function createOrgProvider(
 
 export const setupOrgIdpRoleMapperFixture = async (): Promise<OrgIdpRoleMapperFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const gatewayUrl = process.env.AM_GATEWAY_URL!;
-  const internalGatewayUrl = process.env.AM_INTERNAL_GATEWAY_URL || process.env.AM_GATEWAY_URL!;
-  const defaultApi = getDefaultApi(accessToken);
 
-  const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
-  const existingIdentities = settings.identities ? Array.from(settings.identities) : [];
-  if (existingIdentities.length === 0) {
-    throw new Error('Organization has no identity provider');
-  }
+  // Everything created below is recorded as it happens. The organization is shared across the
+  // whole installation, so a setup that throws part-way — waitForProvidersOnLoginPage timing out,
+  // for instance — must not leave providers or roles registered against it for the rest of the run.
+  const createdOrgIdpIds: string[] = [];
+  const createdRoleIds: string[] = [];
+  const createdDomainIds: string[] = [];
+  let identitiesWerePatched = false;
 
-  // ORGANIZATION_USER is what AuthenticationServiceImpl falls back to when no rule matches.
-  const defaultRole = await findOrganizationRoleByName(accessToken, 'ORGANIZATION_USER');
-
-  const roleAName = uniqueName('am2219-role-a', true);
-  const roleBName = uniqueName('am2219-role-b', true);
-  const roleA = await createCustomOrganizationRole(accessToken, roleAName, ASSIGNABLE_TYPE_ORGANIZATION, ['domain_read']);
-  const roleB = await createCustomOrganizationRole(accessToken, roleBName, ASSIGNABLE_TYPE_ORGANIZATION, ['domain_read']);
-
-  const matchingA = uniqueName('am2219-match-a', true);
-  const nonMatchingA = uniqueName('am2219-nomatch-a', true);
-  const matchingB = uniqueName('am2219-match-b', true);
-
-  const domainA = await createIdpDomain(accessToken, 'am2219-idp-a', [matchingA, nonMatchingA]);
-  const domainB = await createIdpDomain(accessToken, 'am2219-idp-b', [matchingB]);
-
-  const providerAName = uniqueName('am2219-provider-a', true);
-  const providerBName = uniqueName('am2219-provider-b', true);
-
-  // Only the matching username is named in each rule, so the other user reaches the default role.
-  const providerAId = await createOrgProvider(
-    accessToken,
-    providerAName,
-    domainA.domain.hrid!,
-    domainA.clientId,
-    domainA.clientSecret,
-    internalGatewayUrl,
-    { [roleA.id!]: [`preferred_username=${matchingA}`] },
-  );
-  const providerBId = await createOrgProvider(
-    accessToken,
-    providerBName,
-    domainB.domain.hrid!,
-    domainB.clientId,
-    domainB.clientSecret,
-    internalGatewayUrl,
-    { [roleB.id!]: [`preferred_username=${matchingB}`] },
-  );
-
-  await defaultApi.patchOrganizationSettings({
-    organizationId: ORG_ID,
-    patchOrganization: { identities: [...existingIdentities, providerAId, providerBId] },
-  });
-
-  await waitForProvidersOnLoginPage([providerAName, providerBName]);
-
-  const cleanUp = async () => {
-    // Signing in provisions an organization user per account, so remove them rather than
-    // leaving the shared organization to accumulate one set per run.
-    for (const username of [matchingA, nonMatchingA, matchingB]) {
+  const undoPartialSetup = async () => {
+    if (identitiesWerePatched) {
       try {
-        const page = await searchOrganisationUsers(accessToken, `userName eq "${username}"`);
-        for (const user of page.data ?? []) {
-          await deleteOrganisationUser(accessToken, user.id);
-        }
-      } catch {
-        // best effort — a user that was never provisioned is not an error
+        const current = await getDefaultApi(accessToken).getOrganizationSettings({ organizationId: ORG_ID });
+        const remaining = (current.identities ? Array.from(current.identities) : []).filter((id) => !createdOrgIdpIds.includes(id));
+        await getDefaultApi(accessToken).patchOrganizationSettings({
+          organizationId: ORG_ID,
+          patchOrganization: { identities: remaining },
+        });
+      } catch (e) {
+        console.error('Partial cleanup: could not restore organization settings:', e);
       }
     }
-
-    // Re-read rather than restoring the snapshot taken during setup: other spec files patch the
-    // same organization settings, and writing back a stale list would drop their providers.
-    // Only the two ids this fixture added are removed.
-    const current = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
-    const remaining = (current.identities ? Array.from(current.identities) : []).filter((id) => id !== providerAId && id !== providerBId);
-    await defaultApi.patchOrganizationSettings({
-      organizationId: ORG_ID,
-      patchOrganization: { identities: remaining },
-    });
-
-    for (const idpId of [providerAId, providerBId]) {
+    for (const idpId of createdOrgIdpIds) {
       try {
         await getIdpApi(accessToken).deleteIdentityProvider1({ organizationId: ORG_ID, identity: idpId });
-      } catch (e: any) {
-        if (e?.response?.status !== 404) {
-          throw e;
-        }
+      } catch {
+        /* best effort */
       }
     }
-
-    await safeDeleteDomain(domainA.domain.id!, accessToken);
-    await safeDeleteDomain(domainB.domain.id!, accessToken);
-
-    for (const roleId of [roleA.id!, roleB.id!]) {
+    for (const domainId of createdDomainIds) {
+      try {
+        await safeDeleteDomain(domainId, accessToken);
+      } catch {
+        /* best effort */
+      }
+    }
+    for (const roleId of createdRoleIds) {
       try {
         await deleteOrganizationRole(accessToken, roleId);
-      } catch (e: any) {
-        if (e?.response?.status !== 404) {
-          throw e;
-        }
+      } catch {
+        /* best effort */
       }
     }
   };
 
-  return {
-    accessToken,
-    gatewayUrl,
-    internalGatewayUrl,
-    defaultRoleId: defaultRole.id!,
-    defaultRoleName: defaultRole.name!,
-    providerA: {
-      id: providerAId,
-      name: providerAName,
-      mappedRoleId: roleA.id!,
-      mappedRoleName: roleAName,
-      matchingUsername: matchingA,
-      nonMatchingUsername: nonMatchingA,
-      clientId: domainA.clientId,
-    },
-    providerB: {
-      id: providerBId,
-      name: providerBName,
-      mappedRoleId: roleB.id!,
-      mappedRoleName: roleBName,
-      matchingUsername: matchingB,
-      nonMatchingUsername: '',
-      clientId: domainB.clientId,
-    },
-    cleanUp,
-  };
+  try {
+    const gatewayUrl = process.env.AM_GATEWAY_URL!;
+    const internalGatewayUrl = process.env.AM_INTERNAL_GATEWAY_URL || process.env.AM_GATEWAY_URL!;
+    const defaultApi = getDefaultApi(accessToken);
+
+    const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
+    const existingIdentities = settings.identities ? Array.from(settings.identities) : [];
+    if (existingIdentities.length === 0) {
+      throw new Error('Organization has no identity provider');
+    }
+
+    // ORGANIZATION_USER is what AuthenticationServiceImpl falls back to when no rule matches.
+    const defaultRole = await findOrganizationRoleByName(accessToken, 'ORGANIZATION_USER');
+
+    const roleAName = uniqueName('am2219-role-a', true);
+    const roleBName = uniqueName('am2219-role-b', true);
+    const roleA = await createCustomOrganizationRole(accessToken, roleAName, ASSIGNABLE_TYPE_ORGANIZATION, ['domain_read']);
+    createdRoleIds.push(roleA.id!);
+    const roleB = await createCustomOrganizationRole(accessToken, roleBName, ASSIGNABLE_TYPE_ORGANIZATION, ['domain_read']);
+    createdRoleIds.push(roleB.id!);
+
+    const matchingA = uniqueName('am2219-match-a', true);
+    const nonMatchingA = uniqueName('am2219-nomatch-a', true);
+    const matchingB = uniqueName('am2219-match-b', true);
+
+    const domainA = await createIdpDomain(accessToken, 'am2219-idp-a', [matchingA, nonMatchingA]);
+    createdDomainIds.push(domainA.domain.id!);
+    const domainB = await createIdpDomain(accessToken, 'am2219-idp-b', [matchingB]);
+    createdDomainIds.push(domainB.domain.id!);
+
+    const providerAName = uniqueName('am2219-provider-a', true);
+    const providerBName = uniqueName('am2219-provider-b', true);
+
+    // Only the matching username is named in each rule, so the other user reaches the default role.
+    const providerAId = await createOrgProvider(
+      accessToken,
+      providerAName,
+      domainA.domain.hrid!,
+      domainA.clientId,
+      domainA.clientSecret,
+      internalGatewayUrl,
+      { [roleA.id!]: [`preferred_username=${matchingA}`] },
+    );
+    createdOrgIdpIds.push(providerAId);
+    const providerBId = await createOrgProvider(
+      accessToken,
+      providerBName,
+      domainB.domain.hrid!,
+      domainB.clientId,
+      domainB.clientSecret,
+      internalGatewayUrl,
+      { [roleB.id!]: [`preferred_username=${matchingB}`] },
+    );
+    createdOrgIdpIds.push(providerBId);
+
+    await defaultApi.patchOrganizationSettings({
+      organizationId: ORG_ID,
+      patchOrganization: { identities: [...existingIdentities, providerAId, providerBId] },
+    });
+    identitiesWerePatched = true;
+
+    await waitForProvidersOnLoginPage([providerAName, providerBName]);
+
+    const cleanUp = async () => {
+      // Signing in provisions an organization user per account, so remove them rather than
+      // leaving the shared organization to accumulate one set per run.
+      for (const username of [matchingA, nonMatchingA, matchingB]) {
+        try {
+          const page = await searchOrganisationUsers(accessToken, `userName eq "${username}"`);
+          for (const user of page.data ?? []) {
+            await deleteOrganisationUser(accessToken, user.id);
+          }
+        } catch {
+          // best effort — a user that was never provisioned is not an error
+        }
+      }
+
+      // Re-read rather than restoring the snapshot taken during setup: other spec files patch the
+      // same organization settings, and writing back a stale list would drop their providers.
+      // Only the two ids this fixture added are removed.
+      const current = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
+      const remaining = (current.identities ? Array.from(current.identities) : []).filter((id) => id !== providerAId && id !== providerBId);
+      await defaultApi.patchOrganizationSettings({
+        organizationId: ORG_ID,
+        patchOrganization: { identities: remaining },
+      });
+
+      for (const idpId of [providerAId, providerBId]) {
+        try {
+          await getIdpApi(accessToken).deleteIdentityProvider1({ organizationId: ORG_ID, identity: idpId });
+        } catch (e: any) {
+          if (e?.response?.status !== 404) {
+            throw e;
+          }
+        }
+      }
+
+      await safeDeleteDomain(domainA.domain.id!, accessToken);
+      await safeDeleteDomain(domainB.domain.id!, accessToken);
+
+      for (const roleId of [roleA.id!, roleB.id!]) {
+        try {
+          await deleteOrganizationRole(accessToken, roleId);
+        } catch (e: any) {
+          if (e?.response?.status !== 404) {
+            throw e;
+          }
+        }
+      }
+    };
+
+    return {
+      accessToken,
+      gatewayUrl,
+      internalGatewayUrl,
+      defaultRoleId: defaultRole.id!,
+      defaultRoleName: defaultRole.name!,
+      providerA: {
+        id: providerAId,
+        name: providerAName,
+        mappedRoleId: roleA.id!,
+        mappedRoleName: roleAName,
+        matchingUsername: matchingA,
+        nonMatchingUsername: nonMatchingA,
+        clientId: domainA.clientId,
+      },
+      providerB: {
+        id: providerBId,
+        name: providerBName,
+        mappedRoleId: roleB.id!,
+        mappedRoleName: roleBName,
+        matchingUsername: matchingB,
+        nonMatchingUsername: '',
+        clientId: domainB.clientId,
+      },
+      cleanUp,
+    };
+  } catch (error) {
+    await undoPartialSetup();
+    throw error;
+  }
 };
