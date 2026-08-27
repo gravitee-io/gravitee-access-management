@@ -98,12 +98,17 @@ describe('A policy in the login flow that refuses', () => {
     await fixture.setLoginPolicies('post', [throwingPolicy()]);
 
     const location = await signInAndReadRedirect();
+    const url = new URL(location);
 
     // Pinning the behaviour down rather than assuming it: a policy erroring mid-flow turns the
-    // user away, it does not let them through. The message is the Groovy failure itself, which
-    // shows the script ran and threw rather than being rejected before execution.
-    expect(location).toContain('error=login_failed');
-    expect(location).toContain('Cannot+invoke+method');
+    // user away, it does not let them through.
+    expect(url.searchParams.get('error')).toEqual('login_failed');
+    expect(url.pathname).toEqual(`/${fixture.domain.hrid}/login`);
     expect(location).not.toMatch(/[?&]code=/);
+    expect(location).not.toContain(REDIRECT_URI);
+
+    // The gateway currently puts the script's own runtime message into error_description. That is
+    // deliberately not asserted here: the wording belongs to the JVM rather than to AM, and
+    // whether an internal message should reach the browser at all is tracked separately.
   });
 });
