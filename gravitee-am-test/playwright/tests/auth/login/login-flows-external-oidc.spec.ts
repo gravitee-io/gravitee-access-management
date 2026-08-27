@@ -67,15 +67,19 @@ test.describe('Hide login form with external IdP (AM-2169)', () => {
     linkJira(testInfo, 'AM-2169');
 
     const clientId = externalOidcBundle.clientApp.settings.oauth.clientId;
-    const providerLoginRe = new RegExp(`${externalOidcBundle.providerDomain.hrid}.*/login`, 'i');
-    const clientLoginRe = new RegExp(`${externalOidcBundle.clientDomain.hrid}/login`, 'i');
+
+    // Matched on the path alone rather than anywhere in the URL. The provider's authorize URL
+    // carries the client's own `/login/callback` inside its redirect_uri parameter, so a
+    // whole-URL match counts hops that never went near the client's login page.
+    const clientLoginPath = `/${externalOidcBundle.clientDomain.hrid}/login`;
+    const providerLoginPath = `/${externalOidcBundle.providerDomain.hrid}/login`;
 
     // LoginHideFormHandler sits on /login itself, so the browser does reach that URL — it is
-    // answered with a 302 rather than a rendered form. Recording the statuses is therefore how
+    // answered with a 302 rather than a rendered form. Recording the status is therefore how
     // "the form was hidden" is proved; the URL alone cannot show it.
     const clientLoginStatuses: number[] = [];
     page.on('response', (response) => {
-      if (clientLoginRe.test(response.url())) {
+      if (new URL(response.url()).pathname === clientLoginPath) {
         clientLoginStatuses.push(response.status());
       }
     });
@@ -84,12 +88,13 @@ test.describe('Hide login form with external IdP (AM-2169)', () => {
 
     // No fallback to clicking the provider button by hand: if the redirect does not happen, the
     // browser stays on a rendered login form and this fails, which is the point of the feature.
-    await page.waitForURL(providerLoginRe, { timeout: BRIEF_TIMEOUT * 6 });
+    await page.waitForURL((url) => url.pathname === providerLoginPath, { timeout: BRIEF_TIMEOUT * 6 });
 
-    expect(clientLoginStatuses.length).toBeGreaterThan(0);
-    expect(clientLoginStatuses.every((status) => status === 302)).toBe(true);
+    // The client's login page is reached exactly once, and answered with a redirect rather than
+    // a form. Asserting the whole array reports the statuses themselves when it fails.
+    expect(clientLoginStatuses).toEqual([302]);
     await expect(page.locator('#username')).toBeVisible();
-    expect(page.url()).toMatch(providerLoginRe);
+    expect(new URL(page.url()).pathname).toEqual(providerLoginPath);
 
     await submitLogin(page, externalOidcBundle.providerUser.username, externalOidcBundle.providerUser.password);
 
@@ -108,10 +113,10 @@ test.describe('Login form shown when hiding is off (AM-2169)', () => {
     linkJira(testInfo, 'AM-2169');
 
     const clientId = externalOidcBundle.clientApp.settings.oauth.clientId;
-    const clientLoginRe = new RegExp(`${externalOidcBundle.clientDomain.hrid}/login`, 'i');
+    const clientLoginPath = `/${externalOidcBundle.clientDomain.hrid}/login`;
 
     await page.goto(buildAuthorizeUrl(externalOidcBundle.clientGatewayUrl, clientId));
-    await page.waitForURL(clientLoginRe);
+    await page.waitForURL((url) => url.pathname === clientLoginPath);
 
     // The comparison that gives the test above its meaning: same domain, same single external
     // provider, only the setting differs — and here the form is served rather than redirected past.
