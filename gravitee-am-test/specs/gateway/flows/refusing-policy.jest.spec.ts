@@ -108,7 +108,8 @@ describe('A policy in the login flow that refuses', () => {
     expect(location).not.toContain(REDIRECT_URI);
 
     // The gateway currently puts the script's own runtime message into error_description. That is
-    // deliberately not asserted here: the wording belongs to the JVM rather than to AM, and
-    // whether an internal message should reach the browser at all is tracked separately.
+    // deliberately not asserted here: the wording belongs to the JVM rather than to AM, and an
+    // internal message reaching the browser at all is tracked as AM-7593. Should that be fixed to
+    // a generic description, this test keeps passing.
   });
 });
