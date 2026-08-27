@@ -82,9 +82,35 @@ export function extractSocialUrlFromManagementLoginHtml(
   html: string,
   internalGatewayUrl: string,
   gatewayUrl: string,
+  providerName?: string,
 ): string {
   const $ = cheerio.load(html);
-  const href = $('[data-testid^="social-provider-"]').first().attr('href');
+  const links = $('[data-testid^="social-provider-"]');
+
+  // Organization identity providers are shared across the whole installation, so another spec
+  // running at the same time can register one and change which link comes first. Callers that
+  // know their provider's name should pass it rather than trusting the order.
+  //
+  // The link's data-testid carries the provider *type*, which several providers can share; the
+  // name is the button's own text (views/login.html), so that is what is matched.
+  let href: string | undefined;
+  if (providerName) {
+    links.each((_, el) => {
+      if ($(el).text().trim() === providerName) {
+        href = $(el).attr('href');
+      }
+    });
+    if (!href) {
+      const seen = links
+        .map((_, el) => `${$(el).text().trim()} (${$(el).attr('data-testid')})`)
+        .get()
+        .join(', ');
+      throw new Error(`Could not find social provider "${providerName}" in login form. Present: ${seen}`);
+    }
+  } else {
+    href = links.first().attr('href');
+  }
+
   if (!href) {
     throw new Error('Could not find social provider link in login form');
   }
