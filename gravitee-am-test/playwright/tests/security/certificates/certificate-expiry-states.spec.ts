@@ -53,7 +53,11 @@ test.describe('Certificate expiry states (AM-2220)', () => {
     await expect(nearExpiryWarning).toHaveAttribute('aria-describedby', /.+/);
 
     // The half that was missing: without it, a page that flagged every row would still pass.
-    await expect(certPage.certificateRow(healthyName).locator('mat-icon.warning')).toHaveCount(0);
+    // The row is asserted present first — "no warning icon" is otherwise equally true of a row
+    // that has not rendered, which is the case this is here to rule out.
+    const healthyRow = certPage.certificateRow(healthyName);
+    await expect(healthyRow).toBeVisible();
+    await expect(healthyRow.locator('mat-icon.warning')).toHaveCount(0);
   });
 
   test('AM-2220: a certificate that has already expired is refused on upload', async ({ testDomain, adminToken }, testInfo) => {
