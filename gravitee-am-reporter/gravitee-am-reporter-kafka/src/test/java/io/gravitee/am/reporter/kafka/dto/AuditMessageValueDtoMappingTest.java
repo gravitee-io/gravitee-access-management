@@ -139,4 +139,44 @@ class AuditMessageValueDtoMappingTest {
             }
         };
     }
+
+    @org.junit.jupiter.api.Nested
+    class CustomAttributes {
+
+        private Audit auditWith(Map<String, Object> customAttributes) {
+            var audit = new Audit();
+            audit.setId("audit-1");
+            audit.setCustomAttributes(customAttributes);
+            return audit;
+        }
+
+        @Test
+        void areCarriedOntoTheRecord() {
+            var dto = AuditMessageValueDto.from(auditWith(Map.of("employee_id", "E-4471")), null, null);
+
+            assertThat(dto.getCustomAttributes()).isEqualTo(Map.of("employee_id", "E-4471"));
+        }
+
+        @Test
+        void nonStringValuesAreSerializedAsJson() {
+            var dto = AuditMessageValueDto.from(auditWith(Map.of("login_count", 12)), null, null);
+
+            assertThat(dto.getCustomAttributes()).isEqualTo(Map.of("login_count", "12"));
+        }
+
+        @Test
+        void aCollectionIsSerializedAsJson() {
+            var dto = AuditMessageValueDto.from(
+                    auditWith(Map.of("groups", java.util.List.of("admins", "platform"))), null, null);
+
+            assertThat(dto.getCustomAttributes()).isEqualTo(Map.of("groups", "[\"admins\",\"platform\"]"));
+        }
+
+        @Test
+        void areAbsentWhenNoneWereResolved() {
+            assertThat(AuditMessageValueDto.from(auditWith(null), null, null).getCustomAttributes()).isNull();
+            assertThat(AuditMessageValueDto.from(auditWith(Map.of()), null, null).getCustomAttributes()).isNull();
+        }
+    }
+
 }

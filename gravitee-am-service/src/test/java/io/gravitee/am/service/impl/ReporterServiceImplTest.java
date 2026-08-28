@@ -142,7 +142,7 @@ class ReporterServiceImplTest {
             new ReporterAttributeMapping("{#context.attributes['user'].additionalInformation['sub']}", "user_sub");
     private static final ReporterAttributeMapping CLIENT_ID =
             new ReporterAttributeMapping("{#context.attributes['client'].clientId}", "client_id");
-    private static final ReporterAttributeMapping INVALID = new ReporterAttributeMapping("no braces", "user_sub");
+    private static final ReporterAttributeMapping INVALID = new ReporterAttributeMapping("   ", "user_sub");
 
     private Reporter systemReporter(List<ReporterAttributeMapping> attributeMappings, ManagedBy managedBy) {
         return Reporter.builder()

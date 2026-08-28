@@ -17,6 +17,7 @@
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { Reporter } from '@management-models/Reporter';
+import { ReporterAttributeMapping } from '../../../management/reporters/fixtures/kafka-reporter-config-helper';
 import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
@@ -32,7 +33,7 @@ export interface DomainReporterGatewayFixture extends Fixture {
   application: Application;
   user: any & { password: string };
   openIdConfiguration: DomainOidcConfig;
-  addReporter(topicName: string, auditTypes?: string[]): Promise<Reporter>;
+  addReporter(topicName: string, auditTypes?: string[], attributeMappings?: ReporterAttributeMapping[]): Promise<Reporter>;
   addOAuthReporter(topicName: string, auditTypes?: string[]): Promise<Reporter>;
   cleanUp(): Promise<void>;
 }
@@ -82,12 +83,21 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
     lastName: 'User',
     email: `${username}@test.com`,
     preRegistration: false,
+    // Nested source for attribute-mapping tests.
+    additionalInformation: {
+      employeeId: 'E-4471',
+      department: 'Platform',
+    },
   };
   await waitForSyncAfter(domain.id, () => createUser(domain.id, accessToken, user));
 
   const reporterIds: string[] = [];
 
-  const addReporter = async (topicName: string, auditTypes: string[] = []): Promise<Reporter> => {
+  const addReporter = async (
+    topicName: string,
+    auditTypes: string[] = [],
+    attributeMappings?: ReporterAttributeMapping[],
+  ): Promise<Reporter> => {
     const reporter = await waitForSyncAfter(domain.id, () =>
       createDomainReporter(domain.id, accessToken, {
         type: 'reporter-am-kafka',
@@ -99,6 +109,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
           acks: '1',
           auditTypes,
         }),
+        ...(attributeMappings ? { attributeMappings } : {}),
       }),
     );
     reporterIds.push(reporter.id);

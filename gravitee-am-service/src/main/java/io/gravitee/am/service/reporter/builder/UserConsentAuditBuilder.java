@@ -40,6 +40,7 @@ public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentA
 
     public UserConsentAuditBuilder user(User user) {
         if (user != null) {
+            captureUser(user);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
         }
         return this;

@@ -34,6 +34,7 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
+import io.gravitee.am.service.reporter.attribute.AttributeMappingReporter;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -417,12 +418,13 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         }
 
         private Reporter<?, ?> createWrapper(AuditReporter auditReporter, io.gravitee.am.model.Reporter reporterConfig) {
+            var mappedReporter = AttributeMappingReporter.decorate(auditReporter, reporterConfig.getAttributeMappings());
             if (additionalReferences.isEmpty()) {
-                return new EventBusReporterWrapper<>(vertx, auditReporter, reporterConfig.getReference());
+                return new EventBusReporterWrapper<>(vertx, mappedReporter, reporterConfig.getReference());
             }
             var allReferences = new ArrayList<>(additionalReferences);
             allReferences.add(0, reporterConfig.getReference());
-            return new EventBusReporterWrapper<>(vertx, auditReporter, allReferences);
+            return new EventBusReporterWrapper<>(vertx, mappedReporter, allReferences);
 
         }
     }
