@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandlerFact
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.AuthenticationFlowHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieTracer;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
 import io.gravitee.am.model.Domain;
@@ -75,8 +76,9 @@ public class WebConfiguration {
 
     @Bean
     public CookieHandler cookieHandler(@Value("${http.cookie.secure:false}") boolean cookieSecure,
-                                       @Value("${http.cookie.sameSite:Lax}") String sameSite) {
-        return new CookieHandler(cookieSecure, CookieSameSite.valueOf(sameSite.toUpperCase()));
+                                       @Value("${http.cookie.sameSite:Lax}") String sameSite,
+                                       @Value("${http.cookie.trace.names:}") String tracedCookieNames) {
+        return new CookieHandler(cookieSecure, CookieSameSite.valueOf(sameSite.toUpperCase()), new CookieTracer(tracedCookieNames));
     }
 
     @Bean
