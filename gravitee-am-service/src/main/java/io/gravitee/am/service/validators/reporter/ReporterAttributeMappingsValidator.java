@@ -117,10 +117,8 @@ public class ReporterAttributeMappingsValidator implements Validator<List<Report
 
     private static boolean isValidExpression(String expression) {
         return expression != null
-                && expression.length() <= MAX_EXPRESSION_LENGTH
-                && expression.startsWith("{")
-                && expression.endsWith("}")
-                && expression.length() > 2;
+                && !expression.isBlank()
+                && expression.length() <= MAX_EXPRESSION_LENGTH;
     }
 
     private static boolean isValidExportedName(String exportedName) {

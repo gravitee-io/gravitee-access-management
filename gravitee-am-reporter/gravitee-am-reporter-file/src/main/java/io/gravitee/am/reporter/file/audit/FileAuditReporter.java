@@ -163,6 +163,8 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
             entry.setTarget(cloneOfTarget);
         }
 
+        entry.setCustomAttributes(audit.getCustomAttributes());
+
         // link event to the organization and to the environment
         entry.setOrganizationId(context.getOrganizationId());
         entry.setEnvironmentId(context.getEnvironmentId());
