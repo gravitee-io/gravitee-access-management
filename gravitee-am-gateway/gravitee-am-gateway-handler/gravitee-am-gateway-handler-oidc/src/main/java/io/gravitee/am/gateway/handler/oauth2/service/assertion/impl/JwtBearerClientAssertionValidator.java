@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.assertion.impl;
 
+import com.google.common.base.Strings;
 import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -187,8 +188,7 @@ public class JwtBearerClientAssertionValidator implements ClientAssertionValidat
         return clientLookupService.findByClientId(clientId)
                 .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                 .flatMap(client -> {
-                    if (client.getTokenEndpointAuthMethod() != null &&
-                            !ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                    if (isAuthMethodMismatch(client, ClientAuthenticationMethod.PRIVATE_KEY_JWT)) {
                         return Maybe.error(new InvalidClientException(
                                 "Invalid client: missing or unsupported authentication method"));
                     }
@@ -231,8 +231,7 @@ public class JwtBearerClientAssertionValidator implements ClientAssertionValidat
         return clientLookupService.findByClientId(clientId)
                 .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                 .flatMap(client -> {
-                    if (client.getTokenEndpointAuthMethod() != null &&
-                            !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                    if (isAuthMethodMismatch(client, ClientAuthenticationMethod.CLIENT_SECRET_JWT)) {
                         return Maybe.error(new InvalidClientException(
                                 "Invalid client: missing or unsupported authentication method"));
                     }
@@ -248,6 +247,11 @@ public class JwtBearerClientAssertionValidator implements ClientAssertionValidat
                                 "Error validating client JWT signature", josee));
                     }
                 });
+    }
+
+    private static boolean isAuthMethodMismatch(Client client, String expectedMethod) {
+        final String authMethod = client.getTokenEndpointAuthMethod();
+        return !Strings.isNullOrEmpty(authMethod) && !expectedMethod.equalsIgnoreCase(authMethod);
     }
 
     private static boolean verifyJws(Client client, SignedJWT signedJWT) throws JOSEException {
