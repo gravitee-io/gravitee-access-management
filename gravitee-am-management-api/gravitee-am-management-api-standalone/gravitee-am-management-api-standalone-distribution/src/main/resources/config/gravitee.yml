@@ -421,7 +421,7 @@ repositories:
   # specify which scope is used as reference
   # to initialize the IdentityProviders with the "use system cluster"
   # option enabled (only management and gateway scopes are allowed as value)
-  system-cluster: gateway
+  system-cluster: management
   # Storage rules applied to a Mongo identity provider created with the "use system cluster"
   # option enabled. Each defaults to true on a Gravitee-managed cloud installation and to false
   # anywhere else. An identity provider already created keeps its settings whatever these become.
