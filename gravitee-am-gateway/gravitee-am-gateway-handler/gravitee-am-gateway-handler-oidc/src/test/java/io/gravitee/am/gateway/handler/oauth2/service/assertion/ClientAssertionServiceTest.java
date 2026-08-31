@@ -480,6 +480,61 @@ public class ClientAssertionServiceTest {
     }
 
     @Test
+    public void shouldAcceptHmacJwtWhenTokenEndpointAuthMethodIsEmpty() throws JOSEException {
+        SecureRandom random = new SecureRandom();
+        byte[] sharedSecret = new byte[32];
+        random.nextBytes(sharedSecret);
+
+        JWSSigner signer = new MACSigner(new String(sharedSecret, StandardCharsets.UTF_8));
+
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+        client.setClientSecret(new String(sharedSecret));
+        client.setTokenEndpointAuthMethod("");
+        String assertion = generateJWT(signer);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
+    }
+
+    @Test
+    public void shouldAcceptRsaJwtWhenTokenEndpointAuthMethodIsEmpty() throws NoSuchAlgorithmException, JOSEException {
+        KeyPair rsaKey = generateRsaKeyPair();
+
+        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        RSAKey key = new RSAKey();
+        key.setKty("RSA");
+        key.setKid(KID);
+        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
+        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
+
+        Client client = generateClient(key);
+        client.setTokenEndpointAuthMethod("");
+        String assertion = generateJWT(privateKey);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
+    }
+
+    @Test
     public void testHmacJwt_invalidAlgorithm() throws NoSuchAlgorithmException, JOSEException {
         KeyPair rsaKey = generateRsaKeyPair();
 
