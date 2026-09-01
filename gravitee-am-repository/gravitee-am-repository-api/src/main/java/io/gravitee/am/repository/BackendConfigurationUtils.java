@@ -13,32 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.utils;
+package io.gravitee.am.repository;
 
 import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.repository.Scope;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.springframework.core.env.Environment;
 
 import java.net.URI;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BackendConfigurationUtils {
+    public static final String SYSTEM_CLUSTER = "repositories.system-cluster";
+    public static final String DEFAULT_SYSTEM_CLUSTER = Scope.MANAGEMENT.getName();
 
-    public static String getMongoDatabaseName(RepositoriesEnvironment environment) {
-        String uri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri");
-        if (uri != null && ! uri.isEmpty()) {
+    static final String DEFAULT_MONGO_DATABASE = "gravitee-am";
+
+    public static String getMongoDatabaseName(String propertiesBase, RepositoriesEnvironment environment) {
+        final String prefix = propertiesBase + ".mongodb.";
+        final String uri = environment.getProperty(prefix + "uri", "");
+        if (!uri.isEmpty()) {
             final String path = URI.create(uri).getPath();
             if (path != null && path.length() > 1) {
                 return path.substring(1);
             }
         }
+        return environment.getProperty(prefix + "dbname", DEFAULT_MONGO_DATABASE);
+    }
 
-        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.dbname", "gravitee-am");
+    public static String getMongoDatabaseName(RepositoriesEnvironment environment) {
+        return getMongoDatabaseName(Scope.MANAGEMENT.getRepositoryPropertyKey(), environment);
     }
 }

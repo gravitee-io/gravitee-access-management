@@ -20,14 +20,9 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 
-export interface IdentityProviderStorageRules {
-  pinDatabase: boolean;
-  prefixUsersCollection: boolean;
-}
-
 interface InstallationConfiguration {
   type?: string;
-  identityProviderStorage?: Partial<IdentityProviderStorageRules>;
+  systemClusterRestricted?: boolean;
 }
 
 @Injectable()
@@ -41,13 +36,9 @@ export class CloudModeService {
     return this.getInstallation().pipe(map((installation) => installation.type === 'managed'));
   }
 
-  identityProviderStorageRules(): Observable<IdentityProviderStorageRules> {
-    return this.getInstallation().pipe(
-      map((installation) => ({
-        pinDatabase: installation.identityProviderStorage?.pinDatabase === true,
-        prefixUsersCollection: installation.identityProviderStorage?.prefixUsersCollection === true,
-      })),
-    );
+  /** True when the platform owns the database and users collection of a system cluster mongo provider. */
+  isSystemClusterRestricted(): Observable<boolean> {
+    return this.getInstallation().pipe(map((installation) => installation.systemClusterRestricted === true));
   }
 
   private getInstallation(): Observable<InstallationConfiguration> {

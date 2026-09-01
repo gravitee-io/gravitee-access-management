@@ -27,13 +27,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.CustomLog;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-
+import static io.gravitee.am.repository.BackendConfigurationUtils.getMongoDatabaseName;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
@@ -129,25 +127,14 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
                 return commonMongoClient;
             }
         } else {
-            return new MongoClientWrapper(mongoFactory.getObject(prefix + ".mongodb."), getDatabaseName(prefix));
+            return new MongoClientWrapper(mongoFactory.getObject(prefix + ".mongodb."), getMongoDatabaseName(prefix, environment));
         }
     }
 
     private String getDatabaseName(Scope scope) {
         boolean useManagementSettings = environment.getProperty(scope.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
         String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getRepositoryPropertyKey() : scope.getRepositoryPropertyKey();
-        return getDatabaseName(propertyPrefix);
-    }
-
-    private String getDatabaseName(String prefix) {
-        String uri = environment.getProperty(prefix + ".mongodb.uri", "");
-        if (!uri.isEmpty()) {
-            final String path = URI.create(uri).getPath();
-            if (path != null && path.length() > 1) {
-                return path.substring(1);
-            }
-        }
-        return environment.getProperty(prefix + ".mongodb.dbname", "gravitee-am");
+        return getMongoDatabaseName(propertyPrefix, environment);
     }
 
     @Override
@@ -157,7 +144,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
                 new MongoClientWrapper(mongoFactory.getObject(propertyPrefix), () -> {
                     log.debug("Cleaning up datasource {}", datasourceId);
                     this.dsClientWrappers.remove(datasourceId);
-                }, getDatabaseName(propertyPrefix)));
+                }, getMongoDatabaseName(propertyPrefix, environment)));
     }
 
     @Override

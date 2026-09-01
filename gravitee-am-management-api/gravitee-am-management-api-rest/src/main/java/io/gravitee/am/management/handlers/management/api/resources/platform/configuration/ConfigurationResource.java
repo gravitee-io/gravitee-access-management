@@ -112,7 +112,7 @@ public class ConfigurationResource {
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "getInstallationConfiguration",
-            summary = "Get the installation type of this instance and the storage rules it applies to identity providers",
+            summary = "Get the installation type of this instance and whether it owns the storage of identity providers on the system cluster",
             description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Installation configuration successfully fetched",
@@ -121,9 +121,7 @@ public class ConfigurationResource {
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getInstallation(@Suspended final AsyncResponse response) {
         var type = CloudProperties.isManagedCloudEnabled(environment) ? CloudProperties.INSTALLATION_TYPE_MANAGED : CloudProperties.INSTALLATION_TYPE_STANDALONE;
-        response.resume(new InstallationConfiguration(type, new InstallationConfiguration.IdentityProviderStorage(
-                systemClusterIdpSettings.isPinDatabase(),
-                systemClusterIdpSettings.isPrefixUsersCollection())));
+        response.resume(new InstallationConfiguration(type, systemClusterIdpSettings.isRestricted()));
     }
 
 }

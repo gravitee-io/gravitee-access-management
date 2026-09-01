@@ -43,7 +43,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+import static io.gravitee.am.repository.BackendConfigurationUtils.getMongoDatabaseName;
+import static io.gravitee.am.repository.BackendConfigurationUtils.SYSTEM_CLUSTER;
 
 @Component
 @CustomLog
@@ -58,8 +59,6 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     public static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
     private static final String PASSWORD_ENCODER = "passwordEncoder";
     private static final String PASSWORD_ENCODER_OPTIONS = "passwordEncoderOptions";
-
-    static final String SYSTEM_CLUSTER_PROPERTY = "repositories.system-cluster";
 
     private static final Set<String> SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "PBKDF2-SHA1", "PBKDF2-SHA256", "PBKDF2-SHA512", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
     private static final Map<String, String> PBKDF2_PASSWORD_ENCODER_MAP = Map.of(
@@ -145,15 +144,15 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     }
 
     private Scope systemClusterScope() {
-        final String value = environment.getProperty(SYSTEM_CLUSTER_PROPERTY, Scope.MANAGEMENT.getName());
+        final String value = environment.getProperty(SYSTEM_CLUSTER, Scope.MANAGEMENT.getName());
         final Scope scope;
         try {
             scope = Scope.fromName(value);
         } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER_PROPERTY + "' value '" + value + "', only 'management' or 'gateway' are accepted", e);
+            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER + "' value '" + value + "', only 'management' or 'gateway' are accepted", e);
         }
         if (scope != Scope.MANAGEMENT && scope != Scope.GATEWAY) {
-            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER_PROPERTY + "' value '" + value + "', only 'management' or 'gateway' are accepted");
+            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER + "' value '" + value + "', only 'management' or 'gateway' are accepted");
         }
         return scope;
     }

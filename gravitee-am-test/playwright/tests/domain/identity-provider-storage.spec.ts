@@ -45,8 +45,7 @@ const readsPinStorage = async (request, adminToken: string): Promise<boolean> =>
   const response = await request.get(`${process.env.AM_MANAGEMENT_URL}/management/platform/configuration/installation`, {
     headers: { Authorization: `Bearer ${adminToken}` },
   });
-  const rules = (await response.json())?.identityProviderStorage;
-  return rules?.pinDatabase === true && rules?.prefixUsersCollection === true;
+  return (await response.json())?.systemClusterRestricted === true;
 };
 
 /** Skipped unless the installation pins storage: a standalone stack has nothing to lock. */

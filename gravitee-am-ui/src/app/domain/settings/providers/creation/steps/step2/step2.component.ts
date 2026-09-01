@@ -56,12 +56,12 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     if (changes.provider) {
       const providerType = changes.provider.currentValue.type;
       this.cloudModeService
-        .identityProviderStorageRules()
+        .isSystemClusterRestricted()
         .pipe(
-          switchMap((rules) =>
+          switchMap((restricted) =>
             this.organizationService.identitySchema(providerType).pipe(
               map((schema) => enrichFormWithCerts(schema, this.certificates)),
-              map((schema) => enrichFormWithSystemClusterCreationHints(schema, providerType, rules)),
+              map((schema) => enrichFormWithSystemClusterCreationHints(schema, providerType, restricted)),
             ),
           ),
         )

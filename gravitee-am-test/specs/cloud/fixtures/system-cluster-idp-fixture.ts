@@ -93,12 +93,12 @@ export const putAutomationIdp = (scope: SystemClusterIdpFixture, definition: obj
     authHeaders(scope.accessToken),
   );
 
-/** The storage rules the Console reads to shape the mongo identity provider form. */
-export const readStorageRules = async (scope: CloudIdpScope) => {
+/** The storage rule the Console reads to shape the mongo identity provider form. */
+export const readsPinnedStorage = async (scope: CloudIdpScope) => {
   const response = await performGet(process.env.AM_MANAGEMENT_URL, '/management/platform/configuration/installation', {
     Authorization: `Bearer ${scope.accessToken}`,
   });
-  return response.body.identityProviderStorage;
+  return response.body.systemClusterRestricted;
 };
 
 export const createCloudIdp = (scope: CloudIdpScope, idp: object) =>

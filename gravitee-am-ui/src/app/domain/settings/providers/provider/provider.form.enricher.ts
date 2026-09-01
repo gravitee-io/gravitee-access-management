@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { IdentityProviderStorageRules } from '../../../../services/cloud-mode.service';
-
 const OIDC_JSON_FORM = {
   id: 'urn:jsonschema:io:gravitee:am:identityprovider:oauth2:OAuth2GenericIdentityProvider',
   version: '05-2024',
@@ -23,12 +21,6 @@ const OIDC_JSON_FORM = {
 const MONGO_IDP_TYPE = 'mongo-am-idp';
 
 export const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
-
-/** The configuration field each storage rule owns. */
-const RULE_FIELDS: Record<keyof IdentityProviderStorageRules, string> = {
-  pinDatabase: 'database',
-  prefixUsersCollection: 'usersCollection',
-};
 
 /** The widget only binds a form control when `readonly` is falsy, so the toggle reads it too. */
 export const PINNED_STORAGE_TOGGLE = 'useSystemCluster';
@@ -72,19 +64,12 @@ export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, prov
  * Creation screen. The fields stay editable: the plugin schema makes `usersCollection` mandatory and
  * a provider that does not reuse the system cluster still needs both values.
  */
-export function enrichFormWithSystemClusterCreationHints(
-  schema: FormSchema,
-  providerType: string,
-  rules: IdentityProviderStorageRules,
-): FormSchema {
-  if (providerType !== MONGO_IDP_TYPE || !schema?.properties) {
+export function enrichFormWithSystemClusterCreationHints(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
+  if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties) {
     return schema;
   }
 
-  const hinted = Object.entries(RULE_FIELDS)
-    .filter(([rule]) => rules?.[rule])
-    .map(([, field]) => field)
-    .filter((field) => schema.properties[field]);
+  const hinted = PINNED_STORAGE_FIELDS.filter((field) => schema.properties[field]);
   if (hinted.length === 0) {
     return schema;
   }

@@ -26,13 +26,6 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
-import type { IdentityProviderStorage } from './IdentityProviderStorage';
-import {
-  IdentityProviderStorageFromJSON,
-  IdentityProviderStorageFromJSONTyped,
-  IdentityProviderStorageToJSON,
-  IdentityProviderStorageToJSONTyped,
-} from './IdentityProviderStorage';
 
 /**
  *
@@ -42,10 +35,10 @@ import {
 export interface InstallationConfiguration {
   /**
    *
-   * @type {IdentityProviderStorage}
+   * @type {boolean}
    * @memberof InstallationConfiguration
    */
-  identityProviderStorage?: IdentityProviderStorage;
+  systemClusterRestricted?: boolean;
   /**
    *
    * @type {string}
@@ -70,8 +63,7 @@ export function InstallationConfigurationFromJSONTyped(json: any, ignoreDiscrimi
     return json;
   }
   return {
-    identityProviderStorage:
-      json['identityProviderStorage'] == null ? undefined : IdentityProviderStorageFromJSON(json['identityProviderStorage']),
+    systemClusterRestricted: json['systemClusterRestricted'] == null ? undefined : json['systemClusterRestricted'],
     type: json['type'] == null ? undefined : json['type'],
   };
 }
@@ -86,7 +78,7 @@ export function InstallationConfigurationToJSONTyped(value?: InstallationConfigu
   }
 
   return {
-    identityProviderStorage: IdentityProviderStorageToJSON(value['identityProviderStorage']),
+    systemClusterRestricted: value['systemClusterRestricted'],
     type: value['type'],
   };
 }

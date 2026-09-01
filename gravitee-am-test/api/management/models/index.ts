@@ -112,7 +112,6 @@ export * from './Group';
 export * from './GroupPage';
 export * from './I18nDictionary';
 export * from './IdentityProvider';
-export * from './IdentityProviderStorage';
 export * from './InstallationConfiguration';
 export * from './InstallationEntity';
 export * from './JWK';

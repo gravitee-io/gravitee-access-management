@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static io.gravitee.am.dataplane.api.DataPlaneDescription.DEFAULT_DATA_PLANE_ID;
 import static org.springframework.util.StringUtils.hasText;
+import static io.gravitee.am.plugins.dataplane.core.DataPlaneUtility.evaluateDataPlaneId;
 
 @CustomLog
 public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl> implements DataPlaneRegistry {
@@ -75,7 +76,7 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     @Override
     public DataPlaneProvider getProvider(Domain domain) {
         Objects.requireNonNull(domain, "Domain is required to provide DataPlane");
-        final var dataPlaneId = extractDataPlaneId(domain);
+        final var dataPlaneId = evaluateDataPlaneId(domain.getDataPlaneId(), Domain.class, domain.getId());
 
         return getProviderById(dataPlaneId);
     }
@@ -92,22 +93,13 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     @Override
     public DataPlaneDescription getDescription(Domain domain) {
         Objects.requireNonNull(domain, "Domain is required to provide DataPlane Description");
-        final var dataPlaneId = extractDataPlaneId(domain);
+        final var dataPlaneId = evaluateDataPlaneId(domain.getDataPlaneId(), Domain.class, domain.getId());
 
         final var desc = dataPlanDescriptions.get(dataPlaneId);
         if (desc == null) {
             throw new IllegalDataPlaneIdException(dataPlaneId);
         }
         return desc;
-    }
-
-    private String extractDataPlaneId(Domain domain) {
-        var dataPlaneId = domain.getDataPlaneId();
-        if (!hasText(dataPlaneId)) {
-            log.warn("Domain '{}' has empty dataPlaneId, upgrader may have to be executed. Fallback to 'default'.", domain.getId());
-            dataPlaneId = DEFAULT_DATA_PLANE_ID;
-        }
-        return dataPlaneId;
     }
 
     @Override

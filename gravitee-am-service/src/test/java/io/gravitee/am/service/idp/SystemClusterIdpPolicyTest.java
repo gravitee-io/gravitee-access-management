@@ -16,7 +16,9 @@
 package io.gravitee.am.service.idp;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import org.springframework.mock.env.MockEnvironment;
 
 import java.text.ParseException;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -67,40 +70,6 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_pin_the_database_only_when_the_collection_rule_is_turned_off() throws ParseException {
-        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "false");
-        var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
-
-        policyWith(environment).applyOnCreate(idp);
-
-        var configuration = JSONObjectUtils.parse(idp.getConfiguration());
-        assertEquals(PLATFORM_DATABASE, configuration.get("database"));
-        assertEquals("my-users", configuration.get("usersCollection"));
-        assertTrue(idp.isSystemClusterRestricted());
-    }
-
-    @Test
-    void should_prefix_the_collection_only_when_the_database_rule_is_turned_off() throws ParseException {
-        environment.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "false");
-        var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
-
-        policyWith(environment).applyOnCreate(idp);
-
-        var configuration = JSONObjectUtils.parse(idp.getConfiguration());
-        assertEquals("custom-db", configuration.get("database"));
-        assertEquals("idp_" + IDP_ID, configuration.get("usersCollection"));
-        assertTrue(idp.isSystemClusterRestricted());
-    }
-
-    @Test
-    void should_derive_the_collection_from_the_id_only_when_the_collection_rule_is_on() {
-        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "false");
-
-        assertFalse(policyWith(environment).derivesCollectionFromId());
-        assertTrue(policyWith(environment).ownsStorageLocation());
-    }
-
-    @Test
     void should_leave_the_configuration_alone_when_not_in_managed_cloud() {
         var standalone = policyWith(new MockEnvironment());
         var original = configuration(true, "custom-db", "my-users", null);
@@ -139,7 +108,7 @@ class SystemClusterIdpPolicyTest {
         bare.applyOnCreate(idp);
 
         var configuration = JSONObjectUtils.parse(idp.getConfiguration());
-        assertEquals(SystemClusterIdpPolicy.DEFAULT_DATABASE, configuration.get("database"));
+        assertEquals(SystemClusterDatabaseResolver.DEFAULT_DATABASE, configuration.get("database"));
         assertEquals("idp_" + IDP_ID, configuration.get("usersCollection"));
         assertTrue(idp.isSystemClusterRestricted());
     }
@@ -186,9 +155,9 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_read_the_management_uri_when_the_gateway_scope_reuses_the_management_settings() throws ParseException {
-        // use-management-settings defaults to true, so the gateway scope reads the management block.
-        // The node resolves its client wrapper the same way, and the two must agree.
+    void should_read_the_management_uri_when_the_gateway_scope_declares_no_data_plane() throws ParseException {
+        // No data plane is declared, so the resolver falls back to the scope settings, where
+        // use-management-settings defaults to true and the gateway scope reads the management block.
         var gatewayEnv = managedCloudEnvironment();
         gatewayEnv.setProperty("repositories.system-cluster", "gateway");
         gatewayEnv.setProperty("repositories.management.mongodb.uri", "mongodb://mongodb:27017/management-db");
@@ -202,7 +171,7 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_read_the_gateway_uri_when_the_gateway_scope_carries_its_own_settings() throws ParseException {
+    void should_read_the_gateway_uri_when_the_gateway_scope_carries_its_own_settings_and_declares_no_data_plane() throws ParseException {
         var gatewayEnv = managedCloudEnvironment();
         gatewayEnv.setProperty("repositories.system-cluster", "gateway");
         gatewayEnv.setProperty("repositories.gateway.use-management-settings", "false");
@@ -218,8 +187,7 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_leave_the_configuration_alone_when_pinning_is_turned_off() {
-        environment.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "false");
-        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "false");
+        environment.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "false");
         var original = configuration(true, "custom-db", "my-users", null);
         var idp = mongoIdp(original);
 
@@ -233,8 +201,7 @@ class SystemClusterIdpPolicyTest {
     void should_pin_outside_managed_cloud_when_the_setting_is_turned_on() throws ParseException {
         var selfHostedEnv = new MockEnvironment();
         selfHostedEnv.setProperty("repositories.management.mongodb.dbname", PLATFORM_DATABASE);
-        selfHostedEnv.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "true");
-        selfHostedEnv.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "true");
+        selfHostedEnv.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "true");
         var selfHosted = policyWith(selfHostedEnv);
         var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
@@ -306,8 +273,7 @@ class SystemClusterIdpPolicyTest {
     @Test
     void should_reject_an_update_that_turns_the_system_cluster_on_outside_managed_cloud_when_pinning_is_turned_on() {
         var environment = new MockEnvironment();
-        environment.setProperty(SystemClusterIdpSettings.PIN_DATABASE, "true");
-        environment.setProperty(SystemClusterIdpSettings.PREFIX_USERS_COLLECTION, "true");
+        environment.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "true");
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
         var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
@@ -447,7 +413,17 @@ class SystemClusterIdpPolicyTest {
     }
 
     private static SystemClusterIdpPolicy policyWith(MockEnvironment environment) {
-        return new SystemClusterIdpPolicy(environment, new SystemClusterIdpSettings(environment));
+        return new SystemClusterIdpPolicy(resolverWith(environment), new SystemClusterIdpSettings(environment));
+    }
+
+    /**
+     * No data plane is declared, so the resolver falls back to the system cluster scope settings.
+     * The data plane path has its own test, {@link SystemClusterDatabaseResolverTest}.
+     */
+    private static SystemClusterDatabaseResolver resolverWith(MockEnvironment environment) {
+        var registry = org.mockito.Mockito.mock(DataPlaneRegistry.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        org.mockito.Mockito.lenient().when(registry.getDataPlanes()).thenReturn(List.of());
+        return new SystemClusterDatabaseResolver(new RepositoriesEnvironment(environment), registry);
     }
 
     private IdentityProvider mongoIdp(String configuration) {

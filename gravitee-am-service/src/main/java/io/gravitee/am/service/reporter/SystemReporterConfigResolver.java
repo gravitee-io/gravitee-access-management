@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+import static io.gravitee.am.repository.BackendConfigurationUtils.getMongoDatabaseName;
 
 /**
  * @author GraviteeSource Team

@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
-import io.gravitee.am.service.idp.SystemClusterIdpSettings;
 import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -121,14 +120,11 @@ public abstract class MongoAbstractProvider implements InitializingBean {
                 : getClientWrapperBasedOnConfig(scope);
     }
 
-    // The flag marks a provider created under the regime, which may have pinned the collection
-    // without pinning the database. Only the database rule decides this override.
     private boolean shouldTakeDatabaseFromSystemCluster() {
         return this.identityProviderEntity != null
                 && this.identityProviderEntity.isSystemClusterRestricted()
                 && this.configuration.isUseSystemCluster()
-                && !shouldUseDatasource()
-                && new SystemClusterIdpSettings(this.environment).isPinDatabase();
+                && !shouldUseDatasource();
     }
 
     private boolean shouldUseDatasource() {

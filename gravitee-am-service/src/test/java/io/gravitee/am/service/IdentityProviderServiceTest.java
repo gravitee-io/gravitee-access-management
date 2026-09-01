@@ -287,7 +287,7 @@ public class IdentityProviderServiceTest {
         newIdentityProvider.setName("my-idp");
         newIdentityProvider.setConfiguration("{}");
 
-        when(systemClusterIdpPolicy.derivesCollectionFromId()).thenReturn(true);
+        when(systemClusterIdpPolicy.ownsStorageLocation()).thenReturn(true);
         ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
@@ -306,7 +306,7 @@ public class IdentityProviderServiceTest {
         newIdentityProvider.setName("my-idp");
         newIdentityProvider.setConfiguration("{}");
 
-        when(systemClusterIdpPolicy.derivesCollectionFromId()).thenReturn(true);
+        when(systemClusterIdpPolicy.ownsStorageLocation()).thenReturn(true);
         ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
 
         TestObserver testObserver = identityProviderService.create(ReferenceType.ORGANIZATION, "org#1", newIdentityProvider, null, false).test();
@@ -344,7 +344,7 @@ public class IdentityProviderServiceTest {
         newIdentityProvider.setName("my-idp");
         newIdentityProvider.setConfiguration("{}");
 
-        when(systemClusterIdpPolicy.derivesCollectionFromId()).thenReturn(true);
+        when(systemClusterIdpPolicy.ownsStorageLocation()).thenReturn(true);
         ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null, false).test();
@@ -363,7 +363,7 @@ public class IdentityProviderServiceTest {
         newIdentityProvider.setName("my-idp");
         newIdentityProvider.setConfiguration("{}");
 
-        when(systemClusterIdpPolicy.derivesCollectionFromId()).thenReturn(false);
+        when(systemClusterIdpPolicy.ownsStorageLocation()).thenReturn(false);
         ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();

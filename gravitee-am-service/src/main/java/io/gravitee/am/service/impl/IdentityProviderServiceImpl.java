@@ -238,7 +238,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         if (suppliedId == null) {
             return RandomString.generate();
         }
-        if (!systemClusterIdpPolicy.derivesCollectionFromId()) {
+        if (!systemClusterIdpPolicy.ownsStorageLocation()) {
             return suppliedId;
         }
         final boolean internal = system || newIdentityProvider instanceof AutomationNewIdentityProvider;
@@ -321,6 +321,37 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 });
+    }
+
+    @Override
+    public Single<IdentityProvider> updatePinnedStorage(IdentityProvider identityProvider, String configuration) {
+        log.debug("Update the pinned storage of identity provider {}", identityProvider.getId());
+
+        IdentityProvider identityToUpdate = new IdentityProvider(identityProvider);
+        identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(configuration));
+        identityToUpdate.setUpdatedAt(new Date());
+
+        validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
+
+        // Deliberately not doUpdate: systemClusterIdpPolicy.applyOnUpdate rejects a storage change,
+        // which is exactly what the platform is doing here.
+        return identityProviderRepository.update(identityToUpdate)
+                .flatMap(updatedIdp -> {
+                    // create event for sync process
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(updatedIdp.getId(), updatedIdp.getReferenceType(), updatedIdp.getReferenceId(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(updatedIdp));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    log.error("An error occurs while trying to update an identity provider", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
+                })
+                .doOnSuccess(updatedIdp -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(identityProvider).identityProvider(updatedIdp)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).type(EventType.IDENTITY_PROVIDER_UPDATED).reference(new Reference(identityProvider.getReferenceType(), identityProvider.getReferenceId()))
+                        .identityProvider(identityProvider).throwable(throwable)));
     }
 
     @Override

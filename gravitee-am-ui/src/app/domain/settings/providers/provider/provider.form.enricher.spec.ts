@@ -96,7 +96,7 @@ describe('enrichFormWithSystemClusterCreationHints', () => {
       },
     }) as any;
 
-  const pinned = { pinDatabase: true, prefixUsersCollection: true };
+  const pinned = true;
 
   it('appends the hint to the pinned fields', () => {
     const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', pinned);
@@ -114,34 +114,10 @@ describe('enrichFormWithSystemClusterCreationHints', () => {
     expect(enriched.properties.usersCollection.readonly).toBeUndefined();
   });
 
-  it('hints only the database when the collection rule is off', () => {
-    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', {
-      pinDatabase: true,
-      prefixUsersCollection: false,
-    });
-
-    expect(enriched.properties.database.description).toEqual(
-      'The database. The platform sets this value when "use system cluster" is selected.',
-    );
-    expect(enriched.properties.usersCollection.description).toBeUndefined();
-  });
-
-  it('hints only the collection when the database rule is off', () => {
-    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', {
-      pinDatabase: false,
-      prefixUsersCollection: true,
-    });
+  it('leaves the schema alone when the rule is off', () => {
+    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', false);
 
     expect(enriched.properties.database.description).toEqual('The database.');
-    expect(enriched.properties.usersCollection.description).toEqual('The platform sets this value when "use system cluster" is selected.');
-  });
-
-  it('leaves the schema alone when the rule is off', () => {
-    const enriched = enrichFormWithSystemClusterCreationHints(mongoSchema(), 'mongo-am-idp', {
-      pinDatabase: false,
-      prefixUsersCollection: false,
-    });
-
     expect(enriched.properties.usersCollection.description).toBeUndefined();
   });
 
